@@ -1,0 +1,494 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10220\viewh12780\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs36 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 /* \uc0\u21021 \u26399 \u20313 \u30333 \u12434 \u12522 \u12475 \u12483 \u12488  */\
+ * \{\
+    margin: 0;\
+    padding: 0;\
+    box-sizing: border-box;\
+ \}\
+ \
+ body \{\
+    font-family: sans-serif;\
+ \}\
+\
+.navigation-menu \{\
+    display: flex;           /* \uc0\u27178 \u20006 \u12403  */\
+    justify-content: space-between;  /* \uc0\u24038 \u21491 \u12395 \u20998 \u12369 \u12427  */\
+    align-items: center;   /* \uc0\u32294 \u26041 \u21521 \u12398 \u20013 \u22830 \u25539 \u12360  */\
+    padding: 15px;\
+    background-color: #d7d7d8; /* \uc0\u12490 \u12499 \u12496 \u12540 \u12398 \u32972 \u26223 \u33394  */\
+  \}\
+  \
+  .menu-left,\
+  .menu-right \{\
+    display: flex;\
+    gap: 15px; /* \uc0\u12508 \u12479 \u12531 \u38291 \u12398 \u20313 \u30333  */\
+  \}\
+\
+.navigation-menu button \{\
+    min-width: 80px;\
+    padding: 7px 20px;      /* \uc0\u20869 \u20596 \u12398 \u20313 \u30333  */\
+    font-size: 10px;\
+    border: none;\
+    background-color: #315881;\
+    color: white;\
+    border-radius: 4px;\
+    cursor: pointer;\
+    display: inline-block;\
+  flex-shrink: 0;\
+  \}\
+\
+  .navigation-menu button:hover \{\
+    background-color: #5881ad;/* \uc0\u12507 \u12496 \u12540 \u26178 \u12398 \u32972 \u26223 \u33394  */\
+  \}\
+\
+  /* \uc0\u9660  \u12459 \u12524 \u12531 \u12480 \u12540 3\u12459 \u12521 \u12512 \u23550 \u24540 \u65306 column-1\u12316 3 */\
+  .calendar-and-date \{\
+    display: flex;\
+    flex-wrap: wrap;\
+    justify-content: space-between;\
+    align-items: flex-start;\
+    margin: 20px;\
+    width: 100%; /* \uc0\u8592  \u26126 \u31034 \u30340 \u12395 \u24133 \u12434 \u25351 \u23450  */\
+  \}\
+  /* \uc0\u21508 \u12459 \u12521 \u12512 \u12398 \u22522 \u26412 \u12473 \u12479 \u12452 \u12523 \u12434 \u25913 \u21892  */\
+.calendar-col \{\
+  flex: 1;                /* \uc0\u22343 \u31561 \u12395 \u24195 \u12364 \u12427  */\
+  min-width: 220px;       /* \uc0\u12473 \u12510 \u12507 \u12391 \u12418 \u28528 \u12428 \u12377 \u12366 \u12394 \u12356  */\
+  margin: 0 10px;         /* \uc0\u12459 \u12521 \u12512 \u38291 \u12398 \u12473 \u12506 \u12540 \u12473  */\
+\}\
+\
+/* \uc0\u12459 \u12521 \u12512 \u12372 \u12392 \u12398 \u20491 \u21029 \u20301 \u32622 \u35519 \u25972  */\
+.column-1 \{\
+  display: flex;\
+  justify-content: flex-start;\
+\}\
+\
+.column-2 \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 6px;\
+\}\
+\
+.column-3 \{\
+  display: flex;\
+  justify-content: flex-end;\
+\}\
+\
+/* \uc0\u9660  \u26412 \u26085 \u12398 \u22770 \u19978 \u12508 \u12483 \u12463 \u12473 \u65288 column-2 \u12398 \u20013 \u36523 \u12398 \u12473 \u12479 \u12452 \u12523 \u65289  */\
+.today-sales-box \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  background-color: #f9f6f5;\
+  border: 1px solid #ccc;\
+  border-radius: 12px;\
+  padding: 12px 16px;\
+  gap: 8px;\
+  min-width: 160px;\
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);\
+\}\
+\
+/* \uc0\u12508 \u12483 \u12463 \u12473 \u12398 \u12521 \u12505 \u12523 \u65288 \u22806 \u20596 \u12391 \u37197 \u32622 \u65289  */\
+.column-2 .box-label \{\
+  font-size: 12px;\
+  color: #333;\
+  margin-bottom: 6px;\
+  text-align: center;\
+\}\
+\
+/* \uc0\u37329 \u38989 \u12392 \u12508 \u12479 \u12531 \u12434 \u27178 \u20006 \u12403 \u12395  */\
+.today-sales-row \{\
+  display: flex;\
+  align-items: center;\
+  gap: 8px;\
+\}\
+\
+.detail-button \{\
+  font-size: 10px;\
+  padding: 2px 6px;\
+  border: 1px solid #aaa;\
+  border-radius: 4px;\
+  background-color: white;\
+  cursor: pointer;\
+  line-height: 1;\
+  height: auto;\
+\}\
+\
+.detail-button:hover \{\
+  background-color: #e0e0e0;\
+\}\
+\
+  /* \uc0\u9660  \u12459 \u12524 \u12531 \u12480 \u12540 \u12450 \u12452 \u12467 \u12531 \u12392 \u38560 \u12375 input\u12434 \u32294 \u12395 \u37197 \u32622  */\
+.calendar-icon-group \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 4px;\
+\}\
+\
+.calendar-icon \{\
+  width: 32px;\
+  height: 32px;\
+  cursor: pointer;\
+\}\
+\
+.calendar-hidden-input \{\
+  position: absolute;\
+  left: -9999px;\
+  opacity: 0;\
+\}\
+\
+.calendar-content-row \{\
+  display: flex;\
+  align-items: center;\
+  gap: 12px; /* \uc0\u12418 \u12392 \u12418 \u12392 12px\u12384 \u12387 \u12383 \u12418 \u12398 \u12434 \u21322 \u20998 \u12395  */\
+\}\
+\
+.calendar-icon-group \{\
+  display: flex;\
+  align-items: center;\
+\}\
+\
+   \
+  .date-combine-box \{\
+    display: flex;\
+    align-items: center;\
+    background-color: #ddd;\
+    border-radius: 8px;\
+    padding: 4px 10px;\
+    gap: 6px;\
+  \}\
+    \
+  .date-unit \{\
+    display: flex;\
+    align-items: center;\
+    gap: 6px;\
+    background-color: transparent;\
+    border-radius: 0;\
+    padding: 0;\
+  \}\
+  \
+  .date-columns \{\
+    display: flex;\
+    flex-direction: row;\
+    align-items: center;\
+    gap: 6px;\
+  \}\
+  \
+  .date-arrows \{\
+    display: flex;\
+    flex-direction: column;\
+    gap: 2px;\
+    align-items: center;\
+  \}\
+  \
+  .arrow-box \{\
+    display: flex;\
+    flex-direction: column; /* \uc0\u19978 \u19979 \u12395 \u20006 \u12409 \u12427  */\
+    align-items: center;\
+    gap: 1px;\
+  \}\
+  \
+  .arrow \{\
+    background: none;\
+    border: none;\
+    font-size: 12px;\
+    color: blueviolet;\
+    cursor: pointer;\
+    line-height: 1;\
+    padding: 0px;\
+    margin: 0;             /* \uc0\u24565 \u12398 \u12383 \u12417  */\
+  \}\
+   \
+.arrow:hover \{\
+  color: #315881; /* \uc0\u12507 \u12496 \u12540 \u26178 \u12398 \u33394  */\
+\}\
+.arrow:focus \{\
+  outline: none; /* \uc0\u12501 \u12457 \u12540 \u12459 \u12473 \u26178 \u12398 \u12450 \u12454 \u12488 \u12521 \u12452 \u12531 \u12434 \u28040 \u12377  */\
+\}\
+.arrow:active \{\
+  color: #5881ad; /* \uc0\u12463 \u12522 \u12483 \u12463 \u26178 \u12398 \u33394  */\
+\}\
+\
+.date-select \{\
+  font-size: 12px;\
+  padding: 2px 4px;\
+  border-radius: 4px;\
+  border: 1px solid #ccc;\
+  background-color: #ddd; /* \uc0\u8592  \u12371 \u12371 \u12391 \u21608 \u22258 \u12398 \u33394 \u12395 \u21512 \u12431 \u12379 \u12427  */\
+  color: #333;\
+  appearance: none; /* \uc0\u12502 \u12521 \u12454 \u12470 \u12487 \u12501 \u12457 \u12523 \u12488 \u12434 \u28961 \u21177 \u21270 \u65288 \u12458 \u12503 \u12471 \u12519 \u12531 \u65289  */\
+  line-height: 1.2;\
+\}\
+\
+.divider \{\
+  width: 1px;\
+  height: 34px;\
+  background-color: #aaa;\
+  margin: 0 6px;  \
+\}\
+\
+.today-button \{\
+  font-size: 10px;\
+  padding: 2px 6px;          /* \uc0\u19978 \u19979 2px\u12289 \u24038 \u21491 6px\u12395 \u23567 \u12373 \u12367  */\
+  border: 1px solid #aaa;\
+  border-radius: 4px;\
+  background-color: white;\
+  cursor: pointer;\
+  line-height: 1;\
+  height: auto;\
+\}\
+\
+/* \uc0\u26085 \u20184 \u34920 \u31034  */\
+.today-date-display \{\
+  font-size: 14px;\
+  font-weight: bold;\
+\}\
+\
+/* \uc0\u37329 \u38989 \u34920 \u31034  */\
+.today-target-amount \{\
+  font-size: 18px;\
+  font-weight: bold;\
+  color: #315881;\
+\}\
+\
+/* \uc0\u9660  KPI \u12467 \u12531 \u12486 \u12490 \u12398 \u22806 \u26528  */\
+.kpi-container \{\
+  border: 1px solid #ccc;\
+  border-radius: 12px;\
+  padding: 16px;\
+  margin: 20px auto;\
+  background-color: #fff;\
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);\
+  max-width: 800px; /* or 1000px if you prefer */\
+  overflow-x: auto;\
+  transition: all 0.4s ease-in-out;\
+\}\
+\
+/* \uc0\u9660  Expanded state */\
+.kpi-container.expanded \{\
+  max-width: 1400px; /* or even 1800px if needed */\
+\}\
+\
+/* \uc0\u12521 \u12505 \u12523 \u34892 \u65288 \u24038 \u19978 \u12395 \u37197 \u32622 \u12373 \u12428 \u12427 \u12300 \u20170 \u26085 \u12301 \u12508 \u12479 \u12531 \u12394 \u12393 \u65289  */\
+.kpi-label-row \{\
+  margin-bottom: 8px;\
+  display: flex;\
+  justify-content: flex-start;\
+  gap: 8px;\
+\}\
+\
+/* \uc0\u20170 \u26085 \u12508 \u12479 \u12531  */\
+.today-scroll-button \{\
+  font-size: 10px;\
+  padding: 2px 6px;\
+  border: 1px solid #aaa;\
+  border-radius: 4px;\
+  background-color: #f3f3f3;\
+  cursor: pointer;\
+\}\
+\
+/* \uc0\u12504 \u12483 \u12480 \u12540 \u34892  */\
+.kpi-header-row \{\
+  display: flex;\
+  background-color: #e0e0e0;\
+  font-weight: bold;\
+  padding: 8px 0;\
+  border-bottom: 1px solid #ccc;\
+\}\
+\
+/* \uc0\u21508 \u12487 \u12540 \u12479 \u34892  */\
+.kpi-body \{\
+  display: flex;\
+  flex-direction: column;\
+\}\
+\
+.kpi-row \{\
+  display: flex;\
+  border-bottom: 1px solid #eee;\
+  padding: 6px 0;\
+\}\
+\
+.kpi-cell \{\
+  flex: 1;\
+  text-align: center;\
+  font-size: 12px;\
+\}\
+\
+/* ------------------------------\
+   \uc0\u9660  \u12524 \u12473 \u12509 \u12531 \u12471 \u12502 \u23550 \u24540 \u65306 768px\u20197 \u19979 \u65288 iPad\u32294 \u12394 \u12393 \u65289 \
+------------------------------ */\
+@media screen and (max-width: 768px) \{\
+  .calendar-and-date \{\
+    flex-direction: column;\
+    align-items: center;\
+    gap: 24px;\
+  \}\
+\
+  .calendar-icon-group,\
+  .date-combine-box,\
+  .today-button \{\
+    justify-content: center;\
+  \}\
+\
+  .today-sales-box \{\
+    margin-top: 8px;\
+  \}\
+\}\
+\
+/* \uc0\u12508 \u12483 \u12463 \u12473 \u19978 \u37096 \u12398 \u12521 \u12505 \u12523  */\
+.box-label \{\
+  font-size: 13px;\
+  color: #555;\
+  margin-bottom: 4px;\
+\}\
+\
+/* calendar-cul2\uc0\u20840 \u20307 \u12398 \u24133 \u32113 \u19968  */\
+.calendar-cul2 \{\
+  width: 400px;\
+  margin: 14px auto;\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 0;\
+\}\
+\
+.cul2-header-row \{\
+  display: flex;\
+  width: 100%;\
+  gap: 0;\
+\}\
+\
+.cul2-label-group \{\
+  width: calc(100% / 3);\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+\}\
+\
+/* \uc0\u9660  \u24038 \u31471 \u65288 \u30446 \u27161 \u22770 \u19978 \u65289  */\
+.cul2-label-left \{\
+  font-size: 13px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: none;\
+  border-radius: 6px 0 0 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 28px;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+.cul2-value-left \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0 0 0 0px;\
+  padding: 12px 10px;\
+  font-size: 14px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u9660  \u20013 \u22830 \u65288 \u20104 \u28204 \u22770 \u19978 \u65289  */\
+.cul2-label-middle \{\
+  font-size: 13px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: none;\
+  border-radius: 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 28px;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+.cul2-value-middle \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0;\
+  padding: 12px 10px;\
+  font-size: 14px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u9660  \u21491 \u31471 \u65288 \u12462 \u12515 \u12483 \u12503 \u65289  */\
+.cul2-label-right \{\
+  font-size: 13px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: none;\
+  border-radius: 0 6px 0 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 28px;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+.cul2-value-right \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0 0 0px 0;\
+  padding: 12px 10px;\
+  font-size: 14px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u9660  \u12450 \u12463 \u12471 \u12519 \u12531 \u12456 \u12522 \u12450  */\
+.cul2-action-wrapper \{\
+  display: flex;\
+  flex-direction: column;\
+  width: 100%;\
+  margin-top: 0;\
+\}\
+\
+.cul2-action-label \{\
+  font-size: 13px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: 1px solid #bbb;\
+  border-radius: 0;\
+  padding: 6px 0;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+.cul2-action-box \{\
+  font-size: 14px;\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0 0 6px 6px;\
+  padding: 14px 20px;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u9660  \u12510 \u12452 \u12490 \u12473 \u35352 \u21495 \u12398 \u20301 \u32622 \u35519 \u25972  */\
+.negative-sign \{\
+  display: inline-block;\
+  transform: translateY(-1px);\
+  margin-right: 2px;\
+\}}

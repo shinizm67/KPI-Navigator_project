@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kpi navigator</title>
+  <link rel="stylesheet" href="style.css"> <!-- 外部CSS読み込み -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> <!-- Flatpickr -->
+</head>
+
+<body>
+
+<!-- =============================
+  1. ▼ ナビゲーションメニュー
+============================= -->
+<nav class="navigation-menu"> <!-- ▼ navigation-menu start -->
+  <div class="menu-left"> <!-- ▼ menu-left start -->
+      <button>年次</button>
+      <button>月次</button>
+      <button>日次</button>
+      <button>支出管理</button>
+  </div> <!-- ▲ menu-left end -->
+  <div class="menu-right"> <!-- ▼ menu-right start -->
+      <button>基本設定</button>
+      <button>平均値</button>
+  </div> <!-- ▲ menu-right end -->
+</nav> <!-- ▲ navigation-menu end -->
+
+<!-- =============================
+  2. ▼ カレンダー3カラムブロック
+============================= -->
+<div class="calendar-and-date"> <!-- ▼ calendar-and-date start -->
+
+  <!-- 2-1. ▼ カラム1: 年月日＋今日ボタン -->
+  <div class="calendar-col column-1"> <!-- ▼ column-1 start -->
+    <div class="calendar-content-row"> <!-- ▼ calendar-content-row start -->
+      <div class="calendar-icon-group"> <!-- ▼ calendar-icon-group start -->
+        <img src="image/calender_image.png" alt="カレンダー" class="calendar-icon" />
+        <input type="text" id="calendar-input" class="calendar-hidden-input" />
+      </div> <!-- ▲ calendar-icon-group end -->
+
+      <div class="date-combine-box"> <!-- ▼ date-combine-box start -->
+        <!-- 年 -->
+        <div class="date-unit"> <!-- ▼ year-unit start -->
+          <div class="date-columns">
+            <div class="date-arrows">
+              <button class="arrow up" onclick="changeDate('year', 1)">▲</button>
+              <button class="arrow down" onclick="changeDate('year', -1)">▼</button>
+            </div>
+            <select id="year-select" class="date-select"></select>
+          </div>
+        </div> <!-- ▲ year-unit end -->
+
+        <div class="divider"></div>
+
+        <!-- 月 -->
+        <div class="date-unit"> <!-- ▼ month-unit start -->
+          <div class="date-columns">
+            <div class="date-arrows">
+              <button class="arrow up" onclick="changeDate('month', 1)">▲</button>
+              <button class="arrow down" onclick="changeDate('month', -1)">▼</button>
+            </div>
+            <select id="month-select" class="date-select"></select>
+          </div>
+        </div> <!-- ▲ month-unit end -->
+
+        <div class="divider"></div>
+
+        <!-- 日 -->
+        <div class="date-unit"> <!-- ▼ day-unit start -->
+          <div class="date-columns">
+            <div class="date-arrows">
+              <button class="arrow up" onclick="changeDate('day', 1)">▲</button>
+              <button class="arrow down" onclick="changeDate('day', -1)">▼</button>
+            </div>
+            <select id="day-select" class="date-select"></select>
+          </div>
+        </div> <!-- ▲ day-unit end -->
+      </div> <!-- ▲ date-combine-box end -->
+    </div> <!-- ▲ calendar-content-row end -->
+    <button class="today-button" onclick="goToToday()">今日</button>
+  </div> <!-- ▲ column-1 end -->
+
+  <!-- 2-2. ▼ カラム2: 本日の目標売上 -->
+  <div class="calendar-col column-2"> <!-- ▼ column-2 start -->
+    <div class="calendar-cul2"> <!-- ▼ calendar-cul2 start -->
+      <div class="cul2-header-row">
+        <div class="cul2-label-group">
+          <div class="cul2-label-left">目標売上</div>
+          <div class="cul2-value-left">¥253,025</div>
+        </div>
+        <div class="cul2-label-group">
+          <div class="cul2-label-middle">予測売上</div>
+          <div class="cul2-value-middle">¥153,000</div>
+        </div>
+        <div class="cul2-label-group">
+          <div class="cul2-label-right">ギャップ</div>
+          <div class="cul2-value-right"><span class="negative-sign">−</span>¥100,025</div>
+        </div>
+      </div>
+
+      <div class="cul2-action-wrapper">
+        <div class="cul2-action-label">アクション提案</div>
+        <div class="cul2-action-box">
+          あと5人ディナーで達成！（@¥6,000コース）
+        </div>
+      </div>
+    </div> <!-- ▲ calendar-cul2 end -->
+  </div> <!-- ▲ column-2 end -->
+
+  <!-- 2-3. ▼ カラム3: 累積サマリー -->
+  <div class="calendar-col column-3"> <!-- ▼ column-3 start -->
+    <div class="cul3-header-wrapper">
+      <div class="cul3-label-placeholder"></div>
+      <div class="cul3-header-row">
+        <p>累積実績売上</p>
+        <p>累積目標売上</p>
+        <p>差額</p>
+        <p>達成率</p>
+      </div>
+    </div>
+
+    <div class="cul3-data-row">
+      <p class="cul3-label">月次</p>
+      <div class="cul3-data-box">
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">0%</div>
+      </div>
+    </div>
+
+    <div class="cul3-data-row">
+      <p class="cul3-label">年次</p>
+      <div class="cul3-data-box">
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">¥0</div>
+        <div class="cul3-data-cell">0%</div>
+      </div>
+    </div>
+
+    <div class="cul3-action-row">
+      <button class="cul3-action-button">追加表示</button>
+    </div>
+  </div> <!-- ▲ column-3 end -->
+
+</div> <!-- ▲ calendar-and-date end -->
+
+<!-- =============================
+  3. ▼ KPIコンテナ Daily-Bar描画
+============================= -->
+<div class="kpi-container"> <!-- ▼ kpi-container start -->
+  <div class="kpi-label-row">
+    <button class="today-scroll-button">今日</button>
+  </div>
+
+  <div class="kpi-header-row">
+    <div class="kpi-cell">日程</div>
+    <div class="kpi-cell">売上</div>
+    <div class="kpi-cell">目標売上</div>
+    <div class="kpi-cell">差額</div>
+    <div class="kpi-cell">達成率</div>
+  </div>
+
+  <div class="kpi-body" id="kpi-body">
+    <!-- Daily-Bar描画はJSで挿入 -->
+  </div>
+
+  <div class="kpi-summary monthly-summary">
+    <div class="summary-label">月次</div>
+    <div class="summary-box">
+      <div class="summary-cell">実績</div>
+      <div class="summary-cell">目標</div>
+      <div class="summary-cell">差額</div>
+      <div class="summary-cell">達成率</div>
+    </div>
+  </div>
+
+  <div class="kpi-summary yearly-summary">
+    <div class="summary-label">年次</div>
+    <div class="summary-box">
+      <div class="summary-cell">実績</div>
+      <div class="summary-cell">目標</div>
+      <div class="summary-cell">差額</div>
+      <div class="summary-cell">達成率</div>
+    </div>
+  </div>
+</div> <!-- ▲ kpi-container end -->
+
+<!-- =============================
+  4. ▼ スクリプト読み込み
+============================= -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

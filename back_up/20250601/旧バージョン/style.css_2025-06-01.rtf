@@ -1,0 +1,524 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 /* ========================\
+   \uc0\u21021 \u26399 \u12522 \u12475 \u12483 \u12488  / \u20840 \u20307 \u35373 \u23450 \
+======================== */\
+* \{\
+  margin: 0;\
+  padding: 0;\
+  box-sizing: border-box;\
+\}\
+\
+body \{\
+  font-family: sans-serif;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  \u12490 \u12499 \u12466 \u12540 \u12471 \u12519 \u12531 \
+======================== */\
+.navigation-menu \{\
+  display: flex;\
+  justify-content: space-between;\
+  align-items: center;\
+  padding: 15px;\
+  background-color: #d7d7d8;\
+\}\
+\
+.menu-left,\
+.menu-right \{\
+  display: flex;\
+  gap: 15px;\
+\}\
+\
+.navigation-menu button \{\
+  min-width: 80px;\
+  padding: 7px 20px;\
+  font-size: 10px;\
+  border: none;\
+  background-color: #315881;\
+  color: white;\
+  border-radius: 4px;\
+  cursor: pointer;\
+  display: inline-block;\
+  flex-shrink: 0;\
+\}\
+\
+.navigation-menu button:hover \{\
+  background-color: #5881ad;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  \u12459 \u12524 \u12531 \u12480 \u12540 3\u12459 \u12521 \u12512 \u20840 \u20307 \
+======================== */\
+/* \uc0\u12371 \u12371 \u12384 \u12369 \u20462 \u27491 \u12377 \u12428 \u12400 Figma\u12395 \u36817 \u12389 \u12365 \u12414 \u12377 \u65281  */\
+.calendar-and-date \{\
+  display: flex;\
+  flex-wrap: wrap;\
+  justify-content: center;\
+  align-items: flex-start;\
+  margin: 20px;\
+  width: 100%;\
+  gap: 20px;\
+\}\
+\
+.calendar-col \{\
+  flex: 0 0 auto; /* \uc0\u12459 \u12521 \u12512 \u12398 \u24133 \u12434 \u33258 \u21205 \u35519 \u25972  */\
+  min-width: 220px;\
+  margin: 0 20px;\
+\}\
+\
+.column-1 \{\
+  display: flex;\
+  justify-content: flex-start;\
+  align-items: center;\
+\}\
+\
+.column-2 \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 6px;\
+\}\
+\
+.column-3 \{\
+  display: flex;\
+  justify-content: flex-start;\
+\}\
+\
+/* \uc0\u9660  \u12459 \u12521 \u12512 1\u65306 \u26085 \u20184 \u12392 \u12459 \u12524 \u12531 \u12480 \u12540  */\
+.calendar-icon-group \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 4px;\
+\}\
+\
+.calendar-icon \{\
+  width: 28px;\
+  height: 28px;\
+  cursor: pointer;\
+\} \
+\
+.calendar-hidden-input \{\
+  position: absolute;\
+  left: -9999px;\
+  opacity: 0;\
+\}\
+\
+.calendar-content-row \{\
+  display: flex;\
+  align-items: center;\
+  gap: 12px;\
+\}\
+\
+.date-combine-box \{\
+  display: flex;\
+  align-items: center;\
+  background-color: #ddd;\
+  border-radius: 8px;\
+  padding: 4px 10px;\
+  gap: 6px;\
+\}\
+\
+.date-unit,\
+.date-columns \{\
+  display: flex;\
+  align-items: center;\
+  gap: 6px;\
+\}\
+\
+.date-arrows \{\
+  display: flex;\
+  flex-direction: column;\
+  gap: 2px;\
+  align-items: center;\
+\}\
+\
+.arrow-box \{\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  gap: 1px;\
+\}\
+\
+.arrow \{\
+  background: none;\
+  border: none;\
+  font-size: 12px;\
+  color: blueviolet;\
+  cursor: pointer;\
+  line-height: 1;\
+  padding: 0;\
+  margin: 0;\
+\}\
+\
+.arrow:hover \{\
+  color: #315881;\
+\}\
+\
+.arrow:focus \{\
+  outline: none;\
+\}\
+\
+.arrow:active \{\
+  color: #5881ad;\
+\}\
+\
+.date-select \{\
+  font-size: 12px;\
+  padding: 2px 4px;\
+  border-radius: 4px;\
+  border: 1px solid #ccc;\
+  background-color: #ddd;\
+  color: #333;\
+  appearance: none;\
+  line-height: 1.2;\
+\}\
+\
+.divider \{\
+  width: 1px;\
+  height: 34px;\
+  background-color: #aaa;\
+  margin: 0 6px;\
+\}\
+\
+.today-button \{\
+  font-size: 10px;\
+  padding: 2px 6px;\
+  border: 1px solid #aaa;\
+  border-radius: 4px;\
+  background-color: white;\
+  cursor: pointer;\
+  line-height: 1;\
+  height: 24px;\
+  margin-left: 12px;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  \u12459 \u12524 \u12531 \u12480 \u12540  cul2\u65288 \u30446 \u27161 \u22770 \u19978 /\u12462 \u12515 \u12483 \u12503 \u65289 \
+======================== */\
+.calendar-cul2 \{\
+  width: 399px;\
+  margin: 10px auto;\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  margin-bottom: 16px;  /* \uc0\u19979 \u12392 \u12398 \u20313 \u30333  */\
+  gap: 0;\
+\}\
+\
+.cul2-header-row \{\
+  display: flex;\
+  width: 100%;\
+  gap: 0;\
+\}\
+\
+.cul2-label-group \{\
+  width: calc(100% / 3);\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+\}\
+\
+/* \uc0\u24038 \u65306 \u30446 \u27161 \u22770 \u19978  */\
+.cul2-label-left \{\
+  font-size: 11px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: 1px solid #bbb;  \
+  border-radius: 6px 0 0 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 24px;\
+  width: 100%;\
+\}\
+\
+.cul2-value-left \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0;\
+  padding: 8px 5px;\
+  font-size: 12px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+\}\
+\
+/* \uc0\u20013 \u22830 \u65306 \u20104 \u28204 \u22770 \u19978  */\
+.cul2-label-middle \{\
+  font-size: 11px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: 1px solid #bbb;\
+  border-radius: 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 24px;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+.cul2-value-middle \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0;\
+  padding: 8px 5px;\
+  font-size: 12px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u21491 \u65306 \u12462 \u12515 \u12483 \u12503  */\
+.cul2-label-right \{\
+  font-size: 11px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: 1px solid #bbb;\
+  border-radius: 0 6px 0 0;\
+  padding: 4px 6px;\
+  text-align: center;\
+  height: 24px;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+.cul2-value-right \{\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0 0 0px 0;\
+  padding: 8px 5px;\
+  font-size: 12px;\
+  font-weight: bold;\
+  text-align: center;\
+  width: 100%;\
+  box-sizing: border-box;\
+\}\
+\
+/* \uc0\u12450 \u12463 \u12471 \u12519 \u12531 \u25552 \u26696  */\
+.cul2-action-wrapper \{\
+  display: flex;\
+  flex-direction: column;\
+  width: 100%;\
+  margin-top: 0;\
+\}\
+\
+.cul2-action-label \{\
+  font-size: 11px;\
+  background-color: #eee;\
+  border: 1px solid #bbb;\
+  border-bottom: 1px solid #bbb;\
+  padding: 6px 0;\
+  text-align: center;\
+  width: 100%;\
+  border-radius: 0;\
+\}\
+\
+.cul2-action-box \{\
+  font-size: 12px;\
+  background-color: #fff;\
+  border: 1px solid #bbb;\
+  border-top: none;\
+  border-radius: 0 0 6px 6px;\
+  padding: 10px 7px;\
+  text-align: center;\
+  width: 100%;\
+\}\
+\
+.negative-sign \{\
+  display: inline-block;\
+  transform: translateY(-1px);\
+  margin-right: 2px;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  cul3 \u32047 \u31309 \u22770 \u19978 \u24773 \u22577 \
+======================== */\
+.column-3 \{\
+  display: flex;\
+  flex-direction: column;\
+  justify-content: flex-start;\
+  margin-top: 8px;\
+  margin-left: 8px;\
+  gap: 8px;\
+\}\
+\
+/* \uc0\u12504 \u12483 \u12480 \u12540 \u12398 \u12521 \u12505 \u12523 \u25539 \u12360 \u29992  */\
+.cul3-header-wrapper \{\
+  display: flex;\
+  align-items: center;\
+\}\
+\
+.cul3-label-placeholder \{\
+  width: 40px;\
+  height: auto;\
+\}\
+\
+.cul3-header-row \{\
+  display: flex;\
+  gap: 0;\
+  font-size: 10px;\
+  font-weight: bold;\
+  text-align: center;\
+  align-items: center;\
+\}\
+\
+.cul3-header-row p \{\
+  width: 80px;\
+  display: flex;\
+  justify-content: center;\
+  align-items: center;\
+\}\
+\
+/* \uc0\u12487 \u12540 \u12479 \u34892 \u20840 \u20307  */\
+.cul3-data-row \{\
+  display: flex;\
+  align-items: center;\
+  gap: 6px;\
+\}\
+\
+/* \uc0\u26376 \u27425 \u12539 \u24180 \u27425 \u12521 \u12505 \u12523  */\
+.cul3-label \{\
+  width: 40px;\
+  font-size: 10px;\
+  text-align: center;\
+  flex-shrink: 0;\
+\}\
+\
+/* \uc0\u12487 \u12540 \u12479 \u12508 \u12483 \u12463 \u12473 \u26412 \u20307  */\
+.cul3-data-box \{\
+  display: flex;\
+  background-color: #f5f5f5;\
+  border: 1px solid #bbb;\
+  border-radius: 6px;\
+  overflow: hidden;\
+\}\
+\
+/* \uc0\u12487 \u12540 \u12479 \u12475 \u12523  */\
+.cul3-data-cell \{\
+  width: 80px;\
+  font-size: 12px;\
+  text-align: center;\
+  padding: 6px 4px;\
+  border-right: 1px solid #bbb;\
+\}\
+\
+.cul3-data-cell:last-child \{\
+  border-right: none;\
+\}\
+\
+/* \uc0\u36861 \u21152 \u34920 \u31034 \u12508 \u12479 \u12531  */\
+.cul3-action-row \{\
+  text-align: center;\
+  margin-top: 8px;\
+\}\
+\
+.cul3-action-button \{\
+  font-size: 10px;\
+  padding: 4px 10px;\
+  border: 1px solid #aaa;\
+  border-radius: 6px;\
+  background-color: white;\
+  cursor: pointer;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  KPI\u12475 \u12463 \u12471 \u12519 \u12531 \
+======================== */\
+.kpi-container \{\
+  border: 1px solid #ccc;\
+  border-radius: 12px;\
+  padding: 16px;\
+  margin: 20px auto;\
+  background-color: #fff;\
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);\
+  max-width: 800px;\
+  overflow-x: auto;\
+  transition: all 0.4s ease-in-out;\
+\}\
+\
+.kpi-container.expanded \{\
+  max-width: 1400px;\
+\}\
+\
+.kpi-label-row \{\
+  margin-bottom: 8px;\
+  display: flex;\
+  justify-content: flex-start;\
+  gap: 8px;\
+\}\
+\
+.today-scroll-button \{\
+  font-size: 10px;\
+  padding: 2px 6px;\
+  border: 1px solid #aaa;\
+  border-radius: 4px;\
+  background-color: #f3f3f3;\
+  cursor: pointer;\
+\}\
+\
+.kpi-header-row \{\
+  display: flex;\
+  background-color: #e0e0e0;\
+  font-weight: bold;\
+  padding: 8px 0;\
+  border-bottom: 1px solid #ccc;\
+\}\
+\
+.kpi-body \{\
+  display: flex;\
+  flex-direction: column;\
+\}\
+\
+.kpi-row \{\
+  display: flex;\
+  border-bottom: 1px solid #eee;\
+  padding: 6px 0;\
+\}\
+\
+.kpi-cell \{\
+  flex: 1;\
+  text-align: center;\
+  font-size: 12px;\
+\}\
+\
+/* ==============================\
+   4. \uc0\u9660  KPI \u12475 \u12523 \u32232 \u38598 \u29992 \u12473 \u12479 \u12452 \u12523 \
+============================== */\
+.cell-input \{\
+  width: 100%;\
+  font-size: 12px;\
+  text-align: center;\
+  padding: 4px;\
+  border: 1px solid #999;\
+  border-radius: 4px;\
+\}\
+\
+/* ========================\
+   \uc0\u9660  \u12524 \u12473 \u12509 \u12531 \u12471 \u12502 \u23550 \u24540 \
+======================== */\
+@media screen and (max-width: 768px) \{\
+  .calendar-and-date \{\
+    flex-direction: column;\
+    align-items: center;\
+    gap: 24px;\
+  \}\
+\
+  .calendar-icon-group,\
+  .date-combine-box,\
+  .today-button \{\
+    justify-content: center;\
+  \}\
+\
+  .today-sales-box \{\
+    margin-top: 8px;\
+  \}\
+\}}

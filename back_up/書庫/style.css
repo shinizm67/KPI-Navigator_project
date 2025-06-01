@@ -1,0 +1,138 @@
+ /* 初期余白をリセット */
+ * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+ }
+ 
+ body {
+    font-family: sans-serif;
+ }
+
+.navigation-menu {
+    display: flex;           /* 横並び */
+    justify-content: space-between;  /* 左右に分ける */
+    align-items: center;   /* 縦方向の中央揃え */
+    padding: 10px;
+    background-color: #d7d7d8; /* ナビバーの背景色 */
+  }
+  
+  .menu-left,
+  .menu-right {
+    display: flex;
+    gap: 10px; /* ボタン間の余白 */
+  }
+
+.navigation-menu button {
+    min-width: 100px;
+    padding: 10px 20px;      /* 内側の余白 */
+    font-size: 10px;
+    border: none;
+    background-color: #315881;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+  flex-shrink: 0;
+  }
+
+  .navigation-menu button:hover {
+    background-color: #5881ad;/* ホバー時の背景色 */
+  }
+
+  .calendar-and-date {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* カレンダーと日付UIの間のスペース */
+  }
+  
+  .calendar-icon {
+    width: 32px;
+    height: 32px;
+    margin: 20px 10px 20px 20px; /* 上 右 下 左 */
+    vertical-align: middle;
+  }  
+  
+.date-combine-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color:transparent
+  border-radius: 0px;
+  padding: 2px 6px; /* 上下2px, 左右8px に変更 */
+  gap: 6px; /* 少し隙間を狭める（オプション） */
+}
+  
+  .date-unit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #ddd;
+    border-radius: 8px;
+    padding: 6px 10px;
+  }
+  
+  .date-columns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .date-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+  }
+  
+  .arrow-box {
+    display: flex;
+    flex-direction: column; /* 上下に並べる */
+    align-items: center;
+    gap: 1px;
+  }
+  
+  .arrow {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: blueviolet;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0px;
+    margin: 0;             /* 念のため */
+  }
+   
+.arrow:hover {
+  color: #315881; /* ホバー時の色 */
+}
+.arrow:focus {
+  outline: none; /* フォーカス時のアウトラインを消す */
+}
+.arrow:active {
+  color: #5881ad; /* クリック時の色 */
+}
+
+.date-select {
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #ddd; /* ← ここで周囲の色に合わせる */
+  color: #333;
+  appearance: none; /* ブラウザデフォルトを無効化（オプション） */
+  line-height: 1.2;
+}
+
+.divider {
+  width: 1px;
+  height: 34px;
+  background-color: #aaa;
+  margin: 0 6px;  
+}
+
+.today-botton {
+  font-size: 10px;
+}
+

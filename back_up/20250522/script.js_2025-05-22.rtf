@@ -1,0 +1,120 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 let currentDate = new Date();\
+\
+const yearSelect = document.getElementById('year-select');\
+const monthSelect = document.getElementById('month-select');\
+const daySelect = document.getElementById('day-select');\
+\
+// \uc0\u9660  \u24180 \u21021 \u26399 \u21270 \u65306 \u36942 \u21435 10\u24180 \
+const currentYear = new Date().getFullYear();\
+for (let y = currentYear; y >= currentYear - 10; y--) \{\
+  const option = document.createElement('option');\
+  option.value = y;\
+  option.textContent = `$\{y\}\uc0\u24180 `;\
+  yearSelect.appendChild(option);\
+\}\
+\
+// \uc0\u9660  \u26376 \u21021 \u26399 \u21270 \u65306 1\u26376 \u12316 12\u26376 \
+for (let m = 1; m <= 12; m++) \{\
+  const option = document.createElement('option');\
+  option.value = m;\
+  option.textContent = `$\{m\}\uc0\u26376 `;\
+  monthSelect.appendChild(option);\
+\}\
+\
+// \uc0\u9660  \u26085 \u12398 \u36984 \u25246 \u32930 \u12434 \u26356 \u26032 \u12377 \u12427 \u38306 \u25968 \u65288 \u24180 \u12392 \u26376 \u12395 \u24540 \u12376 \u12390 \u65289 \
+function updateDayOptions(year, month) \{\
+  daySelect.innerHTML = '';\
+  const lastDay = new Date(year, month, 0).getDate(); // \uc0\u26376 \u12399 1\u12316 12\
+  for (let d = 1; d <= lastDay; d++) \{\
+    const option = document.createElement('option');\
+    option.value = d;\
+    option.textContent = `$\{d\}\uc0\u26085 `;\
+    daySelect.appendChild(option);\
+  \}\
+\}\
+\
+// \uc0\u9660  \u36984 \u25246 \u32930 \u12395  currentDate \u12398 \u20516 \u12434 \u21453 \u26144 \
+function updateSelectUI() \{\
+  const y = currentDate.getFullYear();\
+  const m = currentDate.getMonth() + 1;\
+  const d = currentDate.getDate();\
+\
+  yearSelect.value = y;\
+  monthSelect.value = m;\
+  updateDayOptions(y, m);\
+  daySelect.value = d;\
+\}\
+\
+// \uc0\u9660  \u9650 \u9660 \u12508 \u12479 \u12531 \u25805 \u20316 \u12391 \u26085 \u20184 \u12434 \u22793 \u26356 \
+function changeDate(type, delta) \{\
+  if (type === 'year') \{\
+    currentDate.setFullYear(currentDate.getFullYear() + delta);\
+  \} else if (type === 'month') \{\
+    currentDate.setMonth(currentDate.getMonth() + delta);\
+  \} else if (type === 'day') \{\
+    currentDate.setDate(currentDate.getDate() + delta);\
+  \}\
+  updateSelectUI();\
+\}\
+\
+// \uc0\u9660  \u12489 \u12525 \u12483 \u12503 \u12480 \u12454 \u12531 \u36984 \u25246 \u12364 \u22793 \u26356 \u12373 \u12428 \u12383 \u12392 \u12365 \
+yearSelect.addEventListener('change', () => \{\
+  currentDate.setFullYear(Number(yearSelect.value));\
+  updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+  updateSelectUI();\
+\});\
+\
+monthSelect.addEventListener('change', () => \{\
+  currentDate.setMonth(Number(monthSelect.value) - 1);\
+  updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+  updateSelectUI();\
+\});\
+\
+daySelect.addEventListener('change', () => \{\
+  currentDate.setDate(Number(daySelect.value));\
+  updateSelectUI();\
+\});\
+\
+// \uc0\u9660  \u20170 \u26085 \u12508 \u12479 \u12531 \
+function goToToday() \{\
+  currentDate = new Date();\
+  updateSelectUI();\
+\}\
+\
+// \uc0\u9660  \u21021 \u26399 \u21270 \
+document.addEventListener('DOMContentLoaded', () => \{\
+  updateSelectUI();\
+\
+  // \uc0\u9660  Flatpickr \u21021 \u26399 \u21270 \
+  flatpickr("#calendar-input", \{\
+    defaultDate: currentDate,\
+    onChange: function(selectedDates) \{\
+      currentDate = selectedDates[0];\
+      updateSelectUI();\
+    \}\
+  \});\
+\
+  // \uc0\u9660  \u12459 \u12524 \u12531 \u12480 \u12540 \u12450 \u12452 \u12467 \u12531 \u12434 \u12463 \u12522 \u12483 \u12463  \u8594  \u12459 \u12524 \u12531 \u12480 \u12540 \u34920 \u31034 \
+  document.querySelector('.calendar-icon').addEventListener('click', () => \{\
+    document.querySelector('#calendar-input')._flatpickr.open();\
+  \});\
+\});\
+\
+  // \uc0\u9660  KPI toggle\
+  const kpiContainer = document.querySelector('.kpi-container');\
+\
+  // Select all toggle buttons (\uc0\u26376 \u27425  and \u24180 \u27425 )\
+  document.querySelectorAll('.column-3 button').forEach(button => \{\
+    button.addEventListener('click', () => \{\
+      kpiContainer.classList.toggle('expanded');\
+    \});\
+  \});\
+\
+}
