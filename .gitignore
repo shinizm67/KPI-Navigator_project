@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 環境・秘密情報（例）
+.env
+.env.local
+*.pem
+
+# 依存関係（プロジェクトの種類に応じて）
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 動画（GitHubは100MB超を拒否するため）
+*.mov

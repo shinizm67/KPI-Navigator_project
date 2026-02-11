@@ -1,0 +1,123 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red193\green193\blue193;}
+{\*\expandedcolortbl;;\cssrgb\c80000\c80000\c80000;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 document.addEventListener('DOMContentLoaded', () => \{\
+  // \uc0\u9660  \u26085 \u20184 \u22793 \u25968 \u12392 \u12475 \u12524 \u12463 \u12479 \u12540 \
+  let currentDate = new Date();\
+  const yearSelect = document.getElementById('year-select');\
+  const monthSelect = document.getElementById('month-select');\
+  const daySelect = document.getElementById('day-select');\
+  const container = document.getElementById('kpi-body');\
+\
+  // \uc0\u9660  \u24180 \u26376 \u26085 \u36984 \u25246 \u32930 \u12398 \u21021 \u26399 \u21270 \
+  const currentYear = new Date().getFullYear();\
+  for (let y = currentYear; y >= currentYear - 10; y--) \{\
+    const option = document.createElement('option');\
+    option.value = y;\
+    option.textContent = `$\{y\}\uc0\u24180 `;\
+    yearSelect.appendChild(option);\
+  \}\
+\
+  for (let m = 1; m <= 12; m++) \{\
+    const option = document.createElement('option');\
+    option.value = m;\
+    option.textContent = `$\{m\}\uc0\u26376 `;\
+    monthSelect.appendChild(option);\
+  \}\
+\
+  function updateDayOptions(year, month) \{\
+    daySelect.innerHTML = '';\
+    const lastDay = new Date(year, month, 0).getDate();\
+    for (let d = 1; d <= lastDay; d++) \{\
+      const option = document.createElement('option');\
+      option.value = d;\
+      option.textContent = `$\{d\}\uc0\u26085 `;\
+      daySelect.appendChild(option);\
+    \}\
+  \}\
+\
+  function updateSelectUI() \{\
+    const y = currentDate.getFullYear();\
+    const m = currentDate.getMonth() + 1;\
+    const d = currentDate.getDate();\
+    yearSelect.value = y;\
+    monthSelect.value = m;\
+    updateDayOptions(y, m);\
+    daySelect.value = d;\
+  \}\
+\
+  yearSelect.addEventListener('change', () => \{\
+    currentDate.setFullYear(Number(yearSelect.value));\
+    updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+    updateSelectUI();\
+  \});\
+\
+  monthSelect.addEventListener('change', () => \{\
+    currentDate.setMonth(Number(monthSelect.value) - 1);\
+    updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+    updateSelectUI();\
+  \});\
+\
+  daySelect.addEventListener('change', () => \{\
+    currentDate.setDate(Number(daySelect.value));\
+    updateSelectUI();\
+  \});\
+\
+  flatpickr("#calendar-input", \{\
+    defaultDate: currentDate,\
+    onChange: function (selectedDates) \{\
+      currentDate = selectedDates[0];\
+      updateSelectUI();\
+    \}\
+  \});\
+\
+  document.querySelector('.calendar-icon').addEventListener('click', () => \{\
+    document.querySelector('#calendar-input')._flatpickr.open();\
+  \});\
+\
+  // \uc0\u9660  KPI\u12496 \u12540 \u29983 \u25104 \u12525 \u12472 \u12483 \u12463 \
+  function createDailyKPIBar(entry) \{\
+    const bar = document.createElement('div');\
+    bar.className = 'kpi-bar';\
+\
+    const date = entry.date;\
+    const weekday = entry.weekday;\
+    const target = entry.target_sales || 0;\
+    const forecast = entry.forecast_sales || 0;\
+    const gap = entry.gap || 0;\
+    const action = entry.action || '';\
+\
+    bar.innerHTML = `\
+      <div class="kpi-date">$\{date\} ($\{weekday\})</div>\
+      <div class="kpi-target">\uc0\u55356 \u57263  \u30446 \u27161 : &yen;$\{target.toLocaleString()\}</div>\
+      <div class="kpi-forecast">\uc0\u55357 \u56522  \u23455 \u32318 : &yen;$\{forecast.toLocaleString()\}</div>\
+      <div class="kpi-gap">\uc0\u9888 \u65039  \u24046 \u38989 : &yen;$\{gap.toLocaleString()\}</div>\
+      <div class="kpi-action">\uc0\u55357 \u56481  $\{action\}</div>\
+    `;\
+    return bar;\
+  \}\
+\
+  // \uc0\u9660  \u12487 \u12540 \u12479 \u21462 \u24471 \u65286 \u25551 \u30011 \
+  fetch('https://forge-laboratory.sunnyday.jp/PHP/api/get_daily_kpi.php')\
+    .then(response => response.json())\
+    .then(data => \{\
+      container.innerHTML = '';\
+      data.forEach(entry => \{\
+        const bar = createDailyKPIBar(entry);\
+        container.appendChild(bar);\
+      \});\
+    \})\
+    .catch(error => \{\
+      console.error('KPI\uc0\u12487 \u12540 \u12479 \u21462 \u24471 \u12456 \u12521 \u12540 :', error);\
+    \});\
+\
+  // \uc0\u21021 \u26399 \u34920 \u31034 \
+  updateSelectUI();\
+\});\
+}

@@ -1,0 +1,408 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset128 HiraginoSans-W3;\f2\fnil\fcharset0 LucidaGrande;
+}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+<!DOCTYPE html>\
+<html lang="ja">\
+<head>\
+  <meta charset="UTF-8">\
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\
+  <title>kpi navigator</title>\
+  <link rel="stylesheet" href="style.css"> <!-- 
+\f1 \'8a\'4f\'95\'94
+\f0 CSS
+\f1 \'93\'c7\'82\'dd\'8d\'9e\'82\'dd
+\f0  -->\
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> <!-- Flatpickr -->\
+</head>\
+\
+<body>\
+\
+<!-- =============================\
+  1. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'69\'83\'72\'83\'51\'81\'5b\'83\'56\'83\'87\'83\'93\'83\'81\'83\'6a\'83\'85\'81\'5b
+\f0 \
+============================= -->\
+<nav class="navigation-menu"> <!-- 
+\f2 \uc0\u9660 
+\f0  navigation-menu start -->\
+  <div class="menu-left"> <!-- 
+\f2 \uc0\u9660 
+\f0  menu-left start -->\
+      <button>
+\f1 \'94\'4e\'8e\'9f
+\f0 </button>\
+      <button>
+\f1 \'8c\'8e\'8e\'9f
+\f0 </button>\
+      <button>
+\f1 \'93\'fa\'8e\'9f
+\f0 </button>\
+      <button>
+\f1 \'8e\'78\'8f\'6f\'8a\'c7\'97\'9d
+\f0 </button>\
+  </div> <!-- 
+\f1 \'81\'a3
+\f0  menu-left end -->\
+  <div class="menu-right"> <!-- 
+\f2 \uc0\u9660 
+\f0  menu-right start -->\
+      <button>
+\f1 \'8a\'ee\'96\'7b\'90\'dd\'92\'e8
+\f0 </button>\
+      <button>
+\f1 \'95\'bd\'8b\'cf\'92\'6c
+\f0 </button>\
+  </div> <!-- 
+\f1 \'81\'a3
+\f0  menu-right end -->\
+</nav> <!-- 
+\f1 \'81\'a3
+\f0  navigation-menu end -->\
+\
+<!-- =============================\
+  2. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'4a\'83\'8c\'83\'93\'83\'5f\'81\'5b
+\f0 3
+\f1 \'83\'4a\'83\'89\'83\'80\'83\'75\'83\'8d\'83\'62\'83\'4e
+\f0 \
+============================= -->\
+<div class="calendar-and-date"> <!-- 
+\f2 \uc0\u9660 
+\f0  calendar-and-date start -->\
+\
+  <!-- 2-1. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'4a\'83\'89\'83\'80
+\f0 1: 
+\f1 \'94\'4e\'8c\'8e\'93\'fa\'81\'7b\'8d\'a1\'93\'fa\'83\'7b\'83\'5e\'83\'93
+\f0  -->\
+  <div class="calendar-col column-1"> <!-- 
+\f2 \uc0\u9660 
+\f0  column-1 start -->\
+    <div class="calendar-content-row"> <!-- 
+\f2 \uc0\u9660 
+\f0  calendar-content-row start -->\
+      <div class="calendar-icon-group"> <!-- 
+\f2 \uc0\u9660 
+\f0  calendar-icon-group start -->\
+        <img src="image/calender_image.png" alt="
+\f1 \'83\'4a\'83\'8c\'83\'93\'83\'5f\'81\'5b
+\f0 " class="calendar-icon" />\
+        <input type="text" id="calendar-input" class="calendar-hidden-input" />\
+      </div> <!-- 
+\f1 \'81\'a3
+\f0  calendar-icon-group end -->\
+\
+      <div class="date-combine-box"> <!-- 
+\f2 \uc0\u9660 
+\f0  date-combine-box start -->\
+        <!-- 
+\f1 \'94\'4e
+\f0  -->\
+        <div class="date-unit"> <!-- 
+\f2 \uc0\u9660 
+\f0  year-unit start -->\
+          <div class="date-columns">\
+            <div class="date-arrows">\
+              <button class="arrow up" onclick="changeDate('year', 1)">
+\f1 \'81\'a3
+\f0 </button>\
+              <button class="arrow down" onclick="changeDate('year', -1)">
+\f2 \uc0\u9660 
+\f0 </button>\
+            </div>\
+            <select id="year-select" class="date-select"></select>\
+          </div>\
+        </div> <!-- 
+\f1 \'81\'a3
+\f0  year-unit end -->\
+\
+        <div class="divider"></div>\
+\
+        <!-- 
+\f1 \'8c\'8e
+\f0  -->\
+        <div class="date-unit"> <!-- 
+\f2 \uc0\u9660 
+\f0  month-unit start -->\
+          <div class="date-columns">\
+            <div class="date-arrows">\
+              <button class="arrow up" onclick="changeDate('month', 1)">
+\f1 \'81\'a3
+\f0 </button>\
+              <button class="arrow down" onclick="changeDate('month', -1)">
+\f2 \uc0\u9660 
+\f0 </button>\
+            </div>\
+            <select id="month-select" class="date-select"></select>\
+          </div>\
+        </div> <!-- 
+\f1 \'81\'a3
+\f0  month-unit end -->\
+\
+        <div class="divider"></div>\
+\
+        <!-- 
+\f1 \'93\'fa
+\f0  -->\
+        <div class="date-unit"> <!-- 
+\f2 \uc0\u9660 
+\f0  day-unit start -->\
+          <div class="date-columns">\
+            <div class="date-arrows">\
+              <button class="arrow up" onclick="changeDate('day', 1)">
+\f1 \'81\'a3
+\f0 </button>\
+              <button class="arrow down" onclick="changeDate('day', -1)">
+\f2 \uc0\u9660 
+\f0 </button>\
+            </div>\
+            <select id="day-select" class="date-select"></select>\
+          </div>\
+        </div> <!-- 
+\f1 \'81\'a3
+\f0  day-unit end -->\
+      </div> <!-- 
+\f1 \'81\'a3
+\f0  date-combine-box end -->\
+    </div> <!-- 
+\f1 \'81\'a3
+\f0  calendar-content-row end -->\
+    <button class="today-button" onclick="goToToday()">
+\f1 \'8d\'a1\'93\'fa
+\f0 </button>\
+  </div> <!-- 
+\f1 \'81\'a3
+\f0  column-1 end -->\
+\
+  <!-- 2-2. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'4a\'83\'89\'83\'80
+\f0 2: 
+\f1 \'96\'7b\'93\'fa\'82\'cc\'96\'da\'95\'57\'94\'84\'8f\'e3
+\f0  -->\
+  <div class="calendar-col column-2"> <!-- 
+\f2 \uc0\u9660 
+\f0  column-2 start -->\
+    <div class="calendar-cul2"> <!-- 
+\f2 \uc0\u9660 
+\f0  calendar-cul2 start -->\
+      <div class="cul2-header-row">\
+        <div class="cul2-label-group">\
+          <div class="cul2-label-left">
+\f1 \'96\'da\'95\'57\'94\'84\'8f\'e3
+\f0 </div>\
+          <div class="cul2-value-left">\'a5253,025</div>\
+        </div>\
+        <div class="cul2-label-group">\
+          <div class="cul2-label-middle">
+\f1 \'97\'5c\'91\'aa\'94\'84\'8f\'e3
+\f0 </div>\
+          <div class="cul2-value-middle">\'a5153,000</div>\
+        </div>\
+        <div class="cul2-label-group">\
+          <div class="cul2-label-right">
+\f1 \'83\'4d\'83\'83\'83\'62\'83\'76
+\f0 </div>\
+          <div class="cul2-value-right"><span class="negative-sign">\uc0\u8722 </span>\'a5100,025</div>\
+        </div>\
+      </div>\
+\
+      <div class="cul2-action-wrapper">\
+        <div class="cul2-action-label">
+\f1 \'83\'41\'83\'4e\'83\'56\'83\'87\'83\'93\'92\'f1\'88\'c4
+\f0 </div>\
+        <div class="cul2-action-box">\
+          
+\f1 \'82\'a0\'82\'c6
+\f0 5
+\f1 \'90\'6c\'83\'66\'83\'42\'83\'69\'81\'5b\'82\'c5\'92\'42\'90\'ac\'81\'49\'81\'69
+\f0 @\'a56,000
+\f1 \'83\'52\'81\'5b\'83\'58\'81\'6a
+\f0 \
+        </div>\
+      </div>\
+    </div> <!-- 
+\f1 \'81\'a3
+\f0  calendar-cul2 end -->\
+  </div> <!-- 
+\f1 \'81\'a3
+\f0  column-2 end -->\
+\
+  <!-- 2-3. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'4a\'83\'89\'83\'80
+\f0 3: 
+\f1 \'97\'dd\'90\'cf\'83\'54\'83\'7d\'83\'8a\'81\'5b
+\f0  -->\
+  <div class="calendar-col column-3"> <!-- 
+\f2 \uc0\u9660 
+\f0  column-3 start -->\
+    <div class="cul3-header-wrapper">\
+      <div class="cul3-label-placeholder"></div>\
+      <div class="cul3-header-row">\
+        <p>
+\f1 \'97\'dd\'90\'cf\'8e\'c0\'90\'d1\'94\'84\'8f\'e3
+\f0 </p>\
+        <p>
+\f1 \'97\'dd\'90\'cf\'96\'da\'95\'57\'94\'84\'8f\'e3
+\f0 </p>\
+        <p>
+\f1 \'8d\'b7\'8a\'7a
+\f0 </p>\
+        <p>
+\f1 \'92\'42\'90\'ac\'97\'a6
+\f0 </p>\
+      </div>\
+    </div>\
+\
+    <div class="cul3-data-row">\
+      <p class="cul3-label">
+\f1 \'8c\'8e\'8e\'9f
+\f0 </p>\
+      <div class="cul3-data-box">\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">0%</div>\
+      </div>\
+    </div>\
+\
+    <div class="cul3-data-row">\
+      <p class="cul3-label">
+\f1 \'94\'4e\'8e\'9f
+\f0 </p>\
+      <div class="cul3-data-box">\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">\'a50</div>\
+        <div class="cul3-data-cell">0%</div>\
+      </div>\
+    </div>\
+\
+    <div class="cul3-action-row">\
+      <button class="cul3-action-button">
+\f1 \'92\'c7\'89\'c1\'95\'5c\'8e\'a6
+\f0 </button>\
+    </div>\
+  </div> <!-- 
+\f1 \'81\'a3
+\f0  column-3 end -->\
+\
+</div> <!-- 
+\f1 \'81\'a3
+\f0  calendar-and-date end -->\
+\
+<!-- =============================\
+  3. 
+\f2 \uc0\u9660 
+\f0  KPI
+\f1 \'83\'52\'83\'93\'83\'65\'83\'69
+\f0  Daily-Bar
+\f1 \'95\'60\'89\'e6
+\f0 \
+============================= -->\
+<div class="kpi-container"> <!-- 
+\f2 \uc0\u9660 
+\f0  kpi-container start -->\
+  <div class="kpi-label-row">\
+    <button class="today-scroll-button">
+\f1 \'8d\'a1\'93\'fa
+\f0 </button>\
+  </div>\
+\
+  <div class="kpi-header-row">\
+    <div class="kpi-cell">
+\f1 \'93\'fa\'92\'f6
+\f0 </div>\
+    <div class="kpi-cell">
+\f1 \'94\'84\'8f\'e3
+\f0 </div>\
+    <div class="kpi-cell">
+\f1 \'96\'da\'95\'57\'94\'84\'8f\'e3
+\f0 </div>\
+    <div class="kpi-cell">
+\f1 \'8d\'b7\'8a\'7a
+\f0 </div>\
+    <div class="kpi-cell">
+\f1 \'92\'42\'90\'ac\'97\'a6
+\f0 </div>\
+  </div>\
+\
+  <div class="kpi-body" id="kpi-body">\
+    <!-- Daily-Bar
+\f1 \'95\'60\'89\'e6\'82\'cd
+\f0 JS
+\f1 \'82\'c5\'91\'7d\'93\'fc
+\f0  -->\
+  </div>\
+\
+  <div class="kpi-summary monthly-summary">\
+    <div class="summary-label">
+\f1 \'8c\'8e\'8e\'9f
+\f0 </div>\
+    <div class="summary-box">\
+      <div class="summary-cell">
+\f1 \'8e\'c0\'90\'d1
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'96\'da\'95\'57
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'8d\'b7\'8a\'7a
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'92\'42\'90\'ac\'97\'a6
+\f0 </div>\
+    </div>\
+  </div>\
+\
+  <div class="kpi-summary yearly-summary">\
+    <div class="summary-label">
+\f1 \'94\'4e\'8e\'9f
+\f0 </div>\
+    <div class="summary-box">\
+      <div class="summary-cell">
+\f1 \'8e\'c0\'90\'d1
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'96\'da\'95\'57
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'8d\'b7\'8a\'7a
+\f0 </div>\
+      <div class="summary-cell">
+\f1 \'92\'42\'90\'ac\'97\'a6
+\f0 </div>\
+    </div>\
+  </div>\
+</div> <!-- 
+\f1 \'81\'a3
+\f0  kpi-container end -->\
+\
+<!-- =============================\
+  4. 
+\f2 \uc0\u9660 
+\f0  
+\f1 \'83\'58\'83\'4e\'83\'8a\'83\'76\'83\'67\'93\'c7\'82\'dd\'8d\'9e\'82\'dd
+\f0 \
+============================= -->\
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>\
+<script src="script.js"></script>\
+\
+</body>\
+</html>\
+}

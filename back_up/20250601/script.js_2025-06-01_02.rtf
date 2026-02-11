@@ -1,0 +1,203 @@
+{\rtf1\ansi\ansicpg932\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 /* ============================================================\
+   \uc0\u9660  \u23436 \u20840 \u32113 \u21512 \u29256  JS\u65306 JSON\u12487 \u12540 \u12479 \u35501 \u36796 \u23550 \u24540 \u29256 \
+   ============================================================ */\
+\
+let currentDate = new Date();\
+let kpiData = [];\
+\
+const yearSelect = document.getElementById('year-select');\
+const monthSelect = document.getElementById('month-select');\
+const daySelect = document.getElementById('day-select');\
+\
+const currentYear = new Date().getFullYear();\
+for (let y = currentYear; y >= currentYear - 10; y--) \{\
+  const option = document.createElement('option');\
+  option.value = y;\
+  option.textContent = `$\{y\}\uc0\u24180 `;\
+  yearSelect.appendChild(option);\
+\}\
+\
+for (let m = 1; m <= 12; m++) \{\
+  const option = document.createElement('option');\
+  option.value = m;\
+  option.textContent = `$\{m\}\uc0\u26376 `;\
+  monthSelect.appendChild(option);\
+\}\
+\
+function updateDayOptions(year, month) \{\
+  daySelect.innerHTML = '';\
+  const lastDay = new Date(year, month, 0).getDate();\
+  for (let d = 1; d <= lastDay; d++) \{\
+    const option = document.createElement('option');\
+    option.value = d;\
+    option.textContent = `$\{d\}\uc0\u26085 `;\
+    daySelect.appendChild(option);\
+  \}\
+\}\
+\
+function updateSelectUI() \{\
+  const y = currentDate.getFullYear();\
+  const m = currentDate.getMonth() + 1;\
+  const d = currentDate.getDate();\
+\
+  yearSelect.value = y;\
+  monthSelect.value = m;\
+  updateDayOptions(y, m);\
+  daySelect.value = d;\
+\}\
+\
+function changeDate(type, delta) \{\
+  if (type === 'year') \{\
+    currentDate.setFullYear(currentDate.getFullYear() + delta);\
+  \} else if (type === 'month') \{\
+    currentDate.setMonth(currentDate.getMonth() + delta);\
+  \} else if (type === 'day') \{\
+    currentDate.setDate(currentDate.getDate() + delta);\
+  \}\
+  updateSelectUI();\
+\}\
+\
+yearSelect.addEventListener('change', () => \{\
+  currentDate.setFullYear(Number(yearSelect.value));\
+  updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+  updateSelectUI();\
+\});\
+\
+monthSelect.addEventListener('change', () => \{\
+  currentDate.setMonth(Number(monthSelect.value) - 1);\
+  updateDayOptions(currentDate.getFullYear(), currentDate.getMonth() + 1);\
+  updateSelectUI();\
+\});\
+\
+daySelect.addEventListener('change', () => \{\
+  currentDate.setDate(Number(daySelect.value));\
+  updateSelectUI();\
+\});\
+\
+function goToToday() \{\
+  currentDate = new Date();\
+  updateSelectUI();\
+\}\
+\
+document.addEventListener('DOMContentLoaded', () => \{\
+  updateSelectUI();\
+\
+  flatpickr("#calendar-input", \{\
+    defaultDate: currentDate,\
+    onChange: function(selectedDates) \{\
+      currentDate = selectedDates[0];\
+      updateSelectUI();\
+    \}\
+  \});\
+\
+  document.querySelector('.calendar-icon').addEventListener('click', () => \{\
+    document.querySelector('#calendar-input')._flatpickr.open();\
+  \});\
+\
+  loadKPIData();\
+\});\
+\
+function calculateGap(sales, target) \{\
+  return sales - target;\
+\}\
+\
+function calculatePercentage(sales, target) \{\
+  if (target === 0) return '0%';\
+  return ((sales / target) * 100).toFixed(2) + '%';\
+\}\
+\
+function renderDailyBars() \{\
+  const kpiBody = document.getElementById('kpi-body');\
+  kpiBody.innerHTML = '';\
+\
+  kpiData.forEach((item, index) => \{\
+    const row = document.createElement('div');\
+    row.className = 'kpi-row';\
+\
+    const dateCell = document.createElement('div');\
+    dateCell.className = 'kpi-cell';\
+    dateCell.textContent = `$\{item.date.slice(5)\} ($\{item.weekday\})`;\
+\
+    const salesCell = document.createElement('div');\
+    salesCell.className = 'kpi-cell editable';\
+    salesCell.textContent = `\'a5$\{item.sales.toLocaleString()\}`;\
+    salesCell.dataset.index = index;\
+    salesCell.dataset.field = 'sales';\
+\
+    const targetCell = document.createElement('div');\
+    targetCell.className = 'kpi-cell editable';\
+    targetCell.textContent = `\'a5$\{item.target.toLocaleString()\}`;\
+    targetCell.dataset.index = index;\
+    targetCell.dataset.field = 'target';\
+\
+    const gapCell = document.createElement('div');\
+    gapCell.className = 'kpi-cell';\
+    const gap = calculateGap(item.sales, item.target);\
+    gapCell.textContent = `$\{gap >= 0 ? '+' : ''\}\'a5$\{gap.toLocaleString()\}`;\
+\
+    const percentCell = document.createElement('div');\
+    percentCell.className = 'kpi-cell';\
+    percentCell.textContent = calculatePercentage(item.sales, item.target);\
+\
+    row.appendChild(dateCell);\
+    row.appendChild(salesCell);\
+    row.appendChild(targetCell);\
+    row.appendChild(gapCell);\
+    row.appendChild(percentCell);\
+\
+    kpiBody.appendChild(row);\
+  \});\
+\
+  attachEditListeners();\
+\}\
+\
+function attachEditListeners() \{\
+  document.querySelectorAll('.editable').forEach(cell => \{\
+    cell.addEventListener('dblclick', () => activateEdit(cell));\
+  \});\
+\}\
+\
+function activateEdit(cell) \{\
+  const index = cell.dataset.index;\
+  const field = cell.dataset.field;\
+  const originalValue = kpiData[index][field];\
+\
+  const input = document.createElement('input');\
+  input.type = 'text';\
+  input.value = originalValue;\
+  input.className = 'cell-input';\
+  cell.innerHTML = '';\
+  cell.appendChild(input);\
+  input.focus();\
+  input.select();\
+\
+  input.addEventListener('keydown', (e) => \{\
+    if (e.key === 'Enter') \{\
+      let newValue = parseInt(input.value.replace(/[^\\d]/g, ''), 10);\
+      if (isNaN(newValue)) newValue = 0;\
+      kpiData[index][field] = newValue;\
+      renderDailyBars();\
+    \}\
+    if (e.key === 'Escape') \{\
+      renderDailyBars();\
+    \}\
+  \});\
+\}\
+\
+function loadKPIData() \{\
+  fetch('data/kpi_data.json')\
+    .then(response => response.json())\
+    .then(data => \{\
+      kpiData = data;\
+      renderDailyBars();\
+    \})\
+    .catch(error => console.error('\uc0\u12487 \u12540 \u12479 \u35501 \u12415 \u36796 \u12415 \u22833 \u25943 :', error));\
+\}\
+}
