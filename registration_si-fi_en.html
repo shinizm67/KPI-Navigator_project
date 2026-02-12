@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Navigator - Registration | FORGE LABORATORY WEB SERVICE</title>
+  <!-- Si-Fi English: Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="si-fi registration-page">
+  <div class="page-wrap" style="max-width: 1200px;">
+    <!-- Header -->
+    <header class="site-header">
+      <div class="header-logo">
+        <img src="image/forge-Lob-logo.png" alt="FORGE LABORATORY" class="logo-img">
+        <span class="logo-text">WEB SERVICE</span>
+      </div>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" aria-label="Switch to Office Mode">Office Mode</a>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content">
+      <h1 class="page-title">
+        <span class="title-main">KPI Navigator</span>
+        <span class="title-sub">Registration</span>
+      </h1>
+
+      <form class="registration-form" action="#" method="post" id="registration-form">
+        <div class="form-group">
+          <label for="name">Name :</label>
+          <input type="text" id="name" name="name" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="company">Company Name / Store Name :</label>
+          <input type="text" id="company" name="company" autocomplete="organization">
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address :</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Password :</label>
+          <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+          <p class="form-hint">*At least 8 characters, including letters, numbers, and symbols</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Register</button>
+        </div>
+      </form>
+    </main>
+
+    <!-- Language selector (above footer) -->
+    <div class="lang-select-wrap">
+      <label for="lang-select" class="visually-hidden">Language</label>
+      <select id="lang-select" class="lang-select" aria-label="Select language">
+        <option value="en" selected>EN English</option>
+        <option value="ja">JA 日本語</option>
+      </select>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-separator"></div>
+      <div class="footer-logo">
+        <img src="image/forge-Lob-logo.png" alt="FORGE LABORATORY" class="logo-img">
+        <span class="logo-text">WEB SERVICE</span>
+      </div>
+      <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
