@@ -1,0 +1,19 @@
+---
+description: OFFICE MODE 等の装飾フレーム（button_frame.svg）内にテキストを固定するパターン。KPI Navigator 共通。
+globs: "**/*.html,**/style.css,**/*.css"
+alwaysApply: false
+---
+
+# 装飾フレーム内テキスト（KPI Navigator 共通）
+
+- **button_frame.svg** は global menu の Logo 右端の「Office Mode」ボタン用の装飾フレーム。
+- 文言（例: "OFFICE MODE"）は **フレーム画像と同じ位置** に配置し、**常にフレーム内に収める**。
+- **@media** で viewport の width が変わっても、テキストがフレームからはみ出さないようにする。
+  - フレームの `max-width` とテキストの `font-size` / `letter-spacing` をブレークポイントごとに調整する。
+- 登録画面・他画面ともスマートフォンで閲覧できるようレスポンシブ対応する。
+
+## 実装の目安
+
+- フレーム: `.btn-mode-frame` でラップし、`position: relative`。中に SVG 画像とテキスト用 span。
+- テキスト: `position: absolute; top/left/right/bottom: 0; display: flex; align-items: center; justify-content: center` で中央に固定。
+- レスポンシブ: `@media (max-width: 768px)` / `480px` などで `.btn-mode-frame` の max-width と `.btn-mode-text` の font-size を小さくする。

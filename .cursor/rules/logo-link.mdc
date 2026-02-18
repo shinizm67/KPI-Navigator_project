@@ -1,0 +1,16 @@
+---
+description: Forge Lab ロゴのハイパーリンクは別タブで開く。KPI Navigator 共通。
+globs: "**/*.html"
+alwaysApply: false
+---
+
+# ロゴリンク（KPI Navigator 共通）
+
+- **Forge Lab ロゴ**（ヘッダー・フッター）のリンクは **常に別タブで開く**。
+- 同一タブで開くと KPI Navigator から離脱し戻る操作が発生するため、UX の観点で `target="_blank"` で統一する。
+- セキュリティのため `rel="noopener noreferrer"` を必ず付与する。
+
+## 記述例
+
+- 英語ページ: `<a href="https://forge-laboratory.com/en" ... target="_blank" rel="noopener noreferrer">`
+- 日本語ページ: `<a href="https://forge-laboratory.com/" ... target="_blank" rel="noopener noreferrer">`
