@@ -1,0 +1,169 @@
+/* ========================================
+   KPI Navigator - Price page (EN)
+   ======================================== */
+
+.si-fi.price-page {
+  background: var(--si-fi-bg);
+  color: var(--si-fi-cyan);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.price-wrap {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.price-content {
+  flex: 1;
+  padding: 48px 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.price-title-main {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.price-title-sub {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+.price-table-wrap {
+  width: 100%;
+  max-width: 720px;
+  border: 1px solid var(--si-fi-green);
+  background: var(--si-fi-input-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.price-table th,
+.price-table td {
+  border: 1px solid rgba(88, 225, 243, 0.35);
+  padding: 14px 16px;
+  text-align: center;
+  color: var(--si-fi-cyan);
+}
+
+.price-table th {
+  font-weight: 600;
+  background: rgba(15, 148, 3, 0.12);
+  color: var(--si-fi-cyan);
+}
+
+.price-table .col-list {
+  text-align: left;
+  width: 55%;
+}
+
+.price-table .col-plan {
+  width: 22.5%;
+}
+
+.price-table tbody tr:hover td {
+  background: rgba(88, 225, 243, 0.05);
+}
+
+.price-table .row-buttons td {
+  padding: 20px 16px;
+  border-top: 1px solid var(--si-fi-green);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.price-table .row-buttons td:first-child {
+  border-left: 1px solid rgba(88, 225, 243, 0.35);
+}
+
+/* 含まれる：緑の丸枠 */
+.icon-check {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--si-fi-green);
+  border-radius: 50%;
+  background: transparent;
+  vertical-align: middle;
+}
+
+/* 含まれない：緑の× */
+.icon-x {
+  display: inline-block;
+  color: var(--si-fi-green);
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.icon-x::before {
+  content: "×";
+}
+
+/* Go to Registration ボタン */
+.btn-register {
+  display: inline-block;
+  padding: 12px 24px;
+  background: var(--si-fi-green);
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 3px;
+  transition: box-shadow 0.2s, opacity 0.2s;
+}
+
+.btn-register:hover {
+  box-shadow: 0 0 14px rgba(15, 148, 3, 0.6);
+  opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+  .price-content {
+    padding: 32px 0 48px;
+  }
+  .price-title-main {
+    font-size: 22px;
+  }
+  .price-title-sub {
+    font-size: 18px;
+    margin-bottom: 28px;
+  }
+  .price-table th,
+  .price-table td {
+    padding: 10px 10px;
+    font-size: 11px;
+  }
+  .price-table .col-list {
+    width: 50%;
+  }
+  .btn-register {
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+}

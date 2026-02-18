@@ -1,0 +1,149 @@
+/* ========================================
+   KPI Navigator - Terms of Service page (EN)
+   ======================================== */
+
+.si-fi.terms-page {
+  background: var(--si-fi-bg);
+  color: var(--si-fi-cyan);
+}
+
+html[lang="en"] .si-fi.terms-page {
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi.terms-page {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.terms-wrap {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.terms-content {
+  flex: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 0 64px;
+}
+
+.terms-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.06em;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.terms-meta {
+  font-size: 13px;
+  color: #58E1F3;
+  margin: 0 0 40px;
+  line-height: 1.6;
+}
+
+.terms-section {
+  margin-bottom: 28px;
+}
+
+.terms-section h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--si-fi-green);
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+.terms-section p,
+.terms-section li {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #58E1F3;
+  margin: 0 0 8px;
+}
+
+.terms-section ul {
+  margin: 8px 0 0;
+  padding-left: 1.5em;
+}
+
+.terms-section li {
+  margin-bottom: 6px;
+}
+
+.terms-content a {
+  color: #58E1F3;
+  text-decoration: underline;
+}
+
+/* --- Go back Registration（最下段に再配置・スクロールでアクティブ） --- */
+.go-back-registration-wrap {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 24px 24px 32px;
+  text-align: center;
+}
+
+/* 非アクティブ：枠のみ・文字は緑の60%透明度で押下不可 */
+.go-back-registration {
+  display: inline-block;
+  padding: 12px 24px;
+  border: 1px solid var(--si-fi-green);
+  background: transparent;
+  color: var(--si-fi-green);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* 最下段までスクロール済み：アクティブ・緑塗り・白文字・押下可 */
+.go-back-registration-wrap.is-active .go-back-registration {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  background: var(--si-fi-green);
+  color: #fff;
+}
+
+.go-back-registration-wrap.is-active .go-back-registration:hover {
+  background: var(--si-fi-green);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(15, 148, 3, 0.5);
+}
+
+@media (max-width: 768px) {
+  .go-back-registration-wrap {
+    padding: 20px 16px 28px;
+  }
+  .go-back-registration {
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .terms-content {
+    padding: 32px 0 48px;
+  }
+  .terms-title {
+    font-size: 20px;
+  }
+  .terms-section h2 {
+    font-size: 13px;
+  }
+  .terms-section p,
+  .terms-section li {
+    font-size: 12px;
+  }
+}

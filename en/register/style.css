@@ -1,0 +1,489 @@
+/* ========================================
+   KPI Navigator - Global & Si-Fi Mode
+   ======================================== */
+
+/* --- Si-Fi color variables --- */
+.si-fi {
+  --si-fi-bg: #000000;
+  --si-fi-cyan: #58E1F3;
+  --si-fi-green: #0F9403;
+  --si-fi-input-bg: #1a1a1a;
+  --si-fi-text: #58E1F3;
+}
+
+/* --- Base reset & box-sizing --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ========================================
+   Si-Fi Registration Page
+   ======================================== */
+/* enページ: 全て Orbitron / jpページ: 全て BIZ UDPGothic、.title-main のみ Orbitron */
+.si-fi.registration-page {
+  background: var(--si-fi-bg);
+  color: var(--si-fi-cyan);
+}
+
+html[lang="en"] .si-fi.registration-page {
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi.registration-page {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi .page-wrap {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Header (Navigation Menu): 画面幅全体、@media 対応 --- */
+.si-fi .site-header {
+  width: 100%;
+  background: #2B2B2B;
+  flex-shrink: 0;
+}
+
+.si-fi .header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.si-fi .header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.si-fi .header-logo .logo-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.si-fi .logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.si-fi .header-actions {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 768px) {
+  .si-fi .header-inner {
+    padding: 16px 16px;
+  }
+  .si-fi .header-actions {
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .si-fi .header-inner {
+    padding: 12px 12px;
+  }
+  .si-fi .header-actions {
+    right: 12px;
+  }
+  .si-fi .logo-img {
+    height: 28px;
+  }
+}
+
+/* --- Office Mode ボタン（装飾フレーム内にテキスト固定）
+     KPI Navigator 共通: フレームが @media で幅変更しても
+     テキストは常にフレーム内に収まるようレスポンシブ対応 --- */
+.si-fi .btn-mode {
+  display: inline-block;
+  color: var(--si-fi-cyan);
+  text-decoration: none;
+  transition: filter 0.2s, opacity 0.2s;
+  max-width: 100%;
+}
+
+.si-fi .btn-mode:hover {
+  filter: drop-shadow(0 0 8px rgba(88, 225, 243, 0.6));
+}
+
+.si-fi .btn-mode-frame {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 156px;
+}
+
+.si-fi .btn-mode-frame-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.si-fi .btn-mode-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--si-fi-cyan);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+html[lang="ja"] .si-fi .btn-mode-text {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  letter-spacing: 0.06em;
+}
+
+/* 装飾フレーム＋テキスト: 幅に応じてフレームとフォントをスケール（スマホ対応） */
+@media (max-width: 768px) {
+  .si-fi .btn-mode-frame {
+    max-width: 130px;
+  }
+  .si-fi .btn-mode-text {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .si-fi .btn-mode-frame {
+    max-width: 110px;
+  }
+  .si-fi .btn-mode-text {
+    font-size: 7px;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (min-width: 769px) {
+  .si-fi .btn-mode-frame {
+    max-width: 156px;
+  }
+  .si-fi .btn-mode-text {
+    font-size: 10px;
+  }
+}
+
+/* --- Main content --- */
+.si-fi .main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0 64px;
+}
+
+.si-fi .page-title {
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+.si-fi .title-main {
+  display: block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.08em;
+}
+
+.si-fi .title-sub {
+  display: block;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+}
+
+/* --- Registration form --- */
+.si-fi .registration-form {
+  width: 100%;
+  max-width: 480px;
+}
+
+.si-fi .form-group {
+  margin-bottom: 24px;
+}
+
+.si-fi .form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.si-fi .form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--si-fi-input-bg);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
+  color: var(--si-fi-cyan);
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+html[lang="en"] .si-fi .form-group input {
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi .form-group input {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi .form-group input::placeholder {
+  color: rgba(88, 225, 243, 0.4);
+}
+
+.si-fi .form-group input:focus {
+  border-color: var(--si-fi-cyan);
+  box-shadow: 0 0 10px rgba(88, 225, 243, 0.3);
+}
+
+.si-fi .form-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--si-fi-cyan);
+  opacity: 0.9;
+  letter-spacing: 0.02em;
+}
+
+.si-fi .form-actions {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.si-fi .btn-submit {
+  padding: 12px 40px;
+  background: transparent;
+  border: 1px solid var(--si-fi-green);
+  color: var(--si-fi-green);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+html[lang="en"] .si-fi .btn-submit {
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi .btn-submit {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi .btn-submit:hover {
+  box-shadow: 0 0 14px rgba(15, 148, 3, 0.5);
+  background: rgba(15, 148, 3, 0.1);
+}
+
+/* --- Language selector（画面右下・Forge Lab 風） --- */
+.si-fi .lang-select-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
+
+html[lang="en"] .si-fi .lang-select-wrap {
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi .lang-select-wrap {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi .lang-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 10px;
+  background: var(--si-fi-input-bg);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 999px;
+  color: var(--si-fi-green);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 0 8px rgba(15, 148, 3, 0.25);
+}
+
+.si-fi .lang-select-btn:hover,
+.si-fi .lang-select-btn:focus {
+  box-shadow: 0 0 12px rgba(15, 148, 3, 0.45);
+}
+
+.si-fi .lang-select-btn .lang-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(224, 224, 224, 0.6);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(224, 224, 224, 0.95);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.si-fi .lang-select-btn .lang-name {
+  color: var(--si-fi-green);
+  letter-spacing: 0.02em;
+}
+
+.si-fi .lang-select-btn .lang-chevron {
+  width: 10px;
+  height: 10px;
+  margin-left: 4px;
+  border-right: 2px solid var(--si-fi-green);
+  border-bottom: 2px solid var(--si-fi-green);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.si-fi .lang-select-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  min-width: max-content;
+  width: 100%;
+  padding: 6px 0;
+  background: var(--si-fi-input-bg);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(15, 148, 3, 0.2);
+}
+
+.si-fi .lang-select-dropdown[hidden] {
+  display: none !important;
+}
+
+.si-fi .lang-option {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(224, 224, 224, 0.9);
+  font-size: 11px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.si-fi .lang-option:hover {
+  background: rgba(15, 148, 3, 0.15);
+  color: var(--si-fi-cyan);
+}
+
+.si-fi .lang-option-active {
+  color: var(--si-fi-green);
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .si-fi .lang-select-wrap {
+    bottom: 16px;
+    right: 16px;
+  }
+  .si-fi .lang-select-btn {
+    padding: 6px 12px 6px 8px;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .si-fi .lang-select-btn .lang-code {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+}
+
+/* --- Footer --- */
+.si-fi .site-footer {
+  flex-shrink: 0;
+  padding-bottom: 24px;
+}
+
+.si-fi .footer-separator {
+  height: 1px;
+  background: rgba(88, 225, 243, 0.3);
+  margin-bottom: 24px;
+}
+
+.si-fi .footer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.si-fi .footer-logo .logo-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.si-fi .footer-logo .logo-img {
+  height: 24px;
+  opacity: 0.85;
+}
+
+.si-fi .footer-copy {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(224, 224, 224, 0.7);
+  text-align: center;
+}
