@@ -213,6 +213,36 @@ html[lang="ja"] .si-fi .btn-mode-text {
   padding: 48px 0 64px;
 }
 
+.si-fi .registration-plan {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.si-fi .registration-plan-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.08em;
+  margin: 0 0 8px;
+}
+
+.si-fi .registration-plan-price {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+
+.si-fi .registration-plan-cancel {
+  font-size: 12px;
+  color: var(--si-fi-cyan);
+  opacity: 0.9;
+  margin: 0;
+}
+
 .si-fi .page-title {
   margin: 0 0 40px;
   text-align: center;
@@ -292,6 +322,84 @@ html[lang="ja"] .si-fi .form-group input {
   letter-spacing: 0.02em;
 }
 
+/* --- 規約・プライバシー同意エリア --- */
+.si-fi .form-agreement {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid var(--si-fi-green);
+  background: var(--si-fi-input-bg);
+  border-radius: 3px;
+}
+
+.si-fi .form-agreement-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.si-fi .form-agreement-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--si-fi-green);
+  flex-shrink: 0;
+}
+
+.si-fi .form-agreement-text {
+  font-size: 13px;
+  color: #58E1F3;
+}
+
+.si-fi .form-agreement-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin: 0 0 20px;
+}
+
+.si-fi .form-agreement-sep {
+  color: #58E1F3;
+  margin: 0 6px;
+}
+
+.si-fi .form-agreement-link {
+  color: #58E1F3;
+  text-decoration: underline;
+  font-size: 13px;
+}
+
+.si-fi .form-agreement-link:hover {
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.si-fi .form-agreement .form-actions {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Register ボタン: 非アクティブ = 緑線・塗り0%・文字緑 / アクティブ = 塗り緑・文字白 */
+.si-fi .form-agreement .btn-submit.btn-register {
+  background: transparent;
+  border: 1px solid var(--si-fi-green);
+  color: var(--si-fi-green);
+  cursor: not-allowed;
+}
+
+.si-fi .form-agreement .btn-submit.btn-register:not(:disabled) {
+  background: var(--si-fi-green);
+  color: #fff;
+  cursor: pointer;
+}
+
+.si-fi .form-agreement .btn-submit.btn-register:not(:disabled):hover {
+  background: var(--si-fi-green);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(15, 148, 3, 0.5);
+}
+
 .si-fi .form-actions {
   margin-top: 32px;
   text-align: center;
@@ -301,6 +409,7 @@ html[lang="ja"] .si-fi .form-group input {
   padding: 12px 40px;
   background: transparent;
   border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
   color: var(--si-fi-green);
   font-size: 14px;
   font-weight: 500;

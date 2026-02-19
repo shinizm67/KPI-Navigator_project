@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Navigator - Price page (EN)
+   KPI Navigator - Plan page (EN)
    ======================================== */
 
 .si-fi.price-page {
@@ -48,6 +48,7 @@
 .price-table-wrap {
   width: 100%;
   max-width: 720px;
+  margin: 0 auto;
   border: 1px solid var(--si-fi-green);
   background: var(--si-fi-input-bg);
   border-radius: 4px;
@@ -68,6 +69,10 @@
   color: var(--si-fi-cyan);
 }
 
+.price-table tbody td:first-child {
+  text-align: left;
+}
+
 .price-table th {
   font-weight: 600;
   background: rgba(15, 148, 3, 0.12);
@@ -75,7 +80,7 @@
 }
 
 .price-table .col-list {
-  text-align: left;
+  text-align: center;
   width: 55%;
 }
 
@@ -108,11 +113,15 @@
   vertical-align: middle;
 }
 
-/* 含まれない：緑の× */
+/* 含まれない：緑の×（○の1.5倍サイズ） */
 .icon-x {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   color: var(--si-fi-green);
-  font-size: 18px;
+  font-size: 30px;
   font-weight: bold;
   line-height: 1;
   vertical-align: middle;
@@ -122,7 +131,7 @@
   content: "×";
 }
 
-/* Go to Registration ボタン */
+/* Register Basic / Register Pro ボタン（1行表示） */
 .btn-register {
   display: inline-block;
   padding: 12px 24px;
@@ -135,6 +144,7 @@
   letter-spacing: 0.04em;
   border: none;
   border-radius: 3px;
+  white-space: nowrap;
   transition: box-shadow 0.2s, opacity 0.2s;
 }
 

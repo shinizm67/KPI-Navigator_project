@@ -6,6 +6,21 @@
 (function () {
   'use strict';
 
+  /* プラン表示: URL の ?plan=basic / ?plan=pro でタイトル・価格を切り替え */
+  var planTitle = document.getElementById('plan-title');
+  var planPrice = document.getElementById('plan-price');
+  if (planTitle && planPrice) {
+    var params = new URLSearchParams(window.location.search);
+    var plan = (params.get('plan') || 'basic').toLowerCase();
+    if (plan === 'pro') {
+      planTitle.textContent = 'KPI Navigator Pro';
+      planPrice.textContent = '$29 / Month';
+    } else {
+      planTitle.textContent = 'KPI Navigator Basic';
+      planPrice.textContent = '$5 / Month';
+    }
+  }
+
   /* Forge Lab 風カスタム言語選択（画面右下） */
   const langWrap = document.getElementById('lang-select-wrap');
   const langBtn = document.getElementById('lang-select-btn');
@@ -65,6 +80,17 @@
     }
   };
   var msg = messages[pageLang] || messages.en;
+
+  /* Register ボタン: 同意チェックで有効化 */
+  var agreeTerms = document.getElementById('agree-terms');
+  var btnRegister = document.getElementById('btn-register');
+  if (agreeTerms && btnRegister) {
+    function setRegisterButtonState() {
+      btnRegister.disabled = !agreeTerms.checked;
+    }
+    setRegisterButtonState();
+    agreeTerms.addEventListener('change', setRegisterButtonState);
+  }
 
   const regForm = document.getElementById('registration-form');
   if (regForm) {

@@ -33,10 +33,14 @@
   <div class="page-wrap" style="max-width: 1200px;">
     <!-- Main -->
     <main class="main-content">
-      <h1 class="page-title">
-        <span class="title-main">KPI Navigator</span>
+      <div class="registration-plan">
+        <h1 class="registration-plan-title" id="plan-title">KPI Navigator Basic</h1>
+        <p class="registration-plan-price" id="plan-price">¥500/月</p>
+        <p class="registration-plan-cancel" id="plan-cancel">いつでも解約可能</p>
+      </div>
+      <h2 class="page-title">
         <span class="title-sub">登録</span>
-      </h1>
+      </h2>
 
       <form class="registration-form" action="#" method="post" id="registration-form">
         <div class="form-group">
@@ -56,8 +60,19 @@
           <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
           <p class="form-hint">*8文字以上で、英字・数字・記号を含めてください</p>
         </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-submit">登録する</button>
+        <div class="form-agreement">
+          <label class="form-agreement-label" for="agree-terms-jp">
+            <input type="checkbox" id="agree-terms-jp" name="agree_terms" class="form-agreement-checkbox" required>
+            <span class="form-agreement-text">利用規約およびプライバシーポリシーに同意します</span>
+          </label>
+          <p class="form-agreement-links">
+            <a href="../../legal/terms/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">利用規約を表示</a>
+            <span class="form-agreement-sep"> / </span>
+            <a href="../../legal/privacy/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">プライバシーポリシーを表示</a>
+          </p>
+          <div class="form-actions">
+            <button type="submit" class="btn-submit btn-register" id="btn-register" disabled>登録する</button>
+          </div>
         </div>
       </form>
     </main>
