@@ -1,0 +1,171 @@
+/* ========================================
+   KPI Navigator - Log IN page (EN) Sci-Fi
+   ======================================== */
+
+.si-fi.login-page {
+  background: var(--si-fi-bg);
+  color: var(--si-fi-cyan);
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi.login-page {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.login-wrap {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.login-content {
+  flex: 1;
+  padding: 48px 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-title-main {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.login-title-sub {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+/* --- Login form: label + input 横並び（添付画像のテイスト） --- */
+.login-form {
+  width: 100%;
+  max-width: 520px;
+}
+
+.si-fi.login-page .login-form .form-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.si-fi.login-page .login-form .form-group label {
+  flex: 0 0 200px;
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+}
+
+.si-fi.login-page .login-form .form-group input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--si-fi-input-bg);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
+  color: var(--si-fi-cyan);
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.si-fi.login-page .login-form .form-group input::placeholder {
+  color: rgba(88, 225, 243, 0.4);
+}
+
+/* フォーカス時（アクティブ状態）: 枠線をシアンに変更（Registration と同じ仕様） */
+.si-fi.login-page .login-form .form-group input:focus {
+  border-color: var(--si-fi-cyan);
+  box-shadow: 0 0 10px rgba(88, 225, 243, 0.3);
+}
+
+.si-fi.login-page .login-form .form-actions {
+  margin-top: 32px;
+  text-align: center;
+}
+
+/* Log IN ボタン: 非アクティブ = 緑枠・塗り0%・緑文字 / アクティブ = 緑塗り・白文字 */
+.si-fi.login-page .btn-login {
+  padding: 12px 48px;
+  background: transparent;
+  color: var(--si-fi-green);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: not-allowed;
+  transition: box-shadow 0.2s, background 0.2s, color 0.2s;
+}
+
+.si-fi.login-page .btn-login:not(:disabled) {
+  background: var(--si-fi-green);
+  color: #FFF;
+  cursor: pointer;
+}
+
+.si-fi.login-page .btn-login:not(:disabled):hover {
+  box-shadow: 0 0 14px rgba(15, 148, 3, 0.6);
+  opacity: 0.95;
+}
+
+html[lang="ja"] .si-fi.login-page .btn-login {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .login-content {
+    padding: 32px 0 48px;
+  }
+  .login-title-main {
+    font-size: 22px;
+  }
+  .login-title-sub {
+    font-size: 18px;
+    margin-bottom: 28px;
+  }
+  .si-fi.login-page .login-form .form-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .si-fi.login-page .login-form .form-group label {
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-wrap {
+    padding: 0 16px;
+  }
+  .login-content {
+    padding: 24px 0 40px;
+  }
+  .login-title-main {
+    font-size: 20px;
+  }
+  .login-title-sub {
+    font-size: 16px;
+    margin-bottom: 24px;
+  }
+  .si-fi.login-page .btn-login {
+    padding: 10px 32px;
+    font-size: 13px;
+  }
+}
