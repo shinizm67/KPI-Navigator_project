@@ -169,3 +169,135 @@ html[lang="ja"] .si-fi.login-page .btn-login {
     font-size: 13px;
   }
 }
+
+/* ========================================
+   Office Mode（body.office-mode で Sci-Fi と切り替え・Log IN EN/JP）
+   ======================================== */
+
+.si-fi.office-mode.login-page {
+  background: #fff;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .login-wrap {
+  background: #fff;
+}
+
+.si-fi.office-mode .login-content {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+/* タイトル（KPI Navigator / ログイン or Log IN）は Orbitron のまま・文字色は黒 */
+.si-fi.office-mode .login-title-main,
+.si-fi.office-mode .login-title-sub {
+  font-family: 'Orbitron', sans-serif;
+  color: #000;
+}
+
+.si-fi.office-mode .login-form .form-group label {
+  color: #000;
+}
+
+.si-fi.office-mode .login-form .form-group input {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .login-form .form-group input::placeholder {
+  color: #666;
+}
+
+.si-fi.office-mode .login-form .form-group input:focus {
+  border-color: #999;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.si-fi.office-mode .btn-login {
+  background: transparent;
+  border: 1px solid #555;
+  color: #555;
+  font-family: 'BIZ UDPGothic', sans-serif;
+  cursor: not-allowed;
+}
+
+.si-fi.office-mode .btn-login:not(:disabled) {
+  background: #6a6a6a;
+  border-color: #6a6a6a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.si-fi.office-mode .btn-login:not(:disabled):hover {
+  background: #5a5a5a;
+  border-color: #5a5a5a;
+  box-shadow: none;
+  opacity: 0.95;
+}
+
+.si-fi.office-mode .footer-copy {
+  color: #000;
+}
+
+.si-fi.office-mode .footer-separator {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.si-fi.office-mode .lang-select-btn {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #333;
+  box-shadow: none;
+}
+
+.si-fi.office-mode .lang-select-btn:hover,
+.si-fi.office-mode .lang-select-btn:focus {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.si-fi.office-mode .lang-select-btn .lang-code {
+  background: #fff;
+  border-color: #ccc;
+  color: #333;
+}
+
+.si-fi.office-mode .lang-select-btn .lang-name {
+  color: #333;
+}
+
+.si-fi.office-mode .lang-select-btn .lang-chevron {
+  border-color: #333;
+}
+
+.si-fi.office-mode .lang-select-dropdown {
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.si-fi.office-mode .lang-option {
+  color: #333;
+}
+
+.si-fi.office-mode .lang-option:hover {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.si-fi.office-mode .lang-option-active {
+  color: #000;
+  font-weight: 600;
+}
+
+.si-fi.office-mode .login-form .form-group input:-webkit-autofill,
+.si-fi.office-mode .login-form .form-group input:-webkit-autofill:hover,
+.si-fi.office-mode .login-form .form-group input:-webkit-autofill:focus,
+.si-fi.office-mode .login-form .form-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+  box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+  -webkit-text-fill-color: #000 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

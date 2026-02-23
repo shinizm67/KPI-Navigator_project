@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../register/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="si-fi terms-page">
+<body class="si-fi terms-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -19,10 +19,10 @@
         </a>
       </div>
       <div class="header-actions">
-        <a href="#" class="btn-mode" aria-label="オフィスモードに切り替え">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="オフィスモードに切り替え">
           <span class="btn-mode-frame">
             <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-            <span class="btn-mode-text">オフィスモード</span>
+            <span class="btn-mode-text" id="btn-mode-text">オフィスモード</span>
           </span>
         </a>
       </div>
@@ -138,10 +138,82 @@
       <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
     </footer>
   </div>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/legal/terms/index.html" data-url-ja="index.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
   <div class="go-back-registration-wrap" id="go-back-wrap">
-    <a href="../../register/registration_si-fi_jp/registration_si-fi_jp.html" class="go-back-registration">→ Go back Registration</a>
+    <a href="../../register/registration_si-fi_jp/registration_si-fi_jp.html" class="go-back-registration">→ 登録ページへ戻る</a>
   </div>
   <script>
+  (function(){
+    var langBtn = document.getElementById('lang-select-btn');
+    var langDropdown = document.getElementById('lang-select-dropdown');
+    var langOptions = document.querySelectorAll('#lang-select-wrap .lang-option');
+    var langWrap = document.getElementById('lang-select-wrap');
+    if (langBtn && langDropdown && langWrap) {
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        langDropdown.hidden = !langDropdown.hidden;
+        langBtn.setAttribute('aria-expanded', !langDropdown.hidden);
+      });
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+      var urlEn = langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap.getAttribute('data-url-ja');
+      var bodyElForLang = document.getElementById('body-el');
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) {
+            sessionStorage.setItem('kpi-office-mode', '1');
+          }
+          var lang = this.getAttribute('data-lang');
+          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          if (href) window.location.href = href;
+        });
+      });
+    }
+  })();
+  (function(){
+    var STORAGE_KEY = 'kpi-office-mode';
+    var bodyEl = document.getElementById('body-el');
+    var btnModeToggle = document.getElementById('btn-mode-toggle');
+    var btnModeText = document.getElementById('btn-mode-text');
+    function updateModeButton() {
+      if (!btnModeText || !btnModeToggle) return;
+      var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+      btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'オフィスモード';
+      btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fiモードに切り替え' : 'オフィスモードに切り替え');
+    }
+    if (bodyEl && btnModeToggle) {
+      if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+        bodyEl.classList.add('office-mode');
+      }
+      btnModeToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        bodyEl.classList.toggle('office-mode');
+        if (bodyEl.classList.contains('office-mode')) {
+          sessionStorage.setItem(STORAGE_KEY, '1');
+        } else {
+          sessionStorage.removeItem(STORAGE_KEY);
+        }
+        updateModeButton();
+      });
+      updateModeButton();
+    }
+  })();
   (function(){
     var wrap = document.getElementById('go-back-wrap');
     if (!wrap) return;

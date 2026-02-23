@@ -153,6 +153,92 @@
   opacity: 0.95;
 }
 
+/* ========================================
+   Office Mode（body.office-mode で Sci-Fi と切り替え・Plan EN）
+   ======================================== */
+
+.si-fi.office-mode.price-page {
+  background: #fff;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .price-wrap {
+  background: #fff;
+}
+
+.si-fi.office-mode .price-content {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+/* タイトル（KPI Navigator / Plan）は Orbitron のまま・文字色は黒 */
+.si-fi.office-mode .price-title-main,
+.si-fi.office-mode .price-title-sub {
+  font-family: 'Orbitron', sans-serif;
+  color: #000;
+}
+
+.si-fi.office-mode .price-table-wrap {
+  border: 1px solid #ccc;
+  background: #f8f8f8;
+}
+
+.si-fi.office-mode .price-table th,
+.si-fi.office-mode .price-table td {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .price-table th {
+  background: rgba(0, 0, 0, 0.06);
+  color: #000;
+}
+
+.si-fi.office-mode .price-table tbody tr:hover td {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.si-fi.office-mode .price-table .row-buttons td {
+  border-top: 1px solid #ccc;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.si-fi.office-mode .price-table .row-buttons td:first-child {
+  border-left-color: rgba(0, 0, 0, 0.12);
+}
+
+.si-fi.office-mode .icon-check {
+  border-color: #333;
+}
+
+.si-fi.office-mode .icon-x {
+  color: #333;
+}
+
+.si-fi.office-mode .btn-register {
+  background: #6a6a6a;
+  color: #fff;
+  font-family: 'BIZ UDPGothic', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.si-fi.office-mode .btn-register:hover {
+  background: #5a5a5a;
+  box-shadow: none;
+  opacity: 0.95;
+}
+
+.si-fi.office-mode .footer-copy {
+  color: #000;
+}
+
+.si-fi.office-mode .footer-separator {
+  background: rgba(0, 0, 0, 0.12);
+}
+
 @media (max-width: 768px) {
   .price-content {
     padding: 32px 0 48px;

@@ -144,3 +144,66 @@ html[lang="ja"] .si-fi.terms-page {
     padding: 10px 20px;
   }
 }
+
+/* ========================================
+   Office Mode（body.office-mode で Sci-Fi と切り替え・Terms/Privacy JP）
+   ======================================== */
+
+.si-fi.office-mode.terms-page {
+  background: #fff;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .terms-wrap {
+  background: #fff;
+}
+
+.si-fi.office-mode .terms-content {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+/* タイトルは Orbitron のまま・文字色は黒 */
+.si-fi.office-mode .terms-title {
+  font-family: 'Orbitron', sans-serif;
+  color: #000;
+}
+
+.si-fi.office-mode .terms-meta,
+.si-fi.office-mode .terms-section h2,
+.si-fi.office-mode .terms-section p,
+.si-fi.office-mode .terms-section li {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .terms-content a {
+  color: #1a73e8;
+}
+
+.si-fi.office-mode .terms-content a:hover {
+  color: #1557b0;
+}
+
+.si-fi.office-mode .footer-copy {
+  color: #000;
+}
+
+/* Go back Registration ボタン（Office 風） */
+.si-fi.office-mode .go-back-registration {
+  border-color: #555;
+  color: #555;
+}
+
+.si-fi.office-mode .go-back-registration-wrap.is-active .go-back-registration {
+  background: #333;
+  border-color: #333;
+  color: #fff;
+}
+
+.si-fi.office-mode .go-back-registration-wrap.is-active .go-back-registration:hover {
+  background: #222;
+  border-color: #222;
+  box-shadow: none;
+}

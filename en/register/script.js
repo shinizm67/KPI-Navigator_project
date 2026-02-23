@@ -6,12 +6,46 @@
 (function () {
   'use strict';
 
-  /* プラン表示: URL の ?plan=basic / ?plan=pro でタイトル・価格を切り替え */
+  var STORAGE_KEY_OFFICE = 'kpi-office-mode';
+  var STORAGE_KEY_PLAN = 'kpi-registration-plan';
+  var bodyEl = document.getElementById('body-el');
+  var btnModeToggle = document.getElementById('btn-mode-toggle');
+  var btnModeText = document.getElementById('btn-mode-text');
+
+  function updateModeButton() {
+    if (!btnModeText || !btnModeToggle) return;
+    var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+    btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
+    btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+  }
+
+  if (bodyEl && btnModeToggle) {
+    if (sessionStorage.getItem(STORAGE_KEY_OFFICE) === '1') {
+      bodyEl.classList.add('office-mode');
+    }
+    btnModeToggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      bodyEl.classList.toggle('office-mode');
+      if (bodyEl.classList.contains('office-mode')) {
+        sessionStorage.setItem(STORAGE_KEY_OFFICE, '1');
+      } else {
+        sessionStorage.removeItem(STORAGE_KEY_OFFICE);
+      }
+      updateModeButton();
+    });
+    updateModeButton();
+  }
+
+  /* プラン表示: URL の ?plan=basic / ?plan=pro。言語切替で同じプランを維持するため sessionStorage に保存 */
   var planTitle = document.getElementById('plan-title');
   var planPrice = document.getElementById('plan-price');
   if (planTitle && planPrice) {
     var params = new URLSearchParams(window.location.search);
-    var plan = (params.get('plan') || 'basic').toLowerCase();
+    var planFromUrl = params.get('plan');
+    var plan = (planFromUrl || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
+    if (planFromUrl) {
+      sessionStorage.setItem(STORAGE_KEY_PLAN, plan);
+    }
     if (plan === 'pro') {
       planTitle.textContent = 'KPI Navigator Pro';
       planPrice.textContent = '$29 / Month';
@@ -47,20 +81,16 @@
     langOptions.forEach(function (opt) {
       opt.addEventListener('click', function (e) {
         e.stopPropagation();
-        const lang = this.getAttribute('data-lang');
-        langOptions.forEach(function (o) {
-          o.classList.toggle('lang-option-active', o.getAttribute('data-lang') === lang);
-        });
-        var codeEl = langBtn.querySelector('.lang-code');
-        var nameEl = langBtn.querySelector('.lang-name');
-        if (codeEl) codeEl.textContent = lang === 'ja' ? 'JP' : 'EN';
-        if (nameEl) nameEl.textContent = lang === 'ja' ? 'Japanese' : 'English';
-        langDropdown.hidden = true;
-        langBtn.setAttribute('aria-expanded', 'false');
-        if (lang === 'ja' && urlJa) {
-          window.location.href = urlJa;
-        } else if (lang === 'en' && urlEn) {
-          window.location.href = urlEn;
+        if (bodyEl && bodyEl.classList.contains('office-mode')) {
+          sessionStorage.setItem(STORAGE_KEY_OFFICE, '1');
+        }
+        var params = new URLSearchParams(window.location.search);
+        var plan = (params.get('plan') || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
+        var lang = this.getAttribute('data-lang');
+        var baseUrl = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+        if (baseUrl) {
+          var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+          window.location.href = baseUrl + sep + 'plan=' + plan;
         }
       });
     });
@@ -81,16 +111,63 @@
   };
   var msg = messages[pageLang] || messages.en;
 
-  /* Register ボタン: 同意チェックで有効化 */
+  /* Register ボタン: 全入力＋パスワード条件＋Confirm 一致＋同意チェックで有効化 */
   var agreeTerms = document.getElementById('agree-terms');
   var btnRegister = document.getElementById('btn-register');
-  if (agreeTerms && btnRegister) {
-    function setRegisterButtonState() {
-      btnRegister.disabled = !agreeTerms.checked;
-    }
-    setRegisterButtonState();
-    agreeTerms.addEventListener('change', setRegisterButtonState);
+  var nameInput = document.getElementById('name');
+  var companyInput = document.getElementById('company');
+  var emailInput = document.getElementById('email');
+  var passwordInput = document.getElementById('password');
+  var passwordConfirmInput = document.getElementById('password-confirm');
+
+  function isPasswordValid(pw) {
+    if (!pw || pw.length < 8) return false;
+    var hasLetter = /[a-zA-Z]/.test(pw);
+    var hasNumber = /[0-9]/.test(pw);
+    var hasSymbol = /[^a-zA-Z0-9]/.test(pw);
+    return hasLetter && hasNumber && hasSymbol;
   }
+
+  function setRegisterButtonState() {
+    if (!btnRegister) return;
+    var nameOk = nameInput && nameInput.value.trim().length > 0;
+    var companyOk = companyInput && companyInput.value.trim().length > 0;
+    var emailOk = emailInput && emailInput.value.trim().length > 0;
+    var pw = passwordInput ? passwordInput.value : '';
+    var pwConfirm = passwordConfirmInput ? passwordConfirmInput.value : '';
+    var passwordOk = isPasswordValid(pw);
+    var confirmOk = pw.length > 0 && pwConfirm.length > 0 && pw === pwConfirm;
+    var agreed = agreeTerms && agreeTerms.checked;
+    btnRegister.disabled = !(nameOk && companyOk && emailOk && passwordOk && confirmOk && agreed);
+  }
+
+  if (btnRegister) {
+    setRegisterButtonState();
+    if (agreeTerms) agreeTerms.addEventListener('change', setRegisterButtonState);
+    [nameInput, companyInput, emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
+      if (el) {
+        el.addEventListener('input', setRegisterButtonState);
+        el.addEventListener('change', setRegisterButtonState);
+      }
+    });
+  }
+
+  /* パスワード表示切替（目のアイコン） */
+  document.querySelectorAll('.btn-password-toggle').forEach(function (btn) {
+    var targetId = btn.getAttribute('data-target');
+    var input = targetId ? document.getElementById(targetId) : null;
+    var openEl = btn.querySelector('.icon-eye-open');
+    var closedEl = btn.querySelector('.icon-eye-closed');
+    if (!input || !openEl || !closedEl) return;
+    btn.addEventListener('click', function () {
+      var isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      openEl.hidden = isPassword;
+      closedEl.hidden = !isPassword;
+      btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      btn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+    });
+  });
 
   const regForm = document.getElementById('registration-form');
   if (regForm) {
@@ -109,8 +186,13 @@
     regForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var password = document.getElementById('password');
-      if (password && password.value.length < 8) {
+      var passwordConfirm = document.getElementById('password-confirm');
+      if (password && !isPasswordValid(password.value)) {
         alert(msg.passwordLength);
+        return;
+      }
+      if (password && passwordConfirm && password.value !== passwordConfirm.value) {
+        alert(pageLang === 'ja' ? 'パスワードが一致しません。' : 'Passwords do not match.');
         return;
       }
       console.log('Registration form submitted (placeholder).');

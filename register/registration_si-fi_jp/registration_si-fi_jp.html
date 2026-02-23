@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
 </head>
-<body class="si-fi registration-page">
+<body class="si-fi registration-page" id="body-el">
   <!-- Navigation Menu（画面幅全体） -->
   <header class="site-header">
     <div class="header-inner">
@@ -20,10 +20,10 @@
         </a>
       </div>
       <div class="header-actions">
-        <a href="#" class="btn-mode" aria-label="オフィスモードに切り替え">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="オフィスモードに切り替え">
           <span class="btn-mode-frame">
             <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-            <span class="btn-mode-text">オフィスモード</span>
+            <span class="btn-mode-text" id="btn-mode-text">オフィスモード</span>
           </span>
         </a>
       </div>
@@ -57,8 +57,32 @@
         </div>
         <div class="form-group">
           <label for="password">パスワード :</label>
-          <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+          <div class="input-password-wrap">
+            <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+            <button type="button" class="btn-password-toggle" aria-label="パスワードを表示" title="パスワードを表示" data-target="password">
+              <span class="icon-eye-open" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span class="icon-eye-closed" aria-hidden="true" hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </span>
+            </button>
+          </div>
           <p class="form-hint">*8文字以上で、英字・数字・記号を含めてください</p>
+        </div>
+        <div class="form-group">
+          <label for="password-confirm">パスワード（確認） :</label>
+          <div class="input-password-wrap">
+            <input type="password" id="password-confirm" name="password_confirm" required autocomplete="new-password" minlength="8" placeholder="">
+            <button type="button" class="btn-password-toggle" aria-label="パスワードを表示" title="パスワードを表示" data-target="password-confirm">
+              <span class="icon-eye-open" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span class="icon-eye-closed" aria-hidden="true" hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </span>
+            </button>
+          </div>
         </div>
         <div class="form-agreement">
           <label class="form-agreement-label" for="agree-terms-jp">

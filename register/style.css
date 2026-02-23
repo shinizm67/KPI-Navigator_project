@@ -285,6 +285,12 @@ html[lang="ja"] .si-fi .btn-mode-text {
   margin-bottom: 8px;
 }
 
+.si-fi .input-password-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
 .si-fi .form-group input {
   width: 100%;
   padding: 12px 14px;
@@ -295,6 +301,39 @@ html[lang="ja"] .si-fi .btn-mode-text {
   font-size: 14px;
   outline: none;
   transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.si-fi .input-password-wrap .btn-password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--si-fi-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: opacity 0.2s;
+}
+
+.si-fi .input-password-wrap .btn-password-toggle:hover {
+  opacity: 0.85;
+}
+
+.si-fi .input-password-wrap .btn-password-toggle svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.si-fi .form-group .input-password-wrap input {
+  padding-right: 44px;
 }
 
 html[lang="en"] .si-fi .form-group input {
@@ -312,6 +351,17 @@ html[lang="ja"] .si-fi .form-group input {
 .si-fi .form-group input:focus {
   border-color: var(--si-fi-cyan);
   box-shadow: 0 0 10px rgba(88, 225, 243, 0.3);
+}
+
+/* オートフィル時も入力前と同じ背景色を維持（Sci-Fi のみ） */
+.si-fi:not(.office-mode) .form-group input:-webkit-autofill,
+.si-fi:not(.office-mode) .form-group input:-webkit-autofill:hover,
+.si-fi:not(.office-mode) .form-group input:-webkit-autofill:focus,
+.si-fi:not(.office-mode) .form-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--si-fi-input-bg) inset !important;
+  box-shadow: 0 0 0 30px var(--si-fi-input-bg) inset !important;
+  -webkit-text-fill-color: var(--si-fi-cyan) !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .si-fi .form-hint {
@@ -595,4 +645,195 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   font-size: 11px;
   color: rgba(224, 224, 224, 0.7);
   text-align: center;
+}
+
+/* ========================================
+   Office Mode（body.office-mode で Sci-Fi と切り替え・JP 登録ページ）
+   ======================================== */
+
+.si-fi.office-mode .site-header {
+  background: #2B2B2B;
+}
+
+.si-fi.office-mode .btn-mode-frame-img {
+  display: none;
+}
+
+.si-fi.office-mode .btn-mode-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  min-height: 36px;
+  padding: 8px 16px;
+  background: #3a3a3a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.si-fi.office-mode .btn-mode-text {
+  position: static;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.si-fi.office-mode .btn-mode:hover {
+  filter: none;
+  opacity: 0.9;
+}
+
+.si-fi.office-mode.registration-page {
+  background: #fff;
+  color: #000;
+}
+
+.si-fi.office-mode .page-wrap {
+  background: #fff;
+}
+
+.si-fi.office-mode .main-content {
+  color: #000;
+}
+
+/* プランタイトル（KPI Navigator Basic/Pro）は Orbitron のまま・文字色は黒 */
+.si-fi.office-mode .registration-plan-title,
+.si-fi.office-mode .registration-plan-price {
+  font-family: 'Orbitron', sans-serif;
+  color: #000;
+}
+
+.si-fi.office-mode .registration-plan-cancel,
+.si-fi.office-mode .title-main,
+.si-fi.office-mode .title-sub,
+.si-fi.office-mode .form-group label,
+.si-fi.office-mode .form-hint,
+.si-fi.office-mode .form-agreement-text,
+.si-fi.office-mode .form-agreement-sep,
+.si-fi.office-mode .footer-copy {
+  color: #000;
+}
+
+.si-fi.office-mode .form-agreement-link {
+  color: #1a73e8;
+}
+
+.si-fi.office-mode .form-agreement-link:hover {
+  color: #1557b0;
+}
+
+.si-fi.office-mode .form-group input {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .form-group input::placeholder {
+  color: #666;
+}
+
+.si-fi.office-mode .form-group input:focus {
+  border-color: #999;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.si-fi.office-mode .input-password-wrap .btn-password-toggle {
+  color: #333;
+}
+
+.si-fi.office-mode .form-agreement {
+  border: 1px solid #ccc;
+  background: #f8f8f8;
+}
+
+.si-fi.office-mode .form-agreement-checkbox {
+  accent-color: #333;
+}
+
+.si-fi.office-mode .form-agreement .btn-submit.btn-register {
+  background: transparent;
+  border: 1px solid #555;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.si-fi.office-mode .form-agreement .btn-submit.btn-register:not(:disabled) {
+  background: #333;
+  border-color: #333;
+  color: #fff;
+  cursor: pointer;
+}
+
+.si-fi.office-mode .form-agreement .btn-submit.btn-register:not(:disabled):hover {
+  background: #222;
+  border-color: #222;
+  box-shadow: none;
+}
+
+.si-fi.office-mode .footer-separator {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.si-fi.office-mode .lang-select-btn {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  color: #333;
+  box-shadow: none;
+}
+
+.si-fi.office-mode .lang-select-btn:hover,
+.si-fi.office-mode .lang-select-btn:focus {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+.si-fi.office-mode .lang-select-btn .lang-code {
+  background: #fff;
+  border-color: #ccc;
+  color: #333;
+}
+
+.si-fi.office-mode .lang-select-btn .lang-name {
+  color: #333;
+}
+
+.si-fi.office-mode .lang-select-btn .lang-chevron {
+  border-color: #333;
+}
+
+.si-fi.office-mode .lang-select-dropdown {
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.si-fi.office-mode .lang-option {
+  color: #333;
+}
+
+.si-fi.office-mode .lang-option:hover {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.si-fi.office-mode .lang-option-active {
+  color: #000;
+  font-weight: 600;
+}
+
+/* Office Mode: JP は本文すべて BIZ UDPGothic（タイトル・SCI-FI ボタンは上で Orbitron 指定済み） */
+html[lang="ja"] .si-fi.office-mode.registration-page {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode .form-group input:-webkit-autofill,
+.si-fi.office-mode .form-group input:-webkit-autofill:hover,
+.si-fi.office-mode .form-group input:-webkit-autofill:focus,
+.si-fi.office-mode .form-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+  box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+  -webkit-text-fill-color: #000 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
