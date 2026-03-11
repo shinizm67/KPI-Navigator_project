@@ -1,0 +1,236 @@
+/* ========================================
+   KPI Navigator - Profile page (EN) Sci-Fi
+   ======================================== */
+
+.si-fi.profile-page {
+  background: var(--si-fi-bg);
+  color: var(--si-fi-cyan);
+  font-family: 'Orbitron', sans-serif;
+}
+
+html[lang="ja"] .si-fi.profile-page {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.profile-page .header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 40px;
+}
+
+/* Profile ヘッダーでは単独の Office Mode ボタンは非表示（ドロップダウン内のみ使用） */
+.si-fi.profile-page .btn-mode {
+  display: none;
+}
+
+.profile-wrap {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.profile-main {
+  flex: 1;
+  padding: 48px 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-title-main {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.profile-title-sub {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+/* --- Form layout: reuse registration-form base styles --- */
+.profile-form {
+  width: 100%;
+  max-width: 640px;
+}
+
+.si-fi.profile-page .profile-form .form-group {
+  margin-bottom: 24px;
+}
+
+.si-fi.profile-page .profile-form .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.04em;
+}
+
+.si-fi.profile-page .profile-form .form-group input,
+.si-fi.profile-page .profile-form .form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--si-fi-input-bg);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
+  color: var(--si-fi-cyan);
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  min-height: 44px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.si-fi.profile-page .profile-form .form-group textarea {
+  min-height: 96px;
+}
+
+.si-fi.profile-page .profile-form .form-group input::placeholder,
+.si-fi.profile-page .profile-form .form-group textarea::placeholder {
+  color: rgba(88, 225, 243, 0.4);
+}
+
+.si-fi.profile-page .profile-form .form-group input:focus,
+.si-fi.profile-page .profile-form .form-group textarea:focus {
+  border-color: var(--si-fi-cyan);
+  box-shadow: 0 0 10px rgba(88, 225, 243, 0.3);
+}
+
+.profile-actions {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.profile-save-button {
+  min-width: 200px;
+}
+
+/* --- Header actions: Office Mode + icons aligned to the right --- */
+.icon-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button .icon-img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid var(--si-fi-cyan);
+  outline-offset: 2px;
+}
+
+.si-fi.profile-page .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* dropdown_menu と setting_gear の間隔を広めに確保（歯車は右端キープ） */
+.si-fi.profile-page .icon-button-menu {
+  margin-right: 12px;
+}
+
+/* --- Global nav (Annual / Monthly / Daily / Index) --- */
+.global-nav {
+  flex: 1;
+}
+
+.global-nav-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.global-nav-item {
+  display: flex;
+}
+
+.nav-frame-btn {
+  display: inline-block;
+  color: var(--si-fi-cyan);
+  text-decoration: none;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+.nav-frame-btn:hover {
+  filter: drop-shadow(0 0 8px rgba(88, 225, 243, 0.6));
+}
+
+.nav-frame-btn .btn-mode-frame {
+  max-width: 120px;
+}
+
+.nav-btn-text {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+/* --- Settings dropdown (from menu icon) --- */
+.settings-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 24px;
+  margin-top: 16px;
+  z-index: 20;
+}
+
+.settings-dropdown-inner {
+  border: 1px solid var(--si-fi-green);
+  padding: 16px 20px;
+  background: #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-dropdown-item {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .profile-main {
+    padding: 32px 0 48px;
+  }
+  .si-fi.profile-page .header-inner {
+    gap: 24px;
+  }
+  .profile-title-main {
+    font-size: 22px;
+  }
+  .profile-title-sub {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-wrap {
+    padding: 0 16px;
+  }
+}
+

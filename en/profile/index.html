@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="si-fi profile-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <nav class="global-nav" aria-label="Main navigation">
+        <ul class="global-nav-list">
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Annual view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Annual</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Monthly view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Monthly</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Daily view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Daily</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Index view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Index</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
+          <span class="btn-mode-frame">
+            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
+          </span>
+        </a>
+        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
+          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+        <button type="button" class="icon-button icon-button-settings" aria-label="Open settings">
+          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+      </div>
+      <div class="settings-dropdown" id="settings-dropdown" hidden>
+        <div class="settings-dropdown-inner">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text">Expense</span>
+            </span>
+          </a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text">Office Mode</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main">
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub">Profile</h2>
+
+      <form class="registration-form profile-form" action="#" method="post" id="profile-form">
+        <div class="form-group">
+          <label for="profile-name">Name :</label>
+          <input type="text" id="profile-name" name="name" required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label for="profile-company">Company Name / Store Name :</label>
+          <input type="text" id="profile-company" name="company" autocomplete="organization">
+        </div>
+
+        <div class="form-group">
+          <label for="profile-email">Email Address :</label>
+          <input type="email" id="profile-email" name="email" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="profile-role">Role / Position :</label>
+          <input type="text" id="profile-role" name="role" autocomplete="organization-title">
+        </div>
+
+        <div class="form-group">
+          <label for="profile-country">Country / Region :</label>
+          <input type="text" id="profile-country" name="country" autocomplete="country-name">
+        </div>
+
+        <div class="form-group">
+          <label for="profile-timezone">Time Zone :</label>
+          <input type="text" id="profile-timezone" name="timezone" placeholder="e.g. UTC+9, JST">
+        </div>
+
+        <div class="form-group form-group-textarea">
+          <label for="profile-kpi-focus">Main KPIs / Goals :</label>
+          <textarea id="profile-kpi-focus" name="kpi_focus" rows="4" placeholder="Describe the KPIs you want to focus on."></textarea>
+        </div>
+
+        <div class="form-actions profile-actions">
+          <button type="submit" class="btn-submit btn-register profile-save-button">Save Profile</button>
+        </div>
+      </form>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-separator"></div>
+      <div class="footer-logo">
+        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'kpi-office-mode';
+      var bodyEl = document.getElementById('body-el');
+      var btnModeToggle = document.getElementById('btn-mode-toggle');
+      var btnModeText = document.getElementById('btn-mode-text');
+      function updateModeButton() {
+        if (!btnModeText || !btnModeToggle) return;
+        var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+        btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+      }
+      if (bodyEl && btnModeToggle) {
+        if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+          bodyEl.classList.add('office-mode');
+        }
+        btnModeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          bodyEl.classList.toggle('office-mode');
+          if (bodyEl.classList.contains('office-mode')) {
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+          }
+          updateModeButton();
+        });
+        updateModeButton();
+      }
+    })();
+    (function () {
+      var menuBtn = document.querySelector('.icon-button-menu');
+      var dropdown = document.getElementById('settings-dropdown');
+      var officeToggle = document.getElementById('settings-office-toggle');
+      if (!menuBtn || !dropdown) return;
+
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.hidden = !dropdown.hidden;
+      });
+
+      if (officeToggle) {
+        officeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var modeBtn = document.getElementById('btn-mode-toggle');
+          if (modeBtn) {
+            modeBtn.click();
+          }
+        });
+      }
+
+      dropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        dropdown.hidden = true;
+      });
+    })();
+  </script>
+</body>
+</html>
+
