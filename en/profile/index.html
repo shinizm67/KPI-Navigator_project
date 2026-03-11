@@ -64,9 +64,30 @@
         <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
           <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" aria-label="Open settings">
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
           <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
+      </div>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Account</h4>
+          <nav class="account-settings-nav">
+            <a href="index.html" class="account-settings-item is-current" role="menuitem">Profile</a>
+            <a href="#" class="account-settings-item" role="menuitem">Change Email</a>
+            <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
+            <a href="#" class="account-settings-item" role="menuitem">Session Management</a>
+          </nav>
+        </section>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Subscription</h4>
+          <nav class="account-settings-nav">
+            <a href="#" class="account-settings-item" role="menuitem">Plan Details</a>
+            <a href="#" class="account-settings-item" role="menuitem">Change Plan</a>
+          </nav>
+        </section>
+        <div class="account-settings-sep"></div>
+        <a href="#" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
@@ -89,43 +110,102 @@
 
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
+      <div class="profile-workspace-indicator" aria-label="Current workspace">
+        <span class="profile-workspace-icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        <span class="profile-workspace-label">Workspace : Personal</span>
+      </div>
       <h1 class="profile-title-main">KPI Navigator</h1>
       <h2 class="profile-title-sub">Profile</h2>
 
       <form class="registration-form profile-form" action="#" method="post" id="profile-form">
+        <div class="profile-readonly-group">
+          <div class="form-group form-group-user-id">
+            <label>User ID :</label>
+            <p class="profile-user-id-value" id="profile-user-id" aria-live="polite">KPI-000000</p>
+          </div>
+          <div class="form-group form-group-email-display">
+            <label>Email Address :</label>
+            <p class="profile-email-value" id="profile-email-display" aria-live="polite">s.matsushita@forge-laboratory.com</p>
+          </div>
+        </div>
+
+        <div class="profile-editable-group">
         <div class="form-group">
-          <label for="profile-name">Name :</label>
-          <input type="text" id="profile-name" name="name" required autocomplete="name">
+          <label for="profile-business-name">Business Name :</label>
+          <input type="text" id="profile-business-name" name="business_name" autocomplete="organization">
         </div>
 
         <div class="form-group">
-          <label for="profile-company">Company Name / Store Name :</label>
+          <label for="profile-company">Company Name :</label>
           <input type="text" id="profile-company" name="company" autocomplete="organization">
         </div>
 
         <div class="form-group">
-          <label for="profile-email">Email Address :</label>
-          <input type="email" id="profile-email" name="email" required autocomplete="email">
+          <label for="profile-industry">Industry :</label>
+          <select id="profile-industry" name="industry" class="profile-select" aria-label="Select industry">
+            <option value="">— Select —</option>
+            <option value="restaurant">Restaurant</option>
+            <option value="wear_shop">Wear Shop</option>
+            <option value="retail">Retail</option>
+            <option value="cafe">Cafe</option>
+          </select>
+        </div>
+
+        <div class="form-group form-group-genre">
+          <label for="profile-genre">Genre :</label>
+          <select id="profile-genre" name="genre" class="profile-select" aria-label="Select genre" disabled>
+            <option value="">— Select Industry first —</option>
+          </select>
         </div>
 
         <div class="form-group">
-          <label for="profile-role">Role / Position :</label>
-          <input type="text" id="profile-role" name="role" autocomplete="organization-title">
+          <label for="profile-country">Country :</label>
+          <select id="profile-country" name="country" class="profile-select" aria-label="Select country">
+            <option value="">— Select —</option>
+            <option value="JP">JP</option>
+            <option value="US">US</option>
+            <option value="UK">UK</option>
+            <option value="DE">DE</option>
+            <option value="FR">FR</option>
+          </select>
         </div>
 
         <div class="form-group">
-          <label for="profile-country">Country / Region :</label>
-          <input type="text" id="profile-country" name="country" autocomplete="country-name">
+          <label for="profile-state">State / Prefecture :</label>
+          <select id="profile-state" name="state" class="profile-select" aria-label="Select state or prefecture" disabled>
+            <option value="">— Select Country first —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="profile-city">City :</label>
+          <select id="profile-city" name="city" class="profile-select" aria-label="Select city" disabled>
+            <option value="">— Select State first —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="profile-currency">Currency :</label>
+          <select id="profile-currency" name="currency" class="profile-select" aria-label="Select currency">
+            <option value="">— Select —</option>
+            <option value="JPY">JPY</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
         </div>
 
         <div class="form-group">
           <label for="profile-timezone">Time Zone :</label>
-          <input type="text" id="profile-timezone" name="timezone" placeholder="e.g. UTC+9, JST">
+          <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="Auto-filled from State / City" aria-label="Time zone (auto-filled)">
         </div>
 
         <div class="form-group form-group-textarea">
           <label for="profile-kpi-focus">Main KPIs / Goals :</label>
           <textarea id="profile-kpi-focus" name="kpi_focus" rows="4" placeholder="Describe the KPIs you want to focus on."></textarea>
+        </div>
         </div>
 
         <div class="form-actions profile-actions">
@@ -203,6 +283,145 @@
       document.addEventListener('click', function () {
         dropdown.hidden = true;
       });
+    })();
+    (function () {
+      var gearBtn = document.getElementById('btn-account-settings');
+      var accountPopup = document.getElementById('account-settings-popup');
+      var menuDropdown = document.getElementById('settings-dropdown');
+      if (!gearBtn || !accountPopup) return;
+
+      gearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !accountPopup.hidden;
+        accountPopup.hidden = isOpen;
+        gearBtn.setAttribute('aria-expanded', !isOpen);
+        if (!isOpen && menuDropdown) menuDropdown.hidden = true;
+      });
+
+      accountPopup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        accountPopup.hidden = true;
+        gearBtn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var industrySelect = document.getElementById('profile-industry');
+      var genreSelect = document.getElementById('profile-genre');
+      var countrySelect = document.getElementById('profile-country');
+      var stateSelect = document.getElementById('profile-state');
+      var citySelect = document.getElementById('profile-city');
+      var timezoneInput = document.getElementById('profile-timezone');
+
+      var genresByIndustry = {
+        restaurant: [{ v: 'italian', l: 'Italian' }, { v: 'french', l: 'French' }, { v: 'indian', l: 'Indian' }, { v: 'thai', l: 'Thai' }, { v: 'spain', l: 'Spain' }, { v: 'japanese', l: 'Japanese' }],
+        wear_shop: [{ v: 'mens', l: "Men's" }, { v: 'womens', l: "Women's" }, { v: 'unisex', l: 'Unisex' }],
+        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }],
+        cafe: [{ v: 'coffee', l: 'Coffee' }, { v: 'tea', l: 'Tea' }]
+      };
+
+      var statesByCountry = {
+        JP: [{ v: 'tokyo', l: 'Tokyo' }, { v: 'osaka', l: 'Osaka' }, { v: 'kyoto', l: 'Kyoto' }, { v: 'fukuoka', l: 'Fukuoka' }],
+        US: [{ v: 'ca', l: 'California' }, { v: 'ny', l: 'New York' }, { v: 'tx', l: 'Texas' }, { v: 'wa', l: 'Washington' }],
+        UK: [{ v: 'england', l: 'England' }, { v: 'scotland', l: 'Scotland' }, { v: 'wales', l: 'Wales' }],
+        DE: [{ v: 'by', l: 'Bavaria' }, { v: 'nw', l: 'North Rhine-Westphalia' }],
+        FR: [{ v: 'idf', l: 'Île-de-France' }, { v: 'paca', l: 'Provence-Alpes-Côte d\'Azur' }]
+      };
+
+      var citiesByState = {
+        tokyo: [{ v: 'tokyo_city', l: 'Tokyo' }, { v: 'yokohama', l: 'Yokohama' }],
+        osaka: [{ v: 'osaka_city', l: 'Osaka' }, { v: 'kobe', l: 'Kobe' }],
+        kyoto: [{ v: 'kyoto_city', l: 'Kyoto' }],
+        fukuoka: [{ v: 'fukuoka_city', l: 'Fukuoka' }],
+        ca: [{ v: 'los_angeles', l: 'Los Angeles' }, { v: 'san_francisco', l: 'San Francisco' }],
+        ny: [{ v: 'new_york', l: 'New York City' }, { v: 'buffalo', l: 'Buffalo' }],
+        tx: [{ v: 'houston', l: 'Houston' }, { v: 'dallas', l: 'Dallas' }],
+        wa: [{ v: 'seattle', l: 'Seattle' }],
+        england: [{ v: 'london', l: 'London' }, { v: 'manchester', l: 'Manchester' }],
+        scotland: [{ v: 'edinburgh', l: 'Edinburgh' }, { v: 'glasgow', l: 'Glasgow' }],
+        wales: [{ v: 'cardiff', l: 'Cardiff' }],
+        by: [{ v: 'munich', l: 'Munich' }],
+        nw: [{ v: 'cologne', l: 'Cologne' }, { v: 'dusseldorf', l: 'Düsseldorf' }],
+        idf: [{ v: 'paris', l: 'Paris' }],
+        paca: [{ v: 'marseille', l: 'Marseille' }, { v: 'nice', l: 'Nice' }]
+      };
+
+      var timezoneByState = {
+        tokyo: 'Asia/Tokyo (JST, UTC+9)',
+        osaka: 'Asia/Tokyo (JST, UTC+9)',
+        kyoto: 'Asia/Tokyo (JST, UTC+9)',
+        fukuoka: 'Asia/Tokyo (JST, UTC+9)',
+        ca: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
+        ny: 'America/New_York (EST/EDT, UTC-5/-4)',
+        tx: 'America/Chicago (CST/CDT, UTC-6/-5)',
+        wa: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
+        england: 'Europe/London (GMT/BST, UTC+0/+1)',
+        scotland: 'Europe/London (GMT/BST, UTC+0/+1)',
+        wales: 'Europe/London (GMT/BST, UTC+0/+1)',
+        by: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
+        nw: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
+        idf: 'Europe/Paris (CET/CEST, UTC+1/+2)',
+        paca: 'Europe/Paris (CET/CEST, UTC+1/+2)'
+      };
+
+      function fillSelect(sel, options, defaultLabel) {
+        if (!sel) return;
+        var first = sel.options[0];
+        sel.innerHTML = '';
+        if (defaultLabel) {
+          var opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = defaultLabel;
+          sel.appendChild(opt);
+        }
+        (options || []).forEach(function (o) {
+          var opt = document.createElement('option');
+          opt.value = o.v;
+          opt.textContent = o.l;
+          sel.appendChild(opt);
+        });
+      }
+
+      if (industrySelect && genreSelect) {
+        industrySelect.addEventListener('change', function () {
+          var v = industrySelect.value;
+          genreSelect.disabled = !v;
+          fillSelect(genreSelect, genresByIndustry[v], '— Select —');
+        });
+      }
+
+      if (countrySelect && stateSelect) {
+        countrySelect.addEventListener('change', function () {
+          var v = countrySelect.value;
+          stateSelect.disabled = !v;
+          citySelect.disabled = true;
+          fillSelect(citySelect, [], '— Select State first —');
+          fillSelect(stateSelect, statesByCountry[v], '— Select —');
+          if (timezoneInput) timezoneInput.value = '';
+        });
+      }
+
+      if (stateSelect && citySelect) {
+        stateSelect.addEventListener('change', function () {
+          var v = stateSelect.value;
+          citySelect.disabled = !v;
+          fillSelect(citySelect, citiesByState[v] || [], '— Select —');
+          if (timezoneInput && timezoneByState[v]) timezoneInput.value = timezoneByState[v];
+          else if (timezoneInput && !v) timezoneInput.value = '';
+        });
+      }
+
+      if (citySelect && timezoneInput) {
+        citySelect.addEventListener('change', function () {
+          if (stateSelect && stateSelect.value && timezoneByState[stateSelect.value]) return;
+          if (timezoneInput && !timezoneInput.value && citySelect.value) {
+            var stateVal = stateSelect && stateSelect.value;
+            if (stateVal && timezoneByState[stateVal]) timezoneInput.value = timezoneByState[stateVal];
+          }
+        });
+      }
     })();
   </script>
 </body>
