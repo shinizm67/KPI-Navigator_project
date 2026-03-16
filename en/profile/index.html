@@ -100,7 +100,7 @@
           <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
             <span class="btn-mode-frame">
               <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-              <span class="btn-mode-text nav-btn-text">Office Mode</span>
+              <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
             </span>
           </a>
         </div>
@@ -110,11 +110,18 @@
 
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
-      <div class="profile-workspace-indicator" aria-label="Current workspace">
-        <span class="profile-workspace-icon" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
-        </span>
-        <span class="profile-workspace-label">Workspace : Personal</span>
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+          <div class="workspace-popup-inner">
+            <div class="workspace-popup-item is-current">Workspace : Personal</div>
+          </div>
+        </div>
       </div>
       <h1 class="profile-title-main">KPI Navigator</h1>
       <h2 class="profile-title-sub">Profile</h2>
@@ -225,17 +232,39 @@
     </footer>
   </div>
 
+  <div class="back-to-top-bar">
+    <button type="button" class="back-to-top-button" id="back-to-top" aria-label="Back to top">
+      <img src="../../images/arrow_up.svg" alt="" aria-hidden="true">
+    </button>
+  </div>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
+      <span class="lang-code" aria-hidden="true">EN</span>
+      <span class="lang-name">English</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
+      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
   <script>
     (function () {
       var STORAGE_KEY = 'kpi-office-mode';
       var bodyEl = document.getElementById('body-el');
       var btnModeToggle = document.getElementById('btn-mode-toggle');
       var btnModeText = document.getElementById('btn-mode-text');
+      var settingsOfficeLabel = document.getElementById('settings-office-label');
       function updateModeButton() {
         if (!btnModeText || !btnModeToggle) return;
         var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
         btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+        if (settingsOfficeLabel) {
+          settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
+        }
       }
       if (bodyEl && btnModeToggle) {
         if (sessionStorage.getItem(STORAGE_KEY) === '1') {
@@ -305,6 +334,27 @@
       document.addEventListener('click', function () {
         accountPopup.hidden = true;
         gearBtn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var trigger = document.getElementById('workspace-trigger');
+      var popup = document.getElementById('workspace-popup');
+      if (!trigger || !popup) return;
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !popup.hidden;
+        popup.hidden = isOpen;
+        trigger.setAttribute('aria-expanded', !isOpen);
+      });
+
+      popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
       });
     })();
     (function () {
@@ -422,6 +472,48 @@
           }
         });
       }
+    })();
+    (function () {
+      var langBtn = document.getElementById('lang-select-btn');
+      var langDropdown = document.getElementById('lang-select-dropdown');
+      var langOptions = document.querySelectorAll('.lang-option');
+      var langWrap = document.getElementById('lang-select-wrap');
+      if (!langBtn || !langDropdown || !langWrap) return;
+
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !langDropdown.hidden;
+        langDropdown.hidden = isOpen;
+        langBtn.setAttribute('aria-expanded', !isOpen);
+      });
+
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+
+      var urlEn = langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap.getAttribute('data-url-ja');
+      var bodyElForLang = document.getElementById('body-el');
+
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) {
+            sessionStorage.setItem('kpi-office-mode', '1');
+          }
+          var lang = this.getAttribute('data-lang');
+          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          if (href) window.location.href = href;
+        });
+      });
+    })();
+    (function () {
+      var backTop = document.getElementById('back-to-top');
+      if (!backTop) return;
+      backTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     })();
   </script>
 </body>

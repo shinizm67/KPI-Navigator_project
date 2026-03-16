@@ -609,6 +609,50 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   }
 }
 
+/* --- Back to top bar（arrow_up.svg・ページ全幅・画面下部固定） --- */
+.si-fi .back-to-top-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2B2B2B;
+  padding: 6px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 900;
+}
+
+.si-fi .back-to-top-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.si-fi .back-to-top-button img {
+  display: block;
+  width: 41px;
+  height: 19px;
+}
+
+.si-fi .back-to-top-button:focus-visible {
+  outline: 2px solid var(--si-fi-cyan);
+  outline-offset: 4px;
+}
+
+/* Office Mode: 背景も濃いグレーで arrow_up を白に */
+.si-fi.office-mode .back-to-top-bar {
+  background: #3A3A3A;
+}
+
+.si-fi.office-mode .back-to-top-button img {
+  filter: brightness(0) invert(1);
+}
+
 /* --- Footer --- */
 .si-fi .site-footer {
   flex-shrink: 0;

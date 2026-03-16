@@ -42,20 +42,32 @@ html[lang="ja"] .si-fi.profile-page {
   align-items: center;
 }
 
-/* Workspace : Personal 表示（緑枠・左寄せ・再生アイコン） */
-.profile-workspace-indicator {
+/* Workspace 選択エリア（トリガー＋ポップアップ） */
+.workspace-selector-wrap {
+  position: relative;
   align-self: flex-start;
+  margin-bottom: 24px;
+}
+
+/* Workspace : Personal 表示（緑枠・左寄せ・再生アイコン）・クリックでポップアップ */
+.profile-workspace-indicator {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
   padding: 8px 14px;
   border: 1px solid var(--si-fi-green);
   border-radius: 3px;
+  background: transparent;
   color: var(--si-fi-cyan);
   font-size: 13px;
   font-family: 'Orbitron', sans-serif;
   letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.profile-workspace-indicator:hover {
+  border-color: rgba(0, 255, 136, 0.9);
+  color: rgba(88, 225, 243, 0.95);
 }
 .profile-workspace-icon {
   display: inline-flex;
@@ -68,6 +80,117 @@ html[lang="ja"] .si-fi.profile-page {
 }
 .profile-workspace-label {
   white-space: nowrap;
+}
+
+/* Workspace ポップアップ（どのアカウントでログイン中か表示・将来は複数切り替え） */
+.workspace-popup {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 8px;
+  min-width: 220px;
+  padding: 12px 0;
+  background: rgba(12, 18, 22, 0.98);
+  border: 1px solid var(--si-fi-green);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+.workspace-popup-inner {
+  padding: 0 16px;
+}
+.workspace-popup-item {
+  padding: 10px 8px;
+  color: var(--si-fi-cyan);
+  font-size: 13px;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.workspace-popup-item.is-current {
+  font-weight: 600;
+  color: rgba(88, 225, 243, 0.95);
+}
+.office-mode .workspace-popup {
+  background: #fff;
+  border-color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+.office-mode .workspace-popup-item {
+  color: #333;
+}
+.office-mode .workspace-popup-item.is-current {
+  color: #000;
+  font-weight: 700;
+}
+
+.si-fi.office-mode .profile-workspace-indicator {
+  border-color: #555;
+  color: #333;
+}
+.si-fi.office-mode .profile-workspace-indicator:hover {
+  border-color: #333;
+  color: #000;
+}
+.si-fi.office-mode .profile-workspace-icon {
+  color: #555;
+}
+
+/* ========================================
+   Profile ページ Office Mode
+   ①文字は全て黒・KPI Navigator 以外は BIZ UDPGothic
+   ②入力ボックス: 枠線黒・背景薄いグレー
+   ======================================== */
+.si-fi.office-mode.profile-page,
+.si-fi.office-mode.profile-page .profile-main {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+.si-fi.office-mode.profile-page .profile-title-main {
+  font-family: 'Orbitron', sans-serif;
+  color: #000;
+}
+.si-fi.office-mode.profile-page .profile-title-sub,
+.si-fi.office-mode.profile-page .profile-form .form-group label,
+.si-fi.office-mode.profile-page .profile-user-id-value,
+.si-fi.office-mode.profile-page .profile-email-value,
+.si-fi.office-mode.profile-page .profile-workspace-indicator,
+.si-fi.office-mode.profile-page .profile-workspace-label,
+.si-fi.office-mode.profile-page .workspace-popup-item {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  color: #000;
+}
+.si-fi.office-mode.profile-page .profile-form .form-group input,
+.si-fi.office-mode.profile-page .profile-form .form-group textarea,
+.si-fi.office-mode.profile-page .profile-form .profile-input-readonly {
+  border: 1px solid #000;
+  background: #e8e8e8;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+.si-fi.office-mode.profile-page .profile-form .profile-select {
+  border: 1px solid #000;
+  background-color: #e8e8e8;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+.si-fi.office-mode.profile-page .profile-form .form-group input::placeholder,
+.si-fi.office-mode.profile-page .profile-form .form-group textarea::placeholder {
+  color: #666;
+}
+.si-fi.office-mode.profile-page .profile-form .form-group input:focus,
+.si-fi.office-mode.profile-page .profile-form .form-group textarea:focus,
+.si-fi.office-mode.profile-page .profile-form .profile-select:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 1px #000;
+}
+.si-fi.office-mode.profile-page .profile-editable-group {
+  border-top-color: rgba(0, 0, 0, 0.2);
+}
+.si-fi.office-mode.profile-page .profile-form .profile-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23000'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
 }
 
 .profile-title-main {
@@ -246,6 +369,26 @@ html[lang="ja"] .si-fi.profile-page {
   min-width: 200px;
 }
 
+/* Save Profile ボタン: カーソルオーバー時に背景緑・文字白 */
+.si-fi.profile-page .profile-save-button:hover {
+  background: var(--si-fi-green);
+  color: #fff;
+}
+
+/* Office Mode 時の Save Profile ボタン */
+.si-fi.office-mode.profile-page .profile-save-button {
+  background: transparent;
+  border: 1px solid #000;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.profile-page .profile-save-button:hover {
+  background: #4a4a4a;
+  border-color: #4a4a4a;
+  color: #fff;
+}
+
 /* --- Header actions: Office Mode + icons aligned to the right --- */
 .icon-button {
   border: none;
@@ -261,6 +404,15 @@ html[lang="ja"] .si-fi.profile-page {
   width: 24px;
   height: 24px;
   display: block;
+}
+
+/* ドロップダウンメニュー・歯車アイコンは Sci-Fi ではシアン、Office Mode では白 */
+.si-fi.profile-page .icon-button .icon-img {
+  filter: none;
+}
+
+.si-fi.office-mode.profile-page .icon-button .icon-img {
+  filter: brightness(0) invert(1);
 }
 
 .icon-button:focus-visible {
@@ -316,6 +468,37 @@ html[lang="ja"] .si-fi.profile-page {
 .nav-btn-text {
   font-size: 9px;
   letter-spacing: 0.08em;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+/* Office Mode: Global Menu（Annual / Monthly / Daily / Index）
+   - 装飾 SVG ボックスを外し、テキストのみ
+   - フォントは BIZ UDPGothic・文字色は黒 */
+.si-fi.office-mode.profile-page .nav-frame-btn {
+  filter: none;
+  color: #fff;
+}
+
+.si-fi.office-mode.profile-page .nav-frame-btn .btn-mode-frame-img {
+  display: none !important;
+}
+
+.si-fi.office-mode.profile-page .nav-frame-btn .btn-mode-frame {
+  max-width: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.si-fi.office-mode.profile-page .nav-btn-text {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+
+/* Office Mode: Global Menu hover でテキストをわずかに拡大してハイライト */
+.si-fi.office-mode.profile-page .nav-frame-btn:hover .nav-btn-text {
+  font-size: 10px;
 }
 
 /* --- Settings dropdown (from menu icon) --- */
