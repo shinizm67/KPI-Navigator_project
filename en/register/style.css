@@ -609,47 +609,50 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   }
 }
 
-/* --- Back to top bar（arrow_up.svg・ページ全幅・画面下部固定） --- */
-.si-fi .back-to-top-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #2B2B2B;
-  padding: 6px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 900;
-}
-
-.si-fi .back-to-top-button {
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.si-fi .back-to-top-button img {
+/* --- Footer Back to Top Button（Forge Lab と共通ルール） --- */
+.footer-backtotop {
   display: block;
-  width: 41px;
-  height: 19px;
+  width: 100%;
+  background: #242424;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  padding: 12px 0;
+  cursor: pointer;
+  text-align: center;
+  transition: background .25s ease, filter .25s ease;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-.si-fi .back-to-top-button:focus-visible {
-  outline: 2px solid var(--si-fi-cyan);
-  outline-offset: 4px;
+.footer-backtotop:hover {
+  background: #3c3c3c;
+  filter: brightness(1.03);
 }
 
-/* Office Mode: 背景も濃いグレーで arrow_up を白に */
-.si-fi.office-mode .back-to-top-bar {
-  background: #3A3A3A;
+.footer-backtotop__icon {
+  width: 22px;
+  height: auto;
+  opacity: .85;
+  transition: opacity .25s, transform .25s, filter .25s;
 }
 
-.si-fi.office-mode .back-to-top-button img {
+.footer-backtotop:hover .footer-backtotop__icon {
+  opacity: 1;
+  transform: translateY(-3px);
+}
+
+.footer-backtotop:focus-visible {
+  outline: 2px solid #0F9403;
+  outline-offset: -2px;
+}
+
+/* Office Mode: 背景を少し明るくし、矢印を白に */
+.si-fi.office-mode .footer-backtotop {
+  background: #3a3a3a;
+  border-top-color: rgba(0, 0, 0, .12);
+}
+
+.si-fi.office-mode .footer-backtotop__icon {
   filter: brightness(0) invert(1);
 }
 
@@ -670,7 +673,7 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 22px;
 }
 
 .si-fi .footer-logo .logo-link {

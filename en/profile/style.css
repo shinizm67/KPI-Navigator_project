@@ -82,6 +82,12 @@ html[lang="ja"] .si-fi.profile-page {
   white-space: nowrap;
 }
 
+/* 日本語ページ（lang="ja"）では Workspace ラベルも BIZ UDPGothic */
+html[lang="ja"] .si-fi.profile-page .profile-workspace-indicator,
+html[lang="ja"] .si-fi.profile-page .profile-workspace-label {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
 /* Workspace ポップアップ（どのアカウントでログイン中か表示・将来は複数切り替え） */
 .workspace-popup {
   position: absolute;
@@ -145,10 +151,25 @@ html[lang="ja"] .si-fi.profile-page {
 .si-fi.office-mode.profile-page .profile-main {
   color: #000;
   font-family: 'BIZ UDPGothic', sans-serif;
+  background: #fff;
 }
 .si-fi.office-mode.profile-page .profile-title-main {
   font-family: 'Orbitron', sans-serif;
   color: #000;
+}
+
+/* Office Mode: Footer は薄いグレー背景（白ロゴが埋もれないように） */
+.si-fi.office-mode.profile-page .site-footer {
+  background: #4a4a4a;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 0;
+}
+
+.si-fi.office-mode.profile-page .footer-copy {
+  color: #fff;
 }
 .si-fi.office-mode.profile-page .profile-title-sub,
 .si-fi.office-mode.profile-page .profile-form .form-group label,
@@ -159,6 +180,11 @@ html[lang="ja"] .si-fi.profile-page {
 .si-fi.office-mode.profile-page .workspace-popup-item {
   font-family: 'BIZ UDPGothic', sans-serif;
   color: #000;
+}
+
+/* 日本語ページ（Sci-Fi モード）では Workspace ドロップダウンの文字も BIZ UDPGothic */
+html[lang="ja"] .si-fi.profile-page .workspace-popup-item {
+  font-family: 'BIZ UDPGothic', sans-serif;
 }
 .si-fi.office-mode.profile-page .profile-form .form-group input,
 .si-fi.office-mode.profile-page .profile-form .form-group textarea,
@@ -316,6 +342,42 @@ html[lang="ja"] .si-fi.profile-page {
   border-top: 1px solid rgba(88, 225, 243, 0.25);
 }
 
+/* ========================================
+   Profile Fixed ページ用：タイトル右寄せ＋内容左寄せ
+   （画像のように 2 カラムで整列）
+   ======================================== */
+.profile-fixed-page .profile-readonly-group .form-group,
+.profile-fixed-page .profile-editable-group .form-group {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.profile-fixed-page .profile-readonly-group .form-group-user-id,
+.profile-fixed-page .profile-readonly-group .form-group-email-display {
+  margin-bottom: 24px;
+}
+
+.profile-fixed-page .profile-readonly-group .form-group label,
+.profile-fixed-page .profile-editable-group .form-group label {
+  flex: 0 0 180px; /* タイトル側の幅を固定 */
+  text-align: right;
+  margin: 0;
+}
+
+.profile-fixed-page .profile-user-id-value,
+.profile-fixed-page .profile-email-value,
+.profile-fixed-page .profile-fixed-value {
+  flex: 1 1 auto;
+  margin: 0;
+  padding-left: 24px; /* タイトルと内容の間のスペース */
+  text-align: left;
+}
+
+.profile-fixed-page .profile-fixed-multiline {
+  white-space: pre-wrap;
+}
+
 /* Select を input と同じ見た目に（フォントは Orbitron） */
 .si-fi.profile-page .profile-form .profile-select {
   width: 100%;
@@ -335,6 +397,11 @@ html[lang="ja"] .si-fi.profile-page {
   background-repeat: no-repeat;
   background-position: right 14px center;
   transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+/* 日本語ページ（lang="ja"）では Select のフォントも BIZ UDPGothic */
+html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
+  font-family: 'BIZ UDPGothic', sans-serif;
 }
 .si-fi.profile-page .profile-form .profile-select:focus {
   border-color: var(--si-fi-cyan);
@@ -387,6 +454,69 @@ html[lang="ja"] .si-fi.profile-page {
   background: #4a4a4a;
   border-color: #4a4a4a;
   color: #fff;
+}
+
+/* ========================================
+   Footer Back to Top Button（Forge Lab と同じ見た目）
+   ======================================== */
+.si-fi.profile-page .footer-backtotop {
+  display: block;
+  width: 100vw;
+  background: #242424;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  padding: 12px 0;
+  cursor: pointer;
+  text-align: center;
+  transition: background .25s ease, filter .25s ease;
+  /* ビューポート全幅に広げつつ中央揃え（Global Menu と同じ感覚で） */
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0 0 30px;
+  box-sizing: border-box;
+}
+
+.si-fi.profile-page .footer-backtotop:hover {
+  background: #3c3c3c;
+  filter: brightness(1.03);
+}
+
+.si-fi.profile-page .footer-backtotop__icon {
+  width: 22px;
+  height: auto;
+  opacity: .85;
+  transition: opacity .25s, transform .25s, filter .25s;
+}
+
+.si-fi.profile-page .footer-backtotop:hover .footer-backtotop__icon {
+  opacity: 1;
+  transform: translateY(-3px);
+}
+
+.si-fi.profile-page .footer-backtotop:focus-visible {
+  outline: 2px solid #0F9403;
+  outline-offset: -2px;
+}
+
+/* Office Mode: 背景は濃いグレー、矢印は白 */
+.si-fi.office-mode.profile-page .footer-backtotop {
+  background: #3a3a3a;
+  border-top-color: rgba(0, 0, 0, .12);
+}
+
+.si-fi.office-mode.profile-page .footer-backtotop__icon {
+  filter: brightness(0) invert(1);
+}
+
+/* Profile ページではフッターの細い線は非表示（Back to Top バーが境界を兼ねる） */
+.si-fi.profile-page .footer-separator {
+  display: none;
+}
+
+/* Profile のフッター下にも余白を少し増やす */
+.si-fi.profile-page .footer-copy {
+  margin-bottom: 30px;
 }
 
 /* --- Header actions: Office Mode + icons aligned to the right --- */
