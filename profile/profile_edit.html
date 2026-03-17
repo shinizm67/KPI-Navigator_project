@@ -1,75 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=profile.html">
-  <title>Profile | KPI Navigator</title>
-  <script>
-    // Fallback JavaScript redirect
-    (function () {
-      try {
-        window.location.replace('profile.html');
-      } catch (e) {
-        window.location.href = 'profile.html';
-      }
-    })();
-  </script>
-</head>
-<body>
-  <p>If you are not redirected automatically, <a href="profile.html">click here</a>.</p>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile | KPI Navigator | FORGE LABORATORY</title>
+  <title>プロフィール | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../register/style.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../register/style.css">
+  <link rel="stylesheet" href="../en/profile/style.css">
 </head>
 <body class="si-fi profile-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
-        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
-          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
-      <nav class="global-nav" aria-label="Main navigation">
+      <nav class="global-nav" aria-label="メインナビゲーション">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Annual view">
+            <a href="#" class="nav-frame-btn" aria-label="年間ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Annual</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Monthly view">
+            <a href="#" class="nav-frame-btn" aria-label="月間ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Monthly</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Daily view">
+            <a href="#" class="nav-frame-btn" aria-label="日別ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Daily</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Index view">
+            <a href="#" class="nav-frame-btn" aria-label="インデックスビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Index</span>
               </span>
             </a>
@@ -77,51 +55,51 @@
         </ul>
       </nav>
       <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
           <span class="btn-mode-frame">
-            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
-          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
+          <img src="../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
-          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+          <img src="../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
-      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
         <h3 class="account-settings-popup-title">Account Settings</h3>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
-            <a href="profile_fixed.html" class="account-settings-item is-current" role="menuitem">Profile</a>
-            <a href="#" class="account-settings-item" role="menuitem">Change Email</a>
-            <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
-            <a href="#" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="profile.html" class="account-settings-item is-current" role="menuitem">Profile</a>
+            <a href="#" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
+            <a href="#" class="account-settings-item" role="menuitem">パスワードの変更</a>
+            <a href="#" class="account-settings-item" role="menuitem">セッション管理</a>
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
-            <a href="#" class="account-settings-item" role="menuitem">Plan Details</a>
-            <a href="#" class="account-settings-item" role="menuitem">Change Plan</a>
+            <a href="#" class="account-settings-item" role="menuitem">プラン詳細</a>
+            <a href="#" class="account-settings-item" role="menuitem">プラン変更</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="#" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
+        <a href="#" class="account-settings-item account-settings-item-danger" role="menuitem">アカウント削除</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text">Expense</span>
             </span>
           </a>
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
             </span>
           </a>
@@ -133,13 +111,13 @@
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
       <div class="workspace-selector-wrap">
-        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
           <span class="profile-workspace-label">Workspace : Personal</span>
         </button>
-        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
           <div class="workspace-popup-inner">
             <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
@@ -161,80 +139,80 @@
         </div>
 
         <div class="profile-editable-group">
-        <div class="form-group">
-          <label for="profile-business-name">Business Name :</label>
-          <input type="text" id="profile-business-name" name="business_name" autocomplete="organization">
-        </div>
+          <div class="form-group">
+            <label for="profile-business-name">屋号 / サービス名 :</label>
+            <input type="text" id="profile-business-name" name="business_name" autocomplete="organization">
+          </div>
 
-        <div class="form-group">
-          <label for="profile-company">Company Name :</label>
-          <input type="text" id="profile-company" name="company" autocomplete="organization">
-        </div>
+          <div class="form-group">
+            <label for="profile-company">会社名 :</label>
+            <input type="text" id="profile-company" name="company" autocomplete="organization">
+          </div>
 
-        <div class="form-group">
-          <label for="profile-industry">Industry :</label>
-          <select id="profile-industry" name="industry" class="profile-select" aria-label="Select industry">
-            <option value="">— Select —</option>
-            <option value="restaurant">Restaurant</option>
-            <option value="wear_shop">Wear Shop</option>
-            <option value="retail">Retail</option>
-            <option value="cafe">Cafe</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="profile-industry">業種 :</label>
+            <select id="profile-industry" name="industry" class="profile-select" aria-label="業種を選択">
+              <option value="">— Select —</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="wear_shop">Wear Shop</option>
+              <option value="retail">Retail</option>
+              <option value="cafe">Cafe</option>
+            </select>
+          </div>
 
-        <div class="form-group form-group-genre">
-          <label for="profile-genre">Genre :</label>
-          <select id="profile-genre" name="genre" class="profile-select" aria-label="Select genre" disabled>
-            <option value="">— Select Industry first —</option>
-          </select>
-        </div>
+          <div class="form-group form-group-genre">
+            <label for="profile-genre">ジャンル :</label>
+            <select id="profile-genre" name="genre" class="profile-select" aria-label="ジャンルを選択" disabled>
+              <option value="">— Select Industry first —</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="profile-country">Country :</label>
-          <select id="profile-country" name="country" class="profile-select" aria-label="Select country">
-            <option value="">— Select —</option>
-            <option value="JP">JP</option>
-            <option value="US">US</option>
-            <option value="UK">UK</option>
-            <option value="DE">DE</option>
-            <option value="FR">FR</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="profile-country">国 :</label>
+            <select id="profile-country" name="country" class="profile-select" aria-label="国を選択">
+              <option value="">— Select —</option>
+              <option value="JP">JP</option>
+              <option value="US">US</option>
+              <option value="UK">UK</option>
+              <option value="DE">DE</option>
+              <option value="FR">FR</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="profile-state">State / Prefecture :</label>
-          <select id="profile-state" name="state" class="profile-select" aria-label="Select state or prefecture" disabled>
-            <option value="">— Select Country first —</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="profile-state">都道府県 / 州 :</label>
+            <select id="profile-state" name="state" class="profile-select" aria-label="都道府県・州を選択" disabled>
+              <option value="">— Select Country first —</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="profile-city">City :</label>
-          <select id="profile-city" name="city" class="profile-select" aria-label="Select city" disabled>
-            <option value="">— Select State first —</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="profile-city">市区町村 :</label>
+            <select id="profile-city" name="city" class="profile-select" aria-label="市区町村を選択" disabled>
+              <option value="">— Select State first —</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="profile-currency">Currency :</label>
-          <select id="profile-currency" name="currency" class="profile-select" aria-label="Select currency">
-            <option value="">— Select —</option>
-            <option value="JPY">JPY</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label for="profile-currency">通貨 :</label>
+            <select id="profile-currency" name="currency" class="profile-select" aria-label="通貨を選択">
+              <option value="">— Select —</option>
+              <option value="JPY">JPY</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="profile-timezone">Time Zone :</label>
-          <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="Auto-filled from State / City" aria-label="Time zone (auto-filled)">
-        </div>
+          <div class="form-group">
+            <label for="profile-timezone">タイムゾーン :</label>
+            <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="都道府県 / 市区町村から自動入力" aria-label="タイムゾーン（自動入力）">
+          </div>
 
-        <div class="form-group form-group-textarea">
-          <label for="profile-kpi-focus">Main KPIs / Goals :</label>
-          <textarea id="profile-kpi-focus" name="kpi_focus" rows="4" placeholder="Describe the KPIs you want to focus on."></textarea>
-        </div>
+          <div class="form-group form-group-textarea">
+            <label for="profile-kpi-focus">主なKPI / 目標 :</label>
+            <textarea id="profile-kpi-focus" name="kpi_focus" rows="4" placeholder="フォーカスしたいKPIや目標を記載してください。"></textarea>
+          </div>
         </div>
 
         <div class="form-actions profile-actions">
@@ -245,28 +223,27 @@
   </div>
 
   <footer class="site-footer">
-    <!-- Save Profile のすぐ下、Footer 内の先頭に Back to Top バー -->
     <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
-      <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
+      <img src="../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
     </button>
     <div class="footer-separator"></div>
     <div class="footer-logo">
-      <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
-        <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+        <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="../../profile/index.html">
-    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
-      <span class="lang-code" aria-hidden="true">EN</span>
-      <span class="lang-name">English</span>
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../en/profile/profile_edit.html" data-url-ja="profile_edit.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
       <span class="lang-chevron" aria-hidden="true"></span>
     </button>
-    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
-      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
-      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
     </div>
   </div>
 
@@ -281,7 +258,7 @@
         if (!btnModeText || !btnModeToggle) return;
         var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
-        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi Mode に切り替え' : 'Office Mode に切り替え');
         if (settingsOfficeLabel) {
           settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
         }
@@ -357,27 +334,6 @@
       });
     })();
     (function () {
-      var trigger = document.getElementById('workspace-trigger');
-      var popup = document.getElementById('workspace-popup');
-      if (!trigger || !popup) return;
-
-      trigger.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var isOpen = !popup.hidden;
-        popup.hidden = isOpen;
-        trigger.setAttribute('aria-expanded', !isOpen);
-      });
-
-      popup.addEventListener('click', function (e) {
-        e.stopPropagation();
-      });
-
-      document.addEventListener('click', function () {
-        popup.hidden = true;
-        trigger.setAttribute('aria-expanded', 'false');
-      });
-    })();
-    (function () {
       var form = document.getElementById('profile-form');
       if (!form) return;
       var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
@@ -429,7 +385,28 @@
           return;
         }
 
-        window.location.href = 'profile_fixed.html';
+        window.location.href = 'profile.html';
+      });
+    })();
+    (function () {
+      var trigger = document.getElementById('workspace-trigger');
+      var popup = document.getElementById('workspace-popup');
+      if (!trigger || !popup) return;
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !popup.hidden;
+        popup.hidden = isOpen;
+        trigger.setAttribute('aria-expanded', !isOpen);
+      });
+
+      popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
       });
     })();
     (function () {
@@ -493,7 +470,6 @@
 
       function fillSelect(sel, options, defaultLabel) {
         if (!sel) return;
-        var first = sel.options[0];
         sel.innerHTML = '';
         if (defaultLabel) {
           var opt = document.createElement('option');

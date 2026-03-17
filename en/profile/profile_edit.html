@@ -2,28 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=profile.html">
-  <title>Profile | KPI Navigator</title>
-  <script>
-    // Fallback JavaScript redirect
-    (function () {
-      try {
-        window.location.replace('profile.html');
-      } catch (e) {
-        window.location.href = 'profile.html';
-      }
-    })();
-  </script>
-</head>
-<body>
-  <p>If you are not redirected automatically, <a href="profile.html">click here</a>.</p>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,7 +73,7 @@
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
-            <a href="profile_fixed.html" class="account-settings-item is-current" role="menuitem">Profile</a>
+            <a href="profile.html" class="account-settings-item is-current" role="menuitem">Profile</a>
             <a href="#" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="#" class="account-settings-item" role="menuitem">Session Management</a>
@@ -258,7 +236,7 @@
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="../../profile/index.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="profile_edit.html" data-url-ja="../../profile/profile_edit.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -429,7 +407,7 @@
           return;
         }
 
-        window.location.href = 'profile_fixed.html';
+        window.location.href = 'profile.html';
       });
     })();
     (function () {

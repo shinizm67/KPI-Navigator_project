@@ -2,37 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=profile.html">
-  <title>Profile | KPI Navigator</title>
-  <script>
-    // Fallback JavaScript redirect
-    (function () {
-      try {
-        window.location.replace('profile.html');
-      } catch (e) {
-        window.location.href = 'profile.html';
-      }
-    })();
-  </script>
-</head>
-<body>
-  <p>If you are not redirected automatically, <a href="profile.html">click here</a>.</p>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile | KPI Navigator | FORGE LABORATORY</title>
+  <title>Profile (Fixed) | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="si-fi profile-page" id="body-el">
+<body class="si-fi profile-page profile-fixed-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -95,7 +73,7 @@
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
-            <a href="profile_fixed.html" class="account-settings-item is-current" role="menuitem">Profile</a>
+            <a href="profile.html" class="account-settings-item is-current" role="menuitem">Profile</a>
             <a href="#" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="#" class="account-settings-item" role="menuitem">Session Management</a>
@@ -148,104 +126,76 @@
       <h1 class="profile-title-main">KPI Navigator</h1>
       <h2 class="profile-title-sub">Profile</h2>
 
-      <form class="registration-form profile-form" action="#" method="post" id="profile-form">
-        <div class="profile-readonly-group">
-          <div class="form-group form-group-user-id">
-            <label>User ID :</label>
-            <p class="profile-user-id-value" id="profile-user-id" aria-live="polite">KPI-000000</p>
-          </div>
-          <div class="form-group form-group-email-display">
-            <label>Email Address :</label>
-            <p class="profile-email-value" id="profile-email-display" aria-live="polite">s.matsushita@forge-laboratory.com</p>
-          </div>
+      <div class="profile-readonly-group">
+        <div class="form-group form-group-user-id">
+          <label>User ID :</label>
+          <p class="profile-user-id-value" id="fixed-user-id" aria-live="polite">KPI-000000</p>
         </div>
-
-        <div class="profile-editable-group">
-        <div class="form-group">
-          <label for="profile-business-name">Business Name :</label>
-          <input type="text" id="profile-business-name" name="business_name" autocomplete="organization">
+        <div class="form-group form-group-email-display">
+          <label>Email Address :</label>
+          <p class="profile-email-value" id="fixed-email" aria-live="polite">s.matsushita@forge-laboratory.com</p>
         </div>
+      </div>
 
+      <div class="profile-editable-group">
         <div class="form-group">
-          <label for="profile-company">Company Name :</label>
-          <input type="text" id="profile-company" name="company" autocomplete="organization">
+          <label>Business Name :</label>
+          <p class="profile-fixed-value" id="fixed-business-name">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-industry">Industry :</label>
-          <select id="profile-industry" name="industry" class="profile-select" aria-label="Select industry">
-            <option value="">— Select —</option>
-            <option value="restaurant">Restaurant</option>
-            <option value="wear_shop">Wear Shop</option>
-            <option value="retail">Retail</option>
-            <option value="cafe">Cafe</option>
-          </select>
+          <label>Company Name :</label>
+          <p class="profile-fixed-value" id="fixed-company">—</p>
+        </div>
+
+        <div class="form-group">
+          <label>Industry :</label>
+          <p class="profile-fixed-value" id="fixed-industry">—</p>
         </div>
 
         <div class="form-group form-group-genre">
-          <label for="profile-genre">Genre :</label>
-          <select id="profile-genre" name="genre" class="profile-select" aria-label="Select genre" disabled>
-            <option value="">— Select Industry first —</option>
-          </select>
+          <label>Genre :</label>
+          <p class="profile-fixed-value" id="fixed-genre">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-country">Country :</label>
-          <select id="profile-country" name="country" class="profile-select" aria-label="Select country">
-            <option value="">— Select —</option>
-            <option value="JP">JP</option>
-            <option value="US">US</option>
-            <option value="UK">UK</option>
-            <option value="DE">DE</option>
-            <option value="FR">FR</option>
-          </select>
+          <label>Country :</label>
+          <p class="profile-fixed-value" id="fixed-country">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-state">State / Prefecture :</label>
-          <select id="profile-state" name="state" class="profile-select" aria-label="Select state or prefecture" disabled>
-            <option value="">— Select Country first —</option>
-          </select>
+          <label>State / Prefecture :</label>
+          <p class="profile-fixed-value" id="fixed-state">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-city">City :</label>
-          <select id="profile-city" name="city" class="profile-select" aria-label="Select city" disabled>
-            <option value="">— Select State first —</option>
-          </select>
+          <label>City :</label>
+          <p class="profile-fixed-value" id="fixed-city">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-currency">Currency :</label>
-          <select id="profile-currency" name="currency" class="profile-select" aria-label="Select currency">
-            <option value="">— Select —</option>
-            <option value="JPY">JPY</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-          </select>
+          <label>Currency :</label>
+          <p class="profile-fixed-value" id="fixed-currency">—</p>
         </div>
 
         <div class="form-group">
-          <label for="profile-timezone">Time Zone :</label>
-          <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="Auto-filled from State / City" aria-label="Time zone (auto-filled)">
+          <label>Time Zone :</label>
+          <p class="profile-fixed-value" id="fixed-timezone">—</p>
         </div>
 
         <div class="form-group form-group-textarea">
-          <label for="profile-kpi-focus">Main KPIs / Goals :</label>
-          <textarea id="profile-kpi-focus" name="kpi_focus" rows="4" placeholder="Describe the KPIs you want to focus on."></textarea>
+          <label>Main KPIs / Goals :</label>
+          <p class="profile-fixed-value profile-fixed-multiline" id="fixed-kpi-focus">—</p>
         </div>
-        </div>
+      </div>
 
-        <div class="form-actions profile-actions">
-          <button type="submit" class="btn-submit btn-register profile-save-button">Save Profile</button>
-        </div>
-      </form>
+      <div class="form-actions profile-actions">
+        <a href="profile_edit.html" class="btn-submit btn-register profile-save-button">Edit</a>
+      </div>
     </main>
   </div>
 
   <footer class="site-footer">
-    <!-- Save Profile のすぐ下、Footer 内の先頭に Back to Top バー -->
     <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
       <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
     </button>
@@ -258,7 +208,7 @@
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="../../profile/index.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="profile.html" data-url-ja="../../profile/profile.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -378,177 +328,6 @@
       });
     })();
     (function () {
-      var form = document.getElementById('profile-form');
-      if (!form) return;
-      var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        var userIdEl = document.getElementById('profile-user-id');
-        var emailEl = document.getElementById('profile-email-display');
-        var businessNameEl = document.getElementById('profile-business-name');
-        var companyEl = document.getElementById('profile-company');
-        var industryEl = document.getElementById('profile-industry');
-        var genreEl = document.getElementById('profile-genre');
-        var countryEl = document.getElementById('profile-country');
-        var stateEl = document.getElementById('profile-state');
-        var cityEl = document.getElementById('profile-city');
-        var currencyEl = document.getElementById('profile-currency');
-        var timezoneEl = document.getElementById('profile-timezone');
-        var kpiFocusEl = document.getElementById('profile-kpi-focus');
-
-        function getSelectText(sel) {
-          if (!sel) return '';
-          var opt = sel.options[sel.selectedIndex];
-          return opt ? opt.textContent : '';
-        }
-
-        var data = {
-          userId: userIdEl ? userIdEl.textContent.trim() : '',
-          email: emailEl ? emailEl.textContent.trim() : '',
-          businessName: businessNameEl ? businessNameEl.value : '',
-          company: companyEl ? companyEl.value : '',
-          industry: getSelectText(industryEl),
-          genre: getSelectText(genreEl),
-          country: getSelectText(countryEl),
-          state: getSelectText(stateEl),
-          city: getSelectText(cityEl),
-          currency: getSelectText(currencyEl),
-          timezone: timezoneEl ? timezoneEl.value : '',
-          kpiFocus: kpiFocusEl ? kpiFocusEl.value : ''
-        };
-
-        try {
-          // 直後に表示する確認ページ用（一時）と、今後の閲覧用（永続）の両方に保存
-          sessionStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
-          localStorage.setItem('kpi-profile-last', JSON.stringify(data));
-          // プロフィール編集済みフラグ（ナビゲーション用）
-          localStorage.setItem('kpi-profile-edited', '1');
-        } catch (err) {
-          return;
-        }
-
-        window.location.href = 'profile_fixed.html';
-      });
-    })();
-    (function () {
-      var industrySelect = document.getElementById('profile-industry');
-      var genreSelect = document.getElementById('profile-genre');
-      var countrySelect = document.getElementById('profile-country');
-      var stateSelect = document.getElementById('profile-state');
-      var citySelect = document.getElementById('profile-city');
-      var timezoneInput = document.getElementById('profile-timezone');
-
-      var genresByIndustry = {
-        restaurant: [{ v: 'italian', l: 'Italian' }, { v: 'french', l: 'French' }, { v: 'indian', l: 'Indian' }, { v: 'thai', l: 'Thai' }, { v: 'spain', l: 'Spain' }, { v: 'japanese', l: 'Japanese' }],
-        wear_shop: [{ v: 'mens', l: "Men's" }, { v: 'womens', l: "Women's" }, { v: 'unisex', l: 'Unisex' }],
-        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }],
-        cafe: [{ v: 'coffee', l: 'Coffee' }, { v: 'tea', l: 'Tea' }]
-      };
-
-      var statesByCountry = {
-        JP: [{ v: 'tokyo', l: 'Tokyo' }, { v: 'osaka', l: 'Osaka' }, { v: 'kyoto', l: 'Kyoto' }, { v: 'fukuoka', l: 'Fukuoka' }],
-        US: [{ v: 'ca', l: 'California' }, { v: 'ny', l: 'New York' }, { v: 'tx', l: 'Texas' }, { v: 'wa', l: 'Washington' }],
-        UK: [{ v: 'england', l: 'England' }, { v: 'scotland', l: 'Scotland' }, { v: 'wales', l: 'Wales' }],
-        DE: [{ v: 'by', l: 'Bavaria' }, { v: 'nw', l: 'North Rhine-Westphalia' }],
-        FR: [{ v: 'idf', l: 'Île-de-France' }, { v: 'paca', l: 'Provence-Alpes-Côte d\'Azur' }]
-      };
-
-      var citiesByState = {
-        tokyo: [{ v: 'tokyo_city', l: 'Tokyo' }, { v: 'yokohama', l: 'Yokohama' }],
-        osaka: [{ v: 'osaka_city', l: 'Osaka' }, { v: 'kobe', l: 'Kobe' }],
-        kyoto: [{ v: 'kyoto_city', l: 'Kyoto' }],
-        fukuoka: [{ v: 'fukuoka_city', l: 'Fukuoka' }],
-        ca: [{ v: 'los_angeles', l: 'Los Angeles' }, { v: 'san_francisco', l: 'San Francisco' }],
-        ny: [{ v: 'new_york', l: 'New York City' }, { v: 'buffalo', l: 'Buffalo' }],
-        tx: [{ v: 'houston', l: 'Houston' }, { v: 'dallas', l: 'Dallas' }],
-        wa: [{ v: 'seattle', l: 'Seattle' }],
-        england: [{ v: 'london', l: 'London' }, { v: 'manchester', l: 'Manchester' }],
-        scotland: [{ v: 'edinburgh', l: 'Edinburgh' }, { v: 'glasgow', l: 'Glasgow' }],
-        wales: [{ v: 'cardiff', l: 'Cardiff' }],
-        by: [{ v: 'munich', l: 'Munich' }],
-        nw: [{ v: 'cologne', l: 'Cologne' }, { v: 'dusseldorf', l: 'Düsseldorf' }],
-        idf: [{ v: 'paris', l: 'Paris' }],
-        paca: [{ v: 'marseille', l: 'Marseille' }, { v: 'nice', l: 'Nice' }]
-      };
-
-      var timezoneByState = {
-        tokyo: 'Asia/Tokyo (JST, UTC+9)',
-        osaka: 'Asia/Tokyo (JST, UTC+9)',
-        kyoto: 'Asia/Tokyo (JST, UTC+9)',
-        fukuoka: 'Asia/Tokyo (JST, UTC+9)',
-        ca: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
-        ny: 'America/New_York (EST/EDT, UTC-5/-4)',
-        tx: 'America/Chicago (CST/CDT, UTC-6/-5)',
-        wa: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
-        england: 'Europe/London (GMT/BST, UTC+0/+1)',
-        scotland: 'Europe/London (GMT/BST, UTC+0/+1)',
-        wales: 'Europe/London (GMT/BST, UTC+0/+1)',
-        by: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
-        nw: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
-        idf: 'Europe/Paris (CET/CEST, UTC+1/+2)',
-        paca: 'Europe/Paris (CET/CEST, UTC+1/+2)'
-      };
-
-      function fillSelect(sel, options, defaultLabel) {
-        if (!sel) return;
-        var first = sel.options[0];
-        sel.innerHTML = '';
-        if (defaultLabel) {
-          var opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = defaultLabel;
-          sel.appendChild(opt);
-        }
-        (options || []).forEach(function (o) {
-          var opt = document.createElement('option');
-          opt.value = o.v;
-          opt.textContent = o.l;
-          sel.appendChild(opt);
-        });
-      }
-
-      if (industrySelect && genreSelect) {
-        industrySelect.addEventListener('change', function () {
-          var v = industrySelect.value;
-          genreSelect.disabled = !v;
-          fillSelect(genreSelect, genresByIndustry[v], '— Select —');
-        });
-      }
-
-      if (countrySelect && stateSelect) {
-        countrySelect.addEventListener('change', function () {
-          var v = countrySelect.value;
-          stateSelect.disabled = !v;
-          citySelect.disabled = true;
-          fillSelect(citySelect, [], '— Select State first —');
-          fillSelect(stateSelect, statesByCountry[v], '— Select —');
-          if (timezoneInput) timezoneInput.value = '';
-        });
-      }
-
-      if (stateSelect && citySelect) {
-        stateSelect.addEventListener('change', function () {
-          var v = stateSelect.value;
-          citySelect.disabled = !v;
-          fillSelect(citySelect, citiesByState[v] || [], '— Select —');
-          if (timezoneInput && timezoneByState[v]) timezoneInput.value = timezoneByState[v];
-          else if (timezoneInput && !v) timezoneInput.value = '';
-        });
-      }
-
-      if (citySelect && timezoneInput) {
-        citySelect.addEventListener('change', function () {
-          if (stateSelect && stateSelect.value && timezoneByState[stateSelect.value]) return;
-          if (timezoneInput && !timezoneInput.value && citySelect.value) {
-            var stateVal = stateSelect && stateSelect.value;
-            if (stateVal && timezoneByState[stateVal]) timezoneInput.value = timezoneByState[stateVal];
-          }
-        });
-      }
-    })();
-    (function () {
       var langBtn = document.getElementById('lang-select-btn');
       var langDropdown = document.getElementById('lang-select-dropdown');
       var langOptions = document.querySelectorAll('.lang-option');
@@ -589,6 +368,45 @@
       backTop.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    })();
+    (function () {
+      var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
+      var raw = sessionStorage.getItem(STORAGE_KEY_PROFILE);
+      // まずは直前の編集結果（sessionStorage）を優先し、それが無ければ最後に保存した内容（localStorage）を使う
+      if (!raw) {
+        raw = localStorage.getItem('kpi-profile-last');
+      }
+      if (!raw) {
+        window.location.replace('index.html');
+        return;
+      }
+      var data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        window.location.replace('index.html');
+        return;
+      }
+      function setText(id, value, fallback) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var v = (value || '').trim();
+        el.textContent = v || (fallback || '—');
+      }
+      setText('fixed-user-id', data.userId, 'KPI-000000');
+      setText('fixed-email', data.email, 's.matsushita@forge-laboratory.com');
+      setText('fixed-business-name', data.businessName);
+      setText('fixed-company', data.company);
+      setText('fixed-industry', data.industry);
+      setText('fixed-genre', data.genre);
+      setText('fixed-country', data.country);
+      setText('fixed-state', data.state);
+      setText('fixed-city', data.city);
+      setText('fixed-currency', data.currency);
+      setText('fixed-timezone', data.timezone);
+      setText('fixed-kpi-focus', data.kpiFocus);
+      // 直前の一時データは読み込み後に削除（localStorage 側は保持）
+      sessionStorage.removeItem(STORAGE_KEY_PROFILE);
     })();
   </script>
 </body>
