@@ -271,6 +271,14 @@ html[lang="ja"] .si-fi.profile-page .workspace-popup-item {
   margin-bottom: 24px;
 }
 
+/* NOTE:
+   `.si-fi.profile-page .profile-form .form-group label` has higher specificity,
+   so if we want consistent spacing across pages, we must override with equal/higher specificity.
+   Change Email pages follow the same spacing as Profile Edit (18px label gap). */
+.si-fi.profile-page.email-change-page .profile-form .profile-editable-group .form-group label {
+  margin-bottom: 18px;
+}
+
 .si-fi.profile-page .profile-form .form-group input,
 .si-fi.profile-page .profile-form .form-group textarea {
   width: 100%;
@@ -378,6 +386,96 @@ html[lang="ja"] .si-fi.profile-page .workspace-popup-item {
   white-space: pre-wrap;
 }
 
+/* ========================================
+   Change Email (view) page tweaks
+   - bigger typography
+   - centered vertical alignment
+   - wider gap between label and value (+20px)
+   ======================================== */
+.email-change-page.profile-fixed-page .profile-readonly-group .form-group {
+  align-items: center; /* avoid baseline/line-height visual offset */
+}
+
+.email-change-page.profile-fixed-page .profile-readonly-group .form-group label {
+  flex-basis: 260px; /* widen to avoid wrapping */
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap; /* keep trailing ':' on same line */
+}
+
+.email-change-page.profile-fixed-page .profile-email-value {
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: 44px; /* default 24px + 20px */
+}
+
+.email-change-page.profile-fixed-page .profile-readonly-group {
+  margin-top: 30px;
+}
+
+/* ========================================
+   Change Password (view) page tweaks
+   - bigger typography
+   - centered vertical alignment
+   - spacing similar to Change Email view
+   ======================================== */
+.password-change-page.profile-fixed-page .profile-readonly-group {
+  margin-top: 30px;
+}
+
+.password-change-page.profile-fixed-page .profile-readonly-group .form-group {
+  align-items: center;
+}
+
+.password-change-page.profile-fixed-page .profile-readonly-group .form-group label {
+  flex-basis: 260px;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.password-change-page.profile-fixed-page .profile-readonly-group .profile-email-value {
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: 44px;
+}
+
+/* Change Email (edit) page: make Current Email row match view page */
+.email-change-page .email-change-current-wrap {
+  margin-top: 30px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.email-change-page .email-change-current-row {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 auto 18px;
+  gap: 44px; /* keep a generous spacing between label and email */
+  transform: translateX(-30px); /* optical centering tweak */
+}
+
+/* Increase specificity to beat `.si-fi.profile-page .profile-form .form-group label` */
+.si-fi.profile-page.email-change-page .profile-form .email-change-current-row label {
+  flex: 0 0 auto;
+  text-align: left;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.si-fi.profile-page.email-change-page .profile-form .email-change-current-row .profile-email-value {
+  flex: 0 0 auto;
+  margin: 0;
+  text-align: left;
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: 0;
+  white-space: nowrap; /* keep email on one line like the view page */
+}
+
 /* Select を input と同じ見た目に（フォントは Orbitron） */
 .si-fi.profile-page .profile-form .profile-select {
   width: 100%;
@@ -434,6 +532,79 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
 
 .profile-save-button {
   min-width: 200px;
+}
+
+/* ========================================
+   Form validation / alerts (Profile family)
+   ======================================== */
+.form-error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ff6b6b;
+  letter-spacing: 0.02em;
+}
+
+.input-password-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.si-fi.profile-page .profile-form .input-password-wrap input {
+  padding-right: 46px; /* space for the eye icon */
+}
+
+.btn-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 6px;
+  color: var(--si-fi-cyan);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
+
+.btn-password-toggle:hover {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(88, 225, 243, 0.35));
+}
+
+.btn-password-toggle:focus-visible {
+  outline: 2px solid var(--si-fi-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.si-fi.office-mode.profile-page .btn-password-toggle {
+  color: #000;
+  filter: none;
+}
+
+.profile-alert {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 0 22px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 255, 136, 0.55);
+  border-radius: 4px;
+  background: rgba(0, 255, 136, 0.08);
+  color: var(--si-fi-cyan);
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.si-fi.office-mode.profile-page .profile-alert {
+  border-color: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.06);
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
 }
 
 /* Save Profile ボタン: カーソルオーバー時に背景緑・文字白 */
@@ -601,6 +772,11 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
+/* Sci-Fi (EN): Global Menu texts use Orbitron */
+html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
+  font-family: 'Orbitron', sans-serif;
+}
+
 /* Office Mode: Global Menu（Annual / Monthly / Daily / Index）
    - 装飾 SVG ボックスを外し、テキストのみ
    - フォントは BIZ UDPGothic・文字色は黒 */
@@ -629,6 +805,46 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
 /* Office Mode: Global Menu hover でテキストをわずかに拡大してハイライト */
 .si-fi.office-mode.profile-page .nav-frame-btn:hover .nav-btn-text {
   font-size: 10px;
+}
+
+/* Office Mode: right-side dropdowns unify to black border + light gray bg + black text */
+.si-fi.office-mode.profile-page .settings-dropdown-inner {
+  border: 1px solid #000;
+  background: #e8e8e8;
+}
+
+.si-fi.office-mode.profile-page .settings-dropdown-item,
+.si-fi.office-mode.profile-page .settings-dropdown-item .nav-btn-text {
+  color: #000;
+}
+
+.si-fi.office-mode.profile-page .settings-dropdown-item .btn-mode-frame-img {
+  display: none !important;
+}
+
+.si-fi.office-mode.profile-page .settings-dropdown-item .btn-mode-frame {
+  max-width: none;
+}
+
+.si-fi.office-mode.profile-page .account-settings-popup {
+  background: #e8e8e8;
+  border: 1px solid #000;
+  color: #000;
+}
+
+.si-fi.office-mode.profile-page .account-settings-popup-title,
+.si-fi.office-mode.profile-page .account-settings-heading,
+.si-fi.office-mode.profile-page .account-settings-item,
+.si-fi.office-mode.profile-page .account-settings-item-danger {
+  color: #000;
+}
+
+.si-fi.office-mode.profile-page .account-settings-heading {
+  border-bottom-color: rgba(0, 0, 0, 0.35);
+}
+
+.si-fi.office-mode.profile-page .account-settings-sep {
+  background: rgba(0, 0, 0, 0.35);
 }
 
 /* --- Settings dropdown (from menu icon) --- */
@@ -766,5 +982,110 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   .profile-wrap {
     padding: 0 16px;
   }
+}
+
+/* ========================================
+   Defensive Protocol page
+   ======================================== */
+.defensive-protocol-page .profile-main {
+  align-items: center;
+}
+
+.defense-card {
+  width: 100%;
+  max-width: 760px;
+  border: 1px solid rgba(0, 255, 136, 0.45);
+  padding: 56px 48px 42px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.defense-title {
+  margin: 0 0 44px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--si-fi-cyan);
+}
+
+.defense-text {
+  margin: 0 0 16px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--si-fi-cyan);
+}
+
+.defense-actions {
+  margin: 58px 0 52px;
+}
+
+.defense-btn-main,
+.defense-btn-sub {
+  min-width: 220px;
+}
+
+.defense-help {
+  margin: 0;
+}
+
+.defense-link {
+  color: var(--si-fi-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.defense-actions-bottom {
+  width: 100%;
+  max-width: 760px;
+  margin-top: 72px;
+  text-align: right;
+}
+
+.defensive-protocol-page .profile-alert {
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .defense-card {
+    padding: 38px 24px 30px;
+  }
+  .defense-title {
+    font-size: 22px;
+    margin-bottom: 32px;
+  }
+  .defense-text {
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   Session Management (Coming soon)
+   ======================================== */
+.session-management-page .coming-soon-panel {
+  width: 100%;
+  max-width: 760px;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  margin-top: 14px;
+}
+
+.session-management-page .coming-soon-text {
+  margin: 0;
+  font-size: 36px;
+  letter-spacing: 0.05em;
+  color: var(--si-fi-cyan);
+  text-align: center;
+}
+
+.si-fi.office-mode.session-management-page .coming-soon-panel {
+  border: none;
+}
+
+.si-fi.office-mode.session-management-page .coming-soon-text {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
 }
 

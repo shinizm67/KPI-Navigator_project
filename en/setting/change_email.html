@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Change Email Address | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="si-fi profile-page profile-fixed-page email-change-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <nav class="global-nav" aria-label="Main navigation">
+        <ul class="global-nav-list">
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Annual view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Annual</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Monthly view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Monthly</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Daily view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Daily</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Index view">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Index</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
+          <span class="btn-mode-frame">
+            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
+          </span>
+        </a>
+        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
+          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
+          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+      </div>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Account</h4>
+          <nav class="account-settings-nav">
+            <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="change_email.html" class="account-settings-item is-current" role="menuitem">Change Email</a>
+            <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
+            <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+          </nav>
+        </section>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Subscription</h4>
+          <nav class="account-settings-nav">
+            <a href="#" class="account-settings-item" role="menuitem">Plan Details</a>
+            <a href="#" class="account-settings-item" role="menuitem">Change Plan</a>
+          </nav>
+        </section>
+        <div class="account-settings-sep"></div>
+        <a href="#" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
+      </div>
+      <div class="settings-dropdown" id="settings-dropdown" hidden>
+        <div class="settings-dropdown-inner">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text">Expense</span>
+            </span>
+          </a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main">
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+          <div class="workspace-popup-inner">
+            <div class="workspace-popup-item is-current">Workspace : Personal</div>
+          </div>
+        </div>
+      </div>
+
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub">Change Email Address</h2>
+
+      <div class="profile-alert profile-alert-success" id="email-change-success" role="status" aria-live="polite" hidden>
+        Updated successfully.
+      </div>
+
+      <div class="profile-readonly-group">
+        <div class="form-group form-group-email-display">
+          <label>Current Email Address :</label>
+          <p class="profile-email-value" id="current-email" aria-live="polite">—</p>
+        </div>
+      </div>
+
+      <div class="form-actions profile-actions">
+        <a href="change_email_edit.html" class="btn-submit btn-register profile-save-button">Edit</a>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
+      <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
+    </button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo">
+      <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+        <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      </a>
+    </div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_email.html" data-url-ja="../../setting/change_email.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
+      <span class="lang-code" aria-hidden="true">EN</span>
+      <span class="lang-name">English</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
+      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'kpi-office-mode';
+      var bodyEl = document.getElementById('body-el');
+      var btnModeToggle = document.getElementById('btn-mode-toggle');
+      var btnModeText = document.getElementById('btn-mode-text');
+      var settingsOfficeLabel = document.getElementById('settings-office-label');
+      function updateModeButton() {
+        if (!btnModeText || !btnModeToggle) return;
+        var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+        btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+        if (settingsOfficeLabel) {
+          settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
+        }
+      }
+      if (bodyEl && btnModeToggle) {
+        if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+          bodyEl.classList.add('office-mode');
+        }
+        btnModeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          bodyEl.classList.toggle('office-mode');
+          if (bodyEl.classList.contains('office-mode')) {
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+          }
+          updateModeButton();
+        });
+        updateModeButton();
+      }
+    })();
+    (function () {
+      var menuBtn = document.querySelector('.icon-button-menu');
+      var dropdown = document.getElementById('settings-dropdown');
+      var officeToggle = document.getElementById('settings-office-toggle');
+      if (!menuBtn || !dropdown) return;
+
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.hidden = !dropdown.hidden;
+      });
+
+      if (officeToggle) {
+        officeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var modeBtn = document.getElementById('btn-mode-toggle');
+          if (modeBtn) {
+            modeBtn.click();
+          }
+        });
+      }
+
+      dropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        dropdown.hidden = true;
+      });
+    })();
+    (function () {
+      var gearBtn = document.getElementById('btn-account-settings');
+      var accountPopup = document.getElementById('account-settings-popup');
+      var menuDropdown = document.getElementById('settings-dropdown');
+      if (!gearBtn || !accountPopup) return;
+
+      gearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !accountPopup.hidden;
+        accountPopup.hidden = isOpen;
+        gearBtn.setAttribute('aria-expanded', !isOpen);
+        if (!isOpen && menuDropdown) menuDropdown.hidden = true;
+      });
+
+      accountPopup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        accountPopup.hidden = true;
+        gearBtn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var trigger = document.getElementById('workspace-trigger');
+      var popup = document.getElementById('workspace-popup');
+      if (!trigger || !popup) return;
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !popup.hidden;
+        popup.hidden = isOpen;
+        trigger.setAttribute('aria-expanded', !isOpen);
+      });
+
+      popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var langBtn = document.getElementById('lang-select-btn');
+      var langDropdown = document.getElementById('lang-select-dropdown');
+      var langOptions = document.querySelectorAll('.lang-option');
+      var langWrap = document.getElementById('lang-select-wrap');
+      if (!langBtn || !langDropdown || !langWrap) return;
+
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !langDropdown.hidden;
+        langDropdown.hidden = isOpen;
+        langBtn.setAttribute('aria-expanded', !isOpen);
+      });
+
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+
+      var urlEn = langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap.getAttribute('data-url-ja');
+      var bodyElForLang = document.getElementById('body-el');
+
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) {
+            sessionStorage.setItem('kpi-office-mode', '1');
+          }
+          var lang = this.getAttribute('data-lang');
+          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          if (href) window.location.href = href;
+        });
+      });
+    })();
+    (function () {
+      var backTop = document.getElementById('footerBackToTop');
+      if (!backTop) return;
+      backTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+    (function () {
+      var el = document.getElementById('current-email');
+      if (!el) return;
+
+      var email = '';
+      try {
+        var raw = localStorage.getItem('kpi-profile-last');
+        if (raw) {
+          var data = JSON.parse(raw);
+          email = (data && data.email) ? String(data.email) : '';
+        }
+      } catch (e) {}
+      email = (email || '').trim() || 's.matsushita@forge-laboratory.com';
+      el.textContent = email;
+    })();
+    (function () {
+      var flagKey = 'kpi-email-change-success';
+      var banner = document.getElementById('email-change-success');
+      if (!banner) return;
+      if (sessionStorage.getItem(flagKey) === '1') {
+        banner.hidden = false;
+        sessionStorage.removeItem(flagKey);
+      }
+    })();
+  </script>
+</body>
+</html>
+

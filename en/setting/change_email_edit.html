@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile (Fixed) | KPI Navigator | FORGE LABORATORY</title>
+  <title>Change Email Address (Edit) | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="si-fi profile-page profile-fixed-page" id="body-el">
+<body class="si-fi profile-page email-change-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -73,10 +73,10 @@
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
-            <a href="profile.html" class="account-settings-item is-current" role="menuitem">Profile</a>
-            <a href="#" class="account-settings-item" role="menuitem">Change Email</a>
+            <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="change_email.html" class="account-settings-item is-current" role="menuitem">Change Email</a>
             <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
-            <a href="#" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -123,75 +123,52 @@
           </div>
         </div>
       </div>
+
       <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">Profile</h2>
+      <h2 class="profile-title-sub">Change Email Address</h2>
 
-      <div class="profile-readonly-group">
-        <div class="form-group form-group-user-id">
-          <label>User ID :</label>
-          <p class="profile-user-id-value" id="fixed-user-id" aria-live="polite">KPI-000000</p>
-        </div>
-        <div class="form-group form-group-email-display">
-          <label>Email Address :</label>
-          <p class="profile-email-value" id="fixed-email" aria-live="polite">s.matsushita@forge-laboratory.com</p>
-        </div>
-      </div>
-
-      <div class="profile-editable-group">
-        <div class="form-group">
-          <label>Business Name :</label>
-          <p class="profile-fixed-value" id="fixed-business-name">—</p>
+      <form class="registration-form profile-form" action="#" method="post" id="change-email-form" novalidate>
+        <div class="profile-readonly-group email-change-current-wrap">
+          <div class="form-group form-group-email-display email-change-current-row">
+            <label>Current Email Address :</label>
+            <p class="profile-email-value" id="current-email" aria-live="polite">—</p>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Company Name :</label>
-          <p class="profile-fixed-value" id="fixed-company">—</p>
+        <div class="profile-editable-group">
+          <div class="form-group">
+            <label for="new-email">New Email Address :</label>
+            <input type="email" id="new-email" name="new_email" autocomplete="email" inputmode="email" placeholder="name@example.com" required>
+            <p class="form-error" id="err-new-email" role="alert" aria-live="polite" hidden></p>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-email">Confirm New Email Address :</label>
+            <input type="email" id="confirm-email" name="confirm_email" autocomplete="email" inputmode="email" placeholder="name@example.com" required>
+            <p class="form-error" id="err-confirm-email" role="alert" aria-live="polite" hidden></p>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password :</label>
+            <div class="input-password-wrap">
+              <input type="password" id="password" name="password" autocomplete="current-password" value="$Forgelab1234567" required>
+              <button type="button" class="btn-password-toggle" aria-label="Show password" title="Show password" data-target="password">
+                <span class="icon-eye-open" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </span>
+                <span class="icon-eye-closed" aria-hidden="true" hidden>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </span>
+              </button>
+            </div>
+            <p class="form-error" id="err-password" role="alert" aria-live="polite" hidden></p>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Industry :</label>
-          <p class="profile-fixed-value" id="fixed-industry">—</p>
+        <div class="form-actions profile-actions">
+          <button type="submit" class="btn-submit btn-register profile-save-button">Update Email Address</button>
         </div>
-
-        <div class="form-group form-group-genre">
-          <label>Genre :</label>
-          <p class="profile-fixed-value" id="fixed-genre">—</p>
-        </div>
-
-        <div class="form-group">
-          <label>Country :</label>
-          <p class="profile-fixed-value" id="fixed-country">—</p>
-        </div>
-
-        <div class="form-group">
-          <label>State / Prefecture :</label>
-          <p class="profile-fixed-value" id="fixed-state">—</p>
-        </div>
-
-        <div class="form-group">
-          <label>City :</label>
-          <p class="profile-fixed-value" id="fixed-city">—</p>
-        </div>
-
-        <div class="form-group">
-          <label>Currency :</label>
-          <p class="profile-fixed-value" id="fixed-currency">—</p>
-        </div>
-
-        <div class="form-group">
-          <label>Time Zone :</label>
-          <p class="profile-fixed-value" id="fixed-timezone">—</p>
-        </div>
-
-        <div class="form-group form-group-textarea">
-          <label>Main KPIs / Goals :</label>
-          <p class="profile-fixed-value profile-fixed-multiline" id="fixed-kpi-focus">—</p>
-        </div>
-      </div>
-
-      <div class="form-actions profile-actions">
-        <a href="profile_edit.html" class="btn-submit btn-register profile-save-button">Edit</a>
-      </div>
+      </form>
     </main>
   </div>
 
@@ -208,7 +185,7 @@
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="profile.html" data-url-ja="../../profile/profile.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_email_edit.html" data-url-ja="../../setting/change_email_edit.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -370,43 +347,115 @@
       });
     })();
     (function () {
-      var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
-      var raw = sessionStorage.getItem(STORAGE_KEY_PROFILE);
-      // まずは直前の編集結果（sessionStorage）を優先し、それが無ければ最後に保存した内容（localStorage）を使う
-      if (!raw) {
-        raw = localStorage.getItem('kpi-profile-last');
-      }
-      if (!raw) {
-        window.location.replace('index.html');
-        return;
-      }
-      var data;
+      var el = document.getElementById('current-email');
+      if (!el) return;
+
+      var email = '';
       try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        window.location.replace('index.html');
-        return;
-      }
-      function setText(id, value, fallback) {
-        var el = document.getElementById(id);
+        var raw = localStorage.getItem('kpi-profile-last');
+        if (raw) {
+          var data = JSON.parse(raw);
+          email = (data && data.email) ? String(data.email) : '';
+        }
+      } catch (e) {}
+      email = (email || '').trim() || 's.matsushita@forge-laboratory.com';
+      el.textContent = email;
+    })();
+    (function () {
+      var form = document.getElementById('change-email-form');
+      if (!form) return;
+
+      var newEmailEl = document.getElementById('new-email');
+      var confirmEl = document.getElementById('confirm-email');
+      var passwordEl = document.getElementById('password');
+
+      var errNew = document.getElementById('err-new-email');
+      var errConfirm = document.getElementById('err-confirm-email');
+      var errPw = document.getElementById('err-password');
+
+      function setErr(el, msg) {
         if (!el) return;
-        var v = (value || '').trim();
-        el.textContent = v || (fallback || '—');
+        el.textContent = msg || '';
+        el.hidden = !msg;
       }
-      setText('fixed-user-id', data.userId, 'KPI-000000');
-      setText('fixed-email', data.email, 's.matsushita@forge-laboratory.com');
-      setText('fixed-business-name', data.businessName);
-      setText('fixed-company', data.company);
-      setText('fixed-industry', data.industry);
-      setText('fixed-genre', data.genre);
-      setText('fixed-country', data.country);
-      setText('fixed-state', data.state);
-      setText('fixed-city', data.city);
-      setText('fixed-currency', data.currency);
-      setText('fixed-timezone', data.timezone);
-      setText('fixed-kpi-focus', data.kpiFocus);
-      // 直前の一時データは読み込み後に削除（localStorage 側は保持）
-      sessionStorage.removeItem(STORAGE_KEY_PROFILE);
+
+      function norm(v) {
+        return String(v || '').trim();
+      }
+
+      function isEmailLike(v) {
+        // simple, practical check for UI validation
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        setErr(errNew, '');
+        setErr(errConfirm, '');
+        setErr(errPw, '');
+
+        var newEmail = norm(newEmailEl && newEmailEl.value);
+        var confirmEmail = norm(confirmEl && confirmEl.value);
+        var pw = norm(passwordEl && passwordEl.value);
+
+        var hasError = false;
+
+        if (!newEmail) {
+          setErr(errNew, 'Please enter a new email address.');
+          hasError = true;
+        } else if (!isEmailLike(newEmail)) {
+          setErr(errNew, 'Please enter a valid email address.');
+          hasError = true;
+        }
+
+        if (!confirmEmail) {
+          setErr(errConfirm, 'Please confirm your new email address.');
+          hasError = true;
+        } else if (newEmail && confirmEmail && newEmail !== confirmEmail) {
+          setErr(errConfirm, 'Email addresses do not match.');
+          hasError = true;
+        }
+
+        if (!pw) {
+          setErr(errPw, 'Please enter your password.');
+          hasError = true;
+        }
+
+        if (hasError) return;
+
+        // mock update: persist to localStorage (profile + email pages read from it)
+        try {
+          var raw = localStorage.getItem('kpi-profile-last');
+          var data = raw ? JSON.parse(raw) : {};
+          if (!data || typeof data !== 'object') data = {};
+          data.email = newEmail;
+          localStorage.setItem('kpi-profile-last', JSON.stringify(data));
+          sessionStorage.setItem('kpi-email-change-success', '1');
+        } catch (err) {
+          // If persistence fails, stay on page (could show error in future)
+          return;
+        }
+
+        window.location.href = 'change_email.html';
+      });
+    })();
+    (function () {
+      /* Password visibility toggle (eye icon) */
+      document.querySelectorAll('.btn-password-toggle').forEach(function (btn) {
+        var targetId = btn.getAttribute('data-target');
+        var input = targetId ? document.getElementById(targetId) : null;
+        var openEl = btn.querySelector('.icon-eye-open');
+        var closedEl = btn.querySelector('.icon-eye-closed');
+        if (!input || !openEl || !closedEl) return;
+        btn.addEventListener('click', function () {
+          var isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          openEl.hidden = isPassword;
+          closedEl.hidden = !isPassword;
+          btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+          btn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        });
+      });
     })();
   </script>
 </body>
