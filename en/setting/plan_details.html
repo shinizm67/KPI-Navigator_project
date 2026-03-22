@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Change Password | KPI Navigator | FORGE LABORATORY</title>
+  <title>Plan Details | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="si-fi profile-page profile-fixed-page password-change-page" id="body-el">
+<body class="si-fi profile-page plan-details-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -75,14 +75,14 @@
           <nav class="account-settings-nav">
             <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
             <a href="change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
-            <a href="change_password.html" class="account-settings-item is-current" role="menuitem">Change Password</a>
+            <a href="change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
-            <a href="plan_details.html" class="account-settings-item" role="menuitem">Plan Details</a>
+            <a href="plan_details.html" class="account-settings-item is-current" role="menuitem">Plan Details</a>
             <a href="change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
           </nav>
         </section>
@@ -109,7 +109,7 @@
   </header>
 
   <div class="page-wrap profile-wrap">
-    <main class="profile-main">
+    <main class="profile-main plan-details-main">
       <div class="workspace-selector-wrap">
         <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
@@ -123,21 +123,132 @@
           </div>
         </div>
       </div>
-
       <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">Change Password</h2>
+      <h2 class="profile-title-sub">Plan Details</h2>
 
-      <div class="profile-alert" role="status" aria-live="polite">
-        Password successfully changed.
-      </div>
+      <div class="plan-details-content">
+        <!-- [ 1 ] Current Plan -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h1">
+          <h3 class="plan-details-section-heading" id="plan-details-h1"><span class="plan-details-num">[ 1 ]</span> Current Plan</h3>
+          <dl class="plan-details-dl plan-details-dl-two-col">
+            <div class="plan-details-dl-row"><dt>Plan Name</dt><dd>Pro</dd></div>
+            <div class="plan-details-dl-row"><dt>Status</dt><dd>Active</dd></div>
+            <div class="plan-details-dl-row"><dt>Price</dt><dd>$99 / Month</dd></div>
+            <div class="plan-details-dl-row"><dt>Billing Cycle</dt><dd>Monthly</dd></div>
+            <div class="plan-details-dl-row"><dt>Next Billing Date</dt><dd>March 15th, 2025</dd></div>
+            <div class="plan-details-dl-row"><dt>Payment Method</dt><dd>Visa ···· ···· ···· 4242</dd></div>
+            <div class="plan-details-dl-row"><dt>Subscription ID</dt><dd>KP-999-0000-0115</dd></div>
+          </dl>
+        </section>
 
-      <div class="form-actions profile-actions">
-        <a href="profile.html" class="btn-submit btn-register profile-save-button">Back to Profile</a>
+        <!-- [ 2 ] Included in Your Plan -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h2">
+          <h3 class="plan-details-section-heading" id="plan-details-h2"><span class="plan-details-num">[ 2 ]</span> Included in Your Plan</h3>
+          <div class="plan-details-feature-grid">
+            <div class="plan-details-feature-card">
+              <h4 class="plan-details-feature-title">Advanced KPI Analytics</h4>
+              <ul class="plan-details-feature-list">
+                <li>Daily / Monthly / Yearly KPI Hub Access</li>
+                <li>Multi-Year Data Comparison</li>
+                <li>Custom KPI dashboards</li>
+              </ul>
+            </div>
+            <div class="plan-details-feature-card">
+              <h4 class="plan-details-feature-title">Data Management</h4>
+              <ul class="plan-details-feature-list">
+                <li>Unlimited CSV Upload</li>
+                <li>Full Historical Data Retention</li>
+                <li>Export to CSV / PDF</li>
+                <li>Data Backup &amp; Recovery</li>
+              </ul>
+            </div>
+            <div class="plan-details-feature-card">
+              <h4 class="plan-details-feature-title">Financial Insight</h4>
+              <ul class="plan-details-feature-list">
+                <li>P&amp;L (Profit &amp; Loss) Visualization</li>
+                <li>Cost Ratio Monitoring</li>
+                <li>Revenue Gap Action Suggestions</li>
+              </ul>
+            </div>
+            <div class="plan-details-feature-card">
+              <h4 class="plan-details-feature-title">AI Assistance</h4>
+              <ul class="plan-details-feature-list">
+                <li>AI Business Advisory Chat</li>
+                <li>Seasonal Forecast Suggestions</li>
+                <li>Risk Detection Alerts</li>
+              </ul>
+            </div>
+            <div class="plan-details-feature-card plan-details-feature-card-wide">
+              <h4 class="plan-details-feature-title">Account &amp; Usage</h4>
+              <ul class="plan-details-feature-list">
+                <li>Multi-Store Management (up to 3 locations)</li>
+                <li>Multi-User Access (up to 5 users)</li>
+                <li>Priority Support</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- [ 3 ] Usage Limits -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h3">
+          <h3 class="plan-details-section-heading" id="plan-details-h3"><span class="plan-details-num">[ 3 ]</span> Usage Limits</h3>
+          <dl class="plan-details-dl plan-details-dl-simple">
+            <div class="plan-details-dl-row"><dt>CSV Upload</dt><dd>Unlimited</dd></div>
+            <div class="plan-details-dl-row"><dt>KPI Advisory calls</dt><dd>500 / month</dd></div>
+            <div class="plan-details-dl-row"><dt>Stores</dt><dd>3</dd></div>
+            <div class="plan-details-dl-row"><dt>Users</dt><dd>5</dd></div>
+          </dl>
+        </section>
+
+        <!-- [ 4 ] Billing -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h4">
+          <h3 class="plan-details-section-heading" id="plan-details-h4"><span class="plan-details-num">[ 4 ]</span> Billing</h3>
+          <p class="plan-details-billing-actions">
+            <a href="#" class="btn-submit btn-register plan-details-inline-btn">Manage Billing</a>
+          </p>
+        </section>
+
+        <!-- [ 5 ] Manage Subscription -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h5">
+          <h3 class="plan-details-section-heading" id="plan-details-h5"><span class="plan-details-num">[ 5 ]</span> Manage Subscription</h3>
+          <ul class="plan-details-link-list">
+            <li><a href="change_plan.html">Change Plan</a></li>
+            <li><a href="#">Switch to Yearly Billing (Save 15%)</a></li>
+            <li><a href="#">Update Payment Method</a></li>
+            <li><a href="#">Cancel Subscription</a></li>
+          </ul>
+          <p class="plan-details-note">Cancellation becomes effective at the end of the current billing period. Data is retained for 30 days after cancellation.</p>
+        </section>
+
+        <!-- [ 6 ] Data & Cancellation Policy -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h6">
+          <h3 class="plan-details-section-heading" id="plan-details-h6"><span class="plan-details-num">[ 6 ]</span> Data &amp; Cancellation Policy</h3>
+          <ul class="plan-details-bullet-list">
+            <li>Downgrading to Basic restricts access to P&amp;L and AI modules.</li>
+            <li>No data is deleted immediately upon downgrade.</li>
+            <li>Account access remains active until the period ends.</li>
+            <li>All data is permanently deleted after 30 days.</li>
+          </ul>
+        </section>
+
+        <!-- [ 7 ] Support -->
+        <section class="plan-details-section" aria-labelledby="plan-details-h7">
+          <h3 class="plan-details-section-heading" id="plan-details-h7"><span class="plan-details-num">[ 7 ]</span> Support</h3>
+          <p class="plan-details-support-text"><strong>Priority Email Support</strong></p>
+          <p class="plan-details-support-text">Response within 24 hours (Business Days)</p>
+          <p class="plan-details-support-actions">
+            <a href="#" class="btn-submit btn-register plan-details-inline-btn">Contact Support &gt;</a>
+          </p>
+        </section>
       </div>
     </main>
   </div>
 
   <footer class="site-footer">
+    <div class="plan-details-footer-strip" role="note">
+      <span class="plan-details-footer-strip-icon" aria-hidden="true">&#9888;</span>
+      <span class="plan-details-footer-strip-text">Forge Laboratory Web API — Plan and billing information is subject to change. See terms for details.</span>
+    </div>
     <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
       <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
     </button>
@@ -147,10 +258,10 @@
         <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
-    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+    <p class="footer-copy">Forge Laboratory · Web API &mdash; © 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_password_success.html" data-url-ja="../../setting/change_password_success.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="plan_details.html" data-url-ja="../../setting/plan_details.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -198,12 +309,24 @@
     (function () {
       var menuBtn = document.querySelector('.icon-button-menu');
       var dropdown = document.getElementById('settings-dropdown');
+      var officeToggle = document.getElementById('settings-office-toggle');
       if (!menuBtn || !dropdown) return;
 
       menuBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         dropdown.hidden = !dropdown.hidden;
       });
+
+      if (officeToggle) {
+        officeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var modeBtn = document.getElementById('btn-mode-toggle');
+          if (modeBtn) {
+            modeBtn.click();
+          }
+        });
+      }
 
       dropdown.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -302,4 +425,3 @@
   </script>
 </body>
 </html>
-

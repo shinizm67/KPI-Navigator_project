@@ -1089,3 +1089,676 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
+/* ========================================
+   Plan Details (subscription overview)
+   ======================================== */
+.plan-details-main .plan-details-content {
+  width: 100%;
+  max-width: 920px;
+  margin-top: 8px;
+}
+
+.plan-details-section {
+  margin-bottom: 36px;
+  padding: 22px 24px 26px;
+  border: 1px solid rgba(0, 255, 136, 0.45);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 0 1px rgba(88, 225, 243, 0.08);
+}
+
+.plan-details-section-heading {
+  margin: 0 0 18px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--si-fi-cyan);
+}
+
+.plan-details-num {
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--si-fi-green);
+  font-weight: 500;
+}
+
+.plan-details-dl {
+  margin: 0;
+}
+
+.plan-details-dl-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(160px, 1.2fr);
+  gap: 12px 24px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(88, 225, 243, 0.12);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.plan-details-dl-row:last-child {
+  border-bottom: none;
+}
+
+.plan-details-dl dt {
+  margin: 0;
+  color: rgba(88, 225, 243, 0.85);
+  font-weight: 500;
+}
+
+.plan-details-dl dd {
+  margin: 0;
+  color: var(--si-fi-cyan);
+}
+
+.plan-details-dl-two-col .plan-details-dl-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .plan-details-dl-two-col .plan-details-dl-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-details-dl-simple .plan-details-dl-row {
+  grid-template-columns: minmax(160px, 1fr) minmax(100px, 1fr);
+}
+
+.plan-details-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .plan-details-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-details-feature-card {
+  padding: 14px 16px;
+  border: 1px solid rgba(88, 225, 243, 0.2);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.plan-details-feature-card-wide {
+  grid-column: 1 / -1;
+}
+
+.plan-details-feature-title {
+  margin: 0 0 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--si-fi-green);
+  text-transform: uppercase;
+}
+
+.plan-details-feature-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--si-fi-cyan);
+}
+
+.plan-details-feature-list li {
+  margin-bottom: 4px;
+}
+
+.plan-details-billing-actions,
+.plan-details-support-actions {
+  margin: 0;
+}
+
+.plan-details-inline-btn {
+  display: inline-block;
+  min-width: 180px;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.plan-details-link-list {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--si-fi-cyan);
+}
+
+.plan-details-link-list a {
+  color: var(--si-fi-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.plan-details-link-list a:hover {
+  color: #fff;
+  filter: drop-shadow(0 0 6px rgba(88, 225, 243, 0.5));
+}
+
+.plan-details-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(88, 225, 243, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.plan-details-bullet-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--si-fi-cyan);
+}
+
+.plan-details-bullet-list li {
+  margin-bottom: 6px;
+}
+
+.plan-details-support-text {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.03em;
+}
+
+.plan-details-footer-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0 0 0;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  background: #3a3a3a;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.plan-details-footer-strip-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #f5c400;
+}
+
+.plan-details-footer-strip-text {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.02em;
+}
+
+/* Plan Details — Office Mode */
+.si-fi.office-mode.plan-details-page .plan-details-section {
+  border-color: rgba(0, 0, 0, 0.35);
+  background: #fafafa;
+  box-shadow: none;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-section-heading {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  color: #000;
+  font-size: 16px;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-num {
+  color: #333;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-dl dt {
+  color: #333;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-dl dd {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-dl-row {
+  border-bottom-color: rgba(0, 0, 0, 0.12);
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-feature-card {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: #fff;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-feature-title {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  color: #000;
+  text-transform: none;
+  font-size: 14px;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-feature-list {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-link-list,
+.si-fi.office-mode.plan-details-page .plan-details-link-list a {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-link-list a:hover {
+  color: #333;
+  filter: none;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-note {
+  color: #555;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-bullet-list {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-support-text {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-inline-btn {
+  background: transparent;
+  border: 1px solid #000;
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-inline-btn:hover {
+  background: #4a4a4a;
+  border-color: #4a4a4a;
+  color: #fff;
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-footer-strip {
+  background: #e8e8e8;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.si-fi.office-mode.plan-details-page .plan-details-footer-strip-text {
+  color: #333;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+/* ========================================
+   Change Plan（en/plan の価格表を継承 + ボタン差し替え）
+   ======================================== */
+.change-plan-content .change-plan-lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(88, 225, 243, 0.85);
+  letter-spacing: 0.03em;
+}
+
+.change-plan-summary-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--si-fi-cyan);
+}
+
+.change-plan-summary-list strong {
+  font-weight: 600;
+  color: rgba(88, 225, 243, 0.95);
+}
+
+.change-plan-table-source {
+  margin: 0 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: rgba(88, 225, 243, 0.55);
+}
+
+.change-plan-table-source a {
+  color: var(--si-fi-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.change-plan-table-wrap {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Downgrade / Current — Plan ページの .btn-register を上書き */
+.change-plan-page .price-table .btn-plan-downgrade {
+  background: transparent !important;
+  border: 1px solid var(--si-fi-green) !important;
+  color: var(--si-fi-green) !important;
+  box-shadow: none !important;
+}
+
+.change-plan-page .price-table .btn-plan-downgrade:hover {
+  box-shadow: 0 0 12px rgba(15, 148, 3, 0.45) !important;
+  opacity: 1;
+}
+
+.change-plan-page .price-table .btn-plan-current {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 3px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: var(--si-fi-green) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  cursor: default;
+  user-select: none;
+}
+
+.change-plan-billing-notice {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--si-fi-cyan);
+  letter-spacing: 0.03em;
+}
+
+.change-plan-billing-notice p {
+  margin: 0 0 12px;
+}
+
+.change-plan-billing-notice p:last-child {
+  margin-bottom: 0;
+}
+
+/* Change Plan — Office Mode */
+.si-fi.office-mode.change-plan-page .change-plan-lead,
+.si-fi.office-mode.change-plan-page .change-plan-summary-list,
+.si-fi.office-mode.change-plan-page .change-plan-billing-notice {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.change-plan-page .change-plan-summary-list strong {
+  color: #000;
+}
+
+.si-fi.office-mode.change-plan-page .change-plan-table-source {
+  color: #666;
+}
+
+.si-fi.office-mode.change-plan-page .change-plan-table-source a {
+  color: #000;
+}
+
+.si-fi.office-mode.change-plan-page .price-table .btn-plan-downgrade {
+  background: transparent !important;
+  border: 1px solid #333 !important;
+  color: #333 !important;
+  font-family: 'BIZ UDPGothic', sans-serif !important;
+}
+
+.si-fi.office-mode.change-plan-page .price-table .btn-plan-downgrade:hover {
+  background: #eee !important;
+  box-shadow: none !important;
+}
+
+.si-fi.office-mode.change-plan-page .price-table .btn-plan-current {
+  background: #6a6a6a !important;
+  color: #fff !important;
+  font-family: 'BIZ UDPGothic', sans-serif !important;
+}
+
+/* ========================================
+   Delete Account（ステッパー + Step 1）
+   ======================================== */
+.delete-account-page-title {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 18px;
+}
+
+.delete-account-warning {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto 28px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 180, 80, 0.45);
+  border-radius: 4px;
+  background: rgba(255, 140, 0, 0.08);
+  color: rgba(255, 200, 120, 0.95);
+  font-size: 13px;
+  line-height: 1.55;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.delete-account-stepper {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto 28px;
+  padding: 0 8px;
+  overflow-x: auto;
+}
+
+.delete-account-stepper-list {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 4px;
+  min-width: min(100%, 880px);
+}
+
+.delete-account-step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  padding: 0 4px;
+}
+
+.delete-account-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  height: 2px;
+  background: rgba(88, 225, 243, 0.25);
+  z-index: 0;
+}
+
+.delete-account-step-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--si-fi-green);
+  background: transparent;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.delete-account-step.is-active .delete-account-step-dot {
+  background: var(--si-fi-green);
+  box-shadow: 0 0 10px rgba(15, 148, 3, 0.6);
+}
+
+.delete-account-step-label {
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  color: rgba(88, 225, 243, 0.85);
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+}
+
+.delete-account-step.is-active .delete-account-step-label {
+  color: var(--si-fi-cyan);
+  font-weight: 600;
+}
+
+.delete-account-step-panel .delete-account-step-heading {
+  margin: 0 0 18px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #d4a84b;
+  text-shadow: 0 0 12px rgba(212, 168, 75, 0.35);
+}
+
+.delete-account-status-dl {
+  margin: 0 0 22px;
+}
+
+.delete-account-status-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(88, 225, 243, 0.12);
+  font-size: 13px;
+}
+
+.delete-account-status-row:last-of-type {
+  border-bottom: none;
+}
+
+.delete-account-status-dl dt {
+  margin: 0;
+  color: rgba(88, 225, 243, 0.75);
+  font-weight: 500;
+}
+
+.delete-account-status-dl dd {
+  margin: 0;
+  color: var(--si-fi-cyan);
+}
+
+.delete-account-stripe-actions {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.btn-delete-stripe {
+  display: inline-block;
+  padding: 14px 28px;
+  background: var(--si-fi-green);
+  color: #fff !important;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 3px;
+  border: none;
+  transition: box-shadow 0.2s, opacity 0.2s;
+  white-space: nowrap;
+}
+
+.btn-delete-stripe:hover {
+  box-shadow: 0 0 18px rgba(15, 148, 3, 0.65);
+  opacity: 0.95;
+}
+
+.delete-account-step-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(88, 225, 243, 0.5);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.account-settings-popup .account-settings-item-danger.is-current {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Delete Account — Office Mode */
+.si-fi.office-mode.delete-account-page .delete-account-warning {
+  border-color: rgba(180, 100, 0, 0.4);
+  background: rgba(255, 240, 200, 0.95);
+  color: #333;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step-label {
+  color: #333;
+  font-family: 'BIZ UDPGothic', sans-serif;
+  font-size: 10px;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step.is-active .delete-account-step-label {
+  color: #000;
+  font-weight: 700;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step-dot {
+  border-color: #333;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step.is-active .delete-account-step-dot {
+  background: #333;
+  box-shadow: none;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step:not(:last-child)::after {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step-panel .delete-account-step-heading {
+  color: #8a6d2a;
+  text-shadow: none;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-status-dl dt {
+  color: #555;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-status-dl dd {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-status-row {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.si-fi.office-mode.delete-account-page .btn-delete-stripe {
+  background: #4a4a4a;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .btn-delete-stripe:hover {
+  background: #333;
+  box-shadow: none;
+}
+
+.si-fi.office-mode.delete-account-page .delete-account-step-note {
+  color: #666;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+

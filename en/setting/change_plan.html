@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Change Password | KPI Navigator | FORGE LABORATORY</title>
+  <title>Change Plan | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="../plan/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="si-fi profile-page profile-fixed-page password-change-page" id="body-el">
+<body class="si-fi profile-page change-plan-page plan-details-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -75,7 +76,7 @@
           <nav class="account-settings-nav">
             <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
             <a href="change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
-            <a href="change_password.html" class="account-settings-item is-current" role="menuitem">Change Password</a>
+            <a href="change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
           </nav>
         </section>
@@ -83,7 +84,7 @@
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
             <a href="plan_details.html" class="account-settings-item" role="menuitem">Plan Details</a>
-            <a href="change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
+            <a href="change_plan.html" class="account-settings-item is-current" role="menuitem">Change Plan</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
@@ -109,7 +110,7 @@
   </header>
 
   <div class="page-wrap profile-wrap">
-    <main class="profile-main">
+    <main class="profile-main plan-details-main">
       <div class="workspace-selector-wrap">
         <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
@@ -123,21 +124,79 @@
           </div>
         </div>
       </div>
-
       <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">Change Password</h2>
+      <h2 class="profile-title-sub">Change Plan</h2>
 
-      <div class="profile-alert" role="status" aria-live="polite">
-        Password successfully changed.
-      </div>
+      <div class="plan-details-content change-plan-content">
+        <!-- [ 1 ] -->
+        <section class="plan-details-section" aria-labelledby="change-plan-h1">
+          <h3 class="plan-details-section-heading" id="change-plan-h1"><span class="plan-details-num">[ 1 ]</span> Current Plan</h3>
+          <p class="change-plan-lead">Upgrade or downgrade your subscription plan.</p>
+        </section>
 
-      <div class="form-actions profile-actions">
-        <a href="profile.html" class="btn-submit btn-register profile-save-button">Back to Profile</a>
+        <!-- [ 2 ] -->
+        <section class="plan-details-section" aria-labelledby="change-plan-h2">
+          <h3 class="plan-details-section-heading" id="change-plan-h2"><span class="plan-details-num">[ 2 ]</span> Current Plan Summary</h3>
+          <ul class="change-plan-summary-list">
+            <li><strong>Current Plan:</strong> Pro</li>
+            <li><strong>Billing Cycle:</strong> Monthly</li>
+            <li><strong>Next Billing Date:</strong> March 14, 2025</li>
+          </ul>
+        </section>
+
+        <!-- [ 3 ] — 機能表は en/plan/index.html と同一（Basic $5 / Pro $29） -->
+        <section class="plan-details-section" aria-labelledby="change-plan-h3">
+          <h3 class="plan-details-section-heading" id="change-plan-h3"><span class="plan-details-num">[ 3 ]</span> Available Plans</h3>
+          <p class="change-plan-table-source">Feature list matches the public <a href="../plan/index.html">Plan</a> page.</p>
+          <div class="price-table-wrap change-plan-table-wrap">
+            <table class="price-table">
+              <thead>
+                <tr>
+                  <th class="col-list">List</th>
+                  <th class="col-plan">Basic $5/month</th>
+                  <th class="col-plan">Pro $29/month</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1. Annual KPI Dashboard</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>2. Monthly KPI Analysis</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>3. Daily Target Tracking</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>4. Automatic Achievement Calculation</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>5. Seasonality Detection</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>6. Business Day Management</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>7. CSV Data Import (Previous Year)</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>8. Automated Sales Target Engine</td><td><span class="icon-check" aria-label="Included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>9. Cost Input (Food &amp; Beverage)</td><td><span class="icon-x" aria-label="Not included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>10. Cost Ratio Visualization</td><td><span class="icon-x" aria-label="Not included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>11. Profit Structure Visualization</td><td><span class="icon-x" aria-label="Not included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr><td>12. Monthly Profit Analysis Dashboard</td><td><span class="icon-x" aria-label="Not included"></span></td><td><span class="icon-check" aria-label="Included"></span></td></tr>
+                <tr class="row-buttons">
+                  <td></td>
+                  <td><a href="#" class="btn-register btn-plan-downgrade">Down Grade Plan</a></td>
+                  <td><span class="btn-register btn-plan-current" role="status" aria-label="Your current plan">Current Plan</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- [ 4 ] -->
+        <section class="plan-details-section" aria-labelledby="change-plan-h4">
+          <h3 class="plan-details-section-heading" id="change-plan-h4"><span class="plan-details-num">[ 4 ]</span> Billing Impact Notice</h3>
+          <div class="change-plan-billing-notice">
+            <p><strong>When upgrading:</strong> You get immediate access to new features. A prorated charge may be applied to your payment method today.</p>
+            <p><strong>When downgrading:</strong> Changes take effect at the end of your current billing period. No immediate refund for the remaining time on the current plan.</p>
+          </div>
+        </section>
       </div>
     </main>
   </div>
 
   <footer class="site-footer">
+    <div class="plan-details-footer-strip" role="note">
+      <span class="plan-details-footer-strip-icon" aria-hidden="true">&#9888;</span>
+      <span class="plan-details-footer-strip-text">Plan changes are subject to billing provider confirmation. See terms for details.</span>
+    </div>
     <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
       <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
     </button>
@@ -147,10 +206,10 @@
         <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
-    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+    <p class="footer-copy">Forge Laboratory · Web API &mdash; © 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_password_success.html" data-url-ja="../../setting/change_password_success.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_plan.html" data-url-ja="../../setting/change_plan.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -198,12 +257,24 @@
     (function () {
       var menuBtn = document.querySelector('.icon-button-menu');
       var dropdown = document.getElementById('settings-dropdown');
+      var officeToggle = document.getElementById('settings-office-toggle');
       if (!menuBtn || !dropdown) return;
 
       menuBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         dropdown.hidden = !dropdown.hidden;
       });
+
+      if (officeToggle) {
+        officeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var modeBtn = document.getElementById('btn-mode-toggle');
+          if (modeBtn) {
+            modeBtn.click();
+          }
+        });
+      }
 
       dropdown.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -302,4 +373,3 @@
   </script>
 </body>
 </html>
-
