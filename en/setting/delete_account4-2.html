@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Account (Step 4-2) | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="si-fi profile-page delete-account-page plan-details-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <nav class="global-nav" aria-label="Main navigation">
+        <ul class="global-nav-list">
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="Go to Annual view"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Annual</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="Go to Monthly view"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Monthly</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="Go to Daily view"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Daily</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="Go to Index view"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Index</span></span></a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span></span></a>
+        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu"><img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true"></button>
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true"><img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true"></button>
+      </div>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Account</h4>
+          <nav class="account-settings-nav">
+            <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
+            <a href="change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
+            <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+          </nav>
+        </section>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Subscription</h4>
+          <nav class="account-settings-nav">
+            <a href="plan_details.html" class="account-settings-item" role="menuitem">Plan Details</a>
+            <a href="change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
+          </nav>
+        </section>
+        <div class="account-settings-sep"></div>
+        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger is-current" role="menuitem" aria-current="page">Delete Account</a>
+      </div>
+      <div class="settings-dropdown" id="settings-dropdown" hidden>
+        <div class="settings-dropdown-inner">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Expense</span></span></a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode"><span class="btn-mode-frame"><img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span></span></a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main plan-details-main delete-account-main">
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden><div class="workspace-popup-inner"><div class="workspace-popup-item is-current">Workspace : Personal</div></div></div>
+      </div>
+
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub delete-account-page-title">DELETE ACCOUNT</h2>
+
+      <nav class="delete-account-stepper" aria-label="Account deletion steps">
+        <div class="delete-account-stepper-track">
+          <img src="../../images/stepper_4.svg" data-src-sci-fi="../../images/stepper_4.svg" data-src-office="../../images/stepper_4_office.svg" alt="Step 4 of 5: Security Verification" class="delete-account-stepper-image" id="delete-account-stepper-image">
+          <ol class="delete-account-stepper-labels" aria-hidden="true">
+            <li>1. Account Status</li>
+            <li>2. Manage Subscription</li>
+            <li>3. Data Retention</li>
+            <li>4. Security Verification</li>
+            <li>5. Final Confirmation</li>
+          </ol>
+        </div>
+      </nav>
+
+      <section class="delete-security-panel">
+        <h3 class="delete-account-step-heading">4. Security Verification</h3>
+        <p class="delete-retention-text">To protect your account, please verify your identity before proceeding.</p>
+        <p class="delete-retention-text">Account deletion is not completed yet.</p>
+
+        <div class="delete-otp-wrap" aria-label="One-time code verification">
+          <p class="delete-otp-caption">We&apos;ve sent a 6-digit code to your email.</p>
+          <p class="delete-otp-caption">Code expires in 5 minutes.</p>
+
+          <form id="delete-otp-form" novalidate>
+            <div class="delete-otp-grid">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" class="delete-otp-input">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" class="delete-otp-input">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" class="delete-otp-input">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" class="delete-otp-input">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" class="delete-otp-input">
+              <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" class="delete-otp-input">
+            </div>
+            <button type="button" class="delete-otp-resend" id="delete-otp-resend">Resend code (60s)</button>
+            <p class="form-error" id="delete-otp-error" hidden>Please enter the 6-digit code.</p>
+            <div class="delete-security-actions">
+              <button type="submit" class="btn-delete-stripe">Confirm</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top"><img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon"></button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo"><a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer"><img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img"></a></div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="delete_account4-2.html" data-url-ja="../../setting/delete_account4-2.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
+      <span class="lang-code" aria-hidden="true">EN</span>
+      <span class="lang-name">English</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
+      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
+  <script>
+    (function(){var STORAGE_KEY='kpi-office-mode',bodyEl=document.getElementById('body-el'),btnModeToggle=document.getElementById('btn-mode-toggle'),btnModeText=document.getElementById('btn-mode-text'),settingsOfficeLabel=document.getElementById('settings-office-label');function updateModeButton(){if(!btnModeText||!btnModeToggle)return;var isOffice=bodyEl&&bodyEl.classList.contains('office-mode');btnModeText.textContent=isOffice?'SCI-FI MODE':'OFFICE MODE';btnModeToggle.setAttribute('aria-label',isOffice?'Switch to Sci-Fi Mode':'Switch to Office Mode');if(settingsOfficeLabel)settingsOfficeLabel.textContent=isOffice?'Sci-Fi Mode':'Office Mode';}if(bodyEl&&btnModeToggle){if(sessionStorage.getItem(STORAGE_KEY)==='1')bodyEl.classList.add('office-mode');btnModeToggle.addEventListener('click',function(e){e.preventDefault();bodyEl.classList.toggle('office-mode');if(bodyEl.classList.contains('office-mode'))sessionStorage.setItem(STORAGE_KEY,'1');else sessionStorage.removeItem(STORAGE_KEY);updateModeButton();});updateModeButton();}})();
+    (function(){var menuBtn=document.querySelector('.icon-button-menu'),dropdown=document.getElementById('settings-dropdown'),officeToggle=document.getElementById('settings-office-toggle');if(!menuBtn||!dropdown)return;menuBtn.addEventListener('click',function(e){e.stopPropagation();dropdown.hidden=!dropdown.hidden;});if(officeToggle)officeToggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var modeBtn=document.getElementById('btn-mode-toggle');if(modeBtn)modeBtn.click();});dropdown.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',function(){dropdown.hidden=true;});})();
+    (function(){var gearBtn=document.getElementById('btn-account-settings'),accountPopup=document.getElementById('account-settings-popup'),menuDropdown=document.getElementById('settings-dropdown');if(!gearBtn||!accountPopup)return;gearBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!accountPopup.hidden;accountPopup.hidden=isOpen;gearBtn.setAttribute('aria-expanded',!isOpen);if(!isOpen&&menuDropdown)menuDropdown.hidden=true;});accountPopup.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',function(){accountPopup.hidden=true;gearBtn.setAttribute('aria-expanded','false');});})();
+    (function(){var trigger=document.getElementById('workspace-trigger'),popup=document.getElementById('workspace-popup');if(!trigger||!popup)return;trigger.addEventListener('click',function(e){e.stopPropagation();var isOpen=!popup.hidden;popup.hidden=isOpen;trigger.setAttribute('aria-expanded',!isOpen);});popup.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',function(){popup.hidden=true;trigger.setAttribute('aria-expanded','false');});})();
+    (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap');if(!langBtn||!langDropdown||!langWrap)return;langBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!langDropdown.hidden;langDropdown.hidden=isOpen;langBtn.setAttribute('aria-expanded',!isOpen);});document.addEventListener('click',function(){langDropdown.hidden=true;langBtn.setAttribute('aria-expanded','false');});var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el');langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();if(bodyElForLang&&bodyElForLang.classList.contains('office-mode'))sessionStorage.setItem('kpi-office-mode','1');var lang=this.getAttribute('data-lang');var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null;if(href)window.location.href=href;});});})();
+    (function(){var backTop=document.getElementById('footerBackToTop');if(!backTop)return;backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
+    (function(){var bodyEl=document.getElementById('body-el'),imgEl=document.getElementById('delete-account-stepper-image');if(!bodyEl||!imgEl)return;var sciFiSrc=imgEl.getAttribute('data-src-sci-fi'),officeSrc=imgEl.getAttribute('data-src-office');function applyStepperByMode(){if(bodyEl.classList.contains('office-mode')){if(officeSrc)imgEl.src=officeSrc;}else{if(sciFiSrc)imgEl.src=sciFiSrc;}}applyStepperByMode();var observer=new MutationObserver(applyStepperByMode);observer.observe(bodyEl,{attributes:true,attributeFilter:['class']});})();
+    (function(){var inputs=[].slice.call(document.querySelectorAll('.delete-otp-input')),form=document.getElementById('delete-otp-form'),err=document.getElementById('delete-otp-error'),resend=document.getElementById('delete-otp-resend');inputs.forEach(function(inp,idx){inp.addEventListener('input',function(){inp.value=inp.value.replace(/[^0-9]/g,'').slice(0,1);if(inp.value&&inputs[idx+1])inputs[idx+1].focus();});inp.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!inp.value&&inputs[idx-1]){inputs[idx-1].focus();}});});if(form&&err){form.addEventListener('submit',function(e){e.preventDefault();var code=inputs.map(function(i){return i.value;}).join('');if(code.length!==6){err.hidden=false;return;}err.hidden=true;window.location.href='delete_account5.html';});}if(resend){var sec=60;resend.addEventListener('click',function(){sec=60;resend.disabled=true;var t=setInterval(function(){sec-=1;resend.textContent='Resend code ('+sec+'s)';if(sec<=0){clearInterval(t);resend.disabled=false;resend.textContent='Resend code';}},1000);});}})();
+  </script>
+</body>
+</html>
+

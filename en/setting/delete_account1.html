@@ -87,7 +87,7 @@
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="delete_account.html" class="account-settings-item account-settings-item-danger is-current" role="menuitem" aria-current="page">Delete Account</a>
+        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger is-current" role="menuitem" aria-current="page">Delete Account</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
@@ -131,28 +131,23 @@
       </p>
 
       <nav class="delete-account-stepper" aria-label="Account deletion steps">
-        <ol class="delete-account-stepper-list">
-          <li class="delete-account-step is-active" aria-current="step">
-            <span class="delete-account-step-dot" aria-hidden="true"></span>
-            <span class="delete-account-step-label">Account Status</span>
-          </li>
-          <li class="delete-account-step">
-            <span class="delete-account-step-dot" aria-hidden="true"></span>
-            <span class="delete-account-step-label">Manage Subscription</span>
-          </li>
-          <li class="delete-account-step">
-            <span class="delete-account-step-dot" aria-hidden="true"></span>
-            <span class="delete-account-step-label">Data Retention</span>
-          </li>
-          <li class="delete-account-step">
-            <span class="delete-account-step-dot" aria-hidden="true"></span>
-            <span class="delete-account-step-label">Security Verification</span>
-          </li>
-          <li class="delete-account-step">
-            <span class="delete-account-step-dot" aria-hidden="true"></span>
-            <span class="delete-account-step-label">Final Confirmation</span>
-          </li>
-        </ol>
+        <div class="delete-account-stepper-track">
+          <img
+            src="../../images/stepper_1.svg"
+            data-src-sci-fi="../../images/stepper_1.svg"
+            data-src-office="../../images/stepper_1_office.svg"
+            alt="Step 1 of 5: Account Status, Manage Subscription, Data Retention, Security Verification, Final Confirmation"
+            class="delete-account-stepper-image"
+            id="delete-account-stepper-image"
+          >
+          <ol class="delete-account-stepper-labels" aria-hidden="true">
+            <li>1. Account Status</li>
+            <li>2. Manage Subscription</li>
+            <li>3. Data Retention</li>
+            <li>4. Security Verification</li>
+            <li>5. Final Confirmation</li>
+          </ol>
+        </div>
       </nav>
 
       <section class="plan-details-section delete-account-step-panel" aria-labelledby="delete-step1-heading">
@@ -187,7 +182,7 @@
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="delete_account.html" data-url-ja="../../setting/delete_account.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="delete_account1.html" data-url-ja="../../setting/delete_account1.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
       <span class="lang-code" aria-hidden="true">EN</span>
       <span class="lang-name">English</span>
@@ -347,6 +342,23 @@
       backTop.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    })();
+    (function () {
+      var bodyEl = document.getElementById('body-el');
+      var imgEl = document.getElementById('delete-account-stepper-image');
+      if (!bodyEl || !imgEl) return;
+      var sciFiSrc = imgEl.getAttribute('data-src-sci-fi');
+      var officeSrc = imgEl.getAttribute('data-src-office');
+      function applyStepperByMode() {
+        if (bodyEl.classList.contains('office-mode')) {
+          if (officeSrc) imgEl.src = officeSrc;
+        } else {
+          if (sciFiSrc) imgEl.src = sciFiSrc;
+        }
+      }
+      applyStepperByMode();
+      var observer = new MutationObserver(applyStepperByMode);
+      observer.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
     })();
   </script>
 </body>

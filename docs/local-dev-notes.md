@@ -89,4 +89,78 @@
 
 ---
 
+## 8. Delete Account ステッパー画像の運用メモ（2026-03）
+
+- 格納先: `images/`
+- ファイル名:
+  - `stepper_1.svg` → `delete_account1.html` 用
+  - `stepper_2.svg` → `delete_account2.html` 用
+  - `stepper_3.svg` → `delete_account3.html` 用
+  - `stepper_4.svg` → `delete_account4*.html` 用（Step4系）
+  - `stepper_5.svg` → `delete_account5.html` 用
+
+### 現在の適用
+
+- `en/setting/delete_account1.html` のステッパーは、HTML/CSS描画ではなく `../../images/stepper_1.svg` を表示する方式に変更済み。
+- Office Mode では `../../images/stepper_1_office.svg` に差し替える方式（色反転パターン）を適用済み。
+- `en/setting/delete_account2.html` も同じ方式で、`stepper_2.svg` / `stepper_2_office.svg` をモードで切り替える。
+- `en/setting/delete_account3.html` も同じ方式で、`stepper_3.svg` / `stepper_3_office.svg` をモードで切り替える。
+- `en/setting/delete_account4-1.html` も同じ方式で、`stepper_4.svg` / `stepper_4_office.svg` をモードで切り替える。
+- `en/setting/delete_account4-2.html` も同じ方式で、`stepper_4.svg` / `stepper_4_office.svg` をモードで切り替える。
+- `en/setting/delete_account5.html` も同じ方式で、`stepper_5.svg` / `stepper_5_office.svg` をモードで切り替える。
+- `en/setting/delete_account_accomplished.html` を削除完了後の遷移先として追加（任意サーベイ付き）。
+
+### delete_account2 のリンク運用メモ（TODO）
+
+- Option A「Keep Plan」ボタン:
+  - 最終的に **KPI Navigatorメインページ（Annual）** のURLへ差し替える。
+  - 現在は暫定リンク（`../../index.html`）。
+- Option C「Cancel Subscription」ボタン:
+  - **Stripeの任意URL** が確定後に差し替える。
+  - 現在は暫定リンク（`#`）。
+
+### Step4 の分岐ルール
+
+- Step4は `4-1` と `4-2` の2パターンを使う想定。
+- 今後のファイル名は以下で統一する（予定）:
+  - `delete_account4-1.html`
+  - `delete_account4-2.html`
+- どちらも Step4 用ステッパー画像を使う前提で実装する。
+
+### 実装ポリシー（重要）
+
+- 今後の Delete Account グループ（`delete_account1〜5`, `4-1`, `4-2`）は、**箱（画像ステッパー）パターンを標準**にする。
+- 旧方式（HTML/CSSのみで丸と線を描画）は使わない。
+- Sci-Fi / Office は画像差し替えで表現し、色調整はSVG側で管理する。
+
+---
+
+## 9. レイアウト余白に関する好み（UIルール）
+
+- オーナー方針: **各 `div` / `section` 間は詰めすぎず、余白をやや広めに取る。**
+- 理由: 要素同士が近すぎると窮屈に見え、可読性と高級感が下がるため。
+- 実装時の目安（Sci-Fi / Office 共通）:
+  - セクション間: `margin-top` / `margin-bottom` を今より一段広めに設定
+  - 見出しと本文ブロック間: 余白を明確に分離する
+  - ボックス（カード）同士: 最低でも1行以上の視覚的な呼吸を作る
+  - Delete Account系ページでは、特に**フォーム前後**と**ボタン前**の余白を広めに取る
+- レビュー時チェック:
+  - 「情報が詰まって見えないか」
+  - 「スクリーンショットで見たときに呼吸感があるか」
+
+### 入力ボックス再発防止ルール
+
+- Security Verification（delete_account4-1 など）の入力欄は、**Change Passwordページ準拠**の見た目を標準とする。
+- 具体的には、Sci-Fi時は緑枠＋暗背景＋フォーカス発光、Office時は黒枠＋薄グレー背景を維持する。
+
+---
+
+## 10. 記号位置の整列ルール（Delete Account含む）
+
+- `:` や `・` などの記号は、同一ブロック内で**縦ラインを揃える**。
+- 特に `ラベル : 値` 形式は、ラベル列の幅を固定して `:` のX位置を統一する。
+- 理由: レイアウトを意図的にコントロールしている印象が強まり、可読性と品質感が上がる。
+
+---
+
 *Last updated: プロジェクトメンテ時に随時更新してください。*
