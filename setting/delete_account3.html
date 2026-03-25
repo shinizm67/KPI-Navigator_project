@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アカウント削除（Step 3） | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../register/style.css">
+  <link rel="stylesheet" href="../en/setting/style.css">
+</head>
+<body class="si-fi profile-page delete-account-page plan-details-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <nav class="global-nav" aria-label="メインナビゲーション">
+        <ul class="global-nav-list">
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="年間ビューへ"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Annual</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="月間ビューへ"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Monthly</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="日別ビューへ"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Daily</span></span></a></li>
+          <li class="global-nav-item"><a href="#" class="nav-frame-btn" aria-label="インデックスビューへ"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Index</span></span></a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span></span></a>
+        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く"><img src="../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true"></button>
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true"><img src="../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true"></button>
+      </div>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
+        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Account</h4>
+          <nav class="account-settings-nav">
+            <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
+            <a href="change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
+            <a href="session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
+          </nav>
+        </section>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Subscription</h4>
+          <nav class="account-settings-nav">
+            <a href="plan_details.html" class="account-settings-item" role="menuitem">プラン詳細</a>
+            <a href="change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
+          </nav>
+        </section>
+        <div class="account-settings-sep"></div>
+        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger is-current" role="menuitem" aria-current="page">アカウント削除</a>
+      </div>
+      <div class="settings-dropdown" id="settings-dropdown" hidden>
+        <div class="settings-dropdown-inner">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Expense</span></span></a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span></span></a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main plan-details-main delete-account-main">
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden><div class="workspace-popup-inner"><div class="workspace-popup-item is-current">Workspace : Personal</div></div></div>
+      </div>
+
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub delete-account-page-title">アカウント削除</h2>
+      <p class="delete-account-subtext">削除後のデータ取り扱いについてご確認ください。</p>
+
+      <nav class="delete-account-stepper" aria-label="アカウント削除ステップ">
+        <div class="delete-account-stepper-track">
+          <img src="../images/stepper_3.svg" data-src-sci-fi="../images/stepper_3.svg" data-src-office="../images/stepper_3_office.svg" alt="5ステップ中3: データ保持" class="delete-account-stepper-image" id="delete-account-stepper-image">
+          <ol class="delete-account-stepper-labels" aria-hidden="true">
+            <li>1. Account Status</li>
+            <li>2. Manage Subscription</li>
+            <li>3. Data Retention</li>
+            <li>4. Security Verification</li>
+            <li>5. Final Confirmation</li>
+          </ol>
+        </div>
+      </nav>
+
+      <section class="delete-retention-intro">
+        <h3 class="delete-account-step-heading">3. データ保持</h3>
+        <p class="delete-retention-text">アカウント削除後に各データがどのように扱われるかをご確認ください。</p>
+      </section>
+
+      <section class="delete-retention-summary">
+        <h4 class="delete-retention-summary-title">保持ポリシー概要</h4>
+        <ul class="delete-retention-list">
+          <li>個人データ: アカウント削除と同時に削除（メール、事業プロフィール）</li>
+          <li>会計関連データ: 会計ログとして保持される場合があります</li>
+          <li>KPIログ: 法令・規約で必要な範囲で保持される場合があります</li>
+          <li>イベント・決済履歴: 分析・サポート目的で保持される場合があります</li>
+        </ul>
+      </section>
+
+      <section class="delete-retention-columns">
+        <div class="delete-retention-column">
+          <h5>削除されるデータ</h5>
+          <ul>
+            <li>プロフィール情報（メール、パスワード、プロフィール、ワークスペース設定）</li>
+            <li>アプリ内ユーザー設定</li>
+          </ul>
+        </div>
+        <div class="delete-retention-column">
+          <h5>保持される可能性があるデータ（匿名化/集計）</h5>
+          <ul>
+            <li>KPIパフォーマンス指標（匿名化）</li>
+            <li>セキュリティ・不正対策のためのシステムログ</li>
+            <li>法令対応に必要な請求関連履歴</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="delete-retention-actions">
+        <p class="delete-retention-helper">削除前に別の選択肢を検討しますか？</p>
+        <a href="#" class="btn-delete-stripe">サブスクのみ解約 →</a>
+        <a href="change_plan.html" class="btn-delete-stripe">プランをダウングレード →</a>
+      </div>
+
+      <div class="delete-retention-nav">
+        <a href="delete_account2.html">← 戻る</a>
+        <a href="delete_account4-1.html">次へ →</a>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ上部へ"><img src="../images/arrow_up.svg" alt="ページ上部へ" class="footer-backtotop__icon"></button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo"><a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer"><img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img"></a></div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../en/setting/delete_account3.html" data-url-ja="delete_account3.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
+  <script>
+    (function () { var STORAGE_KEY='kpi-office-mode',bodyEl=document.getElementById('body-el'),btnModeToggle=document.getElementById('btn-mode-toggle'),btnModeText=document.getElementById('btn-mode-text'),settingsOfficeLabel=document.getElementById('settings-office-label'); function updateModeButton(){ if(!btnModeText||!btnModeToggle) return; var isOffice=bodyEl&&bodyEl.classList.contains('office-mode'); btnModeText.textContent=isOffice?'SCI-FI MODE':'OFFICE MODE'; btnModeToggle.setAttribute('aria-label',isOffice?'Sci-Fi Mode に切り替え':'Office Mode に切り替え'); if(settingsOfficeLabel) settingsOfficeLabel.textContent=isOffice?'Sci-Fi Mode':'Office Mode'; } if(bodyEl&&btnModeToggle){ if(sessionStorage.getItem(STORAGE_KEY)==='1') bodyEl.classList.add('office-mode'); btnModeToggle.addEventListener('click',function(e){e.preventDefault(); bodyEl.classList.toggle('office-mode'); if(bodyEl.classList.contains('office-mode')) sessionStorage.setItem(STORAGE_KEY,'1'); else sessionStorage.removeItem(STORAGE_KEY); updateModeButton();}); updateModeButton(); } })();
+    (function(){var menuBtn=document.querySelector('.icon-button-menu'),dropdown=document.getElementById('settings-dropdown'),officeToggle=document.getElementById('settings-office-toggle'); if(!menuBtn||!dropdown) return; menuBtn.addEventListener('click',function(e){e.stopPropagation(); dropdown.hidden=!dropdown.hidden;}); if(officeToggle) officeToggle.addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); var modeBtn=document.getElementById('btn-mode-toggle'); if(modeBtn) modeBtn.click();}); dropdown.addEventListener('click',function(e){e.stopPropagation();}); document.addEventListener('click',function(){dropdown.hidden=true;});})();
+    (function(){var gearBtn=document.getElementById('btn-account-settings'),accountPopup=document.getElementById('account-settings-popup'),menuDropdown=document.getElementById('settings-dropdown'); if(!gearBtn||!accountPopup) return; gearBtn.addEventListener('click',function(e){e.stopPropagation(); var isOpen=!accountPopup.hidden; accountPopup.hidden=isOpen; gearBtn.setAttribute('aria-expanded',!isOpen); if(!isOpen&&menuDropdown) menuDropdown.hidden=true;}); accountPopup.addEventListener('click',function(e){e.stopPropagation();}); document.addEventListener('click',function(){accountPopup.hidden=true; gearBtn.setAttribute('aria-expanded','false');});})();
+    (function(){var trigger=document.getElementById('workspace-trigger'),popup=document.getElementById('workspace-popup'); if(!trigger||!popup) return; trigger.addEventListener('click',function(e){e.stopPropagation(); var isOpen=!popup.hidden; popup.hidden=isOpen; trigger.setAttribute('aria-expanded',!isOpen);}); popup.addEventListener('click',function(e){e.stopPropagation();}); document.addEventListener('click',function(){popup.hidden=true; trigger.setAttribute('aria-expanded','false');});})();
+    (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap'); if(!langBtn||!langDropdown||!langWrap) return; langBtn.addEventListener('click',function(e){e.stopPropagation(); var isOpen=!langDropdown.hidden; langDropdown.hidden=isOpen; langBtn.setAttribute('aria-expanded',!isOpen);}); document.addEventListener('click',function(){langDropdown.hidden=true; langBtn.setAttribute('aria-expanded','false');}); var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el'); langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation(); if(bodyElForLang&&bodyElForLang.classList.contains('office-mode')) sessionStorage.setItem('kpi-office-mode','1'); var lang=this.getAttribute('data-lang'); var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null; if(href) window.location.href=href;});});})();
+    (function(){var backTop=document.getElementById('footerBackToTop'); if(!backTop) return; backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
+    (function(){var bodyEl=document.getElementById('body-el'),imgEl=document.getElementById('delete-account-stepper-image'); if(!bodyEl||!imgEl) return; var sciFiSrc=imgEl.getAttribute('data-src-sci-fi'),officeSrc=imgEl.getAttribute('data-src-office'); function applyStepperByMode(){ if(bodyEl.classList.contains('office-mode')) { if(officeSrc) imgEl.src=officeSrc; } else { if(sciFiSrc) imgEl.src=sciFiSrc; } } applyStepperByMode(); var observer=new MutationObserver(applyStepperByMode); observer.observe(bodyEl,{attributes:true,attributeFilter:['class']});})();
+  </script>
+</body>
+</html>

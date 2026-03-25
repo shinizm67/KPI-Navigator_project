@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defensive Protocol | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="../setting/style.css">
+</head>
+<body class="si-fi profile-page defensive-protocol-page" id="body-el">
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main">
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub">DEFENSIVE PROTOCOL</h2>
+
+      <section class="defense-card" aria-labelledby="defense-title">
+        <h3 id="defense-title" class="defense-title">Another device is currently signed in</h3>
+        <p class="defense-text">This account is currently in use on another device.</p>
+        <p class="defense-text">To continue on this device, please verify your identity via email.</p>
+
+        <div class="defense-actions">
+          <button type="button" class="btn-submit btn-register defense-btn-main" id="btn-verify-email">Verify via Email</button>
+        </div>
+
+        <p class="defense-help"><a href="account_protection.html" class="defense-link">If this wasn't you, please contact support.</a></p>
+      </section>
+
+      <div class="defense-actions-bottom">
+        <a href="account_protection.html" class="btn-submit btn-register defense-btn-sub">This wasn't me</a>
+      </div>
+
+      <p class="profile-alert" id="verify-feedback" role="status" aria-live="polite" hidden>
+        Verification email has been sent. Please check your inbox.
+      </p>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top"><img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon"></button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo"><img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img"></div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      var backTop = document.getElementById('footerBackToTop');
+      if (!backTop) return;
+      backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
+    (function () {
+      var btn = document.getElementById('btn-verify-email');
+      var feedback = document.getElementById('verify-feedback');
+      if (!btn || !feedback) return;
+      btn.addEventListener('click', function () {
+        feedback.hidden = false;
+      });
+    })();
+  </script>
+</body>
+</html>

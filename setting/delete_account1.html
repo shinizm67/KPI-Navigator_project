@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>防御プロトコル | KPI Navigator | FORGE LABORATORY</title>
+  <title>アカウント削除 | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../register/style.css">
   <link rel="stylesheet" href="../en/setting/style.css">
 </head>
-<body class="si-fi profile-page defensive-protocol-page" id="body-el">
+<body class="si-fi profile-page delete-account-page plan-details-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -52,19 +52,19 @@
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
+        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger is-current" role="menuitem" aria-current="page">アカウント削除</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Expense設定を開く"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Expense</span></span></a>
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Modeを切替"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span></span></a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text">Expense</span></span></a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え"><span class="btn-mode-frame"><img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true"><span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span></span></a>
         </div>
       </div>
     </div>
   </header>
 
   <div class="page-wrap profile-wrap">
-    <main class="profile-main">
+    <main class="profile-main plan-details-main delete-account-main">
       <div class="workspace-selector-wrap">
         <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg></span>
@@ -74,38 +74,76 @@
           <div class="workspace-popup-inner"><div class="workspace-popup-item is-current">Workspace : Personal</div></div>
         </div>
       </div>
-
       <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">DEFENSIVE PROTOCOL</h2>
+      <h2 class="profile-title-sub delete-account-page-title">アカウント削除</h2>
 
-      <section class="defense-card" aria-labelledby="defense-title">
-        <h3 id="defense-title" class="defense-title">他のデバイスでログインが検出されました</h3>
-        <p class="defense-text">このアカウントは現在、別のデバイスで利用されています。</p>
-        <p class="defense-text">このデバイスで続行するには、メールで本人確認を行ってください。</p>
-
-        <div class="defense-actions">
-          <button type="button" class="btn-submit btn-register defense-btn-main" id="btn-verify-email">メールで確認する</button>
-        </div>
-
-        <p class="defense-help"><a href="account_protection.html" class="defense-link">心当たりがない場合は、サポートへ連絡してください。</a></p>
-      </section>
-
-      <div class="defense-actions-bottom">
-        <a href="account_protection.html" class="btn-submit btn-register defense-btn-sub">これは私ではありません</a>
-      </div>
-
-      <p class="profile-alert" id="verify-feedback" role="status" aria-live="polite" hidden>
-        確認メールを送信しました。受信トレイをご確認ください。
+      <p class="delete-account-warning" role="alert">
+        この操作でアカウントは停止されます。個人データは削除され、匿名化されたデータのみ保持される場合があります。
       </p>
+
+      <nav class="delete-account-stepper" aria-label="アカウント削除ステップ">
+        <div class="delete-account-stepper-track">
+          <img
+            src="../images/stepper_1.svg"
+            data-src-sci-fi="../images/stepper_1.svg"
+            data-src-office="../images/stepper_1_office.svg"
+            alt="5ステップ中1: アカウント状況、サブスク管理、データ保持、本人確認、最終確認"
+            class="delete-account-stepper-image"
+            id="delete-account-stepper-image"
+          >
+          <ol class="delete-account-stepper-labels" aria-hidden="true">
+            <li>1. Account Status</li>
+            <li>2. Manage Subscription</li>
+            <li>3. Data Retention</li>
+            <li>4. Security Verification</li>
+            <li>5. Final Confirmation</li>
+          </ol>
+        </div>
+      </nav>
+
+      <section class="plan-details-section delete-account-step-panel" aria-labelledby="delete-step1-heading">
+        <h3 class="delete-account-step-heading" id="delete-step1-heading">1. アカウント状況</h3>
+        <dl class="delete-account-status-dl">
+          <div class="delete-account-status-row"><dt>サブスクリプション</dt><dd>有効</dd></div>
+          <div class="delete-account-status-row"><dt>プラン</dt><dd>Pro</dd></div>
+          <div class="delete-account-status-row"><dt>次回請求日</dt><dd>2025年3月28日</dd></div>
+        </dl>
+        <p class="delete-account-stripe-actions">
+          <a href="#" class="btn-delete-stripe" id="btn-manage-stripe">サブスクリプションを管理（Stripe）→</a>
+        </p>
+        <p class="delete-account-step-note">アカウント削除を完了する前に、Stripeで請求停止またはプラン変更を行ってください。</p>
+      </section>
     </main>
   </div>
 
   <footer class="site-footer">
-    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ上部へ"><img src="../images/arrow_up.svg" alt="ページ上部へ" class="footer-backtotop__icon"></button>
+    <div class="plan-details-footer-strip" role="note">
+      <span class="plan-details-footer-strip-icon" aria-hidden="true">&#9888;</span>
+      <span class="plan-details-footer-strip-text">アカウント削除は最終確認後に取り消せません。必要に応じてサポートへお問い合わせください。</span>
+    </div>
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ上部へ">
+      <img src="../images/arrow_up.svg" alt="ページ上部へ" class="footer-backtotop__icon">
+    </button>
     <div class="footer-separator"></div>
-    <div class="footer-logo"><a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer"><img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img"></a></div>
+    <div class="footer-logo">
+      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+        <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      </a>
+    </div>
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../en/setting/delete_account1.html" data-url-ja="delete_account1.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
 
   <script>
     (function () {
@@ -138,10 +176,14 @@
       var dropdown = document.getElementById('settings-dropdown');
       var officeToggle = document.getElementById('settings-office-toggle');
       if (!menuBtn || !dropdown) return;
-      menuBtn.addEventListener('click', function (e) { e.stopPropagation(); dropdown.hidden = !dropdown.hidden; });
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.hidden = !dropdown.hidden;
+      });
       if (officeToggle) {
         officeToggle.addEventListener('click', function (e) {
-          e.preventDefault(); e.stopPropagation();
+          e.preventDefault();
+          e.stopPropagation();
           var modeBtn = document.getElementById('btn-mode-toggle');
           if (modeBtn) modeBtn.click();
         });
@@ -184,17 +226,55 @@
       });
     })();
     (function () {
+      var langBtn = document.getElementById('lang-select-btn');
+      var langDropdown = document.getElementById('lang-select-dropdown');
+      var langOptions = document.querySelectorAll('.lang-option');
+      var langWrap = document.getElementById('lang-select-wrap');
+      if (!langBtn || !langDropdown || !langWrap) return;
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !langDropdown.hidden;
+        langDropdown.hidden = isOpen;
+        langBtn.setAttribute('aria-expanded', !isOpen);
+      });
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+      var urlEn = langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap.getAttribute('data-url-ja');
+      var bodyElForLang = document.getElementById('body-el');
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) sessionStorage.setItem('kpi-office-mode', '1');
+          var lang = this.getAttribute('data-lang');
+          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          if (href) window.location.href = href;
+        });
+      });
+    })();
+    (function () {
       var backTop = document.getElementById('footerBackToTop');
       if (!backTop) return;
       backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
     })();
     (function () {
-      var btn = document.getElementById('btn-verify-email');
-      var feedback = document.getElementById('verify-feedback');
-      if (!btn || !feedback) return;
-      btn.addEventListener('click', function () {
-        feedback.hidden = false;
-      });
+      var bodyEl = document.getElementById('body-el');
+      var imgEl = document.getElementById('delete-account-stepper-image');
+      if (!bodyEl || !imgEl) return;
+      var sciFiSrc = imgEl.getAttribute('data-src-sci-fi');
+      var officeSrc = imgEl.getAttribute('data-src-office');
+      function applyStepperByMode() {
+        if (bodyEl.classList.contains('office-mode')) {
+          if (officeSrc) imgEl.src = officeSrc;
+        } else {
+          if (sciFiSrc) imgEl.src = sciFiSrc;
+        }
+      }
+      applyStepperByMode();
+      var observer = new MutationObserver(applyStepperByMode);
+      observer.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
     })();
   </script>
 </body>

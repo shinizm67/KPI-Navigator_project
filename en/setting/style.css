@@ -1472,10 +1472,13 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   background: transparent !important;
   border: 1px solid var(--si-fi-green) !important;
   color: var(--si-fi-green) !important;
+  font-weight: 400 !important;
   box-shadow: none !important;
 }
 
 .change-plan-page .price-table .btn-plan-downgrade:hover {
+  background: var(--si-fi-green) !important;
+  color: #fff !important;
   box-shadow: 0 0 12px rgba(15, 148, 3, 0.45) !important;
   opacity: 1;
 }
@@ -1534,11 +1537,13 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   background: transparent !important;
   border: 1px solid #333 !important;
   color: #333 !important;
+  font-weight: 400 !important;
   font-family: 'BIZ UDPGothic', sans-serif !important;
 }
 
 .si-fi.office-mode.change-plan-page .price-table .btn-plan-downgrade:hover {
-  background: #eee !important;
+  background: #6a6a6a !important;
+  color: #fff !important;
   box-shadow: none !important;
 }
 
@@ -2342,6 +2347,7 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
 
 .delete-accomplished-actions .btn-delete-stripe {
   min-width: 180px;
+  text-align: center;
 }
 
 .si-fi.office-mode.delete-account-page .delete-accomplished-fieldset {

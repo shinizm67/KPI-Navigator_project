@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plan Details | KPI Navigator | FORGE LABORATORY</title>
+  <title>プラン詳細 | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../register/style.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../register/style.css">
+  <link rel="stylesheet" href="../en/setting/style.css">
 </head>
 <body class="si-fi profile-page plan-details-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
-        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
-          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
-      <nav class="global-nav" aria-label="Main navigation">
+      <nav class="global-nav" aria-label="メインナビゲーション">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Annual view">
+            <a href="#" class="nav-frame-btn" aria-label="年間ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Annual</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Monthly view">
+            <a href="#" class="nav-frame-btn" aria-label="月間ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Monthly</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Daily view">
+            <a href="#" class="nav-frame-btn" aria-label="日別ビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Daily</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="Go to Index view">
+            <a href="#" class="nav-frame-btn" aria-label="インデックスビューへ">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Index</span>
               </span>
             </a>
@@ -55,51 +55,51 @@
         </ul>
       </nav>
       <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
           <span class="btn-mode-frame">
-            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
-          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
+          <img src="../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
-          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+          <img src="../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
-      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
         <h3 class="account-settings-popup-title">Account Settings</h3>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
             <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
-            <a href="change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
-            <a href="change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
-            <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
+            <a href="change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
+            <a href="session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
-            <a href="plan_details.html" class="account-settings-item is-current" role="menuitem">Plan Details</a>
-            <a href="change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
+            <a href="plan_details.html" class="account-settings-item is-current" role="menuitem">プラン詳細</a>
+            <a href="change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
+        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">アカウント削除</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text">Expense</span>
             </span>
           </a>
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
             </span>
           </a>
@@ -111,133 +111,126 @@
   <div class="page-wrap profile-wrap">
     <main class="profile-main plan-details-main">
       <div class="workspace-selector-wrap">
-        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
           <span class="profile-workspace-label">Workspace : Personal</span>
         </button>
-        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
           <div class="workspace-popup-inner">
             <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
         </div>
       </div>
       <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">Plan Details</h2>
+      <h2 class="profile-title-sub">プラン詳細</h2>
 
       <div class="plan-details-content">
-        <!-- [ 1 ] Current Plan -->
         <section class="plan-details-section" aria-labelledby="plan-details-h1">
-          <h3 class="plan-details-section-heading" id="plan-details-h1"><span class="plan-details-num">[ 1 ]</span> Current Plan</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h1"><span class="plan-details-num">[ 1 ]</span> 現在のプラン</h3>
           <dl class="plan-details-dl plan-details-dl-two-col">
-            <div class="plan-details-dl-row"><dt>Plan Name</dt><dd>Pro</dd></div>
-            <div class="plan-details-dl-row"><dt>Status</dt><dd>Active</dd></div>
-            <div class="plan-details-dl-row"><dt>Price</dt><dd>$29 / Month</dd></div>
-            <div class="plan-details-dl-row"><dt>Billing Cycle</dt><dd>Monthly</dd></div>
-            <div class="plan-details-dl-row"><dt>Next Billing Date</dt><dd>March 15th, 2025</dd></div>
-            <div class="plan-details-dl-row"><dt>Payment Method</dt><dd>Visa ···· ···· ···· 4242</dd></div>
-            <div class="plan-details-dl-row"><dt>Subscription ID</dt><dd>KP-999-0000-0115</dd></div>
+            <div class="plan-details-dl-row"><dt>プラン名</dt><dd>プロ</dd></div>
+            <div class="plan-details-dl-row"><dt>ステータス</dt><dd>利用中</dd></div>
+            <div class="plan-details-dl-row"><dt>価格</dt><dd>¥3,000 / 月</dd></div>
+            <div class="plan-details-dl-row"><dt>請求サイクル</dt><dd>月次</dd></div>
+            <div class="plan-details-dl-row"><dt>次回請求日</dt><dd>2025年3月15日</dd></div>
+            <div class="plan-details-dl-row"><dt>支払い方法</dt><dd>Visa ···· ···· ···· 4242</dd></div>
+            <div class="plan-details-dl-row"><dt>サブスクリプションID</dt><dd>KP-999-0000-0115</dd></div>
           </dl>
         </section>
 
-        <!-- [ 2 ] Included in Your Plan -->
         <section class="plan-details-section" aria-labelledby="plan-details-h2">
-          <h3 class="plan-details-section-heading" id="plan-details-h2"><span class="plan-details-num">[ 2 ]</span> Included in Your Plan</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h2"><span class="plan-details-num">[ 2 ]</span> プランに含まれる内容</h3>
           <div class="plan-details-feature-grid">
             <div class="plan-details-feature-card">
-              <h4 class="plan-details-feature-title">Advanced KPI Analytics</h4>
+              <h4 class="plan-details-feature-title">高度なKPI分析</h4>
               <ul class="plan-details-feature-list">
-                <li>Daily / Monthly / Yearly KPI Hub Access</li>
-                <li>Multi-Year Data Comparison</li>
-                <li>Custom KPI dashboards</li>
+                <li>日次 / 月次 / 年次KPIハブへのアクセス</li>
+                <li>複数年データ比較</li>
+                <li>カスタムKPIダッシュボード</li>
               </ul>
             </div>
             <div class="plan-details-feature-card">
-              <h4 class="plan-details-feature-title">Data Management</h4>
+              <h4 class="plan-details-feature-title">データ管理</h4>
               <ul class="plan-details-feature-list">
-                <li>Unlimited CSV Upload</li>
-                <li>Full Historical Data Retention</li>
-                <li>Export to CSV / PDF</li>
-                <li>Data Backup &amp; Recovery</li>
+                <li>CSVアップロード無制限</li>
+                <li>過去データの完全保持</li>
+                <li>CSV / PDF エクスポート</li>
+                <li>データバックアップ &amp; リカバリー</li>
               </ul>
             </div>
             <div class="plan-details-feature-card">
-              <h4 class="plan-details-feature-title">Financial Insight</h4>
+              <h4 class="plan-details-feature-title">財務インサイト</h4>
               <ul class="plan-details-feature-list">
-                <li>P&amp;L (Profit &amp; Loss) Visualization</li>
-                <li>Cost Ratio Monitoring</li>
-                <li>Revenue Gap Action Suggestions</li>
+                <li>P&amp;L（損益）可視化</li>
+                <li>コスト比率モニタリング</li>
+                <li>売上ギャップのアクション提案</li>
               </ul>
             </div>
             <div class="plan-details-feature-card">
-              <h4 class="plan-details-feature-title">AI Assistance</h4>
+              <h4 class="plan-details-feature-title">AIアシスタンス</h4>
               <ul class="plan-details-feature-list">
-                <li>AI Business Advisory Chat</li>
-                <li>Seasonal Forecast Suggestions</li>
-                <li>Risk Detection Alerts</li>
+                <li>AIビジネスアドバイザリーチャット</li>
+                <li>季節予測サジェスト</li>
+                <li>リスク検知アラート</li>
               </ul>
             </div>
             <div class="plan-details-feature-card plan-details-feature-card-wide">
-              <h4 class="plan-details-feature-title">Account &amp; Usage</h4>
+              <h4 class="plan-details-feature-title">アカウント / 利用枠</h4>
               <ul class="plan-details-feature-list">
-                <li>Multi-Store Management (up to 3 locations)</li>
-                <li>Multi-User Access (up to 5 users)</li>
-                <li>Priority Support</li>
+                <li>複数店舗管理（最大3拠点）</li>
+                <li>複数ユーザー利用（最大5ユーザー）</li>
+                <li>優先サポート</li>
               </ul>
             </div>
           </div>
         </section>
 
-        <!-- [ 3 ] Usage Limits -->
         <section class="plan-details-section" aria-labelledby="plan-details-h3">
-          <h3 class="plan-details-section-heading" id="plan-details-h3"><span class="plan-details-num">[ 3 ]</span> Usage Limits</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h3"><span class="plan-details-num">[ 3 ]</span> 利用上限</h3>
           <dl class="plan-details-dl plan-details-dl-simple">
-            <div class="plan-details-dl-row"><dt>CSV Upload</dt><dd>Unlimited</dd></div>
-            <div class="plan-details-dl-row"><dt>KPI Advisory calls</dt><dd>500 / month</dd></div>
-            <div class="plan-details-dl-row"><dt>Stores</dt><dd>3</dd></div>
-            <div class="plan-details-dl-row"><dt>Users</dt><dd>5</dd></div>
+            <div class="plan-details-dl-row"><dt>CSVアップロード</dt><dd>無制限</dd></div>
+            <div class="plan-details-dl-row"><dt>KPIアドバイザリー利用回数</dt><dd>500回 / 月</dd></div>
+            <div class="plan-details-dl-row"><dt>店舗数</dt><dd>3</dd></div>
+            <div class="plan-details-dl-row"><dt>ユーザー数</dt><dd>5</dd></div>
           </dl>
         </section>
 
-        <!-- [ 4 ] Billing -->
         <section class="plan-details-section" aria-labelledby="plan-details-h4">
-          <h3 class="plan-details-section-heading" id="plan-details-h4"><span class="plan-details-num">[ 4 ]</span> Billing</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h4"><span class="plan-details-num">[ 4 ]</span> 請求</h3>
           <p class="plan-details-billing-actions">
-            <a href="#" class="btn-submit btn-register plan-details-inline-btn">Manage Billing</a>
+            <a href="#" class="btn-submit btn-register plan-details-inline-btn">請求情報を管理</a>
           </p>
         </section>
 
-        <!-- [ 5 ] Manage Subscription -->
         <section class="plan-details-section" aria-labelledby="plan-details-h5">
-          <h3 class="plan-details-section-heading" id="plan-details-h5"><span class="plan-details-num">[ 5 ]</span> Manage Subscription</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h5"><span class="plan-details-num">[ 5 ]</span> サブスクリプション管理</h3>
           <ul class="plan-details-link-list">
-            <li><a href="change_plan.html">Change Plan</a></li>
-            <li><a href="#">Switch to Yearly Billing (Save 15%)</a></li>
-            <li><a href="#">Update Payment Method</a></li>
-            <li><a href="#">Cancel Subscription</a></li>
+            <li><a href="change_plan.html">プラン変更</a></li>
+            <li><a href="#">年額課金へ変更（15%OFF）</a></li>
+            <li><a href="#">支払い方法を更新</a></li>
+            <li><a href="#">サブスクリプションを解約</a></li>
           </ul>
-          <p class="plan-details-note">Cancellation becomes effective at the end of the current billing period. Data is retained for 30 days after cancellation.</p>
+          <p class="plan-details-note">解約は現在の請求期間終了時に反映されます。解約後のデータは30日間保持されます。</p>
         </section>
 
-        <!-- [ 6 ] Data & Cancellation Policy -->
         <section class="plan-details-section" aria-labelledby="plan-details-h6">
-          <h3 class="plan-details-section-heading" id="plan-details-h6"><span class="plan-details-num">[ 6 ]</span> Data &amp; Cancellation Policy</h3>
+          <h3 class="plan-details-section-heading" id="plan-details-h6"><span class="plan-details-num">[ 6 ]</span> データ / 解約ポリシー</h3>
           <ul class="plan-details-bullet-list">
-            <li>Downgrading to Basic restricts access to P&amp;L and AI modules.</li>
-            <li>No data is deleted immediately upon downgrade.</li>
-            <li>Account access remains active until the period ends.</li>
-            <li>All data is permanently deleted after 30 days.</li>
+            <li>ベーシックへダウングレードするとP&amp;LおよびAIモジュールは利用制限されます。</li>
+            <li>ダウングレード時にデータは即時削除されません。</li>
+            <li>アカウント利用は期間終了まで継続されます。</li>
+            <li>すべてのデータは30日後に完全削除されます。</li>
           </ul>
         </section>
 
-        <!-- [ 7 ] Support -->
         <section class="plan-details-section" aria-labelledby="plan-details-h7">
-          <h3 class="plan-details-section-heading" id="plan-details-h7"><span class="plan-details-num">[ 7 ]</span> Support</h3>
-          <p class="plan-details-support-text"><strong>Priority Email Support</strong></p>
-          <p class="plan-details-support-text">Response within 24 hours (Business Days)</p>
+          <h3 class="plan-details-section-heading" id="plan-details-h7"><span class="plan-details-num">[ 7 ]</span> サポート</h3>
+          <p class="plan-details-support-text"><strong>優先メールサポート</strong></p>
+          <p class="plan-details-support-text">24時間以内に返信（営業日）</p>
           <p class="plan-details-support-actions">
-            <a href="#" class="btn-submit btn-register plan-details-inline-btn">Contact Support &gt;</a>
+            <a href="#" class="btn-submit btn-register plan-details-inline-btn">サポートへ連絡 &gt;</a>
           </p>
         </section>
       </div>
@@ -247,29 +240,29 @@
   <footer class="site-footer">
     <div class="plan-details-footer-strip" role="note">
       <span class="plan-details-footer-strip-icon" aria-hidden="true">&#9888;</span>
-      <span class="plan-details-footer-strip-text">Forge Laboratory Web API — Plan and billing information is subject to change. See terms for details.</span>
+      <span class="plan-details-footer-strip-text">Forge Laboratory Web API — プランおよび請求情報は変更される場合があります。詳細は利用規約をご確認ください。</span>
     </div>
-    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
-      <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ上部へ">
+      <img src="../images/arrow_up.svg" alt="ページ上部へ" class="footer-backtotop__icon">
     </button>
     <div class="footer-separator"></div>
     <div class="footer-logo">
-      <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
-        <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+        <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
     <p class="footer-copy">Forge Laboratory · Web API &mdash; © 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="plan_details.html" data-url-ja="../../setting/plan_details.html">
-    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
-      <span class="lang-code" aria-hidden="true">EN</span>
-      <span class="lang-name">English</span>
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../en/setting/plan_details.html" data-url-ja="plan_details.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
       <span class="lang-chevron" aria-hidden="true"></span>
     </button>
-    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
-      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
-      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
     </div>
   </div>
 
@@ -284,7 +277,7 @@
         if (!btnModeText || !btnModeToggle) return;
         var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
-        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi Mode に切り替え' : 'Office Mode に切り替え');
         if (settingsOfficeLabel) {
           settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
         }

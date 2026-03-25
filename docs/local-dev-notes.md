@@ -163,4 +163,31 @@
 
 ---
 
+## 11. ログイン防御導線メモ（Defensive Protocol / Account Protection）
+
+- 導線の前提:
+  - `DEFENSIVE PROTOCOL` と `ACCOUNT PROTECTION` は、**ユーザーが任意で開く設定ページではなく、ログイン防御イベント時に表示するページ**として扱う。
+- 推奨フロー:
+  1. バックエンドで「同一アカウントの有効セッションあり + 新規端末ログイン」を検知
+  2. まず `DEFENSIVE PROTOCOL` を表示
+  3. ユーザーが「This wasn't me」を選んだ場合に `ACCOUNT PROTECTION` へ分岐
+  4. 本人確認完了後に通常ページ（元ページ or ダッシュボード）へ遷移
+- 実装責務:
+  - 判定トリガーはフロントではなく、**PHP + DB（セッション管理）側で実装**する。
+  - フロントは結果を表示するためのUIとして利用する。
+- UI方針:
+  - `ACCOUNT PROTECTION` は警告トーン（黄系）を維持する。
+  - モード（Sci-Fi / Office）は画面テーマであり、セキュリティ判定ロジックとは分離する。
+- フォルダ方針（EN）:
+  - `setting` から分離し、言語ごとに `account_protection` 配下で管理する。
+  - 対象ファイル:
+    - EN:
+      - `en/account_protection/defensive_protocol.html`
+      - `en/account_protection/account_protection.html`
+    - JP:
+      - `account_protection/defensive_protocol.html`
+      - `account_protection/account_protection.html`
+
+---
+
 *Last updated: プロジェクトメンテ時に随時更新してください。*
