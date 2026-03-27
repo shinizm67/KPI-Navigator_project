@@ -217,6 +217,137 @@
       background: rgba(88, 225, 243, 0.3);
       outline: none;
     }
+    .annual-history-btn {
+      position: absolute;
+      right: 62px;
+      top: 36px;
+      min-width: 62px;
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.14);
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      z-index: 3;
+    }
+    .annual-history-btn:hover,
+    .annual-history-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.24);
+      outline: none;
+    }
+    .annual-history-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 8, 12, 0.68);
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .annual-history-panel[hidden] {
+      display: none;
+    }
+    .annual-history-dialog {
+      width: min(920px, calc(100vw - 32px));
+      max-height: min(76vh, 640px);
+      border: 1px solid #58e1f3;
+      background: #0b151c;
+      box-shadow: 0 0 12px rgba(88, 225, 243, 0.35);
+      display: flex;
+      flex-direction: column;
+    }
+    .annual-history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #58e1f3;
+    }
+    .annual-history-title {
+      margin: 0;
+      color: #0db13a;
+      font-size: 14px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 500;
+    }
+    .annual-history-close {
+      min-width: 54px;
+      height: 24px;
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.12);
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+    }
+    .annual-history-close:hover,
+    .annual-history-close:focus-visible {
+      background: rgba(88, 225, 243, 0.24);
+      outline: none;
+    }
+    .annual-history-body {
+      overflow: auto;
+      padding: 0;
+    }
+    .annual-history-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 12px;
+      line-height: 1.3;
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+    }
+    .annual-history-table th,
+    .annual-history-table td {
+      border-right: 1px solid rgba(88, 225, 243, 0.35);
+      border-bottom: 1px solid rgba(88, 225, 243, 0.35);
+      padding: 8px 8px;
+      text-align: left;
+      vertical-align: middle;
+      font-weight: 400;
+    }
+    .annual-history-table tr > *:last-child {
+      border-right: 0;
+    }
+    .annual-history-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #10232c;
+      color: #0db13a;
+    }
+    .annual-history-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-start;
+    }
+    .annual-history-action-btn {
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.12);
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      padding: 4px 7px;
+      cursor: pointer;
+    }
+    .annual-history-action-btn:hover,
+    .annual-history-action-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.24);
+      outline: none;
+    }
     .annual-frame-img {
       width: 100%;
       display: block;
@@ -228,11 +359,81 @@
     }
     .annual-open-body {
       min-height: 420px;
+      height: 420px;
       border-left: 1px solid #39e7f2;
       border-right: 1px solid #39e7f2;
       background: rgba(4, 10, 14, 0.72);
       box-sizing: border-box;
       margin-right: 1px;
+      padding: 0;
+    }
+    .annual-open-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 0;
+      background: transparent;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 400;
+    }
+    .annual-open-table th,
+    .annual-open-table td {
+      border: 0;
+      border-right: 1px solid #58e1f3;
+      border-bottom: 1px solid #58e1f3;
+      height: calc((420px - 12px) / 13);
+      padding: 0 6px;
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 400;
+    }
+    .annual-open-table tr > *:last-child {
+      border-right: 0;
+    }
+    .annual-open-table thead tr:first-child > * {
+      border-top: 0;
+    }
+    .annual-open-table tbody tr:last-child > * {
+      border-bottom: 0;
+    }
+    .annual-open-table th {
+      color: #0db13a;
+    }
+    .annual-open-table td {
+      color: #58e1f3;
+    }
+    .annual-open-table th:nth-child(4),
+    .annual-open-table td:nth-child(4) {
+      background: rgba(88, 225, 243, 0.3);
+    }
+    .annual-open-table tbody td:nth-child(4) {
+      cursor: pointer;
+    }
+    .annual-open-table th[data-tooltip] {
+      position: relative;
+      cursor: default;
+    }
+    .annual-open-table th[data-tooltip]:hover::after,
+    .annual-open-table th[data-tooltip]:focus-visible::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      padding: 4px 6px;
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      background: #102932;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1.2;
+      white-space: nowrap;
+      z-index: 5;
+      pointer-events: none;
+      box-shadow: 0 0 6px rgba(88, 225, 243, 0.45);
     }
     .annual-monthly-toggle {
       position: absolute;
@@ -499,17 +700,93 @@
     }
     .office-mode .annual-open-body {
       min-height: 420px;
+      height: 420px;
       margin-right: 0;
       border-left: 1px solid #777;
       border-right: 1px solid #777;
       background: #f7f7f7;
+    }
+    .office-mode .annual-open-table {
+      background: transparent;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-open-table th,
+    .office-mode .annual-open-table td {
+      border-right-color: #666;
+      border-bottom-color: #666;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-weight: 400;
+    }
+    .office-mode .annual-open-table th,
+    .office-mode .annual-open-table td {
+      color: #111;
+    }
+    .office-mode .annual-open-table th:nth-child(4),
+    .office-mode .annual-open-table td:nth-child(4) {
+      background: #f5f5f5;
+    }
+    .office-mode .annual-open-table th[data-tooltip]:hover::after,
+    .office-mode .annual-open-table th[data-tooltip]:focus-visible::after {
+      border-color: #666;
+      background: #f2f2f2;
+      color: #111;
+      box-shadow: none;
+    }
+    .office-mode .annual-history-btn {
+      border-color: #666;
+      background: #ececec;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-history-btn:hover,
+    .office-mode .annual-history-btn:focus-visible {
+      background: #e2e2e2;
+    }
+    .office-mode .annual-history-dialog {
+      border-color: #666;
+      background: #f4f4f4;
+      box-shadow: none;
+    }
+    .office-mode .annual-history-header {
+      border-bottom-color: #666;
+    }
+    .office-mode .annual-history-title {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-history-close,
+    .office-mode .annual-history-action-btn {
+      border-color: #666;
+      background: #ececec;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-history-close:hover,
+    .office-mode .annual-history-close:focus-visible,
+    .office-mode .annual-history-action-btn:hover,
+    .office-mode .annual-history-action-btn:focus-visible {
+      background: #e2e2e2;
+    }
+    .office-mode .annual-history-table {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-history-table th,
+    .office-mode .annual-history-table td {
+      border-right-color: #777;
+      border-bottom-color: #777;
+    }
+    .office-mode .annual-history-table th {
+      background: #e9e9e9;
+      color: #111;
     }
     .office-mode .annual-monthly-toggle {
       color: #111;
       text-shadow: none;
     }
     .office-mode .annual-kpi-strip {
-      border-color: #666;
+      border-right-color: #666;
+      border-bottom-color: #666;
       background: #f3f3f3;
     }
     .office-mode .annual-kpi-cell {
@@ -532,7 +809,8 @@
       font-weight: 500;
     }
     .office-mode .annual-year-control {
-      border-color: #666;
+      border-right-color: #666;
+      border-bottom-color: #666;
       background: #efefef;
     }
     .office-mode .annual-year-arrow.prev::before {
@@ -546,7 +824,8 @@
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .annual-year-menu {
-      border-color: #666;
+      border-right-color: #666;
+      border-bottom-color: #666;
       background: #efefef;
     }
     .office-mode .annual-year-option {
@@ -565,12 +844,14 @@
     }
     .office-mode .annual-total-bd-value {
       color: #111;
-      border-color: #666;
+      border-right-color: #666;
+      border-bottom-color: #666;
       background: #f2f2f2;
     }
     .office-mode .annual-target-sales-value {
       color: #111;
-      border-color: #666;
+      border-right-color: #666;
+      border-bottom-color: #666;
       background: transparent;
     }
     .office-mode .annual-target-sales-amount {
@@ -721,15 +1002,74 @@
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">年次目標売上</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
-            <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">¥652,528.55</span>
             <button type="button" class="annual-target-inline-edit" id="annual-target-edit-btn" aria-label="年次目標売上を編集"><span class="annual-target-inline-edit-text">編集</span></button>
           </div>
         </div>
-        <div class="annual-kpi-strip-labels" aria-hidden="true">
-          <p class="annual-kpi-strip-label">Monthly Allocation Total</p>
-          <p class="annual-kpi-strip-label">Annual Current Sales</p>
-          <p class="annual-kpi-strip-label">Difference</p>
-          <p class="annual-kpi-strip-label">Achievement</p>
+        <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">履歴</button>
+        <div class="annual-history-panel" id="annual-history-panel" role="dialog" aria-modal="true" aria-label="Annual history" hidden>
+          <div class="annual-history-dialog" role="document">
+            <div class="annual-history-header">
+              <h3 class="annual-history-title">History</h3>
+              <button type="button" class="annual-history-close" id="annual-history-close">Close</button>
+            </div>
+            <div class="annual-history-body">
+              <table class="annual-history-table" aria-label="Annual history records">
+                <thead>
+                  <tr>
+                    <th style="width: 142px;">Date/Time</th>
+                    <th style="width: 84px;">By</th>
+                    <th style="width: 108px;">Target Sales</th>
+                    <th>Summary</th>
+                    <th style="width: 150px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2026-03-27 21:10</td>
+                    <td>オーナー</td>
+                    <td>¥652,528.55</td>
+                    <td>年次目標売上と月次繁閑ウェイトを調整しました。</td>
+                    <td>
+                      <div class="annual-history-actions">
+                        <button type="button" class="annual-history-action-btn">比較</button>
+                        <button type="button" class="annual-history-action-btn">復元</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>2026-03-24 10:05</td>
+                    <td>オーナー</td>
+                    <td>¥640,000.00</td>
+                    <td>初期設定として、月次ウェイトを既定値で登録しました。</td>
+                    <td>
+                      <div class="annual-history-actions">
+                        <button type="button" class="annual-history-action-btn">比較</button>
+                        <button type="button" class="annual-history-action-btn">復元</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>2026-03-20 08:42</td>
+                    <td>オーナー</td>
+                    <td>¥620,000.00</td>
+                    <td>旧スプレッドシートから最初のスナップショットを取り込みました。</td>
+                    <td>
+                      <div class="annual-history-actions">
+                        <button type="button" class="annual-history-action-btn">比較</button>
+                        <button type="button" class="annual-history-action-btn">復元</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="annual-kpi-strip-labels" aria-hidden="true">          <p class="annual-kpi-strip-label">月次配分率合計</p>
+          <p class="annual-kpi-strip-label">年間売上累計</p>
+          <p class="annual-kpi-strip-label">差額</p>
+          <p class="annual-kpi-strip-label">達成率</p>
         </div>
         <div class="annual-kpi-strip" aria-hidden="true">
           <div class="annual-kpi-cell annual-kpi-cell-allocation">
@@ -742,10 +1082,10 @@
             </div>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">$101,754.41</p>
+            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">¥101,754.41</p>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">$49,225.87</p>
+            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">¥49,225.87</p>
           </div>
           <div class="annual-kpi-cell">
             <div class="annual-allocation-wrap">
@@ -762,7 +1102,51 @@
         </div>
         <div class="annual-frame-open" id="annual-frame-open" hidden>
           <img src="../../images/annual_open_top.svg" alt="" class="annual-frame-img" aria-hidden="true">
-          <div class="annual-open-body" aria-hidden="true"></div>
+          <div class="annual-open-body">
+            <table class="annual-open-table" aria-label="Annual monthly summary table">
+              <colgroup>
+                <col style="width: 6.8293%;">
+                <col style="width: 6.8293%;">
+                <col style="width: 13.1707%;">
+                <col style="width: 6.8293%;">
+                <col style="width: 13.1707%;">
+                <col style="width: 13.1707%;">
+                <col style="width: 13.1707%;">
+                <col style="width: 13.1707%;">
+                <col style="width: 6.8293%;">
+                <col style="width: 6.8293%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>月</th>
+                  <th>営業日数</th>
+                  <th>平均売上額</th>
+                  <th>繁閑期%</th>
+                  <th>月次目標売上</th>
+                  <th>日次目標売上</th>
+                  <th>月次売上実績</th>
+                  <th data-tooltip="月間KGI（= 月次売上実績 - 月次目標売上）。月次目標に対する達成差額を示します。">月間KGI</th>
+                  <th data-tooltip="月次平均％（平均売上額に対して実績売上が何％だったか）。翌年の繁閑期％設定の基準です。">月次平均%</th>
+                  <th data-tooltip="月次実質％（前年繁閑％から算出した目標売上KPIに対して、実績売上が何％か）。">月次実質%</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr><td>1月</td><td data-field="annual.table.jan.businessDay">22</td><td data-field="annual.table.jan.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.jan.hlSeasonPct">85%</td><td data-field="annual.table.jan.monthlyTarget">¥42,665.33</td><td data-field="annual.table.jan.dailyTarget">¥1,939.33</td><td data-field="annual.table.jan.monthlyProfit">¥50,812.30</td><td data-field="annual.table.jan.monthlyKgi">¥8,206.98</td><td data-field="annual.table.jan.hlSeasonActualPct">101.35%</td><td data-field="annual.table.jan.hlPercent">119.24%</td></tr>
+                <tr><td>2月</td><td data-field="annual.table.feb.businessDay">22</td><td data-field="annual.table.feb.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.feb.hlSeasonPct">85%</td><td data-field="annual.table.feb.monthlyTarget">¥42,665.33</td><td data-field="annual.table.feb.dailyTarget">¥1,939.33</td><td data-field="annual.table.feb.monthlyProfit">¥49,880.73</td><td data-field="annual.table.feb.monthlyKgi">¥7,215.40</td><td data-field="annual.table.feb.hlSeasonActualPct">99.37%</td><td data-field="annual.table.feb.hlPercent">116.91%</td></tr>
+                <tr><td>3月</td><td data-field="annual.table.mar.businessDay">25</td><td data-field="annual.table.mar.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.mar.hlSeasonPct">100%</td><td data-field="annual.table.mar.monthlyTarget">¥57,039.21</td><td data-field="annual.table.mar.dailyTarget">¥2,281.57</td><td data-field="annual.table.mar.monthlyProfit">¥55,683.25</td><td data-field="annual.table.mar.monthlyKgi">-¥1,355.96</td><td data-field="annual.table.mar.hlSeasonActualPct">97.62%</td><td data-field="annual.table.mar.hlPercent">97.62%</td></tr>
+                <tr><td>4月</td><td data-field="annual.table.apr.businessDay">25</td><td data-field="annual.table.apr.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.apr.hlSeasonPct">110%</td><td data-field="annual.table.apr.monthlyTarget">¥62,743.13</td><td data-field="annual.table.apr.dailyTarget">¥2,509.73</td><td data-field="annual.table.apr.monthlyProfit">¥61,294.91</td><td data-field="annual.table.apr.monthlyKgi">-¥1,448.22</td><td data-field="annual.table.apr.hlSeasonActualPct">107.46%</td><td data-field="annual.table.apr.hlPercent">97.69%</td></tr>
+                <tr><td>5月</td><td data-field="annual.table.may.businessDay">24</td><td data-field="annual.table.may.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.may.hlSeasonPct">120%</td><td data-field="annual.table.may.monthlyTarget">¥54,751.64</td><td data-field="annual.table.may.dailyTarget">¥2,281.51</td><td data-field="annual.table.may.monthlyProfit">¥65,311.03</td><td data-field="annual.table.may.monthlyKgi">¥10,559.39</td><td data-field="annual.table.may.hlSeasonActualPct">119.28%</td><td data-field="annual.table.may.hlPercent">119.28%</td></tr>
+                <tr><td>6月</td><td data-field="annual.table.jun.businessDay">25</td><td data-field="annual.table.jun.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.jun.hlSeasonPct">85%</td><td data-field="annual.table.jun.monthlyTarget">¥48,483.33</td><td data-field="annual.table.jun.dailyTarget">¥1,939.33</td><td data-field="annual.table.jun.monthlyProfit">¥55,311.58</td><td data-field="annual.table.jun.monthlyKgi">¥6,828.39</td><td data-field="annual.table.jun.hlSeasonActualPct">96.97%</td><td data-field="annual.table.jun.hlPercent">114.08%</td></tr>
+                <tr><td>7月</td><td data-field="annual.table.jul.businessDay">26</td><td data-field="annual.table.jul.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.jul.hlSeasonPct">100%</td><td data-field="annual.table.jul.monthlyTarget">¥59,320.78</td><td data-field="annual.table.jul.dailyTarget">¥2,281.57</td><td data-field="annual.table.jul.monthlyProfit">¥59,645.82</td><td data-field="annual.table.jul.monthlyKgi">¥325.04</td><td data-field="annual.table.jul.hlSeasonActualPct">100.55%</td><td data-field="annual.table.jul.hlPercent">100.55%</td></tr>
+                <tr><td>8月</td><td data-field="annual.table.aug.businessDay">20</td><td data-field="annual.table.aug.monthlyAverageTarget">¥45,631.37</td><td data-field="annual.table.aug.hlSeasonPct">100%</td><td data-field="annual.table.aug.monthlyTarget">¥45,631.37</td><td data-field="annual.table.aug.dailyTarget">¥2,281.57</td><td data-field="annual.table.aug.monthlyProfit">¥44,020.75</td><td data-field="annual.table.aug.monthlyKgi">-¥1,610.61</td><td data-field="annual.table.aug.hlSeasonActualPct">96.47%</td><td data-field="annual.table.aug.hlPercent">96.47%</td></tr>
+                <tr><td>9月</td><td data-field="annual.table.sep.businessDay">24</td><td data-field="annual.table.sep.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.sep.hlSeasonPct">100%</td><td data-field="annual.table.sep.monthlyTarget">¥54,751.64</td><td data-field="annual.table.sep.dailyTarget">¥2,281.57</td><td data-field="annual.table.sep.monthlyProfit">¥56,435.25</td><td data-field="annual.table.sep.monthlyKgi">¥1,677.61</td><td data-field="annual.table.sep.hlSeasonActualPct">103.06%</td><td data-field="annual.table.sep.hlPercent">103.06%</td></tr>
+                <tr><td>10月</td><td data-field="annual.table.oct.businessDay">26</td><td data-field="annual.table.oct.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.oct.hlSeasonPct">110%</td><td data-field="annual.table.oct.monthlyTarget">¥65,252.85</td><td data-field="annual.table.oct.dailyTarget">¥2,509.73</td><td data-field="annual.table.oct.monthlyProfit">¥70,728.48</td><td data-field="annual.table.oct.monthlyKgi">¥5,475.62</td><td data-field="annual.table.oct.hlSeasonActualPct">119.23%</td><td data-field="annual.table.oct.hlPercent">108.39%</td></tr>
+                <tr><td>11月</td><td data-field="annual.table.nov.businessDay">23</td><td data-field="annual.table.nov.monthlyAverageTarget">¥52,416.07</td><td data-field="annual.table.nov.hlSeasonPct">110%</td><td data-field="annual.table.nov.monthlyTarget">¥57,123.68</td><td data-field="annual.table.nov.dailyTarget">¥2,509.73</td><td data-field="annual.table.nov.monthlyProfit">¥62,272.34</td><td data-field="annual.table.nov.monthlyKgi">¥4,548.66</td><td data-field="annual.table.nov.hlSeasonActualPct">118.67%</td><td data-field="annual.table.nov.hlPercent">107.88%</td></tr>
+                <tr><td>12月</td><td data-field="annual.table.dec.businessDay">24</td><td data-field="annual.table.dec.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.dec.hlSeasonPct">115%</td><td data-field="annual.table.dec.monthlyTarget">¥62,971.29</td><td data-field="annual.table.dec.dailyTarget">¥2,623.80</td><td data-field="annual.table.dec.monthlyProfit">¥70,291.96</td><td data-field="annual.table.dec.monthlyKgi">¥7,320.67</td><td data-field="annual.table.dec.hlSeasonActualPct">128.37%</td><td data-field="annual.table.dec.hlPercent">111.63%</td></tr>
+              </tbody>
+            </table>
+          </div>
           <img src="../../images/annual_open_bottom.svg" alt="" class="annual-frame-img" aria-hidden="true">
         </div>
         <button type="button" class="annual-monthly-toggle" id="annual-monthly-toggle" aria-expanded="false" aria-controls="annual-frame-open">
@@ -940,6 +1324,54 @@
       });
     })();
     (function () {
+      var historyBtn = document.getElementById('annual-history-btn');
+      var historyPanel = document.getElementById('annual-history-panel');
+      var historyClose = document.getElementById('annual-history-close');
+      if (!historyBtn || !historyPanel || !historyClose) return;
+
+      var lastFocused = null;
+
+      function openHistory() {
+        lastFocused = document.activeElement;
+        historyPanel.hidden = false;
+        historyBtn.setAttribute('aria-expanded', 'true');
+        historyClose.focus();
+      }
+
+      function closeHistory() {
+        historyPanel.hidden = true;
+        historyBtn.setAttribute('aria-expanded', 'false');
+        if (lastFocused && typeof lastFocused.focus === 'function') {
+          lastFocused.focus();
+        }
+      }
+
+      historyBtn.setAttribute('aria-expanded', 'false');
+      historyBtn.addEventListener('click', function () {
+        if (historyPanel.hidden) {
+          openHistory();
+        } else {
+          closeHistory();
+        }
+      });
+
+      historyClose.addEventListener('click', function () {
+        closeHistory();
+      });
+
+      historyPanel.addEventListener('click', function (e) {
+        if (e.target === historyPanel) {
+          closeHistory();
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !historyPanel.hidden) {
+          closeHistory();
+        }
+      });
+    })();
+    (function () {
       var backTop = document.getElementById('footerBackToTop');
       if (!backTop) return;
       backTop.addEventListener('click', function () {
@@ -1043,10 +1475,72 @@
         raw = window.__ANNUAL_DATA.targetSales;
       }
       if (typeof raw === 'number' && Number.isFinite(raw)) {
-        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        targetEl.textContent = '¥' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       } else {
         targetEl.textContent = String(raw);
       }
+    })();
+    (function () {
+      var targetEl = document.getElementById('annual-target-sales-value');
+      var editBtn = document.getElementById('annual-target-edit-btn');
+      if (!targetEl || !editBtn) return;
+
+      function parseCurrencyInput(raw) {
+        var normalized = String(raw || '').replace(/[¥$,\s]/g, '');
+        var value = Number(normalized);
+        return Number.isFinite(value) && value >= 0 ? value : NaN;
+      }
+
+      function formatCurrency(value) {
+        return '¥' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function extractCurrentValue() {
+        var raw = String(targetEl.textContent || '').replace(/[¥$,\s]/g, '');
+        var v = Number(raw);
+        return Number.isFinite(v) ? v : 0;
+      }
+
+      function notifyChange(value) {
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.targetSales = value;
+
+        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
+          detail: {
+            targetSales: value,
+            display: formatCurrency(value)
+          }
+        }));
+      }
+
+      async function persistTargetSales(value) {
+        if (typeof window.__saveAnnualTargetSales === 'function') {
+          await window.__saveAnnualTargetSales({
+            targetSales: value
+          });
+        }
+      }
+
+      editBtn.addEventListener('click', async function () {
+        var current = extractCurrentValue();
+        var input = window.prompt('年次目標売上 (JPY)', String(Math.round(current * 100) / 100));
+        if (input == null) return;
+
+        var next = parseCurrencyInput(input);
+        if (!Number.isFinite(next)) {
+          window.alert('Please enter a valid non-negative number.');
+          return;
+        }
+
+        targetEl.textContent = formatCurrency(next);
+        notifyChange(next);
+
+        try {
+          await persistTargetSales(next);
+        } catch (e) {
+          window.alert('Failed to save Annual Target Sales to DB.');
+        }
+      });
     })();
     (function () {
       function getMarkerColor(percent) {
@@ -1062,10 +1556,16 @@
         return (Math.round(percent * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }) + '%';
       }
 
+      function parsePercentText(text) {
+        var normalized = String(text || '').replace('%', '').trim();
+        var parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : NaN;
+      }
+
       function initAllocationWidget(options) {
         var graphEl = document.getElementById(options.graphId);
         var percentEl = document.getElementById(options.percentId);
-        if (!graphEl || !percentEl) return;
+        if (!graphEl || !percentEl) return null;
 
         var fallbackPercent = 100;
         var data = window.__ANNUAL_DATA || {};
@@ -1086,6 +1586,7 @@
           var kgiX = Math.max(0, Math.min(maxKgiX, kgiXRaw));
           var markerColor = getMarkerColor(safePercent);
 
+          currentPercent = safePercent;
           graphEl.style.setProperty('--kpi-x', kpiMarkerX + 'px');
           graphEl.style.setProperty('--kgi-x', kgiX + 'px');
           graphEl.style.setProperty('--fill-w', kgiX + 'px');
@@ -1093,37 +1594,88 @@
           percentEl.textContent = formatPercentText(safePercent);
         }
 
-        percentEl.setAttribute('title', 'Click to edit');
-        percentEl.addEventListener('click', function () {
-          var input = window.prompt(options.promptLabel + ' (%)', String(currentPercent));
-          if (input == null) return;
-          var normalized = String(input).replace('%', '').trim();
-          var next = Number(normalized);
-          if (!Number.isFinite(next) || next <= 0) return;
-          currentPercent = next;
-          renderAllocation(currentPercent);
-        });
+        if (options.editable) {
+          percentEl.setAttribute('title', 'Click to edit');
+          percentEl.addEventListener('click', function () {
+            var input = window.prompt(options.promptLabel + ' (%)', String(currentPercent));
+            if (input == null) return;
+            var next = parsePercentText(input);
+            if (!Number.isFinite(next) || next <= 0) return;
+            renderAllocation(next);
+          });
+        } else {
+          percentEl.removeAttribute('title');
+        }
 
         renderAllocation(currentPercent);
+        return {
+          setPercent: function (value) {
+            renderAllocation(value);
+          },
+          getPercent: function () {
+            return currentPercent;
+          }
+        };
       }
 
-      initAllocationWidget({
+      var monthlyAllocationWidget = initAllocationWidget({
         graphId: 'annual-allocation-graph',
         percentId: 'annual-allocation-percent',
         dataKey: 'monthlyAllocationPercent',
-        promptLabel: 'Monthly Allocation Total'
+        promptLabel: 'Monthly Allocation Total',
+        editable: false
       });
       initAllocationWidget({
         graphId: 'annual-achievement-graph',
         percentId: 'annual-achievement-percent',
         dataKey: 'achievementPercent',
-        promptLabel: 'Achievement'
+        promptLabel: 'Achievement',
+        editable: true
       });
+
+      var hlSeasonCells = document.querySelectorAll('.annual-open-table tbody td:nth-child(4)');
+      function normalizeWeightInput(raw) {
+        var value = parsePercentText(raw);
+        if (!Number.isFinite(value)) return null;
+        if (!Number.isInteger(value)) return null;
+        if (value % 5 !== 0) return null;
+        if (value < 60 || value > 200) return null;
+        return value;
+      }
+
+      function recalcMonthlyAllocationTotal() {
+        if (!monthlyAllocationWidget || !hlSeasonCells.length) return;
+        var sum = 0;
+        hlSeasonCells.forEach(function (cell) {
+          var parsed = parsePercentText(cell.textContent);
+          sum += Number.isFinite(parsed) ? parsed : 100;
+        });
+        var totalPercent = sum / 12;
+        monthlyAllocationWidget.setPercent(totalPercent);
+      }
+
+      hlSeasonCells.forEach(function (cell) {
+        cell.setAttribute('title', 'Input in 5% steps only (60% to 200%)');
+        cell.addEventListener('click', function () {
+          var current = parsePercentText(cell.textContent);
+          var input = window.prompt('H/L Sea (%) - 5% steps only', String(Number.isFinite(current) ? current : 100));
+          if (input == null) return;
+          var next = normalizeWeightInput(input);
+          if (next == null) {
+            window.alert('Please enter an integer in 5% steps (60 to 200).');
+            return;
+          }
+          cell.textContent = next + '%';
+          recalcMonthlyAllocationTotal();
+        });
+      });
+
+      recalcMonthlyAllocationTotal();
     })();
     (function () {
       function formatCurrency(value) {
         var absValue = Math.abs(value);
-        var formatted = '$' + absValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var formatted = '¥' + absValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return value < 0 ? '-' + formatted : formatted;
       }
 
