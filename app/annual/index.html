@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>年次 | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="../../en/setting/style.css">
+  <style>
+    .annual-monthly-data {
+      position: relative;
+      width: min(100%, 1020px);
+      margin-top: 8px;
+      align-self: center;
+    }
+    .annual-year-control {
+      position: absolute;
+      left: 62px;
+      top: 36px;
+      width: 100px;
+      height: 22px;
+      border: 1px solid #58e1f3;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      box-sizing: border-box;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .annual-year-arrow {
+      width: 10px;
+      height: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+    }
+    .annual-year-arrow::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+    .annual-year-arrow.prev::before {
+      border-right: 10px solid #58e1f3;
+    }
+    .annual-year-arrow.next::before {
+      border-left: 10px solid #58e1f3;
+    }
+    .annual-year-value {
+      border: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      padding: 0;
+      min-width: 42px;
+      text-align: center;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    .annual-year-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 18px;
+      right: 18px;
+      margin: 0;
+      padding: 2px 0;
+      list-style: none;
+      border: 1px solid #58e1f3;
+      background: #102932;
+      z-index: 3;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .annual-year-menu[hidden] {
+      display: none;
+    }
+    .annual-year-option {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 11px;
+      font-family: 'Orbitron', sans-serif;
+      padding: 4px 0;
+      cursor: pointer;
+    }
+    .annual-year-option:hover,
+    .annual-year-option:focus-visible {
+      background: rgba(88, 225, 243, 0.3);
+      outline: none;
+    }
+    .annual-total-bd-group {
+      position: absolute;
+      left: 214px;
+      top: 15px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+    .annual-total-bd-label {
+      margin: 0;
+      color: #0db13a;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.01em;
+    }
+    .annual-total-bd-value {
+      width: 79px;
+      height: 33px;
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #58e1f3;
+      font-size: 16px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .annual-target-sales-group {
+      position: absolute;
+      left: 50%;
+      transform: translateX(calc(-50% + 80px));
+      top: 14px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+    .annual-target-sales-label {
+      margin: 0;
+      color: #0db13a;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.01em;
+    }
+    .annual-target-sales-value {
+      width: 350px;
+      height: 33px;
+      border: 1px solid #58e1f3;
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      background: transparent;
+    }
+    .annual-target-sales-amount {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 8px 0 10px;
+      white-space: nowrap;
+      box-sizing: border-box;
+      background: rgba(88, 225, 243, 0.3);
+    }
+    .annual-target-inline-edit {
+      height: 100%;
+      width: 64px;
+      min-width: 64px;
+      padding: 0;
+      flex: 0 0 64px;
+      border: 0;
+      border-left: 1px solid #58e1f3;
+      background: rgba(88, 225, 243, 0.12);
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0;
+      cursor: pointer;
+      display: block;
+      position: relative;
+      text-align: left;
+      box-sizing: border-box;
+      appearance: none;
+      -webkit-appearance: none;
+      text-indent: 0;
+    }
+    .annual-target-inline-edit-text {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .annual-target-inline-edit:hover,
+    .annual-target-inline-edit:focus-visible {
+      background: rgba(88, 225, 243, 0.3);
+      outline: none;
+    }
+    .annual-frame-img {
+      width: 100%;
+      display: block;
+      height: auto;
+    }
+    .annual-frame-open[hidden],
+    .annual-frame-close[hidden] {
+      display: none;
+    }
+    .annual-open-body {
+      min-height: 420px;
+      border-left: 1px solid #39e7f2;
+      border-right: 1px solid #39e7f2;
+      background: rgba(4, 10, 14, 0.72);
+      box-sizing: border-box;
+      margin-right: 1px;
+    }
+    .annual-monthly-toggle {
+      position: absolute;
+      left: 4px;
+      top: clamp(147px, 18.6vw, 185px);
+      min-width: 0;
+      height: auto;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #39e7f2;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      cursor: pointer;
+      z-index: 2;
+      line-height: 1;
+      text-shadow: 0 0 6px rgba(57, 231, 242, 0.55);
+    }
+    .annual-monthly-toggle.is-open-state {
+      left: 5px;
+      top: clamp(143px, 18.2vw, 181px);
+    }
+    html[lang="en"] .annual-monthly-toggle {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .annual-monthly-toggle:hover,
+    .annual-monthly-toggle:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .annual-kpi-strip {
+      position: absolute;
+      left: 82px;
+      top: 112px;
+      z-index: 2;
+      width: 900px;
+      height: 47px;
+      display: grid;
+      grid-template-columns: 260px 190px 190px 260px;
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      background: rgba(0, 0, 0, 0.06);
+    }
+    .annual-kpi-cell {
+      height: 100%;
+      box-sizing: border-box;
+      border-right: 1px solid #58e1f3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .annual-kpi-cell:last-child {
+      border-right: none;
+    }
+    .annual-kpi-cell-allocation {
+      background: #444444;
+    }
+    .annual-allocation-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      box-sizing: border-box;
+      padding: 0 10px;
+    }
+    .annual-allocation-graph {
+      position: relative;
+      width: 133px;
+      height: 11px;
+      border: 1px solid #58e1f3;
+      box-sizing: border-box;
+      background: rgba(15, 148, 3, 0.33);
+      overflow: visible;
+      --marker-color: #e6ff00;
+      --kpi-x: 88.67px;
+      --kgi-x: 88.67px;
+      --fill-w: 88.67px;
+    }
+    .annual-allocation-graph::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: var(--fill-w);
+      background: #0f9403;
+    }
+    .annual-allocation-marker-line {
+      position: absolute;
+      top: 0;
+      left: var(--kpi-x);
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: #E6FF00;
+      box-shadow: 0 0 4px color-mix(in srgb, var(--marker-color) 55%, transparent);
+    }
+    .annual-allocation-marker-triangle {
+      position: absolute;
+      left: var(--kgi-x);
+      top: -13px;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 13px solid var(--marker-color);
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    }
+    .annual-allocation-percent {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      min-width: 62px;
+      text-align: right;
+      cursor: pointer;
+      user-select: none;
+    }
+    .annual-kpi-value {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .annual-kpi-strip-labels {
+      position: absolute;
+      left: 82px;
+      top: 94px;
+      z-index: 2;
+      width: 900px;
+      display: grid;
+      grid-template-columns: 260px 190px 190px 260px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .annual-kpi-strip-label {
+      margin: 0;
+      text-align: center;
+      color: #0db13a;
+      font-size: 13px;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+    .si-fi:not(.office-mode) .annual-monthly-data .annual-kpi-strip-label {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .nav-frame-btn[aria-current="page"] .btn-mode-frame {
+      background: rgba(88, 225, 243, 0.18);
+      border-radius: 2px;
+    }
+    .nav-btn-text {
+      font-size: 10px;
+      line-height: 1;
+      letter-spacing: 0.05em;
+    }
+    .nav-frame-btn[aria-current="page"] .nav-btn-text {
+      font-size: 11px;
+      font-weight: 700;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-monthly-data,
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-monthly-data * {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .global-nav-list {
+      gap: 24px;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .nav-frame-btn .btn-mode-frame {
+      max-width: 120px;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .nav-btn-text {
+      font-size: 10px !important;
+      line-height: 1 !important;
+      letter-spacing: 0.05em;
+      font-weight: 400;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .nav-frame-btn[aria-current="page"] .nav-btn-text {
+      font-size: 11px !important;
+      font-weight: 700;
+    }
+    /* JP/EN visual parity tuning (Annual only): Japanese glyph metrics are visually larger */
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-year-value {
+      font-size: 8px;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-total-bd-label,
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-target-sales-label {
+      font-size: 10px;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-total-bd-value,
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-target-sales-value {
+      font-size: 13px;
+    }
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-target-inline-edit {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+
+    /* Office Mode: Annual monthly-data frame (CSS-drawn, no SVG ornaments) */
+    .office-mode .annual-frame-img {
+      display: none;
+    }
+    .office-mode .annual-monthly-data,
+    .office-mode .annual-monthly-data * {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-frame-close {
+      position: relative;
+      min-height: 228px;
+      border: 1px solid #5b5b5b;
+      border-radius: 4px;
+      background: #dbdbdb;
+      box-sizing: border-box;
+    }
+    .office-mode .annual-frame-close::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 20px;
+      border-top: 1px solid #666;
+      background: #d4d4d4;
+    }
+    .office-mode .annual-frame-open {
+      position: relative;
+      border: 1px solid #5b5b5b;
+      border-radius: 4px;
+      background: #dbdbdb;
+      box-sizing: border-box;
+      padding-top: 208px;
+      padding-bottom: 20px;
+      overflow: hidden;
+    }
+    .office-mode .annual-frame-open::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 208px;
+      border-bottom: 1px solid #666;
+      background: #dbdbdb;
+    }
+    .office-mode .annual-frame-open::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 20px;
+      border-top: 1px solid #666;
+      background: #d4d4d4;
+    }
+    .office-mode .annual-open-body {
+      min-height: 420px;
+      margin-right: 0;
+      border-left: 1px solid #777;
+      border-right: 1px solid #777;
+      background: #f7f7f7;
+    }
+    .office-mode .annual-monthly-toggle {
+      color: #111;
+      text-shadow: none;
+    }
+    .office-mode .annual-kpi-strip {
+      border-color: #666;
+      background: #f3f3f3;
+    }
+    .office-mode .annual-kpi-cell {
+      border-right-color: #666;
+    }
+    .office-mode .annual-kpi-cell-allocation {
+      background: #e0e0e0;
+    }
+    .office-mode .annual-allocation-percent {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-kpi-value {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-kpi-strip-label {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-weight: 500;
+    }
+    .office-mode .annual-year-control {
+      border-color: #666;
+      background: #efefef;
+    }
+    .office-mode .annual-year-arrow.prev::before {
+      border-right-color: #222;
+    }
+    .office-mode .annual-year-arrow.next::before {
+      border-left-color: #222;
+    }
+    .office-mode .annual-year-value {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-year-menu {
+      border-color: #666;
+      background: #efefef;
+    }
+    .office-mode .annual-year-option {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-year-option:hover,
+    .office-mode .annual-year-option:focus-visible {
+      background: #ddd;
+    }
+    .office-mode .annual-total-bd-label,
+    .office-mode .annual-target-sales-label {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-weight: 500;
+    }
+    .office-mode .annual-total-bd-value {
+      color: #111;
+      border-color: #666;
+      background: #f2f2f2;
+    }
+    .office-mode .annual-target-sales-value {
+      color: #111;
+      border-color: #666;
+      background: transparent;
+    }
+    .office-mode .annual-target-sales-amount {
+      background: #f5f5f5;
+    }
+    .office-mode .annual-target-inline-edit {
+      border-left-color: #666;
+      background: #e9e9e9;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-target-inline-edit:hover,
+    .office-mode .annual-target-inline-edit:focus-visible {
+      background: #f5f5f5;
+    }
+    .office-mode .nav-frame-btn[aria-current="page"] .btn-mode-frame {
+      background: #d7d7d7;
+    }
+    .office-mode .nav-frame-btn[aria-current="page"] .nav-btn-text {
+      color: #111;
+    }
+  </style>
+</head>
+<body class="si-fi profile-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <nav class="global-nav" aria-label="メインナビゲーション">
+        <ul class="global-nav-list">
+          <li class="global-nav-item">
+            <a href="index.html" class="nav-frame-btn" aria-label="年間ビュー" aria-current="page">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Annual</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="月間ビューへ（準備中）">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Monthly</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="日別ビューへ（準備中）">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Daily</span>
+              </span>
+            </a>
+          </li>
+          <li class="global-nav-item">
+            <a href="#" class="nav-frame-btn" aria-label="インデックスビューへ（準備中）">
+              <span class="btn-mode-frame">
+                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <span class="btn-mode-text nav-btn-text">Index</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
+          <span class="btn-mode-frame">
+            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
+          </span>
+        </a>
+        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
+          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+        </button>
+      </div>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
+        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Account</h4>
+          <nav class="account-settings-nav">
+            <a href="../../setting/profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
+            <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
+            <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
+          </nav>
+        </section>
+        <section class="account-settings-section">
+          <h4 class="account-settings-heading">Subscription</h4>
+          <nav class="account-settings-nav">
+            <a href="../../setting/plan_details.html" class="account-settings-item" role="menuitem">プラン詳細</a>
+            <a href="../../setting/change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
+          </nav>
+        </section>
+        <div class="account-settings-sep"></div>
+        <a href="../../setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">アカウント削除</a>
+      </div>
+      <div class="settings-dropdown" id="settings-dropdown" hidden>
+        <div class="settings-dropdown-inner">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く（準備中）">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text">Expense</span>
+            </span>
+          </a>
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
+            <span class="btn-mode-frame">
+              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main">
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
+          <div class="workspace-popup-inner">
+            <div class="workspace-popup-item is-current">Workspace : Personal</div>
+          </div>
+        </div>
+      </div>
+      <section class="annual-monthly-data" id="annual-monthly-data">
+        <div class="annual-year-control" id="annual-year-control">
+          <button type="button" class="annual-year-arrow prev" id="annual-year-prev" aria-label="前年へ"></button>
+          <button type="button" class="annual-year-value" id="annual-year-value" aria-haspopup="listbox" aria-expanded="false">2025</button>
+          <button type="button" class="annual-year-arrow next" id="annual-year-next" aria-label="翌年へ"></button>
+          <ul class="annual-year-menu" id="annual-year-menu" role="listbox" aria-label="年選択" hidden></ul>
+        </div>
+        <div class="annual-total-bd-group">
+          <p class="annual-total-bd-label">年間営業日数</p>
+          <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">286</div>
+        </div>
+        <div class="annual-target-sales-group">
+          <p class="annual-target-sales-label">年次目標売上</p>
+          <div class="annual-target-sales-value" data-field="annual.targetSales">
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
+            <button type="button" class="annual-target-inline-edit" id="annual-target-edit-btn" aria-label="年次目標売上を編集"><span class="annual-target-inline-edit-text">編集</span></button>
+          </div>
+        </div>
+        <div class="annual-kpi-strip-labels" aria-hidden="true">
+          <p class="annual-kpi-strip-label">Monthly Allocation Total</p>
+          <p class="annual-kpi-strip-label">Annual Current Sales</p>
+          <p class="annual-kpi-strip-label">Difference</p>
+          <p class="annual-kpi-strip-label">Achievement</p>
+        </div>
+        <div class="annual-kpi-strip" aria-hidden="true">
+          <div class="annual-kpi-cell annual-kpi-cell-allocation">
+            <div class="annual-allocation-wrap">
+              <div class="annual-allocation-graph" id="annual-allocation-graph">
+                <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
+                <span class="annual-allocation-marker-line" aria-hidden="true"></span>
+              </div>
+              <p class="annual-allocation-percent" id="annual-allocation-percent">100%</p>
+            </div>
+          </div>
+          <div class="annual-kpi-cell">
+            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">$101,754.41</p>
+          </div>
+          <div class="annual-kpi-cell">
+            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">$49,225.87</p>
+          </div>
+          <div class="annual-kpi-cell">
+            <div class="annual-allocation-wrap">
+              <div class="annual-allocation-graph" id="annual-achievement-graph">
+                <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
+                <span class="annual-allocation-marker-line" aria-hidden="true"></span>
+              </div>
+              <p class="annual-allocation-percent" id="annual-achievement-percent">100%</p>
+            </div>
+          </div>
+        </div>
+        <div class="annual-frame-close" id="annual-frame-close">
+          <img src="../../images/annual_close.svg" alt="" class="annual-frame-img" aria-hidden="true">
+        </div>
+        <div class="annual-frame-open" id="annual-frame-open" hidden>
+          <img src="../../images/annual_open_top.svg" alt="" class="annual-frame-img" aria-hidden="true">
+          <div class="annual-open-body" aria-hidden="true"></div>
+          <img src="../../images/annual_open_bottom.svg" alt="" class="annual-frame-img" aria-hidden="true">
+        </div>
+        <button type="button" class="annual-monthly-toggle" id="annual-monthly-toggle" aria-expanded="false" aria-controls="annual-frame-open">
+          Open
+        </button>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ先頭へ戻る">
+      <img src="../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
+    </button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo">
+      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+        <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      </a>
+    </div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/app/annual/index.html" data-url-ja="index.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'kpi-office-mode';
+      var bodyEl = document.getElementById('body-el');
+      var btnModeToggle = document.getElementById('btn-mode-toggle');
+      var btnModeText = document.getElementById('btn-mode-text');
+      var settingsOfficeLabel = document.getElementById('settings-office-label');
+      function updateModeButton() {
+        if (!btnModeText || !btnModeToggle) return;
+        var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+        btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi Mode に切り替え' : 'Office Mode に切り替え');
+        if (settingsOfficeLabel) {
+          settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
+        }
+      }
+      if (bodyEl && btnModeToggle) {
+        if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+          bodyEl.classList.add('office-mode');
+        }
+        btnModeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          bodyEl.classList.toggle('office-mode');
+          if (bodyEl.classList.contains('office-mode')) {
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+          }
+          updateModeButton();
+        });
+        updateModeButton();
+      }
+    })();
+    (function () {
+      var menuBtn = document.querySelector('.icon-button-menu');
+      var dropdown = document.getElementById('settings-dropdown');
+      var officeToggle = document.getElementById('settings-office-toggle');
+      if (!menuBtn || !dropdown) return;
+
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.hidden = !dropdown.hidden;
+      });
+
+      if (officeToggle) {
+        officeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var modeBtn = document.getElementById('btn-mode-toggle');
+          if (modeBtn) {
+            modeBtn.click();
+          }
+        });
+      }
+
+      dropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        dropdown.hidden = true;
+      });
+    })();
+    (function () {
+      var gearBtn = document.getElementById('btn-account-settings');
+      var accountPopup = document.getElementById('account-settings-popup');
+      var menuDropdown = document.getElementById('settings-dropdown');
+      if (!gearBtn || !accountPopup) return;
+
+      gearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !accountPopup.hidden;
+        accountPopup.hidden = isOpen;
+        gearBtn.setAttribute('aria-expanded', !isOpen);
+        if (!isOpen && menuDropdown) menuDropdown.hidden = true;
+      });
+
+      accountPopup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        accountPopup.hidden = true;
+        gearBtn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var trigger = document.getElementById('workspace-trigger');
+      var popup = document.getElementById('workspace-popup');
+      if (!trigger || !popup) return;
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !popup.hidden;
+        popup.hidden = isOpen;
+        trigger.setAttribute('aria-expanded', !isOpen);
+      });
+
+      popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var langBtn = document.getElementById('lang-select-btn');
+      var langDropdown = document.getElementById('lang-select-dropdown');
+      var langOptions = document.querySelectorAll('.lang-option');
+      var langWrap = document.getElementById('lang-select-wrap');
+      if (!langBtn || !langDropdown || !langWrap) return;
+
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !langDropdown.hidden;
+        langDropdown.hidden = isOpen;
+        langBtn.setAttribute('aria-expanded', !isOpen);
+      });
+
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+
+      var urlEn = langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap.getAttribute('data-url-ja');
+      var bodyElForLang = document.getElementById('body-el');
+
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) {
+            sessionStorage.setItem('kpi-office-mode', '1');
+          }
+          var lang = this.getAttribute('data-lang');
+          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          if (href) window.location.href = href;
+        });
+      });
+    })();
+    (function () {
+      var backTop = document.getElementById('footerBackToTop');
+      if (!backTop) return;
+      backTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+    (function () {
+      var btn = document.getElementById('annual-monthly-toggle');
+      var closeFrame = document.getElementById('annual-frame-close');
+      var openFrame = document.getElementById('annual-frame-open');
+      if (!btn || !closeFrame || !openFrame) return;
+      var isOpen = false;
+      function render() {
+        openFrame.hidden = !isOpen;
+        closeFrame.hidden = isOpen;
+        btn.textContent = isOpen ? 'Close' : 'Open';
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        btn.classList.toggle('is-open-state', !isOpen);
+      }
+      btn.addEventListener('click', function () {
+        isOpen = !isOpen;
+        render();
+      });
+      render();
+    })();
+    (function () {
+      var currentYear = 2025;
+      var minYear = 2000;
+      var maxYear = 2100;
+      var prevBtn = document.getElementById('annual-year-prev');
+      var nextBtn = document.getElementById('annual-year-next');
+      var yearBtn = document.getElementById('annual-year-value');
+      var menu = document.getElementById('annual-year-menu');
+      var wrap = document.getElementById('annual-year-control');
+      if (!prevBtn || !nextBtn || !yearBtn || !menu || !wrap) return;
+
+      function buildYearMenu() {
+        menu.innerHTML = '';
+        for (var y = currentYear + 3; y >= currentYear - 3; y--) {
+          if (y < minYear || y > maxYear) continue;
+          var li = document.createElement('li');
+          var opt = document.createElement('button');
+          opt.type = 'button';
+          opt.className = 'annual-year-option';
+          opt.textContent = String(y);
+          opt.setAttribute('role', 'option');
+          opt.addEventListener('click', function (e) {
+            currentYear = Number(e.currentTarget.textContent);
+            renderYear();
+            menu.hidden = true;
+            yearBtn.setAttribute('aria-expanded', 'false');
+          });
+          li.appendChild(opt);
+          menu.appendChild(li);
+        }
+      }
+      function renderYear() {
+        yearBtn.textContent = String(currentYear);
+        buildYearMenu();
+      }
+      prevBtn.addEventListener('click', function () {
+        currentYear = Math.max(minYear, currentYear - 1);
+        renderYear();
+      });
+      nextBtn.addEventListener('click', function () {
+        currentYear = Math.min(maxYear, currentYear + 1);
+        renderYear();
+      });
+      yearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.hidden = !menu.hidden;
+        yearBtn.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+      });
+      menu.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+      document.addEventListener('click', function (e) {
+        if (!wrap.contains(e.target)) {
+          menu.hidden = true;
+          yearBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      renderYear();
+    })();
+    (function () {
+      var bdEl = document.getElementById('annual-total-bd-value');
+      if (!bdEl) return;
+      var fallback = 286;
+      var v = fallback;
+      if (window.__ANNUAL_DATA && Number.isFinite(Number(window.__ANNUAL_DATA.totalBusinessDay))) {
+        v = Number(window.__ANNUAL_DATA.totalBusinessDay);
+      }
+      bdEl.textContent = String(v);
+    })();
+    (function () {
+      var targetEl = document.getElementById('annual-target-sales-value');
+      if (!targetEl) return;
+      var fallback = 652528.55;
+      var raw = fallback;
+      if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.targetSales != null) {
+        raw = window.__ANNUAL_DATA.targetSales;
+      }
+      if (typeof raw === 'number' && Number.isFinite(raw)) {
+        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else {
+        targetEl.textContent = String(raw);
+      }
+    })();
+    (function () {
+      function getMarkerColor(percent) {
+        if (percent >= 100) return '#E6FF00';
+        if (percent >= 90) return '#FFB300';
+        if (percent >= 80) return '#FF8A00';
+        if (percent >= 70) return '#FF6A00';
+        if (percent >= 60) return '#FF3D00';
+        return '#FF0000';
+      }
+
+      function formatPercentText(percent) {
+        return (Math.round(percent * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }) + '%';
+      }
+
+      function initAllocationWidget(options) {
+        var graphEl = document.getElementById(options.graphId);
+        var percentEl = document.getElementById(options.percentId);
+        if (!graphEl || !percentEl) return;
+
+        var fallbackPercent = 100;
+        var data = window.__ANNUAL_DATA || {};
+        var rawPercent = data[options.dataKey] != null ? data[options.dataKey] : fallbackPercent;
+        var currentPercent = Number(rawPercent);
+        if (!Number.isFinite(currentPercent) || currentPercent <= 0) currentPercent = fallbackPercent;
+
+        function renderAllocation(percent) {
+          var safePercent = Number(percent);
+          if (!Number.isFinite(safePercent) || safePercent <= 0) safePercent = fallbackPercent;
+
+          var graphWidth = 133;
+          var kpiMarkerX = graphWidth * (2 / 3);
+          var minTailW = graphWidth * 0.10;
+          var maxKgiX = graphWidth - minTailW;
+
+          var kgiXRaw = kpiMarkerX * (safePercent / 100);
+          var kgiX = Math.max(0, Math.min(maxKgiX, kgiXRaw));
+          var markerColor = getMarkerColor(safePercent);
+
+          graphEl.style.setProperty('--kpi-x', kpiMarkerX + 'px');
+          graphEl.style.setProperty('--kgi-x', kgiX + 'px');
+          graphEl.style.setProperty('--fill-w', kgiX + 'px');
+          graphEl.style.setProperty('--marker-color', markerColor);
+          percentEl.textContent = formatPercentText(safePercent);
+        }
+
+        percentEl.setAttribute('title', 'Click to edit');
+        percentEl.addEventListener('click', function () {
+          var input = window.prompt(options.promptLabel + ' (%)', String(currentPercent));
+          if (input == null) return;
+          var normalized = String(input).replace('%', '').trim();
+          var next = Number(normalized);
+          if (!Number.isFinite(next) || next <= 0) return;
+          currentPercent = next;
+          renderAllocation(currentPercent);
+        });
+
+        renderAllocation(currentPercent);
+      }
+
+      initAllocationWidget({
+        graphId: 'annual-allocation-graph',
+        percentId: 'annual-allocation-percent',
+        dataKey: 'monthlyAllocationPercent',
+        promptLabel: 'Monthly Allocation Total'
+      });
+      initAllocationWidget({
+        graphId: 'annual-achievement-graph',
+        percentId: 'annual-achievement-percent',
+        dataKey: 'achievementPercent',
+        promptLabel: 'Achievement'
+      });
+    })();
+    (function () {
+      function formatCurrency(value) {
+        var absValue = Math.abs(value);
+        var formatted = '$' + absValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return value < 0 ? '-' + formatted : formatted;
+      }
+
+      var currentEl = document.getElementById('annual-current-sales-value');
+      var diffEl = document.getElementById('annual-difference-value');
+      if (!currentEl || !diffEl) return;
+
+      var fallbackCurrent = 101754.41;
+      var fallbackDifference = 49225.87;
+      var data = window.__ANNUAL_DATA || {};
+
+      var currentRaw = data.currentSales != null ? data.currentSales : fallbackCurrent;
+      var targetRaw = data.targetSales != null ? data.targetSales : 652528.55;
+      var differenceRaw = data.difference != null ? data.difference : null;
+
+      var currentNum = Number(currentRaw);
+      var targetNum = Number(targetRaw);
+      var diffNum = Number(differenceRaw);
+
+      if (Number.isFinite(currentNum)) {
+        currentEl.textContent = formatCurrency(currentNum);
+      } else {
+        currentEl.textContent = String(currentRaw);
+      }
+
+      if (Number.isFinite(diffNum)) {
+        diffEl.textContent = formatCurrency(diffNum);
+      } else if (Number.isFinite(targetNum) && Number.isFinite(currentNum)) {
+        diffEl.textContent = formatCurrency(targetNum - currentNum);
+      } else {
+        diffEl.textContent = formatCurrency(fallbackDifference);
+      }
+    })();
+  </script>
+</body>
+</html>
