@@ -4,6 +4,33 @@
 
 年次ページの「日次フォーカス（Table Window / Focus Bar / 365日行）」まわりで、レイアウトや将来の破綻を防ぐための要点をまとめる。
 
+## Table Window の高さ（縦）
+
+- **現状: `800px`**（Sci-Fi / Office とも `.annual-daily-focus-window` および Office 用上書きで統一）。以前の `1000px` より短くし、一覧は **窓内の縦スクロール**で回す。最上段〜最下段の往復が長く感じにくくする意図。
+- **調整は容易**: 通常は **`height` の数値だけ**変えればよい。他デバイスで窮屈なら 820〜840px などへ。
+- **Focus Bar** は窓内で **`top: 235px` 等のピクセル指定**のまま（高さ変更と独立させ、無理に連動させない方針でよい）。
+
+## 開き時の左右インセットと横スクロール終端（CSS 変数）
+
+- `body.annual-focus-bar-expanded` で **`--annual-daily-focus-table-pad-left`**（例: `76px`）と **`--annual-daily-focus-table-pad-right`**（例: `44px`）を定義。
+- 次を **同じ変数でそろえる**ことで、365 行・Global Menu・Focus Bar 上段/下段の横スクロールが **同じ `scrollLeft` 同期**のまま位置がずれない:
+  - `#annual-daily-focus-scroll`
+  - `#annual-daily-focus-global-scroll`
+  - `#annual-daily-focus-bar-upper-scroll` / `#annual-daily-focus-bar-lower-scroll`
+- **左パディング**: Edit（`left: 14px` + 幅 `57px`）の右より外側からグリッドが始まるようにし、**Global Menu の「日付」と 365 行の左端を揃える**用途。
+- **右パディング**: 横スクロールの **終端に余白**を持たせ、右端が詰まりすぎないようにする用途。
+
+## Global Menu と 365 行の列センター
+
+- Global Menu は **365 行と同じ 3 グループ**（600 + gap 5 + 480 + gap 5 + 480 = **1570px**）の flex/grid で、**横スクロールは上記と同期**。
+- 見出しが「セルとセルの境の縦線」に寄って見える場合は、**表側と Global Menu 側のスクロール開始 X（`padding-left`）が一致しているか**を最初に疑う（履歴では **71px と 10px の混在**が半セル級のズレ要因になった）。
+
+## パネル 3 — more / Close の見た目（導線）
+
+- **閉じているとき**: **more** を主導線（Sci-Fi では六角＋フィル＋光彩、Office では枠・背景を強め）。
+- **Table Window 開き（展開）時**: **Close** を主導線に切り替え、**more** は副次（閉じる操作が目立つようにする）。
+- 実装は `body.annual-focus-bar-expanded` と `:not(.office-mode)` / `.office-mode` の組み合わせで上書き。
+
 ## ページ幅の階層（Figma との対応）
 
 - **外枠**: `en/setting/style.css` の `.profile-wrap` が `max-width: 1200px`（パディングあり）。「1200px で作った」記憶はここに対応する。

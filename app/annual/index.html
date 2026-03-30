@@ -365,13 +365,13 @@
       column-gap: calc(100% * 89 / 1017);
       align-items: start;
     }
-    /* 日次フォーカス窓 — Figma 725×~922、高さ1000px、角丸13px、背景 #1F1E1E、枠線なし */
+    /* 日次フォーカス窓 — Figma 725×~922 基準、高さは 800px 前後で調整可、角丸13px、背景 #1F1E1E、枠線なし */
     .annual-daily-focus-window {
       --focus-bar-w: 757px;
       position: relative;
       width: 725px;
       max-width: 100%;
-      height: 1000px;
+      height: 800px;
       margin: 28px auto 0;
       box-sizing: border-box;
       border: none;
@@ -388,6 +388,12 @@
       /* 親幅（2&3 帯≈1017 基準のセクション≈1020px）より広い 1100px を中央に置く。auto は子>親で左寄せになるため calc で負マージン中央寄せ */
       margin: 28px calc((100% - 1100px) / 2) 0;
     }
+    /* 展開時: 365 行・Global Menu・Focus Bar の横スクロール開始を同一 X に。Edit(14+57px) 右に余白し窓内のまま */
+    body.annual-focus-bar-expanded {
+      --annual-daily-focus-table-pad-left: 76px;
+      /* 横スクロール終端で右に余白（左ほど大きくしない） */
+      --annual-daily-focus-table-pad-right: 44px;
+    }
     .annual-daily-focus-global-menu {
       position: absolute;
       top: 0;
@@ -403,29 +409,38 @@
       border-radius: 13px 13px 0 0;
       background: #2a2a2a;
     }
+    /* Edit: 54px 装飾 + 右 3px を不透明レールにし、背面の Global Menu 横スクロールを隠す */
     .annual-daily-focus-edit-btn {
       position: absolute;
       left: 14px;
       top: 50%;
-      width: 54px;
+      width: 57px;
       height: 22px;
       padding: 0;
       border: 0;
-      background: transparent;
+      background: #2a2a2a;
       transform: translateY(-50%);
       cursor: pointer;
-      z-index: 3;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      box-sizing: border-box;
     }
     .annual-daily-focus-edit-btn img {
       display: block;
-      width: 100%;
-      height: 100%;
+      width: 54px;
+      height: 22px;
+      flex-shrink: 0;
       object-fit: fill;
       pointer-events: none;
     }
     .annual-daily-focus-edit-btn span {
       position: absolute;
-      inset: 0;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 54px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -450,15 +465,19 @@
     .annual-daily-focus-global-scroll::-webkit-scrollbar {
       display: none;
     }
+    /* Global Menu: 365 行と同じ 3 グループ（600 + gap5 + 480 + gap5 + 480）で列センターを一致 */
     .annual-daily-focus-menu-grid {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       width: 600px;
       max-width: 100%;
       height: 100%;
       box-sizing: border-box;
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      align-items: center;
+      gap: 0;
       padding: 0 2px;
+      margin-left: 0;
       font-family: 'Orbitron', sans-serif;
       font-size: 13px;
       font-weight: 400;
@@ -466,12 +485,33 @@
       letter-spacing: 0.02em;
       color: rgba(88, 225, 243, 0.92);
       text-align: center;
-      margin-left: 0;
     }
-    .annual-daily-hdr__cell--open-only {
+    .annual-daily-focus-menu-group {
+      display: grid;
+      align-items: center;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .annual-daily-focus-menu-group--base {
+      width: 600px;
+      flex-shrink: 0;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .annual-daily-focus-menu-group--monthly,
+    .annual-daily-focus-menu-group--annual {
       display: none;
+      width: 480px;
+      flex-shrink: 0;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    .annual-daily-focus-menu-grid .annual-daily-hdr__cell--date {
+    .annual-daily-focus-menu-group .annual-daily-hdr__cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-width: 0;
+    }
+    .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
       text-align: center;
       padding-left: 0;
       padding-right: 0;
@@ -482,21 +522,31 @@
       letter-spacing: 0.02em;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-menu-grid {
+      justify-content: flex-start;
       width: 1570px;
       max-width: none;
-      margin-left: 0;
-      grid-template-columns: repeat(13, minmax(0, 120px));
+      gap: 5px;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell--open-only {
-      display: block;
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-group--annual {
+      display: grid;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell:nth-child(6),
-    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell:nth-child(10) {
-      margin-left: 5px;
+    body.annual-focus-bar-expanded .annual-daily-focus-edit-btn {
+      top: 0;
+      height: 100%;
+      transform: none;
+      align-items: center;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-global-scroll {
       justify-content: flex-start;
       align-items: center;
+      padding-left: var(--annual-daily-focus-table-pad-left);
+      padding-right: var(--annual-daily-focus-table-pad-right);
+      box-sizing: border-box;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-scroll {
+      padding-left: var(--annual-daily-focus-table-pad-left);
+      padding-right: var(--annual-daily-focus-table-pad-right);
     }
     .annual-daily-focus-scroll-clip {
       position: absolute;
@@ -712,9 +762,11 @@
       max-width: calc(100% - 28px);
       transform: translateX(-50%);
       box-sizing: border-box;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      display: flex;
+      flex-direction: row;
       align-items: center;
+      justify-content: center;
+      gap: 0;
       color: rgba(88, 225, 243, 0.92);
       font-family: 'Orbitron', sans-serif;
       font-size: 11px;
@@ -725,8 +777,24 @@
       z-index: 2;
       pointer-events: none;
     }
-    .annual-daily-focus-bar-upper__cell--open-only {
+    .annual-daily-focus-bar-upper__group {
+      display: grid;
+      align-items: center;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .annual-daily-focus-bar-upper__group--base {
+      width: 100%;
+      flex: 1 1 auto;
+      max-width: 640px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .annual-daily-focus-bar-upper__group--monthly,
+    .annual-daily-focus-bar-upper__group--annual {
       display: none;
+      width: 480px;
+      flex-shrink: 0;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     html[lang="ja"] .annual-daily-focus-bar-upper {
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -798,23 +866,38 @@
     .annual-daily-focus-bar-lower-scroll::-webkit-scrollbar {
       display: none;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper {
+      width: 1570px;
+      max-width: none;
+      gap: 5px;
+      justify-content: flex-start;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base {
+      width: 600px;
+      flex: 0 0 600px;
+      max-width: none;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--annual {
+      display: grid;
+    }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower {
       width: 1570px;
       max-width: none;
       grid-template-columns: repeat(13, minmax(0, 120px));
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell--open-only {
-      display: block;
-    }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell--open-only {
       display: flex;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell:nth-child(6),
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell:nth-child(10),
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(6),
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(10) {
       margin-left: 5px;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
+      padding-left: var(--annual-daily-focus-table-pad-left);
+      padding-right: var(--annual-daily-focus-table-pad-right);
+      box-sizing: border-box;
     }
     .annual-daily-focus-bar-lower__cell {
       min-width: 0;
@@ -877,17 +960,25 @@
       transform: translate(-50%, -50%);
       transition: color 0.15s ease, text-shadow 0.15s ease, transform 0.15s ease;
     }
+    /* 閉じ: more を六角ハイライト（展開への導線）、Close はラベル */
     .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
       top: 4.5%;
-    }
-    /* Close: 六角形／内側は SVG パネルと同じ #58E1F3 41% */
-    .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
-      top: 94.85%;
       padding: 4px 18px;
       min-width: 52px;
       box-sizing: border-box;
       background: rgba(88, 225, 243, 0.41);
       clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+      color: #9ef6ff;
+      text-shadow: 0 0 10px rgba(158, 246, 255, 0.85), 0 0 18px rgba(88, 225, 243, 0.5);
+    }
+    .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
+      top: 94.85%;
+      padding: 0 4px;
+      min-width: 0;
+      background: transparent;
+      clip-path: none;
+      text-shadow: none;
+      color: #58e1f3;
     }
     .annual-summary-bottom-cell--sales > .annual-sales-tab:hover,
     .annual-summary-bottom-cell--sales > .annual-sales-tab:focus-visible {
@@ -895,6 +986,29 @@
       outline: none;
       text-shadow: 0 0 10px rgba(158, 246, 255, 0.9), 0 0 20px rgba(88, 225, 243, 0.55);
       transform: translate(-50%, -50%) scale(1.08);
+    }
+    /* 展開: Close を六角ハイライト（閉じる導線）、more はラベル */
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
+      padding: 0 4px;
+      min-width: 0;
+      background: transparent;
+      clip-path: none;
+      text-shadow: none;
+      color: #58e1f3;
+    }
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
+      padding: 4px 18px;
+      min-width: 52px;
+      box-sizing: border-box;
+      background: rgba(88, 225, 243, 0.41);
+      clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+      color: #9ef6ff;
+      text-shadow: 0 0 10px rgba(158, 246, 255, 0.85), 0 0 18px rgba(88, 225, 243, 0.5);
+    }
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-summary-bottom-cell--sales > .annual-sales-tab--more:hover,
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-summary-bottom-cell--sales > .annual-sales-tab--more:focus-visible {
+      background: transparent;
+      clip-path: none;
     }
     /* パネル3: 月次/年次サマリー */
     .annual-sales-overlay {
@@ -1402,11 +1516,14 @@
       border: none;
       border-radius: 13px;
       background: #dbdbdb;
-      height: 1000px;
+      height: 800px;
     }
     .office-mode .annual-daily-focus-global-menu {
       background: #e8e8e8;
       border-radius: 13px 13px 0 0;
+    }
+    .office-mode .annual-daily-focus-edit-btn {
+      background: #e8e8e8;
     }
     .office-mode .annual-daily-focus-scroll-clip {
       background: #dbdbdb;
@@ -1566,10 +1683,11 @@
       margin: 0;
       z-index: 2;
       box-sizing: border-box;
-      background: #e8e8e8;
-      border: 1px solid #666;
+      background: #dfeaf7;
+      border: 1px solid #333;
       padding: 5px 12px;
       min-width: 0;
+      font-weight: 500;
     }
     .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
       position: absolute;
@@ -1581,10 +1699,11 @@
       margin: 0;
       z-index: 2;
       clip-path: none;
-      background: #e8e8e8;
-      border: 1px solid #666;
+      background: #ececec;
+      border: 1px solid #9a9a9a;
       padding: 5px 12px;
       min-width: 0;
+      font-weight: 400;
       transition: background 0.12s ease, color 0.12s ease;
     }
     .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab:hover,
@@ -1601,6 +1720,27 @@
     .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:active {
       background: #d6d6d6;
       color: #000;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
+      background: #ececec;
+      border-color: #9a9a9a;
+      font-weight: 400;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
+      background: #dfeaf7;
+      border-color: #333;
+      font-weight: 500;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:hover,
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:focus-visible {
+      background: #f0f0f0;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:active {
+      background: #e0e0e0;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:hover,
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:focus-visible {
+      background: #e8f0fa;
     }
     .office-mode .annual-sales-abbr,
     .office-mode .annual-sales-row-h,
@@ -2196,19 +2336,25 @@
             </button>
             <div class="annual-daily-focus-global-scroll" id="annual-daily-focus-global-scroll">
               <div class="annual-daily-focus-menu-grid">
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--date">日付</span>
-                <span class="annual-daily-hdr__cell">本日売上</span>
-                <span class="annual-daily-hdr__cell">目標売上</span>
-                <span class="annual-daily-hdr__cell">差額</span>
-                <span class="annual-daily-hdr__cell">達成率</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">月次目標売上</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">月次売上</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">差額</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">達成率</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">年次目標売上</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">年次売上</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">差額</span>
-                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">達成率</span>
+                <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--base">
+                  <span class="annual-daily-hdr__cell annual-daily-hdr__cell--date">日付</span>
+                  <span class="annual-daily-hdr__cell">本日売上</span>
+                  <span class="annual-daily-hdr__cell">目標売上</span>
+                  <span class="annual-daily-hdr__cell">差額</span>
+                  <span class="annual-daily-hdr__cell">達成率</span>
+                </div>
+                <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--monthly">
+                  <span class="annual-daily-hdr__cell">月次目標売上</span>
+                  <span class="annual-daily-hdr__cell">月次売上</span>
+                  <span class="annual-daily-hdr__cell">差額</span>
+                  <span class="annual-daily-hdr__cell">達成率</span>
+                </div>
+                <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--annual">
+                  <span class="annual-daily-hdr__cell">年次目標売上</span>
+                  <span class="annual-daily-hdr__cell">年次売上</span>
+                  <span class="annual-daily-hdr__cell">差額</span>
+                  <span class="annual-daily-hdr__cell">達成率</span>
+                </div>
               </div>
             </div>
           </nav>
@@ -2226,19 +2372,25 @@
               </button>
               <div class="annual-daily-focus-bar-upper-scroll" id="annual-daily-focus-bar-upper-scroll">
                 <div class="annual-daily-focus-bar-upper">
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--date">日付</span>
-                  <span class="annual-daily-focus-bar-upper__cell">本日売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell">目標売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell">差額</span>
-                  <span class="annual-daily-focus-bar-upper__cell">達成率</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">月次目標売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">月次売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">差額</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">達成率</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">年次目標売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">年次売上</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">差額</span>
-                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">達成率</span>
+                  <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--base">
+                    <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--date">日付</span>
+                    <span class="annual-daily-focus-bar-upper__cell">本日売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">目標売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
+                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                  </div>
+                  <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--monthly">
+                    <span class="annual-daily-focus-bar-upper__cell">月次目標売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">月次売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
+                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                  </div>
+                  <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--annual">
+                    <span class="annual-daily-focus-bar-upper__cell">年次目標売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">年次売上</span>
+                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
+                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                  </div>
                 </div>
               </div>
               <div class="annual-daily-focus-bar-lower-scroll" id="annual-daily-focus-bar-lower-scroll">
