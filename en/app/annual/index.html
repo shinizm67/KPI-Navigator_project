@@ -748,7 +748,7 @@
       position: absolute;
       left: 50%;
       top: 11px;
-      width: 640px;
+      width: 637px;
       max-width: calc(100% - 28px);
       transform: translateX(-50%);
       box-sizing: border-box;
@@ -776,7 +776,7 @@
     .annual-daily-focus-bar-upper__group--base {
       width: 100%;
       flex: 1 1 auto;
-      max-width: 640px;
+      max-width: 637px;
       grid-template-columns: repeat(5, minmax(0, 1fr));
     }
     .annual-daily-focus-bar-upper__group--monthly,
@@ -816,14 +816,14 @@
       position: absolute;
       left: 50%;
       top: 53px;
-      width: 640px;
+      width: 637px;
       max-width: calc(100% - 28px);
-      height: 39px;
+      height: 49px;
       transform: translate(-50%, -50%);
       box-sizing: border-box;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      align-items: center;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: stretch;
       border: 1px solid #58e1f3;
       border-radius: 3px;
       background: rgba(88, 225, 243, 0.38);
@@ -839,7 +839,7 @@
       left: 0;
       right: 0;
       top: 27px;
-      height: 52px;
+      height: 58px;
       display: none;
       overflow-x: auto;
       overflow-y: hidden;
@@ -869,7 +869,10 @@
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower {
       width: 1570px;
       max-width: none;
+      min-height: 49px;
+      height: auto;
       grid-template-columns: repeat(13, minmax(0, 120px));
+      align-items: stretch;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell--open-only {
       display: flex;
@@ -887,6 +890,8 @@
     .annual-daily-focus-bar-lower__cell {
       min-width: 0;
       height: 100%;
+      box-sizing: border-box;
+      padding: 0 4px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -905,7 +910,8 @@
     }
     .annual-daily-focus-bar-lower__cell--date {
       justify-content: flex-start;
-      padding-left: 18px;
+      padding-left: 8px;
+      padding-right: 4px;
     }
     .annual-daily-focus-bar-img {
       position: relative;
@@ -1507,7 +1513,32 @@
       color: #b00020;
     }
     .office-mode .annual-daily-focus-bar-layer {
+      top: 235px;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-layer {
       display: none;
+    }
+    .office-mode .annual-daily-focus-bar-stack::before {
+      background: #e8e8e8;
+    }
+    .office-mode .annual-daily-focus-bar-upper {
+      color: #111;
+    }
+    .office-mode .annual-daily-focus-bar-upper__cell--date {
+      color: #111;
+    }
+    .office-mode .annual-daily-focus-bar-lower {
+      border-color: #666;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .office-mode .annual-daily-focus-bar-lower__cell {
+      color: #111;
+      border-right-color: #bbb;
+    }
+    .office-mode .annual-daily-focus-wing-hit:hover,
+    .office-mode .annual-daily-focus-wing-hit:focus-visible {
+      background: rgba(0, 0, 0, 0.06);
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.12);
     }
     .office-mode .annual-summary-bottom-cell {
       min-height: 148px;
@@ -2410,6 +2441,9 @@
             sessionStorage.removeItem(STORAGE_KEY);
           }
           updateModeButton();
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.refreshFocusBarAsset === 'function') {
+            window.__ANNUAL_UI.refreshFocusBarAsset();
+          }
         });
         updateModeButton();
       }
@@ -3083,9 +3117,18 @@
       if (!moreBtn || !closeBtn || !wingHitBtn || !focusBarImg) return;
 
       function updateFocusBarImage(expanded) {
-        var src = focusBarImg.getAttribute('src') || '';
-        var next = expanded ? src.replace('focus_bar.svg', 'focus_bar_open.svg') : src.replace('focus_bar_open.svg', 'focus_bar.svg');
-        if (next !== src) focusBarImg.setAttribute('src', next);
+        var srcAttr = focusBarImg.getAttribute('src') || '';
+        var dir = srcAttr.indexOf('/') >= 0 ? srcAttr.slice(0, srcAttr.lastIndexOf('/') + 1) : '../../../images/';
+        var office = document.body.classList.contains('office-mode');
+        var file = office
+          ? expanded
+            ? 'focus_bar_office_mode_open.svg'
+            : 'focus_bar_office_mode.svg'
+          : expanded
+            ? 'focus_bar_open.svg'
+            : 'focus_bar.svg';
+        var next = dir + file;
+        if (focusBarImg.getAttribute('src') !== next) focusBarImg.setAttribute('src', next);
       }
 
       function setFocusBarExpanded(expanded) {
@@ -3095,6 +3138,9 @@
         updateFocusBarImage(expanded);
         window.__ANNUAL_UI = window.__ANNUAL_UI || {};
         window.__ANNUAL_UI.focusBarExpanded = expanded;
+        window.__ANNUAL_UI.refreshFocusBarAsset = function () {
+          updateFocusBarImage(document.body.classList.contains('annual-focus-bar-expanded'));
+        };
         document.dispatchEvent(
           new CustomEvent('annual:focusBarStateChanged', {
             detail: { expanded: expanded }

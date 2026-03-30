@@ -52,8 +52,11 @@
 
 ## Focus Bar（SVG）
 
-- 閉じ: `images/focus_bar.svg`（757px 幅想定）、開き: `images/focus_bar_open.svg`（1132px 幅想定）。  
-  CSS 変数 `--focus-bar-w` が閉じ/開きで切り替わる。
+- **Sci-Fi** 閉じ: `images/focus_bar.svg`、開き: `images/focus_bar_open.svg`。  
+- **Office** 閉じ: `images/focus_bar_office_mode.svg`、開き: `images/focus_bar_office_mode_open.svg`（757×82 系・展開幅は Open 側デザインに合わせて `--focus-bar-w` を要確認）。  
+- Table Window 上端からの位置は **Sci-Fi / Office 共通で `top: 235px`**（`.annual-daily-focus-bar-layer`）。Office 時は内側パネル・ラベル・値行をグレー系に上書き。  
+- **Office + Table 展開**の Focus Bar レイアウトは次ステップのため、いまは **`body.annual-focus-bar-expanded.office-mode` で Focus Bar レイヤーを非表示**（閉じ時のみ Office アセット表示）。
+- **閉じ時の値行（下段）**: Figma **637×49px**・**5 列**（`grid-template-columns: repeat(5, minmax(0, 1fr))`）。`left: 50%` と `transform: translate(-50%, -50%)` でバー内 **X 方向中央**。上段ラベル帯も **637px** で列を揃える。
 - Table と Global Menu / Focus Bar 内コンテンツの **横スクロール同期** は既存の `annual:focusBarStateChanged` と scroll ハンドラで維持。
 
 ## 365日行 — 閉じ / 開きの列モデル
