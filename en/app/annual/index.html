@@ -15,6 +15,7 @@
       width: min(100%, 1020px);
       margin-top: 8px;
       align-self: center;
+      overflow-x: visible;
     }
     .annual-year-control {
       position: absolute;
@@ -29,7 +30,7 @@
       justify-content: space-between;
       padding: 0 8px;
       box-sizing: border-box;
-      z-index: 2;
+      z-index: 8;
       background: rgba(0, 0, 0, 0.08);
     }
     .annual-year-arrow {
@@ -353,6 +354,743 @@
       display: block;
       height: auto;
     }
+    /* Bottom row: same outer width as annual_close / open (1017 artboard). Columns 471 + gap 89 + 457 = 1017 */
+    .annual-summary-bottom-row {
+      display: grid;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      margin-top: 123px;
+      grid-template-columns: calc(100% * 471 / 1017) calc(100% * 457 / 1017);
+      column-gap: calc(100% * 89 / 1017);
+      align-items: start;
+    }
+    /* Daily focus window — Figma 725×~922; height 1000px; radius 13px; bg #1F1E1E (no chrome border) */
+    .annual-daily-focus-window {
+      --focus-bar-w: 757px;
+      position: relative;
+      width: 725px;
+      max-width: 100%;
+      height: 1000px;
+      margin: 28px auto 0;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 13px;
+      background: #1f1e1e;
+      overflow: visible;
+    }
+    /* Expanded: 1100px per design; without this, max-width:100% caps to parent (~1016px with panels 2+3). */
+    body.annual-focus-bar-expanded .annual-daily-focus-window {
+      width: 1100px;
+      min-width: 1100px;
+      max-width: none;
+      --focus-bar-w: 1132px;
+      /* Center 1100px window on the narrower section (~1020px); margin:auto fails when child is wider than parent */
+      margin: 28px calc((100% - 1100px) / 2) 0;
+    }
+    .annual-daily-focus-global-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      box-sizing: border-box;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border-radius: 13px 13px 0 0;
+      background: #2a2a2a;
+    }
+    .annual-daily-focus-edit-btn {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 54px;
+      height: 22px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      transform: translateY(-50%);
+      cursor: pointer;
+      z-index: 3;
+    }
+    .annual-daily-focus-edit-btn img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      pointer-events: none;
+    }
+    .annual-daily-focus-edit-btn span {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+    .annual-daily-focus-global-scroll {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .annual-daily-focus-global-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .annual-daily-focus-menu-grid {
+      width: 600px;
+      max-width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: center;
+      padding: 0 2px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      color: rgba(88, 225, 243, 0.92);
+      text-align: center;
+      margin-left: 0;
+    }
+    .annual-daily-hdr__cell--open-only {
+      display: none;
+    }
+    .annual-daily-focus-menu-grid .annual-daily-hdr__cell--date {
+      text-align: center;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid {
+      width: 1570px;
+      max-width: none;
+      margin-left: 0;
+      grid-template-columns: repeat(13, minmax(0, 120px));
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell--open-only {
+      display: block;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell:nth-child(6),
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-grid .annual-daily-hdr__cell:nth-child(10) {
+      margin-left: 5px;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-global-scroll {
+      justify-content: flex-start;
+      align-items: center;
+    }
+    .annual-daily-focus-scroll-clip {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0 0 13px 13px;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .annual-daily-focus-scroll {
+      height: 100%;
+      overflow: auto;
+      box-sizing: border-box;
+      padding: 12px 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .annual-daily-focus-placeholder {
+      margin: 0;
+      color: rgba(88, 225, 243, 0.45);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    /* Daily table: 600×40px rows, 2px gap, centered in window (Figma) */
+    .annual-daily-table-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 100%;
+      padding-bottom: 16px;
+    }
+    body.annual-focus-bar-expanded .annual-daily-table-wrap {
+      align-items: flex-start;
+    }
+    .annual-daily-hdr__cell--date {
+      text-align: left;
+      padding-left: 6px;
+    }
+    .annual-daily-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 600px;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+    body.annual-focus-bar-expanded .annual-daily-rows {
+      width: 1570px;
+    }
+    .annual-daily-row {
+      width: 100%;
+      max-width: none;
+      height: 40px;
+      box-sizing: border-box;
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1;
+      color: #58e1f3;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row {
+      gap: 5px;
+    }
+    .annual-daily-row--off {
+      opacity: 0.48;
+      background: rgba(88, 225, 243, 0.06);
+    }
+    .annual-daily-row--outside-year {
+      color: rgba(88, 225, 243, 0.42);
+    }
+    .annual-daily-row--outside-year .annual-daily-row__group {
+      border-color: rgba(88, 225, 243, 0.3);
+      background: rgba(88, 225, 243, 0.04);
+    }
+    .annual-daily-row--outside-year .annual-daily-row__cell {
+      border-right-color: rgba(88, 225, 243, 0.18);
+    }
+    .annual-daily-row--outside-year.annual-daily-row--focus-active {
+      color: #58e1f3;
+    }
+    .annual-daily-row--outside-year.annual-daily-row--focus-active .annual-daily-row__group {
+      border-color: #58e1f3;
+      background: rgba(88, 225, 243, 0.14);
+    }
+    .annual-daily-row--outside-year.annual-daily-row--focus-active .annual-daily-row__cell {
+      border-right-color: rgba(88, 225, 243, 0.35);
+    }
+    .annual-daily-row__group {
+      display: grid;
+      align-items: stretch;
+      height: 100%;
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(88, 225, 243, 0.14);
+      overflow: hidden;
+    }
+    .annual-daily-row__group--base {
+      width: 600px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .annual-daily-row__group--monthly,
+    .annual-daily-row__group--annual {
+      width: 480px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      display: none;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-row__group--annual {
+      display: grid;
+    }
+    .annual-daily-row__cell {
+      min-width: 0;
+      padding: 0 4px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      box-sizing: border-box;
+      border-right: 1px solid rgba(88, 225, 243, 0.35);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annual-daily-row__group .annual-daily-row__cell:last-child {
+      border-right: 0;
+    }
+    .annual-daily-row__cell--date {
+      text-align: left;
+      justify-content: flex-start;
+      padding-left: 8px;
+    }
+    .annual-daily-row__cell--neg {
+      color: #ff6b6b;
+    }
+    .annual-daily-row__cell--open-only {
+      display: none;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row__cell--open-only {
+      display: flex;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row__cell:nth-child(6),
+    body.annual-focus-bar-expanded .annual-daily-row__cell:nth-child(10) {
+      margin-left: 5px;
+    }
+    /*
+     * Focus Bar: SVGのみ（レイアウト検証用）。Window 725 / 装飾 757、左右16pxはみ出し。
+     * 比較は「600px行」ではなく Window 外枠基準で行うこと。
+     */
+    .annual-daily-focus-bar-layer {
+      position: absolute;
+      left: 50%;
+      top: 235px;
+      z-index: 3;
+      width: var(--focus-bar-w);
+      min-width: var(--focus-bar-w);
+      max-width: none;
+      transform: translateX(-50%);
+      pointer-events: none;
+      line-height: 0;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+    .annual-daily-focus-wing-hit {
+      position: absolute;
+      right: 3px;
+      top: 8px;
+      bottom: 8px;
+      width: 12px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      z-index: 4;
+      pointer-events: auto;
+      padding: 0;
+      border-radius: 1px;
+    }
+    .annual-daily-focus-wing-hit:hover,
+    .annual-daily-focus-wing-hit:focus-visible {
+      outline: none;
+      background: rgba(88, 225, 243, 0.12);
+      box-shadow: inset 0 0 8px rgba(88, 225, 243, 0.6), 0 0 6px rgba(88, 225, 243, 0.32);
+    }
+    .annual-daily-focus-wing-hit span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .annual-daily-focus-bar-stack {
+      position: relative;
+      width: 100%;
+      pointer-events: auto;
+      box-sizing: border-box;
+    }
+    .annual-daily-focus-bar-stack::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 16px;
+      right: 17px;
+      background: #1f1e1e;
+      border-radius: 6px;
+      z-index: 0;
+    }
+    .annual-daily-focus-bar-upper {
+      position: absolute;
+      left: 50%;
+      top: 11px;
+      width: 640px;
+      max-width: calc(100% - 28px);
+      transform: translateX(-50%);
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      color: rgba(88, 225, 243, 0.92);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      text-align: center;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .annual-daily-focus-bar-upper__cell--open-only {
+      display: none;
+    }
+    .annual-daily-focus-bar-upper-scroll {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 28px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .annual-daily-focus-bar-upper-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .annual-daily-focus-bar-upper__cell {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annual-daily-focus-bar-upper__cell--date {
+      text-align: left;
+      padding-left: 18px;
+    }
+    .annual-daily-focus-bar-lower {
+      position: absolute;
+      left: 50%;
+      top: 53px;
+      width: 640px;
+      max-width: calc(100% - 28px);
+      height: 39px;
+      transform: translate(-50%, -50%);
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      border: 1px solid #58e1f3;
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.38);
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .annual-daily-focus-bar-lower__cell--open-only {
+      display: none;
+    }
+    .annual-daily-focus-bar-lower-scroll {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 27px;
+      height: 52px;
+      display: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .annual-daily-focus-bar-lower-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower {
+      width: 1570px;
+      max-width: none;
+      grid-template-columns: repeat(13, minmax(0, 120px));
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell--open-only {
+      display: block;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell--open-only {
+      display: flex;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell:nth-child(6),
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper .annual-daily-focus-bar-upper__cell:nth-child(10),
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(6),
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(10) {
+      margin-left: 5px;
+    }
+    .annual-daily-focus-bar-lower__cell {
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid rgba(88, 225, 243, 0.52);
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annual-daily-focus-bar-lower__cell:last-child {
+      border-right: 0;
+    }
+    .annual-daily-focus-bar-lower__cell--date {
+      justify-content: flex-start;
+      padding-left: 18px;
+    }
+    .annual-daily-focus-bar-img {
+      position: relative;
+      z-index: 3;
+      display: block;
+      width: 100%;
+      max-width: none;
+      height: auto;
+      pointer-events: none;
+      vertical-align: top;
+    }
+    .annual-summary-bottom-cell {
+      min-width: 0;
+      position: relative;
+    }
+    /* monthly_sales 枠は上下タブ用に SVG が高い。縮尺差を見て日次 body に近づける（-8px から 3px 下げて -5px） */
+    .annual-summary-bottom-cell--sales {
+      margin-top: -5px;
+    }
+    /* Panel 3: tab labels sit in SVG protrusions (viewBox 457×146, centers ≈4.5% / 94.85% from top) */
+    .annual-summary-bottom-cell--sales > .annual-sales-tab {
+      position: absolute;
+      left: 50%;
+      z-index: 4;
+      margin: 0;
+      padding: 0 4px;
+      border: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1;
+      font-family: inherit;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-transform: none;
+      transform: translate(-50%, -50%);
+      transition: color 0.15s ease, text-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
+      top: 4.5%;
+    }
+    /* Close: hex shape; fill matches SVG inner panels (#58E1F3 @ 41% alpha) */
+    .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
+      top: 94.85%;
+      padding: 4px 18px;
+      min-width: 52px;
+      box-sizing: border-box;
+      background: rgba(88, 225, 243, 0.41);
+      clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+    }
+    .annual-summary-bottom-cell--sales > .annual-sales-tab:hover,
+    .annual-summary-bottom-cell--sales > .annual-sales-tab:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+      text-shadow: 0 0 10px rgba(158, 246, 255, 0.9), 0 0 20px rgba(88, 225, 243, 0.55);
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+    /* Panel 3: monthly / annual summary (457×146 SVG inner layout) */
+    .annual-sales-overlay {
+      position: absolute;
+      z-index: 2;
+      inset: 7.5% 2.1% 9.5% 2.1%;
+      box-sizing: border-box;
+      pointer-events: none;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .annual-sales-overlay * {
+      pointer-events: auto;
+    }
+    .annual-sales-grid {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 11%;
+      bottom: 11%;
+      display: grid;
+      grid-template-columns: minmax(40px, 0.75fr) repeat(4, 1fr);
+      grid-template-rows: auto 1fr auto 1fr;
+      align-items: center;
+      justify-items: center;
+      column-gap: 4px;
+      row-gap: 4px;
+      box-sizing: border-box;
+      padding: 0 2px;
+    }
+    .annual-sales-grid-spacer {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      height: 100%;
+    }
+    .annual-sales-abbr {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 400;
+      text-align: center;
+      width: 100%;
+    }
+    .annual-sales-row-h {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 400;
+      text-align: left;
+      justify-self: start;
+      width: 100%;
+      padding-left: 2px;
+    }
+    .annual-sales-val {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 400;
+      text-align: center;
+      width: 100%;
+    }
+    .annual-sales-divider {
+      grid-column: 1 / -1;
+      width: 100%;
+      height: 1px;
+      background: #58e1f3;
+      margin: 2px 0;
+      justify-self: stretch;
+    }
+    .annual-summary-bottom-frame-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    /* Daily KPI (panel 2) — inset matches SVG inner panel ~ (3,12)–(467,121) / 471×132 */
+    .annual-daily-kpi-overlay {
+      position: absolute;
+      z-index: 2;
+      box-sizing: border-box;
+      top: 9.09%;
+      right: 0.79%;
+      bottom: 8.33%;
+      left: 0.66%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      pointer-events: none;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .annual-daily-kpi-overlay * {
+      pointer-events: auto;
+    }
+    .annual-daily-kpi-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1 1 50%;
+      max-width: 50%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .annual-daily-kpi-col--date {
+      padding-right: 6px;
+    }
+    .annual-daily-kpi-col--sales {
+      padding-left: 6px;
+    }
+    .annual-daily-kpi-label {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 13px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: none;
+    }
+    .annual-daily-kpi-date-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      width: 100%;
+    }
+    .annual-daily-kpi-date-btn {
+      margin: 0;
+      padding: 2px 0;
+      border: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 13px;
+      line-height: 1.2;
+      font-family: inherit;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      text-align: center;
+    }
+    .annual-daily-kpi-date-btn:hover,
+    .annual-daily-kpi-date-btn:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .annual-daily-kpi-date-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      opacity: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .annual-daily-kpi-today-btn {
+      margin: 0;
+      box-sizing: border-box;
+      width: 40px;
+      min-width: 40px;
+      max-width: 40px;
+      padding: 5px 0;
+      border: 0;
+      border-radius: 4px;
+      background: #58e1f3;
+      color: #0a1620;
+      font-size: 11px;
+      line-height: 1;
+      font-family: inherit;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .annual-daily-kpi-today-btn:hover,
+    .annual-daily-kpi-today-btn:focus-visible {
+      background: #9ef6ff;
+      outline: none;
+    }
+    .annual-daily-kpi-target {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
     .annual-frame-open[hidden],
     .annual-frame-close[hidden] {
       display: none;
@@ -521,6 +1259,7 @@
       width: var(--fill-w);
       background: #0f9403;
     }
+    /* KPI 基準（100%相当）— 位置固定のため常に黄。深刻度は逆三角形のみ。 */
     .annual-allocation-marker-line {
       position: absolute;
       top: 0;
@@ -528,8 +1267,8 @@
       transform: translateX(-50%);
       width: 4px;
       height: 100%;
-      background: #E6FF00;
-      box-shadow: 0 0 4px color-mix(in srgb, var(--marker-color) 55%, transparent);
+      background: #e6ff00;
+      box-shadow: 0 0 4px color-mix(in srgb, #e6ff00 55%, transparent);
     }
     .annual-allocation-marker-triangle {
       position: absolute;
@@ -606,6 +1345,224 @@
     .office-mode .annual-frame-img {
       display: none;
     }
+    .office-mode .annual-summary-bottom-frame-img {
+      display: none;
+    }
+    .office-mode .annual-summary-bottom-row {
+      margin-top: 123px;
+    }
+    .office-mode .annual-daily-focus-window {
+      border: none;
+      border-radius: 13px;
+      background: #dbdbdb;
+      height: 1000px;
+    }
+    .office-mode .annual-daily-focus-global-menu {
+      background: #e8e8e8;
+      border-radius: 13px 13px 0 0;
+    }
+    .office-mode .annual-daily-focus-scroll-clip {
+      background: #dbdbdb;
+    }
+    .office-mode .annual-daily-focus-scroll {
+      background: transparent;
+    }
+    .office-mode .annual-daily-focus-placeholder {
+      color: #555;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-daily-focus-menu-grid {
+      color: #333;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-daily-row {
+      border-color: #666;
+      background: #ececec;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-daily-row--off {
+      opacity: 0.65;
+      background: #e2e2e2;
+    }
+    .office-mode .annual-daily-row--outside-year {
+      border-color: #9a9a9a;
+      background: #e7e7e7;
+      color: #6c6c6c;
+    }
+    .office-mode .annual-daily-row--outside-year .annual-daily-row__cell {
+      border-right-color: #c6c6c6;
+    }
+    .office-mode .annual-daily-row--outside-year.annual-daily-row--focus-active {
+      border-color: #666;
+      background: #ececec;
+      color: #111;
+    }
+    .office-mode .annual-daily-row__cell {
+      border-right-color: #bbb;
+    }
+    .office-mode .annual-daily-row__cell--neg {
+      color: #b00020;
+    }
+    .office-mode .annual-daily-focus-bar-layer {
+      display: none;
+    }
+    .office-mode .annual-summary-bottom-cell {
+      min-height: 148px;
+      border: 1px solid #5b5b5b;
+      border-radius: 4px;
+      background: #dbdbdb;
+      box-sizing: border-box;
+    }
+    .office-mode .annual-summary-bottom-cell--daily {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      min-height: 128px;
+      padding: 14px 16px 16px;
+    }
+    .office-mode .annual-daily-kpi-overlay {
+      position: static;
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      height: auto;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      align-items: center;
+    }
+    .office-mode .annual-daily-kpi-label {
+      color: #111;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    body.si-fi.office-mode .annual-daily-kpi-date-btn {
+      color: #111;
+      font-size: 13px;
+      font-weight: 400;
+    }
+    body.si-fi.office-mode .annual-daily-kpi-date-btn:hover,
+    body.si-fi.office-mode .annual-daily-kpi-date-btn:focus-visible {
+      color: #000;
+    }
+    .office-mode .annual-daily-kpi-today-btn {
+      box-sizing: border-box;
+      width: 40px;
+      min-width: 40px;
+      max-width: 40px;
+      padding: 5px 0;
+      font-size: 11px;
+      background: #e8e8e8;
+      color: #111;
+      border: 1px solid #666;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .office-mode .annual-daily-kpi-today-btn:hover,
+    .office-mode .annual-daily-kpi-today-btn:focus-visible {
+      background: #f5f5f5;
+    }
+    body.si-fi.office-mode .annual-daily-kpi-target {
+      color: #111;
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .office-mode .annual-summary-bottom-cell--sales {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      min-height: 148px;
+      padding: 18px 12px 20px;
+      box-sizing: border-box;
+    }
+    .office-mode .annual-sales-overlay {
+      position: static;
+      inset: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 0;
+      flex: 1 1 auto;
+      padding: 22px 0 36px;
+      box-sizing: border-box;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .annual-sales-grid {
+      position: relative;
+      top: auto;
+      bottom: auto;
+      left: auto;
+      right: auto;
+      margin: 0;
+      width: 100%;
+    }
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab {
+      color: #111;
+      transition: none;
+    }
+    /* Office パネル3: メイン枠内＝padding 基準で more 上端 3px、Close 下端 3px */
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      transform: translateX(-50%);
+      margin: 0;
+      z-index: 2;
+      box-sizing: border-box;
+      background: #e8e8e8;
+      border: 1px solid #666;
+      padding: 5px 12px;
+      min-width: 0;
+    }
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      right: auto;
+      top: auto;
+      transform: translateX(-50%);
+      margin: 0;
+      z-index: 2;
+      clip-path: none;
+      background: #e8e8e8;
+      border: 1px solid #666;
+      padding: 5px 12px;
+      min-width: 0;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab:hover,
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab:focus-visible {
+      transform: translateX(-50%);
+      text-shadow: none;
+      color: #000;
+    }
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:hover,
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:focus-visible {
+      background: #f5f5f5;
+      color: #000;
+    }
+    body.si-fi.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:active {
+      background: #d6d6d6;
+      color: #000;
+    }
+    body.si-fi.office-mode .annual-sales-abbr,
+    body.si-fi.office-mode .annual-sales-row-h,
+    body.si-fi.office-mode .annual-sales-val {
+      color: #111;
+    }
+    body.si-fi.office-mode .annual-sales-divider {
+      background: #111;
+    }
     .office-mode .annual-monthly-data,
     .office-mode .annual-monthly-data * {
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -681,9 +1638,12 @@
     .office-mode .annual-open-table td {
       color: #111;
     }
-    .office-mode .annual-open-table th:nth-child(4),
-    .office-mode .annual-open-table td:nth-child(4) {
-      background: #f5f5f5;
+    .office-mode .annual-open-table thead th {
+      background: #e6e6e6;
+      font-weight: 700;
+    }
+    .office-mode .annual-open-table tbody td:nth-child(4) {
+      background: #e6e6e6;
     }
     .office-mode .annual-open-table th[data-tooltip]:hover::after,
     .office-mode .annual-open-table th[data-tooltip]:focus-visible::after {
@@ -743,6 +1703,17 @@
     .office-mode .annual-monthly-toggle {
       color: #111;
       text-shadow: none;
+      min-width: 52px;
+      padding: 4px 10px;
+      border: 1px solid #888;
+      border-radius: 3px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .office-mode .annual-monthly-toggle:hover,
+    .office-mode .annual-monthly-toggle:focus-visible {
+      color: #111;
+      background: #f0f0f0;
     }
     .office-mode .annual-kpi-strip {
       border-right-color: #666;
@@ -754,6 +1725,20 @@
     }
     .office-mode .annual-kpi-cell-allocation {
       background: #e0e0e0;
+    }
+    .office-mode .annual-allocation-graph {
+      border: 1px solid #2a2a2a;
+      background: #6e6e6e;
+    }
+    .office-mode .annual-allocation-graph::before {
+      background: #d2d2d2;
+    }
+    .office-mode .annual-allocation-marker-line {
+      background: #e6ff00;
+      box-shadow: 0 0 2px color-mix(in srgb, #e6ff00 45%, transparent);
+    }
+    .office-mode .annual-allocation-marker-triangle {
+      filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
     }
     .office-mode .annual-allocation-percent {
       color: #111;
@@ -951,7 +1936,7 @@
       <section class="annual-monthly-data" id="annual-monthly-data">
         <div class="annual-year-control" id="annual-year-control">
           <button type="button" class="annual-year-arrow prev" id="annual-year-prev" aria-label="Previous year"></button>
-          <button type="button" class="annual-year-value" id="annual-year-value" aria-haspopup="listbox" aria-expanded="false">2025</button>
+          <button type="button" class="annual-year-value" id="annual-year-value" aria-haspopup="listbox" aria-expanded="false">2026</button>
           <button type="button" class="annual-year-arrow next" id="annual-year-next" aria-label="Next year"></button>
           <ul class="annual-year-menu" id="annual-year-menu" role="listbox" aria-label="Select year" hidden></ul>
         </div>
@@ -1112,6 +2097,124 @@
         <button type="button" class="annual-monthly-toggle" id="annual-monthly-toggle" aria-expanded="false" aria-controls="annual-frame-open">
           Open
         </button>
+        <div class="annual-summary-bottom-row" aria-label="Daily KPI and monthly sales summary">
+          <div class="annual-summary-bottom-cell annual-summary-bottom-cell--daily">
+            <img src="../../../images/annual_daily_kpi.svg" alt="" class="annual-summary-bottom-frame-img" width="471" height="132" decoding="async">
+            <div class="annual-daily-kpi-overlay">
+              <div class="annual-daily-kpi-col annual-daily-kpi-col--date">
+                <p class="annual-daily-kpi-label" id="annual-daily-label-date">Date set</p>
+                <div class="annual-daily-kpi-date-row">
+                  <input type="date" class="annual-daily-kpi-date-input" id="annual-daily-date-input" lang="en" aria-hidden="true" tabindex="-1">
+                  <button type="button" class="annual-daily-kpi-date-btn" id="annual-daily-date-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Choose date">2025 / 6 / 7 sat</button>
+                  <button type="button" class="annual-daily-kpi-today-btn" id="annual-daily-today-btn">Today</button>
+                </div>
+              </div>
+              <div class="annual-daily-kpi-col annual-daily-kpi-col--sales">
+                <p class="annual-daily-kpi-label" id="annual-daily-label-target">Target sales</p>
+                <p class="annual-daily-kpi-target" id="annual-daily-target-sales" data-field="annual.daily.targetSales">$357,971</p>
+              </div>
+            </div>
+          </div>
+          <div class="annual-summary-bottom-cell annual-summary-bottom-cell--sales">
+            <img src="../../../images/annual_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="146" decoding="async">
+            <button type="button" class="annual-sales-tab annual-sales-tab--more" id="annual-focus-more-btn" aria-expanded="false" aria-label="Expand focus bar">more</button>
+            <div class="annual-sales-overlay">
+              <div class="annual-sales-grid" role="grid" aria-label="Monthly and annual comparison">
+                <span class="annual-sales-grid-spacer" aria-hidden="true"></span>
+                <div class="annual-sales-abbr" data-abbr="CAS">CAS</div>
+                <div class="annual-sales-abbr" data-abbr="CTS">CTS</div>
+                <div class="annual-sales-abbr" data-abbr="Diff">Diff</div>
+                <div class="annual-sales-abbr" data-abbr="Ach">Ach</div>
+                <div class="annual-sales-row-h">MTH</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cas">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cts">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.diff">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.ach">100%</div>
+                <div class="annual-sales-divider" role="presentation"></div>
+                <div class="annual-sales-row-h">ANN</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cas">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cts">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.diff">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.ach">100%</div>
+              </div>
+            </div>
+            <button type="button" class="annual-sales-tab annual-sales-tab--close" id="annual-focus-close-btn" aria-label="Collapse focus bar">Close</button>
+          </div>
+        </div>
+        <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="Daily sales list">
+          <nav class="annual-daily-focus-global-menu" id="annual-daily-focus-global-menu" aria-label="Global menu">
+            <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn" aria-label="Edit day row">
+              <img src="../../../images/button.svg" alt="" decoding="async">
+              <span>Edit</span>
+            </button>
+            <div class="annual-daily-focus-global-scroll" id="annual-daily-focus-global-scroll">
+              <div class="annual-daily-focus-menu-grid">
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--date">Date</span>
+                <span class="annual-daily-hdr__cell">Today&rsquo;s Sales</span>
+                <span class="annual-daily-hdr__cell">Target Sales</span>
+                <span class="annual-daily-hdr__cell">Difference</span>
+                <span class="annual-daily-hdr__cell">Achievement</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Monthly Target Sales</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Monthly Sales</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Difference</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Achievement</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Annual Target Sales</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Annual Sales</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Difference</span>
+                <span class="annual-daily-hdr__cell annual-daily-hdr__cell--open-only">Achievement</span>
+              </div>
+            </div>
+          </nav>
+          <div class="annual-daily-focus-scroll-clip">
+            <div class="annual-daily-focus-scroll" id="annual-daily-focus-scroll">
+              <div class="annual-daily-table-wrap">
+                <div class="annual-daily-rows" id="annual-daily-rows" role="list" aria-label="Daily rows for year"></div>
+              </div>
+            </div>
+          </div>
+          <div class="annual-daily-focus-bar-layer">
+            <div class="annual-daily-focus-bar-stack">
+              <button type="button" class="annual-daily-focus-wing-hit" id="annual-daily-focus-wing-hit" aria-label="Expand daily table">
+                <span>Toggle</span>
+              </button>
+              <div class="annual-daily-focus-bar-upper-scroll" id="annual-daily-focus-bar-upper-scroll">
+                <div class="annual-daily-focus-bar-upper">
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--date">Date</span>
+                  <span class="annual-daily-focus-bar-upper__cell">Today&rsquo;s Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell">Target Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell">Difference</span>
+                  <span class="annual-daily-focus-bar-upper__cell">Achievement</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Monthly Target Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Monthly Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Difference</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Achievement</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Annual Target Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Annual Sales</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Difference</span>
+                  <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--open-only">Achievement</span>
+                </div>
+              </div>
+              <div class="annual-daily-focus-bar-lower-scroll" id="annual-daily-focus-bar-lower-scroll">
+                <div class="annual-daily-focus-bar-lower">
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">1/6 mon</span>
+                  <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">100%</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">$123,456</span>
+                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">100%</span>
+                </div>
+              </div>
+              <img src="../../../images/focus_bar.svg" alt="" class="annual-daily-focus-bar-img" id="annual-daily-focus-bar-img" width="757" height="82" decoding="async" aria-hidden="true">
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -1358,7 +2461,10 @@
       render();
     })();
     (function () {
-      var currentYear = 2025;
+      window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+      var currentYear = Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))
+        ? Number(window.__ANNUAL_DATA.calendarYear)
+        : 2026;
       var minYear = 2000;
       var maxYear = 2100;
       var prevBtn = document.getElementById('annual-year-prev');
@@ -1390,7 +2496,12 @@
       }
       function renderYear() {
         yearBtn.textContent = String(currentYear);
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.calendarYear = currentYear;
         buildYearMenu();
+        document.dispatchEvent(
+          new CustomEvent('annual:calendarYearChanged', { detail: { year: currentYear } })
+        );
       }
       prevBtn.addEventListener('click', function () {
         currentYear = Math.max(minYear, currentYear - 1);
@@ -1503,13 +2614,21 @@
       });
     })();
     (function () {
-      function getMarkerColor(percent) {
-        if (percent >= 100) return '#E6FF00';
-        if (percent >= 90) return '#FFB300';
-        if (percent >= 80) return '#FF8A00';
-        if (percent >= 70) return '#FF6A00';
-        if (percent >= 60) return '#FF3D00';
-        return '#FF0000';
+      /** Achievement only: 100%+ yellow; 50–100% in 10% bands (amber → red); below 50% critical red. */
+      function getAchievementMarkerColor(percent) {
+        var p = Number(percent);
+        if (!Number.isFinite(p)) return '#E6FF00';
+        if (p >= 100) return '#E6FF00';
+        if (p >= 90) return '#F9A825';
+        if (p >= 80) return '#EF6C00';
+        if (p >= 70) return '#E65100';
+        if (p >= 60) return '#E53935';
+        if (p >= 50) return '#C62828';
+        return '#B71C1C';
+      }
+
+      function getAllocationMarkerColor() {
+        return '#E6FF00';
       }
 
       function formatPercentText(percent) {
@@ -1544,7 +2663,9 @@
 
           var kgiXRaw = kpiMarkerX * (safePercent / 100);
           var kgiX = Math.max(0, Math.min(maxKgiX, kgiXRaw));
-          var markerColor = getMarkerColor(safePercent);
+          var markerColor = options.achievementAlertColors
+            ? getAchievementMarkerColor(safePercent)
+            : getAllocationMarkerColor();
 
           currentPercent = safePercent;
           graphEl.style.setProperty('--kpi-x', kpiMarkerX + 'px');
@@ -1555,7 +2676,10 @@
         }
 
         if (options.editable) {
-          percentEl.setAttribute('title', 'Click to edit');
+          percentEl.setAttribute(
+            'title',
+            'Click to edit. Triangle color shows severity (yellow ≥100%, amber–red by 10% steps down to 50%, dark red below 50%). Vertical bar stays yellow.'
+          );
           percentEl.addEventListener('click', function () {
             var input = window.prompt(options.promptLabel + ' (%)', String(currentPercent));
             if (input == null) return;
@@ -1583,14 +2707,16 @@
         percentId: 'annual-allocation-percent',
         dataKey: 'monthlyAllocationPercent',
         promptLabel: 'Monthly Allocation Total',
-        editable: false
+        editable: false,
+        achievementAlertColors: false
       });
       initAllocationWidget({
         graphId: 'annual-achievement-graph',
         percentId: 'annual-achievement-percent',
         dataKey: 'achievementPercent',
         promptLabel: 'Achievement',
-        editable: true
+        editable: true,
+        achievementAlertColors: true
       });
 
       var hlSeasonCells = document.querySelectorAll('.annual-open-table tbody td:nth-child(4)');
@@ -1668,6 +2794,384 @@
       } else {
         diffEl.textContent = formatCurrency(fallbackDifference);
       }
+    })();
+    (function () {
+      window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+      window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {
+        selectedDate: '2025-06-07',
+        targetSales: 357971,
+        targetSalesByDate: { '2025-06-07': 357971 }
+      };
+
+      var dateBtn = document.getElementById('annual-daily-date-btn');
+      var dateInput = document.getElementById('annual-daily-date-input');
+      var todayBtn = document.getElementById('annual-daily-today-btn');
+      var targetEl = document.getElementById('annual-daily-target-sales');
+      if (!dateBtn || !dateInput || !todayBtn || !targetEl) return;
+
+      var langJa = document.documentElement.lang === 'ja';
+      dateInput.setAttribute('lang', langJa ? 'ja' : 'en');
+      var dowEn = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+      function toISODateLocal(d) {
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+      }
+
+      function parseISODateLocal(iso) {
+        var p = String(iso || '').split('-');
+        if (p.length !== 3) return null;
+        var y = Number(p[0]);
+        var m = Number(p[1]);
+        var day = Number(p[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(day)) return null;
+        var d = new Date(y, m - 1, day);
+        if (d.getFullYear() !== y || d.getMonth() !== m - 1 || d.getDate() !== day) return null;
+        return d;
+      }
+
+      function formatDateButtonLabel(d) {
+        var y = d.getFullYear();
+        var mo = d.getMonth() + 1;
+        var day = d.getDate();
+        if (langJa) {
+          var wd = new Intl.DateTimeFormat('ja-JP', { weekday: 'short' }).format(d);
+          return y + ' / ' + mo + ' / ' + day + ' ' + wd;
+        }
+        return y + ' / ' + mo + ' / ' + day + ' ' + dowEn[d.getDay()];
+      }
+
+      function formatTargetSalesValue(amount) {
+        var n = Number(amount);
+        if (!Number.isFinite(n)) n = 357971;
+        var rounded = Math.round(n);
+        if (langJa) {
+          return '\u00a5' + rounded.toLocaleString('en-US');
+        }
+        return '$' + rounded.toLocaleString('en-US');
+      }
+
+      function resolveTargetSalesForDate(iso) {
+        var data = window.__ANNUAL_DATA || {};
+        var daily = data.daily || {};
+        var map = daily.targetSalesByDate || {};
+        if (map[iso] != null && Number.isFinite(Number(map[iso]))) {
+          return Number(map[iso]);
+        }
+        return 357971;
+      }
+
+      function applyDailySelection(d) {
+        var iso = toISODateLocal(d);
+        window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+        var target = resolveTargetSalesForDate(iso);
+        window.__ANNUAL_DATA.daily.selectedDate = iso;
+        window.__ANNUAL_DATA.daily.targetSales = target;
+        dateInput.value = iso;
+        dateBtn.textContent = formatDateButtonLabel(d);
+        targetEl.textContent = formatTargetSalesValue(target);
+        document.dispatchEvent(
+          new CustomEvent('annual:dailyDateChanged', {
+            detail: { isoDate: iso, date: d, targetSales: target }
+          })
+        );
+      }
+
+      var initialIso = window.__ANNUAL_DATA.daily.selectedDate || '2025-06-07';
+      var initialDate = parseISODateLocal(initialIso) || parseISODateLocal('2025-06-07');
+      applyDailySelection(initialDate);
+
+      dateBtn.addEventListener('click', function () {
+        dateBtn.setAttribute('aria-expanded', 'true');
+        if (typeof dateInput.showPicker === 'function') {
+          try {
+            dateInput.showPicker();
+          } catch (e) {
+            dateInput.focus();
+          }
+        } else {
+          dateInput.focus();
+        }
+      });
+
+      dateInput.addEventListener('change', function () {
+        dateBtn.setAttribute('aria-expanded', 'false');
+        var d = parseISODateLocal(dateInput.value);
+        if (!d) return;
+        applyDailySelection(d);
+      });
+
+      dateInput.addEventListener('blur', function () {
+        dateBtn.setAttribute('aria-expanded', 'false');
+      });
+
+      todayBtn.addEventListener('click', function () {
+        var now = new Date();
+        var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        applyDailySelection(d);
+      });
+
+      /** Optional: server/DB writes window.__ANNUAL_DATA.daily then calls this. */
+      window.__applyAnnualDailyFromServer = function (payload) {
+        if (!payload || !payload.selectedDate) return;
+        var d = parseISODateLocal(payload.selectedDate);
+        if (!d) return;
+        window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+        if (payload.targetSalesByDate && typeof payload.targetSalesByDate === 'object') {
+          window.__ANNUAL_DATA.daily.targetSalesByDate = Object.assign(
+            {},
+            window.__ANNUAL_DATA.daily.targetSalesByDate,
+            payload.targetSalesByDate
+          );
+        }
+        if (payload.targetSales != null) {
+          window.__ANNUAL_DATA.daily.targetSales = Number(payload.targetSales);
+        }
+        applyDailySelection(d);
+      };
+    })();
+    (function () {
+      window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+      window.__ANNUAL_DATA.focusSummary = window.__ANNUAL_DATA.focusSummary || {
+        monthly: { cas: 123456, cts: 123456, diff: 123456, ach: 100 },
+        annual: { cas: 123456, cts: 123456, diff: 123456, ach: 100 }
+      };
+
+      var moreBtn = document.getElementById('annual-focus-more-btn');
+      var closeBtn = document.getElementById('annual-focus-close-btn');
+      var wingHitBtn = document.getElementById('annual-daily-focus-wing-hit');
+      var focusBarImg = document.getElementById('annual-daily-focus-bar-img');
+      if (!moreBtn || !closeBtn || !wingHitBtn || !focusBarImg) return;
+
+      function updateFocusBarImage(expanded) {
+        var src = focusBarImg.getAttribute('src') || '';
+        var next = expanded ? src.replace('focus_bar.svg', 'focus_bar_open.svg') : src.replace('focus_bar_open.svg', 'focus_bar.svg');
+        if (next !== src) focusBarImg.setAttribute('src', next);
+      }
+
+      function setFocusBarExpanded(expanded) {
+        document.body.classList.toggle('annual-focus-bar-expanded', expanded);
+        moreBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        wingHitBtn.setAttribute('aria-label', expanded ? 'Collapse daily table' : 'Expand daily table');
+        updateFocusBarImage(expanded);
+        window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+        window.__ANNUAL_UI.focusBarExpanded = expanded;
+        document.dispatchEvent(
+          new CustomEvent('annual:focusBarStateChanged', {
+            detail: { expanded: expanded }
+          })
+        );
+      }
+
+      moreBtn.addEventListener('click', function () {
+        setFocusBarExpanded(true);
+      });
+      closeBtn.addEventListener('click', function () {
+        setFocusBarExpanded(false);
+      });
+      wingHitBtn.addEventListener('click', function () {
+        setFocusBarExpanded(!document.body.classList.contains('annual-focus-bar-expanded'));
+      });
+      setFocusBarExpanded(false);
+    })();
+    (function () {
+      var body = document.body;
+      var tableScroll = document.getElementById('annual-daily-focus-scroll');
+      var globalScroll = document.getElementById('annual-daily-focus-global-scroll');
+      var upperScroll = document.getElementById('annual-daily-focus-bar-upper-scroll');
+      var lowerScroll = document.getElementById('annual-daily-focus-bar-lower-scroll');
+      if (!tableScroll || !globalScroll || !upperScroll) return;
+
+      var lock = false;
+      function syncScrollLeft(source) {
+        if (lock) return;
+        lock = true;
+        var x = source.scrollLeft;
+        if (tableScroll !== source) tableScroll.scrollLeft = x;
+        if (globalScroll !== source) globalScroll.scrollLeft = x;
+        if (upperScroll !== source) upperScroll.scrollLeft = x;
+        if (lowerScroll && lowerScroll !== source) lowerScroll.scrollLeft = x;
+        lock = false;
+      }
+
+      tableScroll.addEventListener('scroll', function () { syncScrollLeft(tableScroll); }, { passive: true });
+      globalScroll.addEventListener('scroll', function () { syncScrollLeft(globalScroll); }, { passive: true });
+      upperScroll.addEventListener('scroll', function () { syncScrollLeft(upperScroll); }, { passive: true });
+      if (lowerScroll) {
+        lowerScroll.addEventListener('scroll', function () { syncScrollLeft(lowerScroll); }, { passive: true });
+      }
+
+      document.addEventListener('annual:focusBarStateChanged', function () {
+        syncScrollLeft(tableScroll);
+      });
+      if (!body.classList.contains('annual-focus-bar-expanded')) {
+        syncScrollLeft(tableScroll);
+      }
+    })();
+    (function () {
+      window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+      if (window.__ANNUAL_DATA.calendarYear == null) {
+        window.__ANNUAL_DATA.calendarYear = 2026;
+      }
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+
+      function isLeapYear(y) {
+        return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+      }
+
+      function daysInCalendarYear(y) {
+        return isLeapYear(y) ? 366 : 365;
+      }
+
+      window.__getDaysInCalendarYear = daysInCalendarYear;
+      window.__isLeapYearCalendar = isLeapYear;
+
+      var rowsRoot = document.getElementById('annual-daily-rows');
+      if (!rowsRoot) return;
+
+      var isJa = document.documentElement.getAttribute('lang') === 'ja';
+      var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+      function fmtMoney(n) {
+        if (n == null || !isFinite(Number(n))) return '—';
+        var v = Math.round(Number(n));
+        if (isJa) return '¥' + v.toLocaleString('ja-JP');
+        return '$' + v.toLocaleString('en-US');
+      }
+
+      function renderAnnualDailyTable(year) {
+        year = Number(year);
+        if (!Number.isFinite(year)) year = 2026;
+        window.__ANNUAL_DATA.calendarYear = year;
+        var rangeStart = new Date(year - 1, 11, 25);
+        var rangeEnd = new Date(year + 1, 0, 20);
+        rowsRoot.innerHTML = '';
+        rowsRoot.setAttribute('data-year', String(year));
+        rowsRoot.setAttribute(
+          'aria-label',
+          isJa ? year + '年の日次一覧' : 'Daily rows for ' + year
+        );
+
+        for (var d = new Date(rangeStart); d <= rangeEnd; d.setDate(d.getDate() + 1)) {
+          var iso = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+          var dow = d.getDay();
+          var isWeekend = dow === 0 || dow === 6;
+
+          var isOutsideYear = d.getFullYear() !== year;
+          var row = document.createElement('div');
+          row.className =
+            'annual-daily-row' +
+            (isWeekend ? ' annual-daily-row--off' : '') +
+            (isOutsideYear ? ' annual-daily-row--outside-year' : '');
+          row.setAttribute('role', 'listitem');
+          row.setAttribute('data-iso-date', iso);
+          row.setAttribute('data-active-year', isOutsideYear ? '0' : '1');
+
+          var dateLabel;
+          if (isJa) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
+            if (isWeekend) dateLabel += ' OFF';
+          } else {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
+            if (isWeekend) dateLabel += ' OFF';
+          }
+
+          var dash = '—';
+          var c1 = document.createElement('div');
+          c1.className = 'annual-daily-row__cell annual-daily-row__cell--date';
+          c1.textContent = dateLabel;
+
+          var c2 = document.createElement('div');
+          c2.className = 'annual-daily-row__cell';
+          c2.setAttribute('data-field', 'annual.dailyTable.' + iso + '.sales');
+          c2.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c3 = document.createElement('div');
+          c3.className = 'annual-daily-row__cell';
+          c3.setAttribute('data-field', 'annual.dailyTable.' + iso + '.target');
+          c3.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c4 = document.createElement('div');
+          c4.className = 'annual-daily-row__cell';
+          c4.setAttribute('data-field', 'annual.dailyTable.' + iso + '.diff');
+          c4.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c5 = document.createElement('div');
+          c5.className = 'annual-daily-row__cell';
+          c5.setAttribute('data-field', 'annual.dailyTable.' + iso + '.ach');
+          c5.textContent = isWeekend || isOutsideYear ? dash : '0%';
+
+          var c6 = document.createElement('div');
+          c6.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c6.setAttribute('data-field', 'annual.dailyTable.' + iso + '.monthlyTarget');
+          c6.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c7 = document.createElement('div');
+          c7.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c7.setAttribute('data-field', 'annual.dailyTable.' + iso + '.monthlySales');
+          c7.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c8 = document.createElement('div');
+          c8.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c8.setAttribute('data-field', 'annual.dailyTable.' + iso + '.monthlyDiff');
+          c8.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c9 = document.createElement('div');
+          c9.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c9.setAttribute('data-field', 'annual.dailyTable.' + iso + '.monthlyAch');
+          c9.textContent = isWeekend || isOutsideYear ? dash : '0%';
+
+          var c10 = document.createElement('div');
+          c10.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c10.setAttribute('data-field', 'annual.dailyTable.' + iso + '.annualTarget');
+          c10.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c11 = document.createElement('div');
+          c11.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c11.setAttribute('data-field', 'annual.dailyTable.' + iso + '.annualSales');
+          c11.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c12 = document.createElement('div');
+          c12.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c12.setAttribute('data-field', 'annual.dailyTable.' + iso + '.annualDiff');
+          c12.textContent = isWeekend || isOutsideYear ? dash : fmtMoney(0);
+
+          var c13 = document.createElement('div');
+          c13.className = 'annual-daily-row__cell annual-daily-row__cell--open-only';
+          c13.setAttribute('data-field', 'annual.dailyTable.' + iso + '.annualAch');
+          c13.textContent = isWeekend || isOutsideYear ? dash : '0%';
+
+          row.appendChild(c1);
+          row.appendChild(c2);
+          row.appendChild(c3);
+          row.appendChild(c4);
+          row.appendChild(c5);
+          row.appendChild(c6);
+          row.appendChild(c7);
+          row.appendChild(c8);
+          row.appendChild(c9);
+          row.appendChild(c10);
+          row.appendChild(c11);
+          row.appendChild(c12);
+          row.appendChild(c13);
+          rowsRoot.appendChild(row);
+        }
+      }
+
+      window.__renderAnnualDailyTable = renderAnnualDailyTable;
+
+      document.addEventListener('annual:calendarYearChanged', function (ev) {
+        var y = ev.detail && ev.detail.year;
+        if (y != null) renderAnnualDailyTable(Number(y));
+      });
+
+      renderAnnualDailyTable(window.__ANNUAL_DATA.calendarYear);
     })();
   </script>
 </body>

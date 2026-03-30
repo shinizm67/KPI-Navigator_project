@@ -190,3 +190,65 @@
 - 4列目セル編集（5%刻み・60〜200%）変更時に、
   - 12ヶ月平均を `Monthly Allocation Total` へ再計算反映。
 
+### 日次 KPI（パネル2）データ連携（2026-03-28）
+
+- `window.__ANNUAL_DATA.daily`:
+  - `selectedDate`: `YYYY-MM-DD`（ローカル日付の ISO 表現）
+  - `targetSales`: 現在選択日の目標売上（UI 同期用。`resolve` 結果が入る）
+  - `targetSalesByDate`: 任意。`{ 'YYYY-MM-DD': number }` がある日はその値を表示。無い日はモック既定値 `357971`
+- 日付変更・今日ボタン後に `annual:dailyDateChanged` を `document` に発火（`detail`: `isoDate`, `Date` 互換の `date`, `targetSales`）。パネル3などはこのイベントで追従可能。
+- サーバ反映の受け口: `window.__applyAnnualDailyFromServer({ selectedDate, targetSales?, targetSalesByDate? })`
+- 日付 UI は `<input type="date">` のネイティブピッカー。**文言・フォントはブラウザ/OS のロケールに依存**し、CSS では中身をほぼ制御できない。ページ言語に合わせて `lang` を `en` / `ja` で付与しているが、環境によっては OS 言語が優先される。**厳密に EN/JP を揃えるには** Flatpickr 等のカスタムピッカーが必要。
+
+### パネル3（月次/年次サマリー・Focus Bar 連携）（2026-03-28）
+
+- 略語行: CAS / CTS / Diff / Ach（11px）。MTH（月次）/ ANN（年次）行見出し 11px。数値セル 13px。中央にシアンの区切り線。
+- 上下タブ: **more**（展開）・**Close**（縮小）、11px。クリックで `document.body` に `annual-focus-bar-expanded` を付与/除去し、`annual:focusBarStateChanged`（`detail.expanded`）を発火。`window.__ANNUAL_UI.focusBarExpanded` も同期。
+- 将来の DB 用 `data-field`: `annual.focusSummary.monthly|annual.{cas,cts,diff,ach}`。略語ホバーでのフル表記は後続。
+
+## 日次365行 / Focus Bar / 日付ボタン 連携メモ（2026-03-30）
+
+### 現在の前提（実装済み）
+
+- 日次リストは `renderAnnualDailyTable(year)` で生成。
+- 表示レンジはバッファ付き:
+  - 開始: `year-1/12/25`
+  - 終了: `year+1/1/20`
+- 前年/翌年バッファ行は `annual-daily-row--outside-year` を付与し、非アクティブ色で表示。
+- 当年外の行はデフォルト値を `-` 表示（将来、データがあれば表示可能）。
+
+### 仕様メモ（今回の合意、未実装）
+
+1. 過去年方向スクロール制御
+   - 原則: データが存在する最古年までスクロール可能。
+   - データが存在しない年へは遡れない（ナンセンスな空レンジ遷移を防ぐ）。
+   - 例: 履歴が5年前まであれば5年前まで、10年前まであれば10年前まで遡れる。
+
+2. 未来年方向スクロール制御
+   - 未来側は入力準備（将来メモ機能）を想定し、データ未入力でも遷移可能。
+   - 実装時は上限年を可変にしておく（`+5`/`+10`固定ではなく設定化推奨）。
+
+3. 「2の日付ボタン」と Focus Bar の双方向同期（UX必須）
+   - 日付ボタンで任意日付を入力したら、Focus Bar がその日付行へアニメーション遷移する。
+   - 日次行をスクロールしたら、Focus Bar が示す日付に合わせて日付ボタンも即時同期する。
+   - 常に「現在フォーカス日」が1つに定義され、UI上の複数箇所で不一致を作らない。
+
+### 推奨アーキテクチャ（実装時ガイド）
+
+- 単一の状態源（single source of truth）を導入:
+  - `focusedDate`（`YYYY-MM-DD`）を中心に全UIを同期。
+- 推奨イベント:
+  - `annual:focusedDateChanged`（`detail: { isoDate, source }`）
+  - `source` は `dateButton | scroll | keyboard | programmatic` など。
+- 年切替ルール:
+  - `focusedDate` が当年外へ移動した場合、必要に応じて `calendarYear` を自動追従。
+- パフォーマンス:
+  - スクロール同期は `requestAnimationFrame` / スロットリングで過負荷を回避。
+  - 「スナップ先行計算 + 慣性停止後確定」でチラつきを抑える。
+
+### なぜこの仕様が必要か（UX観点）
+
+- 日付ボタンと Focus Bar がズレると、ユーザーは「どの日のデータを見ているか」を瞬時に判断できない。
+- 年境界（`1/1`, `12/31`）は利用頻度が高く、ここでフォーカス不能だと体験品質が大きく低下する。
+- 双方向同期は「操作しても迷わない」ための中核要件で、導入優先度は高い。
+

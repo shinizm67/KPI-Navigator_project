@@ -762,6 +762,11 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   filter: drop-shadow(0 0 8px rgba(88, 225, 243, 0.6));
 }
 
+/* グローバルナビ: 現在ページ（Annual 等） */
+.nav-frame-btn[aria-current="page"] .nav-btn-text {
+  font-weight: 700;
+}
+
 .nav-frame-btn .btn-mode-frame {
   max-width: 120px;
 }
@@ -805,6 +810,10 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
 /* Office Mode: Global Menu hover でテキストをわずかに拡大してハイライト */
 .si-fi.office-mode.profile-page .nav-frame-btn:hover .nav-btn-text {
   font-size: 10px;
+}
+
+.si-fi.office-mode.profile-page .nav-frame-btn[aria-current="page"] .nav-btn-text {
+  font-weight: 700;
 }
 
 /* Office Mode: right-side dropdowns unify to black border + light gray bg + black text */
