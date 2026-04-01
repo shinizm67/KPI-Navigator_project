@@ -1,6 +1,6 @@
 # Annual Daily Focus / Table Window — 特記事項（実装メモ）
 
-更新日: 2026-03-31
+更新日: 2026-04-01
 
 年次ページの「日次フォーカス（Table Window / Focus Bar / 365日行）」まわりで、レイアウトや将来の破綻を防ぐための要点をまとめる。
 
@@ -12,7 +12,8 @@
 
 ## 開き時の左右インセットと横スクロール終端（CSS 変数）
 
-- `body.annual-focus-bar-expanded` で **`--annual-daily-focus-table-pad-left`**（例: `76px`）と **`--annual-daily-focus-table-pad-right`**（例: `44px`）を定義。
+- `body.annual-focus-bar-expanded` で **`--annual-daily-focus-table-pad-left`**（`76px`）と **`--annual-daily-focus-table-pad-right`**（`64px`）を定義。
+- Open 時の右端停止後の余白は **`--annual-daily-focus-scroll-end-gap`**（現在 `40px`）で管理。終端が詰まる場合はこの値を増減して調整。
 - 次を **同じ変数でそろえる**ことで、365 行・Global Menu・Focus Bar 上段/下段の横スクロールが **同じ `scrollLeft` 同期**のまま位置がずれない:
   - `#annual-daily-focus-scroll`
   - `#annual-daily-focus-global-scroll`
@@ -55,15 +56,20 @@
 - **Sci-Fi** 閉じ: `images/focus_bar.svg`、開き: `images/focus_bar_open.svg`。  
 - **Office** 閉じ: `images/focus_bar_office_mode.svg`、開き: `images/focus_bar_office_mode_open.svg`（757×82 系・展開幅は Open 側デザインに合わせて `--focus-bar-w` を要確認）。  
 - Table Window 上端からの位置は **Sci-Fi / Office 共通で `top: 235px`**（`.annual-daily-focus-bar-layer`）。Office 時は内側パネル・ラベル・値行をグレー系に上書き。  
-- **Office + Table 展開**の Focus Bar レイアウトは次ステップのため、いまは **`body.annual-focus-bar-expanded.office-mode` で Focus Bar レイヤーを非表示**（閉じ時のみ Office アセット表示）。
-- **閉じ時の値行（下段）**: Figma **637×49px**・**5 列**（`grid-template-columns: repeat(5, minmax(0, 1fr))`）。`left: 50%` と `transform: translate(-50%, -50%)` でバー内 **X 方向中央**。上段ラベル帯も **637px** で列を揃える。
+- **Office + Table 展開**も Focus Bar を表示し、`focus_bar_office_mode_open.svg`（1132×91）に切り替え。`--focus-bar-w: 1132px` は Sci-Fi 展開と共通。
+- Focus Bar は「セクション1（左ウィング）/ セクション2（中央コンテンツ）/ セクション3（右ウィング）」の責務分離で扱う。**横スクロールするのはセクション2のみ**。
+- 展開時の可視境界は **セクション2固定**（`left: 16px; right: 17px;`）とし、`.annual-daily-focus-bar-stack { overflow: hidden; }` で **セクション2の外へ内容を出さない**。
+- **展開時の上段タイトル**は `left: 0; transform: none;` で左起点にし、`Date` から表示。`Date` セルは開き時のみ中央揃えに上書きして列センターと一致させる。
+- **下段値行（Focus Bar section2）** は再表示済み。365日行と同じ 3 グループ（5/4/4）で描画し、サイズは **637 / 511 / 511**、ギャップは **6px**、背景は `#58E1F3` の `41%`。
+- **閉じ時の値行（下段）**は 5 列ベース（637×49）。開き時は 5/4/4 の 3 グループへ拡張。
 - Table と Global Menu / Focus Bar 内コンテンツの **横スクロール同期** は既存の `annual:focusBarStateChanged` と scroll ハンドラで維持。
 
 ## 365日行 — 閉じ / 開きの列モデル
 
 - **閉じ**: 5 列均等（行コンテナに `border-radius` の1つの「カプセル」）。
 - **開き**: **13 列** = 左 5 + 中央 4 + 右 4。  
-  - グループ幅の目安: **600px + 5px ギャップ + 480px + 5px + 480px = 1570px**（列 120px × 13 + ギャップ）。  
+  - 365日行のグループ幅目安: **600px + 5px + 480px + 5px + 480px = 1570px**。  
+  - Focus Bar 下段のグループ幅: **637px + 6px + 511px + 6px + 511px = 1671px**（365日行より拡大表示）。  
   - **1100px の Table Window 内では収まらない**ため、`#annual-daily-focus-scroll` 等で **横スクロール**。
 - 開き時は行を **3 セグメント**（各グループが独自の `border-radius`）に見せるため、行の外枠をやめセル側で角丸・左マージン（ギャップ）を付与する CSS パターンを使用。
 - 追加列の `data-field` 接尾辞（例）:  

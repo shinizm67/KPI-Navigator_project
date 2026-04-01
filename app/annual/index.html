@@ -385,6 +385,9 @@
       min-width: 1100px;
       max-width: none;
       --focus-bar-w: 1132px;
+      /* 1132px のバーを 1100px 窓にセンター配置したとき、内側 980px 列をウィング外に出さないクリップ（pad 76/44 と同じ可視幅） */
+      --focus-bar-clip-left: calc(var(--annual-daily-focus-table-pad-left) + (var(--focus-bar-w) - 1100px) / 2);
+      --focus-bar-clip-right: calc(var(--annual-daily-focus-table-pad-right) + (var(--focus-bar-w) - 1100px) / 2);
       /* 親幅（2&3 帯≈1017 基準のセクション≈1020px）より広い 1100px を中央に置く。auto は子>親で左寄せになるため calc で負マージン中央寄せ */
       margin: 28px calc((100% - 1100px) / 2) 0;
     }
@@ -392,7 +395,9 @@
     body.annual-focus-bar-expanded {
       --annual-daily-focus-table-pad-left: 76px;
       /* 横スクロール終端で右に余白（左ほど大きくしない） */
-      --annual-daily-focus-table-pad-right: 44px;
+      --annual-daily-focus-table-pad-right: 64px;
+      /* Open 時の右端停止後に残す実余白（table / menu / focus bar で共通） */
+      --annual-daily-focus-scroll-end-gap: 40px;
     }
     .annual-daily-focus-global-menu {
       position: absolute;
@@ -523,10 +528,10 @@
     }
     body.annual-focus-bar-expanded .annual-daily-focus-menu-grid {
       justify-content: flex-start;
-      width: 1570px;
+      width: calc(1570px + var(--annual-daily-focus-scroll-end-gap));
       max-width: none;
       gap: 5px;
-    }
+          }
     body.annual-focus-bar-expanded .annual-daily-focus-menu-group--monthly,
     body.annual-focus-bar-expanded .annual-daily-focus-menu-group--annual {
       display: grid;
@@ -541,12 +546,12 @@
       justify-content: flex-start;
       align-items: center;
       padding-left: var(--annual-daily-focus-table-pad-left);
-      padding-right: var(--annual-daily-focus-table-pad-right);
+      padding-right: calc(var(--annual-daily-focus-table-pad-right) + var(--annual-daily-focus-scroll-end-gap));
       box-sizing: border-box;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-scroll {
       padding-left: var(--annual-daily-focus-table-pad-left);
-      padding-right: var(--annual-daily-focus-table-pad-right);
+      padding-right: calc(var(--annual-daily-focus-table-pad-right) + var(--annual-daily-focus-scroll-end-gap));
     }
     .annual-daily-focus-scroll-clip {
       position: absolute;
@@ -599,8 +604,8 @@
       padding: 0;
     }
     body.annual-focus-bar-expanded .annual-daily-rows {
-      width: 1570px;
-    }
+      width: calc(1570px + var(--annual-daily-focus-scroll-end-gap));
+          }
     .annual-daily-row {
       width: 100%;
       max-width: none;
@@ -820,15 +825,19 @@
     }
     .annual-daily-focus-bar-upper__cell {
       min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .annual-daily-focus-bar-upper__cell--date {
       text-align: left;
+      justify-content: flex-start;
       padding-left: 18px;
     }
-    /* 閉じ時: Figma 637×49px・5 分割。365 行と同様 left:50% + translate でバー内 X 中央 */
+    /* 閉じ時: Figma 637×49px。365日行と同じ 5 / 4 / 4 の3グループ構造（閉じ時は base のみ表示） */
     .annual-daily-focus-bar-lower {
       position: absolute;
       left: 50%;
@@ -838,17 +847,35 @@
       height: 49px;
       transform: translate(-50%, -50%);
       box-sizing: border-box;
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      display: flex;
+      flex-direction: row;
       align-items: stretch;
+      justify-content: center;
+      gap: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .annual-daily-focus-bar-lower__group {
+      display: grid;
+      align-items: stretch;
+      height: 100%;
+      box-sizing: border-box;
       border: 1px solid #58e1f3;
       border-radius: 3px;
       background: rgba(88, 225, 243, 0.38);
-      z-index: 2;
-      pointer-events: none;
       overflow: hidden;
     }
-    .annual-daily-focus-bar-lower__cell--open-only {
+    .annual-daily-focus-bar-lower__group--base {
+      width: 100%;
+      flex: 1 1 auto;
+      max-width: 637px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .annual-daily-focus-bar-lower__group--monthly,
+    .annual-daily-focus-bar-lower__group--annual {
+      width: 511px;
+      flex-shrink: 0;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       display: none;
     }
     .annual-daily-focus-bar-lower-scroll {
@@ -869,40 +896,78 @@
       display: none;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper {
-      width: 1570px;
+      left: 0;
+      top: 11px;
+      transform: none;
+      width: calc(1671px + var(--annual-daily-focus-scroll-end-gap));
       max-width: none;
-      gap: 5px;
+      gap: 6px;
       justify-content: flex-start;
-    }
+      margin-left: 9px;
+          }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base {
-      width: 600px;
-      flex: 0 0 600px;
+      width: 637px;
+      flex: 0 0 637px;
       max-width: none;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--monthly,
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--annual {
       display: grid;
+      width: 511px;
+      flex: 0 0 511px;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__cell--date {
+      text-align: center;
+      justify-content: center;
+      padding-left: 0;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower {
-      width: 1570px;
+      position: relative;
+      left: 0;
+      top: 8px;
+      transform: none;
+      width: calc(1671px + var(--annual-daily-focus-scroll-end-gap));
       max-width: none;
       min-height: 49px;
-      height: auto;
-      grid-template-columns: repeat(13, minmax(0, 120px));
+      height: 49px;
       align-items: stretch;
+      justify-content: flex-start;
+      gap: 6px;
+      margin-left: 9px;
+          }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base {
+      width: 637px;
+      flex: 0 0 637px;
+      max-width: none;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell--open-only {
-      display: flex;
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--annual {
+      display: grid;
+      width: 511px;
+      flex: 0 0 511px;
     }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(6),
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell:nth-child(10) {
-      margin-left: 5px;
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-stack {
+      overflow: hidden;
     }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-stack::before {
+      /* Area2 背景は全幅を不透過で塗る（コンテンツのクリップ幅とは分離） */
+      left: 16px;
+      right: 17px;
+    }
+    /* Open時: セクション2の「穴」全幅で横スクロール表示する */
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll,
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
-      padding-left: var(--annual-daily-focus-table-pad-left);
-      padding-right: var(--annual-daily-focus-table-pad-right);
       box-sizing: border-box;
+      left: 16px;
+      right: 17px;
+      width: auto;
+      padding-left: 0;
+      padding-right: var(--annual-daily-focus-scroll-end-gap);
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
+      display: block;
+      top: 24px;
+      height: 67px;
     }
     .annual-daily-focus-bar-lower__cell {
       min-width: 0;
@@ -922,7 +987,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .annual-daily-focus-bar-lower__cell:last-child {
+    .annual-daily-focus-bar-lower__group .annual-daily-focus-bar-lower__cell:last-child {
       border-right: 0;
     }
     .annual-daily-focus-bar-lower__cell--date {
@@ -1530,8 +1595,34 @@
       background: #e8e8e8;
       border-radius: 13px 13px 0 0;
     }
+    /* SVG 装飾なし: テキスト + 黒枠ボックス */
     .office-mode .annual-daily-focus-edit-btn {
       background: #e8e8e8;
+      width: auto;
+      min-width: 0;
+      height: auto;
+      padding: 5px 14px;
+      border: 1px solid #000;
+      border-radius: 2px;
+      justify-content: center;
+      align-items: center;
+    }
+    .office-mode .annual-daily-focus-edit-btn img {
+      display: none;
+    }
+    .office-mode .annual-daily-focus-edit-btn span {
+      position: static;
+      width: auto;
+      color: #000;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      pointer-events: none;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-edit-btn {
+      top: 50%;
+      height: auto;
+      transform: translateY(-50%);
     }
     .office-mode .annual-daily-focus-scroll-clip {
       background: #dbdbdb;
@@ -1553,22 +1644,44 @@
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
+    /* 当年営業日グリッド: ベースのシアン枠・背景を白系に統一 */
+    .office-mode .annual-daily-row__group {
+      border: 1px solid #666;
+      background: #fff;
+    }
     .office-mode .annual-daily-row--off {
       opacity: 0.65;
       background: #e2e2e2;
     }
-    .office-mode .annual-daily-row--outside-year {
+    /* 店休日: 従来トーン維持（グループもグレーに揃えシアンを消す） */
+    .office-mode .annual-daily-row--off .annual-daily-row__group {
       border-color: #9a9a9a;
-      background: #e7e7e7;
-      color: #6c6c6c;
+      background: #e2e2e2;
+    }
+    /* 前年度: 線・文字は薄め、背景はやや濃いグレー */
+    .office-mode .annual-daily-row--outside-year {
+      border-color: #b0b0b0;
+      background: #c6c6c6;
+      color: #a0a0a0;
+    }
+    .office-mode .annual-daily-row--outside-year .annual-daily-row__group {
+      border: 1px solid #b8b8b8;
+      background: #cfcfcf;
     }
     .office-mode .annual-daily-row--outside-year .annual-daily-row__cell {
-      border-right-color: #c6c6c6;
+      border-right-color: #d4d4d4;
     }
     .office-mode .annual-daily-row--outside-year.annual-daily-row--focus-active {
       border-color: #666;
       background: #ececec;
       color: #111;
+    }
+    .office-mode .annual-daily-row--outside-year.annual-daily-row--focus-active .annual-daily-row__group {
+      border-color: #666;
+      background: #fff;
+    }
+    .office-mode .annual-daily-row--outside-year.annual-daily-row--focus-active .annual-daily-row__cell {
+      border-right-color: #bbb;
     }
     .office-mode .annual-daily-row__cell {
       border-right-color: #bbb;
@@ -1579,9 +1692,6 @@
     /* Office: Table Window 上端から Sci-Fi と同じ top:235px。閉じ SVG = focus_bar_office_mode.svg */
     .office-mode .annual-daily-focus-bar-layer {
       top: 235px;
-    }
-    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-layer {
-      display: none;
     }
     .office-mode .annual-daily-focus-bar-stack::before {
       background: #e8e8e8;
@@ -1706,7 +1816,7 @@
       color: #111;
       transition: none;
     }
-    /* Office パネル3: メイン枠内＝padding 基準で more 上端 3px、Close 下端 3px */
+    /* Office パネル3: 角ボックス＋黒枠。非アクティブ=#fff、アクティブ=#e8e8e8。Table Close 時は more がアクティブ、Open 時は Close がアクティブ */
     .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
       position: absolute;
       top: 3px;
@@ -1717,11 +1827,14 @@
       margin: 0;
       z-index: 2;
       box-sizing: border-box;
-      background: #dfeaf7;
-      border: 1px solid #333;
+      background: #e8e8e8;
+      border: 1px solid #000;
+      border-radius: 2px;
       padding: 5px 12px;
       min-width: 0;
+      clip-path: none;
       font-weight: 500;
+      transition: background 0.12s ease, color 0.12s ease;
     }
     .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
       position: absolute;
@@ -1733,8 +1846,9 @@
       margin: 0;
       z-index: 2;
       clip-path: none;
-      background: #ececec;
-      border: 1px solid #9a9a9a;
+      background: #fff;
+      border: 1px solid #000;
+      border-radius: 2px;
       padding: 5px 12px;
       min-width: 0;
       font-weight: 400;
@@ -1746,35 +1860,43 @@
       text-shadow: none;
       color: #000;
     }
-    .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:hover,
-    .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:focus-visible {
-      background: #f5f5f5;
-      color: #000;
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--more:hover,
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--more:focus-visible {
+      background: #dedede;
     }
-    .office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:active {
-      background: #d6d6d6;
-      color: #000;
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--close:hover,
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--close:focus-visible {
+      background: #f5f5f5;
+    }
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--more:active {
+      background: #d0d0d0;
+    }
+    body.office-mode:not(.annual-focus-bar-expanded) .annual-summary-bottom-cell--sales > .annual-sales-tab--close:active {
+      background: #ececec;
     }
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more {
-      background: #ececec;
-      border-color: #9a9a9a;
+      background: #fff;
+      border-color: #000;
       font-weight: 400;
     }
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close {
-      background: #dfeaf7;
-      border-color: #333;
+      background: #e8e8e8;
+      border-color: #000;
       font-weight: 500;
     }
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:hover,
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:focus-visible {
-      background: #f0f0f0;
+      background: #f5f5f5;
     }
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--more:active {
-      background: #e0e0e0;
+      background: #ececec;
     }
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:hover,
     body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:focus-visible {
-      background: #e8f0fa;
+      background: #dedede;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-summary-bottom-cell--sales > .annual-sales-tab--close:active {
+      background: #d0d0d0;
     }
     .office-mode .annual-sales-abbr,
     .office-mode .annual-sales-row-h,
@@ -2429,19 +2551,25 @@
               </div>
               <div class="annual-daily-focus-bar-lower-scroll" id="annual-daily-focus-bar-lower-scroll">
                 <div class="annual-daily-focus-bar-lower">
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">1/6 mon</span>
-                  <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell">100%</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">100%</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">¥123,456</span>
-                  <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--open-only">100%</span>
+                  <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--base">
+                    <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">1/6 mon</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                  </div>
+                  <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--monthly">
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                  </div>
+                  <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--annual">
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                  </div>
                 </div>
               </div>
               <img src="../../images/focus_bar.svg" alt="" class="annual-daily-focus-bar-img" id="annual-daily-focus-bar-img" width="757" height="82" decoding="async" aria-hidden="true">
@@ -2761,6 +2889,15 @@
           yearBtn.setAttribute('aria-expanded', 'false');
         }
       });
+      window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+      window.__ANNUAL_UI.setCalendarYear = function (y) {
+        y = Number(y);
+        if (!Number.isFinite(y)) return;
+        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        if (currentYear === y) return;
+        currentYear = y;
+        renderYear();
+      };
       renderYear();
     })();
     (function () {
@@ -3115,6 +3252,29 @@
         );
       }
 
+      function daysInMonth(year, monthIndex0) {
+        return new Date(year, monthIndex0 + 1, 0).getDate();
+      }
+
+      /** Section1 年変更時: 同月同日で選択年へ（2/29 などはその月の末日に丸め） */
+      function shiftDailyDateToCalendarYear(newYear) {
+        newYear = Number(newYear);
+        if (!Number.isFinite(newYear)) return;
+        var cur = parseISODateLocal(window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate);
+        if (!cur) return;
+        var mo = cur.getMonth();
+        var day = cur.getDate();
+        var maxDay = daysInMonth(newYear, mo);
+        var d = new Date(newYear, mo, Math.min(day, maxDay));
+        applyDailySelection(d);
+      }
+
+      document.addEventListener('annual:calendarYearChanged', function (ev) {
+        var y = ev.detail && ev.detail.year;
+        if (y == null) return;
+        shiftDailyDateToCalendarYear(Number(y));
+      });
+
       var initialIso = window.__ANNUAL_DATA.daily.selectedDate || '2025-06-07';
       var initialDate = parseISODateLocal(initialIso) || parseISODateLocal('2025-06-07');
       applyDailySelection(initialDate);
@@ -3147,6 +3307,9 @@
         var now = new Date();
         var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         applyDailySelection(d);
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYear === 'function') {
+          window.__ANNUAL_UI.setCalendarYear(d.getFullYear());
+        }
       });
 
       window.__applyAnnualDailyFromServer = function (payload) {
@@ -3193,6 +3356,8 @@
             : 'focus_bar.svg';
         var next = dir + file;
         if (focusBarImg.getAttribute('src') !== next) focusBarImg.setAttribute('src', next);
+        focusBarImg.setAttribute('width', expanded ? '1132' : '757');
+        focusBarImg.setAttribute('height', expanded ? '91' : '82');
       }
 
       function setFocusBarExpanded(expanded) {
@@ -3377,6 +3542,60 @@
       });
 
       renderAnnualDailyTable(window.__ANNUAL_DATA.calendarYear);
+    })();
+    (function () {
+      var rowsRoot = document.getElementById('annual-daily-rows');
+      var tableScroll = document.getElementById('annual-daily-focus-scroll');
+      var lower = document.querySelector('.annual-daily-focus-bar-lower');
+      if (!rowsRoot || !tableScroll || !lower) return;
+
+      var lowerCells = lower.querySelectorAll('.annual-daily-focus-bar-lower__cell');
+      if (!lowerCells || lowerCells.length < 13) return;
+
+      function copyGroupText(row, groupClass) {
+        var group = row.querySelector(groupClass);
+        if (!group) return [];
+        var cells = group.querySelectorAll('.annual-daily-row__cell');
+        return Array.prototype.map.call(cells, function (cell) {
+          return cell.textContent || '—';
+        });
+      }
+
+      function writeLowerFromRow(row) {
+        if (!row) return;
+        var base = copyGroupText(row, '.annual-daily-row__group--base');
+        var monthly = copyGroupText(row, '.annual-daily-row__group--monthly');
+        var annual = copyGroupText(row, '.annual-daily-row__group--annual');
+        var merged = base.concat(monthly, annual);
+        for (var i = 0; i < lowerCells.length; i += 1) {
+          lowerCells[i].textContent = merged[i] != null ? merged[i] : '—';
+        }
+      }
+
+      function pickFocusedRow() {
+        var rows = rowsRoot.children;
+        if (!rows || !rows.length) return null;
+        var rowPitch = 42; // 行高40px + gap2px
+        var idx = Math.round(tableScroll.scrollTop / rowPitch);
+        if (idx < 0) idx = 0;
+        if (idx >= rows.length) idx = rows.length - 1;
+        return rows[idx];
+      }
+
+      var raf = 0;
+      function refreshLower() {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          writeLowerFromRow(pickFocusedRow());
+        });
+      }
+
+      tableScroll.addEventListener('scroll', refreshLower, { passive: true });
+      document.addEventListener('annual:focusBarStateChanged', refreshLower);
+      document.addEventListener('annual:calendarYearChanged', function () {
+        setTimeout(refreshLower, 0);
+      });
+      setTimeout(refreshLower, 0);
     })();
   </script>
 </body>
