@@ -394,10 +394,19 @@
     /* 展開時: 365 行・Global Menu・Focus Bar の横スクロール開始を同一 X に。Edit(14+57px) 右に余白し窓内のまま */
     body.annual-focus-bar-expanded {
       --annual-daily-focus-table-pad-left: 76px;
+      /* Edit 右端〜Date 起点までの理論値に、SVGはみ出し／サブピクセル用の微調整を加算 */
+      --annual-global-menu-date-overhang-fudge: 2px;
+      --annual-global-menu-date-overhang: calc(
+        var(--annual-daily-focus-table-pad-left) + 2px - 14px - 57px
+          + var(--annual-global-menu-date-overhang-fudge)
+      );
       /* 横スクロール終端で右に余白（左ほど大きくしない） */
       --annual-daily-focus-table-pad-right: 64px;
       /* Open 時の右端停止後に残す実余白（table / menu / focus bar で共通） */
       --annual-daily-focus-scroll-end-gap: 40px;
+      /* Date 右端までの X（Table Window マスク等の参照用） */
+      --annual-date-cut-x: calc(var(--annual-daily-focus-table-pad-left) + 120px);
+      --annual-date-left-mask-w: var(--annual-daily-focus-table-pad-left);
     }
     .annual-daily-focus-global-menu {
       position: absolute;
@@ -413,6 +422,17 @@
       padding: 0 10px;
       border-radius: 13px 13px 0 0;
       background: #2a2a2a;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-global-menu::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--annual-date-left-mask-w);
+      background: #2a2a2a;
+      z-index: 10;
+      pointer-events: none;
     }
     /* Edit: 54px 装飾 + 右 3px を不透明レールにし、背面の Global Menu 横スクロールを隠す */
     .annual-daily-focus-edit-btn {
@@ -501,6 +521,7 @@
       width: 600px;
       flex-shrink: 0;
       grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: stretch;
     }
     .annual-daily-focus-menu-group--monthly,
     .annual-daily-focus-menu-group--annual {
@@ -515,6 +536,8 @@
       justify-content: center;
       text-align: center;
       min-width: 0;
+      height: 100%;
+      box-sizing: border-box;
     }
     .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
       text-align: center;
@@ -539,12 +562,54 @@
     body.annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
       min-width: 120px;
       max-width: 120px;
+      position: relative;
+      z-index: 8;
+      background: #2a2a2a;
+    }
+    /* Sci-Fi: Date 枠左端を Edit 右端まで延ばし、すき間からの横スクロール漏れを防ぐ（列右端は 120px 相当で維持） */
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
+      margin-left: calc(-1 * var(--annual-global-menu-date-overhang));
+      min-width: calc(120px + var(--annual-global-menu-date-overhang));
+      max-width: calc(120px + var(--annual-global-menu-date-overhang));
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-group--base {
+      position: relative;
+      z-index: 4;
+      overflow: visible;
+      isolation: isolate;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-menu-group--annual {
+      position: relative;
+      z-index: 1;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-edit-btn {
       top: 0;
       height: 100%;
       transform: none;
       align-items: center;
+      z-index: 12;
+    }
+    /* Open: Edit 塗りと Date 塗りのあいだを同色でつなぐ（SVGはみ出し・サブピクセル対策。幅は Date overhang と一致） */
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-edit-btn::after {
+      content: "";
+      position: absolute;
+      left: 100%;
+      top: 0;
+      bottom: 0;
+      width: var(--annual-global-menu-date-overhang);
+      background: #2a2a2a;
+      pointer-events: none;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-edit-btn::after {
+      content: "";
+      position: absolute;
+      left: 100%;
+      top: 0;
+      bottom: 0;
+      width: max(0px, var(--annual-global-menu-date-overhang));
+      background: #e8e8e8;
+      pointer-events: none;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-global-scroll {
       justify-content: flex-start;
@@ -566,6 +631,17 @@
       border-radius: 0 0 13px 13px;
       overflow: hidden;
       z-index: 1;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-scroll-clip::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--annual-date-left-mask-w);
+      background: #1f1e1e;
+      z-index: 10;
+      pointer-events: none;
     }
     .annual-daily-focus-scroll {
       height: 100%;
@@ -616,6 +692,7 @@
       height: 40px;
       box-sizing: border-box;
       display: flex;
+      position: relative;
       gap: 0;
       align-items: stretch;
       font-family: 'Orbitron', sans-serif;
@@ -681,6 +758,24 @@
     body.annual-focus-bar-expanded .annual-daily-row__group--base .annual-daily-row__cell--date {
       min-width: 120px;
       max-width: 120px;
+      position: relative;
+      z-index: 8;
+      background: #366e76;
+    }
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-row--off .annual-daily-row__group--base .annual-daily-row__cell--date,
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-row--outside-year .annual-daily-row__group--base .annual-daily-row__cell--date {
+      background: #2b474b;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row__group--base {
+      position: relative;
+      z-index: 4;
+      overflow: visible;
+      isolation: isolate;
+    }
+    body.annual-focus-bar-expanded .annual-daily-row__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-row__group--annual {
+      position: relative;
+      z-index: 1;
     }
     .annual-daily-row__cell {
       min-width: 0;
@@ -703,6 +798,11 @@
       text-align: left;
       justify-content: flex-start;
       padding-left: 8px;
+    }
+    /* base グループ左端＝行カプセル角に合わせ、Date 塗りの角がはみ出さない（Open 時 overflow:visible 対策） */
+    .annual-daily-row__group--base .annual-daily-row__cell--date {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
     }
     .annual-daily-row__cell--neg {
       color: #ff6b6b;
@@ -736,11 +836,29 @@
       padding: 0;
       border-radius: 1px;
     }
+    .annual-daily-focus-wing-hit::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(88, 225, 243, 0.2);
+      box-shadow: inset 0 0 8px rgba(88, 225, 243, 0.42);
+      transition: opacity 0.12s ease;
+    }
+    .annual-daily-focus-wing-hit--left::before {
+      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+    }
+    #annual-daily-focus-wing-hit::before {
+      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+    }
     .annual-daily-focus-wing-hit:hover,
     .annual-daily-focus-wing-hit:focus-visible {
       outline: none;
-      background: rgba(88, 225, 243, 0.12);
-      box-shadow: inset 0 0 8px rgba(88, 225, 243, 0.6), 0 0 6px rgba(88, 225, 243, 0.32);
+    }
+    .annual-daily-focus-wing-hit:hover::before,
+    .annual-daily-focus-wing-hit:focus-visible::before {
+      opacity: 1;
     }
     .annual-daily-focus-wing-hit span {
       position: absolute;
@@ -749,6 +867,36 @@
       overflow: hidden;
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
+    }
+    .annual-daily-focus-wing-hit--left {
+      left: 3px;
+      right: auto;
+    }
+    /* Open 時: 右ウィング◀タブは可視幅が広い。左ウィング▲▼も同様に広いヒット領域（右ボタンだけに right:0 を当てる） */
+    body.annual-focus-bar-expanded #annual-daily-focus-wing-hit {
+      right: 0;
+      top: 3px;
+      bottom: 3px;
+      width: 28px;
+      z-index: 6;
+    }
+    body.annual-focus-bar-expanded #annual-daily-focus-wing-hit::before {
+      /* Open時は内側の縦帯まで光らないよう、発光を外側タブ領域へ限定 */
+      left: 10px;
+      right: 0;
+      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-wing-hit--left {
+      left: 0;
+      top: 3px;
+      bottom: 3px;
+      width: 28px;
+      z-index: 6;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-wing-hit--left::before {
+      left: 0;
+      right: 10px;
+      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
     }
     .annual-daily-focus-bar-stack {
       position: relative;
@@ -952,8 +1100,25 @@
       flex: 0 0 511px;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base .annual-daily-focus-bar-upper__cell--date {
-      min-width: 127px;
-      max-width: 127px;
+      min-width: calc(127px + 9px);
+      max-width: calc(127px + 9px);
+      margin-left: -9px;
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+      position: relative;
+      z-index: 8;
+      background: #366e76;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base {
+      position: relative;
+      z-index: 4;
+      overflow: visible;
+      isolation: isolate;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--annual {
+      position: relative;
+      z-index: 1;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__cell--date {
       text-align: center;
@@ -984,6 +1149,22 @@
       pointer-events: none;
       z-index: 1;
     }
+    /* Close時: Open と同様、前後行を薄く見せる（中央寄せは JS で transform 合成） */
+    body:not(.annual-focus-bar-expanded) .annual-daily-focus-bar-lower--ghost {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 637px;
+      max-width: calc(100% - 28px);
+      height: 49px;
+      margin-left: 0;
+      margin-right: 0;
+      justify-content: center;
+      gap: 0;
+      opacity: 0.42;
+      pointer-events: none;
+      z-index: 1;
+    }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base {
       width: 637px;
       flex: 0 0 637px;
@@ -996,15 +1177,36 @@
       flex: 0 0 511px;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
-      min-width: 127px;
-      max-width: 127px;
+      min-width: calc(127px + 9px);
+      max-width: calc(127px + 9px);
+      margin-left: -9px;
+      padding-left: calc(8px + 9px);
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+      position: relative;
+      z-index: 8;
+      background: #366e76;
     }
-    /* Open時: 店休日(OFF)は非アクティブ見た目にする */
-    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group {
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
+      background: #2b474b;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base {
+      position: relative;
+      z-index: 4;
+      overflow: visible;
+      isolation: isolate;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--monthly,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--annual {
+      position: relative;
+      z-index: 1;
+    }
+    /* Sci-Fi: 店休日(OFF)は Open/Close とも非アクティブ見た目にする */
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group {
       background: rgba(88, 225, 243, 0.12);
       border-color: rgba(88, 225, 243, 0.45);
     }
-    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
       color: rgba(88, 225, 243, 0.62);
       border-right-color: rgba(88, 225, 243, 0.28);
     }
@@ -1012,8 +1214,8 @@
       overflow: hidden;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-stack::before {
-      /* Area2 背景は全幅を不透過で塗る（コンテンツのクリップ幅とは分離） */
-      left: 16px;
+      /* 左ウィング下も含め背面を塗る。::after で同領域を z-index 10 塗りすると SVG 装飾が黒塗りに潰れる */
+      left: 0;
       right: 17px;
     }
     /* Open時: セクション2の「穴」全幅で横スクロール表示する */
@@ -1030,6 +1232,19 @@
       display: block;
       top: 24px;
       height: 67px;
+    }
+    /* Open 時: 枠 SVG が z-index:3 でスクロール内容(2)より上に来て右側セルが塗り潰されるのを防ぐ */
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-img {
+      z-index: 1;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
+      z-index: 4;
+    }
+    /* gap:6px・子の margin-left:9px 直下は透過のままだと Area2(#1f1e1e) が見えセクション2左が黒帯になる */
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-upper-scroll,
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower-scroll {
+      background: rgba(88, 225, 243, 0.28);
     }
     .annual-daily-focus-bar-lower__cell {
       min-width: 0;
@@ -1649,6 +1864,16 @@
       background: #e8e8e8;
       border-radius: 13px 13px 0 0;
     }
+    .office-mode.annual-focus-bar-expanded .annual-daily-focus-global-menu::before {
+      background: #e8e8e8;
+    }
+    .office-mode .annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
+      background: #e8e8e8;
+    }
+    .office-mode .annual-focus-bar-expanded .annual-daily-row__group--base .annual-daily-row__cell--date,
+    .office-mode .annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
+      background: #d2d2d2;
+    }
     /* SVG 装飾なし: テキスト + 黒枠ボックス */
     .office-mode .annual-daily-focus-edit-btn {
       background: #e8e8e8;
@@ -1750,6 +1975,12 @@
     .office-mode .annual-daily-focus-bar-stack::before {
       background: #e8e8e8;
     }
+    .office-mode.annual-focus-bar-expanded .annual-daily-focus-scroll-clip::before {
+      background: #e8e8e8;
+    }
+    .office-mode .annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base .annual-daily-focus-bar-upper__cell--date {
+      background: #e8e8e8;
+    }
     .office-mode .annual-daily-focus-bar-upper {
       color: #111;
     }
@@ -1768,10 +1999,21 @@
       color: #111;
       border-right-color: #a9a9a9;
     }
-    .office-mode .annual-daily-focus-wing-hit:hover,
-    .office-mode .annual-daily-focus-wing-hit:focus-visible {
-      background: rgba(0, 0, 0, 0.06);
-      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.12);
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group {
+      border-color: #9a9a9a;
+      background: #e2e2e2;
+    }
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
+      color: #6a6a6a;
+      border-right-color: #bdbdbd;
+    }
+    .office-mode .annual-daily-focus-wing-hit::before {
+      background: rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.14);
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-upper-scroll,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower-scroll {
+      background: #d8d8d8;
     }
     .office-mode .annual-summary-bottom-cell {
       min-height: 148px;
@@ -2219,6 +2461,681 @@
     .office-mode .nav-frame-btn[aria-current="page"] .nav-btn-text {
       color: #111;
     }
+
+    /* Annual Edit モーダル（×左上・保存右上、グリッド522は維持） */
+    .annual-edit-modal {
+      --aem-cyan: #58e1f3;
+      --aem-line: #58e1f3;
+      --aem-cell-fill: rgba(88, 225, 243, 0.33);
+      --aem-row-off-fill: rgba(88, 225, 243, 0.22);
+      --aem-panel-bg: #414141;
+      --aem-panel-w: 704px;
+      --aem-grid-w: 522px;
+      --aem-pad-x: calc((var(--aem-panel-w) - var(--aem-grid-w)) / 2);
+      font-family: 'BIZ UDPGothic', sans-serif;
+      box-sizing: border-box;
+    }
+    html[lang='en'] body.si-fi:not(.office-mode) .annual-edit-modal {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .annual-edit-modal[hidden] {
+      display: none !important;
+    }
+    .annual-edit-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .annual-edit-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      cursor: pointer;
+    }
+    .annual-edit-modal__panel {
+      position: relative;
+      width: var(--aem-panel-w);
+      height: 780px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      box-sizing: border-box;
+      background: var(--aem-panel-bg);
+      border: 1px solid var(--aem-line);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      /* 上: ×(absolute) の下端到達と重ならない余白。40px だと top:17 + 高さ32 = 49 で年月子が食い込む */
+      padding: 44px var(--aem-pad-x) 14px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+      z-index: 1;
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .annual-edit-modal__close {
+      position: absolute;
+      top: 6px;
+      left: 12px;
+      right: auto;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: var(--aem-cell-fill);
+      color: var(--aem-cyan);
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .annual-edit-modal__close:hover,
+    .annual-edit-modal__close:focus-visible {
+      background: rgba(88, 225, 243, 0.45);
+      outline: none;
+    }
+    .annual-edit-modal__save {
+      position: absolute;
+      top: 6px;
+      right: 12px;
+      min-width: 72px;
+      height: 32px;
+      padding: 0 12px;
+      margin: 0;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: var(--aem-cell-fill);
+      color: var(--aem-cyan);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .annual-edit-modal__save:hover,
+    .annual-edit-modal__save:focus-visible {
+      background: rgba(88, 225, 243, 0.45);
+      outline: none;
+    }
+    .annual-edit-modal__ym {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: stretch;
+      width: var(--aem-grid-w);
+      margin: 0;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      border: 1px solid var(--aem-line);
+      border-bottom: 0;
+      background: var(--aem-cell-fill);
+    }
+    .annual-edit-modal__ym-cell {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 40px;
+      box-sizing: border-box;
+      border: 0;
+      border-right: 1px solid var(--aem-line);
+      background: transparent;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      line-height: 1;
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__ym-cell:last-child {
+      border-right: 0;
+    }
+    .annual-edit-modal__ym-arrow {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      margin: 0;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--aem-cyan);
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .annual-edit-modal__ym-arrow:hover,
+    .annual-edit-modal__ym-arrow:focus-visible {
+      background: rgba(88, 225, 243, 0.35);
+      outline: none;
+    }
+    .annual-edit-modal__ym-select {
+      flex: 0 1 auto;
+      width: auto;
+      min-width: 0;
+      max-width: 12.5em;
+      height: auto;
+      margin: 0 2px;
+      padding: 2px 4px;
+      box-sizing: border-box;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--aem-cyan);
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.3;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: underline;
+      text-decoration-color: rgba(88, 225, 243, 0.75);
+      text-underline-offset: 3px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .annual-edit-modal__ym-select:hover {
+      text-decoration-color: var(--aem-cyan);
+    }
+    .annual-edit-modal__ym-select:focus {
+      outline: 1px solid var(--aem-cyan);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+    .annual-edit-modal__ym-select option {
+      background: #2a2a2a;
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__colhead {
+      display: grid;
+      grid-template-columns: 231px 90px 201px;
+      width: var(--aem-grid-w);
+      flex-shrink: 0;
+      border: 1px solid var(--aem-line);
+      border-bottom: 0;
+      box-sizing: border-box;
+    }
+    .annual-edit-modal__colhead > div {
+      box-sizing: border-box;
+      border-right: 1px solid var(--aem-line);
+      background: var(--aem-cell-fill);
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__colhead > div:last-child {
+      border-right: 0;
+    }
+    .annual-edit-modal__colhead-date-merged {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-height: 60px;
+      position: relative;
+      font-size: 13px;
+    }
+    .annual-edit-modal__colhead-date-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 0;
+      padding: 4px 6px;
+      border: 0;
+      background: none;
+      color: inherit;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(88, 225, 243, 0.75);
+      text-underline-offset: 3px;
+    }
+    .annual-edit-modal__colhead-date-btn:hover,
+    .annual-edit-modal__colhead-date-btn:focus-visible {
+      color: #9ef6ff;
+      text-decoration-color: var(--aem-cyan);
+      outline: none;
+    }
+    .annual-edit-modal__colhead-date-native {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      opacity: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .annual-edit-modal__colhead-sales {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 60px;
+      font-size: 13px;
+    }
+    .annual-edit-modal__sales-sort {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .annual-edit-modal__sales-sort-toggle {
+      margin: 0;
+    }
+    .annual-edit-modal__sales-sort-orders {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .annual-edit-modal__sales-sort-section-label {
+      font-size: 11px;
+      line-height: 1.3;
+      color: var(--aem-cyan);
+      opacity: 0.85;
+      margin: 0 0 6px;
+    }
+    .annual-edit-modal__sales-sort-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.15);
+      color: var(--aem-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: left;
+      cursor: pointer;
+    }
+    .annual-edit-modal__sales-sort-amounts {
+      max-height: min(50vh, 280px);
+      overflow-y: auto;
+      margin: 0 0 8px;
+    }
+    .annual-edit-modal__sales-sort-amounts .annual-edit-modal__sales-sort-btn {
+      margin-top: 6px;
+    }
+    .annual-edit-modal__sales-sort-amounts .annual-edit-modal__sales-sort-btn:first-child {
+      margin-top: 0;
+    }
+    .annual-edit-modal__sales-sort-btn:hover,
+    .annual-edit-modal__sales-sort-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.3);
+      outline: none;
+    }
+    .annual-edit-modal__sales-sort-btn.is-active {
+      background: rgba(88, 225, 243, 0.38);
+      box-shadow: 0 0 0 1px var(--aem-cyan);
+    }
+    .annual-edit-modal__colhead-dayoff {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 60px;
+      padding: 4px 2px;
+    }
+    .annual-edit-modal__colhead-dayoff-title {
+      font-size: 13px;
+      line-height: 1;
+    }
+    .annual-edit-modal__select-all {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--aem-cyan);
+      font-size: 11px;
+      line-height: 1;
+      text-decoration: underline;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .annual-edit-modal__select-all:hover,
+    .annual-edit-modal__select-all:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .annual-edit-modal__sort-icon {
+      font-size: 9px;
+      opacity: 0.85;
+    }
+    .annual-edit-modal__date-filter {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .annual-edit-modal__date-filter-toggle {
+      margin: 0 0 0 2px;
+      padding: 2px 8px;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.15);
+      color: var(--aem-cyan);
+      font-family: inherit;
+      font-size: 10px;
+      line-height: 1.2;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .annual-edit-modal__date-filter-toggle:hover,
+    .annual-edit-modal__date-filter-toggle:focus-visible {
+      background: rgba(88, 225, 243, 0.32);
+      outline: none;
+    }
+    .annual-edit-modal__date-filter-toggle.is-active {
+      background: rgba(88, 225, 243, 0.38);
+      box-shadow: 0 0 0 1px var(--aem-cyan);
+    }
+    .annual-edit-modal__date-filter-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 220px;
+      z-index: 20;
+      padding: 10px 12px 12px;
+      box-sizing: border-box;
+      background: #2f2f2f;
+      border: 1px solid var(--aem-line);
+      border-radius: 4px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__date-filter-panel[hidden] {
+      display: none !important;
+    }
+    .annual-edit-modal__filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 5px 0;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .annual-edit-modal__filter-row input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #0f9403;
+    }
+    .annual-edit-modal__filter-clear {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      border: 1px solid var(--aem-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--aem-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .annual-edit-modal__filter-clear:hover,
+    .annual-edit-modal__filter-clear:focus-visible {
+      background: rgba(88, 225, 243, 0.35);
+      outline: none;
+    }
+    .annual-edit-modal__scroll {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      width: var(--aem-grid-w);
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid var(--aem-line);
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: #0f9403 rgba(88, 225, 243, 0.25);
+    }
+    .annual-edit-modal__scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+    .annual-edit-modal__scroll::-webkit-scrollbar-track {
+      background: rgba(88, 225, 243, 0.15);
+    }
+    .annual-edit-modal__scroll::-webkit-scrollbar-thumb {
+      background: #0f9403;
+      border-radius: 4px;
+    }
+    .annual-edit-modal__table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+    .annual-edit-modal__table td {
+      border: solid var(--aem-line);
+      border-width: 0 1px 1px 0;
+      box-sizing: border-box;
+      vertical-align: middle;
+      background: var(--aem-cell-fill);
+      color: var(--aem-cyan);
+    }
+    .annual-edit-modal__table tbody:first-child tr:first-child td {
+      border-top-width: 1px;
+    }
+    .annual-edit-modal__table tr td:first-child {
+      border-left-width: 1px;
+    }
+    .annual-edit-modal__table tr.annual-edit-modal__row--off td {
+      background: var(--aem-row-off-fill);
+    }
+    /* beats .annual-edit-modal__table td { vertical-align: middle } */
+    .annual-edit-modal__table td.annual-edit-modal__month-td {
+      width: 41px;
+      padding: 0;
+      vertical-align: top;
+      text-align: center;
+      position: relative;
+      background: var(--aem-cell-fill);
+    }
+    .annual-edit-modal__table tr.annual-edit-modal__row--off td.annual-edit-modal__month-td {
+      background: var(--aem-cell-fill);
+    }
+    .annual-edit-modal__month-td-label {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: block;
+      box-sizing: border-box;
+      width: 41px;
+      margin: 0 auto;
+      padding: 12px 2px 10px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      outline: none;
+      color: var(--aem-cyan);
+      font-size: 20px;
+      line-height: 1.1;
+      letter-spacing: 0.14em;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+    }
+    .annual-edit-modal__date-td {
+      width: 190px;
+      height: 40px;
+      padding: 0 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annual-edit-modal__table--no-month .annual-edit-modal__date-td {
+      width: 231px;
+    }
+    .annual-edit-modal__cb-td {
+      width: 90px;
+      height: 40px;
+      text-align: center;
+    }
+    .annual-edit-modal__cb {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: #0f9403;
+    }
+    .annual-edit-modal__sales-td {
+      width: 201px;
+      height: 40px;
+      padding: 0 8px;
+    }
+    .annual-edit-modal__sales-input {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      border: 0;
+      background: transparent;
+      color: var(--aem-cyan);
+      font-size: 17px;
+      line-height: 1.2;
+      font-family: inherit;
+      text-align: right;
+      padding: 2px 0;
+    }
+    .annual-edit-modal__sales-input:focus {
+      outline: 1px solid var(--aem-cyan);
+      outline-offset: 1px;
+    }
+    body.office-mode .annual-edit-modal__panel {
+      border-color: #333;
+      color: #111;
+      --aem-cyan: #111;
+      --aem-line: #333;
+      --aem-cell-fill: rgba(0, 0, 0, 0.06);
+      --aem-row-off-fill: rgba(0, 0, 0, 0.04);
+      --aem-panel-bg: #e8e8e8;
+    }
+    body.office-mode .annual-edit-modal__close,
+    body.office-mode .annual-edit-modal__save,
+    body.office-mode .annual-edit-modal__ym,
+    body.office-mode .annual-edit-modal__ym-cell {
+      border-color: #333;
+      color: #111;
+    }
+    body.office-mode .annual-edit-modal__close,
+    body.office-mode .annual-edit-modal__save,
+    body.office-mode .annual-edit-modal__ym {
+      background: #f0f0f0;
+    }
+    body.office-mode .annual-edit-modal__ym-cell {
+      background: transparent;
+    }
+    body.office-mode .annual-edit-modal__ym-arrow {
+      border-color: #333;
+      color: #111;
+      background: #e8e8e8;
+    }
+    body.office-mode .annual-edit-modal__ym-arrow:hover,
+    body.office-mode .annual-edit-modal__ym-arrow:focus-visible {
+      background: #ddd;
+    }
+    body.office-mode .annual-edit-modal__close:hover,
+    body.office-mode .annual-edit-modal__close:focus-visible,
+    body.office-mode .annual-edit-modal__save:hover,
+    body.office-mode .annual-edit-modal__save:focus-visible {
+      background: #ddd;
+    }
+    body.office-mode .annual-edit-modal__ym-select {
+      color: #111;
+      background: transparent;
+      text-decoration-color: rgba(0, 0, 0, 0.45);
+    }
+    body.office-mode .annual-edit-modal__ym-select:hover {
+      text-decoration-color: #111;
+    }
+    body.office-mode .annual-edit-modal__ym-select option {
+      background: #fff;
+      color: #111;
+    }
+    body.office-mode .annual-edit-modal__backdrop {
+      background: rgba(0, 0, 0, 0.35);
+    }
+    body.office-mode .annual-edit-modal {
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+    }
+    body.office-mode .annual-edit-modal__select-all {
+      color: #111;
+    }
+    body.office-mode .annual-edit-modal__colhead-date-btn {
+      color: #111;
+      text-decoration-color: rgba(0, 0, 0, 0.45);
+    }
+    body.office-mode .annual-edit-modal__colhead-date-btn:hover,
+    body.office-mode .annual-edit-modal__colhead-date-btn:focus-visible {
+      color: #000;
+      text-decoration-color: #111;
+    }
+    body.office-mode .annual-edit-modal__date-filter-toggle {
+      border-color: #333;
+      color: #111;
+      background: #e8e8e8;
+    }
+    body.office-mode .annual-edit-modal__date-filter-panel {
+      background: #fff;
+      border-color: #333;
+      color: #111;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    body.office-mode .annual-edit-modal__filter-clear {
+      border-color: #333;
+      color: #111;
+      background: #eee;
+    }
+    body.office-mode .annual-edit-modal__scroll {
+      scrollbar-color: #555 #ddd;
+    }
+    body.office-mode .annual-edit-modal__scroll::-webkit-scrollbar-thumb {
+      background: #555;
+    }
   </style>
 </head>
 <body class="si-fi profile-page" id="body-el">
@@ -2580,6 +3497,9 @@
           </div>
           <div class="annual-daily-focus-bar-layer">
             <div class="annual-daily-focus-bar-stack">
+              <button type="button" class="annual-daily-focus-wing-hit annual-daily-focus-wing-hit--left" id="annual-daily-focus-wing-hit-left" aria-label="日次テーブルを展開">
+                <span>フォーカス行 上下</span>
+              </button>
               <button type="button" class="annual-daily-focus-wing-hit" id="annual-daily-focus-wing-hit" aria-label="日次テーブルを展開">
                 <span>Toggle</span>
               </button>
@@ -2635,6 +3555,170 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div
+    class="annual-edit-modal"
+    id="annual-edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="annual-edit-modal-title"
+    hidden
+  >
+    <div class="annual-edit-modal__backdrop" id="annual-edit-modal-backdrop" aria-hidden="true"></div>
+    <div class="annual-edit-modal__panel" role="document">
+      <h2 id="annual-edit-modal-title" class="annual-edit-modal__sr-only">日次一括編集</h2>
+      <button type="button" class="annual-edit-modal__close" id="annual-edit-modal-close" aria-label="閉じる">
+        ×
+      </button>
+      <button type="button" class="annual-edit-modal__save" id="annual-edit-modal-save" aria-label="保存">
+        保存
+      </button>
+      <div class="annual-edit-modal__ym">
+        <div class="annual-edit-modal__ym-cell">
+          <label class="annual-edit-modal__sr-only" for="annual-edit-year-select">年</label>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-prev" aria-label="前年">
+            ◀︎
+          </button>
+          <select
+            id="annual-edit-year-select"
+            class="annual-edit-modal__ym-select"
+            aria-label="年を一覧から選択"
+          ></select>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-next" aria-label="翌年">
+            ▶︎
+          </button>
+        </div>
+        <div class="annual-edit-modal__ym-cell">
+          <label class="annual-edit-modal__sr-only" for="annual-edit-month-select">月</label>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-prev" aria-label="前月">
+            ◀︎
+          </button>
+          <select
+            id="annual-edit-month-select"
+            class="annual-edit-modal__ym-select"
+            aria-label="月を一覧から選択"
+          ></select>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-next" aria-label="翌月">
+            ▶︎
+          </button>
+        </div>
+      </div>
+      <div class="annual-edit-modal__colhead" aria-hidden="false">
+        <div class="annual-edit-modal__colhead-date-merged">
+          <button type="button" class="annual-edit-modal__colhead-date-btn" id="annual-edit-date-header-btn">日付</button>
+          <div class="annual-edit-modal__date-filter" id="annual-edit-date-filter-wrap">
+            <button
+              type="button"
+              class="annual-edit-modal__date-filter-toggle"
+              id="annual-edit-date-filter-toggle"
+              aria-expanded="false"
+              aria-haspopup="true"
+              aria-controls="annual-edit-date-filter-panel"
+              aria-label="曜日・祝日で表示を絞り込む"
+            >
+              <span class="annual-edit-modal__sort-icon" aria-hidden="true">▼</span>
+            </button>
+            <div
+              id="annual-edit-date-filter-panel"
+              class="annual-edit-modal__date-filter-panel"
+              role="group"
+              aria-label="表示する曜日・祝日"
+              hidden
+            >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="1" /> 月曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="2" /> 火曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="3" /> 水曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="4" /> 木曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="5" /> 金曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="6" /> 土曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="0" /> 日曜日</label
+              >
+              <label class="annual-edit-modal__filter-row"
+                ><input type="checkbox" id="annual-edit-filter-holiday" /> 祝日（休日カレンダー連携時）</label
+              >
+              <button type="button" class="annual-edit-modal__filter-clear" id="annual-edit-filter-clear">
+                フィルターを解除
+              </button>
+            </div>
+          </div>
+          <input
+            type="date"
+            id="annual-edit-colhead-date-input"
+            class="annual-edit-modal__colhead-date-native"
+            tabindex="-1"
+            aria-label="日付を選んで一覧の先頭へ"
+          />
+        </div>
+        <div class="annual-edit-modal__colhead-dayoff">
+          <span class="annual-edit-modal__colhead-dayoff-title">店休</span>
+          <button type="button" class="annual-edit-modal__select-all" id="annual-edit-select-all">
+            すべて選択
+          </button>
+        </div>
+        <div class="annual-edit-modal__colhead-sales">
+          <span>売上</span>
+          <div class="annual-edit-modal__sales-sort" id="annual-edit-sales-sort-wrap">
+            <button
+              type="button"
+              class="annual-edit-modal__date-filter-toggle annual-edit-modal__sales-sort-toggle"
+              id="annual-edit-sales-sort-toggle"
+              aria-expanded="false"
+              aria-haspopup="true"
+              aria-controls="annual-edit-sales-sort-panel"
+              aria-label="売上で並べ替え"
+            >
+              <span class="annual-edit-modal__sort-icon" aria-hidden="true">▼</span>
+            </button>
+            <div
+              id="annual-edit-sales-sort-panel"
+              class="annual-edit-modal__date-filter-panel annual-edit-modal__sales-sort-panel"
+              role="group"
+              aria-label="売上の並べ替え"
+              hidden
+            >
+              <div class="annual-edit-modal__sales-sort-orders">
+                <button
+                  type="button"
+                  class="annual-edit-modal__sales-sort-btn"
+                  data-aem-sales-order="desc"
+                >
+                  降り順（売上 高→低）
+                </button>
+                <button
+                  type="button"
+                  class="annual-edit-modal__sales-sort-btn"
+                  data-aem-sales-order="asc"
+                >
+                  登り順（売上 低→高）
+                </button>
+              </div>
+              <div class="annual-edit-modal__sales-sort-section-label">数値順位</div>
+              <div class="annual-edit-modal__sales-sort-amounts" id="annual-edit-sales-sort-amounts"></div>
+              <button type="button" class="annual-edit-modal__filter-clear" id="annual-edit-sales-sort-reset">
+                日付順に戻す
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="annual-edit-modal__scroll">
+        <table class="annual-edit-modal__table" id="annual-edit-modal-table" aria-label="日次一覧"></table>
+      </div>
+    </div>
   </div>
 
   <footer class="site-footer">
@@ -3293,7 +4377,45 @@
         return 357971;
       }
 
-      function applyDailySelection(d) {
+      function getJumpYearBounds() {
+        var data = window.__ANNUAL_DATA || {};
+        var daily = data.daily || {};
+        var map = daily.targetSalesByDate || {};
+        var minYear = null;
+        Object.keys(map).forEach(function (k) {
+          var m = /^(\d{4})-\d{2}-\d{2}$/.exec(String(k));
+          if (!m) return;
+          var y = Number(m[1]);
+          if (!Number.isFinite(y)) return;
+          if (minYear == null || y < minYear) minYear = y;
+        });
+        if (minYear == null) {
+          var cur = parseISODateLocal(daily.selectedDate);
+          minYear = cur ? cur.getFullYear() : new Date().getFullYear();
+        }
+        var maxYear = new Date().getFullYear() + 5;
+        if (minYear > maxYear) minYear = maxYear;
+        return { minYear: minYear, maxYear: maxYear };
+      }
+
+      function isDateJumpAllowed(d) {
+        var b = getJumpYearBounds();
+        var y = d.getFullYear();
+        return y >= b.minYear && y <= b.maxYear;
+      }
+
+      function showJumpRangeMessage(d) {
+        var b = getJumpYearBounds();
+        var y = d.getFullYear();
+        window.alert('ジャンプ可能な年は ' + b.minYear + '年〜' + b.maxYear + '年 です。選択した ' + y + '年 は範囲外です。');
+      }
+
+      function applyDailySelection(d, source, opts) {
+        opts = opts || {};
+        if (!opts.skipJumpGuard && !isDateJumpAllowed(d)) {
+          showJumpRangeMessage(d);
+          return false;
+        }
         var iso = toISODateLocal(d);
         window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
         var target = resolveTargetSalesForDate(iso);
@@ -3304,10 +4426,19 @@
         targetEl.textContent = formatTargetSalesValue(target);
         document.dispatchEvent(
           new CustomEvent('annual:dailyDateChanged', {
-            detail: { isoDate: iso, date: d, targetSales: target }
+            detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
           })
         );
+        return true;
       }
+      window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+      window.__ANNUAL_UI.setDailyDateByISO = function (iso, source) {
+        var d = parseISODateLocal(iso);
+        if (!d) return false;
+        var src = source || 'focus-sync';
+        var opts = src === 'focus-sync' ? { skipJumpGuard: true } : {};
+        return applyDailySelection(d, src, opts);
+      };
 
       function daysInMonth(year, monthIndex0) {
         return new Date(year, monthIndex0 + 1, 0).getDate();
@@ -3332,9 +4463,9 @@
         shiftDailyDateToCalendarYear(Number(y));
       });
 
-      var initialIso = window.__ANNUAL_DATA.daily.selectedDate || '2025-06-07';
-      var initialDate = parseISODateLocal(initialIso) || parseISODateLocal('2025-06-07');
-      applyDailySelection(initialDate);
+      var nowInit = new Date();
+      var initialDate = new Date(nowInit.getFullYear(), nowInit.getMonth(), nowInit.getDate());
+      applyDailySelection(initialDate, 'initial', { skipJumpGuard: true });
 
       dateBtn.addEventListener('click', function () {
         dateBtn.setAttribute('aria-expanded', 'true');
@@ -3353,7 +4484,9 @@
         dateBtn.setAttribute('aria-expanded', 'false');
         var d = parseISODateLocal(dateInput.value);
         if (!d) return;
-        applyDailySelection(d);
+        var prevIso = window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate;
+        var ok = applyDailySelection(d, 'picker');
+        if (!ok && prevIso) dateInput.value = prevIso;
       });
 
       dateInput.addEventListener('blur', function () {
@@ -3363,7 +4496,8 @@
       todayBtn.addEventListener('click', function () {
         var now = new Date();
         var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        applyDailySelection(d);
+        var ok = applyDailySelection(d, 'today');
+        if (!ok) return;
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYear === 'function') {
           window.__ANNUAL_UI.setCalendarYear(d.getFullYear());
         }
@@ -3384,7 +4518,7 @@
         if (payload.targetSales != null) {
           window.__ANNUAL_DATA.daily.targetSales = Number(payload.targetSales);
         }
-        applyDailySelection(d);
+        applyDailySelection(d, 'server', { skipJumpGuard: true });
       };
     })();
     (function () {
@@ -3397,8 +4531,9 @@
       var moreBtn = document.getElementById('annual-focus-more-btn');
       var closeBtn = document.getElementById('annual-focus-close-btn');
       var wingHitBtn = document.getElementById('annual-daily-focus-wing-hit');
+      var wingHitLeft = document.getElementById('annual-daily-focus-wing-hit-left');
       var focusBarImg = document.getElementById('annual-daily-focus-bar-img');
-      if (!moreBtn || !closeBtn || !wingHitBtn || !focusBarImg) return;
+      if (!moreBtn || !closeBtn || !wingHitBtn || !wingHitLeft || !focusBarImg) return;
 
       function updateFocusBarImage(expanded) {
         var srcAttr = focusBarImg.getAttribute('src') || '';
@@ -3421,6 +4556,10 @@
         document.body.classList.toggle('annual-focus-bar-expanded', expanded);
         moreBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         wingHitBtn.setAttribute('aria-label', expanded ? '日次テーブルを縮小' : '日次テーブルを展開');
+        wingHitLeft.setAttribute(
+          'aria-label',
+          expanded ? 'フォーカス行を移動（上半分で1行上・下半分で1行下）' : 'フォーカス行を移動（上半分で1行上・下半分で1行下）'
+        );
         updateFocusBarImage(expanded);
         window.__ANNUAL_UI = window.__ANNUAL_UI || {};
         window.__ANNUAL_UI.focusBarExpanded = expanded;
@@ -3440,20 +4579,61 @@
       closeBtn.addEventListener('click', function () {
         setFocusBarExpanded(false);
       });
-      wingHitBtn.addEventListener('click', function (e) {
-        var expandedNow = document.body.classList.contains('annual-focus-bar-expanded');
-        if (!expandedNow) {
-          setFocusBarExpanded(true);
-          return;
-        }
-        var rect = wingHitBtn.getBoundingClientRect();
+      wingHitLeft.addEventListener('click', function (e) {
+        var rect = wingHitLeft.getBoundingClientRect();
         var relY = e.clientY - rect.top;
         var step = relY < rect.height / 2 ? -1 : 1;
         document.dispatchEvent(
           new CustomEvent('annual:focusBarStepRequested', { detail: { step: step } })
         );
       });
+      wingHitLeft.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          document.dispatchEvent(
+            new CustomEvent('annual:focusBarStepRequested', { detail: { step: e.key === 'ArrowUp' ? -1 : 1 } })
+          );
+          return;
+        }
+        if ((e.key === 'Enter' || e.key === ' ') && !document.body.classList.contains('annual-focus-bar-expanded')) {
+          e.preventDefault();
+          setFocusBarExpanded(true);
+        }
+      });
+      wingHitBtn.addEventListener('click', function (e) {
+        var expandedNow = document.body.classList.contains('annual-focus-bar-expanded');
+        if (!expandedNow) {
+          setFocusBarExpanded(true);
+          return;
+        }
+        /* Open時: 上▲/下▼は1行ずつ。中央帯は◀タブ＝閉じる（右ウィング全域をヒットで背面テーブルへ透過させない） */
+        var rect = wingHitBtn.getBoundingClientRect();
+        var relY = e.clientY - rect.top;
+        var h = rect.height;
+        var edgeFrac = 0.32;
+        var topBand = h * edgeFrac;
+        var bottomBand = h * edgeFrac;
+        if (relY < topBand) {
+          document.dispatchEvent(
+            new CustomEvent('annual:focusBarStepRequested', { detail: { step: -1 } })
+          );
+          return;
+        }
+        if (relY > h - bottomBand) {
+          document.dispatchEvent(
+            new CustomEvent('annual:focusBarStepRequested', { detail: { step: 1 } })
+          );
+          return;
+        }
+        setFocusBarExpanded(false);
+      });
       wingHitBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') {
+          if (!document.body.classList.contains('annual-focus-bar-expanded')) return;
+          e.preventDefault();
+          setFocusBarExpanded(false);
+          return;
+        }
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           e.preventDefault();
           document.dispatchEvent(
@@ -3489,7 +4669,7 @@
           var nodes = document.querySelectorAll(selectors[i]);
           for (var j = 0; j < nodes.length; j += 1) {
             nodes[j].style.transform = pinX ? 'translateX(' + pinX + 'px)' : '';
-            nodes[j].style.zIndex = pinX ? '4' : '';
+            nodes[j].style.zIndex = pinX ? '12' : '';
           }
         }
       }
@@ -3511,6 +4691,24 @@
       var SNAP_DELAY_MS = 110;
       var snapTimer = 0;
       var snapping = false;
+
+      /** 縦スムーズスクロール完了後にコールバック（scrollTop が目標に十分近いかタイムアウト） */
+      function waitForVerticalScrollSettle(targetTop, cb) {
+        var start = Date.now();
+        var maxMs = 900;
+        function tick() {
+          if (Math.abs(tableScroll.scrollTop - targetTop) < 0.51) {
+            cb();
+            return;
+          }
+          if (Date.now() - start > maxMs) {
+            cb();
+            return;
+          }
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
 
       function getFocusAnchorOffsetY() {
         var tableRect = tableScroll.getBoundingClientRect();
@@ -3555,26 +4753,38 @@
       function snapTableToNearestRow() {
         if (!body.classList.contains('annual-focus-bar-expanded')) return;
         var maxTop = tableScroll.scrollHeight - tableScroll.clientHeight;
-        if (maxTop <= 0) return;
+        if (maxTop <= 0) {
+          syncDailyDateFromFocusedRow();
+          return;
+        }
         var idx = getNearestFocusRowIndex();
         var target = getScrollTopForRowIndex(idx);
-        if (Math.abs(target - tableScroll.scrollTop) < 1) return;
+        if (Math.abs(target - tableScroll.scrollTop) < 1) {
+          syncDailyDateFromFocusedRowForIndex(idx);
+          return;
+        }
         snapping = true;
         tableScroll.scrollTo({ top: target, behavior: 'smooth' });
-        setTimeout(function () {
+        waitForVerticalScrollSettle(target, function () {
           snapping = false;
-        }, 220);
+          syncDailyDateFromFocusedRowForIndex(idx);
+        });
       }
 
       function scheduleSnap() {
-        if (!body.classList.contains('annual-focus-bar-expanded')) return;
         if (snapping) return;
         if (snapTimer) clearTimeout(snapTimer);
-        snapTimer = setTimeout(snapTableToNearestRow, SNAP_DELAY_MS);
+        snapTimer = setTimeout(function () {
+          snapTimer = 0;
+          if (body.classList.contains('annual-focus-bar-expanded')) {
+            snapTableToNearestRow();
+          } else {
+            syncDailyDateFromFocusedRow();
+          }
+        }, SNAP_DELAY_MS);
       }
 
       function stepTableByRows(step) {
-        if (!body.classList.contains('annual-focus-bar-expanded')) return;
         step = Number(step);
         if (!Number.isFinite(step) || step === 0) return;
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
@@ -3584,11 +4794,31 @@
         if (idx >= rows.length) idx = rows.length - 1;
         var target = getScrollTopForRowIndex(idx);
         if (snapTimer) clearTimeout(snapTimer);
+        if (Math.abs(target - tableScroll.scrollTop) < 1) {
+          syncDailyDateFromFocusedRowForIndex(idx);
+          return;
+        }
         snapping = true;
         tableScroll.scrollTo({ top: target, behavior: 'smooth' });
-        setTimeout(function () {
+        waitForVerticalScrollSettle(target, function () {
           snapping = false;
-        }, 220);
+          syncDailyDateFromFocusedRowForIndex(idx);
+        });
+      }
+
+      function syncDailyDateFromFocusedRowForIndex(idx) {
+        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
+        if (!rows || !rows.length) return;
+        if (idx < 0 || idx >= rows.length) return;
+        var iso = rows[idx].getAttribute('data-iso-date');
+        if (!iso) return;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
+        }
+      }
+
+      function syncDailyDateFromFocusedRow() {
+        syncDailyDateFromFocusedRowForIndex(getNearestFocusRowIndex());
       }
 
       tableScroll.addEventListener('scroll', function () {
@@ -3602,9 +4832,13 @@
       }
       var focusBarStack = document.querySelector('.annual-daily-focus-bar-stack');
       var wingHitBtn = document.getElementById('annual-daily-focus-wing-hit');
+      var wingHitLeft = document.getElementById('annual-daily-focus-wing-hit-left');
       function forwardWheelToHorizontalScroll(e) {
         var expandedNow = body.classList.contains('annual-focus-bar-expanded');
-        var overWing = e.target && e.target.closest && e.target.closest('#annual-daily-focus-wing-hit');
+        var overWing =
+          e.target &&
+          e.target.closest &&
+          e.target.closest('#annual-daily-focus-wing-hit, #annual-daily-focus-wing-hit-left');
         if (overWing) return;
 
         var absX = Math.abs(e.deltaX);
@@ -3615,6 +4849,7 @@
           if (!absY) return;
           e.preventDefault();
           tableScroll.scrollTop += e.deltaY;
+          scheduleSnap();
           return;
         }
 
@@ -3639,6 +4874,9 @@
       if (wingHitBtn) {
         wingHitBtn.addEventListener('wheel', forwardWheelToHorizontalScroll, { passive: false });
       }
+      if (wingHitLeft) {
+        wingHitLeft.addEventListener('wheel', forwardWheelToHorizontalScroll, { passive: false });
+      }
 
       document.addEventListener('annual:focusBarStateChanged', function () {
         if (snapTimer) clearTimeout(snapTimer);
@@ -3649,9 +4887,65 @@
         var step = ev.detail && ev.detail.step;
         stepTableByRows(step);
       });
+      document.addEventListener('annual:dailyDateChanged', function (ev) {
+        var iso = ev && ev.detail && ev.detail.isoDate;
+        var source = ev && ev.detail && ev.detail.source;
+        if (!iso) return;
+        if (source === 'focus-sync') return;
+
+        // Year変更やテーブル再描画直後に飛んだ場合に備えて短いリトライを入れる
+        var tries = 0;
+        var maxTries = 6;
+        function tryScrollToISO() {
+          tries += 1;
+          var row = document.querySelector('#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]');
+          if (!row) {
+            if (tries < maxTries) {
+              setTimeout(tryScrollToISO, 50);
+            }
+            return;
+          }
+          var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
+          var idx = -1;
+          for (var i = 0; i < rows.length; i += 1) {
+            if (rows[i] === row) {
+              idx = i;
+              break;
+            }
+          }
+          if (idx < 0) return;
+
+          if (snapTimer) clearTimeout(snapTimer);
+          snapping = true;
+          var target = getScrollTopForRowIndex(idx);
+          tableScroll.scrollTo({ top: target, behavior: 'smooth' });
+          setTimeout(function () {
+            snapping = false;
+          }, 220);
+        }
+        tryScrollToISO();
+      });
+      document.addEventListener('annual:focusBarHorizontalNudgeRequested', function (ev) {
+        if (!body.classList.contains('annual-focus-bar-expanded')) return;
+        var dir = ev.detail && ev.detail.direction;
+        if (dir !== 1 && dir !== -1) return;
+        var cw = tableScroll.clientWidth || 400;
+        var nudge = Math.min(420, Math.max(160, Math.round(cw * 0.28)));
+        tableScroll.scrollLeft += dir * nudge;
+        syncScrollLeft(tableScroll);
+      });
       if (!body.classList.contains('annual-focus-bar-expanded')) {
         syncScrollLeft(tableScroll);
       }
+      // 初期描画時の selectedDate を確実に Focus Bar 側へ同期（リスナー登録後に実行）
+      setTimeout(function () {
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var iso = daily && daily.selectedDate;
+        if (!iso) return;
+        document.dispatchEvent(
+          new CustomEvent('annual:dailyDateChanged', { detail: { isoDate: iso, source: 'initial-sync' } })
+        );
+      }, 0);
     })();
     (function () {
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
@@ -3844,26 +5138,32 @@
       }
 
       var raf = 0;
+      var LOWER_ROW_STEP_PX = 49;
+
       function refreshLower() {
         if (raf) cancelAnimationFrame(raf);
         raf = requestAnimationFrame(function () {
           var state = getFocusedRowState();
           writeLowerFromRow(state.row);
-          if (document.body.classList.contains('annual-focus-bar-expanded')) {
-            lower.style.transform = 'translateY(' + (-state.offset) + 'px)';
-            var rows = rowsRoot.children;
-            var prevRow = state.idx > 0 ? rows[state.idx - 1] : state.row;
-            var nextRow = state.idx < rows.length - 1 ? rows[state.idx + 1] : state.row;
-            writeLowerFromRowTo(lowerPrev, prevRow);
-            writeLowerFromRowTo(lowerNext, nextRow);
-            lowerPrev.style.display = 'flex';
-            lowerNext.style.display = 'flex';
-            lowerPrev.style.transform = 'translateY(' + (-state.offset - 49) + 'px)';
-            lowerNext.style.transform = 'translateY(' + (-state.offset + 49) + 'px)';
+          var expanded = document.body.classList.contains('annual-focus-bar-expanded');
+          var rows = rowsRoot.children;
+          var prevRow = state.idx > 0 ? rows[state.idx - 1] : state.row;
+          var nextRow = state.idx < rows.length - 1 ? rows[state.idx + 1] : state.row;
+          writeLowerFromRowTo(lowerPrev, prevRow);
+          writeLowerFromRowTo(lowerNext, nextRow);
+          lowerPrev.style.display = 'flex';
+          lowerNext.style.display = 'flex';
+          var oy = -state.offset;
+          if (expanded) {
+            lower.style.transform = 'translateY(' + oy + 'px)';
+            lowerPrev.style.transform = 'translateY(' + (oy - LOWER_ROW_STEP_PX) + 'px)';
+            lowerNext.style.transform = 'translateY(' + (oy + LOWER_ROW_STEP_PX) + 'px)';
           } else {
-            lower.style.transform = '';
-            lowerPrev.style.display = 'none';
-            lowerNext.style.display = 'none';
+            lower.style.transform = 'translate(-50%, calc(-50% + ' + oy + 'px))';
+            lowerPrev.style.transform =
+              'translate(-50%, calc(-50% + ' + (oy - LOWER_ROW_STEP_PX) + 'px))';
+            lowerNext.style.transform =
+              'translate(-50%, calc(-50% + ' + (oy + LOWER_ROW_STEP_PX) + 'px))';
           }
         });
       }
@@ -3874,6 +5174,912 @@
         setTimeout(refreshLower, 0);
       });
       setTimeout(refreshLower, 0);
+    })();
+  </script>
+  <script>
+    (function () {
+      var modal = document.getElementById('annual-edit-modal');
+      var backdrop = document.getElementById('annual-edit-modal-backdrop');
+      var btnClose = document.getElementById('annual-edit-modal-close');
+      var btnSave = document.getElementById('annual-edit-modal-save');
+      var btnEdit = document.getElementById('annual-daily-focus-edit-btn');
+      var modalTable = document.getElementById('annual-edit-modal-table');
+      var yearSelect = document.getElementById('annual-edit-year-select');
+      var monthSelect = document.getElementById('annual-edit-month-select');
+      var yearPrev = document.getElementById('annual-edit-year-prev');
+      var yearNext = document.getElementById('annual-edit-year-next');
+      var monthPrev = document.getElementById('annual-edit-month-prev');
+      var monthNext = document.getElementById('annual-edit-month-next');
+      var dateHeaderBtn = document.getElementById('annual-edit-date-header-btn');
+      var dateInput = document.getElementById('annual-edit-colhead-date-input');
+      var dateFilterWrap = document.getElementById('annual-edit-date-filter-wrap');
+      var dateFilterToggle = document.getElementById('annual-edit-date-filter-toggle');
+      var dateFilterPanel = document.getElementById('annual-edit-date-filter-panel');
+      var filterHolidayCb = document.getElementById('annual-edit-filter-holiday');
+      var filterClearBtn = document.getElementById('annual-edit-filter-clear');
+      var salesSortWrap = document.getElementById('annual-edit-sales-sort-wrap');
+      var salesSortToggle = document.getElementById('annual-edit-sales-sort-toggle');
+      var salesSortPanel = document.getElementById('annual-edit-sales-sort-panel');
+      var salesSortResetBtn = document.getElementById('annual-edit-sales-sort-reset');
+      var salesSortAmountsHost = document.getElementById('annual-edit-sales-sort-amounts');
+      var selectAllBtn = document.getElementById('annual-edit-select-all');
+      var scrollEl = modal ? modal.querySelector('.annual-edit-modal__scroll') : null;
+
+      if (!modal || !modalTable || !btnEdit) return;
+
+      var isJa = document.documentElement.getAttribute('lang') === 'ja';
+      var MONTHS_JA = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      var MONTHS_EN = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ];
+      var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+      var state = {
+        year: 2026,
+        viewMonth: 0,
+        rowStateByIso: {},
+        salesPinnedAmount: null,
+        salesAmountSort: null,
+        modalDirty: false
+      };
+      var lastFocusEl = null;
+      var MSG_UNSAVED_CLOSE = isJa
+        ? '変更が保存されていません。保存せずに閉じますか？'
+        : 'You have unsaved changes. Close without saving?';
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+
+      function daysInMonth(y, m0) {
+        return new Date(y, m0 + 1, 0).getDate();
+      }
+
+      function getCalendarYear() {
+        var d = window.__ANNUAL_DATA;
+        if (d && d.calendarYear != null) return Number(d.calendarYear);
+        return new Date().getFullYear();
+      }
+
+      function clampYear(yr) {
+        var minY = 2000;
+        var maxY = new Date().getFullYear() + 5;
+        return Math.max(minY, Math.min(maxY, yr));
+      }
+
+      function ensureYearOptions() {
+        if (!yearSelect) return;
+        var minY = 2000;
+        var maxY = new Date().getFullYear() + 5;
+        var rebuild = yearSelect.options.length === 0;
+        if (!rebuild) {
+          var lo = Number(yearSelect.options[0].value);
+          var hi = Number(yearSelect.options[yearSelect.options.length - 1].value);
+          if (lo !== minY || hi !== maxY) rebuild = true;
+        }
+        if (rebuild) {
+          yearSelect.innerHTML = '';
+          for (var y = minY; y <= maxY; y++) {
+            var opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = String(y);
+            yearSelect.appendChild(opt);
+          }
+        }
+      }
+
+      function ensureMonthOptions() {
+        if (!monthSelect || monthSelect.options.length === 12) return;
+        monthSelect.innerHTML = '';
+        var labels = isJa ? MONTHS_JA : MONTHS_EN;
+        for (var i = 0; i < 12; i++) {
+          var opt = document.createElement('option');
+          opt.value = String(i);
+          opt.textContent = labels[i];
+          monthSelect.appendChild(opt);
+        }
+      }
+
+      function syncSelectsFromState() {
+        ensureYearOptions();
+        ensureMonthOptions();
+        if (yearSelect) {
+          var y = clampYear(state.year);
+          state.year = y;
+          yearSelect.value = String(y);
+        }
+        if (monthSelect) {
+          monthSelect.value = String(state.viewMonth);
+        }
+      }
+
+      function syncYearMonthFromApp() {
+        state.year = clampYear(getCalendarYear());
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var iso = daily && daily.selectedDate;
+        state.viewMonth = 0;
+        if (iso && typeof iso === 'string') {
+          var p = iso.split('-');
+          if (p.length >= 2) {
+            var m = Number(p[1]);
+            if (m >= 1 && m <= 12) state.viewMonth = m - 1;
+          }
+        }
+        syncSelectsFromState();
+      }
+
+      function syncColheadDatePickerBounds() {
+        if (!dateInput) return;
+        var minY = 2000;
+        var maxY = new Date().getFullYear() + 5;
+        dateInput.min = minY + '-01-01';
+        dateInput.max = maxY + '-12-31';
+      }
+
+      function syncColheadDatePickerValue() {
+        if (!dateInput) return;
+        syncColheadDatePickerBounds();
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var isoPick = daily && daily.selectedDate;
+        if (isoPick && typeof isoPick === 'string') {
+          var parts = isoPick.split('-');
+          if (parts.length >= 3) {
+            var py = Number(parts[0]);
+            if (py === state.year) {
+              var pm = Number(parts[1]);
+              var pd = Number(parts[2]);
+              if (pm >= 1 && pm <= 12 && pd >= 1 && pd <= daysInMonth(py, pm - 1)) {
+                dateInput.value = isoPick;
+                return;
+              }
+            }
+          }
+        }
+        dateInput.value = state.year + '-' + pad2(state.viewMonth + 1) + '-01';
+      }
+
+      function scrollToIsoDate(iso) {
+        if (!scrollEl || !modalTable || !iso) return;
+        var cb = modalTable.querySelector('.annual-edit-modal__cb[data-iso-date="' + iso + '"]');
+        if (!cb) return;
+        var tr = cb.closest('tr');
+        if (tr) tr.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+
+      function openColheadDatePicker() {
+        if (!dateInput) return;
+        syncColheadDatePickerBounds();
+        syncColheadDatePickerValue();
+        dateInput.focus();
+        if (typeof dateInput.showPicker === 'function') {
+          try {
+            dateInput.showPicker();
+            return;
+          } catch (e) {}
+        }
+        dateInput.click();
+      }
+
+      function formatDateCell(y, m0, day, off) {
+        var d = new Date(y, m0, day);
+        var dow = d.getDay();
+        var label;
+        if (isJa) {
+          label = m0 + 1 + '/' + day + ' ' + WEEKDAYS_JA[dow];
+          if (off) label += ' OFF';
+        } else {
+          label = m0 + 1 + '/' + day + ' ' + WEEKDAYS_EN[dow];
+          if (off) label += ' OFF';
+        }
+        return label;
+      }
+
+      function fmtSalesInput(n) {
+        if (n == null || !isFinite(Number(n))) n = 0;
+        var v = Math.round(Number(n));
+        if (isJa) return '¥' + v.toLocaleString('ja-JP');
+        return '$' + v.toLocaleString('en-US');
+      }
+
+      function rowApplyOffState(tr, cb, dateTd) {
+        var iso = cb.getAttribute('data-iso-date');
+        if (!iso) return;
+        var p = iso.split('-');
+        var y = Number(p[0]);
+        var m0 = Number(p[1]) - 1;
+        var day = Number(p[2]);
+        var off = cb.checked;
+        dateTd.textContent = formatDateCell(y, m0, day, off);
+        tr.classList.toggle('annual-edit-modal__row--off', off);
+        var inp = tr.querySelector('.annual-edit-modal__sales-input');
+        if (!inp) return;
+        if (off) {
+          inp.readOnly = true;
+          inp.value = fmtSalesInput(0);
+        } else {
+          inp.readOnly = false;
+          var last = inp.getAttribute('data-last-active');
+          inp.value = fmtSalesInput(last != null && last !== '' ? Number(last) : 1234);
+        }
+        persistRowState(tr);
+      }
+
+      function persistRowState(tr) {
+        var cb = tr.querySelector('.annual-edit-modal__cb');
+        var inp = tr.querySelector('.annual-edit-modal__sales-input');
+        if (!cb) return;
+        var iso = cb.getAttribute('data-iso-date');
+        if (!iso) return;
+        state.rowStateByIso[iso] = {
+          off: cb.checked,
+          last:
+            inp && inp.getAttribute('data-last-active') != null && inp.getAttribute('data-last-active') !== ''
+              ? inp.getAttribute('data-last-active')
+              : '1234'
+        };
+        state.modalDirty = true;
+      }
+
+      function getRowDefaults(iso, isWk) {
+        var s = state.rowStateByIso[iso];
+        if (s) {
+          return {
+            off: !!s.off,
+            last: s.last != null && s.last !== '' ? String(s.last) : '1234'
+          };
+        }
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var map = daily && daily.targetSalesByDate;
+        if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
+          var n = Number(map[iso]);
+          if (!isFinite(n)) n = 0;
+          if (n === 0) {
+            return { off: true, last: '1234' };
+          }
+          return { off: false, last: String(Math.round(n)) };
+        }
+        return { off: !!isWk, last: '1234' };
+      }
+
+      function saveModalEdits() {
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+        window.__ANNUAL_DATA.daily.targetSalesByDate = window.__ANNUAL_DATA.daily.targetSalesByDate || {};
+        var map = window.__ANNUAL_DATA.daily.targetSalesByDate;
+        var all = gatherYearDays(state.year);
+        for (var i = 0; i < all.length; i++) {
+          var item = all[i];
+          var defs = getRowDefaults(item.iso, item.isWk);
+          map[item.iso] = defs.off ? 0 : Math.round(Number(defs.last));
+        }
+        state.rowStateByIso = {};
+        state.modalDirty = false;
+        document.dispatchEvent(
+          new CustomEvent('annual:editModalSaved', { detail: { year: state.year } })
+        );
+      }
+
+      function requestCloseModal() {
+        if (state.modalDirty && !window.confirm(MSG_UNSAVED_CLOSE)) return;
+        closeModal();
+      }
+
+      function isNationalHolidayIso(iso) {
+        var d = window.__ANNUAL_DATA;
+        if (!d || !iso) return false;
+        var h = d.nationalHolidays;
+        if (Array.isArray(h)) return h.indexOf(iso) >= 0;
+        if (h && typeof h === 'object') return !!h[iso];
+        return false;
+      }
+
+      function readDateFilterFromUi() {
+        var dow = {};
+        var els = modal.querySelectorAll('.annual-edit-modal__filter-dow');
+        for (var i = 0; i < els.length; i++) {
+          if (els[i].checked) dow[els[i].value] = true;
+        }
+        return { dow: dow, holiday: !!(filterHolidayCb && filterHolidayCb.checked) };
+      }
+
+      function isDateFilterActive(optFilter) {
+        var f = optFilter || readDateFilterFromUi();
+        if (f.holiday) return true;
+        for (var k in f.dow) {
+          if (f.dow[k]) return true;
+        }
+        return false;
+      }
+
+      function dayPassesFilter(item, optFilter) {
+        var f = optFilter || readDateFilterFromUi();
+        if (!isDateFilterActive(f)) return true;
+        var dowOk = !!f.dow[String(item.dow)];
+        var holOk = f.holiday && isNationalHolidayIso(item.iso);
+        return dowOk || holOk;
+      }
+
+      function gatherYearDays(y) {
+        var list = [];
+        for (var m0 = 0; m0 < 12; m0++) {
+          var dc = daysInMonth(y, m0);
+          for (var day = 1; day <= dc; day++) {
+            var d = new Date(y, m0, day);
+            var dow = d.getDay();
+            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+            var isWk = dow === 0 || dow === 6;
+            list.push({ y: y, m0: m0, day: day, iso: iso, dow: dow, isWk: isWk });
+          }
+        }
+        return list;
+      }
+
+      function closeDateFilterPanel() {
+        if (!dateFilterPanel) return;
+        dateFilterPanel.hidden = true;
+        if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openDateFilterPanel() {
+        if (!dateFilterPanel) return;
+        dateFilterPanel.hidden = false;
+        if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function updateFilterToggleActive() {
+        if (!dateFilterToggle) return;
+        dateFilterToggle.classList.toggle('is-active', isDateFilterActive());
+      }
+
+      function clearDateFilterUi() {
+        var els = modal.querySelectorAll('.annual-edit-modal__filter-dow');
+        for (var i = 0; i < els.length; i++) els[i].checked = false;
+        if (filterHolidayCb) filterHolidayCb.checked = false;
+        closeDateFilterPanel();
+        updateFilterToggleActive();
+      }
+
+      function getSortableSalesAmountForRow(item) {
+        var defs = getRowDefaults(item.iso, item.isWk);
+        if (defs.off) return 0;
+        var n = Number(defs.last);
+        return isFinite(n) ? n : 0;
+      }
+
+      function roundedSalesAmountForRow(item) {
+        return Math.round(getSortableSalesAmountForRow(item));
+      }
+
+      function getDateFilteredRowItems() {
+        var y = state.year;
+        var filterSnapshot = readDateFilterFromUi();
+        var all = gatherYearDays(y);
+        var rows = [];
+        for (var a = 0; a < all.length; a++) {
+          if (dayPassesFilter(all[a], filterSnapshot)) rows.push(all[a]);
+        }
+        return rows;
+      }
+
+      function collectUniqueSalesAmountsDesc(rows) {
+        var seen = Object.create(null);
+        for (var i = 0; i < rows.length; i++) {
+          seen[roundedSalesAmountForRow(rows[i])] = true;
+        }
+        var out = [];
+        for (var k in seen) {
+          if (Object.prototype.hasOwnProperty.call(seen, k)) out.push(Number(k));
+        }
+        out.sort(function (a, b) {
+          return b - a;
+        });
+        return out;
+      }
+
+      function syncSalesPinnedAmountValid(rows) {
+        if (state.salesPinnedAmount == null) return;
+        var list = collectUniqueSalesAmountsDesc(rows);
+        var ok = false;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] === state.salesPinnedAmount) {
+            ok = true;
+            break;
+          }
+        }
+        if (!ok) state.salesPinnedAmount = null;
+      }
+
+      function refreshSalesSortAmountButtons(amountsDesc) {
+        if (!salesSortAmountsHost) return;
+        salesSortAmountsHost.innerHTML = '';
+        for (var i = 0; i < amountsDesc.length; i++) {
+          var amt = amountsDesc[i];
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'annual-edit-modal__sales-sort-btn';
+          btn.setAttribute('data-aem-sales-amount', String(amt));
+          btn.textContent = fmtSalesInput(amt);
+          if (state.salesPinnedAmount != null && state.salesPinnedAmount === amt) {
+            btn.classList.add('is-active');
+          }
+          salesSortAmountsHost.appendChild(btn);
+        }
+      }
+
+      function updateSalesSortOrderButtonsActive() {
+        var orderBtns = modal.querySelectorAll('[data-aem-sales-order]');
+        for (var i = 0; i < orderBtns.length; i++) {
+          var el = orderBtns[i];
+          var o = el.getAttribute('data-aem-sales-order');
+          var on = state.salesPinnedAmount == null && state.salesAmountSort === o;
+          el.classList.toggle('is-active', !!on);
+        }
+      }
+
+      function closeSalesSortPanel() {
+        if (!salesSortPanel) return;
+        salesSortPanel.hidden = true;
+        if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openSalesSortPanel() {
+        if (!salesSortPanel) return;
+        var rowItems = getDateFilteredRowItems();
+        syncSalesPinnedAmountValid(rowItems);
+        refreshSalesSortAmountButtons(collectUniqueSalesAmountsDesc(rowItems));
+        updateSalesSortOrderButtonsActive();
+        updateSalesSortToggleActive();
+        salesSortPanel.hidden = false;
+        if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function updateSalesSortToggleActive() {
+        if (!salesSortToggle) return;
+        salesSortToggle.classList.toggle(
+          'is-active',
+          state.salesPinnedAmount != null || state.salesAmountSort != null
+        );
+      }
+
+      function renderTable() {
+        var rows = getDateFilteredRowItems();
+        syncSalesPinnedAmountValid(rows);
+        var amountsDesc = collectUniqueSalesAmountsDesc(rows);
+        refreshSalesSortAmountButtons(amountsDesc);
+        updateSalesSortOrderButtonsActive();
+
+        var displayRows = rows.slice();
+        if (state.salesPinnedAmount != null) {
+          displayRows = displayRows.filter(function (item) {
+            return roundedSalesAmountForRow(item) === state.salesPinnedAmount;
+          });
+          displayRows.sort(function (a, b) {
+            if (a.iso < b.iso) return -1;
+            if (a.iso > b.iso) return 1;
+            return 0;
+          });
+        } else if (state.salesAmountSort === 'asc' || state.salesAmountSort === 'desc') {
+          var desc = state.salesAmountSort === 'desc';
+          displayRows.sort(function (a, b) {
+            var va = roundedSalesAmountForRow(a);
+            var vb = roundedSalesAmountForRow(b);
+            if (va !== vb) return desc ? vb - va : va - vb;
+            if (a.iso < b.iso) return -1;
+            if (a.iso > b.iso) return 1;
+            return 0;
+          });
+        }
+
+        var showMonthCol = state.salesPinnedAmount == null && state.salesAmountSort == null;
+        var tableEl = document.getElementById('annual-edit-modal-table');
+        if (tableEl) {
+          tableEl.classList.toggle('annual-edit-modal__table--no-month', !showMonthCol);
+        }
+
+        while (modalTable.firstChild) modalTable.removeChild(modalTable.firstChild);
+
+        var tbodySeg = null;
+        function ensureTbodySeg() {
+          if (!tbodySeg) {
+            tbodySeg = document.createElement('tbody');
+            modalTable.appendChild(tbodySeg);
+          }
+        }
+
+        for (var i = 0; i < displayRows.length; i++) {
+          var item = displayRows[i];
+          var segBoundary = showMonthCol && (i === 0 || displayRows[i - 1].m0 !== item.m0);
+          if (segBoundary) {
+            tbodySeg = null;
+          }
+          ensureTbodySeg();
+
+          let tr = document.createElement('tr');
+          tr.setAttribute('role', 'row');
+          tr.setAttribute('data-iso-date', item.iso);
+          tr.setAttribute('data-month-idx', String(item.m0));
+
+          if (showMonthCol) {
+            if (i === 0 || displayRows[i - 1].m0 !== item.m0) {
+              tr.setAttribute('data-month-start', String(item.m0));
+            }
+            var showMonthTd = i === 0 || displayRows[i - 1].m0 !== item.m0;
+            if (showMonthTd) {
+              var rowspan = 1;
+              for (var j = i + 1; j < displayRows.length && displayRows[j].m0 === item.m0; j++) rowspan++;
+              var tdM = document.createElement('td');
+              tdM.className = 'annual-edit-modal__month-td';
+              tdM.rowSpan = rowspan;
+              var monthLab = document.createElement('span');
+              monthLab.className = 'annual-edit-modal__month-td-label';
+              monthLab.textContent = isJa ? MONTHS_JA[item.m0] : MONTHS_EN[item.m0];
+              tdM.appendChild(monthLab);
+              tr.appendChild(tdM);
+            }
+          }
+
+          var defs = getRowDefaults(item.iso, item.isWk);
+          var off = defs.off;
+
+          let tdDate = document.createElement('td');
+          tdDate.className = 'annual-edit-modal__date-td';
+          tdDate.textContent = formatDateCell(item.y, item.m0, item.day, off);
+
+          let tdCb = document.createElement('td');
+          tdCb.className = 'annual-edit-modal__cb-td';
+          let cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = 'annual-edit-modal__cb';
+          cb.setAttribute('data-iso-date', item.iso);
+          cb.checked = off;
+          cb.setAttribute('aria-label', isJa ? '店休日' : 'Day off');
+          tdCb.appendChild(cb);
+
+          let tdSales = document.createElement('td');
+          tdSales.className = 'annual-edit-modal__sales-td';
+          let inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = 'annual-edit-modal__sales-input';
+          inp.setAttribute('data-iso-date', item.iso);
+          inp.setAttribute('inputmode', 'decimal');
+          inp.setAttribute('data-last-active', defs.last);
+          if (off) {
+            inp.value = fmtSalesInput(0);
+            inp.readOnly = true;
+          } else {
+            inp.value = fmtSalesInput(
+              defs.last != null && defs.last !== '' ? Number(defs.last) : 1234
+            );
+            inp.readOnly = false;
+          }
+          tdSales.appendChild(inp);
+
+          tr.appendChild(tdDate);
+          tr.appendChild(tdCb);
+          tr.appendChild(tdSales);
+          if (off) tr.classList.add('annual-edit-modal__row--off');
+
+          cb.addEventListener('change', function () {
+            var inpEl = tr.querySelector('.annual-edit-modal__sales-input');
+            if (cb.checked && inpEl && !inpEl.readOnly) {
+              var raw = String(inpEl.value || '').replace(/[^\d.-]/g, '');
+              if (raw !== '') inpEl.setAttribute('data-last-active', String(Number(raw)));
+            }
+            rowApplyOffState(tr, cb, tdDate);
+            if (state.salesPinnedAmount != null || state.salesAmountSort != null) renderTable();
+          });
+          inp.addEventListener('input', function () {
+            state.modalDirty = true;
+          });
+          inp.addEventListener('change', function () {
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
+            persistRowState(tr);
+            if (state.salesPinnedAmount != null || state.salesAmountSort != null) renderTable();
+          });
+
+          tbodySeg.appendChild(tr);
+        }
+        updateFilterToggleActive();
+        updateSalesSortToggleActive();
+      }
+
+      function scrollToViewMonth() {
+        if (!scrollEl) return;
+        var target = modalTable.querySelector('tr[data-month-idx="' + state.viewMonth + '"]');
+        if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        else scrollEl.scrollTop = 0;
+      }
+
+      function openModal() {
+        lastFocusEl = document.activeElement;
+        state.rowStateByIso = {};
+        state.salesPinnedAmount = null;
+        state.salesAmountSort = null;
+        syncYearMonthFromApp();
+        syncColheadDatePickerValue();
+        clearDateFilterUi();
+        closeSalesSortPanel();
+        renderTable();
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        scrollToViewMonth();
+        state.modalDirty = false;
+        if (btnClose) btnClose.focus();
+      }
+
+      function closeModal() {
+        closeDateFilterPanel();
+        closeSalesSortPanel();
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (lastFocusEl && typeof lastFocusEl.focus === 'function') lastFocusEl.focus();
+        else btnEdit.focus();
+      }
+
+      btnEdit.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+      });
+      if (btnClose) btnClose.addEventListener('click', requestCloseModal);
+      if (backdrop) backdrop.addEventListener('click', requestCloseModal);
+      if (btnSave) btnSave.addEventListener('click', saveModalEdits);
+
+      document.addEventListener('keydown', function (e) {
+        if (!modal || modal.hidden) return;
+        if (e.key === 'Escape') {
+          if (salesSortPanel && !salesSortPanel.hidden) {
+            e.preventDefault();
+            closeSalesSortPanel();
+            return;
+          }
+          if (dateFilterPanel && !dateFilterPanel.hidden) {
+            e.preventDefault();
+            closeDateFilterPanel();
+            return;
+          }
+          e.preventDefault();
+          requestCloseModal();
+        }
+      });
+
+      document.addEventListener('mousedown', function (e) {
+        if (!modal || modal.hidden) return;
+        if (dateFilterPanel && !dateFilterPanel.hidden) {
+          if (!dateFilterWrap || !dateFilterWrap.contains(e.target)) closeDateFilterPanel();
+        }
+        if (salesSortPanel && !salesSortPanel.hidden) {
+          if (!salesSortWrap || !salesSortWrap.contains(e.target)) closeSalesSortPanel();
+        }
+      });
+
+      if (dateFilterToggle) {
+        dateFilterToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (dateFilterPanel.hidden) openDateFilterPanel();
+          else closeDateFilterPanel();
+        });
+      }
+
+      function onDateFilterOptionChange() {
+        renderTable();
+        scrollToViewMonth();
+      }
+
+      var dowEls = modal.querySelectorAll('.annual-edit-modal__filter-dow');
+      for (var di = 0; di < dowEls.length; di++) {
+        dowEls[di].addEventListener('change', onDateFilterOptionChange);
+      }
+      if (filterHolidayCb) filterHolidayCb.addEventListener('change', onDateFilterOptionChange);
+      if (filterClearBtn) {
+        filterClearBtn.addEventListener('click', function () {
+          clearDateFilterUi();
+          renderTable();
+          scrollToViewMonth();
+        });
+      }
+
+      if (salesSortToggle) {
+        salesSortToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (salesSortPanel.hidden) openSalesSortPanel();
+          else closeSalesSortPanel();
+        });
+      }
+      if (salesSortPanel) {
+        salesSortPanel.addEventListener('click', function (e) {
+          var orderBtn = e.target.closest('[data-aem-sales-order]');
+          if (orderBtn) {
+            var o = orderBtn.getAttribute('data-aem-sales-order');
+            if (o === 'asc' || o === 'desc') {
+              state.salesAmountSort = o;
+              state.salesPinnedAmount = null;
+              closeSalesSortPanel();
+              renderTable();
+              if (scrollEl) scrollEl.scrollTop = 0;
+            }
+            return;
+          }
+          var btn = e.target.closest('[data-aem-sales-amount]');
+          if (!btn) return;
+          var v = Number(btn.getAttribute('data-aem-sales-amount'));
+          if (!isFinite(v)) return;
+          state.salesPinnedAmount = Math.round(v);
+          state.salesAmountSort = null;
+          closeSalesSortPanel();
+          renderTable();
+          if (scrollEl) scrollEl.scrollTop = 0;
+        });
+      }
+      if (salesSortResetBtn) {
+        salesSortResetBtn.addEventListener('click', function () {
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          closeSalesSortPanel();
+          renderTable();
+          scrollToViewMonth();
+        });
+      }
+
+      if (yearSelect) {
+        yearSelect.addEventListener('change', function () {
+          var y = Number(yearSelect.value);
+          if (!isFinite(y)) return;
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampYear(y);
+          yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderTable();
+          scrollToViewMonth();
+        });
+      }
+      if (monthSelect) {
+        monthSelect.addEventListener('change', function () {
+          var m = Number(monthSelect.value);
+          if (!isFinite(m) || m < 0 || m > 11) return;
+          state.viewMonth = m;
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+
+      if (dateHeaderBtn) {
+        dateHeaderBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          openColheadDatePicker();
+        });
+      }
+      if (dateInput) {
+        dateInput.addEventListener('change', function () {
+          var v = dateInput.value;
+          if (!v) return;
+          var p = v.split('-');
+          var y = clampYear(Number(p[0]));
+          var m = Number(p[1]);
+          var d = Number(p[2]);
+          if (!isFinite(m) || !isFinite(d) || m < 1 || m > 12) return;
+          var dim = daysInMonth(y, m - 1);
+          if (d < 1 || d > dim) return;
+          var iso = y + '-' + pad2(m) + '-' + pad2(d);
+          var prevYear = state.year;
+          state.year = y;
+          state.viewMonth = m - 1;
+          if (yearSelect) yearSelect.value = String(state.year);
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          if (prevYear !== state.year) {
+            state.rowStateByIso = {};
+            state.modalDirty = false;
+            state.salesPinnedAmount = null;
+            state.salesAmountSort = null;
+            renderTable();
+          }
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              scrollToIsoDate(iso);
+            });
+          });
+        });
+      }
+
+      if (yearPrev) {
+        yearPrev.addEventListener('click', function () {
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampYear(state.year - 1);
+          if (yearSelect) yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderTable();
+          scrollToViewMonth();
+        });
+      }
+      if (yearNext) {
+        yearNext.addEventListener('click', function () {
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampYear(state.year + 1);
+          if (yearSelect) yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderTable();
+          scrollToViewMonth();
+        });
+      }
+      if (monthPrev) {
+        monthPrev.addEventListener('click', function () {
+          state.viewMonth = (state.viewMonth + 11) % 12;
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+      if (monthNext) {
+        monthNext.addEventListener('click', function () {
+          state.viewMonth = (state.viewMonth + 1) % 12;
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+
+      if (selectAllBtn)
+        selectAllBtn.addEventListener('click', function () {
+          var rows = modalTable.querySelectorAll('tr');
+          var allChecked = true;
+          var any = false;
+          for (var j = 0; j < rows.length; j++) {
+            var tr0 = rows[j];
+            var cb0 = tr0.querySelector('.annual-edit-modal__cb');
+            if (!cb0) continue;
+            any = true;
+            if (!cb0.checked) {
+              allChecked = false;
+              break;
+            }
+          }
+          if (!any) return;
+          var turnOn = !allChecked;
+          for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var cb = tr.querySelector('.annual-edit-modal__cb');
+            var dateTd = tr.querySelector('.annual-edit-modal__date-td');
+            if (!cb || !dateTd) continue;
+            var inpEl = tr.querySelector('.annual-edit-modal__sales-input');
+            if (turnOn) {
+              if (inpEl && !cb.checked && !inpEl.readOnly) {
+                var raw = String(inpEl.value || '').replace(/[^\d.-]/g, '');
+                if (raw !== '') inpEl.setAttribute('data-last-active', String(Number(raw)));
+              }
+              cb.checked = true;
+            } else {
+              if (inpEl && cb.checked && !inpEl.readOnly) {
+                var raw2 = String(inpEl.value || '').replace(/[^\d.-]/g, '');
+                if (raw2 !== '') inpEl.setAttribute('data-last-active', String(Number(raw2)));
+              }
+              cb.checked = false;
+            }
+            rowApplyOffState(tr, cb, dateTd);
+          }
+        });
     })();
   </script>
 </body>
