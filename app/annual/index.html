@@ -4044,12 +4044,75 @@
     (function () {
       var bdEl = document.getElementById('annual-total-bd-value');
       if (!bdEl) return;
-      var fallback = 286;
-      var v = fallback;
-      if (window.__ANNUAL_DATA && Number.isFinite(Number(window.__ANNUAL_DATA.totalBusinessDay))) {
-        v = Number(window.__ANNUAL_DATA.totalBusinessDay);
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
       }
-      bdEl.textContent = String(v);
+
+      /** Edit モーダル save と同じ前提: map にキーがあり 0 なら店休、正の数なら営業。未設定は土日休み・平日営業。 */
+      function isCalendarBusinessDay(y, m0, day) {
+        var d = new Date(y, m0, day);
+        if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
+        var dow = d.getDay();
+        var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var map = daily && daily.targetSalesByDate;
+        var isWk = dow === 0 || dow === 6;
+        if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
+          var n = Number(map[iso]);
+          if (!isFinite(n)) return !isWk;
+          if (n === 0) return false;
+          return true;
+        }
+        return !isWk;
+      }
+
+      function countBusinessDaysInMonth(y, m0) {
+        var dc = new Date(y, m0 + 1, 0).getDate();
+        var c = 0;
+        for (var day = 1; day <= dc; day++) {
+          if (isCalendarBusinessDay(y, m0, day)) c++;
+        }
+        return c;
+      }
+
+      function countBusinessDaysInYear(y) {
+        y = Number(y);
+        if (!isFinite(y)) return 0;
+        var c = 0;
+        for (var m0 = 0; m0 < 12; m0++) c += countBusinessDaysInMonth(y, m0);
+        return c;
+      }
+
+      function syncBusinessDayDisplayFromDailyMap() {
+        var cy =
+          window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear != null
+            ? Number(window.__ANNUAL_DATA.calendarYear)
+            : new Date().getFullYear();
+        if (!isFinite(cy)) cy = new Date().getFullYear();
+        var total = countBusinessDaysInYear(cy);
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.totalBusinessDay = total;
+        bdEl.textContent = String(total);
+
+        var rows = document.querySelectorAll('.annual-open-table tbody tr');
+        for (var i = 0; i < rows.length && i < 12; i++) {
+          var cells = rows[i].getElementsByTagName('td');
+          if (cells.length >= 2) cells[1].textContent = String(countBusinessDaysInMonth(cy, i));
+        }
+      }
+
+      window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+      window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap = syncBusinessDayDisplayFromDailyMap;
+
+      document.addEventListener('annual:calendarYearChanged', function () {
+        syncBusinessDayDisplayFromDailyMap();
+      });
+      document.addEventListener('annual:editModalSaved', function () {
+        syncBusinessDayDisplayFromDailyMap();
+      });
+
+      syncBusinessDayDisplayFromDailyMap();
     })();
     (function () {
       var targetEl = document.getElementById('annual-target-sales-value');
@@ -4519,6 +4582,9 @@
           window.__ANNUAL_DATA.daily.targetSales = Number(payload.targetSales);
         }
         applyDailySelection(d, 'server', { skipJumpGuard: true });
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function') {
+          window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
+        }
       };
     })();
     (function () {

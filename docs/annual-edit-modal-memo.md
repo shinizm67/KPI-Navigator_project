@@ -2,6 +2,8 @@
 
 対象: `app/annual/index.html` と `en/app/annual/index.html` の **日次一括編集モーダル**（`#annual-edit-modal`）。JP / EN で HTML 文言・パス以外は同一仕様。
 
+**関連**: 本丸の営業日数連携・Focus Bar 幅・Graph 方針などは **`docs/annual-surface-integration-memo.md`**。
+
 ---
 
 ## パネルレイアウト（確定）
