@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>年次 | KPI Navigator | FORGE LABORATORY</title>
+  <title>Monthly | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../register/style.css">
-  <link rel="stylesheet" href="../../en/setting/style.css">
+  <link rel="stylesheet" href="../../../register/style.css">
+  <link rel="stylesheet" href="../../setting/style.css">
   <style>
     .annual-monthly-data {
       position: relative;
@@ -3598,6 +3598,352 @@
     body.office-mode .annual-edit-modal__scroll::-webkit-scrollbar-thumb {
       background: #555;
     }
+    /* Monthly page: replace Annual daily table window with monthly vertical table window */
+    .annual-daily-focus-window,
+    #annual-graph-popover,
+    #annual-edit-modal {
+      display: none !important;
+    }
+    .monthly-table-window {
+      width: 1100px;
+      min-height: 913px;
+      margin: 80px calc((100% - 1100px) / 2) 0;
+      border: 0;
+      border-radius: 12px;
+      background: #1f1e1e;
+      box-sizing: border-box;
+      position: relative;
+      padding: 24px 18px 18px;
+    }
+    .monthly-vertical-focus-bar {
+      position: absolute;
+      left: 504px;
+      top: -39px;
+      width: 123px;
+      height: 916px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .monthly-table-window__guide-line {
+      position: absolute;
+      left: 44px;
+      top: 0;
+      width: 0.5px;
+      height: 775px;
+      background: #58E1F3;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .monthly-month-picker {
+      position: absolute;
+      left: 44px;
+      top: -41px;
+      width: 113.5px;
+      height: 41px;
+      border: 0.5px solid #58E1F3;
+      border-radius: 10px 10px 0 0;
+      background: #1F1E1E;
+      display: grid;
+      grid-template-columns: 20px 1fr 20px;
+      align-items: center;
+      box-sizing: border-box;
+      z-index: 6;
+    }
+    .monthly-month-picker::after {
+      content: '';
+      position: absolute;
+      left: calc(100% - 0.5px);
+      top: 100%;
+      width: 0.5px;
+      height: 913px;
+      background: #58E1F3;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .monthly-table-window__h-line-775 {
+      position: absolute;
+      left: 0;
+      top: 775px;
+      width: 505px;
+      height: 0.5px;
+      background: #58E1F3;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .monthly-table-window__h-line-775-right {
+      position: absolute;
+      left: 627px;
+      top: 775px;
+      width: calc(100% - 627px);
+      height: 0.5px;
+      background: #58E1F3;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .monthly-month-picker__arrow,
+    .monthly-month-picker__label {
+      border: 0;
+      background: transparent;
+      color: #58E1F3;
+      font-family: 'Orbitron', sans-serif;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+    }
+    .monthly-month-picker__arrow {
+      font-size: 12px;
+      width: 20px;
+      height: 100%;
+    }
+    .monthly-month-picker__label {
+      font-size: 13px;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+    }
+    .monthly-month-picker__menu {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: -0.5px;
+      width: calc(100% + 1px);
+      max-height: 232px;
+      overflow-y: auto;
+      background: #1F1E1E;
+      border: 0.5px solid #58E1F3;
+      border-radius: 0 0 8px 8px;
+      margin: 0;
+      padding: 4px 0;
+      list-style: none;
+      z-index: 7;
+      scrollbar-width: thin;
+      scrollbar-color: #58E1F3 #1F1E1E;
+    }
+    .monthly-month-picker__menu[hidden] {
+      display: none;
+    }
+    .monthly-month-picker__item {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #58E1F3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      line-height: 1.2;
+      text-align: center;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    .monthly-month-picker__item:hover,
+    .monthly-month-picker__item:focus-visible {
+      background: rgba(88, 225, 243, 0.2);
+      outline: none;
+    }
+    .monthly-vertical-focus-bar img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+    .monthly-table-window__plan {
+      position: absolute;
+      left: 14px;
+      top: 10px;
+      display: inline-flex;
+      gap: 8px;
+      z-index: 2;
+    }
+    .monthly-plan-btn {
+      min-width: 62px;
+      height: 24px;
+      border: 1px solid #58e1f3;
+      border-radius: 12px;
+      padding: 0 10px;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.28);
+    }
+    .monthly-plan-btn.is-active {
+      color: #0b130c;
+      background: #8cb20e;
+      border-color: #8cb20e;
+      font-weight: 700;
+    }
+    .monthly-table-window__shell {
+      margin-top: 20px;
+      border: 1px solid #58e1f3;
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 72px 114px 1fr;
+      gap: 10px;
+      min-height: 840px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .monthly-table-window__side-title {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      color: #58e1f3;
+      font-size: 15px;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.06em;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+      background: rgba(88, 225, 243, 0.08);
+    }
+    .monthly-table-window__focusbar {
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(88, 225, 243, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .monthly-table-window__focusbar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .monthly-focusbar-img-office {
+      display: none !important;
+    }
+    .office-mode .monthly-focusbar-img-scifi {
+      display: none !important;
+    }
+    .office-mode .monthly-focusbar-img-office {
+      display: block !important;
+    }
+    .monthly-table-window__main {
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      padding: 8px;
+      overflow: auto;
+      scrollbar-color: #58e1f3 #1f1e1e;
+      scrollbar-width: thin;
+    }
+    .monthly-table-grid {
+      min-width: 840px;
+      width: max-content;
+    }
+    .monthly-table-grid__header {
+      display: grid;
+      grid-template-columns: 100px repeat(9, 100px) repeat(6, 100px) 100px;
+      gap: 0;
+      border: 1px solid #58e1f3;
+      border-bottom: 0;
+    }
+    .monthly-hdr {
+      height: 45px;
+      border-right: 1px solid #58e1f3;
+      color: #58e1f3;
+      font-size: 13px;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(88, 225, 243, 0.1);
+      white-space: nowrap;
+    }
+    .monthly-hdr:last-child {
+      border-right: 0;
+    }
+    .monthly-hdr--toggle::after {
+      content: " ▼";
+      font-size: 11px;
+      color: #8cb20e;
+    }
+    .monthly-table-grid__rows {
+      border: 1px solid #58e1f3;
+      display: grid;
+      grid-template-columns: 100px repeat(9, 100px) repeat(6, 100px) 100px;
+    }
+    .monthly-cell {
+      height: 45px;
+      border-right: 1px solid #58e1f3;
+      border-top: 1px solid #58e1f3;
+      color: #58e1f3;
+      font-size: 13px;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(114, 117, 117, 0.1);
+      box-sizing: border-box;
+    }
+    .monthly-cell:nth-child(-n + 17) {
+      border-top: 0;
+    }
+    .monthly-cell:nth-child(17n) {
+      border-right: 0;
+    }
+    .monthly-cell--row {
+      color: #8cb20e;
+      font-size: 11px;
+      font-family: 'Orbitron', sans-serif;
+      background: rgba(88, 225, 243, 0.08);
+    }
+    .office-mode .monthly-table-window {
+      background: #f2f2f2;
+      border-color: #727575;
+    }
+    .office-mode .monthly-table-window__shell,
+    .office-mode .monthly-table-window__side-title,
+    .office-mode .monthly-table-window__focusbar,
+    .office-mode .monthly-table-window__main,
+    .office-mode .monthly-table-grid__header,
+    .office-mode .monthly-table-grid__rows,
+    .office-mode .monthly-hdr,
+    .office-mode .monthly-cell {
+      border-color: #727575;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-hdr--toggle::after,
+    .office-mode .monthly-cell--row {
+      color: #2d6b18;
+    }
+    .office-mode .monthly-plan-btn {
+      border-color: #727575;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      background: #e9e9e9;
+    }
+    .office-mode .monthly-month-picker {
+      border-color: #727575;
+      background: #f2f2f2;
+    }
+    .office-mode .monthly-month-picker::after {
+      background: #727575;
+    }
+    .office-mode .monthly-month-picker__arrow,
+    .office-mode .monthly-month-picker__label,
+    .office-mode .monthly-month-picker__item {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-month-picker__menu {
+      background: #f2f2f2;
+      border-color: #727575;
+      scrollbar-color: #727575 #f2f2f2;
+    }
+    .office-mode .monthly-month-picker__item:hover,
+    .office-mode .monthly-month-picker__item:focus-visible {
+      background: rgba(114, 117, 117, 0.2);
+    }
+    .office-mode .monthly-plan-btn.is-active {
+      background: #a4bd40;
+      border-color: #889f2f;
+      color: #111;
+    }
   </style>
 </head>
 <body class="si-fi profile-page" id="body-el">
@@ -3605,23 +3951,23 @@
     <div class="header-inner">
       <div class="header-logo">
         <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
-          <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+          <img src="../../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
       <nav class="global-nav" aria-label="メインナビゲーション">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="index.html" class="nav-frame-btn" aria-label="年間ビュー" aria-current="page">
+            <a href="../annual/index.html" class="nav-frame-btn" aria-label="年間ビュー">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Annual</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="../monthly/index.html" class="nav-frame-btn" aria-label="月間ビュー">
+            <a href="index.html" class="nav-frame-btn" aria-label="月間ビュー" aria-current="page">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Monthly</span>
               </span>
             </a>
@@ -3629,7 +3975,7 @@
           <li class="global-nav-item">
             <a href="#" class="nav-frame-btn" aria-label="日別ビューへ（準備中）">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Daily</span>
               </span>
             </a>
@@ -3637,7 +3983,7 @@
           <li class="global-nav-item">
             <a href="#" class="nav-frame-btn" aria-label="インデックスビューへ（準備中）">
               <span class="btn-mode-frame">
-                <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+                <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Index</span>
               </span>
             </a>
@@ -3647,15 +3993,15 @@
       <div class="header-actions">
         <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
           <span class="btn-mode-frame">
-            <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
         <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
-          <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
+          <img src="../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
         <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
-          <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
+          <img src="../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
       <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
@@ -3683,13 +4029,13 @@
         <div class="settings-dropdown-inner">
           <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く（準備中）">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text">Expense</span>
             </span>
           </a>
           <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
             <span class="btn-mode-frame">
-              <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
             </span>
           </a>
@@ -3823,10 +4169,10 @@
           </div>
         </div>
         <div class="annual-frame-close" id="annual-frame-close">
-          <img src="../../images/annual_close.svg" alt="" class="annual-frame-img" aria-hidden="true">
+          <img src="../../../images/annual_close.svg" alt="" class="annual-frame-img" aria-hidden="true">
         </div>
         <div class="annual-frame-open" id="annual-frame-open" hidden>
-          <img src="../../images/annual_open_top.svg" alt="" class="annual-frame-img" aria-hidden="true">
+          <img src="../../../images/annual_open_top.svg" alt="" class="annual-frame-img" aria-hidden="true">
           <div class="annual-open-body">
             <table class="annual-open-table" aria-label="Annual monthly summary table">
               <colgroup>
@@ -3872,14 +4218,14 @@
               </tbody>
             </table>
           </div>
-          <img src="../../images/annual_open_bottom.svg" alt="" class="annual-frame-img" aria-hidden="true">
+          <img src="../../../images/annual_open_bottom.svg" alt="" class="annual-frame-img" aria-hidden="true">
         </div>
         <button type="button" class="annual-monthly-toggle" id="annual-monthly-toggle" aria-expanded="false" aria-controls="annual-frame-open">
           Open
         </button>
         <div class="annual-summary-bottom-row" aria-label="日次KPIと月次売上サマリー">
           <div class="annual-summary-bottom-cell annual-summary-bottom-cell--daily">
-            <img src="../../images/annual_daily_kpi.svg" alt="" class="annual-summary-bottom-frame-img" width="471" height="132" decoding="async">
+            <img src="../../../images/annual_daily_kpi.svg" alt="" class="annual-summary-bottom-frame-img" width="471" height="132" decoding="async">
             <div class="annual-daily-kpi-overlay">
               <div class="annual-daily-kpi-col annual-daily-kpi-col--date">
                 <p class="annual-daily-kpi-label" id="annual-daily-label-date">日付</p>
@@ -3896,7 +4242,7 @@
             </div>
           </div>
           <div class="annual-summary-bottom-cell annual-summary-bottom-cell--sales">
-            <img src="../../images/annual_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="146" decoding="async">
+            <img src="../../../images/annual_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="146" decoding="async">
             <button type="button" class="annual-sales-tab annual-sales-tab--more" id="annual-focus-more-btn" aria-expanded="false" aria-label="フォーカスバーを展開">more</button>
             <div class="annual-sales-overlay">
               <div class="annual-sales-grid" role="grid" aria-label="月次と年次の比較">
@@ -3923,7 +4269,7 @@
         <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="日次売上一覧">
           <nav class="annual-daily-focus-global-menu" id="annual-daily-focus-global-menu" aria-label="グローバルメニュー">
             <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn" aria-label="日次行を編集">
-              <img src="../../images/button.svg" alt="" decoding="async">
+              <img src="../../../images/button.svg" alt="" decoding="async">
               <span>Edit</span>
             </button>
             <div class="annual-daily-focus-global-scroll" id="annual-daily-focus-global-scroll">
@@ -4022,10 +4368,33 @@
                   </div>
                 </div>
               </div>
-              <img src="../../images/focus_bar.svg" alt="" class="annual-daily-focus-bar-img" id="annual-daily-focus-bar-img" width="757" height="91" decoding="async" aria-hidden="true">
+              <img src="../../../images/focus_bar.svg" alt="" class="annual-daily-focus-bar-img" id="annual-daily-focus-bar-img" width="757" height="91" decoding="async" aria-hidden="true">
             </div>
           </div>
         </div>
+        <section class="monthly-table-window" aria-label="Monthly Table Window">
+          <div class="monthly-month-picker" id="monthly-month-picker">
+            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-prev" aria-label="前の月">◀</button>
+            <button
+              type="button"
+              class="monthly-month-picker__label"
+              id="monthly-month-label"
+              aria-label="月を選択"
+              aria-expanded="false"
+              aria-haspopup="listbox"
+              aria-controls="monthly-month-menu"
+            >January</button>
+            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-next" aria-label="次の月">▶</button>
+            <ul class="monthly-month-picker__menu" id="monthly-month-menu" role="listbox" aria-label="月一覧" hidden></ul>
+          </div>
+          <span class="monthly-table-window__guide-line" aria-hidden="true"></span>
+          <span class="monthly-table-window__h-line-775" aria-hidden="true"></span>
+          <span class="monthly-table-window__h-line-775-right" aria-hidden="true"></span>
+          <div class="monthly-vertical-focus-bar" aria-hidden="true">
+            <img src="../../../images/vertical_focus_bar.svg" alt="" class="monthly-focusbar-img-scifi">
+            <img src="../../../images/vertical_focus_bar_office.svg" alt="" class="monthly-focusbar-img-office">
+          </div>
+        </section>
       </section>
     </main>
   </div>
@@ -4258,18 +4627,18 @@
 
   <footer class="site-footer">
     <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ先頭へ戻る">
-      <img src="../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
+      <img src="../../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
     </button>
     <div class="footer-separator"></div>
     <div class="footer-logo">
       <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
-        <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        <img src="../../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/app/annual/index.html" data-url-ja="index.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="../../../app/monthly/index.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
       <span class="lang-code" aria-hidden="true">JP</span>
       <span class="lang-name">Japanese</span>
@@ -5138,7 +5507,7 @@
 
       function updateFocusBarImage(expanded) {
         var srcAttr = focusBarImg.getAttribute('src') || '';
-        var dir = srcAttr.indexOf('/') >= 0 ? srcAttr.slice(0, srcAttr.lastIndexOf('/') + 1) : '../../images/';
+        var dir = srcAttr.indexOf('/') >= 0 ? srcAttr.slice(0, srcAttr.lastIndexOf('/') + 1) : '../../../images/';
         var office = document.body.classList.contains('office-mode');
         var file = office
           ? expanded
@@ -7070,6 +7439,74 @@
             rowApplyOffState(tr, cb, dateTd);
           }
         });
+    })();
+    (function () {
+      var prevBtn = document.getElementById('monthly-month-prev');
+      var nextBtn = document.getElementById('monthly-month-next');
+      var labelBtn = document.getElementById('monthly-month-label');
+      var menu = document.getElementById('monthly-month-menu');
+      if (!prevBtn || !nextBtn || !labelBtn || !menu) return;
+
+      var months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      var current = 0;
+
+      function closeMenu() {
+        menu.hidden = true;
+        labelBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function openMenu() {
+        menu.hidden = false;
+        labelBtn.setAttribute('aria-expanded', 'true');
+      }
+
+      function render() {
+        labelBtn.textContent = months[current];
+        menu.innerHTML = months
+          .map(function (m, idx) {
+            var sel = idx === current ? ' aria-selected="true"' : '';
+            return '<li role="presentation"><button type="button" class="monthly-month-picker__item" role="option" data-month-index="' + idx + '"' + sel + '>' + m + '</button></li>';
+          })
+          .join('');
+      }
+
+      prevBtn.addEventListener('click', function () {
+        current = (current + 11) % 12;
+        render();
+      });
+
+      nextBtn.addEventListener('click', function () {
+        current = (current + 1) % 12;
+        render();
+      });
+
+      labelBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (menu.hidden) openMenu();
+        else closeMenu();
+      });
+
+      menu.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-month-index]') : null;
+        if (!btn) return;
+        var idx = Number(btn.getAttribute('data-month-index'));
+        if (!Number.isNaN(idx)) {
+          current = idx;
+          render();
+        }
+        closeMenu();
+      });
+
+      document.addEventListener('click', function (e) {
+        var picker = document.getElementById('monthly-month-picker');
+        if (!picker) return;
+        if (!picker.contains(e.target)) closeMenu();
+      });
+
+      render();
     })();
   </script>
 </body>
