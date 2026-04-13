@@ -4440,6 +4440,18 @@
           menu.appendChild(li);
         }
       }
+      function syncAnnualNavToStorage() {
+        try {
+          var data = window.__ANNUAL_DATA || {};
+          var cy = data.calendarYear;
+          var iso = data.daily && data.daily.selectedDate;
+          if (cy == null) return;
+          localStorage.setItem(
+            'kpiNavigator.annualNav',
+            JSON.stringify({ calendarYear: Number(cy), selectedIso: iso || null })
+          );
+        } catch (err) {}
+      }
       function renderYear() {
         yearBtn.textContent = String(currentYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
@@ -4448,6 +4460,7 @@
         document.dispatchEvent(
           new CustomEvent('annual:calendarYearChanged', { detail: { year: currentYear } })
         );
+        syncAnnualNavToStorage();
       }
       prevBtn.addEventListener('click', function () {
         currentYear = Math.max(minYear, currentYear - 1);
@@ -4472,6 +4485,7 @@
         }
       });
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+      window.__ANNUAL_UI.syncAnnualNavToStorage = syncAnnualNavToStorage;
       window.__ANNUAL_UI.setCalendarYear = function (y) {
         y = Number(y);
         if (!Number.isFinite(y)) return;
@@ -4932,6 +4946,9 @@
             detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
           })
         );
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncAnnualNavToStorage === 'function') {
+          window.__ANNUAL_UI.syncAnnualNavToStorage();
+        }
         return true;
       }
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};

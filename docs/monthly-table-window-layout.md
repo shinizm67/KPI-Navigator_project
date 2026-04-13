@@ -45,7 +45,8 @@ Product-level notes remain in `docs/monthly-page-memo.md`. This file records **p
 ## Tab right vertical line (sub-pixel)
 
 - Do **not** position with a separate element using `left: 44 + 113.5`; rounding misaligns with the tab border.
-- Use `.monthly-month-picker::after`: `left: calc(100% - 0.5px)`, `top: 100%`, `width: 0.5px`, `height: 913px`, `#58E1F3` (Office: `#727575` on `::after`).
+- Use `.monthly-month-picker::after`: `left: 100%`, `top: 100%`, `width: 0.5px`, `height: 913px`, `#58E1F3` (Office: `#727575` on `::after`).
+- With `box-sizing: border-box` and `width: 113.5px`, percentage `left` is resolved against the **padding box** width (`112.5px`), so `left: 100%` places the line’s left edge at the inner side of the tab’s right border (`44px + 113.5px − 0.5px = 157px` from the window). Using `calc(100% - 0.5px)` shifts the line **0.5px left** and breaks the corner with the horizontal guide.
 
 ## Guide lines (`#58E1F3`, `0.5px` unless noted)
 

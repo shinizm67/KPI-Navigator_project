@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="content-language" content="en">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1730,6 +1731,10 @@
     /* monthly_sales は上下タブ用に SVG が高い。縮尺差を見て日次 body に近づける（-8px から 3px 下げて -5px） */
     .annual-summary-bottom-cell--sales {
       margin-top: -5px;
+    }
+    /* Monthly: Area3 はフラット SVG（457×129）、タブボタンなし */
+    body.monthly-page .annual-summary-bottom-cell--sales {
+      margin-top: 0;
     }
     /* パネル3: タブ文言は SVG 突起内（viewBox 457×146、中心 約4.5% / 94.85%） */
     .annual-summary-bottom-cell--sales > .annual-sales-tab {
@@ -3605,8 +3610,62 @@
       display: none !important;
     }
     .monthly-table-window {
+      /* Income 9 行＝日次セル列の内側グリッドと同期（.monthly-scroll-data top:60 + 列の 1px 枠内側） */
+      --monthly-income-grid-rows: repeat(8, 44px) 43px;
+      --monthly-income-cell-border: 1px;
+      --monthly-income-cell-outer-top: 60px;
+      --monthly-income-cell-outer-h: 397px;
+      --monthly-income-label-band-top: calc(
+        var(--monthly-income-cell-outer-top) + var(--monthly-income-cell-border)
+      );
+      --monthly-income-label-band-h: calc(
+        var(--monthly-income-cell-outer-h) - 2 * var(--monthly-income-cell-border)
+      );
+      --monthly-expenses-gap-after-income: 39px;
+      --monthly-expenses-row-h: 44px;
+      --monthly-expenses-rows: 6;
+      --monthly-expenses-grid-rows: repeat(6, var(--monthly-expenses-row-h));
+      --monthly-expenses-cell-outer-top: calc(
+        var(--monthly-income-cell-outer-top) + var(--monthly-income-cell-outer-h) +
+          var(--monthly-expenses-gap-after-income)
+      );
+      --monthly-expenses-cell-outer-h: calc(
+        var(--monthly-expenses-rows) * var(--monthly-expenses-row-h) +
+          2 * var(--monthly-income-cell-border)
+      );
+      --monthly-expenses-label-band-top: calc(
+        var(--monthly-expenses-cell-outer-top) + var(--monthly-income-cell-border)
+      );
+      --monthly-expenses-label-band-h: calc(
+        var(--monthly-expenses-cell-outer-h) - 2 * var(--monthly-income-cell-border)
+      );
+      --monthly-date-row-h: 35px;
+      --monthly-hscroll-top: 25px;
+      --monthly-scroll-stack-h-before-profit: calc(
+        var(--monthly-date-row-h) + var(--monthly-income-cell-outer-h) +
+          var(--monthly-expenses-gap-after-income) + var(--monthly-expenses-cell-outer-h)
+      );
+      --monthly-profit-gap-after-expenses: 27px;
+      --monthly-profit-row-h: 45px;
+      /* Reserve space below Profit row so the horizontal scrollbar thumb does not overlap cells */
+      --monthly-hscroll-scrollbar-gutter: 30px;
+      --monthly-profit-cell-outer-top: calc(
+        var(--monthly-hscroll-top) + var(--monthly-scroll-stack-h-before-profit) +
+          var(--monthly-profit-gap-after-expenses)
+      );
+      --monthly-hscroll-outer-h: calc(
+        var(--monthly-scroll-stack-h-before-profit) + var(--monthly-profit-gap-after-expenses) +
+          var(--monthly-profit-row-h) + var(--monthly-hscroll-scrollbar-gutter)
+      );
+      /* Vertical Focus Bar: 110px column; rows 45px between 1px rules (row track 46px + last row 45px) */
+      --monthly-vfocus-col-w: 110px;
+      --monthly-vfocus-line-w: 1px;
+      --monthly-vfocus-cell-inner-h: 45px;
+      --monthly-vfocus-cell-row-h: calc(
+        var(--monthly-vfocus-cell-inner-h) + var(--monthly-vfocus-line-w)
+      );
       width: 1100px;
-      min-height: 913px;
+      min-height: 1100px;
       margin: 80px calc((100% - 1100px) / 2) 0;
       border: 0;
       border-radius: 12px;
@@ -3620,9 +3679,172 @@
       left: 504px;
       top: -39px;
       width: 123px;
-      height: 916px;
+      height: 1103px;
       z-index: 5;
       pointer-events: none;
+    }
+    .monthly-vertical-focus-bar .monthly-vfocus-frame {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: fill;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .monthly-vfocus-fill {
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      top: 39px;
+      bottom: 17px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .monthly-vfocus-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: var(--monthly-vfocus-col-w);
+      max-width: var(--monthly-vfocus-col-w);
+      flex: 0 0 auto;
+      box-sizing: border-box;
+    }
+    /* Date: no cell frame, label only */
+    .monthly-vfocus-date {
+      flex: 0 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin: 0;
+      padding: 0 2px 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      color: #58e1f3;
+      background: transparent;
+      border: 0;
+    }
+    html[lang='ja'] .monthly-vfocus-date {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-vfocus-date--off {
+      opacity: 0.55;
+      color: rgba(88, 225, 243, 0.75);
+    }
+    .monthly-vfocus-income-grid {
+      display: grid;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 10px;
+      grid-template-rows: repeat(8, var(--monthly-vfocus-cell-row-h)) var(--monthly-vfocus-cell-inner-h);
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .monthly-vfocus-exp-grid {
+      display: grid;
+      width: 100%;
+      box-sizing: border-box;
+      grid-template-rows: repeat(5, var(--monthly-vfocus-cell-row-h)) var(--monthly-vfocus-cell-inner-h);
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .monthly-vfocus-spacer {
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
+      background: #1f1e1e;
+    }
+    .monthly-vfocus-spacer--income-exp {
+      height: var(--monthly-expenses-gap-after-income);
+      min-height: var(--monthly-expenses-gap-after-income);
+    }
+    .monthly-vfocus-spacer--profit-gap {
+      position: relative;
+      height: var(--monthly-profit-gap-after-expenses);
+      min-height: var(--monthly-profit-gap-after-expenses);
+    }
+    .monthly-vfocus-spacer--profit-gap::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 123px;
+      height: 0.5px;
+      background: #58e1f3;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .monthly-vfocus-cell {
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: #58e1f3;
+      border-bottom: var(--monthly-vfocus-line-w) solid rgba(88, 225, 243, 0.55);
+      background: rgba(114, 117, 117, 0.12);
+      position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[lang='ja'] .monthly-vfocus-cell {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-vfocus-income-grid .monthly-vfocus-cell:last-child,
+    .monthly-vfocus-exp-grid .monthly-vfocus-cell:last-child {
+      border-bottom: 0;
+    }
+    .monthly-vfocus-profit {
+      flex: 0 0 calc(var(--monthly-vfocus-cell-inner-h) + 2 * var(--monthly-vfocus-line-w));
+      min-height: calc(var(--monthly-vfocus-cell-inner-h) + 2 * var(--monthly-vfocus-line-w));
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1;
+      color: #58e1f3;
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(114, 117, 117, 0.14);
+      position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[lang='ja'] .monthly-vfocus-profit {
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .monthly-table-window__guide-line {
       position: absolute;
@@ -3652,10 +3874,10 @@
     .monthly-month-picker::after {
       content: '';
       position: absolute;
-      left: calc(100% - 0.5px);
+      left: 100%;
       top: 100%;
       width: 0.5px;
-      height: 913px;
+      height: 1100px;
       background: #58E1F3;
       pointer-events: none;
       z-index: 2;
@@ -3679,6 +3901,456 @@
       background: #58E1F3;
       z-index: 2;
       pointer-events: none;
+    }
+    /* 左ラベル帯: 左 20px・幅 20px。Income / Expenses は Y 帯のみ差分 */
+    .monthly-table-window__vlabel {
+      position: absolute;
+      left: 20px;
+      width: 20px;
+      margin: 0;
+      padding: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    /* Vertical "Income" band: same outer height as the 9-row data column (397px), flex-centered */
+    .monthly-table-window__vlabel--income {
+      top: var(--monthly-income-cell-outer-top);
+      height: var(--monthly-income-cell-outer-h);
+    }
+    .monthly-table-window__vlabel--expenses {
+      top: var(--monthly-expenses-cell-outer-top);
+      height: var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-table-window__vlabel .monthly-table-window__vlabel-inner {
+      display: block;
+      white-space: nowrap;
+      transform: rotate(-90deg);
+      transform-origin: center center;
+    }
+    html[lang="ja"] .monthly-table-window__vlabel {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    /* 日付列などセル無しテキスト: left/top は Table Window 基準、left は文字の水平中心。全て text-align:center＋translateX(-50%) */
+    .monthly-table-window__col-text {
+      position: absolute;
+      margin: 0;
+      padding: 0;
+      z-index: 3;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+      text-align: center;
+      white-space: nowrap;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    html[lang="ja"] .monthly-table-window__col-text {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__col-text--date {
+      left: 93px;
+      top: 27px;
+    }
+    /* Profit: Profit row vertical center = label center; horizontal center aligned with Date column (93px) */
+    .monthly-table-window__col-text--profit {
+      left: 93px;
+      top: calc(var(--monthly-profit-cell-outer-top) + var(--monthly-profit-row-h) / 2);
+      transform: translate(-50%, -50%);
+    }
+    /* Monthly 日次セル: border-radius 6px で統一（Annual 日次行と揃える） */
+    .monthly-scroll-data {
+      --monthly-data-col-w: 100px;
+      --monthly-data-col-gap: 3px;
+      --monthly-data-cols-max: 31;
+      position: absolute;
+      left: 195px;
+      top: var(--monthly-hscroll-top);
+      width: calc(100% - 195px);
+      height: var(--monthly-hscroll-outer-h);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      z-index: 2;
+      box-sizing: border-box;
+      scrollbar-color: #58e1f3 #1f1e1e;
+      scrollbar-width: thin;
+    }
+    .monthly-scroll-data::-webkit-scrollbar {
+      height: 6px;
+    }
+    .monthly-scroll-data::-webkit-scrollbar-track {
+      background: #1f1e1e;
+    }
+    .monthly-scroll-data::-webkit-scrollbar-thumb {
+      background: #58e1f3;
+    }
+    .monthly-scroll-data__stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: max-content;
+      min-height: 100%;
+      box-sizing: border-box;
+    }
+    .monthly-scroll-data__between {
+      flex: 0 0 var(--monthly-expenses-gap-after-income);
+      height: var(--monthly-expenses-gap-after-income);
+      min-height: var(--monthly-expenses-gap-after-income);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      gap: var(--monthly-data-col-gap);
+      width: max-content;
+      box-sizing: border-box;
+    }
+    .monthly-scroll-data__track--date {
+      height: var(--monthly-date-row-h);
+      flex: 0 0 var(--monthly-date-row-h);
+      align-items: flex-start;
+    }
+    .monthly-date-header-cell {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    html[lang="ja"] .monthly-date-header-cell {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-date-header-cell--off {
+      opacity: 0.48;
+    }
+    .monthly-date-header-cell--buffer {
+      opacity: 0.38;
+      color: #4a9aa8;
+    }
+    .monthly-data-column--buffer {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--income {
+      height: var(--monthly-income-cell-outer-h);
+      flex: 0 0 var(--monthly-income-cell-outer-h);
+    }
+    .monthly-scroll-data__track--expenses {
+      height: var(--monthly-expenses-cell-outer-h);
+      flex: 0 0 var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-scroll-data__between--profit-gap {
+      flex: 0 0 var(--monthly-profit-gap-after-expenses);
+      height: var(--monthly-profit-gap-after-expenses);
+      min-height: var(--monthly-profit-gap-after-expenses);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--profit {
+      height: var(--monthly-profit-row-h);
+      flex: 0 0 var(--monthly-profit-row-h);
+      align-items: center;
+    }
+    .monthly-profit-cell {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      height: var(--monthly-profit-row-h);
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(114, 117, 117, 0.08);
+      pointer-events: none;
+    }
+    .monthly-profit-cell--buffer {
+      opacity: 0.45;
+    }
+    .monthly-scroll-data__track-spacer {
+      flex: 0 0 calc((var(--monthly-data-cols-max) - 1) * var(--monthly-data-col-w));
+      width: calc((var(--monthly-data-cols-max) - 1) * var(--monthly-data-col-w));
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--date .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-date-row-h);
+    }
+    .monthly-scroll-data__track--income .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-income-cell-outer-h);
+    }
+    .monthly-scroll-data__track--expenses .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-data-column {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      display: grid;
+      background: rgba(114, 117, 117, 0.08);
+    }
+    .monthly-data-column--income {
+      height: var(--monthly-income-cell-outer-h);
+      grid-template-rows: var(--monthly-income-grid-rows);
+    }
+    .monthly-data-column--expenses {
+      height: var(--monthly-expenses-cell-outer-h);
+      grid-template-rows: var(--monthly-expenses-grid-rows);
+    }
+    .monthly-data-column__cell {
+      box-sizing: border-box;
+      border-bottom: 1px solid #58e1f3;
+      min-height: 0;
+    }
+    .monthly-data-column__cell:last-child {
+      border-bottom: 0;
+    }
+    .monthly-table-window__income-col {
+      position: absolute;
+      left: 93px;
+      top: var(--monthly-income-label-band-top);
+      width: max-content;
+      max-width: 72px;
+      height: var(--monthly-income-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-income-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    html[lang="ja"] .monthly-table-window__income-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__income-group {
+      display: contents;
+    }
+    .monthly-table-window__income-label {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      font: inherit;
+      color: inherit;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"] > .monthly-table-window__income-label {
+      grid-row: 1;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 2;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 3;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"] > .monthly-table-window__income-label {
+      grid-row: 4;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 5;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 6;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"] > .monthly-table-window__income-label {
+      grid-row: 7;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 8;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 9;
+    }
+    .monthly-table-window__income-subs {
+      display: contents;
+    }
+    .monthly-table-window__income-arrows-col {
+      position: absolute;
+      left: 143px;
+      top: var(--monthly-income-label-band-top);
+      width: 28px;
+      height: var(--monthly-income-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-income-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    html[lang="ja"] .monthly-table-window__income-arrows-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__income-arrow-group {
+      display: contents;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="sales"] {
+      grid-row: 1;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="sales"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 2;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="sales"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 3;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="customer"] {
+      grid-row: 4;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="customer"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 5;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="customer"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 6;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="pc"] {
+      grid-row: 7;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="pc"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 8;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="pc"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 9;
+    }
+    .monthly-table-window__income-arrow-btn {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      line-height: 1;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-arrow-btn:hover,
+    .monthly-table-window__income-arrow-btn:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .monthly-table-window__income-arrow-gap {
+      display: contents;
+    }
+    .monthly-table-window__income-arrow-gap-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      margin: 0;
+      padding: 0;
+      visibility: hidden;
+      overflow: hidden;
+      width: 100%;
+      min-height: 0;
+      pointer-events: none;
+    }
+    .monthly-table-window__income-arrow-group.is-collapsed .monthly-table-window__income-arrow-gap {
+      display: none;
+    }
+    .monthly-table-window__income-line {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-group.is-collapsed .monthly-table-window__income-subs {
+      display: none;
+    }
+    .monthly-table-window__expenses-col {
+      position: absolute;
+      left: 93px;
+      top: var(--monthly-expenses-label-band-top);
+      width: max-content;
+      max-width: 80px;
+      height: var(--monthly-expenses-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-expenses-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+      pointer-events: none;
+    }
+    html[lang="ja"] .monthly-table-window__expenses-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__expenses-line {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
     }
     .monthly-month-picker__arrow,
     .monthly-month-picker__label {
@@ -3737,12 +4409,6 @@
     .monthly-month-picker__item:focus-visible {
       background: rgba(88, 225, 243, 0.2);
       outline: none;
-    }
-    .monthly-vertical-focus-bar img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
     }
     .monthly-table-window__plan {
       position: absolute;
@@ -3939,6 +4605,92 @@
     .office-mode .monthly-month-picker__item:focus-visible {
       background: rgba(114, 117, 117, 0.2);
     }
+    .office-mode .monthly-table-window__vlabel {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__col-text {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-arrows-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-arrow-btn:hover,
+    .office-mode .monthly-table-window__income-arrow-btn:focus-visible {
+      color: #000;
+    }
+    .office-mode .monthly-table-window__expenses-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-scroll-data {
+      scrollbar-color: #727575 #f2f2f2;
+    }
+    .office-mode .monthly-scroll-data::-webkit-scrollbar-track {
+      background: #f2f2f2;
+    }
+    .office-mode .monthly-scroll-data::-webkit-scrollbar-thumb {
+      background: #727575;
+    }
+    .office-mode .monthly-data-column {
+      border-color: #727575;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-data-column__cell {
+      border-bottom-color: #727575;
+    }
+    .office-mode .monthly-date-header-cell {
+      color: #111;
+    }
+    .office-mode .monthly-date-header-cell--off {
+      opacity: 0.65;
+    }
+    .office-mode .monthly-date-header-cell--buffer {
+      opacity: 0.5;
+      color: #5a6a6c;
+    }
+    .office-mode .monthly-data-column--buffer {
+      opacity: 0.55;
+    }
+    .office-mode .monthly-profit-cell {
+      border-color: #727575;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-profit-cell--buffer {
+      opacity: 0.55;
+    }
+    .office-mode .monthly-vfocus-income-grid,
+    .office-mode .monthly-vfocus-exp-grid,
+    .office-mode .monthly-vfocus-profit {
+      border-color: #727575;
+      color: #111;
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .office-mode .monthly-vfocus-date {
+      color: #111;
+      background: transparent;
+    }
+    .office-mode .monthly-vfocus-cell {
+      color: #111;
+      border-bottom-color: rgba(114, 117, 117, 0.55);
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-vfocus-date--off {
+      color: #444;
+      opacity: 0.75;
+    }
+    .office-mode .monthly-vfocus-spacer {
+      background: #f2f2f2;
+    }
+    .office-mode .monthly-vfocus-spacer--profit-gap::before {
+      background: #727575;
+    }
     .office-mode .monthly-plan-btn.is-active {
       background: #a4bd40;
       border-color: #889f2f;
@@ -3946,18 +4698,18 @@
     }
   </style>
 </head>
-<body class="si-fi profile-page" id="body-el">
+<body class="si-fi profile-page monthly-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
-        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
           <img src="../../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
-      <nav class="global-nav" aria-label="メインナビゲーション">
+      <nav class="global-nav" aria-label="Main navigation">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="../annual/index.html" class="nav-frame-btn" aria-label="年間ビュー">
+            <a href="../annual/index.html" class="nav-frame-btn" aria-label="Go to Annual view">
               <span class="btn-mode-frame">
                 <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Annual</span>
@@ -3965,7 +4717,7 @@
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="index.html" class="nav-frame-btn" aria-label="月間ビュー" aria-current="page">
+            <a href="index.html" class="nav-frame-btn" aria-label="Go to Monthly view" aria-current="page">
               <span class="btn-mode-frame">
                 <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Monthly</span>
@@ -3973,7 +4725,7 @@
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="日別ビューへ（準備中）">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Daily view (coming soon)">
               <span class="btn-mode-frame">
                 <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Daily</span>
@@ -3981,7 +4733,7 @@
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn" aria-label="インデックスビューへ（準備中）">
+            <a href="#" class="nav-frame-btn" aria-label="Go to Index view (coming soon)">
               <span class="btn-mode-frame">
                 <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">Index</span>
@@ -3991,49 +4743,49 @@
         </ul>
       </nav>
       <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
           <span class="btn-mode-frame">
             <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
+        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
           <img src="../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
           <img src="../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
-      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
         <h3 class="account-settings-popup-title">Account Settings</h3>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
             <a href="../../setting/profile.html" class="account-settings-item" role="menuitem">Profile</a>
-            <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
-            <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
-            <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
+            <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
+            <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
+            <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
-            <a href="../../setting/plan_details.html" class="account-settings-item" role="menuitem">プラン詳細</a>
-            <a href="../../setting/change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
+            <a href="../../setting/plan_details.html" class="account-settings-item" role="menuitem">Plan Details</a>
+            <a href="../../setting/change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="../../setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">アカウント削除</a>
+        <a href="../../setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く（準備中）">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense (coming soon)">
             <span class="btn-mode-frame">
               <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text">Expense</span>
             </span>
           </a>
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
             <span class="btn-mode-frame">
               <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
@@ -4047,13 +4799,13 @@
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
       <div class="workspace-selector-wrap">
-        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
           <span class="profile-workspace-label">Workspace : Personal</span>
         </button>
-        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
           <div class="workspace-popup-inner">
             <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
@@ -4061,23 +4813,23 @@
       </div>
       <section class="annual-monthly-data" id="annual-monthly-data">
         <div class="annual-year-control" id="annual-year-control">
-          <button type="button" class="annual-year-arrow prev" id="annual-year-prev" aria-label="前年へ"></button>
+          <button type="button" class="annual-year-arrow prev" id="annual-year-prev" aria-label="Previous year"></button>
           <button type="button" class="annual-year-value" id="annual-year-value" aria-haspopup="listbox" aria-expanded="false">2026</button>
-          <button type="button" class="annual-year-arrow next" id="annual-year-next" aria-label="翌年へ"></button>
-          <ul class="annual-year-menu" id="annual-year-menu" role="listbox" aria-label="年選択" hidden></ul>
+          <button type="button" class="annual-year-arrow next" id="annual-year-next" aria-label="Next year"></button>
+          <ul class="annual-year-menu" id="annual-year-menu" role="listbox" aria-label="Select year" hidden></ul>
         </div>
         <div class="annual-total-bd-group">
-          <p class="annual-total-bd-label">年間営業日数</p>
+          <p class="annual-total-bd-label">Total Business day</p>
           <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">286</div>
         </div>
         <div class="annual-target-sales-group">
-          <p class="annual-target-sales-label">年次目標売上</p>
+          <p class="annual-target-sales-label">Annual Target Sales</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
-            <span class="annual-target-sales-amount" id="annual-target-sales-value">¥652,528.55</span>
-            <button type="button" class="annual-target-inline-edit" id="annual-target-edit-btn" aria-label="年次目標売上を編集"><span class="annual-target-inline-edit-text">編集</span></button>
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
+            <button type="button" class="annual-target-inline-edit" id="annual-target-edit-btn" aria-label="Edit annual target sales"><span class="annual-target-inline-edit-text">Edit</span></button>
           </div>
         </div>
-        <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">履歴</button>
+        <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">History</button>
         <div class="annual-history-panel" id="annual-history-panel" role="dialog" aria-modal="true" aria-label="Annual history" hidden>
           <div class="annual-history-dialog" role="document">
             <div class="annual-history-header">
@@ -4098,37 +4850,37 @@
                 <tbody>
                   <tr>
                     <td>2026-03-27 21:10</td>
-                    <td>オーナー</td>
-                    <td>¥652,528.55</td>
-                    <td>年次目標売上と月次繁閑ウェイトを調整しました。</td>
+                    <td>Owner</td>
+                    <td>$652,528.55</td>
+                    <td>Adjusted annual target and monthly seasonal weights.</td>
                     <td>
                       <div class="annual-history-actions">
-                        <button type="button" class="annual-history-action-btn">比較</button>
-                        <button type="button" class="annual-history-action-btn">復元</button>
+                        <button type="button" class="annual-history-action-btn">Compare</button>
+                        <button type="button" class="annual-history-action-btn">Restore</button>
                       </div>
                     </td>
                   </tr>
                   <tr>
                     <td>2026-03-24 10:05</td>
-                    <td>オーナー</td>
-                    <td>¥640,000.00</td>
-                    <td>初期設定として、月次ウェイトを既定値で登録しました。</td>
+                    <td>Owner</td>
+                    <td>$640,000.00</td>
+                    <td>Initial yearly setup with default monthly weights.</td>
                     <td>
                       <div class="annual-history-actions">
-                        <button type="button" class="annual-history-action-btn">比較</button>
-                        <button type="button" class="annual-history-action-btn">復元</button>
+                        <button type="button" class="annual-history-action-btn">Compare</button>
+                        <button type="button" class="annual-history-action-btn">Restore</button>
                       </div>
                     </td>
                   </tr>
                   <tr>
                     <td>2026-03-20 08:42</td>
-                    <td>オーナー</td>
-                    <td>¥620,000.00</td>
-                    <td>旧スプレッドシートから最初のスナップショットを取り込みました。</td>
+                    <td>Owner</td>
+                    <td>$620,000.00</td>
+                    <td>First imported snapshot from legacy spreadsheet.</td>
                     <td>
                       <div class="annual-history-actions">
-                        <button type="button" class="annual-history-action-btn">比較</button>
-                        <button type="button" class="annual-history-action-btn">復元</button>
+                        <button type="button" class="annual-history-action-btn">Compare</button>
+                        <button type="button" class="annual-history-action-btn">Restore</button>
                       </div>
                     </td>
                   </tr>
@@ -4137,10 +4889,10 @@
             </div>
           </div>
         </div>
-        <div class="annual-kpi-strip-labels" aria-hidden="true">          <p class="annual-kpi-strip-label">月次配分率合計</p>
-          <p class="annual-kpi-strip-label">年間売上累計</p>
-          <p class="annual-kpi-strip-label">差額</p>
-          <p class="annual-kpi-strip-label">達成率</p>
+        <div class="annual-kpi-strip-labels" aria-hidden="true">          <p class="annual-kpi-strip-label">Monthly Allocation Total</p>
+          <p class="annual-kpi-strip-label">Annual Current Sales</p>
+          <p class="annual-kpi-strip-label">Difference</p>
+          <p class="annual-kpi-strip-label">Achievement</p>
         </div>
         <div class="annual-kpi-strip" aria-hidden="true">
           <div class="annual-kpi-cell annual-kpi-cell-allocation">
@@ -4153,10 +4905,10 @@
             </div>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">¥101,754.41</p>
+            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">$101,754.41</p>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">¥49,225.87</p>
+            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">$49,225.87</p>
           </div>
           <div class="annual-kpi-cell">
             <div class="annual-allocation-wrap">
@@ -4189,32 +4941,32 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th>月</th>
-                  <th>営業日数</th>
-                  <th>平均売上額</th>
-                  <th>繁閑期%</th>
-                  <th>月次目標売上</th>
-                  <th>日次目標売上</th>
-                  <th>月次売上実績</th>
-                  <th data-tooltip="月間KGI（= 月次売上実績 - 月次目標売上）。月次目標に対する達成差額を示します。">月間KGI</th>
-                  <th data-tooltip="月次平均％（平均売上額に対して実績売上が何％だったか）。翌年の繁閑期％設定の基準です。">月次平均%</th>
-                  <th data-tooltip="月次実質％（前年繁閑％から算出した目標売上KPIに対して、実績売上が何％か）。">月次実質%</th>
+                  <th>Month</th>
+                  <th data-tooltip="Business Day">Bussi D</th>
+                  <th data-tooltip="Monthly Average Target Sales">M A Target</th>
+                  <th data-tooltip="High and Low Season Percentage">H/L Sea</th>
+                  <th data-tooltip="Monthly Target Sales">Monthly Target</th>
+                  <th data-tooltip="Daily Target Sales">Daily Target</th>
+                  <th>Monthly Profit</th>
+                  <th>Monthly KGI</th>
+                  <th data-tooltip="Monthly Seasonal Average Percentage">H/L Sea</th>
+                  <th data-tooltip="Monthly KPI Achievement Percentage (KGI vs KPI)">H/L %</th>
                 </tr>
               </thead>
 
               <tbody>
-                <tr><td>1月</td><td data-field="annual.table.jan.businessDay">22</td><td data-field="annual.table.jan.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.jan.hlSeasonPct">85%</td><td data-field="annual.table.jan.monthlyTarget">¥42,665.33</td><td data-field="annual.table.jan.dailyTarget">¥1,939.33</td><td data-field="annual.table.jan.monthlyProfit">¥50,812.30</td><td data-field="annual.table.jan.monthlyKgi">¥8,206.98</td><td data-field="annual.table.jan.hlSeasonActualPct">101.35%</td><td data-field="annual.table.jan.hlPercent">119.24%</td></tr>
-                <tr><td>2月</td><td data-field="annual.table.feb.businessDay">22</td><td data-field="annual.table.feb.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.feb.hlSeasonPct">85%</td><td data-field="annual.table.feb.monthlyTarget">¥42,665.33</td><td data-field="annual.table.feb.dailyTarget">¥1,939.33</td><td data-field="annual.table.feb.monthlyProfit">¥49,880.73</td><td data-field="annual.table.feb.monthlyKgi">¥7,215.40</td><td data-field="annual.table.feb.hlSeasonActualPct">99.37%</td><td data-field="annual.table.feb.hlPercent">116.91%</td></tr>
-                <tr><td>3月</td><td data-field="annual.table.mar.businessDay">25</td><td data-field="annual.table.mar.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.mar.hlSeasonPct">100%</td><td data-field="annual.table.mar.monthlyTarget">¥57,039.21</td><td data-field="annual.table.mar.dailyTarget">¥2,281.57</td><td data-field="annual.table.mar.monthlyProfit">¥55,683.25</td><td data-field="annual.table.mar.monthlyKgi">-¥1,355.96</td><td data-field="annual.table.mar.hlSeasonActualPct">97.62%</td><td data-field="annual.table.mar.hlPercent">97.62%</td></tr>
-                <tr><td>4月</td><td data-field="annual.table.apr.businessDay">25</td><td data-field="annual.table.apr.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.apr.hlSeasonPct">110%</td><td data-field="annual.table.apr.monthlyTarget">¥62,743.13</td><td data-field="annual.table.apr.dailyTarget">¥2,509.73</td><td data-field="annual.table.apr.monthlyProfit">¥61,294.91</td><td data-field="annual.table.apr.monthlyKgi">-¥1,448.22</td><td data-field="annual.table.apr.hlSeasonActualPct">107.46%</td><td data-field="annual.table.apr.hlPercent">97.69%</td></tr>
-                <tr><td>5月</td><td data-field="annual.table.may.businessDay">24</td><td data-field="annual.table.may.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.may.hlSeasonPct">120%</td><td data-field="annual.table.may.monthlyTarget">¥54,751.64</td><td data-field="annual.table.may.dailyTarget">¥2,281.51</td><td data-field="annual.table.may.monthlyProfit">¥65,311.03</td><td data-field="annual.table.may.monthlyKgi">¥10,559.39</td><td data-field="annual.table.may.hlSeasonActualPct">119.28%</td><td data-field="annual.table.may.hlPercent">119.28%</td></tr>
-                <tr><td>6月</td><td data-field="annual.table.jun.businessDay">25</td><td data-field="annual.table.jun.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.jun.hlSeasonPct">85%</td><td data-field="annual.table.jun.monthlyTarget">¥48,483.33</td><td data-field="annual.table.jun.dailyTarget">¥1,939.33</td><td data-field="annual.table.jun.monthlyProfit">¥55,311.58</td><td data-field="annual.table.jun.monthlyKgi">¥6,828.39</td><td data-field="annual.table.jun.hlSeasonActualPct">96.97%</td><td data-field="annual.table.jun.hlPercent">114.08%</td></tr>
-                <tr><td>7月</td><td data-field="annual.table.jul.businessDay">26</td><td data-field="annual.table.jul.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.jul.hlSeasonPct">100%</td><td data-field="annual.table.jul.monthlyTarget">¥59,320.78</td><td data-field="annual.table.jul.dailyTarget">¥2,281.57</td><td data-field="annual.table.jul.monthlyProfit">¥59,645.82</td><td data-field="annual.table.jul.monthlyKgi">¥325.04</td><td data-field="annual.table.jul.hlSeasonActualPct">100.55%</td><td data-field="annual.table.jul.hlPercent">100.55%</td></tr>
-                <tr><td>8月</td><td data-field="annual.table.aug.businessDay">20</td><td data-field="annual.table.aug.monthlyAverageTarget">¥45,631.37</td><td data-field="annual.table.aug.hlSeasonPct">100%</td><td data-field="annual.table.aug.monthlyTarget">¥45,631.37</td><td data-field="annual.table.aug.dailyTarget">¥2,281.57</td><td data-field="annual.table.aug.monthlyProfit">¥44,020.75</td><td data-field="annual.table.aug.monthlyKgi">-¥1,610.61</td><td data-field="annual.table.aug.hlSeasonActualPct">96.47%</td><td data-field="annual.table.aug.hlPercent">96.47%</td></tr>
-                <tr><td>9月</td><td data-field="annual.table.sep.businessDay">24</td><td data-field="annual.table.sep.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.sep.hlSeasonPct">100%</td><td data-field="annual.table.sep.monthlyTarget">¥54,751.64</td><td data-field="annual.table.sep.dailyTarget">¥2,281.57</td><td data-field="annual.table.sep.monthlyProfit">¥56,435.25</td><td data-field="annual.table.sep.monthlyKgi">¥1,677.61</td><td data-field="annual.table.sep.hlSeasonActualPct">103.06%</td><td data-field="annual.table.sep.hlPercent">103.06%</td></tr>
-                <tr><td>10月</td><td data-field="annual.table.oct.businessDay">26</td><td data-field="annual.table.oct.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.oct.hlSeasonPct">110%</td><td data-field="annual.table.oct.monthlyTarget">¥65,252.85</td><td data-field="annual.table.oct.dailyTarget">¥2,509.73</td><td data-field="annual.table.oct.monthlyProfit">¥70,728.48</td><td data-field="annual.table.oct.monthlyKgi">¥5,475.62</td><td data-field="annual.table.oct.hlSeasonActualPct">119.23%</td><td data-field="annual.table.oct.hlPercent">108.39%</td></tr>
-                <tr><td>11月</td><td data-field="annual.table.nov.businessDay">23</td><td data-field="annual.table.nov.monthlyAverageTarget">¥52,416.07</td><td data-field="annual.table.nov.hlSeasonPct">110%</td><td data-field="annual.table.nov.monthlyTarget">¥57,123.68</td><td data-field="annual.table.nov.dailyTarget">¥2,509.73</td><td data-field="annual.table.nov.monthlyProfit">¥62,272.34</td><td data-field="annual.table.nov.monthlyKgi">¥4,548.66</td><td data-field="annual.table.nov.hlSeasonActualPct">118.67%</td><td data-field="annual.table.nov.hlPercent">107.88%</td></tr>
-                <tr><td>12月</td><td data-field="annual.table.dec.businessDay">24</td><td data-field="annual.table.dec.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.dec.hlSeasonPct">115%</td><td data-field="annual.table.dec.monthlyTarget">¥62,971.29</td><td data-field="annual.table.dec.dailyTarget">¥2,623.80</td><td data-field="annual.table.dec.monthlyProfit">¥70,291.96</td><td data-field="annual.table.dec.monthlyKgi">¥7,320.67</td><td data-field="annual.table.dec.hlSeasonActualPct">128.37%</td><td data-field="annual.table.dec.hlPercent">111.63%</td></tr>
+                <tr><td>Jan</td><td data-field="annual.table.jan.businessDay">22</td><td data-field="annual.table.jan.monthlyAverageTarget">$50,194.50</td><td data-field="annual.table.jan.hlSeasonPct">85%</td><td data-field="annual.table.jan.monthlyTarget">$42,665.33</td><td data-field="annual.table.jan.dailyTarget">$1,939.33</td><td data-field="annual.table.jan.monthlyProfit">$50,812.30</td><td data-field="annual.table.jan.monthlyKgi">$8,206.98</td><td data-field="annual.table.jan.hlSeasonActualPct">101.35%</td><td data-field="annual.table.jan.hlPercent">119.24%</td></tr>
+                <tr><td>Feb</td><td data-field="annual.table.feb.businessDay">22</td><td data-field="annual.table.feb.monthlyAverageTarget">$50,194.50</td><td data-field="annual.table.feb.hlSeasonPct">85%</td><td data-field="annual.table.feb.monthlyTarget">$42,665.33</td><td data-field="annual.table.feb.dailyTarget">$1,939.33</td><td data-field="annual.table.feb.monthlyProfit">$49,880.73</td><td data-field="annual.table.feb.monthlyKgi">$7,215.40</td><td data-field="annual.table.feb.hlSeasonActualPct">99.37%</td><td data-field="annual.table.feb.hlPercent">116.91%</td></tr>
+                <tr><td>Mar</td><td data-field="annual.table.mar.businessDay">25</td><td data-field="annual.table.mar.monthlyAverageTarget">$57,039.21</td><td data-field="annual.table.mar.hlSeasonPct">100%</td><td data-field="annual.table.mar.monthlyTarget">$57,039.21</td><td data-field="annual.table.mar.dailyTarget">$2,281.57</td><td data-field="annual.table.mar.monthlyProfit">$55,683.25</td><td data-field="annual.table.mar.monthlyKgi">-$1,355.96</td><td data-field="annual.table.mar.hlSeasonActualPct">97.62%</td><td data-field="annual.table.mar.hlPercent">97.62%</td></tr>
+                <tr><td>Apr</td><td data-field="annual.table.apr.businessDay">25</td><td data-field="annual.table.apr.monthlyAverageTarget">$57,039.21</td><td data-field="annual.table.apr.hlSeasonPct">110%</td><td data-field="annual.table.apr.monthlyTarget">$62,743.13</td><td data-field="annual.table.apr.dailyTarget">$2,509.73</td><td data-field="annual.table.apr.monthlyProfit">$61,294.91</td><td data-field="annual.table.apr.monthlyKgi">-$1,448.22</td><td data-field="annual.table.apr.hlSeasonActualPct">107.46%</td><td data-field="annual.table.apr.hlPercent">97.69%</td></tr>
+                <tr><td>May</td><td data-field="annual.table.may.businessDay">24</td><td data-field="annual.table.may.monthlyAverageTarget">$54,751.64</td><td data-field="annual.table.may.hlSeasonPct">120%</td><td data-field="annual.table.may.monthlyTarget">$54,751.64</td><td data-field="annual.table.may.dailyTarget">$2,281.51</td><td data-field="annual.table.may.monthlyProfit">$65,311.03</td><td data-field="annual.table.may.monthlyKgi">$10,559.39</td><td data-field="annual.table.may.hlSeasonActualPct">119.28%</td><td data-field="annual.table.may.hlPercent">119.28%</td></tr>
+                <tr><td>Jun</td><td data-field="annual.table.jun.businessDay">25</td><td data-field="annual.table.jun.monthlyAverageTarget">$57,039.21</td><td data-field="annual.table.jun.hlSeasonPct">85%</td><td data-field="annual.table.jun.monthlyTarget">$48,483.33</td><td data-field="annual.table.jun.dailyTarget">$1,939.33</td><td data-field="annual.table.jun.monthlyProfit">$55,311.58</td><td data-field="annual.table.jun.monthlyKgi">$6,828.39</td><td data-field="annual.table.jun.hlSeasonActualPct">96.97%</td><td data-field="annual.table.jun.hlPercent">114.08%</td></tr>
+                <tr><td>Jul</td><td data-field="annual.table.jul.businessDay">26</td><td data-field="annual.table.jul.monthlyAverageTarget">$59,320.78</td><td data-field="annual.table.jul.hlSeasonPct">100%</td><td data-field="annual.table.jul.monthlyTarget">$59,320.78</td><td data-field="annual.table.jul.dailyTarget">$2,281.57</td><td data-field="annual.table.jul.monthlyProfit">$59,645.82</td><td data-field="annual.table.jul.monthlyKgi">$325.04</td><td data-field="annual.table.jul.hlSeasonActualPct">100.55%</td><td data-field="annual.table.jul.hlPercent">100.55%</td></tr>
+                <tr><td>Aug</td><td data-field="annual.table.aug.businessDay">20</td><td data-field="annual.table.aug.monthlyAverageTarget">$45,631.37</td><td data-field="annual.table.aug.hlSeasonPct">100%</td><td data-field="annual.table.aug.monthlyTarget">$45,631.37</td><td data-field="annual.table.aug.dailyTarget">$2,281.57</td><td data-field="annual.table.aug.monthlyProfit">$44,020.75</td><td data-field="annual.table.aug.monthlyKgi">-$1,610.61</td><td data-field="annual.table.aug.hlSeasonActualPct">96.47%</td><td data-field="annual.table.aug.hlPercent">96.47%</td></tr>
+                <tr><td>Sep</td><td data-field="annual.table.sep.businessDay">24</td><td data-field="annual.table.sep.monthlyAverageTarget">$54,751.64</td><td data-field="annual.table.sep.hlSeasonPct">100%</td><td data-field="annual.table.sep.monthlyTarget">$54,751.64</td><td data-field="annual.table.sep.dailyTarget">$2,281.57</td><td data-field="annual.table.sep.monthlyProfit">$56,435.25</td><td data-field="annual.table.sep.monthlyKgi">$1,677.61</td><td data-field="annual.table.sep.hlSeasonActualPct">103.06%</td><td data-field="annual.table.sep.hlPercent">103.06%</td></tr>
+                <tr><td>Oct</td><td data-field="annual.table.oct.businessDay">26</td><td data-field="annual.table.oct.monthlyAverageTarget">$59,320.78</td><td data-field="annual.table.oct.hlSeasonPct">110%</td><td data-field="annual.table.oct.monthlyTarget">$65,252.85</td><td data-field="annual.table.oct.dailyTarget">$2,509.73</td><td data-field="annual.table.oct.monthlyProfit">$70,728.48</td><td data-field="annual.table.oct.monthlyKgi">$5,475.62</td><td data-field="annual.table.oct.hlSeasonActualPct">119.23%</td><td data-field="annual.table.oct.hlPercent">108.39%</td></tr>
+                <tr><td>Nov</td><td data-field="annual.table.nov.businessDay">23</td><td data-field="annual.table.nov.monthlyAverageTarget">$52,416.07</td><td data-field="annual.table.nov.hlSeasonPct">110%</td><td data-field="annual.table.nov.monthlyTarget">$57,123.68</td><td data-field="annual.table.nov.dailyTarget">$2,509.73</td><td data-field="annual.table.nov.monthlyProfit">$62,272.34</td><td data-field="annual.table.nov.monthlyKgi">$4,548.66</td><td data-field="annual.table.nov.hlSeasonActualPct">118.67%</td><td data-field="annual.table.nov.hlPercent">107.88%</td></tr>
+                <tr><td>Dec</td><td data-field="annual.table.dec.businessDay">24</td><td data-field="annual.table.dec.monthlyAverageTarget">$54,751.64</td><td data-field="annual.table.dec.hlSeasonPct">115%</td><td data-field="annual.table.dec.monthlyTarget">$62,971.29</td><td data-field="annual.table.dec.dailyTarget">$2,623.80</td><td data-field="annual.table.dec.monthlyProfit">$70,291.96</td><td data-field="annual.table.dec.monthlyKgi">$7,320.67</td><td data-field="annual.table.dec.hlSeasonActualPct">128.37%</td><td data-field="annual.table.dec.hlPercent">111.63%</td></tr>
               </tbody>
             </table>
           </div>
@@ -4223,75 +4975,73 @@
         <button type="button" class="annual-monthly-toggle" id="annual-monthly-toggle" aria-expanded="false" aria-controls="annual-frame-open">
           Open
         </button>
-        <div class="annual-summary-bottom-row" aria-label="日次KPIと月次売上サマリー">
+        <div class="annual-summary-bottom-row" aria-label="Daily KPI and monthly sales summary">
           <div class="annual-summary-bottom-cell annual-summary-bottom-cell--daily">
             <img src="../../../images/annual_daily_kpi.svg" alt="" class="annual-summary-bottom-frame-img" width="471" height="132" decoding="async">
             <div class="annual-daily-kpi-overlay">
               <div class="annual-daily-kpi-col annual-daily-kpi-col--date">
-                <p class="annual-daily-kpi-label" id="annual-daily-label-date">日付</p>
+                <p class="annual-daily-kpi-label" id="annual-daily-label-date">Date set</p>
                 <div class="annual-daily-kpi-date-row">
-                  <input type="date" class="annual-daily-kpi-date-input" id="annual-daily-date-input" lang="ja" aria-hidden="true" tabindex="-1">
-                  <button type="button" class="annual-daily-kpi-date-btn" id="annual-daily-date-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="日付を選択">2025 / 6 / 7 土</button>
-                  <button type="button" class="annual-daily-kpi-today-btn" id="annual-daily-today-btn">今日</button>
+                  <input type="date" class="annual-daily-kpi-date-input" id="annual-daily-date-input" lang="en" aria-hidden="true" tabindex="-1">
+                  <button type="button" class="annual-daily-kpi-date-btn" id="annual-daily-date-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Choose date">2025 / 6 / 7 sat</button>
+                  <button type="button" class="annual-daily-kpi-today-btn" id="annual-daily-today-btn">Today</button>
                 </div>
               </div>
               <div class="annual-daily-kpi-col annual-daily-kpi-col--sales">
-                <p class="annual-daily-kpi-label" id="annual-daily-label-target">目標売上</p>
-                <p class="annual-daily-kpi-target" id="annual-daily-target-sales" data-field="annual.daily.targetSales">¥357,971</p>
+                <p class="annual-daily-kpi-label" id="annual-daily-label-target">Target sales</p>
+                <p class="annual-daily-kpi-target" id="annual-daily-target-sales" data-field="annual.daily.targetSales">$357,971</p>
               </div>
             </div>
           </div>
           <div class="annual-summary-bottom-cell annual-summary-bottom-cell--sales">
-            <img src="../../../images/annual_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="146" decoding="async">
-            <button type="button" class="annual-sales-tab annual-sales-tab--more" id="annual-focus-more-btn" aria-expanded="false" aria-label="フォーカスバーを展開">more</button>
+            <img src="../../../images/monthly_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="129" decoding="async">
             <div class="annual-sales-overlay">
-              <div class="annual-sales-grid" role="grid" aria-label="月次と年次の比較">
+              <div class="annual-sales-grid" role="grid" aria-label="Monthly and annual comparison">
                 <span class="annual-sales-grid-spacer" aria-hidden="true"></span>
                 <div class="annual-sales-abbr" data-abbr="CAS">CAS</div>
                 <div class="annual-sales-abbr" data-abbr="CTS">CTS</div>
                 <div class="annual-sales-abbr" data-abbr="Diff">Diff</div>
                 <div class="annual-sales-abbr" data-abbr="Ach">Ach</div>
                 <div class="annual-sales-row-h">MTH</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cas">¥123,456</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cts">¥123,456</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.diff">¥123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cas">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.cts">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.monthly.diff">$123,456</div>
                 <div class="annual-sales-val" data-field="annual.focusSummary.monthly.ach">100%</div>
                                 <div class="annual-sales-row-h">ANN</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cas">¥123,456</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cts">¥123,456</div>
-                <div class="annual-sales-val" data-field="annual.focusSummary.annual.diff">¥123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cas">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.cts">$123,456</div>
+                <div class="annual-sales-val" data-field="annual.focusSummary.annual.diff">$123,456</div>
                 <div class="annual-sales-val" data-field="annual.focusSummary.annual.ach">100%</div>
               </div>
             </div>
-            <button type="button" class="annual-sales-tab annual-sales-tab--close" id="annual-focus-close-btn" aria-label="フォーカスバーを縮小">Close</button>
           </div>
         </div>
-        <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="日次売上一覧">
-          <nav class="annual-daily-focus-global-menu" id="annual-daily-focus-global-menu" aria-label="グローバルメニュー">
-            <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn" aria-label="日次行を編集">
+        <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="Daily sales list">
+          <nav class="annual-daily-focus-global-menu" id="annual-daily-focus-global-menu" aria-label="Global menu">
+            <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn" aria-label="Edit day row">
               <img src="../../../images/button.svg" alt="" decoding="async">
               <span>Edit</span>
             </button>
             <div class="annual-daily-focus-global-scroll" id="annual-daily-focus-global-scroll">
               <div class="annual-daily-focus-menu-grid">
                 <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--base">
-                  <span class="annual-daily-hdr__cell annual-daily-hdr__cell--date">日付</span>
-                  <span class="annual-daily-hdr__cell">本日売上</span>
-                  <span class="annual-daily-hdr__cell">目標売上</span>
-                  <span class="annual-daily-hdr__cell">差額</span>
-                  <span class="annual-daily-hdr__cell">達成率</span>
+                  <span class="annual-daily-hdr__cell annual-daily-hdr__cell--date">Date</span>
+                  <span class="annual-daily-hdr__cell">Today&rsquo;s Sales</span>
+                  <span class="annual-daily-hdr__cell">Target Sales</span>
+                  <span class="annual-daily-hdr__cell">Difference</span>
+                  <span class="annual-daily-hdr__cell">Achievement</span>
                 </div>
                 <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--monthly">
-                  <span class="annual-daily-hdr__cell">月次目標売上</span>
-                  <span class="annual-daily-hdr__cell">月次売上</span>
-                  <span class="annual-daily-hdr__cell">差額</span>
-                  <span class="annual-daily-hdr__cell">達成率</span>
+                  <span class="annual-daily-hdr__cell">Monthly Target Sales</span>
+                  <span class="annual-daily-hdr__cell">Monthly Sales</span>
+                  <span class="annual-daily-hdr__cell">Difference</span>
+                  <span class="annual-daily-hdr__cell">Achievement</span>
                 </div>
                 <div class="annual-daily-focus-menu-group annual-daily-focus-menu-group--annual">
-                  <span class="annual-daily-hdr__cell">年次目標売上</span>
-                  <span class="annual-daily-hdr__cell">年次売上</span>
-                  <span class="annual-daily-hdr__cell">差額</span>
-                  <span class="annual-daily-hdr__cell">達成率</span>
+                  <span class="annual-daily-hdr__cell">Annual Target Sales</span>
+                  <span class="annual-daily-hdr__cell">Annual Sales</span>
+                  <span class="annual-daily-hdr__cell">Difference</span>
+                  <span class="annual-daily-hdr__cell">Achievement</span>
                 </div>
               </div>
             </div>
@@ -4299,7 +5049,7 @@
           <div class="annual-daily-focus-scroll-clip">
             <div class="annual-daily-focus-scroll" id="annual-daily-focus-scroll">
               <div class="annual-daily-table-wrap">
-                <div class="annual-daily-rows" id="annual-daily-rows" role="list" aria-label="年次の日次一覧"></div>
+                <div class="annual-daily-rows" id="annual-daily-rows" role="list" aria-label="Daily rows for year"></div>
               </div>
             </div>
           </div>
@@ -4308,7 +5058,7 @@
               type="button"
               class="annual-daily-focus-bar-graph-btn"
               id="annual-daily-focus-bar-graph-btn"
-              aria-label="グラフを開く"
+              aria-label="Open graph"
               aria-expanded="false"
               aria-haspopup="dialog"
               aria-controls="annual-graph-popover-panel"
@@ -4316,32 +5066,32 @@
               <span class="annual-daily-focus-bar-graph-btn__inner">Graph</span>
             </button>
             <div class="annual-daily-focus-bar-stack">
-              <button type="button" class="annual-daily-focus-wing-hit annual-daily-focus-wing-hit--left" id="annual-daily-focus-wing-hit-left" aria-label="日次テーブルを展開">
-                <span>フォーカス行 上下</span>
+              <button type="button" class="annual-daily-focus-wing-hit annual-daily-focus-wing-hit--left" id="annual-daily-focus-wing-hit-left" aria-label="Expand daily table">
+                <span>Focus row up and down</span>
               </button>
-              <button type="button" class="annual-daily-focus-wing-hit" id="annual-daily-focus-wing-hit" aria-label="日次テーブルを展開">
+              <button type="button" class="annual-daily-focus-wing-hit" id="annual-daily-focus-wing-hit" aria-label="Expand daily table">
                 <span>Toggle</span>
               </button>
               <div class="annual-daily-focus-bar-upper-scroll" id="annual-daily-focus-bar-upper-scroll">
                 <div class="annual-daily-focus-bar-upper">
                   <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--base">
-                    <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--date">日付</span>
-                    <span class="annual-daily-focus-bar-upper__cell">本日売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">目標売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
-                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                    <span class="annual-daily-focus-bar-upper__cell annual-daily-focus-bar-upper__cell--date">Date</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Today&rsquo;s Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Target Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Difference</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Achievement</span>
                   </div>
                   <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--monthly">
-                    <span class="annual-daily-focus-bar-upper__cell">月次目標売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">月次売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
-                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Monthly Target Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Monthly Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Difference</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Achievement</span>
                   </div>
                   <div class="annual-daily-focus-bar-upper__group annual-daily-focus-bar-upper__group--annual">
-                    <span class="annual-daily-focus-bar-upper__cell">年次目標売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">年次売上</span>
-                    <span class="annual-daily-focus-bar-upper__cell">差額</span>
-                    <span class="annual-daily-focus-bar-upper__cell">達成率</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Annual Target Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Annual Sales</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Difference</span>
+                    <span class="annual-daily-focus-bar-upper__cell">Achievement</span>
                   </div>
                 </div>
               </div>
@@ -4349,21 +5099,21 @@
                 <div class="annual-daily-focus-bar-lower">
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--base">
                     <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">1/6 mon</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
                     <span class="annual-daily-focus-bar-lower__cell">100%</span>
                   </div>
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--monthly">
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
                     <span class="annual-daily-focus-bar-lower__cell">100%</span>
                   </div>
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--annual">
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
+                    <span class="annual-daily-focus-bar-lower__cell">$123,456</span>
                     <span class="annual-daily-focus-bar-lower__cell">100%</span>
                   </div>
                 </div>
@@ -4374,25 +5124,164 @@
         </div>
         <section class="monthly-table-window" aria-label="Monthly Table Window">
           <div class="monthly-month-picker" id="monthly-month-picker">
-            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-prev" aria-label="前の月">◀</button>
+            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-prev" aria-label="Previous month">◀</button>
             <button
               type="button"
               class="monthly-month-picker__label"
               id="monthly-month-label"
-              aria-label="月を選択"
+              aria-label="Select month"
               aria-expanded="false"
               aria-haspopup="listbox"
               aria-controls="monthly-month-menu"
             >January</button>
-            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-next" aria-label="次の月">▶</button>
-            <ul class="monthly-month-picker__menu" id="monthly-month-menu" role="listbox" aria-label="月一覧" hidden></ul>
+            <button type="button" class="monthly-month-picker__arrow" id="monthly-month-next" aria-label="Next month">▶</button>
+            <ul class="monthly-month-picker__menu" id="monthly-month-menu" role="listbox" aria-label="Months" hidden></ul>
           </div>
           <span class="monthly-table-window__guide-line" aria-hidden="true"></span>
           <span class="monthly-table-window__h-line-775" aria-hidden="true"></span>
           <span class="monthly-table-window__h-line-775-right" aria-hidden="true"></span>
+          <p class="monthly-table-window__vlabel monthly-table-window__vlabel--income">
+            <span class="monthly-table-window__vlabel-inner">Income</span>
+          </p>
+          <p class="monthly-table-window__vlabel monthly-table-window__vlabel--expenses">
+            <span class="monthly-table-window__vlabel-inner">Expenses</span>
+          </p>
+          <div
+            class="monthly-scroll-data"
+            id="monthly-scroll-data"
+            role="region"
+            aria-label="Date, Income, Expenses, and Profit daily cells (horizontal scroll)"
+          >
+            <div class="monthly-scroll-data__stack">
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--date"
+                id="monthly-scroll-track-date"
+              ></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--income"
+                id="monthly-scroll-track-income"
+              ></div>
+              <div class="monthly-scroll-data__between" aria-hidden="true"></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--expenses"
+                id="monthly-scroll-track-expenses"
+              ></div>
+              <div
+                class="monthly-scroll-data__between monthly-scroll-data__between--profit-gap"
+                aria-hidden="true"
+              ></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--profit"
+                id="monthly-scroll-track-profit"
+              ></div>
+            </div>
+          </div>
+          <p class="monthly-table-window__col-text monthly-table-window__col-text--date">Date</p>
+          <div class="monthly-table-window__income-col" id="monthly-income-col" role="group" aria-label="Income">
+            <div class="monthly-table-window__income-group" data-income-group="sales">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-sales">Sales</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-sales-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-group" data-income-group="customer">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-customer">Customer</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-customer-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-group" data-income-group="pc">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-pc">P/C</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-pc-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+          </div>
+          <div class="monthly-table-window__income-arrows-col" id="monthly-income-arrows-col" aria-label="Income expand and collapse">
+            <div class="monthly-table-window__income-arrow-group" data-income-group="sales">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="sales"
+                aria-expanded="true"
+                aria-controls="monthly-income-sales-subs"
+                aria-labelledby="monthly-income-label-sales"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-arrow-group" data-income-group="customer">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="customer"
+                aria-expanded="true"
+                aria-controls="monthly-income-customer-subs"
+                aria-labelledby="monthly-income-label-customer"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-arrow-group" data-income-group="pc">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="pc"
+                aria-expanded="true"
+                aria-controls="monthly-income-pc-subs"
+                aria-labelledby="monthly-income-label-pc"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+          </div>
+          <div class="monthly-table-window__expenses-col" role="group" aria-label="Expenses">
+            <p class="monthly-table-window__expenses-line">Food</p>
+            <p class="monthly-table-window__expenses-line">Beverage</p>
+            <p class="monthly-table-window__expenses-line">Misc</p>
+            <p class="monthly-table-window__expenses-line">Fixed</p>
+            <p class="monthly-table-window__expenses-line">Expected</p>
+            <p class="monthly-table-window__expenses-line">Total</p>
+          </div>
+          <p class="monthly-table-window__col-text monthly-table-window__col-text--profit">Profit</p>
           <div class="monthly-vertical-focus-bar" aria-hidden="true">
-            <img src="../../../images/vertical_focus_bar.svg" alt="" class="monthly-focusbar-img-scifi">
-            <img src="../../../images/vertical_focus_bar_office.svg" alt="" class="monthly-focusbar-img-office">
+            <img
+              src="../../../images/vertical_focus_bar.svg"
+              alt=""
+              class="monthly-vfocus-frame monthly-focusbar-img-scifi"
+              decoding="async"
+            >
+            <img
+              src="../../../images/vertical_focus_bar_office.svg"
+              alt=""
+              class="monthly-vfocus-frame monthly-focusbar-img-office"
+              decoding="async"
+            >
+            <div class="monthly-vfocus-fill">
+              <div class="monthly-vfocus-stack">
+                <div class="monthly-vfocus-date" id="monthly-vfocus-date"></div>
+                <div class="monthly-vfocus-income-grid" id="monthly-vfocus-income-grid"></div>
+                <div class="monthly-vfocus-spacer monthly-vfocus-spacer--income-exp" aria-hidden="true"></div>
+                <div class="monthly-vfocus-exp-grid" id="monthly-vfocus-exp-grid"></div>
+                <div class="monthly-vfocus-spacer monthly-vfocus-spacer--profit-gap" aria-hidden="true"></div>
+                <div class="monthly-vfocus-profit" id="monthly-vfocus-profit"></div>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -4409,7 +5298,7 @@
       aria-labelledby="annual-graph-popover-title"
     >
       <div class="annual-graph-popover__head">
-        <h2 class="annual-graph-popover__title" id="annual-graph-popover-title">日次グラフ</h2>
+        <h2 class="annual-graph-popover__title" id="annual-graph-popover-title">Daily Graph</h2>
         <div class="annual-graph-popover__head-actions">
           <div class="annual-graph-popover__dropdown">
             <button
@@ -4420,21 +5309,21 @@
               aria-haspopup="listbox"
               aria-controls="annual-graph-popover-drop-menu"
             >
-              ▼ 日次
+              ▼ Daily
             </button>
             <ul class="annual-graph-popover__drop-menu" id="annual-graph-popover-drop-menu" role="listbox" hidden>
               <li role="presentation">
-                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="daily">日次</button>
+                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="daily">Daily</button>
               </li>
               <li role="presentation">
-                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="monthly">月次</button>
+                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="monthly">Monthly</button>
               </li>
               <li role="presentation">
-                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="annual">年次</button>
+                <button type="button" class="annual-graph-popover__drop-item" role="option" data-graph-mode="annual">Annual</button>
               </li>
             </ul>
           </div>
-          <button type="button" class="annual-graph-popover__close" id="annual-graph-popover-close" aria-label="閉じる">
+          <button type="button" class="annual-graph-popover__close" id="annual-graph-popover-close" aria-label="Close">
             ×
           </button>
         </div>
@@ -4448,13 +5337,13 @@
             </div>
             <span class="annual-graph-popover__bar-tri-kgi"></span>
           </div>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-ach">達成率 :</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-ach">Achievement :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-ach" id="annual-graph-popover-val-ach">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-target">目標売上 :</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-target">Target Sales :</span>
           <span class="annual-graph-popover__value annual-graph-popover__value--editable" id="annual-graph-popover-val-target">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-actual">実績売上 :</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-actual">Actual Sales :</span>
           <span class="annual-graph-popover__value annual-graph-popover__value--editable annual-graph-popover__val-actual" id="annual-graph-popover-val-actual">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-diff">差額 :</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-diff">Difference :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-diff" id="annual-graph-popover-val-diff">—</span>
         </div>
       </div>
@@ -4471,46 +5360,46 @@
   >
     <div class="annual-edit-modal__backdrop" id="annual-edit-modal-backdrop" aria-hidden="true"></div>
     <div class="annual-edit-modal__panel" role="document">
-      <h2 id="annual-edit-modal-title" class="annual-edit-modal__sr-only">日次一括編集</h2>
-      <button type="button" class="annual-edit-modal__close" id="annual-edit-modal-close" aria-label="閉じる">
+      <h2 id="annual-edit-modal-title" class="annual-edit-modal__sr-only">Bulk daily edit</h2>
+      <button type="button" class="annual-edit-modal__close" id="annual-edit-modal-close" aria-label="Close">
         ×
       </button>
-      <button type="button" class="annual-edit-modal__save" id="annual-edit-modal-save" aria-label="保存">
-        保存
+      <button type="button" class="annual-edit-modal__save" id="annual-edit-modal-save" aria-label="Save">
+        Save
       </button>
       <div class="annual-edit-modal__ym">
         <div class="annual-edit-modal__ym-cell">
-          <label class="annual-edit-modal__sr-only" for="annual-edit-year-select">年</label>
-          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-prev" aria-label="前年">
+          <label class="annual-edit-modal__sr-only" for="annual-edit-year-select">Year</label>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-prev" aria-label="Previous year">
             ◀︎
           </button>
           <select
             id="annual-edit-year-select"
             class="annual-edit-modal__ym-select"
-            aria-label="年を一覧から選択"
+            aria-label="Choose year from list"
           ></select>
-          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-next" aria-label="翌年">
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-year-next" aria-label="Next year">
             ▶︎
           </button>
         </div>
         <div class="annual-edit-modal__ym-cell">
-          <label class="annual-edit-modal__sr-only" for="annual-edit-month-select">月</label>
-          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-prev" aria-label="前月">
+          <label class="annual-edit-modal__sr-only" for="annual-edit-month-select">Month</label>
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-prev" aria-label="Previous month">
             ◀︎
           </button>
           <select
             id="annual-edit-month-select"
             class="annual-edit-modal__ym-select"
-            aria-label="月を一覧から選択"
+            aria-label="Choose month from list"
           ></select>
-          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-next" aria-label="翌月">
+          <button type="button" class="annual-edit-modal__ym-arrow" id="annual-edit-month-next" aria-label="Next month">
             ▶︎
           </button>
         </div>
       </div>
-      <div class="annual-edit-modal__colhead" aria-hidden="false">
+      <div class="annual-edit-modal__colhead">
         <div class="annual-edit-modal__colhead-date-merged">
-          <button type="button" class="annual-edit-modal__colhead-date-btn" id="annual-edit-date-header-btn">日付</button>
+          <button type="button" class="annual-edit-modal__colhead-date-btn" id="annual-edit-date-header-btn">Date</button>
           <div class="annual-edit-modal__date-filter" id="annual-edit-date-filter-wrap">
             <button
               type="button"
@@ -4519,7 +5408,7 @@
               aria-expanded="false"
               aria-haspopup="true"
               aria-controls="annual-edit-date-filter-panel"
-              aria-label="曜日・祝日で表示を絞り込む"
+              aria-label="Filter rows by weekday or national holiday"
             >
               <span class="annual-edit-modal__sort-icon" aria-hidden="true">▼</span>
             </button>
@@ -4527,35 +5416,35 @@
               id="annual-edit-date-filter-panel"
               class="annual-edit-modal__date-filter-panel"
               role="group"
-              aria-label="表示する曜日・祝日"
+              aria-label="Weekdays and holidays"
               hidden
             >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="1" /> 月曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="1" /> Monday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="2" /> 火曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="2" /> Tuesday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="3" /> 水曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="3" /> Wednesday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="4" /> 木曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="4" /> Thursday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="5" /> 金曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="5" /> Friday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="6" /> 土曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="6" /> Saturday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="0" /> 日曜日</label
+                ><input type="checkbox" class="annual-edit-modal__filter-dow" value="0" /> Sunday</label
               >
               <label class="annual-edit-modal__filter-row"
-                ><input type="checkbox" id="annual-edit-filter-holiday" /> 祝日（休日カレンダー連携時）</label
+                ><input type="checkbox" id="annual-edit-filter-holiday" /> National holiday</label
               >
               <button type="button" class="annual-edit-modal__filter-clear" id="annual-edit-filter-clear">
-                フィルターを解除
+                Clear filter
               </button>
             </div>
           </div>
@@ -4564,17 +5453,15 @@
             id="annual-edit-colhead-date-input"
             class="annual-edit-modal__colhead-date-native"
             tabindex="-1"
-            aria-label="日付を選んで一覧の先頭へ"
+            aria-label="Pick a date to jump to top of list"
           />
         </div>
         <div class="annual-edit-modal__colhead-dayoff">
-          <span class="annual-edit-modal__colhead-dayoff-title">店休</span>
-          <button type="button" class="annual-edit-modal__select-all" id="annual-edit-select-all">
-            すべて選択
-          </button>
+          <span class="annual-edit-modal__colhead-dayoff-title">Day Off</span>
+          <button type="button" class="annual-edit-modal__select-all" id="annual-edit-select-all">Select All</button>
         </div>
         <div class="annual-edit-modal__colhead-sales">
-          <span>売上</span>
+          <span>Sales</span>
           <div class="annual-edit-modal__sales-sort" id="annual-edit-sales-sort-wrap">
             <button
               type="button"
@@ -4583,7 +5470,7 @@
               aria-expanded="false"
               aria-haspopup="true"
               aria-controls="annual-edit-sales-sort-panel"
-              aria-label="売上で並べ替え"
+              aria-label="Sort by sales"
             >
               <span class="annual-edit-modal__sort-icon" aria-hidden="true">▼</span>
             </button>
@@ -4591,7 +5478,7 @@
               id="annual-edit-sales-sort-panel"
               class="annual-edit-modal__date-filter-panel annual-edit-modal__sales-sort-panel"
               role="group"
-              aria-label="売上の並べ替え"
+              aria-label="Sales sort options"
               hidden
             >
               <div class="annual-edit-modal__sales-sort-orders">
@@ -4600,38 +5487,38 @@
                   class="annual-edit-modal__sales-sort-btn"
                   data-aem-sales-order="desc"
                 >
-                  降り順（売上 高→低）
+                  Descending (high → low)
                 </button>
                 <button
                   type="button"
                   class="annual-edit-modal__sales-sort-btn"
                   data-aem-sales-order="asc"
                 >
-                  登り順（売上 低→高）
+                  Ascending (low → high)
                 </button>
               </div>
-              <div class="annual-edit-modal__sales-sort-section-label">数値順位</div>
+              <div class="annual-edit-modal__sales-sort-section-label">Numeric rank</div>
               <div class="annual-edit-modal__sales-sort-amounts" id="annual-edit-sales-sort-amounts"></div>
               <button type="button" class="annual-edit-modal__filter-clear" id="annual-edit-sales-sort-reset">
-                日付順に戻す
+                Back to date order
               </button>
             </div>
           </div>
         </div>
       </div>
       <div class="annual-edit-modal__scroll">
-        <table class="annual-edit-modal__table" id="annual-edit-modal-table" aria-label="日次一覧"></table>
+        <table class="annual-edit-modal__table" id="annual-edit-modal-table" aria-label="Daily rows"></table>
       </div>
     </div>
   </div>
 
   <footer class="site-footer">
-    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ先頭へ戻る">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
       <img src="../../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
     </button>
     <div class="footer-separator"></div>
     <div class="footer-logo">
-      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+      <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
         <img src="../../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
@@ -4639,14 +5526,14 @@
   </footer>
 
   <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="index.html" data-url-ja="../../../app/monthly/index.html">
-    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
-      <span class="lang-code" aria-hidden="true">JP</span>
-      <span class="lang-name">Japanese</span>
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
+      <span class="lang-code" aria-hidden="true">EN</span>
+      <span class="lang-name">English</span>
       <span class="lang-chevron" aria-hidden="true"></span>
     </button>
-    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
-      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
-      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
+      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
     </div>
   </div>
 
@@ -4661,7 +5548,7 @@
         if (!btnModeText || !btnModeToggle) return;
         var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
-        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi Mode に切り替え' : 'Office Mode に切り替え');
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
         if (settingsOfficeLabel) {
           settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
         }
@@ -5027,7 +5914,7 @@
         raw = window.__ANNUAL_DATA.targetSales;
       }
       if (typeof raw === 'number' && Number.isFinite(raw)) {
-        targetEl.textContent = '¥' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       } else {
         targetEl.textContent = String(raw);
       }
@@ -5038,17 +5925,17 @@
       if (!targetEl || !editBtn) return;
 
       function parseCurrencyInput(raw) {
-        var normalized = String(raw || '').replace(/[¥$,\s]/g, '');
+        var normalized = String(raw || '').replace(/[$,\s]/g, '');
         var value = Number(normalized);
         return Number.isFinite(value) && value >= 0 ? value : NaN;
       }
 
       function formatCurrency(value) {
-        return '¥' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
       function extractCurrentValue() {
-        var raw = String(targetEl.textContent || '').replace(/[¥$,\s]/g, '');
+        var raw = String(targetEl.textContent || '').replace(/[$,\s]/g, '');
         var v = Number(raw);
         return Number.isFinite(v) ? v : 0;
       }
@@ -5075,7 +5962,7 @@
 
       editBtn.addEventListener('click', async function () {
         var current = extractCurrentValue();
-        var input = window.prompt('年次目標売上 (JPY)', String(Math.round(current * 100) / 100));
+        var input = window.prompt('Annual Target Sales (USD)', String(Math.round(current * 100) / 100));
         if (input == null) return;
 
         var next = parseCurrencyInput(input);
@@ -5159,7 +6046,7 @@
         if (options.editable) {
           percentEl.setAttribute(
             'title',
-            'クリックで編集。逆三角形の色が深刻度（100%以上は黄、50〜100%は10%刻みでアンバー→赤、50%未満は濃い赤）。縦棒は常に黄。'
+            'Click to edit. Triangle color shows severity (100%+ yellow; 50–100% in 10% bands amber→red; below 50% deep red). Vertical bar stays yellow.'
           );
           percentEl.addEventListener('click', function () {
             var input = window.prompt(options.promptLabel + ' (%)', String(currentPercent));
@@ -5187,7 +6074,7 @@
         graphId: 'annual-allocation-graph',
         percentId: 'annual-allocation-percent',
         dataKey: 'monthlyAllocationPercent',
-        promptLabel: '月次配分率合計',
+        promptLabel: 'Monthly Allocation Total',
         editable: false,
         achievementAlertColors: false
       });
@@ -5195,7 +6082,7 @@
         graphId: 'annual-achievement-graph',
         percentId: 'annual-achievement-percent',
         dataKey: 'achievementPercent',
-        promptLabel: '達成率',
+        promptLabel: 'Achievement',
         editable: true,
         achievementAlertColors: true
       });
@@ -5242,7 +6129,7 @@
     (function () {
       function formatCurrency(value) {
         var absValue = Math.abs(value);
-        var formatted = '¥' + absValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var formatted = '$' + absValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return value < 0 ? '-' + formatted : formatted;
       }
 
@@ -5374,7 +6261,7 @@
       function showJumpRangeMessage(d) {
         var b = getJumpYearBounds();
         var y = d.getFullYear();
-        window.alert('ジャンプ可能な年は ' + b.minYear + '年〜' + b.maxYear + '年 です。選択した ' + y + '年 は範囲外です。');
+        window.alert('Jump is allowed only from ' + b.minYear + ' to ' + b.maxYear + '. Selected year ' + y + ' is out of range.');
       }
 
       function applyDailySelection(d, source, opts) {
@@ -7441,72 +8328,527 @@
         });
     })();
     (function () {
+      var STORAGE_ANNUAL = 'kpiNavigator.annualNav';
+      var STORAGE_MONTHLY_LAST = 'kpiNavigator.monthlyLast';
+      var LEADING = 3;
+      var TRAILING = 4;
+      var COL_W = 100;
+      var GAP = 3;
+      var COL_STEP = COL_W + GAP;
+
+      var useJa =
+        String(document.documentElement.getAttribute('lang') || '')
+          .toLowerCase()
+          .indexOf('ja') === 0;
+      var MONTHS_JA = [
+        '1月', '2月', '3月', '4月', '5月', '6月',
+        '7月', '8月', '9月', '10月', '11月', '12月'
+      ];
+      var MONTHS_EN = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      var months = useJa ? MONTHS_JA : MONTHS_EN;
+      var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+      var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
       var prevBtn = document.getElementById('monthly-month-prev');
       var nextBtn = document.getElementById('monthly-month-next');
       var labelBtn = document.getElementById('monthly-month-label');
       var menu = document.getElementById('monthly-month-menu');
-      if (!prevBtn || !nextBtn || !labelBtn || !menu) return;
+      var scrollEl = document.getElementById('monthly-scroll-data');
+      var trackDate = document.getElementById('monthly-scroll-track-date');
+      var trackIncome = document.getElementById('monthly-scroll-track-income');
+      var trackExpenses = document.getElementById('monthly-scroll-track-expenses');
+      var trackProfit = document.getElementById('monthly-scroll-track-profit');
+      if (
+        !prevBtn ||
+        !nextBtn ||
+        !labelBtn ||
+        !menu ||
+        !scrollEl ||
+        !trackDate ||
+        !trackIncome ||
+        !trackExpenses ||
+        !trackProfit
+      )
+        return;
 
-      var months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      var current = 0;
+      var vDateEl = document.getElementById('monthly-vfocus-date');
+      var vIncGrid = document.getElementById('monthly-vfocus-income-grid');
+      var vExpGrid = document.getElementById('monthly-vfocus-exp-grid');
+      var vProfitEl = document.getElementById('monthly-vfocus-profit');
+      function ensureVFocusShell() {
+        if (!vDateEl || !vIncGrid || !vExpGrid || !vProfitEl) return false;
+        if (vIncGrid.childElementCount === 0) {
+          for (var vi = 0; vi < 9; vi++) {
+            var sp = document.createElement('span');
+            sp.className = 'monthly-vfocus-cell';
+            sp.setAttribute('aria-hidden', 'true');
+            vIncGrid.appendChild(sp);
+          }
+        }
+        if (vExpGrid.childElementCount === 0) {
+          for (var ve = 0; ve < 6; ve++) {
+            var sp2 = document.createElement('span');
+            sp2.className = 'monthly-vfocus-cell';
+            sp2.setAttribute('aria-hidden', 'true');
+            vExpGrid.appendChild(sp2);
+          }
+        }
+        return true;
+      }
+      var vfocusOk = ensureVFocusShell();
+      var demoMoney = useJa ? '\u00a5123,456' : '$123,456';
+      function textOrDemo(t) {
+        var s = String(t || '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return s || demoMoney;
+      }
+      var vFocusRaf = null;
+      function scheduleVFocusUpdate() {
+        if (!vfocusOk) return;
+        if (vFocusRaf != null) return;
+        vFocusRaf = requestAnimationFrame(function () {
+          vFocusRaf = null;
+          updateVerticalFocus();
+        });
+      }
+      function updateVerticalFocus() {
+        if (!vfocusOk) return;
+        var n = trackDate.children.length;
+        if (n === 0) {
+          vDateEl.textContent = '';
+          vProfitEl.textContent = '';
+          return;
+        }
+        var vw = scrollEl.clientWidth;
+        var centerX = scrollEl.scrollLeft + vw / 2;
+        var idx = Math.round((centerX - COL_W / 2) / COL_STEP);
+        if (idx < 0) idx = 0;
+        if (idx >= n) idx = n - 1;
+        var hdr = trackDate.children[idx];
+        if (hdr) {
+          vDateEl.textContent = hdr.textContent || '';
+          if (hdr.classList.contains('monthly-date-header-cell--off')) {
+            vDateEl.classList.add('monthly-vfocus-date--off');
+          } else {
+            vDateEl.classList.remove('monthly-vfocus-date--off');
+          }
+        }
+        var incCol = trackIncome.children[idx];
+        if (incCol) {
+          var incCells = incCol.querySelectorAll('.monthly-data-column__cell');
+          for (var ai = 0; ai < 9; ai++) {
+            var tgt = vIncGrid.children[ai];
+            var srcN = incCells[ai];
+            if (tgt) tgt.textContent = textOrDemo(srcN ? srcN.textContent : '');
+          }
+        }
+        var expCol = trackExpenses.children[idx];
+        if (expCol) {
+          var expCells = expCol.querySelectorAll('.monthly-data-column__cell');
+          for (var bi = 0; bi < 6; bi++) {
+            var tgt2 = vExpGrid.children[bi];
+            var srcE = expCells[bi];
+            if (tgt2) tgt2.textContent = textOrDemo(srcE ? srcE.textContent : '');
+          }
+        }
+        var pCol = trackProfit.children[idx];
+        vProfitEl.textContent = textOrDemo(pCol ? pCol.textContent : '');
+      }
+      scrollEl.addEventListener('scroll', scheduleVFocusUpdate, { passive: true });
+      window.addEventListener('resize', scheduleVFocusUpdate);
 
+      var state = { year: new Date().getFullYear(), month0: new Date().getMonth() };
+      var isoToIndex = {};
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+      function toISODateLocal(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      function parseISODateLocal(s) {
+        if (!s || typeof s !== 'string') return null;
+        var p = s.split('-');
+        if (p.length !== 3) return null;
+        var y = Number(p[0]);
+        var m = Number(p[1]);
+        var day = Number(p[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(day)) return null;
+        var d = new Date(y, m - 1, day);
+        if (d.getFullYear() !== y || d.getMonth() !== m - 1 || d.getDate() !== day) return null;
+        return d;
+      }
+      function daysInMonth(y, m0) {
+        return new Date(y, m0 + 1, 0).getDate();
+      }
+      function readAnnualNav() {
+        try {
+          var raw = localStorage.getItem(STORAGE_ANNUAL);
+          if (!raw) return null;
+          var o = JSON.parse(raw);
+          if (!o || typeof o !== 'object') return null;
+          return {
+            calendarYear: Number(o.calendarYear),
+            selectedIso: o.selectedIso || null
+          };
+        } catch (e) {
+          return null;
+        }
+      }
+      function readMonthlyLast() {
+        try {
+          var raw = sessionStorage.getItem(STORAGE_MONTHLY_LAST);
+          if (!raw) return null;
+          var o = JSON.parse(raw);
+          if (!o || typeof o !== 'object') return null;
+          return { year: Number(o.year), month0: Number(o.month0) };
+        } catch (e2) {
+          return null;
+        }
+      }
+      function persistMonthlyLast() {
+        try {
+          sessionStorage.setItem(
+            STORAGE_MONTHLY_LAST,
+            JSON.stringify({ year: state.year, month0: state.month0 })
+          );
+        } catch (e3) {}
+      }
+      function isDemoOff(d) {
+        if (d.getDay() === 0) return true;
+        if (d.getMonth() === 0 && d.getDate() <= 5) return true;
+        return false;
+      }
+      function dateLabelText(d) {
+        var dow = d.getDay();
+        var w = useJa ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow];
+        var base = d.getMonth() + 1 + '/' + d.getDate() + ' ' + w;
+        return isDemoOff(d) ? base + ' OFF' : base;
+      }
+      function ariaDateLabel(d, inMonth) {
+        var y = d.getFullYear();
+        var mo = d.getMonth() + 1;
+        var day = d.getDate();
+        var dow = d.getDay();
+        var wj = WEEKDAYS_JA[dow];
+        var off = isDemoOff(d);
+        if (useJa) {
+          return y + '年' + mo + '月' + day + '日 ' + wj + (inMonth ? '' : '（前後月）') + (off ? ' 店休' : '');
+        }
+        return (
+          mo +
+          '/' +
+          day +
+          '/' +
+          y +
+          ' ' +
+          WEEKDAYS_EN[dow] +
+          (inMonth ? '' : ' (adjacent month)') +
+          (off ? ', closed' : '')
+        );
+      }
       function closeMenu() {
         menu.hidden = true;
         labelBtn.setAttribute('aria-expanded', 'false');
       }
-
       function openMenu() {
         menu.hidden = false;
         labelBtn.setAttribute('aria-expanded', 'true');
       }
-
-      function render() {
-        labelBtn.textContent = months[current];
+      function renderPickerMenu() {
+        labelBtn.textContent = months[state.month0];
         menu.innerHTML = months
           .map(function (m, idx) {
-            var sel = idx === current ? ' aria-selected="true"' : '';
-            return '<li role="presentation"><button type="button" class="monthly-month-picker__item" role="option" data-month-index="' + idx + '"' + sel + '>' + m + '</button></li>';
+            var sel = idx === state.month0 ? ' aria-selected="true"' : '';
+            return (
+              '<li role="presentation"><button type="button" class="monthly-month-picker__item" role="option" data-month-index="' +
+              idx +
+              '"' +
+              sel +
+              '>' +
+              m +
+              '</button></li>'
+            );
           })
           .join('');
       }
+      function addDays(base, delta) {
+        var x = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+        x.setDate(x.getDate() + delta);
+        return x;
+      }
+      function makeIncomeColumn(buffer, iso, aria) {
+        var div = document.createElement('div');
+        div.className =
+          'monthly-data-column monthly-data-column--income' +
+          (buffer ? ' monthly-data-column--buffer' : '');
+        div.setAttribute('role', 'presentation');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('aria-label', aria);
+        for (var i = 0; i < 9; i++) {
+          var s = document.createElement('span');
+          s.className = 'monthly-data-column__cell';
+          s.setAttribute('aria-hidden', 'true');
+          div.appendChild(s);
+        }
+        return div;
+      }
+      function makeExpensesColumn(buffer, iso, aria) {
+        var div = document.createElement('div');
+        div.className =
+          'monthly-data-column monthly-data-column--expenses' +
+          (buffer ? ' monthly-data-column--buffer' : '');
+        div.setAttribute('role', 'presentation');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('aria-label', aria);
+        for (var j = 0; j < 6; j++) {
+          var s2 = document.createElement('span');
+          s2.className = 'monthly-data-column__cell';
+          s2.setAttribute('aria-hidden', 'true');
+          div.appendChild(s2);
+        }
+        return div;
+      }
+      function makeProfitCell(buffer, iso, colNum) {
+        var div = document.createElement('div');
+        div.className = 'monthly-profit-cell' + (buffer ? ' monthly-profit-cell--buffer' : '');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('role', 'presentation');
+        div.setAttribute(
+          'aria-label',
+          (useJa ? 'Profit 列' : 'Profit column ') +
+            colNum +
+            (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+        );
+        return div;
+      }
+      function rebuildColumns() {
+        isoToIndex = {};
+        trackDate.innerHTML = '';
+        trackIncome.innerHTML = '';
+        trackExpenses.innerHTML = '';
+        trackProfit.innerHTML = '';
+        var y = state.year;
+        var m0 = state.month0;
+        var dim = daysInMonth(y, m0);
+        var first = new Date(y, m0, 1);
+        var start = addDays(first, -LEADING);
+        var total = LEADING + dim + TRAILING;
+        var incLabel = 'Income';
+        var expLabel = 'Expenses';
+        for (var i = 0; i < total; i++) {
+          var d = addDays(start, i);
+          var iso = toISODateLocal(d);
+          var inMonth = d.getMonth() === m0 && d.getFullYear() === y;
+          var buffer = !inMonth;
+          var off = isDemoOff(d);
+          isoToIndex[iso] = i;
+          var p = document.createElement('p');
+          p.className = 'monthly-date-header-cell';
+          if (off) p.classList.add('monthly-date-header-cell--off');
+          if (buffer) p.classList.add('monthly-date-header-cell--buffer');
+          p.setAttribute('data-iso', iso);
+          p.textContent = dateLabelText(d);
+          p.setAttribute('aria-label', ariaDateLabel(d, inMonth));
+          trackDate.appendChild(p);
+          var colNum = i + 1;
+          trackIncome.appendChild(
+            makeIncomeColumn(
+              buffer,
+              iso,
+              incLabel + ' ' + (useJa ? '列' : 'column ') + colNum + (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+            )
+          );
+          trackExpenses.appendChild(
+            makeExpensesColumn(
+              buffer,
+              iso,
+              expLabel + ' ' + (useJa ? '列' : 'column ') + colNum + (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+            )
+          );
+          trackProfit.appendChild(makeProfitCell(buffer, iso, colNum));
+        }
+        scheduleVFocusUpdate();
+      }
+      function scrollToIso(iso) {
+        var idx = iso != null ? isoToIndex[iso] : null;
+        if (idx == null) {
+          var firstIso = toISODateLocal(new Date(state.year, state.month0, 1));
+          idx = isoToIndex[firstIso];
+        }
+        if (idx == null) return;
+        scrollEl.scrollLeft = Math.max(0, idx * COL_STEP);
+        scheduleVFocusUpdate();
+      }
+      function scheduleScroll(iso) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            scrollToIso(iso);
+          });
+        });
+      }
+      function pickInitialYearMonth() {
+        var nav = readAnnualNav();
+        var now = new Date();
+        var year =
+          nav && Number.isFinite(nav.calendarYear) ? nav.calendarYear : now.getFullYear();
+        var last = readMonthlyLast();
+        var month0;
+        if (last && last.year === year && last.month0 >= 0 && last.month0 <= 11) {
+          month0 = last.month0;
+        } else if (nav && nav.selectedIso) {
+          var pd = parseISODateLocal(nav.selectedIso);
+          if (pd && pd.getFullYear() === year) month0 = pd.getMonth();
+          else month0 = year === now.getFullYear() ? now.getMonth() : 0;
+        } else {
+          month0 = year === now.getFullYear() ? now.getMonth() : 0;
+        }
+        return { year: year, month0: month0, nav: nav };
+      }
+      function focusIsoForNav(nav) {
+        if (!nav || !nav.selectedIso) return null;
+        var pd = parseISODateLocal(nav.selectedIso);
+        if (!pd || pd.getFullYear() !== state.year || pd.getMonth() !== state.month0) return null;
+        return nav.selectedIso;
+      }
+      function applyExternalNav() {
+        var nav = readAnnualNav();
+        if (!nav || !Number.isFinite(nav.calendarYear)) return;
+        state.year = nav.calendarYear;
+        var pd = nav.selectedIso ? parseISODateLocal(nav.selectedIso) : null;
+        if (pd && pd.getFullYear() === state.year) state.month0 = pd.getMonth();
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(focusIsoForNav(nav));
+      }
+      function bumpMonth(delta) {
+        var m = state.month0 + delta;
+        var y = state.year;
+        while (m < 0) {
+          m += 12;
+          y -= 1;
+        }
+        while (m > 11) {
+          m -= 12;
+          y += 1;
+        }
+        state.month0 = m;
+        state.year = y;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      }
+
+      var init = pickInitialYearMonth();
+      state.year = init.year;
+      state.month0 = init.month0;
+      persistMonthlyLast();
+      renderPickerMenu();
+      rebuildColumns();
+      scheduleScroll(focusIsoForNav(init.nav));
+      scheduleVFocusUpdate();
 
       prevBtn.addEventListener('click', function () {
-        current = (current + 11) % 12;
-        render();
+        bumpMonth(-1);
       });
-
       nextBtn.addEventListener('click', function () {
-        current = (current + 1) % 12;
-        render();
+        bumpMonth(1);
       });
-
       labelBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (menu.hidden) openMenu();
         else closeMenu();
       });
-
       menu.addEventListener('click', function (e) {
         var btn = e.target && e.target.closest ? e.target.closest('[data-month-index]') : null;
         if (!btn) return;
         var idx = Number(btn.getAttribute('data-month-index'));
         if (!Number.isNaN(idx)) {
-          current = idx;
-          render();
+          state.month0 = idx;
+          persistMonthlyLast();
+          renderPickerMenu();
+          rebuildColumns();
+          scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
         }
         closeMenu();
       });
-
       document.addEventListener('click', function (e) {
         var picker = document.getElementById('monthly-month-picker');
         if (!picker) return;
         if (!picker.contains(e.target)) closeMenu();
       });
+      window.addEventListener('storage', function (ev) {
+        if (ev.key !== STORAGE_ANNUAL) return;
+        applyExternalNav();
+      });
 
-      render();
+      window.__MONTHLY_UI = window.__MONTHLY_UI || {};
+      window.__MONTHLY_UI.setCalendarYear = function (y) {
+        y = Number(y);
+        if (!Number.isFinite(y)) return;
+        state.year = y;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      };
+      window.__MONTHLY_UI.setMonth0 = function (m0) {
+        m0 = Number(m0);
+        if (m0 < 0 || m0 > 11) return;
+        state.month0 = m0;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      };
+      window.__MONTHLY_UI.scrollToIsoDate = function (iso) {
+        var d = parseISODateLocal(iso);
+        if (!d) return;
+        state.year = d.getFullYear();
+        state.month0 = d.getMonth();
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(iso);
+      };
+      window.__MONTHLY_UI.applyFromAnnualStorage = function () {
+        applyExternalNav();
+      };
+      window.__MONTHLY_UI.getState = function () {
+        return { year: state.year, month0: state.month0 };
+      };
+    })();
+    (function () {
+      var win = document.querySelector('.monthly-table-window');
+      if (!win) return;
+      win.querySelectorAll('.monthly-table-window__income-arrow-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var key = btn.getAttribute('data-income-group');
+          if (!key) return;
+          var group = win.querySelector(
+            '.monthly-table-window__income-col .monthly-table-window__income-group[data-income-group="' + key + '"]'
+          );
+          var pack = btn.closest('.monthly-table-window__income-arrow-group');
+          if (!group) return;
+          var subs = group.querySelector('.monthly-table-window__income-subs');
+          var icon = btn.querySelector('.monthly-table-window__income-arrow-icon');
+          group.classList.toggle('is-collapsed');
+          var collapsed = group.classList.contains('is-collapsed');
+          if (pack) {
+            if (collapsed) pack.classList.add('is-collapsed');
+            else pack.classList.remove('is-collapsed');
+          }
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          if (subs) subs.hidden = collapsed;
+          if (icon) icon.textContent = collapsed ? '\u25C0' : '\u25BC';
+        });
+      });
     })();
   </script>
 </body>

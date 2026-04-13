@@ -1731,6 +1731,10 @@
     .annual-summary-bottom-cell--sales {
       margin-top: -5px;
     }
+    /* Monthly: Area3 はフラット SVG（457×129）、タブボタンなし */
+    body.monthly-page .annual-summary-bottom-cell--sales {
+      margin-top: 0;
+    }
     /* パネル3: タブ文言は SVG 突起内（viewBox 457×146、中心 約4.5% / 94.85%） */
     .annual-summary-bottom-cell--sales > .annual-sales-tab {
       position: absolute;
@@ -3605,8 +3609,65 @@
       display: none !important;
     }
     .monthly-table-window {
+      /* Income 9 行＝日次セル列の内側グリッドと同期（.monthly-scroll-data top:60 + 列の 1px 枠内側） */
+      --monthly-income-grid-rows: repeat(8, 44px) 43px;
+      --monthly-income-cell-border: 1px;
+      --monthly-income-cell-outer-top: 60px;
+      --monthly-income-cell-outer-h: 397px;
+      --monthly-income-label-band-top: calc(
+        var(--monthly-income-cell-outer-top) + var(--monthly-income-cell-border)
+      );
+      --monthly-income-label-band-h: calc(
+        var(--monthly-income-cell-outer-h) - 2 * var(--monthly-income-cell-border)
+      );
+      /* Expenses: Income 列の下辺（外寸）の直下から 39px 空け、上枠 1px の手前まで（枠同士は食い込まない） */
+      --monthly-expenses-gap-after-income: 39px;
+      --monthly-expenses-row-h: 44px;
+      --monthly-expenses-rows: 6;
+      --monthly-expenses-grid-rows: repeat(6, var(--monthly-expenses-row-h));
+      --monthly-expenses-cell-outer-top: calc(
+        var(--monthly-income-cell-outer-top) + var(--monthly-income-cell-outer-h) +
+          var(--monthly-expenses-gap-after-income)
+      );
+      --monthly-expenses-cell-outer-h: calc(
+        var(--monthly-expenses-rows) * var(--monthly-expenses-row-h) +
+          2 * var(--monthly-income-cell-border)
+      );
+      --monthly-expenses-label-band-top: calc(
+        var(--monthly-expenses-cell-outer-top) + var(--monthly-income-cell-border)
+      );
+      --monthly-expenses-label-band-h: calc(
+        var(--monthly-expenses-cell-outer-h) - 2 * var(--monthly-income-cell-border)
+      );
+      /* 日付行（文字上端 TW+25px〜Income 上 60px）＋ Income + ギャップ + Expenses + Profit 行 */
+      --monthly-date-row-h: 35px;
+      --monthly-hscroll-top: 25px;
+      --monthly-scroll-stack-h-before-profit: calc(
+        var(--monthly-date-row-h) + var(--monthly-income-cell-outer-h) +
+          var(--monthly-expenses-gap-after-income) + var(--monthly-expenses-cell-outer-h)
+      );
+      /* Expenses 下辺〜 Profit セル行の間（従来 Profit ラベル位置に合わせた余白） */
+      --monthly-profit-gap-after-expenses: 27px;
+      --monthly-profit-row-h: 45px;
+      /* 横スクロールバーが Profit 行に被らないよう、その下に余白 */
+      --monthly-hscroll-scrollbar-gutter: 30px;
+      --monthly-profit-cell-outer-top: calc(
+        var(--monthly-hscroll-top) + var(--monthly-scroll-stack-h-before-profit) +
+          var(--monthly-profit-gap-after-expenses)
+      );
+      --monthly-hscroll-outer-h: calc(
+        var(--monthly-scroll-stack-h-before-profit) + var(--monthly-profit-gap-after-expenses) +
+          var(--monthly-profit-row-h) + var(--monthly-hscroll-scrollbar-gutter)
+      );
+      /* Vertical Focus Bar 内: 列幅 110px、行は 1px 線の間を 45px（下線含む行ボックスは 46px） */
+      --monthly-vfocus-col-w: 110px;
+      --monthly-vfocus-line-w: 1px;
+      --monthly-vfocus-cell-inner-h: 45px;
+      --monthly-vfocus-cell-row-h: calc(
+        var(--monthly-vfocus-cell-inner-h) + var(--monthly-vfocus-line-w)
+      );
       width: 1100px;
-      min-height: 913px;
+      min-height: 1100px;
       margin: 80px calc((100% - 1100px) / 2) 0;
       border: 0;
       border-radius: 12px;
@@ -3620,9 +3681,174 @@
       left: 504px;
       top: -39px;
       width: 123px;
-      height: 916px;
+      height: 1103px;
       z-index: 5;
       pointer-events: none;
+    }
+    /* SVG vertical_focus_bar.svg の内側ダーク領域（rect y=39 h=860）に合わせる */
+    .monthly-vertical-focus-bar .monthly-vfocus-frame {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: fill;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .monthly-vfocus-fill {
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      top: 39px;
+      bottom: 17px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .monthly-vfocus-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: var(--monthly-vfocus-col-w);
+      max-width: var(--monthly-vfocus-col-w);
+      flex: 0 0 auto;
+      box-sizing: border-box;
+    }
+    /* Date はセル枠なし（ラベル表示のみ） */
+    .monthly-vfocus-date {
+      flex: 0 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin: 0;
+      padding: 0 2px 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      color: #58e1f3;
+      background: transparent;
+      border: 0;
+    }
+    html[lang='ja'] .monthly-vfocus-date {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-vfocus-date--off {
+      opacity: 0.55;
+      color: rgba(88, 225, 243, 0.75);
+    }
+    .monthly-vfocus-income-grid {
+      display: grid;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 10px;
+      grid-template-rows: repeat(8, var(--monthly-vfocus-cell-row-h)) var(--monthly-vfocus-cell-inner-h);
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .monthly-vfocus-exp-grid {
+      display: grid;
+      width: 100%;
+      box-sizing: border-box;
+      grid-template-rows: repeat(5, var(--monthly-vfocus-cell-row-h)) var(--monthly-vfocus-cell-inner-h);
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .monthly-vfocus-spacer {
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
+      background: #1f1e1e;
+    }
+    .monthly-vfocus-spacer--income-exp {
+      height: var(--monthly-expenses-gap-after-income);
+      min-height: var(--monthly-expenses-gap-after-income);
+    }
+    .monthly-vfocus-spacer--profit-gap {
+      position: relative;
+      height: var(--monthly-profit-gap-after-expenses);
+      min-height: var(--monthly-profit-gap-after-expenses);
+    }
+    /* Expenses と Profit の間の縦中央、Focus Bar 全幅（123px）の 0.5px 線 */
+    .monthly-vfocus-spacer--profit-gap::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 123px;
+      height: 0.5px;
+      background: #58e1f3;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .monthly-vfocus-cell {
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: #58e1f3;
+      border-bottom: var(--monthly-vfocus-line-w) solid rgba(88, 225, 243, 0.55);
+      background: rgba(114, 117, 117, 0.12);
+      position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[lang='ja'] .monthly-vfocus-cell {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-vfocus-income-grid .monthly-vfocus-cell:last-child,
+    .monthly-vfocus-exp-grid .monthly-vfocus-cell:last-child {
+      border-bottom: 0;
+    }
+    .monthly-vfocus-profit {
+      flex: 0 0 calc(var(--monthly-vfocus-cell-inner-h) + 2 * var(--monthly-vfocus-line-w));
+      min-height: calc(var(--monthly-vfocus-cell-inner-h) + 2 * var(--monthly-vfocus-line-w));
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 3px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1;
+      color: #58e1f3;
+      border: var(--monthly-vfocus-line-w) solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(114, 117, 117, 0.14);
+      position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    html[lang='ja'] .monthly-vfocus-profit {
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .monthly-table-window__guide-line {
       position: absolute;
@@ -3652,10 +3878,10 @@
     .monthly-month-picker::after {
       content: '';
       position: absolute;
-      left: calc(100% - 0.5px);
+      left: 100%;
       top: 100%;
       width: 0.5px;
-      height: 913px;
+      height: 1100px;
       background: #58E1F3;
       pointer-events: none;
       z-index: 2;
@@ -3679,6 +3905,461 @@
       background: #58E1F3;
       z-index: 2;
       pointer-events: none;
+    }
+    /* 左ラベル帯: 左 20px・幅 20px。Income / Expenses は Y 帯のみ差分 */
+    .monthly-table-window__vlabel {
+      position: absolute;
+      left: 20px;
+      width: 20px;
+      margin: 0;
+      padding: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    /* セル列外枠（397px）の縦中央＝Income エリア（9 行）に相当。開閉で左ラベル帯だけ高さが変わってもセル側は固定 */
+    .monthly-table-window__vlabel--income {
+      top: var(--monthly-income-cell-outer-top);
+      height: var(--monthly-income-cell-outer-h);
+    }
+    .monthly-table-window__vlabel--expenses {
+      top: var(--monthly-expenses-cell-outer-top);
+      height: var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-table-window__vlabel .monthly-table-window__vlabel-inner {
+      display: block;
+      white-space: nowrap;
+      transform: rotate(-90deg);
+      transform-origin: center center;
+    }
+    html[lang="ja"] .monthly-table-window__vlabel {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    /* 日付列などセル無しテキスト: left/top は Table Window 基準、left は文字の水平中心。全て text-align:center＋translateX(-50%) */
+    .monthly-table-window__col-text {
+      position: absolute;
+      margin: 0;
+      padding: 0;
+      z-index: 3;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+      text-align: center;
+      white-space: nowrap;
+      transform: translate(-50%, 0);
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    html[lang="ja"] .monthly-table-window__col-text {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__col-text--date {
+      left: 93px;
+      top: 27px;
+    }
+    /* Profit: 横スクロール Profit 行（45px）の縦中央と文字の縦中央を一致。水平中心は Date 列と同一（93px） */
+    .monthly-table-window__col-text--profit {
+      left: 93px;
+      top: calc(var(--monthly-profit-cell-outer-top) + var(--monthly-profit-row-h) / 2);
+      transform: translate(-50%, -50%);
+    }
+    /* Monthly 日次セル: border-radius 6px で統一（Annual 日次行と揃える） */
+    /* Income / Expenses（将来の日付行も同内側へ）: 1 つの overflow-x で横スクロール＝オーバースクロール反動が帯全体で一致 */
+    .monthly-scroll-data {
+      --monthly-data-col-w: 100px;
+      --monthly-data-col-gap: 3px;
+      --monthly-data-cols-max: 31;
+      position: absolute;
+      left: 195px;
+      top: var(--monthly-hscroll-top);
+      width: calc(100% - 195px);
+      height: var(--monthly-hscroll-outer-h);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      z-index: 2;
+      box-sizing: border-box;
+      scrollbar-color: #58e1f3 #1f1e1e;
+      scrollbar-width: thin;
+    }
+    .monthly-scroll-data::-webkit-scrollbar {
+      height: 6px;
+    }
+    .monthly-scroll-data::-webkit-scrollbar-track {
+      background: #1f1e1e;
+    }
+    .monthly-scroll-data::-webkit-scrollbar-thumb {
+      background: #58e1f3;
+    }
+    .monthly-scroll-data__stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: max-content;
+      min-height: 100%;
+      box-sizing: border-box;
+    }
+    .monthly-scroll-data__between {
+      flex: 0 0 var(--monthly-expenses-gap-after-income);
+      height: var(--monthly-expenses-gap-after-income);
+      min-height: var(--monthly-expenses-gap-after-income);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      gap: var(--monthly-data-col-gap);
+      width: max-content;
+      box-sizing: border-box;
+    }
+    .monthly-scroll-data__track--date {
+      height: var(--monthly-date-row-h);
+      flex: 0 0 var(--monthly-date-row-h);
+      align-items: flex-start;
+    }
+    .monthly-date-header-cell {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    html[lang="ja"] .monthly-date-header-cell {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    /* 店休・OFF: Annual の .annual-daily-row--off と同系（背景は後から .monthly-data-column 側で拡張予定） */
+    .monthly-date-header-cell--off {
+      opacity: 0.48;
+    }
+    .monthly-date-header-cell--buffer {
+      opacity: 0.38;
+      color: #4a9aa8;
+    }
+    .monthly-data-column--buffer {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--income {
+      height: var(--monthly-income-cell-outer-h);
+      flex: 0 0 var(--monthly-income-cell-outer-h);
+    }
+    .monthly-scroll-data__track--expenses {
+      height: var(--monthly-expenses-cell-outer-h);
+      flex: 0 0 var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-scroll-data__between--profit-gap {
+      flex: 0 0 var(--monthly-profit-gap-after-expenses);
+      height: var(--monthly-profit-gap-after-expenses);
+      min-height: var(--monthly-profit-gap-after-expenses);
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--profit {
+      height: var(--monthly-profit-row-h);
+      flex: 0 0 var(--monthly-profit-row-h);
+      align-items: center;
+    }
+    .monthly-profit-cell {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      height: var(--monthly-profit-row-h);
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      background: rgba(114, 117, 117, 0.08);
+      pointer-events: none;
+    }
+    .monthly-profit-cell--buffer {
+      opacity: 0.45;
+    }
+    /* 最大 31 列分の横幅（未実装列）。実列追加時に削除または幅を減らす */
+    .monthly-scroll-data__track-spacer {
+      flex: 0 0 calc((var(--monthly-data-cols-max) - 1) * var(--monthly-data-col-w));
+      width: calc((var(--monthly-data-cols-max) - 1) * var(--monthly-data-col-w));
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .monthly-scroll-data__track--date .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-date-row-h);
+    }
+    .monthly-scroll-data__track--income .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-income-cell-outer-h);
+    }
+    .monthly-scroll-data__track--expenses .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-expenses-cell-outer-h);
+    }
+    .monthly-data-column {
+      flex: 0 0 var(--monthly-data-col-w);
+      width: var(--monthly-data-col-w);
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      border-radius: 6px;
+      overflow: hidden;
+      display: grid;
+      background: rgba(114, 117, 117, 0.08);
+    }
+    .monthly-data-column--income {
+      height: var(--monthly-income-cell-outer-h);
+      grid-template-rows: var(--monthly-income-grid-rows);
+    }
+    .monthly-data-column--expenses {
+      height: var(--monthly-expenses-cell-outer-h);
+      grid-template-rows: var(--monthly-expenses-grid-rows);
+    }
+    .monthly-data-column__cell {
+      box-sizing: border-box;
+      border-bottom: 1px solid #58e1f3;
+      min-height: 0;
+    }
+    .monthly-data-column__cell:last-child {
+      border-bottom: 0;
+    }
+    /* Income ラベル 9 行: 日次セル内側グリッドと同一行高・同一縦位置（セルは触らず左文字のみ合わせる） */
+    .monthly-table-window__income-col {
+      position: absolute;
+      left: 93px;
+      top: var(--monthly-income-label-band-top);
+      width: max-content;
+      max-width: 72px;
+      height: var(--monthly-income-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-income-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    html[lang="ja"] .monthly-table-window__income-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__income-group {
+      display: contents;
+    }
+    .monthly-table-window__income-label {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      font: inherit;
+      color: inherit;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"] > .monthly-table-window__income-label {
+      grid-row: 1;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 2;
+    }
+    .monthly-table-window__income-group[data-income-group="sales"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 3;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"] > .monthly-table-window__income-label {
+      grid-row: 4;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 5;
+    }
+    .monthly-table-window__income-group[data-income-group="customer"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 6;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"] > .monthly-table-window__income-label {
+      grid-row: 7;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(1) {
+      grid-row: 8;
+    }
+    .monthly-table-window__income-group[data-income-group="pc"]
+      > .monthly-table-window__income-subs
+      > .monthly-table-window__income-line:nth-child(2) {
+      grid-row: 9;
+    }
+    .monthly-table-window__income-subs {
+      display: contents;
+    }
+    .monthly-table-window__income-arrows-col {
+      position: absolute;
+      left: 143px;
+      top: var(--monthly-income-label-band-top);
+      width: 28px;
+      height: var(--monthly-income-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-income-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58E1F3;
+    }
+    html[lang="ja"] .monthly-table-window__income-arrows-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__income-arrow-group {
+      display: contents;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="sales"] {
+      grid-row: 1;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="sales"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 2;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="sales"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 3;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="customer"] {
+      grid-row: 4;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="customer"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 5;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="customer"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 6;
+    }
+    .monthly-table-window__income-arrow-btn[data-income-group="pc"] {
+      grid-row: 7;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="pc"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(1) {
+      grid-row: 8;
+    }
+    .monthly-table-window__income-arrow-group[data-income-group="pc"]
+      .monthly-table-window__income-arrow-gap-line:nth-child(2) {
+      grid-row: 9;
+    }
+    .monthly-table-window__income-arrow-btn {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      line-height: 1;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-arrow-btn:hover,
+    .monthly-table-window__income-arrow-btn:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .monthly-table-window__income-arrow-gap {
+      display: contents;
+    }
+    .monthly-table-window__income-arrow-gap-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      margin: 0;
+      padding: 0;
+      visibility: hidden;
+      overflow: hidden;
+      width: 100%;
+      min-height: 0;
+      pointer-events: none;
+    }
+    .monthly-table-window__income-arrow-group.is-collapsed .monthly-table-window__income-arrow-gap {
+      display: none;
+    }
+    .monthly-table-window__income-line {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .monthly-table-window__income-group.is-collapsed .monthly-table-window__income-subs {
+      display: none;
+    }
+    /* Expenses ラベル 6 行: 日次セル内側グリッドと同一行高（44px×6） */
+    .monthly-table-window__expenses-col {
+      position: absolute;
+      left: 93px;
+      top: var(--monthly-expenses-label-band-top);
+      width: max-content;
+      max-width: 80px;
+      height: var(--monthly-expenses-label-band-h);
+      transform: translateX(-50%);
+      z-index: 4;
+      display: grid;
+      grid-template-rows: var(--monthly-expenses-grid-rows);
+      justify-items: center;
+      align-items: stretch;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+      pointer-events: none;
+    }
+    html[lang="ja"] .monthly-table-window__expenses-col {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .monthly-table-window__expenses-line {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
     }
     .monthly-month-picker__arrow,
     .monthly-month-picker__label {
@@ -3737,12 +4418,6 @@
     .monthly-month-picker__item:focus-visible {
       background: rgba(88, 225, 243, 0.2);
       outline: none;
-    }
-    .monthly-vertical-focus-bar img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
     }
     .monthly-table-window__plan {
       position: absolute;
@@ -3939,6 +4614,92 @@
     .office-mode .monthly-month-picker__item:focus-visible {
       background: rgba(114, 117, 117, 0.2);
     }
+    .office-mode .monthly-table-window__vlabel {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__col-text {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-arrows-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-table-window__income-arrow-btn:hover,
+    .office-mode .monthly-table-window__income-arrow-btn:focus-visible {
+      color: #000;
+    }
+    .office-mode .monthly-table-window__expenses-col {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .monthly-scroll-data {
+      scrollbar-color: #727575 #f2f2f2;
+    }
+    .office-mode .monthly-scroll-data::-webkit-scrollbar-track {
+      background: #f2f2f2;
+    }
+    .office-mode .monthly-scroll-data::-webkit-scrollbar-thumb {
+      background: #727575;
+    }
+    .office-mode .monthly-data-column {
+      border-color: #727575;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-data-column__cell {
+      border-bottom-color: #727575;
+    }
+    .office-mode .monthly-date-header-cell {
+      color: #111;
+    }
+    .office-mode .monthly-date-header-cell--off {
+      opacity: 0.65;
+    }
+    .office-mode .monthly-date-header-cell--buffer {
+      opacity: 0.5;
+      color: #5a6a6c;
+    }
+    .office-mode .monthly-data-column--buffer {
+      opacity: 0.55;
+    }
+    .office-mode .monthly-profit-cell {
+      border-color: #727575;
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-profit-cell--buffer {
+      opacity: 0.55;
+    }
+    .office-mode .monthly-vfocus-income-grid,
+    .office-mode .monthly-vfocus-exp-grid,
+    .office-mode .monthly-vfocus-profit {
+      border-color: #727575;
+      color: #111;
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .office-mode .monthly-vfocus-date {
+      color: #111;
+      background: transparent;
+    }
+    .office-mode .monthly-vfocus-cell {
+      color: #111;
+      border-bottom-color: rgba(114, 117, 117, 0.55);
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .office-mode .monthly-vfocus-date--off {
+      color: #444;
+      opacity: 0.75;
+    }
+    .office-mode .monthly-vfocus-spacer {
+      background: #f2f2f2;
+    }
+    .office-mode .monthly-vfocus-spacer--profit-gap::before {
+      background: #727575;
+    }
     .office-mode .monthly-plan-btn.is-active {
       background: #a4bd40;
       border-color: #889f2f;
@@ -3946,7 +4707,7 @@
     }
   </style>
 </head>
-<body class="si-fi profile-page" id="body-el">
+<body class="si-fi profile-page monthly-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -4242,8 +5003,7 @@
             </div>
           </div>
           <div class="annual-summary-bottom-cell annual-summary-bottom-cell--sales">
-            <img src="../../images/annual_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="146" decoding="async">
-            <button type="button" class="annual-sales-tab annual-sales-tab--more" id="annual-focus-more-btn" aria-expanded="false" aria-label="フォーカスバーを展開">more</button>
+            <img src="../../images/monthly_monthly_sales.svg" alt="" class="annual-summary-bottom-frame-img" width="457" height="129" decoding="async">
             <div class="annual-sales-overlay">
               <div class="annual-sales-grid" role="grid" aria-label="月次と年次の比較">
                 <span class="annual-sales-grid-spacer" aria-hidden="true"></span>
@@ -4263,7 +5023,6 @@
                 <div class="annual-sales-val" data-field="annual.focusSummary.annual.ach">100%</div>
               </div>
             </div>
-            <button type="button" class="annual-sales-tab annual-sales-tab--close" id="annual-focus-close-btn" aria-label="フォーカスバーを縮小">Close</button>
           </div>
         </div>
         <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="日次売上一覧">
@@ -4390,9 +5149,148 @@
           <span class="monthly-table-window__guide-line" aria-hidden="true"></span>
           <span class="monthly-table-window__h-line-775" aria-hidden="true"></span>
           <span class="monthly-table-window__h-line-775-right" aria-hidden="true"></span>
+          <p class="monthly-table-window__vlabel monthly-table-window__vlabel--income">
+            <span class="monthly-table-window__vlabel-inner">Income</span>
+          </p>
+          <p class="monthly-table-window__vlabel monthly-table-window__vlabel--expenses">
+            <span class="monthly-table-window__vlabel-inner">Expenses</span>
+          </p>
+          <div
+            class="monthly-scroll-data"
+            id="monthly-scroll-data"
+            role="region"
+            aria-label="日付・Income・Expenses・Profit 日次セル（横スクロール）"
+          >
+            <div class="monthly-scroll-data__stack">
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--date"
+                id="monthly-scroll-track-date"
+              ></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--income"
+                id="monthly-scroll-track-income"
+              ></div>
+              <div class="monthly-scroll-data__between" aria-hidden="true"></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--expenses"
+                id="monthly-scroll-track-expenses"
+              ></div>
+              <div
+                class="monthly-scroll-data__between monthly-scroll-data__between--profit-gap"
+                aria-hidden="true"
+              ></div>
+              <div
+                class="monthly-scroll-data__track monthly-scroll-data__track--profit"
+                id="monthly-scroll-track-profit"
+              ></div>
+            </div>
+          </div>
+          <p class="monthly-table-window__col-text monthly-table-window__col-text--date">Date</p>
+          <div class="monthly-table-window__income-col" id="monthly-income-col" role="group" aria-label="Income">
+            <div class="monthly-table-window__income-group" data-income-group="sales">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-sales">Sales</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-sales-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-group" data-income-group="customer">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-customer">Customer</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-customer-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-group" data-income-group="pc">
+              <span class="monthly-table-window__income-label" id="monthly-income-label-pc">P/C</span>
+              <div class="monthly-table-window__income-subs" id="monthly-income-pc-subs">
+                <p class="monthly-table-window__income-line">Lunch</p>
+                <p class="monthly-table-window__income-line">Dinner</p>
+              </div>
+            </div>
+          </div>
+          <div class="monthly-table-window__income-arrows-col" id="monthly-income-arrows-col" aria-label="Income 開閉">
+            <div class="monthly-table-window__income-arrow-group" data-income-group="sales">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="sales"
+                aria-expanded="true"
+                aria-controls="monthly-income-sales-subs"
+                aria-labelledby="monthly-income-label-sales"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-arrow-group" data-income-group="customer">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="customer"
+                aria-expanded="true"
+                aria-controls="monthly-income-customer-subs"
+                aria-labelledby="monthly-income-label-customer"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+            <div class="monthly-table-window__income-arrow-group" data-income-group="pc">
+              <button
+                type="button"
+                class="monthly-table-window__income-arrow-btn"
+                data-income-group="pc"
+                aria-expanded="true"
+                aria-controls="monthly-income-pc-subs"
+                aria-labelledby="monthly-income-label-pc"
+              >
+                <span class="monthly-table-window__income-arrow-icon" aria-hidden="true">▼</span>
+              </button>
+              <div class="monthly-table-window__income-arrow-gap" aria-hidden="true">
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+                <span class="monthly-table-window__income-arrow-gap-line">&nbsp;</span>
+              </div>
+            </div>
+          </div>
+          <div class="monthly-table-window__expenses-col" role="group" aria-label="Expenses">
+            <p class="monthly-table-window__expenses-line">Food</p>
+            <p class="monthly-table-window__expenses-line">Beverage</p>
+            <p class="monthly-table-window__expenses-line">Misc</p>
+            <p class="monthly-table-window__expenses-line">Fixed</p>
+            <p class="monthly-table-window__expenses-line">Expected</p>
+            <p class="monthly-table-window__expenses-line">Total</p>
+          </div>
+          <p class="monthly-table-window__col-text monthly-table-window__col-text--profit">Profit</p>
           <div class="monthly-vertical-focus-bar" aria-hidden="true">
-            <img src="../../images/vertical_focus_bar.svg" alt="" class="monthly-focusbar-img-scifi">
-            <img src="../../images/vertical_focus_bar_office.svg" alt="" class="monthly-focusbar-img-office">
+            <img
+              src="../../images/vertical_focus_bar.svg"
+              alt=""
+              class="monthly-vfocus-frame monthly-focusbar-img-scifi"
+              decoding="async"
+            >
+            <img
+              src="../../images/vertical_focus_bar_office.svg"
+              alt=""
+              class="monthly-vfocus-frame monthly-focusbar-img-office"
+              decoding="async"
+            >
+            <div class="monthly-vfocus-fill">
+              <div class="monthly-vfocus-stack">
+                <div class="monthly-vfocus-date" id="monthly-vfocus-date"></div>
+                <div class="monthly-vfocus-income-grid" id="monthly-vfocus-income-grid"></div>
+                <div class="monthly-vfocus-spacer monthly-vfocus-spacer--income-exp" aria-hidden="true"></div>
+                <div class="monthly-vfocus-exp-grid" id="monthly-vfocus-exp-grid"></div>
+                <div class="monthly-vfocus-spacer monthly-vfocus-spacer--profit-gap" aria-hidden="true"></div>
+                <div class="monthly-vfocus-profit" id="monthly-vfocus-profit"></div>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -7441,72 +8339,527 @@
         });
     })();
     (function () {
+      var STORAGE_ANNUAL = 'kpiNavigator.annualNav';
+      var STORAGE_MONTHLY_LAST = 'kpiNavigator.monthlyLast';
+      var LEADING = 3;
+      var TRAILING = 4;
+      var COL_W = 100;
+      var GAP = 3;
+      var COL_STEP = COL_W + GAP;
+
+      var useJa =
+        String(document.documentElement.getAttribute('lang') || '')
+          .toLowerCase()
+          .indexOf('ja') === 0;
+      var MONTHS_JA = [
+        '1月', '2月', '3月', '4月', '5月', '6月',
+        '7月', '8月', '9月', '10月', '11月', '12月'
+      ];
+      var MONTHS_EN = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      var months = useJa ? MONTHS_JA : MONTHS_EN;
+      var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+      var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
       var prevBtn = document.getElementById('monthly-month-prev');
       var nextBtn = document.getElementById('monthly-month-next');
       var labelBtn = document.getElementById('monthly-month-label');
       var menu = document.getElementById('monthly-month-menu');
-      if (!prevBtn || !nextBtn || !labelBtn || !menu) return;
+      var scrollEl = document.getElementById('monthly-scroll-data');
+      var trackDate = document.getElementById('monthly-scroll-track-date');
+      var trackIncome = document.getElementById('monthly-scroll-track-income');
+      var trackExpenses = document.getElementById('monthly-scroll-track-expenses');
+      var trackProfit = document.getElementById('monthly-scroll-track-profit');
+      if (
+        !prevBtn ||
+        !nextBtn ||
+        !labelBtn ||
+        !menu ||
+        !scrollEl ||
+        !trackDate ||
+        !trackIncome ||
+        !trackExpenses ||
+        !trackProfit
+      )
+        return;
 
-      var months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      var current = 0;
+      var vDateEl = document.getElementById('monthly-vfocus-date');
+      var vIncGrid = document.getElementById('monthly-vfocus-income-grid');
+      var vExpGrid = document.getElementById('monthly-vfocus-exp-grid');
+      var vProfitEl = document.getElementById('monthly-vfocus-profit');
+      function ensureVFocusShell() {
+        if (!vDateEl || !vIncGrid || !vExpGrid || !vProfitEl) return false;
+        if (vIncGrid.childElementCount === 0) {
+          for (var vi = 0; vi < 9; vi++) {
+            var sp = document.createElement('span');
+            sp.className = 'monthly-vfocus-cell';
+            sp.setAttribute('aria-hidden', 'true');
+            vIncGrid.appendChild(sp);
+          }
+        }
+        if (vExpGrid.childElementCount === 0) {
+          for (var ve = 0; ve < 6; ve++) {
+            var sp2 = document.createElement('span');
+            sp2.className = 'monthly-vfocus-cell';
+            sp2.setAttribute('aria-hidden', 'true');
+            vExpGrid.appendChild(sp2);
+          }
+        }
+        return true;
+      }
+      var vfocusOk = ensureVFocusShell();
+      var demoMoney = useJa ? '\u00a5123,456' : '$123,456';
+      function textOrDemo(t) {
+        var s = String(t || '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return s || demoMoney;
+      }
+      var vFocusRaf = null;
+      function scheduleVFocusUpdate() {
+        if (!vfocusOk) return;
+        if (vFocusRaf != null) return;
+        vFocusRaf = requestAnimationFrame(function () {
+          vFocusRaf = null;
+          updateVerticalFocus();
+        });
+      }
+      function updateVerticalFocus() {
+        if (!vfocusOk) return;
+        var n = trackDate.children.length;
+        if (n === 0) {
+          vDateEl.textContent = '';
+          vProfitEl.textContent = '';
+          return;
+        }
+        var vw = scrollEl.clientWidth;
+        var centerX = scrollEl.scrollLeft + vw / 2;
+        var idx = Math.round((centerX - COL_W / 2) / COL_STEP);
+        if (idx < 0) idx = 0;
+        if (idx >= n) idx = n - 1;
+        var hdr = trackDate.children[idx];
+        if (hdr) {
+          vDateEl.textContent = hdr.textContent || '';
+          if (hdr.classList.contains('monthly-date-header-cell--off')) {
+            vDateEl.classList.add('monthly-vfocus-date--off');
+          } else {
+            vDateEl.classList.remove('monthly-vfocus-date--off');
+          }
+        }
+        var incCol = trackIncome.children[idx];
+        if (incCol) {
+          var incCells = incCol.querySelectorAll('.monthly-data-column__cell');
+          for (var ai = 0; ai < 9; ai++) {
+            var tgt = vIncGrid.children[ai];
+            var srcN = incCells[ai];
+            if (tgt) tgt.textContent = textOrDemo(srcN ? srcN.textContent : '');
+          }
+        }
+        var expCol = trackExpenses.children[idx];
+        if (expCol) {
+          var expCells = expCol.querySelectorAll('.monthly-data-column__cell');
+          for (var bi = 0; bi < 6; bi++) {
+            var tgt2 = vExpGrid.children[bi];
+            var srcE = expCells[bi];
+            if (tgt2) tgt2.textContent = textOrDemo(srcE ? srcE.textContent : '');
+          }
+        }
+        var pCol = trackProfit.children[idx];
+        vProfitEl.textContent = textOrDemo(pCol ? pCol.textContent : '');
+      }
+      scrollEl.addEventListener('scroll', scheduleVFocusUpdate, { passive: true });
+      window.addEventListener('resize', scheduleVFocusUpdate);
 
+      var state = { year: new Date().getFullYear(), month0: new Date().getMonth() };
+      var isoToIndex = {};
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+      function toISODateLocal(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      function parseISODateLocal(s) {
+        if (!s || typeof s !== 'string') return null;
+        var p = s.split('-');
+        if (p.length !== 3) return null;
+        var y = Number(p[0]);
+        var m = Number(p[1]);
+        var day = Number(p[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(day)) return null;
+        var d = new Date(y, m - 1, day);
+        if (d.getFullYear() !== y || d.getMonth() !== m - 1 || d.getDate() !== day) return null;
+        return d;
+      }
+      function daysInMonth(y, m0) {
+        return new Date(y, m0 + 1, 0).getDate();
+      }
+      function readAnnualNav() {
+        try {
+          var raw = localStorage.getItem(STORAGE_ANNUAL);
+          if (!raw) return null;
+          var o = JSON.parse(raw);
+          if (!o || typeof o !== 'object') return null;
+          return {
+            calendarYear: Number(o.calendarYear),
+            selectedIso: o.selectedIso || null
+          };
+        } catch (e) {
+          return null;
+        }
+      }
+      function readMonthlyLast() {
+        try {
+          var raw = sessionStorage.getItem(STORAGE_MONTHLY_LAST);
+          if (!raw) return null;
+          var o = JSON.parse(raw);
+          if (!o || typeof o !== 'object') return null;
+          return { year: Number(o.year), month0: Number(o.month0) };
+        } catch (e2) {
+          return null;
+        }
+      }
+      function persistMonthlyLast() {
+        try {
+          sessionStorage.setItem(
+            STORAGE_MONTHLY_LAST,
+            JSON.stringify({ year: state.year, month0: state.month0 })
+          );
+        } catch (e3) {}
+      }
+      function isDemoOff(d) {
+        if (d.getDay() === 0) return true;
+        if (d.getMonth() === 0 && d.getDate() <= 5) return true;
+        return false;
+      }
+      function dateLabelText(d) {
+        var dow = d.getDay();
+        var w = useJa ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow];
+        var base = d.getMonth() + 1 + '/' + d.getDate() + ' ' + w;
+        return isDemoOff(d) ? base + ' OFF' : base;
+      }
+      function ariaDateLabel(d, inMonth) {
+        var y = d.getFullYear();
+        var mo = d.getMonth() + 1;
+        var day = d.getDate();
+        var dow = d.getDay();
+        var wj = WEEKDAYS_JA[dow];
+        var off = isDemoOff(d);
+        if (useJa) {
+          return y + '年' + mo + '月' + day + '日 ' + wj + (inMonth ? '' : '（前後月）') + (off ? ' 店休' : '');
+        }
+        return (
+          mo +
+          '/' +
+          day +
+          '/' +
+          y +
+          ' ' +
+          WEEKDAYS_EN[dow] +
+          (inMonth ? '' : ' (adjacent month)') +
+          (off ? ', closed' : '')
+        );
+      }
       function closeMenu() {
         menu.hidden = true;
         labelBtn.setAttribute('aria-expanded', 'false');
       }
-
       function openMenu() {
         menu.hidden = false;
         labelBtn.setAttribute('aria-expanded', 'true');
       }
-
-      function render() {
-        labelBtn.textContent = months[current];
+      function renderPickerMenu() {
+        labelBtn.textContent = months[state.month0];
         menu.innerHTML = months
           .map(function (m, idx) {
-            var sel = idx === current ? ' aria-selected="true"' : '';
-            return '<li role="presentation"><button type="button" class="monthly-month-picker__item" role="option" data-month-index="' + idx + '"' + sel + '>' + m + '</button></li>';
+            var sel = idx === state.month0 ? ' aria-selected="true"' : '';
+            return (
+              '<li role="presentation"><button type="button" class="monthly-month-picker__item" role="option" data-month-index="' +
+              idx +
+              '"' +
+              sel +
+              '>' +
+              m +
+              '</button></li>'
+            );
           })
           .join('');
       }
+      function addDays(base, delta) {
+        var x = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+        x.setDate(x.getDate() + delta);
+        return x;
+      }
+      function makeIncomeColumn(buffer, iso, aria) {
+        var div = document.createElement('div');
+        div.className =
+          'monthly-data-column monthly-data-column--income' +
+          (buffer ? ' monthly-data-column--buffer' : '');
+        div.setAttribute('role', 'presentation');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('aria-label', aria);
+        for (var i = 0; i < 9; i++) {
+          var s = document.createElement('span');
+          s.className = 'monthly-data-column__cell';
+          s.setAttribute('aria-hidden', 'true');
+          div.appendChild(s);
+        }
+        return div;
+      }
+      function makeExpensesColumn(buffer, iso, aria) {
+        var div = document.createElement('div');
+        div.className =
+          'monthly-data-column monthly-data-column--expenses' +
+          (buffer ? ' monthly-data-column--buffer' : '');
+        div.setAttribute('role', 'presentation');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('aria-label', aria);
+        for (var j = 0; j < 6; j++) {
+          var s2 = document.createElement('span');
+          s2.className = 'monthly-data-column__cell';
+          s2.setAttribute('aria-hidden', 'true');
+          div.appendChild(s2);
+        }
+        return div;
+      }
+      function makeProfitCell(buffer, iso, colNum) {
+        var div = document.createElement('div');
+        div.className = 'monthly-profit-cell' + (buffer ? ' monthly-profit-cell--buffer' : '');
+        div.setAttribute('data-iso', iso);
+        div.setAttribute('role', 'presentation');
+        div.setAttribute(
+          'aria-label',
+          (useJa ? 'Profit 列' : 'Profit column ') +
+            colNum +
+            (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+        );
+        return div;
+      }
+      function rebuildColumns() {
+        isoToIndex = {};
+        trackDate.innerHTML = '';
+        trackIncome.innerHTML = '';
+        trackExpenses.innerHTML = '';
+        trackProfit.innerHTML = '';
+        var y = state.year;
+        var m0 = state.month0;
+        var dim = daysInMonth(y, m0);
+        var first = new Date(y, m0, 1);
+        var start = addDays(first, -LEADING);
+        var total = LEADING + dim + TRAILING;
+        var incLabel = 'Income';
+        var expLabel = 'Expenses';
+        for (var i = 0; i < total; i++) {
+          var d = addDays(start, i);
+          var iso = toISODateLocal(d);
+          var inMonth = d.getMonth() === m0 && d.getFullYear() === y;
+          var buffer = !inMonth;
+          var off = isDemoOff(d);
+          isoToIndex[iso] = i;
+          var p = document.createElement('p');
+          p.className = 'monthly-date-header-cell';
+          if (off) p.classList.add('monthly-date-header-cell--off');
+          if (buffer) p.classList.add('monthly-date-header-cell--buffer');
+          p.setAttribute('data-iso', iso);
+          p.textContent = dateLabelText(d);
+          p.setAttribute('aria-label', ariaDateLabel(d, inMonth));
+          trackDate.appendChild(p);
+          var colNum = i + 1;
+          trackIncome.appendChild(
+            makeIncomeColumn(
+              buffer,
+              iso,
+              incLabel + ' ' + (useJa ? '列' : 'column ') + colNum + (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+            )
+          );
+          trackExpenses.appendChild(
+            makeExpensesColumn(
+              buffer,
+              iso,
+              expLabel + ' ' + (useJa ? '列' : 'column ') + colNum + (buffer ? (useJa ? '（非アクティブ）' : ' (inactive)') : '')
+            )
+          );
+          trackProfit.appendChild(makeProfitCell(buffer, iso, colNum));
+        }
+        scheduleVFocusUpdate();
+      }
+      function scrollToIso(iso) {
+        var idx = iso != null ? isoToIndex[iso] : null;
+        if (idx == null) {
+          var firstIso = toISODateLocal(new Date(state.year, state.month0, 1));
+          idx = isoToIndex[firstIso];
+        }
+        if (idx == null) return;
+        scrollEl.scrollLeft = Math.max(0, idx * COL_STEP);
+        scheduleVFocusUpdate();
+      }
+      function scheduleScroll(iso) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            scrollToIso(iso);
+          });
+        });
+      }
+      function pickInitialYearMonth() {
+        var nav = readAnnualNav();
+        var now = new Date();
+        var year =
+          nav && Number.isFinite(nav.calendarYear) ? nav.calendarYear : now.getFullYear();
+        var last = readMonthlyLast();
+        var month0;
+        if (last && last.year === year && last.month0 >= 0 && last.month0 <= 11) {
+          month0 = last.month0;
+        } else if (nav && nav.selectedIso) {
+          var pd = parseISODateLocal(nav.selectedIso);
+          if (pd && pd.getFullYear() === year) month0 = pd.getMonth();
+          else month0 = year === now.getFullYear() ? now.getMonth() : 0;
+        } else {
+          month0 = year === now.getFullYear() ? now.getMonth() : 0;
+        }
+        return { year: year, month0: month0, nav: nav };
+      }
+      function focusIsoForNav(nav) {
+        if (!nav || !nav.selectedIso) return null;
+        var pd = parseISODateLocal(nav.selectedIso);
+        if (!pd || pd.getFullYear() !== state.year || pd.getMonth() !== state.month0) return null;
+        return nav.selectedIso;
+      }
+      function applyExternalNav() {
+        var nav = readAnnualNav();
+        if (!nav || !Number.isFinite(nav.calendarYear)) return;
+        state.year = nav.calendarYear;
+        var pd = nav.selectedIso ? parseISODateLocal(nav.selectedIso) : null;
+        if (pd && pd.getFullYear() === state.year) state.month0 = pd.getMonth();
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(focusIsoForNav(nav));
+      }
+      function bumpMonth(delta) {
+        var m = state.month0 + delta;
+        var y = state.year;
+        while (m < 0) {
+          m += 12;
+          y -= 1;
+        }
+        while (m > 11) {
+          m -= 12;
+          y += 1;
+        }
+        state.month0 = m;
+        state.year = y;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      }
+
+      var init = pickInitialYearMonth();
+      state.year = init.year;
+      state.month0 = init.month0;
+      persistMonthlyLast();
+      renderPickerMenu();
+      rebuildColumns();
+      scheduleScroll(focusIsoForNav(init.nav));
+      scheduleVFocusUpdate();
 
       prevBtn.addEventListener('click', function () {
-        current = (current + 11) % 12;
-        render();
+        bumpMonth(-1);
       });
-
       nextBtn.addEventListener('click', function () {
-        current = (current + 1) % 12;
-        render();
+        bumpMonth(1);
       });
-
       labelBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         if (menu.hidden) openMenu();
         else closeMenu();
       });
-
       menu.addEventListener('click', function (e) {
         var btn = e.target && e.target.closest ? e.target.closest('[data-month-index]') : null;
         if (!btn) return;
         var idx = Number(btn.getAttribute('data-month-index'));
         if (!Number.isNaN(idx)) {
-          current = idx;
-          render();
+          state.month0 = idx;
+          persistMonthlyLast();
+          renderPickerMenu();
+          rebuildColumns();
+          scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
         }
         closeMenu();
       });
-
       document.addEventListener('click', function (e) {
         var picker = document.getElementById('monthly-month-picker');
         if (!picker) return;
         if (!picker.contains(e.target)) closeMenu();
       });
+      window.addEventListener('storage', function (ev) {
+        if (ev.key !== STORAGE_ANNUAL) return;
+        applyExternalNav();
+      });
 
-      render();
+      window.__MONTHLY_UI = window.__MONTHLY_UI || {};
+      window.__MONTHLY_UI.setCalendarYear = function (y) {
+        y = Number(y);
+        if (!Number.isFinite(y)) return;
+        state.year = y;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      };
+      window.__MONTHLY_UI.setMonth0 = function (m0) {
+        m0 = Number(m0);
+        if (m0 < 0 || m0 > 11) return;
+        state.month0 = m0;
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(toISODateLocal(new Date(state.year, state.month0, 1)));
+      };
+      window.__MONTHLY_UI.scrollToIsoDate = function (iso) {
+        var d = parseISODateLocal(iso);
+        if (!d) return;
+        state.year = d.getFullYear();
+        state.month0 = d.getMonth();
+        persistMonthlyLast();
+        renderPickerMenu();
+        rebuildColumns();
+        scheduleScroll(iso);
+      };
+      window.__MONTHLY_UI.applyFromAnnualStorage = function () {
+        applyExternalNav();
+      };
+      window.__MONTHLY_UI.getState = function () {
+        return { year: state.year, month0: state.month0 };
+      };
+    })();
+    (function () {
+      var win = document.querySelector('.monthly-table-window');
+      if (!win) return;
+      win.querySelectorAll('.monthly-table-window__income-arrow-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var key = btn.getAttribute('data-income-group');
+          if (!key) return;
+          var group = win.querySelector(
+            '.monthly-table-window__income-col .monthly-table-window__income-group[data-income-group="' + key + '"]'
+          );
+          var pack = btn.closest('.monthly-table-window__income-arrow-group');
+          if (!group) return;
+          var subs = group.querySelector('.monthly-table-window__income-subs');
+          var icon = btn.querySelector('.monthly-table-window__income-arrow-icon');
+          group.classList.toggle('is-collapsed');
+          var collapsed = group.classList.contains('is-collapsed');
+          if (pack) {
+            if (collapsed) pack.classList.add('is-collapsed');
+            else pack.classList.remove('is-collapsed');
+          }
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          if (subs) subs.hidden = collapsed;
+          if (icon) icon.textContent = collapsed ? '\u25C0' : '\u25BC';
+        });
+      });
     })();
   </script>
 </body>
