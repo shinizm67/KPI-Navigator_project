@@ -1392,8 +1392,8 @@
     .annual-graph-popover__panel {
       position: fixed;
       width: 510px;
-      height: 342px;
-      min-height: 342px;
+      height: auto;
+      min-height: 382px;
       box-sizing: border-box;
       margin: 0;
       /* 左右対称で視覚中央。縦はコンテンツ束をパネル内でセンター */
@@ -1999,6 +1999,38 @@
       line-height: 1.2;
       font-weight: 400;
       letter-spacing: 0.02em;
+    }
+    .annual-daily-kpi-past {
+      display: none;
+      width: 100%;
+      margin-top: 2px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .annual-daily-kpi-past.is-visible {
+      display: grid;
+    }
+    .annual-daily-kpi-past-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .annual-daily-kpi-past-label {
+      margin: 0;
+      color: #58e1f3;
+      opacity: 0.9;
+      font-size: 9px;
+      line-height: 1;
+      letter-spacing: 0.03em;
+    }
+    .annual-daily-kpi-past-value {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 11px;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
     }
     .annual-frame-open[hidden],
     .annual-frame-close[hidden] {
@@ -2923,10 +2955,18 @@
       background: #f5f5f5;
     }
     .office-mode .nav-frame-btn[aria-current="page"] .btn-mode-frame {
-      background: #d7d7d7;
+      background: #4a4a4a;
+      border-color: rgba(255, 255, 255, 0.28);
     }
     .office-mode .nav-frame-btn[aria-current="page"] .nav-btn-text {
-      color: #111;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+    html[lang='ja'] .office-mode .nav-frame-btn[aria-current='page'] .nav-btn-text {
+      font-family: 'BIZ UDPGothic', sans-serif;
+      letter-spacing: 0.06em;
     }
 
     /* Annual Edit モーダル（×左上・保存右上、グリッド522は維持） */
@@ -3603,9 +3643,863 @@
     body.office-mode .annual-edit-modal__scroll::-webkit-scrollbar-thumb {
       background: #555;
     }
+
+    /* Monthly Edit Floating Window (Focus Bar → Edit; UI shell — persistence later) */
+    .monthly-edit-float[hidden] {
+      display: none !important;
+    }
+    .monthly-edit-float {
+      --mef-cyan: #58e1f3;
+      --mef-line: #58e1f3;
+      --mef-panel: #2c2c2c;
+      --mef-fixed: #252525;
+      --mef-th-h: 36px;
+      --mef-row-h: 36px;
+      --mef-group-h: 28px;
+      --mef-profit-h: 44px;
+      --mef-label-w: 320px;
+      --mef-col-min: 88px;
+      position: fixed;
+      inset: 0;
+      z-index: 20100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    html[lang='en'] body.si-fi:not(.office-mode) .monthly-edit-float {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .monthly-edit-float__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+    }
+    .monthly-edit-float__panel {
+      position: relative;
+      z-index: 1;
+      width: min(1120px, calc(100vw - 32px));
+      height: min(780px, calc(100vh - 32px));
+      max-height: calc(100vh - 32px);
+      box-sizing: border-box;
+      background: var(--mef-panel);
+      border: 1px solid var(--mef-line);
+      border-radius: 6px;
+      box-shadow: 0 16px 56px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      color: var(--mef-cyan);
+      overflow: hidden;
+    }
+    .monthly-edit-float__sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .monthly-edit-float__close {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--mef-line);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--mef-cyan);
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      pointer-events: auto;
+    }
+    .monthly-edit-float__close:hover,
+    .monthly-edit-float__close:focus-visible {
+      background: rgba(88, 225, 243, 0.35);
+      outline: none;
+    }
+    .monthly-edit-float__today {
+      position: absolute;
+      top: 10px;
+      left: 56px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      background: rgba(88, 225, 243, 0.1);
+      color: var(--mef-cyan);
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .monthly-edit-float__today:hover,
+    .monthly-edit-float__today:focus-visible {
+      background: rgba(88, 225, 243, 0.22);
+      outline: none;
+    }
+    .monthly-edit-float__confirm {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      min-width: 88px;
+      height: 32px;
+      padding: 0 14px;
+      border: 1px solid var(--mef-line);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.35);
+      color: var(--mef-cyan);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-sizing: border-box;
+      pointer-events: auto;
+    }
+    .monthly-edit-float__confirm:hover,
+    .monthly-edit-float__confirm:focus-visible {
+      background: rgba(88, 225, 243, 0.5);
+      outline: none;
+    }
+    .monthly-edit-float__undo {
+      position: absolute;
+      top: 10px;
+      right: 108px;
+      min-width: 76px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--mef-line);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--mef-cyan);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__csv-upload {
+      position: absolute;
+      top: 10px;
+      right: 214px;
+      min-width: 112px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--mef-line);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--mef-cyan);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__csv-upload:hover,
+    .monthly-edit-float__csv-upload:focus-visible {
+      background: rgba(88, 225, 243, 0.32);
+      outline: none;
+    }
+    .monthly-edit-float__undo:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .monthly-edit-float__today,
+    .monthly-edit-float__nav button,
+    .monthly-edit-float__csv-upload,
+    .monthly-edit-float__undo,
+    .monthly-edit-float__confirm {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .monthly-edit-float__top {
+      flex: 0 0 auto;
+      background: var(--mef-fixed);
+      border-bottom: 1px solid rgba(88, 225, 243, 0.25);
+      padding: 52px 14px 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 10px 16px;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+    .monthly-edit-float__nav button {
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      background: rgba(88, 225, 243, 0.1);
+      color: var(--mef-cyan);
+      border-radius: 3px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__nav button:hover,
+    .monthly-edit-float__nav button:focus-visible {
+      background: rgba(88, 225, 243, 0.22);
+      outline: none;
+    }
+    .monthly-edit-float__month-label {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      min-width: 120px;
+      text-align: center;
+    }
+    .monthly-edit-float__month-trigger {
+      min-width: 146px;
+      justify-content: center;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .monthly-edit-float__month-picker {
+      position: absolute;
+      left: 90px;
+      top: calc(100% + 8px);
+      width: 252px;
+      padding: 10px;
+      border: 1px solid rgba(88, 225, 243, 0.38);
+      border-radius: 4px;
+      background: rgba(6, 17, 22, 0.96);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      box-sizing: border-box;
+      z-index: 3;
+    }
+    .monthly-edit-float__month-picker[hidden] {
+      display: none;
+    }
+    .monthly-edit-float__month-picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .monthly-edit-float__month-picker-label {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: rgba(88, 225, 243, 0.75);
+    }
+    .monthly-edit-float__month-picker-year {
+      width: 104px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.08);
+      color: var(--mef-cyan);
+      padding: 4px 6px;
+      font-size: 12px;
+      font-family: 'Orbitron', sans-serif;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__month-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .monthly-edit-float__month-btn {
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.08);
+      color: var(--mef-cyan);
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__month-btn:hover,
+    .monthly-edit-float__month-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.22);
+      outline: none;
+    }
+    .monthly-edit-float__month-btn.is-active {
+      background: rgba(88, 225, 243, 0.35);
+      border-color: rgba(88, 225, 243, 0.62);
+      color: #021218;
+      font-weight: 700;
+    }
+    .monthly-edit-float__zoom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(88, 225, 243, 0.85);
+      justify-self: end;
+    }
+    .monthly-edit-float__zoom input[type='range'] {
+      width: 120px;
+      accent-color: #58e1f3;
+    }
+    .monthly-edit-float__zoom-edit {
+      width: 58px;
+      border: 1px solid rgba(88, 225, 243, 0.5);
+      background: rgba(0, 0, 0, 0.3);
+      color: #58e1f3;
+      font: inherit;
+      text-align: right;
+      padding: 2px 5px;
+      border-radius: 2px;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__kpi-strip {
+      grid-column: 1 / -1;
+      min-height: 96px;
+      border: 1px solid rgba(88, 225, 243, 0.22);
+      border-radius: 4px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 8px;
+      padding: 10px 12px;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__kpi-col {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 2;
+      min-width: 0;
+      border-left: 1px solid rgba(88, 225, 243, 0.18);
+      padding-left: 10px;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__kpi-col:first-child {
+      border-left: 0;
+      padding-left: 0;
+    }
+    .monthly-edit-float__kpi-cell {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      align-self: center;
+    }
+    .monthly-edit-float__kpi-cell-label {
+      font-size: 11px;
+      line-height: 1.1;
+      color: rgba(88, 225, 243, 0.86);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .monthly-edit-float__kpi-cell-value {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #58e1f3;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .monthly-edit-float__kpi-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      width: 100%;
+      margin-top: 2px;
+      font-size: 12px;
+      color: rgba(88, 225, 243, 0.88);
+    }
+    .monthly-edit-float__kpi-progress-top span:first-child {
+      min-width: 0;
+      opacity: 0.75;
+    }
+    .monthly-edit-float__kpi-progress-top span:last-child {
+      min-width: 36px;
+      text-align: right;
+      font-weight: 700;
+    }
+    .monthly-edit-float__kpi-progress-bar {
+      position: relative;
+      width: 100%;
+      height: 11px;
+      margin-top: 2px;
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      border-radius: 999px;
+      background: rgba(88, 225, 243, 0.08);
+      overflow: hidden;
+    }
+    .monthly-edit-float__kpi-col:not(:first-child) .monthly-edit-float__kpi-cell {
+      justify-items: center;
+    }
+    .monthly-edit-float__kpi-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(80, 210, 228, 0.8), rgba(120, 247, 255, 0.96));
+      transition: width 120ms ease-out;
+    }
+    .monthly-edit-float__kpi-progress-target {
+      position: absolute;
+      top: -1px;
+      bottom: -1px;
+      width: 2px;
+      left: 66.6667%;
+      transform: translateX(-50%);
+      background: #e6ff00;
+      box-shadow: 0 0 4px rgba(230, 255, 0, 0.45);
+      pointer-events: none;
+    }
+    .monthly-edit-float__kpi-progress-marker {
+      position: absolute;
+      top: -6px;
+      left: 0%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--kpi-marker-color, #e6ff00);
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.45));
+      pointer-events: none;
+    }
+    .monthly-edit-float__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: var(--mef-label-w) 1fr;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__labels {
+      background: var(--mef-fixed);
+      border-right: 1px solid rgba(88, 225, 243, 0.28);
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .monthly-edit-float__labels::-webkit-scrollbar {
+      display: none;
+    }
+    .monthly-edit-float__labels-inner {
+      padding: 0 0 12px;
+      box-sizing: border-box;
+      will-change: transform;
+    }
+    .monthly-edit-float__label-corner {
+      height: var(--mef-th-h);
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__group-head {
+      height: var(--mef-group-h);
+      min-height: var(--mef-group-h);
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: #58e1f3;
+      text-transform: uppercase;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .monthly-edit-float__label-row {
+      padding: 0 12px;
+      height: var(--mef-row-h);
+      min-height: var(--mef-row-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(88, 225, 243, 0.92);
+      border-top: 1px solid rgba(88, 225, 243, 0.12);
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__label-main {
+      min-width: 0;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      overflow: visible;
+    }
+    .monthly-edit-float__label-text {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    .monthly-edit-float__label-prefix {
+      flex: 0 0 auto;
+      display: inline-block;
+      margin-right: auto;
+      font-size: 10px;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      color: rgba(88, 225, 243, 0.55);
+      border: 1px solid rgba(88, 225, 243, 0.28);
+      border-radius: 2px;
+      padding: 2px 4px;
+      text-transform: uppercase;
+    }
+    .monthly-edit-float__label-edit {
+      border: 0;
+      background: transparent;
+      color: rgba(88, 225, 243, 0.65);
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+    .monthly-edit-float__label-edit:hover,
+    .monthly-edit-float__label-edit:focus-visible {
+      color: #58e1f3;
+      outline: none;
+    }
+    .monthly-edit-float__label-edit-input {
+      width: 100%;
+      border: 1px solid rgba(88, 225, 243, 0.5);
+      background: rgba(0, 0, 0, 0.25);
+      color: #58e1f3;
+      font: inherit;
+      padding: 2px 6px;
+      border-radius: 2px;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__label-actions {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .monthly-edit-float__mini-btn {
+      border: 1px solid rgba(88, 225, 243, 0.42);
+      background: rgba(88, 225, 243, 0.08);
+      color: #58e1f3;
+      font-size: 10px;
+      line-height: 1;
+      padding: 2px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .monthly-edit-float__mini-btn:hover,
+    .monthly-edit-float__mini-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.2);
+      outline: none;
+    }
+    .monthly-edit-float__mini-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .monthly-edit-float__label-row--sub {
+      font-weight: 500;
+      color: rgba(88, 225, 243, 0.72);
+      padding-left: 18px;
+    }
+    .monthly-edit-float__label-row--profit {
+      height: var(--mef-profit-h);
+      min-height: var(--mef-profit-h);
+      border-top: 1px solid rgba(88, 225, 243, 0.5);
+      font-size: 13px;
+      font-weight: 800;
+      color: #58e1f3;
+      background: rgba(88, 225, 243, 0.08);
+    }
+    .monthly-edit-float__scroll {
+      overflow: auto;
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
+      padding: 0 10px 10px 0;
+      overscroll-behavior-y: none;
+    }
+    .monthly-edit-float__scale-root {
+      transform-origin: top left;
+      display: inline-block;
+      min-width: min-content;
+    }
+    .monthly-edit-float__table {
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid var(--mef-line);
+      border-radius: 4px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .monthly-edit-float__table th,
+    .monthly-edit-float__table td {
+      border-right: 1px solid rgba(88, 225, 243, 0.35);
+      border-bottom: 1px solid rgba(88, 225, 243, 0.35);
+      min-width: var(--mef-col-min);
+      width: var(--mef-col-min);
+      height: var(--mef-row-h);
+      box-sizing: border-box;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 12px;
+    }
+    .monthly-edit-float__table th:last-child,
+    .monthly-edit-float__table td:last-child {
+      border-right: 0;
+    }
+    .monthly-edit-float__table thead th {
+      background: rgba(88, 225, 243, 0.12);
+      font-weight: 700;
+      color: var(--mef-cyan);
+      padding: 4px 2px;
+    }
+    .monthly-edit-float__table tbody td {
+      background: rgba(88, 225, 243, 0.06);
+      padding: 2px;
+    }
+    .monthly-edit-float__table tbody td.kpi-fill-empty {
+      background: rgba(88, 225, 243, 0.03);
+      box-shadow: inset 0 0 0 1px rgba(88, 225, 243, 0.14);
+    }
+    .monthly-edit-float__table tbody td.kpi-fill-empty .monthly-edit-float__input:not(:disabled) {
+      color: rgba(88, 225, 243, 0.52);
+    }
+    .monthly-edit-float__table tr.monthly-edit-float__profit-row td.kpi-fill-empty {
+      background: rgba(88, 225, 243, 0.05);
+    }
+    .monthly-edit-float__table th.mef-col-inactive,
+    .monthly-edit-float__table td.mef-col-inactive {
+      opacity: 0.35;
+      background: rgba(88, 225, 243, 0.02);
+    }
+    .monthly-edit-float__table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+    .monthly-edit-float__table tr.monthly-edit-float__profit-row td {
+      border-top: 1px solid rgba(88, 225, 243, 0.6);
+      background: rgba(88, 225, 243, 0.08);
+      height: var(--mef-profit-h);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .monthly-edit-float__strip-row td {
+      height: var(--mef-group-h);
+      padding: 0 !important;
+      background: rgba(88, 225, 243, 0.08) !important;
+      border-bottom: 1px solid rgba(88, 225, 243, 0.35);
+      font-size: 0;
+      line-height: 0;
+    }
+    body.office-mode .monthly-edit-float__strip-row td {
+      background: #e0e0e0 !important;
+    }
+    .monthly-edit-float__input {
+      width: 100%;
+      max-width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--mef-cyan);
+      font: inherit;
+      text-align: center;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__input:focus {
+      outline: 1px solid rgba(88, 225, 243, 0.65);
+      outline-offset: -1px;
+    }
+    .monthly-edit-float__cb {
+      width: 16px;
+      height: 16px;
+      accent-color: #58e1f3;
+      cursor: pointer;
+    }
+    body.office-mode .monthly-edit-float {
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+      --mef-cyan: #111;
+      --mef-line: #000000;
+      --mef-panel: #f4f4f4;
+      --mef-fixed: #e8e8e8;
+    }
+    body.office-mode .monthly-edit-float__backdrop {
+      background: rgba(0, 0, 0, 0.35);
+    }
+    body.office-mode .monthly-edit-float__close,
+    body.office-mode .monthly-edit-float__confirm {
+      border-color: #000;
+      color: #111;
+      background: #ddd;
+    }
+    body.office-mode .monthly-edit-float__nav button {
+      border-color: #333;
+      color: #111;
+      background: #eee;
+    }
+    body.office-mode .monthly-edit-float__month-picker {
+      border-color: rgba(0, 0, 0, 0.35);
+      background: #f4f4f4;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    }
+    body.office-mode .monthly-edit-float__month-picker-label {
+      color: #444;
+    }
+    body.office-mode .monthly-edit-float__month-picker-year,
+    body.office-mode .monthly-edit-float__month-btn {
+      border-color: #555;
+      color: #111;
+      background: #fff;
+    }
+    body.office-mode .monthly-edit-float__month-btn.is-active {
+      background: #d8d8d8;
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__today {
+      border-color: #333;
+      color: #111;
+      background: #eee;
+    }
+    body.office-mode .monthly-edit-float__month-label {
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__zoom {
+      color: #333;
+    }
+    body.office-mode .monthly-edit-float__zoom-edit {
+      border-color: #888;
+      background: #fff;
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__kpi-strip {
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+    body.office-mode .monthly-edit-float__kpi-col {
+      border-left-color: rgba(0, 0, 0, 0.16);
+    }
+    body.office-mode .monthly-edit-float__kpi-progress-top {
+      color: #333;
+    }
+    body.office-mode .monthly-edit-float__kpi-progress-bar {
+      border-color: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.06);
+    }
+    body.office-mode .monthly-edit-float__kpi-progress-fill {
+      background: linear-gradient(90deg, rgba(90, 90, 90, 0.75), rgba(170, 170, 170, 0.9));
+    }
+    body.office-mode .monthly-edit-float__kpi-progress-target {
+      box-shadow: none;
+    }
+    body.office-mode .monthly-edit-float__kpi-cell-label {
+      color: #666;
+    }
+    body.office-mode .monthly-edit-float__kpi-cell-value {
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__labels {
+      border-right-color: #ccc;
+    }
+    body.office-mode .monthly-edit-float__group-head {
+      color: #111;
+      font-size: 13px;
+      font-weight: 800;
+      justify-content: center;
+      text-align: center;
+    }
+    body.office-mode .monthly-edit-float__label-row {
+      color: #111;
+      border-top-color: rgba(0, 0, 0, 0.08);
+    }
+    body.office-mode .monthly-edit-float__label-row--sub {
+      color: #444;
+    }
+    body.office-mode .monthly-edit-float__label-row--profit {
+      border-top-color: #444;
+      color: #111;
+      background: #e7e7e7;
+    }
+    body.office-mode .monthly-edit-float__label-edit {
+      color: #777;
+    }
+    body.office-mode .monthly-edit-float__label-edit:hover,
+    body.office-mode .monthly-edit-float__label-edit:focus-visible {
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__label-edit-input {
+      border-color: #888;
+      background: #fff;
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__label-prefix {
+      color: #666;
+      border-color: #aaa;
+      background: #f3f3f3;
+    }
+    body.office-mode .monthly-edit-float__mini-btn {
+      border-color: #777;
+      color: #111;
+      background: #efefef;
+    }
+    body.office-mode .monthly-edit-float__undo {
+      border-color: #777;
+      color: #111;
+      background: #efefef;
+    }
+    body.office-mode .monthly-edit-float__csv-upload {
+      border-color: #777;
+      color: #111;
+      background: #efefef;
+    }
+    body.office-mode .monthly-edit-float__table {
+      border-color: #000;
+      background: #fff;
+    }
+    body.office-mode .monthly-edit-float__table thead th {
+      background: #e4e4e4;
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__table tbody td {
+      background: #fafafa;
+    }
+    body.office-mode .monthly-edit-float__table tbody td.kpi-fill-empty {
+      background: #eef2f6;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+    body.office-mode .monthly-edit-float__table tbody td.kpi-fill-empty .monthly-edit-float__input:not(:disabled) {
+      color: #777;
+    }
+    body.office-mode .monthly-edit-float__table tr.monthly-edit-float__profit-row td {
+      border-top-color: #444;
+      background: #e7e7e7;
+      color: #111;
+    }
+    body.office-mode .monthly-edit-float__table tr.monthly-edit-float__profit-row td.kpi-fill-empty {
+      background: #dde2e8;
+    }
+    body.office-mode .monthly-edit-float__table th,
+    body.office-mode .monthly-edit-float__table td {
+      border-right-color: #000;
+      border-bottom-color: #000;
+    }
+    body.office-mode .monthly-edit-float__input {
+      color: #111;
+    }
+
     /* Monthly page: replace Annual daily table window with monthly vertical table window */
     .annual-daily-focus-window,
-    #annual-graph-popover,
     #annual-edit-modal {
       display: none !important;
     }
@@ -3730,6 +4624,7 @@
       justify-content: center;
       gap: 12px;
       pointer-events: auto;
+      overflow: visible;
     }
     .monthly-vfocus-top-btn,
     .monthly-vfocus-top-edit {
@@ -3750,7 +4645,8 @@
     }
     .monthly-vfocus-top-edit {
       font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
+      font-size: 15px;
+      line-height: 18px;
       font-weight: 700;
       letter-spacing: 0.01em;
       min-width: 24px;
@@ -3765,6 +4661,53 @@
     .monthly-vfocus-top-btn:focus-visible,
     .monthly-vfocus-top-edit:focus-visible {
       opacity: 0.85;
+      outline: none;
+    }
+    .monthly-vfocus-graph-btn {
+      position: absolute;
+      left: 100%;
+      transform: translateX(0.3px);
+      top: 14px;
+      min-width: 68px;
+      height: 28px;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 2px;
+      border: 1px solid #58e1f3;
+      border-radius: 0 6px 0 0;
+      background: #1f1e1e;
+      color: #061217;
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 3;
+      line-height: 0;
+      isolation: isolate;
+    }
+    .monthly-vfocus-graph-btn__inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background-color: #58e1f3;
+      border-radius: 0 5px 0 0;
+      color: #1a1a1a;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+    html[lang='ja'] .monthly-vfocus-graph-btn__inner {
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-size: 15px;
+    }
+    .monthly-vfocus-graph-btn:hover .monthly-vfocus-graph-btn__inner,
+    .monthly-vfocus-graph-btn:focus-visible .monthly-vfocus-graph-btn__inner {
+      background: #7deaf7;
+    }
+    .monthly-vfocus-graph-btn:focus-visible {
       outline: none;
     }
     .monthly-vfocus-fill {
@@ -3816,6 +4759,61 @@
     .monthly-vfocus-lane--center {
       opacity: 1;
     }
+    body:not(.office-mode) .monthly-vfocus-lane--side {
+      opacity: 0.42;
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-group {
+      background: rgba(88, 225, 243, 0.38);
+      border-color: #58e1f3;
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell {
+      background: #35686f;
+      color: #58e1f3;
+      border-bottom-color: rgba(88, 225, 243, 0.52);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-date {
+      background: transparent;
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-profit-bottom {
+      background: #35686f;
+      border-color: #58e1f3;
+      color: #58e1f3;
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-group {
+      background: rgba(88, 225, 243, 0.12);
+      border-color: rgba(88, 225, 243, 0.45);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell {
+      background: rgba(88, 225, 243, 0.08);
+      color: rgba(88, 225, 243, 0.62);
+      border-bottom-color: rgba(88, 225, 243, 0.28);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-date {
+      background: transparent;
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-profit-bottom {
+      background: rgba(88, 225, 243, 0.1);
+      border-color: rgba(88, 225, 243, 0.4);
+      color: rgba(88, 225, 243, 0.62);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-group {
+      background: rgba(88, 225, 243, 0.04);
+      border-color: rgba(88, 225, 243, 0.22);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-cell {
+      background: transparent;
+      color: rgba(88, 225, 243, 0.14);
+      border-bottom-color: rgba(88, 225, 243, 0.14);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-date {
+      background: transparent;
+      color: rgba(88, 225, 243, 0.13);
+    }
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-profit-bottom {
+      background: rgba(88, 225, 243, 0.05);
+      border-color: rgba(88, 225, 243, 0.22);
+      color: rgba(88, 225, 243, 0.15);
+    }
     /* Date: no cell frame, label only */
     .monthly-vfocus-date {
       flex: 0 0 auto;
@@ -3842,8 +4840,28 @@
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .monthly-vfocus-date--off {
+      align-items: baseline;
+      justify-content: center;
+      gap: 3px;
+    }
+    .monthly-vfocus-date--off .monthly-vfocus-date__main {
+      color: rgba(88, 225, 243, 0.52);
+    }
+    .monthly-vfocus-date__off {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      color: rgba(88, 225, 243, 0.38);
+      vertical-align: baseline;
+    }
+    .monthly-vfocus-date--buffer {
       opacity: 0.55;
-      color: rgba(88, 225, 243, 0.75);
+      color: rgba(88, 225, 243, 0.14);
+    }
+    html[lang='ja'] .monthly-vfocus-date--buffer {
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .monthly-vfocus-groups {
       display: flex;
@@ -3867,9 +4885,10 @@
       margin-top: var(--monthly-vfocus-groups-gap-between);
     }
     .monthly-vfocus-profit-divider {
-      width: 100%;
+      /* Match TW column width; do not span full decorative frame */
+      width: var(--monthly-vfocus-col-w);
       max-width: 100%;
-      align-self: stretch;
+      align-self: center;
       height: 0.5px;
       background: #58e1f3;
       margin-top: var(--monthly-vfocus-profit-line-gap-top);
@@ -4134,21 +5153,14 @@
     html[lang="ja"] .monthly-date-header-cell {
       font-family: 'BIZ UDPGothic', sans-serif;
     }
-    .monthly-date-header-cell--off {
-      opacity: 0.48;
-    }
     .monthly-date-header-cell--buffer {
-      opacity: 0.38;
-      color: #4a9aa8;
+      opacity: 0.1;
+      color: rgba(88, 225, 243, 0.14);
     }
-    .monthly-data-column--buffer {
-      opacity: 0.45;
-      pointer-events: none;
-    }
-    .monthly-data-column--off {
-      opacity: 0.62;
-      pointer-events: none;
-      background: rgba(88, 225, 243, 0.05);
+    /* Current-month closed: softer date header than open days (readable without Focus Bar) */
+    .monthly-date-header-cell--off:not(.monthly-date-header-cell--buffer) {
+      opacity: 1;
+      color: rgba(88, 225, 243, 0.42);
     }
     .monthly-scroll-data__track--group {
       height: var(--monthly-data-group-outer-h);
@@ -4185,7 +5197,9 @@
       flex: 0 0 var(--monthly-data-col-w);
       width: var(--monthly-data-col-w);
       box-sizing: border-box;
-      border: 1px solid #58e1f3;
+      border-width: 1px;
+      border-style: solid;
+      border-color: #58e1f3;
       border-radius: 6px;
       overflow: hidden;
       display: grid;
@@ -4217,6 +5231,31 @@
     }
     .monthly-data-column__cell:last-child {
       border-bottom: 0;
+    }
+    /* buffer/off はベースの border より後で指定（border 略式で上書きされないようにする） */
+    .monthly-data-column:not(.monthly-data-column--buffer):not(.monthly-data-column--off) {
+      border-color: #58e1f3;
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .monthly-data-column--buffer {
+      opacity: 1;
+      pointer-events: none;
+      border-color: rgba(88, 225, 243, 0.14);
+      background: rgba(88, 225, 243, 0.03);
+    }
+    .monthly-data-column--buffer .monthly-data-column__cell {
+      color: rgba(88, 225, 243, 0.15);
+      border-bottom-color: rgba(88, 225, 243, 0.14);
+    }
+    /* Current-month OFF: inactive but more legible than before */
+    .monthly-data-column--off:not(.monthly-data-column--buffer) {
+      opacity: 0.66;
+      pointer-events: none;
+      background: rgba(88, 225, 243, 0.08);
+    }
+    .monthly-data-column--off:not(.monthly-data-column--buffer) .monthly-data-column__cell {
+      color: rgba(88, 225, 243, 0.9);
+      border-bottom-color: rgba(88, 225, 243, 0.38);
     }
 
     .monthly-table-window__metric-col {
@@ -4570,6 +5609,64 @@
       border-color: #8cb20e;
       font-weight: 700;
     }
+    .monthly-access-controls {
+      width: min(100%, 1020px);
+      margin: 8px auto 0;
+      padding-bottom: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+    }
+    .monthly-access-btn {
+      position: relative;
+      width: 112px;
+      height: 46px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: #58e1f3;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+    .monthly-access-btn__frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    .monthly-access-btn__label {
+      position: relative;
+      z-index: 1;
+      transform: translateY(0.5px);
+      white-space: nowrap;
+    }
+    .monthly-access-btn--locked {
+      color: #f3bd58;
+    }
+    .monthly-access-btn--locked:hover .monthly-access-btn__label,
+    .monthly-access-btn--locked:focus-visible .monthly-access-btn__label {
+      text-shadow: 0 0 8px rgba(243, 189, 88, 0.45);
+    }
+    .monthly-access-btn--edit:hover .monthly-access-btn__label,
+    .monthly-access-btn--edit:focus-visible .monthly-access-btn__label {
+      text-shadow: 0 0 8px rgba(88, 225, 243, 0.45);
+    }
+    .office-mode .monthly-access-btn {
+      color: #58e1f3;
+    }
+    .office-mode .monthly-access-btn--locked {
+      color: #f3bd58;
+    }
     .monthly-table-window__shell {
       margin-top: 20px;
       border: 1px solid #58e1f3;
@@ -4708,6 +5805,16 @@
       font-family: 'BIZ UDPGothic', sans-serif;
       background: rgba(0, 0, 0, 0.03);
     }
+    /* TW 左タイトル帯: 非アクティブ（日付・セル側の buffer/off）は別ルール。ここはアクティブ相当を純黒に統一 */
+    .office-mode .monthly-table-window__side-title,
+    .office-mode .monthly-table-window__vlabel,
+    .office-mode .monthly-table-window__col-text,
+    .office-mode .monthly-table-window__metric-col,
+    .office-mode .monthly-table-window__income-col,
+    .office-mode .monthly-table-window__income-arrows-col,
+    .office-mode .monthly-table-window__expenses-col {
+      color: #000000;
+    }
     .office-mode .monthly-hdr--toggle::after,
     .office-mode .monthly-cell--row {
       color: #2d6b18;
@@ -4719,11 +5826,11 @@
       background: #e9e9e9;
     }
     .office-mode .monthly-month-picker {
-      border-color: #727575;
+      border-color: #000000;
       background: #f2f2f2;
     }
     .office-mode .monthly-month-picker::after {
-      background: #727575;
+      background: #000000;
     }
     .office-mode .monthly-month-picker__arrow,
     .office-mode .monthly-month-picker__label,
@@ -4733,7 +5840,7 @@
     }
     .office-mode .monthly-month-picker__menu {
       background: #f2f2f2;
-      border-color: #727575;
+      border-color: #000000;
       scrollbar-color: #727575 #f2f2f2;
     }
     .office-mode .monthly-month-picker__item:hover,
@@ -4741,19 +5848,15 @@
       background: rgba(114, 117, 117, 0.2);
     }
     .office-mode .monthly-table-window__vlabel {
-      color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .monthly-table-window__col-text {
-      color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .monthly-table-window__income-col {
-      color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .monthly-table-window__income-arrows-col {
-      color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .monthly-table-window__income-arrow-btn:hover,
@@ -4761,8 +5864,13 @@
       color: #000;
     }
     .office-mode .monthly-table-window__expenses-col {
-      color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    /* TW 内の 0.5px 縦横ガイド線（Sci-Fi シアン）を Office で純黒に */
+    .office-mode .monthly-table-window__guide-line,
+    .office-mode .monthly-table-window__h-line-775,
+    .office-mode .monthly-table-window__h-line-775-right {
+      background: #000000;
     }
     .office-mode .monthly-scroll-data {
       scrollbar-color: #727575 #f2f2f2;
@@ -4773,30 +5881,145 @@
     .office-mode .monthly-scroll-data::-webkit-scrollbar-thumb {
       background: #727575;
     }
+    /* 日次列枠: Sci-Fi の active(1) / buffer(α0.14) / OFF(列 opacity 0.48) の段差を、Office では黒〜薄灰に写像 */
     .office-mode .monthly-data-column {
-      border-color: #727575;
+      border-color: #000000;
       background: rgba(0, 0, 0, 0.03);
     }
     .office-mode .monthly-data-column__cell {
-      border-bottom-color: #727575;
+      border-bottom-color: #000000;
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .monthly-date-header-cell {
       color: #111;
     }
-    .office-mode .monthly-date-header-cell--off {
-      opacity: 0.65;
-    }
     .office-mode .monthly-date-header-cell--buffer {
-      opacity: 0.5;
-      color: #5a6a6c;
+      opacity: 0.22;
+      color: #6a6a6a;
+    }
+    .office-mode .monthly-date-header-cell--off:not(.monthly-date-header-cell--buffer) {
+      opacity: 1;
+      color: #6a6a6a;
+    }
+    /* Sci-Fi の (0,3,0) ルールより特異度を上げないと外枠が #58e1f3 のまま残る */
+    .office-mode .monthly-data-column:not(.monthly-data-column--buffer):not(.monthly-data-column--off) {
+      border-color: #000000;
+      background: rgba(0, 0, 0, 0.04);
     }
     .office-mode .monthly-data-column--buffer {
-      opacity: 0.55;
+      opacity: 1;
+      border-color: #d0d0d0;
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .office-mode .monthly-data-column--buffer .monthly-data-column__cell {
+      color: #6e6e6e;
+      border-bottom-color: #d0d0d0;
+    }
+    .office-mode .monthly-data-column--off:not(.monthly-data-column--buffer) {
+      opacity: 0.72;
+      background: rgba(0, 0, 0, 0.05);
+      border-color: #4a4a4a;
+    }
+    .office-mode .monthly-data-column--off:not(.monthly-data-column--buffer) .monthly-data-column__cell {
+      color: #6e6e6e;
+      border-bottom-color: #aeaeae;
+    }
+    .office-mode .monthly-vfocus-top-btn,
+    .office-mode .monthly-vfocus-top-edit {
+      color: #ffffff;
+    }
+    .office-mode .monthly-vfocus-graph-btn {
+      border-color: #000;
+      background: #dbdbdb;
+    }
+    .office-mode .monthly-vfocus-graph-btn__inner {
+      background: #c5c5c5;
+      color: #111;
+    }
+    .office-mode .monthly-vfocus-graph-btn:hover .monthly-vfocus-graph-btn__inner,
+    .office-mode .monthly-vfocus-graph-btn:focus-visible .monthly-vfocus-graph-btn__inner {
+      background: #b8b8b8;
+    }
+    .office-mode .monthly-vfocus-lane--side {
+      opacity: 0.5;
+    }
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-group {
+      background: #d2d2d2;
+      border-color: #000000;
+    }
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell {
+      background: #e8e8e8;
+      color: #111;
+      border-bottom-color: #000000;
+    }
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-date {
+      background: transparent;
+      color: #111;
+    }
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-profit-bottom {
+      background: #e8e8e8;
+      border-color: #000000;
+      color: #111;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-group {
+      border-color: #4a4a4a;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell {
+      background: rgba(0, 0, 0, 0.04);
+      color: #666;
+      border-bottom-color: #aeaeae;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-profit-bottom {
+      border-color: #4a4a4a;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-date {
+      background: transparent;
+      color: #555;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-group {
+      border-color: #d0d0d0;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-cell {
+      color: #9a9a9a;
+      border-bottom-color: #d0d0d0;
+    }
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-buffer .monthly-vfocus-profit-bottom {
+      border-color: #d0d0d0;
+    }
+    /* 左右レーンも中央と同じ TW 状態（営業 / OFF / buffer）で枠色を揃える */
+    .office-mode .monthly-vfocus-lane--side:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-group {
+      border-color: #000000;
+    }
+    .office-mode .monthly-vfocus-lane--side:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell {
+      border-bottom-color: #000000;
+    }
+    .office-mode .monthly-vfocus-lane--side:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-profit-bottom {
+      border-color: #000000;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-off .monthly-vfocus-group {
+      border-color: #4a4a4a;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-off .monthly-vfocus-cell {
+      border-bottom-color: #aeaeae;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-off .monthly-vfocus-profit-bottom {
+      border-color: #4a4a4a;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-buffer .monthly-vfocus-group {
+      border-color: #d0d0d0;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-buffer .monthly-vfocus-cell {
+      border-bottom-color: #d0d0d0;
+    }
+    .office-mode .monthly-vfocus-lane--side.monthly-vfocus-lane--tw-buffer .monthly-vfocus-profit-bottom {
+      border-color: #d0d0d0;
+    }
+    .office-mode .monthly-vfocus-date--buffer {
+      color: #6e6e6e;
     }
     .office-mode .monthly-vfocus-group {
-      border-color: #727575;
+      border-color: #000000;
       color: #111;
       background: rgba(0, 0, 0, 0.04);
     }
@@ -4806,18 +6029,30 @@
     }
     .office-mode .monthly-vfocus-cell {
       color: #111;
-      border-bottom-color: rgba(114, 117, 117, 0.55);
+      border-bottom-color: #000000;
       background: rgba(0, 0, 0, 0.03);
     }
     .office-mode .monthly-vfocus-date--off {
-      color: #444;
-      opacity: 0.75;
+      align-items: baseline;
+      justify-content: center;
+      gap: 3px;
+      opacity: 0.85;
+    }
+    .office-mode .monthly-vfocus-date--off .monthly-vfocus-date__main {
+      color: #777;
+    }
+    .office-mode .monthly-vfocus-date__off {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      color: #888;
     }
     .office-mode .monthly-vfocus-profit-divider {
-      background: #727575;
+      background: #000000;
     }
     .office-mode .monthly-vfocus-profit-bottom {
-      border-color: #727575;
+      border-color: #000000;
       color: #111;
       background: rgba(0, 0, 0, 0.04);
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -4944,6 +6179,43 @@
             <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
         </div>
+      </div>
+      <div class="monthly-access-controls" aria-label="Monthly plan controls">
+        <a
+          href="../../setting/change_plan.html"
+          class="monthly-access-btn monthly-access-btn--locked"
+          id="monthly-plan-lock-link"
+          aria-label="Change Plan"
+        >
+          <img
+            src="../../../images/monthly_decoration_frame_locked.svg"
+            alt=""
+            class="monthly-access-btn__frame"
+            id="monthly-plan-lock-frame"
+            width="109"
+            height="43"
+            decoding="async"
+            aria-hidden="true"
+          >
+          <span class="monthly-access-btn__label" id="monthly-plan-lock-label">LOCKED</span>
+        </a>
+        <button
+          type="button"
+          class="monthly-access-btn monthly-access-btn--edit"
+          id="monthly-top-edit-btn"
+          aria-label="Edit"
+        >
+          <img
+            src="../../../images/monthly_decoration_frame_edit.svg"
+            alt=""
+            class="monthly-access-btn__frame"
+            width="112"
+            height="46"
+            decoding="async"
+            aria-hidden="true"
+          >
+          <span class="monthly-access-btn__label">EDIT</span>
+        </button>
       </div>
       <section class="annual-monthly-data" id="annual-monthly-data">
         <div class="annual-year-control" id="annual-year-control">
@@ -5124,6 +6396,20 @@
               <div class="annual-daily-kpi-col annual-daily-kpi-col--sales">
                 <p class="annual-daily-kpi-label" id="annual-daily-label-target">Target sales</p>
                 <p class="annual-daily-kpi-target" id="annual-daily-target-sales" data-field="annual.daily.targetSales">$357,971</p>
+                <div class="annual-daily-kpi-past" id="annual-daily-kpi-past">
+                  <div class="annual-daily-kpi-past-item">
+                    <p class="annual-daily-kpi-past-label">Actual</p>
+                    <p class="annual-daily-kpi-past-value" id="annual-daily-actual-sales">—</p>
+                  </div>
+                  <div class="annual-daily-kpi-past-item">
+                    <p class="annual-daily-kpi-past-label">Diff</p>
+                    <p class="annual-daily-kpi-past-value" id="annual-daily-diff-sales">—</p>
+                  </div>
+                  <div class="annual-daily-kpi-past-item">
+                    <p class="annual-daily-kpi-past-label">Ach</p>
+                    <p class="annual-daily-kpi-past-value" id="annual-daily-ach-rate">—</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -5356,6 +6642,16 @@
               <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-prev-day" aria-label="Previous day">◀</button>
               <button type="button" class="monthly-vfocus-top-edit" id="monthly-vfocus-edit" aria-label="Edit">Edit</button>
               <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-next-day" aria-label="Next day">▶</button>
+              <button
+                type="button"
+                class="monthly-vfocus-graph-btn"
+                id="monthly-vfocus-graph-btn"
+                aria-label="Open graph"
+                aria-haspopup="dialog"
+                aria-controls="annual-graph-popover-panel"
+              >
+                <span class="monthly-vfocus-graph-btn__inner">Graph</span>
+              </button>
             </div>
             <div class="monthly-vfocus-fill">
               <div class="monthly-vfocus-stack">
@@ -5448,6 +6744,8 @@
             </div>
             <span class="annual-graph-popover__bar-tri-kgi"></span>
           </div>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-date">Date :</span>
+          <span class="annual-graph-popover__value" id="annual-graph-popover-val-date">—</span>
           <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-ach">Achievement :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-ach" id="annual-graph-popover-val-ach">—</span>
           <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-target">Target Sales :</span>
@@ -5623,6 +6921,77 @@
     </div>
   </div>
 
+  <div
+    class="monthly-edit-float"
+    id="monthly-edit-float"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="monthly-edit-float-title"
+    hidden
+  >
+    <div class="monthly-edit-float__backdrop" id="monthly-edit-float-backdrop" aria-hidden="true"></div>
+    <div class="monthly-edit-float__panel" role="document">
+      <h2 id="monthly-edit-float-title" class="monthly-edit-float__sr-only">Monthly bulk edit</h2>
+      <button type="button" class="monthly-edit-float__close" id="monthly-edit-float-close" aria-label="Close">
+        ×
+      </button>
+      <button type="button" class="monthly-edit-float__today" id="monthly-edit-float-today" aria-label="Jump to today">
+        Today
+      </button>
+      <button type="button" class="monthly-edit-float__undo" id="monthly-edit-float-undo" aria-label="Undo last change" disabled>
+        Undo
+      </button>
+      <button
+        type="button"
+        class="monthly-edit-float__csv-upload"
+        id="monthly-edit-float-csv-upload"
+        aria-label="Import CSV"
+        title="Import a CSV file and update the table"
+      >
+        Import CSV
+      </button>
+      <button type="button" class="monthly-edit-float__confirm" id="monthly-edit-float-confirm">Confirm</button>
+      <div class="monthly-edit-float__top">
+        <div class="monthly-edit-float__nav">
+          <button type="button" id="monthly-edit-float-prev" aria-label="Previous month">◀ Prev</button>
+          <button
+            type="button"
+            class="monthly-edit-float__month-label monthly-edit-float__month-trigger"
+            id="monthly-edit-float-month-label"
+            aria-live="polite"
+            aria-label="Choose year and month"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+          ></button>
+          <button type="button" id="monthly-edit-float-next" aria-label="Next month">Next ▶</button>
+          <div class="monthly-edit-float__month-picker" id="monthly-edit-float-month-picker" hidden>
+            <div class="monthly-edit-float__month-picker-head">
+              <span class="monthly-edit-float__month-picker-label">Year</span>
+              <select class="monthly-edit-float__month-picker-year" id="monthly-edit-float-year-select"></select>
+            </div>
+            <div class="monthly-edit-float__month-grid" id="monthly-edit-float-month-grid"></div>
+          </div>
+        </div>
+        <div class="monthly-edit-float__zoom">
+          <label for="monthly-edit-float-zoom">Zoom</label>
+          <input type="range" id="monthly-edit-float-zoom" min="50" max="300" value="100" aria-valuemin="50" aria-valuemax="300" aria-valuenow="100" />
+          <span id="monthly-edit-float-zoom-pct" aria-hidden="true">100%</span>
+        </div>
+        <div class="monthly-edit-float__kpi-strip" id="monthly-edit-float-kpi-strip"></div>
+      </div>
+      <div class="monthly-edit-float__body">
+        <div class="monthly-edit-float__labels" id="monthly-edit-float-labels-wrap">
+          <div class="monthly-edit-float__labels-inner" id="monthly-edit-float-labels"></div>
+        </div>
+        <div class="monthly-edit-float__scroll" id="monthly-edit-float-scroll">
+          <div class="monthly-edit-float__scale-root" id="monthly-edit-float-scale-root">
+            <table class="monthly-edit-float__table" id="monthly-edit-float-table" aria-label="Month daily grid"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
       <img src="../../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
@@ -5683,6 +7052,27 @@
         });
         updateModeButton();
       }
+    })();
+    (function () {
+      var STORAGE_KEY = 'kpi-office-mode';
+      document.addEventListener('click', function (ev) {
+        var t = ev.target;
+        if (!t || !t.closest) return;
+        var a = t.closest('a[href]');
+        if (!a) return;
+        var href = String(a.getAttribute('href') || '').trim();
+        if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
+        if (href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) return;
+        if (a.getAttribute('target') === '_blank') return;
+        var isOffice = document.body.classList.contains('office-mode');
+        try {
+          if (isOffice) {
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+          }
+        } catch (_err) {}
+      });
     })();
     (function () {
       var menuBtn = document.querySelector('.icon-button-menu');
@@ -5756,6 +7146,58 @@
       document.addEventListener('click', function () {
         popup.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    (function () {
+      var PLAN_KEY = 'kpiNavigator.userPlan';
+      var lockLink = document.getElementById('monthly-plan-lock-link');
+      var lockFrame = document.getElementById('monthly-plan-lock-frame');
+      var lockLabel = document.getElementById('monthly-plan-lock-label');
+      var topEditBtn = document.getElementById('monthly-top-edit-btn');
+      if (!lockLink || !lockFrame || !lockLabel || !topEditBtn) return;
+
+      function normalizePlan(raw) {
+        var s = String(raw || '').trim().toLowerCase();
+        return s === 'pro' ? 'pro' : 'basic';
+      }
+      function resolvePlan() {
+        var g = window.__KPI_USER_PLAN;
+        if (typeof g === 'string' && g) return normalizePlan(g);
+        try {
+          return normalizePlan(localStorage.getItem(PLAN_KEY));
+        } catch (_err) {
+          return 'basic';
+        }
+      }
+      function applyPlanUi(plan) {
+        var isPro = plan === 'pro';
+        if (isPro) {
+          lockLink.classList.remove('monthly-access-btn--locked');
+          lockLabel.textContent = 'UNLOCKED';
+          lockFrame.setAttribute('src', '../../../images/monthly_decoration_frame_edit.svg');
+        } else {
+          lockLink.classList.add('monthly-access-btn--locked');
+          lockLabel.textContent = 'LOCKED';
+          lockFrame.setAttribute('src', '../../../images/monthly_decoration_frame_locked.svg');
+        }
+      }
+
+      applyPlanUi(resolvePlan());
+      window.__MONTHLY_UI = window.__MONTHLY_UI || {};
+      window.__MONTHLY_UI.setUserPlan = function (plan) {
+        var normalized = normalizePlan(plan);
+        try {
+          localStorage.setItem(PLAN_KEY, normalized);
+        } catch (_err) {}
+        applyPlanUi(normalized);
+      };
+
+      topEditBtn.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('monthly:vfocusEditRequested', {
+          detail: {
+            isoDate: null
+          }
+        }));
       });
     })();
     (function () {
@@ -5868,6 +7310,26 @@
       render();
     })();
     (function () {
+      window.__KPI_DATA_GATEWAY = window.__KPI_DATA_GATEWAY || {
+        getJson: function (key) {
+          try {
+            var raw = localStorage.getItem(key);
+            if (!raw) return null;
+            var parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+          } catch (e) {
+            return null;
+          }
+        },
+        setJson: function (key, value) {
+          try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+      };
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
       var currentYear = Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))
         ? Number(window.__ANNUAL_DATA.calendarYear)
@@ -6281,11 +7743,27 @@
         targetSales: 357971,
         targetSalesByDate: { '2025-06-07': 357971 }
       };
+      (function hydrateAnnualDailyShared() {
+        var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualDailyShared');
+        if (!parsed) return;
+        var daily = window.__ANNUAL_DATA.daily || {};
+        if (parsed.targetSalesByDate && typeof parsed.targetSalesByDate === 'object') {
+          daily.targetSalesByDate = Object.assign({}, daily.targetSalesByDate || {}, parsed.targetSalesByDate);
+        }
+        if (parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
+          daily.businessDayByDate = Object.assign({}, daily.businessDayByDate || {}, parsed.businessDayByDate);
+        }
+        window.__ANNUAL_DATA.daily = daily;
+      })();
 
       var dateBtn = document.getElementById('annual-daily-date-btn');
       var dateInput = document.getElementById('annual-daily-date-input');
       var todayBtn = document.getElementById('annual-daily-today-btn');
       var targetEl = document.getElementById('annual-daily-target-sales');
+      var pastWrap = document.getElementById('annual-daily-kpi-past');
+      var actualEl = document.getElementById('annual-daily-actual-sales');
+      var diffPastEl = document.getElementById('annual-daily-diff-sales');
+      var achPastEl = document.getElementById('annual-daily-ach-rate');
       if (!dateBtn || !dateInput || !todayBtn || !targetEl) return;
 
       var langJa = document.documentElement.lang === 'ja';
@@ -6330,6 +7808,49 @@
           return '\u00a5' + rounded.toLocaleString('en-US');
         }
         return '$' + rounded.toLocaleString('en-US');
+      }
+      function parseMoneyTextToNumber(text) {
+        var raw = String(text || '').replace(/[^\d.-]/g, '');
+        if (raw === '' || raw === '-' || raw === '.' || raw === '-.') return NaN;
+        var n = Number(raw);
+        return Number.isFinite(n) ? n : NaN;
+      }
+      function formatAchText(v) {
+        var n = Number(v);
+        if (!Number.isFinite(n)) return '—';
+        return (Math.round(n * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }) + '%';
+      }
+      function isPastIsoDate(iso) {
+        var d = parseISODateLocal(iso);
+        if (!d) return false;
+        var today = new Date();
+        var td = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return d.getTime() < td.getTime();
+      }
+      function readRowMetricsByIso(iso) {
+        var row = document.querySelector('#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]');
+        if (!row) return { sales: NaN, diff: NaN, ach: NaN };
+        var group = row.querySelector('.annual-daily-row__group--base');
+        if (!group) return { sales: NaN, diff: NaN, ach: NaN };
+        var cells = group.querySelectorAll('.annual-daily-row__cell');
+        if (!cells.length) return { sales: NaN, diff: NaN, ach: NaN };
+        return {
+          sales: parseMoneyTextToNumber(cells[1] && cells[1].textContent),
+          diff: parseMoneyTextToNumber(cells[3] && cells[3].textContent),
+          ach: parseMoneyTextToNumber(cells[4] && cells[4].textContent)
+        };
+      }
+      function updatePastKpiByIso(iso) {
+        if (!pastWrap || !actualEl || !diffPastEl || !achPastEl) return;
+        if (!isPastIsoDate(iso)) {
+          pastWrap.classList.remove('is-visible');
+          return;
+        }
+        var m = readRowMetricsByIso(iso);
+        actualEl.textContent = Number.isFinite(m.sales) ? formatTargetSalesValue(m.sales) : '—';
+        diffPastEl.textContent = Number.isFinite(m.diff) ? formatTargetSalesValue(m.diff) : '—';
+        achPastEl.textContent = formatAchText(m.ach);
+        pastWrap.classList.add('is-visible');
       }
 
       function resolveTargetSalesForDate(iso) {
@@ -6389,6 +7910,7 @@
         dateInput.value = iso;
         dateBtn.textContent = formatDateButtonLabel(d);
         targetEl.textContent = formatTargetSalesValue(target);
+        updatePastKpiByIso(iso);
         document.dispatchEvent(
           new CustomEvent('annual:dailyDateChanged', {
             detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
@@ -6426,6 +7948,16 @@
         var y = ev.detail && ev.detail.year;
         if (y == null) return;
         shiftDailyDateToCalendarYear(Number(y));
+      });
+      document.addEventListener('annual:salesMapChanged', function () {
+        var iso = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate;
+        if (!iso) return;
+        updatePastKpiByIso(iso);
+      });
+      document.addEventListener('annual:businessDayMapChanged', function () {
+        var iso = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate;
+        if (!iso) return;
+        updatePastKpiByIso(iso);
       });
 
       var nowInit = new Date();
@@ -6955,6 +8487,9 @@
         year = Number(year);
         if (!Number.isFinite(year)) year = 2026;
         window.__ANNUAL_DATA.calendarYear = year;
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var tmap = (daily && daily.targetSalesByDate) || {};
+        var bmap = (daily && daily.businessDayByDate) || {};
         var rangeStart = new Date(year - 1, 11, 25);
         var rangeEnd = new Date(year + 1, 0, 20);
         rowsRoot.innerHTML = '';
@@ -6968,6 +8503,11 @@
           var iso = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
           var dow = d.getDay();
           var isWeekend = dow === 0 || dow === 6;
+          var hasBiz = Object.prototype.hasOwnProperty.call(bmap, iso);
+          var isBusiness = hasBiz ? !!bmap[iso] : !isWeekend;
+          var hasSales = Object.prototype.hasOwnProperty.call(tmap, iso);
+          var salesNum = hasSales ? Number(tmap[iso]) : NaN;
+          if (!Number.isFinite(salesNum)) salesNum = 0;
 
           var isOutsideYear = d.getFullYear() !== year;
           var row = document.createElement('div');
@@ -6982,10 +8522,10 @@
           var dateLabel;
           if (isJa) {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
-            if (isWeekend) dateLabel += ' OFF';
+            if (!isBusiness) dateLabel += ' OFF';
           } else {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
-            if (isWeekend) dateLabel += ' OFF';
+            if (!isBusiness) dateLabel += ' OFF';
           }
 
           var dash = '—';
@@ -7002,10 +8542,10 @@
           var groupBase = document.createElement('div');
           groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
           groupBase.appendChild(createCell(null, dateLabel, 'annual-daily-row__cell--date'));
-          groupBase.appendChild(createCell('sales', isWeekend || isOutsideYear ? dash : fmtMoney(0)));
-          groupBase.appendChild(createCell('target', isWeekend || isOutsideYear ? dash : fmtMoney(0)));
-          groupBase.appendChild(createCell('diff', isWeekend || isOutsideYear ? dash : fmtMoney(0)));
-          groupBase.appendChild(createCell('ach', isWeekend || isOutsideYear ? dash : '0%'));
+          groupBase.appendChild(createCell('sales', !isBusiness || isOutsideYear ? dash : fmtMoney(salesNum)));
+          groupBase.appendChild(createCell('target', !isBusiness || isOutsideYear ? dash : fmtMoney(salesNum)));
+          groupBase.appendChild(createCell('diff', !isBusiness || isOutsideYear ? dash : fmtMoney(0)));
+          groupBase.appendChild(createCell('ach', !isBusiness || isOutsideYear ? dash : '100%'));
 
           var groupMonthly = document.createElement('div');
           groupMonthly.className = 'annual-daily-row__group annual-daily-row__group--monthly';
@@ -7033,6 +8573,16 @@
       document.addEventListener('annual:calendarYearChanged', function (ev) {
         var y = ev.detail && ev.detail.year;
         if (y != null) renderAnnualDailyTable(Number(y));
+      });
+      document.addEventListener('annual:businessDayMapChanged', function (ev) {
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== Number(window.__ANNUAL_DATA.calendarYear)) return;
+        renderAnnualDailyTable(window.__ANNUAL_DATA.calendarYear);
+      });
+      document.addEventListener('annual:salesMapChanged', function (ev) {
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== Number(window.__ANNUAL_DATA.calendarYear)) return;
+        renderAnnualDailyTable(window.__ANNUAL_DATA.calendarYear);
       });
 
       renderAnnualDailyTable(window.__ANNUAL_DATA.calendarYear);
@@ -7150,6 +8700,7 @@
   <script>
     (function () {
       var graphBtn = document.getElementById('annual-daily-focus-bar-graph-btn');
+      var monthlyGraphBtn = document.getElementById('monthly-vfocus-graph-btn');
       var root = document.getElementById('annual-graph-popover');
       var backdrop = document.getElementById('annual-graph-popover-backdrop');
       var panel = document.getElementById('annual-graph-popover-panel');
@@ -7157,21 +8708,25 @@
       var dropBtn = document.getElementById('annual-graph-popover-drop-btn');
       var dropMenu = document.getElementById('annual-graph-popover-drop-menu');
       var titleEl = document.getElementById('annual-graph-popover-title');
+      var lblDate = document.getElementById('annual-graph-popover-lbl-date');
       var lblAch = document.getElementById('annual-graph-popover-lbl-ach');
       var lblTarget = document.getElementById('annual-graph-popover-lbl-target');
       var lblActual = document.getElementById('annual-graph-popover-lbl-actual');
       var lblDiff = document.getElementById('annual-graph-popover-lbl-diff');
       var valAch = document.getElementById('annual-graph-popover-val-ach');
+      var valDate = document.getElementById('annual-graph-popover-val-date');
       var valTarget = document.getElementById('annual-graph-popover-val-target');
       var valActual = document.getElementById('annual-graph-popover-val-actual');
       var valDiff = document.getElementById('annual-graph-popover-val-diff');
-      if (!graphBtn || !root || !backdrop || !panel || !btnClose || !dropBtn || !dropMenu) return;
+      if ((!graphBtn && !monthlyGraphBtn) || !root || !backdrop || !panel || !btnClose || !dropBtn || !dropMenu) return;
+      var activeTriggerBtn = graphBtn || monthlyGraphBtn;
 
       var isJa = document.documentElement.getAttribute('lang') === 'ja';
       var STR = isJa
         ? {
             titles: { daily: '日次グラフ', monthly: '月次グラフ', annual: '年次グラフ' },
             drop: { daily: '▼ 日次', monthly: '▼ 月次', annual: '▼ 年次' },
+            date: '日付 :',
             ach: '達成率 :',
             target: '目標売上 :',
             actual: '実績売上 :',
@@ -7184,6 +8739,7 @@
         : {
             titles: { daily: 'Daily Graph', monthly: 'Monthly Graph', annual: 'Annual Graph' },
             drop: { daily: '▼ Daily', monthly: '▼ Monthly', annual: '▼ Annual' },
+            date: 'Date :',
             ach: 'Achievement :',
             target: 'Target Sales :',
             actual: 'Actual Sales :',
@@ -7293,10 +8849,24 @@
       }
 
       function getFocusedRow() {
+        if (monthlyGraphBtn && window.__MONTHLY_UI && typeof window.__MONTHLY_UI.getFocusedIsoDate === 'function') {
+          var iso = window.__MONTHLY_UI.getFocusedIsoDate();
+          if (iso) {
+            var monthlyRow = document.querySelector('#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]');
+            if (monthlyRow) return monthlyRow;
+          }
+        }
         var fn = window.__getAnnualDailyFocusedRowState;
         if (typeof fn !== 'function') return null;
         var st = fn();
         return st && st.row ? st.row : null;
+      }
+      function getFocusedDateText(row) {
+        if (!row) return '—';
+        var cell = row.querySelector('.annual-daily-row__group--base .annual-daily-row__cell--date');
+        if (cell && String(cell.textContent || '').trim() !== '') return String(cell.textContent).trim();
+        var iso = row.getAttribute('data-iso-date');
+        return iso && String(iso).trim() !== '' ? String(iso).trim() : '—';
       }
 
       function refreshGraphContent() {
@@ -7304,6 +8874,7 @@
         panel.classList.remove('annual-graph-popover--win', 'annual-graph-popover--lose', 'annual-graph-popover--neutral');
         if (!row) {
           panel.classList.add('annual-graph-popover--neutral');
+          valDate.textContent = '—';
           valAch.textContent = '0%';
           valTarget.textContent = '—';
           valActual.textContent = '—';
@@ -7320,6 +8891,7 @@
             : mode === 'monthly'
               ? parseRowGroup(row, '.annual-daily-row__group--monthly', 'monthly')
               : parseRowGroup(row, '.annual-daily-row__group--annual', 'annual');
+        valDate.textContent = getFocusedDateText(row);
 
         var target = g.target;
         var sales = g.sales;
@@ -7368,6 +8940,7 @@
       function syncLabels() {
         titleEl.textContent = STR.titles[mode] || STR.titles.daily;
         dropBtn.textContent = STR.drop[mode] || STR.drop.daily;
+        lblDate.textContent = STR.date;
         lblAch.textContent = STR.ach;
         lblTarget.textContent = STR.target;
         lblActual.textContent = STR.actual;
@@ -7376,9 +8949,11 @@
       }
 
       function positionPanel() {
-        var r = graphBtn.getBoundingClientRect();
+        var anchor = activeTriggerBtn || graphBtn || monthlyGraphBtn;
+        if (!anchor) return;
+        var r = anchor.getBoundingClientRect();
         var pw = 510;
-        var ph = 342;
+        var ph = panel.offsetHeight || 382;
         var margin = 8;
         var left = r.right - pw;
         var top = r.bottom + 6;
@@ -7390,14 +8965,16 @@
         panel.style.top = top + 'px';
       }
 
-      function openPopover() {
+      function openPopover(triggerBtn) {
+        if (triggerBtn) activeTriggerBtn = triggerBtn;
         syncLabels();
         refreshGraphContent();
-        positionPanel();
         root.hidden = false;
         root.setAttribute('aria-hidden', 'false');
         root.classList.add('is-open');
-        graphBtn.setAttribute('aria-expanded', 'true');
+        positionPanel();
+        if (graphBtn) graphBtn.setAttribute('aria-expanded', activeTriggerBtn === graphBtn ? 'true' : 'false');
+        if (monthlyGraphBtn) monthlyGraphBtn.setAttribute('aria-expanded', activeTriggerBtn === monthlyGraphBtn ? 'true' : 'false');
         dropMenu.hidden = true;
         dropBtn.setAttribute('aria-expanded', 'false');
         try {
@@ -7409,11 +8986,12 @@
         root.hidden = true;
         root.setAttribute('aria-hidden', 'true');
         root.classList.remove('is-open');
-        graphBtn.setAttribute('aria-expanded', 'false');
+        if (graphBtn) graphBtn.setAttribute('aria-expanded', 'false');
+        if (monthlyGraphBtn) monthlyGraphBtn.setAttribute('aria-expanded', 'false');
         dropMenu.hidden = true;
         dropBtn.setAttribute('aria-expanded', 'false');
         try {
-          graphBtn.focus();
+          if (activeTriggerBtn && typeof activeTriggerBtn.focus === 'function') activeTriggerBtn.focus();
         } catch (e) {}
       }
 
@@ -7431,14 +9009,19 @@
         }
       }
 
-      graphBtn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        if (!root.hidden) {
-          closePopover();
-          return;
-        }
-        openPopover();
-      });
+      function bindGraphButton(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          if (!root.hidden && activeTriggerBtn === btn) {
+            closePopover();
+            return;
+          }
+          openPopover(btn);
+        });
+      }
+      bindGraphButton(graphBtn);
+      bindGraphButton(monthlyGraphBtn);
 
       btnClose.addEventListener('click', function (ev) {
         ev.stopPropagation();
@@ -8507,6 +10090,9 @@
       var vProfitPrev = document.getElementById('monthly-vfocus-profit-prev');
       var vProfitBottom = document.getElementById('monthly-vfocus-profit-bottom');
       var vProfitNext = document.getElementById('monthly-vfocus-profit-next');
+      var vLanePrev = document.getElementById('monthly-vfocus-lane-prev');
+      var vLaneCenter = document.getElementById('monthly-vfocus-lane-center');
+      var vLaneNext = document.getElementById('monthly-vfocus-lane-next');
       var vFocusStackEl = document.querySelector('.monthly-vfocus-stack');
       var vFocusLanesEl = document.querySelector('.monthly-vfocus-lanes');
       var vPrevDayBtn = document.getElementById('monthly-vfocus-prev-day');
@@ -8577,6 +10163,40 @@
         if (anchor > scrollRect.width) return scrollRect.width;
         return anchor;
       }
+      function escapeHtmlMonthly(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function setFocusBarDateFromHeader(dateEl, hdrLane) {
+        if (!dateEl) return;
+        dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
+        if (!hdrLane) {
+          dateEl.textContent = '';
+          return;
+        }
+        var raw = hdrLane.textContent || '';
+        if (hdrLane.classList.contains('monthly-date-header-cell--buffer')) {
+          dateEl.classList.add('monthly-vfocus-date--buffer');
+        } else if (hdrLane.classList.contains('monthly-date-header-cell--off')) {
+          dateEl.classList.add('monthly-vfocus-date--off');
+        }
+        var offSuffix = ' OFF';
+        var offIdx = raw.lastIndexOf(offSuffix);
+        if (dateEl.classList.contains('monthly-vfocus-date--off') && offIdx >= 0) {
+          var main = raw.slice(0, offIdx);
+          dateEl.innerHTML =
+            '<span class="monthly-vfocus-date__main">' +
+            escapeHtmlMonthly(main) +
+            '</span><span class="monthly-vfocus-date__off">' +
+            escapeHtmlMonthly(offSuffix) +
+            '</span>';
+        } else {
+          dateEl.textContent = raw;
+        }
+      }
       function updateVerticalFocus() {
         if (!vfocusOk) return;
         var n = trackDate.children.length;
@@ -8591,7 +10211,7 @@
           for (var le = 0; le < 3; le++) {
             if (laneDates[le]) {
               laneDates[le].textContent = '';
-              laneDates[le].classList.remove('monthly-vfocus-date--off');
+              laneDates[le].classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
             }
             for (var gj = 0; gj < 3; gj++) {
               var g0 = laneGroups[le][gj];
@@ -8602,6 +10222,9 @@
             }
             if (laneProfits[le]) laneProfits[le].textContent = '';
           }
+          [vLanePrev, vLaneCenter, vLaneNext].forEach(function (laneEl) {
+            if (laneEl) laneEl.classList.remove('monthly-vfocus-lane--tw-off', 'monthly-vfocus-lane--tw-buffer');
+          });
           return;
         }
         var anchorX = getFocusAnchorXInViewport();
@@ -8621,7 +10244,7 @@
           if (colIdx < 0 || colIdx >= n) {
             if (dateEl) {
               dateEl.textContent = '';
-              dateEl.classList.remove('monthly-vfocus-date--off');
+              dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
             }
             if (profitEl) profitEl.textContent = '';
             for (var gi = 0; gi < 3; gi++) {
@@ -8635,12 +10258,7 @@
           }
           var hdrLane = trackDate.children[colIdx];
           if (dateEl) {
-            dateEl.textContent = hdrLane ? hdrLane.textContent || '' : '';
-            if (hdrLane && hdrLane.classList.contains('monthly-date-header-cell--off')) {
-              dateEl.classList.add('monthly-vfocus-date--off');
-            } else {
-              dateEl.classList.remove('monthly-vfocus-date--off');
-            }
+            setFocusBarDateFromHeader(dateEl, hdrLane);
           }
           var valuesLane = [];
           [trackGroup1, trackGroup2, trackGroup3].forEach(function (t) {
@@ -8674,6 +10292,21 @@
         fillLane(0, idx - 1);
         fillLane(1, idx);
         fillLane(2, idx + 1);
+        function syncVFocusLaneTwState(laneEl, colIdx) {
+          if (!laneEl) return;
+          laneEl.classList.remove('monthly-vfocus-lane--tw-off', 'monthly-vfocus-lane--tw-buffer');
+          if (colIdx < 0 || colIdx >= n) return;
+          var h = trackDate.children[colIdx];
+          if (!h) return;
+          if (h.classList.contains('monthly-date-header-cell--buffer')) {
+            laneEl.classList.add('monthly-vfocus-lane--tw-buffer');
+          } else if (h.classList.contains('monthly-date-header-cell--off')) {
+            laneEl.classList.add('monthly-vfocus-lane--tw-off');
+          }
+        }
+        syncVFocusLaneTwState(vLanePrev, idx - 1);
+        syncVFocusLaneTwState(vLaneCenter, idx);
+        syncVFocusLaneTwState(vLaneNext, idx + 1);
         if (vFocusLanesEl && vFocusStackEl) {
           var laneW = vFocusStackEl.clientWidth;
           var shift = -laneW * (1 + frac);
@@ -8849,18 +10482,12 @@
         }
       }
       function readAnnualNav() {
-        try {
-          var raw = localStorage.getItem(STORAGE_ANNUAL);
-          if (!raw) return null;
-          var o = JSON.parse(raw);
-          if (!o || typeof o !== 'object') return null;
-          return {
-            calendarYear: Number(o.calendarYear),
-            selectedIso: o.selectedIso || null
-          };
-        } catch (e) {
-          return null;
-        }
+        var o = window.__KPI_DATA_GATEWAY.getJson(STORAGE_ANNUAL);
+        if (!o) return null;
+        return {
+          calendarYear: Number(o.calendarYear),
+          selectedIso: o.selectedIso || null
+        };
       }
       function readMonthlyLast() {
         try {
@@ -8888,16 +10515,32 @@
           );
         } catch (e3) {}
       }
-      function isDemoOff(d) {
-        if (d.getDay() === 0) return true;
-        if (d.getMonth() === 0 && d.getDate() <= 5) return true;
-        return false;
+      function isBusinessDayByIso(iso, d) {
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var bmap = daily && daily.businessDayByDate;
+        if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        var tmap = daily && daily.targetSalesByDate;
+        if (tmap && Object.prototype.hasOwnProperty.call(tmap, iso)) {
+          var n = Number(tmap[iso]);
+          return Number.isFinite(n) && n > 0;
+        }
+        return d.getDay() !== 0 && d.getDay() !== 6;
+      }
+      function resolveDailySalesText(iso) {
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        var tmap = daily && daily.targetSalesByDate;
+        var n = tmap && Object.prototype.hasOwnProperty.call(tmap, iso) ? Number(tmap[iso]) : NaN;
+        if (!Number.isFinite(n)) return demoMoney;
+        var rounded = Math.round(n);
+        if (useJa) return '\u00a5' + rounded.toLocaleString('ja-JP');
+        return '$' + rounded.toLocaleString('en-US');
       }
       function dateLabelText(d) {
         var dow = d.getDay();
         var w = useJa ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow];
         var base = d.getMonth() + 1 + '/' + d.getDate() + ' ' + w;
-        return isDemoOff(d) ? base + ' OFF' : base;
+        var iso = toISODateLocal(d);
+        return isBusinessDayByIso(iso, d) ? base : base + ' OFF';
       }
       function ariaDateLabel(d, inMonth) {
         var y = d.getFullYear();
@@ -8905,7 +10548,8 @@
         var day = d.getDate();
         var dow = d.getDay();
         var wj = WEEKDAYS_JA[dow];
-        var off = isDemoOff(d);
+        var iso = toISODateLocal(d);
+        var off = !isBusinessDayByIso(iso, d);
         if (useJa) {
           return y + '年' + mo + '月' + day + '日 ' + wj + (inMonth ? '' : '（前後月）') + (off ? ' 店休' : '');
         }
@@ -8951,18 +10595,47 @@
         x.setDate(x.getDate() + delta);
         return x;
       }
-      function getDummyGroupValues(groupNo, off) {
+      var OFF_CELL_DASH = '-';
+      function dashRow6() {
+        return [OFF_CELL_DASH, OFF_CELL_DASH, OFF_CELL_DASH, OFF_CELL_DASH, OFF_CELL_DASH, OFF_CELL_DASH];
+      }
+      function getActiveDummyGroupValues(groupNo, iso) {
+        var sales = resolveDailySalesText(iso);
         if (groupNo === 1) {
-          return off
-            ? ['$0', '$0', '$0', '$0', '$0', '0%']
-            : ['$123,456', '$123,456', '$123,456', '$123,456', '$123,456', '100%'];
+          return [sales, demoMoney, demoMoney, sales, demoMoney, '100%'];
         }
         if (groupNo === 2) {
-          return off ? ['0', '0', '0', '0', '0', '0'] : ['23', '23', '23', '23', '23', '23'];
+          return ['23', '23', '23', '23', '23', '23'];
         }
-        return off
-          ? ['$0', '$0', '$0', '$0', '$0', '$0']
-          : ['$123,456', '$123,456', '$123,456', '$123,456', '$123,456', '$123,456'];
+        return ['$123,456', '$123,456', '$123,456', '$123,456', '$123,456', '$123,456'];
+      }
+      // OFF: G1/G2 は常に「-」。G3 は DB 取り込み後に window.__MONTHLY_OFF_DAY_GROUP3_BY_ISO[iso] = 長さ6配列 で上書き可。
+      function getMonthlyGroupCellValues(groupNo, off, iso) {
+        if (!off) return getActiveDummyGroupValues(groupNo, iso);
+        if (groupNo === 1 || groupNo === 2) return dashRow6();
+        var map = window.__MONTHLY_OFF_DAY_GROUP3_BY_ISO;
+        if (map && typeof map === 'object' && Object.prototype.hasOwnProperty.call(map, iso)) {
+          var row = map[iso];
+          if (Array.isArray(row) && row.length >= 6) {
+            var out = [];
+            for (var i = 0; i < 6; i++) {
+              var v = row[i];
+              out.push(v == null || String(v).trim() === '' ? OFF_CELL_DASH : String(v));
+            }
+            return out;
+          }
+        }
+        return dashRow6();
+      }
+      // OFF: 既定「-」。DB 後は window.__MONTHLY_OFF_DAY_PROFIT_BY_ISO[iso] で上書き可。
+      function getMonthlyProfitCellValue(off, iso) {
+        if (!off) return demoMoney;
+        var pmap = window.__MONTHLY_OFF_DAY_PROFIT_BY_ISO;
+        if (pmap && typeof pmap === 'object' && pmap[iso] != null) {
+          var ps = String(pmap[iso]).trim();
+          if (ps !== '') return ps;
+        }
+        return OFF_CELL_DASH;
       }
       function makeGroupColumn(buffer, off, iso, aria, groupNo) {
         var div = document.createElement('div');
@@ -8973,7 +10646,7 @@
         div.setAttribute('role', 'presentation');
         div.setAttribute('data-iso', iso);
         div.setAttribute('aria-label', aria);
-        var values = getDummyGroupValues(groupNo, off);
+        var values = getMonthlyGroupCellValues(groupNo, off, iso);
         for (var i = 0; i < 6; i++) {
           var cell = document.createElement('span');
           cell.className = 'monthly-data-column__cell';
@@ -8995,7 +10668,7 @@
         var cell = document.createElement('span');
         cell.className = 'monthly-data-column__cell';
         cell.setAttribute('aria-hidden', 'true');
-        cell.textContent = off ? '$0' : '$123,456';
+        cell.textContent = getMonthlyProfitCellValue(off, iso);
         div.appendChild(cell);
         return div;
       }
@@ -9029,7 +10702,7 @@
           var iso = toISODateLocal(d);
           var inMonth = d.getMonth() === m0 && d.getFullYear() === y;
           var buffer = !inMonth;
-          var off = isDemoOff(d);
+          var off = !isBusinessDayByIso(iso, d);
           isoToIndex[iso] = i;
           var p = document.createElement('p');
           p.className = 'monthly-date-header-cell';
@@ -9272,6 +10945,16 @@
         rebuildColumns();
         scheduleScroll(iso);
       });
+      document.addEventListener('annual:businessDayMapChanged', function () {
+        var keepIso = currentFocusIso || readDailySelectedIso() || toISODateLocal(new Date(state.year, state.month0, 1));
+        rebuildColumns();
+        scheduleScroll(keepIso);
+      });
+      document.addEventListener('annual:salesMapChanged', function () {
+        var keepIso = currentFocusIso || readDailySelectedIso() || toISODateLocal(new Date(state.year, state.month0, 1));
+        rebuildColumns();
+        scheduleScroll(keepIso);
+      });
 
       window.__MONTHLY_UI = window.__MONTHLY_UI || {};
       window.__MONTHLY_UI.setCalendarYear = function (y) {
@@ -9316,6 +10999,1364 @@
       window.__MONTHLY_UI.getState = function () {
         return { year: state.year, month0: state.month0 };
       };
+      window.__MONTHLY_UI.getFocusedIsoDate = function () {
+        return currentFocusIso || readDailySelectedIso() || null;
+      };
+      window.__MONTHLY_UI.rebuildDataColumns = function () {
+        rebuildColumns();
+        updateVerticalFocus();
+      };
+    })();
+    (function () {
+      var root = document.getElementById('monthly-edit-float');
+      var backdrop = document.getElementById('monthly-edit-float-backdrop');
+      var btnClose = document.getElementById('monthly-edit-float-close');
+      var btnUndo = document.getElementById('monthly-edit-float-undo');
+      var btnCsvUpload = document.getElementById('monthly-edit-float-csv-upload');
+      var btnConfirm = document.getElementById('monthly-edit-float-confirm');
+      var btnPrev = document.getElementById('monthly-edit-float-prev');
+      var btnNext = document.getElementById('monthly-edit-float-next');
+      var btnToday = document.getElementById('monthly-edit-float-today');
+      var lblMonth = document.getElementById('monthly-edit-float-month-label');
+      var monthPicker = document.getElementById('monthly-edit-float-month-picker');
+      var yearSelect = document.getElementById('monthly-edit-float-year-select');
+      var monthGrid = document.getElementById('monthly-edit-float-month-grid');
+      var kpiStrip = document.getElementById('monthly-edit-float-kpi-strip');
+      /** KPI strip uses screenshot dummy values when true; set false for live data */
+      var MEF_KPI_STRIP_USE_DUMMY = true;
+      var labelsWrap = document.getElementById('monthly-edit-float-labels-wrap');
+      var elLabels = document.getElementById('monthly-edit-float-labels');
+      var tbl = document.getElementById('monthly-edit-float-table');
+      var scroller = document.getElementById('monthly-edit-float-scroll');
+      var scaleRoot = document.getElementById('monthly-edit-float-scale-root');
+      var zoom = document.getElementById('monthly-edit-float-zoom');
+      var zoomPct = document.getElementById('monthly-edit-float-zoom-pct');
+      if (!root || !backdrop || !btnClose || !tbl || !elLabels || !scroller) return;
+
+      var useJa = String(document.documentElement.getAttribute('lang') || '').toLowerCase().indexOf('ja') === 0;
+      var MONTHS_JA = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      var MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
+      var WD_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      var mefYear = new Date().getFullYear();
+      var mefMonth0 = new Date().getMonth();
+      var nextRowId = 1;
+      var rowValueById = {};
+      var bizDayByIso = {};
+      var rowById = {};
+      var undoStack = [];
+      var currentScale = 1;
+      var pickerYear = new Date().getFullYear();
+      var hasPendingEdits = false;
+      var confirmedSnapshot = '';
+      /** Whether Confirm was pressed this open; until then, close always prompts */
+      var editSessionCommitted = false;
+
+      var state = {
+        collapsed: { income: false, fixed: false, variable: false },
+        incomeItems: [],
+        fixedItems: [],
+        variableItems: []
+      };
+
+      function t(ja, en) {
+        return useJa ? ja : en;
+      }
+      function escapeHtml(text) {
+        return String(text == null ? '' : text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+      function daysInMonth(y, m0) {
+        return new Date(y, m0 + 1, 0).getDate();
+      }
+      function monthIsoList(y, m0) {
+        var out = [];
+        var dmax = daysInMonth(y, m0);
+        for (var d = 1; d <= dmax; d++) out.push(y + '-' + pad2(m0 + 1) + '-' + pad2(d));
+        return out;
+      }
+      function ensureAnnualDailyStore() {
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+        window.__ANNUAL_DATA.daily.targetSalesByDate = window.__ANNUAL_DATA.daily.targetSalesByDate || {};
+        window.__ANNUAL_DATA.daily.businessDayByDate = window.__ANNUAL_DATA.daily.businessDayByDate || {};
+        var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualDailyShared');
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.targetSalesByDate && typeof parsed.targetSalesByDate === 'object') {
+            window.__ANNUAL_DATA.daily.targetSalesByDate = Object.assign(
+              {},
+              window.__ANNUAL_DATA.daily.targetSalesByDate,
+              parsed.targetSalesByDate
+            );
+          }
+          if (parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
+            window.__ANNUAL_DATA.daily.businessDayByDate = Object.assign(
+              {},
+              window.__ANNUAL_DATA.daily.businessDayByDate,
+              parsed.businessDayByDate
+            );
+          }
+        }
+        return window.__ANNUAL_DATA.daily;
+      }
+      function persistAnnualDailyShared() {
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        if (!daily) return;
+        window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', {
+          targetSalesByDate: daily.targetSalesByDate || {},
+          businessDayByDate: daily.businessDayByDate || {}
+        });
+      }
+      function syncBizDayFromAnnualStoreForMonth() {
+        var daily = ensureAnnualDailyStore();
+        var bmap = daily.businessDayByDate || {};
+        var tmap = daily.targetSalesByDate || {};
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        isoList.forEach(function (iso) {
+          if (Object.prototype.hasOwnProperty.call(bmap, iso)) {
+            bizDayByIso[iso] = !!bmap[iso];
+            return;
+          }
+          if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
+            var n = Number(tmap[iso]);
+            bizDayByIso[iso] = Number.isFinite(n) ? n !== 0 : true;
+            return;
+          }
+          if (bizDayByIso[iso] == null) bizDayByIso[iso] = true;
+        });
+      }
+      function persistBusinessDayToAnnualStore(iso, isBusinessDay) {
+        var daily = ensureAnnualDailyStore();
+        daily.businessDayByDate[iso] = !!isBusinessDay;
+        var cur = Number(daily.targetSalesByDate[iso]);
+        if (!isBusinessDay) {
+          daily.targetSalesByDate[iso] = 0;
+        } else if (!Number.isFinite(cur) || cur <= 0) {
+          daily.targetSalesByDate[iso] = 1234;
+        }
+        persistAnnualDailyShared();
+      }
+      function syncMonthlySalesFromAnnualStoreForMonth() {
+        var rows = currentRows();
+        ensureRowMap(rows);
+        var daily = ensureAnnualDailyStore();
+        var tmap = daily.targetSalesByDate || {};
+        var primary = state.incomeItems && state.incomeItems[0];
+        if (!primary) return;
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        isoList.forEach(function (iso) {
+          if (!Object.prototype.hasOwnProperty.call(tmap, iso)) return;
+          var n = Number(tmap[iso]);
+          writeValue(primary.id, iso, Number.isFinite(n) ? n : 0);
+        });
+      }
+      function syncMonthlySalesToAnnualStoreForMonth() {
+        var daily = ensureAnnualDailyStore();
+        var tmap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        isoList.forEach(function (iso) {
+          var total = Math.round(aggregateValue('totalSales', iso));
+          var isBusiness = bizDayByIso[iso] !== false;
+          bmap[iso] = !!isBusiness;
+          tmap[iso] = isBusiness ? total : 0;
+        });
+        daily.businessDayByDate = bmap;
+        daily.targetSalesByDate = tmap;
+        persistAnnualDailyShared();
+      }
+      function makeRow(kind, labelJa, labelEn, opts) {
+        var o = opts || {};
+        return {
+          id: 'r' + nextRowId++,
+          kind: kind,
+          labelJa: labelJa,
+          labelEn: labelEn,
+          editableLabel: !!o.editableLabel,
+          deletable: !!o.deletable,
+          sub: !!o.sub,
+          aggregateFor: o.aggregateFor || null
+        };
+      }
+      function rowLabel(r) {
+        return useJa ? r.labelJa : r.labelEn;
+      }
+      function parseMoney(text) {
+        var s = String(text == null ? '' : text).replace(/[^\d.-]/g, '');
+        if (s === '') return 0;
+        var n = Number(s);
+        return Number.isFinite(n) ? n : 0;
+      }
+      function fmtMoney(n) {
+        var v = Math.round(Number(n) || 0);
+        return useJa ? '\u00a5' + v.toLocaleString('ja-JP') : '$' + v.toLocaleString('en-US');
+      }
+      function monthLabelText(year, month0) {
+        return String(year) + ' / ' + (useJa ? MONTHS_JA[month0] : MONTHS_EN[month0]);
+      }
+      function setMonthLabel() {
+        if (!lblMonth) return;
+        lblMonth.textContent = monthLabelText(mefYear, mefMonth0);
+      }
+      function isoToDate(iso) {
+        var p = String(iso || '').split('-');
+        if (p.length !== 3) return null;
+        var y = Number(p[0]);
+        var m = Number(p[1]);
+        var d = Number(p[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+        var dt = new Date(y, m - 1, d);
+        if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+        return dt;
+      }
+      function fmtPct(n) {
+        var v = Number(n);
+        if (!Number.isFinite(v)) return '0%';
+        return Math.round(v * 10) / 10 + '%';
+      }
+      function yearCutoffDate() {
+        var now = new Date();
+        if (mefYear === now.getFullYear() && mefMonth0 === now.getMonth()) {
+          return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+        return new Date(mefYear, mefMonth0 + 1, 0);
+      }
+      function monthCutoffDate() {
+        var now = new Date();
+        if (mefYear === now.getFullYear() && mefMonth0 === now.getMonth()) {
+          return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+        return new Date(mefYear, mefMonth0 + 1, 0);
+      }
+      function sumTargetByDateRange(startDate, endDate) {
+        var data = window.__ANNUAL_DATA || {};
+        var daily = data.daily || {};
+        var map = daily.targetSalesByDate || {};
+        var total = 0;
+        var hasAny = false;
+        Object.keys(map).forEach(function (iso) {
+          var d = isoToDate(iso);
+          if (!d) return;
+          if (d < startDate || d > endDate) return;
+          var n = Number(map[iso]);
+          if (!Number.isFinite(n)) return;
+          hasAny = true;
+          total += n;
+        });
+        return { total: total, hasAny: hasAny };
+      }
+      function getKpiSummary() {
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        var mCut = monthCutoffDate();
+        var yCut = yearCutoffDate();
+        var monthlyActual = 0;
+        for (var i = 0; i < isoList.length; i++) {
+          var md = isoToDate(isoList[i]);
+          if (!md || md > mCut) continue;
+          monthlyActual += aggregateValue('totalSales', isoList[i]);
+        }
+        var monthTargetRes = sumTargetByDateRange(new Date(mefYear, mefMonth0, 1), mCut);
+        var monthlyTarget = monthTargetRes.total;
+        var annualData = window.__ANNUAL_DATA || {};
+        var annualActualRaw = Number(annualData.currentSales);
+        var annualActual = Number.isFinite(annualActualRaw) ? annualActualRaw : 0;
+        var yearStart = new Date(mefYear, 0, 1);
+        var yearTargetRes = sumTargetByDateRange(yearStart, yCut);
+        var annualTarget = yearTargetRes.total;
+        if (!yearTargetRes.hasAny) {
+          var annualFixedTarget = Number(annualData.targetSales);
+          if (Number.isFinite(annualFixedTarget) && annualFixedTarget > 0) {
+            annualTarget = annualFixedTarget;
+          }
+        }
+        return {
+          monthly: {
+            actual: monthlyActual,
+            target: monthlyTarget,
+            diff: monthlyTarget - monthlyActual,
+            rate: monthlyTarget > 0 ? (monthlyActual / monthlyTarget) * 100 : 0
+          },
+          annual: {
+            actual: annualActual,
+            target: annualTarget,
+            diff: annualTarget - annualActual,
+            rate: annualTarget > 0 ? (annualActual / annualTarget) * 100 : 0
+          }
+        };
+      }
+      function getKpiStripDummySummary() {
+        return {
+          monthly: {
+            actual: 1234567,
+            target: 1234567,
+            diff: 1234,
+            rate: 98
+          },
+          annual: {
+            actual: 12345678,
+            target: 12345678,
+            diff: 12345,
+            rate: 128
+          }
+        };
+      }
+      function renderKpiStrip() {
+        if (!kpiStrip) return;
+        function getAchievementMarkerColor(percent) {
+          var p = Number(percent);
+          if (!Number.isFinite(p)) return '#E6FF00';
+          if (p >= 100) return '#E6FF00';
+          if (p >= 90) return '#F9A825';
+          if (p >= 80) return '#EF6C00';
+          if (p >= 70) return '#E65100';
+          if (p >= 60) return '#E53935';
+          if (p >= 50) return '#C62828';
+          return '#B71C1C';
+        }
+        function progressVisual(rate) {
+          var n = Number(rate);
+          if (!Number.isFinite(n)) n = 0;
+          var kpiPct = 200 / 3;
+          var pos = Math.max(0, Math.min(90, kpiPct * (Math.max(0, n) / 100)));
+          return { fill: pos, marker: pos, color: getAchievementMarkerColor(n) };
+        }
+        var labels = useJa
+          ? {
+              annualProgress: 'Annual Progress',
+              monthlyProgress: 'Monthly Progress',
+              annualTotal: 'Annual Total Profit',
+              monthlyTotal: 'Monthly Total Profit',
+              annualTarget: 'Annual Target Profit',
+              monthlyTarget: 'Monthly Target Profit',
+              annualDiff: 'Difference',
+              monthlyDiff: 'Difference'
+            }
+          : {
+              annualProgress: 'Annual Progress',
+              monthlyProgress: 'Monthly Progress',
+              annualTotal: 'Annual Total Profit',
+              monthlyTotal: 'Monthly Total Profit',
+              annualTarget: 'Annual Target Profit',
+              monthlyTarget: 'Monthly Target Profit',
+              annualDiff: 'Difference',
+              monthlyDiff: 'Difference'
+            };
+        if (MEF_KPI_STRIP_USE_DUMMY) {
+          labels = {
+            annualProgress: 'Annual Progress',
+            monthlyProgress: 'Monthly Progress',
+            annualTotal: 'Annual Total Profet',
+            monthlyTotal: 'Monthly Total Profet',
+            annualTarget: 'Annual Target Profet',
+            monthlyTarget: 'Monthly Target Profet',
+            annualDiff: 'Difference',
+            monthlyDiff: 'Difference'
+          };
+        }
+        var kpi = MEF_KPI_STRIP_USE_DUMMY ? getKpiStripDummySummary() : getKpiSummary();
+        function fmtKpiMoney(v) {
+          if (MEF_KPI_STRIP_USE_DUMMY) return '$' + Math.round(Number(v) || 0).toLocaleString('en-US');
+          return fmtMoney(v);
+        }
+        var annualProg = progressVisual(kpi.annual.rate);
+        var monthlyProg = progressVisual(kpi.monthly.rate);
+        kpiStrip.innerHTML =
+          '<div class="monthly-edit-float__kpi-col">' +
+          '<div class="monthly-edit-float__kpi-cell">' +
+          '<div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.annualProgress) + '</div>' +
+          '<div class="monthly-edit-float__kpi-progress-bar">' +
+          '<div class="monthly-edit-float__kpi-progress-fill" style="width:' + annualProg.fill.toFixed(1) + '%"></div>' +
+          '<span class="monthly-edit-float__kpi-progress-target"></span>' +
+          '<span class="monthly-edit-float__kpi-progress-marker" style="left:' + annualProg.marker.toFixed(1) + '%;--kpi-marker-color:' + annualProg.color + ';"></span>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtPct(kpi.annual.rate)) + '</span></div>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-cell">' +
+          '<div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.monthlyProgress) + '</div>' +
+          '<div class="monthly-edit-float__kpi-progress-bar">' +
+          '<div class="monthly-edit-float__kpi-progress-fill" style="width:' + monthlyProg.fill.toFixed(1) + '%"></div>' +
+          '<span class="monthly-edit-float__kpi-progress-target"></span>' +
+          '<span class="monthly-edit-float__kpi-progress-marker" style="left:' + monthlyProg.marker.toFixed(1) + '%;--kpi-marker-color:' + monthlyProg.color + ';"></span>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtPct(kpi.monthly.rate)) + '</span></div>' +
+          '</div>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-col">' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.annualTotal) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.annual.actual)) + '</div></div>' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.monthlyTotal) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.monthly.actual)) + '</div></div>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-col">' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.annualTarget) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.annual.target)) + '</div></div>' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.monthlyTarget) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.monthly.target)) + '</div></div>' +
+          '</div>' +
+          '<div class="monthly-edit-float__kpi-col">' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.annualDiff) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.annual.diff)) + '</div></div>' +
+          '<div class="monthly-edit-float__kpi-cell"><div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.monthlyDiff) + '</div><div class="monthly-edit-float__kpi-cell-value">' + escapeHtml(fmtKpiMoney(kpi.monthly.diff)) + '</div></div>' +
+          '</div>';
+      }
+      function closeMonthPicker() {
+        if (!monthPicker || monthPicker.hidden) return;
+        monthPicker.hidden = true;
+        if (lblMonth) lblMonth.setAttribute('aria-expanded', 'false');
+      }
+      function applyMonthSelection(month0) {
+        mefYear = pickerYear;
+        mefMonth0 = month0;
+        closeMonthPicker();
+        buildGrid();
+        scrollToPreferredDayLeft();
+      }
+      function renderMonthPicker() {
+        if (!yearSelect || !monthGrid) return;
+        var nowYear = new Date().getFullYear();
+        var startYear = Math.min(nowYear - 15, mefYear - 15);
+        var endYear = Math.max(nowYear + 15, mefYear + 15);
+        yearSelect.innerHTML = '';
+        for (var y = startYear; y <= endYear; y++) {
+          var opt = document.createElement('option');
+          opt.value = String(y);
+          opt.textContent = String(y);
+          yearSelect.appendChild(opt);
+        }
+        yearSelect.value = String(pickerYear);
+        monthGrid.innerHTML = '';
+        for (var m = 0; m < 12; m++) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'monthly-edit-float__month-btn' + (pickerYear === mefYear && m === mefMonth0 ? ' is-active' : '');
+          b.textContent = useJa ? MONTHS_JA[m] : MONTHS_EN[m];
+          b.setAttribute('data-month0', String(m));
+          b.setAttribute('aria-label', monthLabelText(pickerYear, m));
+          monthGrid.appendChild(b);
+        }
+      }
+      function openMonthPicker() {
+        if (!monthPicker || !lblMonth) return;
+        pickerYear = mefYear;
+        renderMonthPicker();
+        monthPicker.hidden = false;
+        lblMonth.setAttribute('aria-expanded', 'true');
+      }
+      function ensureDefaultsForMonth() {
+        syncBizDayFromAnnualStoreForMonth();
+        syncMonthlySalesFromAnnualStoreForMonth();
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        isoList.forEach(function (iso) {
+          if (bizDayByIso[iso] == null) bizDayByIso[iso] = true;
+        });
+        Object.keys(rowValueById).forEach(function (rowId) {
+          var m = rowValueById[rowId] || {};
+          isoList.forEach(function (iso) {
+            if (m[iso] == null) m[iso] = 0;
+          });
+          rowValueById[rowId] = m;
+        });
+      }
+      function createInitialRowsIfNeeded() {
+        if (state.incomeItems.length === 0) state.incomeItems.push(makeRow('money', 'Sales', 'Sales', {}));
+        if (state.fixedItems.length === 0) state.fixedItems.push(makeRow('money', '家賃', 'Rent', {}));
+        if (state.variableItems.length === 0)
+          state.variableItems.push(makeRow('money', '仕入費', 'Merchandise', { editableLabel: true }));
+      }
+      function currentRows() {
+        createInitialRowsIfNeeded();
+        var rows = [];
+        rows.push({ type: 'group', id: 'g-income', labelJa: 'INCOME', labelEn: 'INCOME' });
+        rows.push({ type: 'bizday', id: 'bizday', labelJa: '営業日', labelEn: 'Business Day' });
+        rows.push({
+          type: 'aggregate',
+          id: 'totalSales',
+          labelJa: 'Total Sales',
+          labelEn: 'Total Sales',
+          section: 'income',
+          plusminus: 'income'
+        });
+        if (!state.collapsed.income) {
+          state.incomeItems.forEach(function (r) {
+            rows.push({ type: 'moneyRow', row: r, section: 'income' });
+          });
+          rows.push({ type: 'moneyStatic', id: 'incLunch', labelJa: 'Lunch Sales', labelEn: 'Lunch Sales', section: 'income', sub: true });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'incDinner',
+            labelJa: 'Dinner Sales',
+            labelEn: 'Dinner Sales',
+            section: 'income',
+            sub: true,
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'target',
+            labelJa: 'Target Sales',
+            labelEn: 'Target Sales',
+            section: 'income',
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'diff',
+            labelJa: 'Difference',
+            labelEn: 'Difference',
+            section: 'income',
+            autoCalc: true
+          });
+          rows.push({
+            type: 'percent',
+            id: 'ach',
+            labelJa: 'Achievement',
+            labelEn: 'Achievement',
+            section: 'income',
+            autoCalc: true
+          });
+          rows.push({ type: 'moneyStatic', id: 'cust', labelJa: 'Customers', labelEn: 'Customers', section: 'income' });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'custLunch',
+            labelJa: 'Lunch Customers',
+            labelEn: 'Lunch Customers',
+            section: 'income',
+            sub: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'custDinner',
+            labelJa: 'Dinner Customers',
+            labelEn: 'Dinner Customers',
+            section: 'income',
+            sub: true,
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'pc',
+            labelJa: 'Profit per Customer',
+            labelEn: 'Profit per Customer',
+            section: 'income',
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'pcLunch',
+            labelJa: 'Lunch Profit/Customer',
+            labelEn: 'Lunch Profit/Customer',
+            section: 'income',
+            sub: true,
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'pcDinner',
+            labelJa: 'Dinner Profit/Customer',
+            labelEn: 'Dinner Profit/Customer',
+            section: 'income',
+            sub: true,
+            autoCalc: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'groupCnt',
+            labelJa: 'Number of Groups',
+            labelEn: 'Number of Groups',
+            section: 'income'
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'groupCntLunch',
+            labelJa: 'Lunch Groups',
+            labelEn: 'Lunch Groups',
+            section: 'income',
+            sub: true
+          });
+          rows.push({
+            type: 'moneyStatic',
+            id: 'groupCntDinner',
+            labelJa: 'Dinner Groups',
+            labelEn: 'Dinner Groups',
+            section: 'income',
+            sub: true,
+            autoCalc: true
+          });
+        }
+        rows.push({ type: 'group', id: 'g-exp', labelJa: 'EXPENSES', labelEn: 'EXPENSES' });
+        rows.push({
+          type: 'aggregate',
+          id: 'totalExpenses',
+          labelJa: 'Total Expenses',
+          labelEn: 'Total Expenses',
+          section: 'expenses'
+        });
+        rows.push({
+          type: 'aggregate',
+          id: 'fixed',
+          labelJa: 'Fixed',
+          labelEn: 'Fixed',
+          section: 'fixed',
+          plusminus: 'fixed'
+        });
+        if (!state.collapsed.fixed) {
+          state.fixedItems.forEach(function (r) {
+            rows.push({ type: 'moneyRow', row: r, section: 'fixed' });
+          });
+        }
+        rows.push({
+          type: 'aggregate',
+          id: 'expected',
+          labelJa: 'Expected',
+          labelEn: 'Expected',
+          section: 'variable',
+          plusminus: 'variable'
+        });
+        if (!state.collapsed.variable) {
+          state.variableItems.forEach(function (r) {
+            rows.push({ type: 'moneyRow', row: r, section: 'variable' });
+          });
+        }
+        rows.push({ type: 'aggregate', id: 'profit', labelJa: 'Profit', labelEn: 'Profit', section: 'profit' });
+        return rows;
+      }
+      function applyZoom() {
+        if (!zoom || !scaleRoot || !zoomPct) return;
+        var v = Number(zoom.value);
+        if (!Number.isFinite(v)) v = 100;
+        currentScale = v / 100;
+        scaleRoot.style.transform = 'scale(' + currentScale + ')';
+        zoomPct.textContent = Math.round(v) + '%';
+        zoom.setAttribute('aria-valuenow', String(Math.round(v)));
+        syncLabelScroll();
+      }
+      function syncLabelScroll() {
+        var adjusted = currentScale > 0 ? scroller.scrollTop / currentScale : scroller.scrollTop;
+        if (!labelsWrap) return;
+        var maxLeft = Math.max(0, labelsWrap.scrollHeight - labelsWrap.clientHeight);
+        if (adjusted > maxLeft) {
+          adjusted = maxLeft;
+          scroller.scrollTop = adjusted * currentScale;
+        }
+        labelsWrap.scrollTop = adjusted;
+      }
+      function scrollToPreferredDayLeft() {
+        if (!scroller || !tbl) return;
+        var ths = tbl.querySelectorAll('thead th');
+        if (!ths || !ths.length) return;
+        var now = new Date();
+        var dayIdx = 0;
+        if (now.getFullYear() === mefYear && now.getMonth() === mefMonth0) {
+          dayIdx = Math.max(0, Math.min(ths.length - 1, now.getDate() - 1));
+        }
+        var target = ths[dayIdx];
+        var left = (target ? target.offsetLeft : 0) * currentScale;
+        scroller.scrollLeft = left;
+      }
+      function syncUndoButton() {
+        if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+      }
+      function snapshotState() {
+        var daily = ensureAnnualDailyStore();
+        return JSON.stringify({
+          state: state,
+          nextRowId: nextRowId,
+          rowValueById: rowValueById,
+          bizDayByIso: bizDayByIso,
+          sharedTargetSalesByDate: daily.targetSalesByDate || {},
+          sharedBusinessDayByDate: daily.businessDayByDate || {}
+        });
+      }
+      function pushUndo() {
+        undoStack.push(snapshotState());
+        if (undoStack.length > 30) undoStack.shift();
+        syncUndoButton();
+      }
+      function popUndo() {
+        if (!undoStack.length) return false;
+        var snap = JSON.parse(undoStack.pop());
+        state = snap.state || state;
+        nextRowId = Number(snap.nextRowId || nextRowId);
+        rowValueById = snap.rowValueById || rowValueById;
+        bizDayByIso = snap.bizDayByIso || bizDayByIso;
+        var daily = ensureAnnualDailyStore();
+        if (snap.sharedTargetSalesByDate && typeof snap.sharedTargetSalesByDate === 'object') {
+          daily.targetSalesByDate = Object.assign({}, snap.sharedTargetSalesByDate);
+        }
+        if (snap.sharedBusinessDayByDate && typeof snap.sharedBusinessDayByDate === 'object') {
+          daily.businessDayByDate = Object.assign({}, snap.sharedBusinessDayByDate);
+        }
+        persistAnnualDailyShared();
+        syncUndoButton();
+        return true;
+      }
+      function ensureRowMap(rows) {
+        rowById = {};
+        rows.forEach(function (r) {
+          if (r.type === 'moneyRow') rowById[r.row.id] = r.row;
+        });
+      }
+      function readValue(rowId, iso) {
+        var byIso = rowValueById[rowId] || {};
+        return Number(byIso[iso] || 0);
+      }
+      function writeValue(rowId, iso, v) {
+        if (!rowValueById[rowId]) rowValueById[rowId] = {};
+        rowValueById[rowId][iso] = Number(v) || 0;
+      }
+      function sumRows(rows, iso) {
+        var total = 0;
+        rows.forEach(function (r) {
+          total += readValue(r.id, iso);
+        });
+        return total;
+      }
+      function aggregateValue(id, iso) {
+        if (id === 'totalSales') return sumRows(state.incomeItems, iso);
+        if (id === 'fixed') return sumRows(state.fixedItems, iso);
+        if (id === 'expected') return sumRows(state.variableItems, iso);
+        if (id === 'totalExpenses') return aggregateValue('fixed', iso) + aggregateValue('expected', iso);
+        if (id === 'profit') return aggregateValue('totalSales', iso) - aggregateValue('totalExpenses', iso);
+        return 0;
+      }
+      function createLabelRow(item, rowsRef) {
+        var rowEl = document.createElement('div');
+        rowEl.className = 'monthly-edit-float__label-row';
+        if (item.sub) rowEl.classList.add('monthly-edit-float__label-row--sub');
+        if (item.isProfit) rowEl.classList.add('monthly-edit-float__label-row--profit');
+
+        var main = document.createElement('div');
+        main.className = 'monthly-edit-float__label-main';
+        if (item.autoCalc) {
+          var prefix = document.createElement('span');
+          prefix.className = 'monthly-edit-float__label-prefix';
+          prefix.textContent = 'Auto Calc';
+          main.appendChild(prefix);
+        }
+        var text = document.createElement('span');
+        text.className = 'monthly-edit-float__label-text';
+        text.textContent = item.label;
+        main.appendChild(text);
+
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
+        rowEl.appendChild(main);
+
+        if (item.controls) {
+          var actions = document.createElement('div');
+          actions.className = 'monthly-edit-float__label-actions';
+          var toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'monthly-edit-float__mini-btn';
+          toggle.setAttribute('data-action', 'toggle');
+          toggle.setAttribute('data-section', item.controls.section);
+          toggle.textContent = state.collapsed[item.controls.section] ? '▶' : '▼';
+          actions.appendChild(toggle);
+
+          if (item.controls.plusminus) {
+            var plus = document.createElement('button');
+            plus.type = 'button';
+            plus.className = 'monthly-edit-float__mini-btn';
+            plus.setAttribute('data-action', 'add-row');
+            plus.setAttribute('data-section', item.controls.plusminus);
+            plus.textContent = '+';
+            actions.appendChild(plus);
+
+            var minus = document.createElement('button');
+            minus.type = 'button';
+            minus.className = 'monthly-edit-float__mini-btn';
+            minus.setAttribute('data-action', 'remove-row');
+            minus.setAttribute('data-section', item.controls.plusminus);
+            minus.textContent = '-';
+            var len =
+              item.controls.plusminus === 'income'
+                ? state.incomeItems.length
+                : item.controls.plusminus === 'fixed'
+                ? state.fixedItems.length
+                : state.variableItems.length;
+            minus.disabled = len <= 1;
+            actions.appendChild(minus);
+          }
+          rowEl.appendChild(actions);
+        }
+        elLabels.appendChild(rowEl);
+      }
+      function cellInactiveClass(iso) {
+        return bizDayByIso[iso] ? '' : ' mef-col-inactive';
+      }
+      function clearKpiFill(td) {
+        td.classList.remove('kpi-fill-empty', 'kpi-fill-has');
+      }
+      function setKpiFill(td, state) {
+        clearKpiFill(td);
+        if (state === 'empty') td.classList.add('kpi-fill-empty');
+        else if (state === 'has') td.classList.add('kpi-fill-has');
+      }
+      function syncMoneyInputTdFill(inp) {
+        var td = inp.closest('td');
+        if (!td) return;
+        if (inp.disabled) {
+          clearKpiFill(td);
+          return;
+        }
+        var n = parseMoney(inp.value);
+        setKpiFill(td, !Number.isFinite(n) || n === 0 ? 'empty' : 'has');
+      }
+      function buildGrid() {
+        ensureDefaultsForMonth();
+        var isoList = monthIsoList(mefYear, mefMonth0);
+        var rows = currentRows();
+        ensureRowMap(rows);
+        elLabels.innerHTML = '';
+        var corner = document.createElement('div');
+        corner.className = 'monthly-edit-float__label-corner';
+        corner.setAttribute('aria-hidden', 'true');
+        elLabels.appendChild(corner);
+
+        var thead = document.createElement('thead');
+        var trh = document.createElement('tr');
+        isoList.forEach(function (iso, idx) {
+          var dt = new Date(mefYear, mefMonth0, idx + 1);
+          var wd = useJa ? WD_JA[dt.getDay()] : WD_EN[dt.getDay()];
+          var th = document.createElement('th');
+          th.scope = 'col';
+          th.className = cellInactiveClass(iso).trim();
+          th.textContent = mefMonth0 + 1 + '/' + (idx + 1) + ' ' + wd;
+          trh.appendChild(th);
+        });
+        thead.appendChild(trh);
+
+        var tbody = document.createElement('tbody');
+        rows.forEach(function (r) {
+          if (r.type === 'group') {
+            var gh = document.createElement('div');
+            gh.className = 'monthly-edit-float__group-head';
+            gh.textContent = useJa ? r.labelJa : r.labelEn;
+            elLabels.appendChild(gh);
+            var trStrip = document.createElement('tr');
+            trStrip.className = 'monthly-edit-float__strip-row';
+            var tdStrip = document.createElement('td');
+            tdStrip.colSpan = isoList.length;
+            tdStrip.innerHTML = '&nbsp;';
+            trStrip.appendChild(tdStrip);
+            tbody.appendChild(trStrip);
+            return;
+          }
+
+          var labelInfo = { label: '', sub: false, controls: null, rowRef: null, autoCalc: false, isProfit: false };
+          var tr = document.createElement('tr');
+
+          if (r.type === 'bizday') {
+            labelInfo.label = t('営業日', 'Business Day');
+            isoList.forEach(function (iso) {
+              var td = document.createElement('td');
+              td.className = cellInactiveClass(iso).trim();
+              var cb = document.createElement('input');
+              cb.type = 'checkbox';
+              cb.className = 'monthly-edit-float__cb';
+              cb.checked = !!bizDayByIso[iso];
+              cb.setAttribute('data-action', 'bizday-toggle');
+              cb.setAttribute('data-iso', iso);
+              td.appendChild(cb);
+              tr.appendChild(td);
+            });
+          } else if (r.type === 'aggregate') {
+            labelInfo.label = useJa ? r.labelJa : r.labelEn;
+            if (r.id === 'profit') {
+              labelInfo.isProfit = true;
+              tr.classList.add('monthly-edit-float__profit-row');
+            }
+            if (r.id === 'totalSales') labelInfo.controls = { section: 'income', plusminus: 'income' };
+            if (r.id === 'fixed') labelInfo.controls = { section: 'fixed', plusminus: 'fixed' };
+            if (r.id === 'expected') labelInfo.controls = { section: 'variable', plusminus: 'variable' };
+            isoList.forEach(function (iso) {
+              var td = document.createElement('td');
+              td.className = cellInactiveClass(iso).trim();
+              var out = document.createElement('span');
+              out.textContent = fmtMoney(aggregateValue(r.id, iso));
+              td.appendChild(out);
+              if (bizDayByIso[iso]) setKpiFill(td, 'has');
+              tr.appendChild(td);
+            });
+          } else if (r.type === 'moneyRow' || r.type === 'moneyStatic' || r.type === 'percent') {
+            if (r.type === 'moneyRow') {
+              labelInfo.label = rowLabel(r.row);
+              labelInfo.rowRef = r.row;
+              labelInfo.sub = r.section !== 'income';
+            } else {
+              labelInfo.label = useJa ? r.labelJa : r.labelEn;
+              labelInfo.sub = !!r.sub;
+              labelInfo.autoCalc = !!r.autoCalc;
+            }
+            isoList.forEach(function (iso) {
+              var td = document.createElement('td');
+              td.className = cellInactiveClass(iso).trim();
+              var inp = document.createElement('input');
+              inp.type = 'text';
+              inp.className = 'monthly-edit-float__input';
+              inp.disabled = !bizDayByIso[iso];
+              if (r.type === 'percent') {
+                inp.value = '0%';
+                inp.disabled = true;
+              } else if (r.type === 'moneyRow') {
+                inp.value = fmtMoney(readValue(r.row.id, iso));
+                inp.setAttribute('data-action', 'money-input');
+                inp.setAttribute('data-row-id', r.row.id);
+                inp.setAttribute('data-iso', iso);
+              } else {
+                inp.value = fmtMoney(0);
+                inp.disabled = !!r.autoCalc;
+                inp.readOnly = !r.autoCalc;
+              }
+              td.appendChild(inp);
+              if (bizDayByIso[iso]) {
+                if (r.type === 'percent' || r.autoCalc) {
+                  setKpiFill(td, 'has');
+                } else if (r.type === 'moneyRow') {
+                  syncMoneyInputTdFill(inp);
+                } else {
+                  var sn = parseMoney(inp.value);
+                  setKpiFill(td, !Number.isFinite(sn) || sn === 0 ? 'empty' : 'has');
+                }
+              }
+              tr.appendChild(td);
+            });
+          }
+
+          createLabelRow(labelInfo, rows);
+          tbody.appendChild(tr);
+        });
+
+        tbl.innerHTML = '';
+        tbl.appendChild(thead);
+        tbl.appendChild(tbody);
+        if (!tbl.hasAttribute('data-kpi-fill-bound')) {
+          tbl.setAttribute('data-kpi-fill-bound', '1');
+          tbl.addEventListener('input', function (ev) {
+            var t = ev.target;
+            if (t && t.getAttribute && t.getAttribute('data-action') === 'money-input') syncMoneyInputTdFill(t);
+          });
+          tbl.addEventListener('change', function (ev) {
+            var t = ev.target;
+            if (t && t.getAttribute && t.getAttribute('data-action') === 'money-input') syncMoneyInputTdFill(t);
+          });
+        }
+        setMonthLabel();
+        renderKpiStrip();
+        syncLabelScroll();
+      }
+      function syncFromPage() {
+        var ui = window.__MONTHLY_UI;
+        if (ui && typeof ui.getState === 'function') {
+          var st = ui.getState();
+          if (st && Number.isFinite(st.year) && Number.isFinite(st.month0)) {
+            mefYear = st.year;
+            mefMonth0 = st.month0;
+          }
+        }
+      }
+      function openFloat() {
+        syncFromPage();
+        undoStack = [];
+        syncUndoButton();
+        clearDirty();
+        editSessionCommitted = false;
+        buildGrid();
+        confirmedSnapshot = buildConfirmedSnapshot();
+        root.hidden = false;
+        document.body.style.overflow = 'hidden';
+        scroller.scrollTop = 0;
+        applyZoom();
+        scrollToPreferredDayLeft();
+        syncLabelScroll();
+        btnClose.focus();
+      }
+      function jumpToToday() {
+        var now = new Date();
+        mefYear = now.getFullYear();
+        mefMonth0 = now.getMonth();
+        buildGrid();
+        scrollToPreferredDayLeft();
+      }
+      function closeFloat() {
+        closeMonthPicker();
+        root.hidden = true;
+        document.body.style.overflow = '';
+      }
+      function markDirty() {
+        hasPendingEdits = true;
+      }
+      function clearDirty() {
+        hasPendingEdits = false;
+      }
+      function sortedIsoMap(src) {
+        var out = {};
+        Object.keys(src || {})
+          .sort()
+          .forEach(function (k) {
+            out[k] = src[k];
+          });
+        return out;
+      }
+      function sortedNestedMap(src) {
+        var out = {};
+        Object.keys(src || {})
+          .sort()
+          .forEach(function (rk) {
+            out[rk] = sortedIsoMap(src[rk] || {});
+          });
+        return out;
+      }
+      function rowSnapshot(items) {
+        return (items || []).map(function (r) {
+          return {
+            id: r.id,
+            labelJa: r.labelJa,
+            labelEn: r.labelEn,
+            editableLabel: !!r.editableLabel,
+            deletable: !!r.deletable,
+            sub: !!r.sub
+          };
+        });
+      }
+      function buildConfirmedSnapshot() {
+        return JSON.stringify({
+          year: mefYear,
+          month0: mefMonth0,
+          bizDayByIso: sortedIsoMap(bizDayByIso),
+          rowValueById: sortedNestedMap(rowValueById),
+          collapsed: {
+            income: !!state.collapsed.income,
+            fixed: !!state.collapsed.fixed,
+            variable: !!state.collapsed.variable
+          },
+          incomeItems: rowSnapshot(state.incomeItems),
+          fixedItems: rowSnapshot(state.fixedItems),
+          variableItems: rowSnapshot(state.variableItems)
+        });
+      }
+      function hasUnsavedChanges() {
+        if (hasPendingEdits) return true;
+        return buildConfirmedSnapshot() !== confirmedSnapshot;
+      }
+      function confirmDiscardEdits() {
+        if (editSessionCommitted && !hasUnsavedChanges()) return true;
+        return window.confirm(t('確認前の変更があります。このまま閉じますか？', 'You have unconfirmed changes. Close anyway?'));
+      }
+      function requestCloseFloat() {
+        if (!confirmDiscardEdits()) return;
+        clearDirty();
+        closeFloat();
+      }
+      function addRow(section) {
+        if (section === 'income') state.incomeItems.push(makeRow('money', '副収入', 'Side income', { editableLabel: true, deletable: true }));
+        if (section === 'fixed') state.fixedItems.push(makeRow('money', '固定費項目', 'Fixed item', { editableLabel: true, deletable: true }));
+        if (section === 'variable')
+          state.variableItems.push(makeRow('money', '変動費項目', 'Variable item', { editableLabel: true, deletable: true }));
+      }
+      function removeRow(section) {
+        if (section === 'income' && state.incomeItems.length > 1) state.incomeItems.pop();
+        if (section === 'fixed' && state.fixedItems.length > 1) state.fixedItems.pop();
+        if (section === 'variable' && state.variableItems.length > 1) state.variableItems.pop();
+      }
+      function rowsBySection(section) {
+        if (section === 'income') return state.incomeItems;
+        if (section === 'fixed') return state.fixedItems;
+        if (section === 'variable') return state.variableItems;
+        return null;
+      }
+
+      document.addEventListener('monthly:vfocusEditRequested', openFloat);
+      btnClose.addEventListener('click', requestCloseFloat);
+      if (btnUndo) {
+        btnUndo.addEventListener('click', function () {
+          if (!popUndo()) return;
+          markDirty();
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          buildGrid();
+        });
+      }
+      if (btnCsvUpload) {
+        btnCsvUpload.addEventListener('click', function () {
+          window.alert('CSV import will be implemented in a coming phase.');
+        });
+      }
+      backdrop.addEventListener('click', requestCloseFloat);
+      if (btnConfirm) {
+        btnConfirm.addEventListener('click', function () {
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          document.dispatchEvent(new CustomEvent('monthly:editFloatConfirmed', { detail: { year: mefYear, month0: mefMonth0 } }));
+          confirmedSnapshot = buildConfirmedSnapshot();
+          clearDirty();
+          undoStack = [];
+          syncUndoButton();
+          editSessionCommitted = true;
+        });
+      }
+      btnPrev && btnPrev.addEventListener('click', function () {
+        markDirty();
+        mefMonth0 -= 1;
+        if (mefMonth0 < 0) {
+          mefMonth0 = 11;
+          mefYear -= 1;
+        }
+        buildGrid();
+      });
+      btnNext && btnNext.addEventListener('click', function () {
+        markDirty();
+        mefMonth0 += 1;
+        if (mefMonth0 > 11) {
+          mefMonth0 = 0;
+          mefYear += 1;
+        }
+        buildGrid();
+      });
+      btnToday && btnToday.addEventListener('click', function () {
+        markDirty();
+        jumpToToday();
+      });
+      lblMonth &&
+        lblMonth.addEventListener('click', function () {
+          if (!monthPicker) return;
+          if (monthPicker.hidden) openMonthPicker();
+          else closeMonthPicker();
+        });
+      yearSelect &&
+        yearSelect.addEventListener('change', function () {
+          var y = Number(yearSelect.value);
+          if (!Number.isFinite(y)) return;
+          pickerYear = y;
+          renderMonthPicker();
+        });
+      monthGrid &&
+        monthGrid.addEventListener('click', function (ev) {
+          var btn = ev.target.closest('.monthly-edit-float__month-btn');
+          if (!btn) return;
+          var m = Number(btn.getAttribute('data-month0'));
+          if (!Number.isInteger(m) || m < 0 || m > 11) return;
+          markDirty();
+          applyMonthSelection(m);
+        });
+      if (zoom) {
+        zoom.addEventListener('input', applyZoom);
+        zoom.addEventListener('change', applyZoom);
+      }
+      if (zoomPct && zoom) {
+        zoomPct.addEventListener('dblclick', function () {
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'monthly-edit-float__zoom-edit';
+          input.value = String(Math.round(Number(zoom.value) || 100));
+          zoomPct.replaceWith(input);
+          input.focus();
+          input.select();
+          var done = function (commit) {
+            if (commit) {
+              var raw = String(input.value || '').trim();
+              var min = Number(zoom.min || 50);
+              var max = Number(zoom.max || 300);
+              if (/^[0-9]+$/.test(raw)) {
+                var n = Number(raw);
+                if (n >= min && n <= max) {
+                  zoom.value = String(n);
+                  applyZoom();
+                } else {
+                  window.alert('Zoom must be between ' + min + '% and ' + max + '%.');
+                }
+              } else {
+                window.alert('Only half-width numeric input is allowed.');
+              }
+            }
+            input.replaceWith(zoomPct);
+          };
+          input.addEventListener('keydown', function (e3) {
+            if (e3.key === 'Enter') done(true);
+            else if (e3.key === 'Escape') done(false);
+          });
+          input.addEventListener('blur', function () {
+            done(true);
+          });
+        });
+      }
+      scroller.addEventListener('scroll', syncLabelScroll, { passive: true });
+      if (labelsWrap) {
+        labelsWrap.addEventListener(
+          'wheel',
+          function (ev) {
+            if (root.hidden) return;
+            scroller.scrollTop += ev.deltaY;
+            ev.preventDefault();
+          },
+          { passive: false }
+        );
+      }
+      root.addEventListener('click', function (ev) {
+        if (
+          monthPicker &&
+          !monthPicker.hidden &&
+          !monthPicker.contains(ev.target) &&
+          lblMonth &&
+          ev.target !== lblMonth &&
+          !lblMonth.contains(ev.target)
+        ) {
+          closeMonthPicker();
+        }
+        var btn = ev.target.closest('button');
+        if (!btn) return;
+        var action = btn.getAttribute('data-action');
+        if (action === 'toggle') {
+          var sec = btn.getAttribute('data-section');
+          if (state.collapsed.hasOwnProperty(sec)) state.collapsed[sec] = !state.collapsed[sec];
+          buildGrid();
+        } else if (action === 'add-row') {
+          pushUndo();
+          addRow(btn.getAttribute('data-section'));
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          markDirty();
+          buildGrid();
+        } else if (action === 'remove-row') {
+          var sec2 = btn.getAttribute('data-section');
+          var arr = rowsBySection(sec2);
+          if (!arr || arr.length <= 1) return;
+          var ask =
+            t('削除する行番号を入力してください:', 'Enter row number to delete:') +
+            '\n' +
+            arr
+              .map(function (row, idx) {
+                return idx + 1 + '. ' + rowLabel(row);
+              })
+              .join('\n');
+          var picked = window.prompt(ask, String(arr.length));
+          if (picked == null) return;
+          var idxPicked = Number(picked) - 1;
+          if (!Number.isInteger(idxPicked) || idxPicked < 0 || idxPicked >= arr.length) {
+            window.alert(t('有効な行番号を入力してください。', 'Enter a valid row number.'));
+            return;
+          }
+          var targetRow = arr[idxPicked];
+          var ok = window.confirm(t('本当に行を消去しますか？', 'Delete this row?') + '\n' + rowLabel(targetRow));
+          if (!ok) return;
+          pushUndo();
+          arr.splice(idxPicked, 1);
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          markDirty();
+          buildGrid();
+        } else if (action === 'edit-label') {
+          var rowId = btn.getAttribute('data-row-id');
+          var row = rowById[rowId];
+          if (!row) return;
+          var host = btn.closest('.monthly-edit-float__label-main');
+          var old = rowLabel(row);
+          host.innerHTML = '';
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'monthly-edit-float__label-edit-input';
+          input.value = old;
+          host.appendChild(input);
+          input.focus();
+          input.select();
+          var commit = function (ok) {
+            var val = String(input.value || '').trim();
+            if (ok && val !== '') {
+              pushUndo();
+              if (useJa) row.labelJa = val;
+              else row.labelEn = val;
+              markDirty();
+            }
+            buildGrid();
+          };
+          input.addEventListener('keydown', function (e2) {
+            if (e2.key === 'Enter') commit(true);
+            else if (e2.key === 'Escape') commit(false);
+          });
+          input.addEventListener('blur', function () {
+            commit(true);
+          });
+        }
+      });
+      root.addEventListener('change', function (ev) {
+        var target = ev.target;
+        var action = target.getAttribute('data-action');
+        if (action === 'bizday-toggle') {
+          var iso = target.getAttribute('data-iso');
+          pushUndo();
+          bizDayByIso[iso] = !!target.checked;
+          persistBusinessDayToAnnualStore(iso, !!target.checked);
+          document.dispatchEvent(
+            new CustomEvent('annual:businessDayMapChanged', {
+              detail: { year: mefYear, source: 'monthly-edit-float', iso: iso, businessDay: !!target.checked }
+            })
+          );
+          markDirty();
+          buildGrid();
+        } else if (action === 'money-input') {
+          var rowId = target.getAttribute('data-row-id');
+          var iso2 = target.getAttribute('data-iso');
+          pushUndo();
+          writeValue(rowId, iso2, parseMoney(target.value));
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          markDirty();
+          buildGrid();
+        }
+      });
+      root.addEventListener('input', function (ev) {
+        var target = ev.target;
+        if (!target) return;
+        if (target.getAttribute('data-action') === 'money-input') {
+          markDirty();
+        }
+      });
+      document.addEventListener('keydown', function (ev) {
+        if (root.hidden) return;
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          if (monthPicker && !monthPicker.hidden) {
+            closeMonthPicker();
+            return;
+          }
+          requestCloseFloat();
+        }
+      });
+      document.addEventListener('annual:businessDayMapChanged', function (ev) {
+        if (root.hidden) return;
+        var src = ev && ev.detail && ev.detail.source;
+        if (src === 'monthly-edit-float') return;
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== mefYear) return;
+        syncBizDayFromAnnualStoreForMonth();
+        buildGrid();
+      });
+      document.addEventListener('annual:salesMapChanged', function (ev) {
+        if (root.hidden) return;
+        var src = ev && ev.detail && ev.detail.source;
+        if (src === 'monthly-edit-float') return;
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== mefYear) return;
+        syncMonthlySalesFromAnnualStoreForMonth();
+        buildGrid();
+      });
+      window.addEventListener('beforeunload', function (ev) {
+        if (root.hidden) return;
+        if (editSessionCommitted && !hasUnsavedChanges()) return;
+        ev.preventDefault();
+        ev.returnValue = '';
+      });
     })();
     (function () {
       var win = document.querySelector('.monthly-table-window');
