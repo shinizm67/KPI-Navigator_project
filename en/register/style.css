@@ -703,6 +703,21 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   background: #2B2B2B;
 }
 
+/* KPI Navigator: グローバルメニュー（.site-header）を縦スクロールで固定＋すりガラス。
+   `profile-page`: 年次・月次・setting/*・account_protection/* 等（setting/style.css 併用ページ）。
+   それ以外へ広げるときは body に `kpi-sticky-site-header` を追加（本 register を読むページのみ）。 */
+.si-fi.profile-page .site-header,
+.si-fi.kpi-sticky-site-header .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(43, 43, 43, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid rgba(88, 225, 243, 0.22);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+}
+
 /* Sci-Fi への戻りボタン: SVG 装飾非表示、CSS でボックス描画・メニューよりやや明るめ・文字白 */
 .si-fi.office-mode .btn-mode-frame-img {
   display: none;

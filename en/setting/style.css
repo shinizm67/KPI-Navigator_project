@@ -18,11 +18,108 @@ html[lang="ja"] .si-fi.profile-page {
   align-items: center;
   justify-content: flex-start;
   gap: 40px;
+  box-sizing: border-box;
+  /* Reserve room for absolute-positioned right actions (gear + mode toggle). */
+  padding-right: 260px;
 }
 
-/* Profile ヘッダーでは単独の Office Mode ボタンは非表示（ドロップダウン内のみ使用） */
+/* グローバルメニュー固定（sticky + 透過）: register/style.css の `.si-fi.profile-page .site-header` を参照 */
+
+/* Profile ヘッダー: モード切替トグル（Global Menu 右端） */
 .si-fi.profile-page .btn-mode {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--si-fi-cyan);
+  margin-left: 4px;
+  order: 3;
+}
+
+.si-fi.profile-page .btn-mode:focus-visible {
+  outline: 2px solid var(--si-fi-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.si-fi.profile-page .btn-mode .btn-mode-frame-img {
+  display: none !important;
+}
+
+.si-fi.profile-page .btn-mode .btn-mode-frame {
+  display: grid;
+  grid-template-columns: auto 30px auto;
+  grid-template-rows: auto auto;
+  column-gap: 4px;
+  row-gap: 2px;
+  align-items: center;
+  max-width: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.si-fi.profile-page .btn-mode .btn-mode-frame::before {
+  content: "Mode";
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+  justify-self: center;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--si-fi-cyan);
+}
+
+.si-fi.profile-page .btn-mode .btn-mode-frame::after {
+  content: "Sci-Fi";
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--si-fi-cyan);
+}
+
+.si-fi.profile-page .btn-mode #btn-mode-text {
+  grid-column: 2;
+  grid-row: 2;
+  width: 30px;
+  height: 11px;
+  border: 1px solid #0f9403;
+  border-radius: 999px;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  background: rgba(15, 148, 3, 0.1);
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  overflow: visible;
+}
+
+.si-fi.profile-page .btn-mode #btn-mode-text::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: 14px;
+  height: 7px;
+  border-radius: 999px;
+  background: #0f9403;
+  transition: left 0.18s ease;
+}
+
+.si-fi.profile-page .btn-mode #btn-mode-text::after {
+  content: "Office";
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(88, 225, 243, 0.45);
+  white-space: nowrap;
 }
 
 .profile-wrap {
@@ -727,14 +824,57 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   gap: 16px;
 }
 
+.si-fi.profile-page .icon-button-menu {
+  order: 1;
+}
+
+.si-fi.profile-page .icon-button-settings {
+  order: 2;
+}
+
 /* dropdown_menu と setting_gear の間隔を広めに確保（歯車は右端キープ） */
 .si-fi.profile-page .icon-button-menu {
   margin-right: 12px;
 }
 
+/* Global: remove dropdown-menu button and its panel */
+.si-fi.profile-page .icon-button-menu {
+  display: none !important;
+}
+
+.si-fi.profile-page .settings-dropdown {
+  display: none !important;
+}
+
+.si-fi.office-mode.profile-page .btn-mode .btn-mode-frame::before {
+  color: #fff;
+}
+
+.si-fi.office-mode.profile-page .btn-mode .btn-mode-frame::after {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.si-fi.office-mode.profile-page .btn-mode #btn-mode-text::after {
+  color: #fff;
+}
+
+.si-fi.office-mode.profile-page .btn-mode #btn-mode-text {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.si-fi.office-mode.profile-page .btn-mode #btn-mode-text::before {
+  background: #fff;
+}
+
+.si-fi.office-mode.profile-page .btn-mode #btn-mode-text::before {
+  left: 14px;
+}
+
 /* --- Global nav (Annual / Monthly / Daily / Index) --- */
 .global-nav {
   flex: 1;
+  min-width: 0;
 }
 
 .global-nav-list {
@@ -746,9 +886,41 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   padding: 0;
   margin: 0;
 }
+html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list {
+  gap: 28px !important;
+}
+html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
+  gap: 28px !important;
+}
 
 .global-nav-item {
   display: flex;
+}
+
+/* Global Menu tabs (Office): keep the same slot geometry as Sci-Fi */
+.si-fi.office-mode.profile-page .global-nav .nav-frame-btn .btn-mode-frame {
+  position: relative !important;
+  width: 120px !important;
+  max-width: 120px !important;
+  display: inline-flex !important;
+  justify-content: center;
+  align-items: center;
+}
+.si-fi.office-mode.profile-page .global-nav .nav-frame-btn .btn-mode-frame-img {
+  display: none !important;
+}
+.si-fi.office-mode.profile-page .global-nav .nav-frame-btn .btn-mode-text {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  display: inline-block !important;
+  white-space: nowrap;
+}
+.si-fi.office-mode.profile-page .global-nav .nav-frame-btn {
+  display: inline-block;
+  width: 120px !important;
 }
 
 .nav-frame-btn {
@@ -760,6 +932,14 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
 
 .nav-frame-btn:hover {
   filter: drop-shadow(0 0 8px rgba(88, 225, 243, 0.6));
+}
+
+/* Setting pages: disable Daily/Index buttons without hiding them */
+.nav-frame-btn.is-disabled {
+  pointer-events: none;
+  cursor: default;
+  filter: brightness(0.5);
+  opacity: 0.55;
 }
 
 /* グローバルナビ: 現在ページ（Annual 等） */
@@ -801,9 +981,18 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   padding: 0;
 }
 
+/* Office Mode: Global Menu spacing by language */
+html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list {
+  gap: 28px !important;
+}
+html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
+  gap: 28px !important;
+}
+
 .si-fi.office-mode.profile-page .nav-btn-text {
   font-family: 'BIZ UDPGothic', sans-serif;
   color: #fff;
+  font-size: 12px;
   letter-spacing: 0.06em;
 }
 
@@ -814,6 +1003,7 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
 
 .si-fi.office-mode.profile-page .nav-frame-btn[aria-current="page"] .nav-btn-text {
   font-weight: 700;
+  font-size: 13px;
 }
 
 /* Office Mode: right-side dropdowns unify to black border + light gray bg + black text */
@@ -978,6 +1168,7 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   }
   .si-fi.profile-page .header-inner {
     gap: 24px;
+    padding-right: 220px;
   }
   .profile-title-main {
     font-size: 22px;

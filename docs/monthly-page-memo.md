@@ -1,11 +1,11 @@
 # Monthly Page メモ（初期仕様）
 
-更新日: 2026-04-10
+更新日: 2026-05-08
 
 ## 前提（Annual との関係）
 
 - Monthly ページの基本構成は Annual とほぼ共通とする。
-- 上部 3 Area は Annual と同一の設計思想を採用し、ページをまたいでも基本情報を同じ位置で参照できるようにする。
+- 上部 Area は Annual と同一の設計思想を採用する（現在は上段 Area1 を中心に運用。旧 Area2 / Area3 は削除済み）。
 - 相違点の主軸は最下部 Table Window の表現形式。
 
 ## Table Window の差分（Annual vs Monthly）

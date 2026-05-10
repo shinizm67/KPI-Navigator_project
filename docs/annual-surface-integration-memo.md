@@ -55,6 +55,33 @@
 
 ---
 
+## Area ウィンドウ（Open / Close ラベル）実装メモ（2026-05 追記）
+
+- 対象ファイルは `app/annual/index.html` / `app/monthly/index.html` / `en/app/annual/index.html` / `en/app/monthly/index.html` の4つ。
+- 上段 Area は現在、下段2ペイン（旧 Area2 / Area3）を削除し、`area_close.svg` / `area_open_top.svg` / `area_open_bottom.svg` 構成を採用している。
+- Open/Close のラベルボタン（`.annual-monthly-toggle`）は、表示状態に応じて `.annual-area-top-svg` 配下へ移動して配置する（Sci-Fi）。Office mode では `annual-monthly-data` 直下に戻す。
+- 座標は「見た目調整の px 置き」ではなく、SVG の `<rect>` 幾何中心に合わせる。
+  - Open 表示（閉じ枠）: `area_close.svg` の `rect x="1.05737" y="332.5" width="39" height="14"`（viewBox 高さ 362）
+  - Close 表示（開き上段枠）: `area_open_top.svg` の `rect x="1.10736" y="332.5" width="39" height="14"`（viewBox 高さ 358）
+- 実装ルール:
+  - `left` / `top` は `calc(100% * ...)` で viewBox 比率に変換
+  - `transform: translate(-50%, -50%)` で「文字ボタン中心 = ボックス中心」を一致
+  - Open / Close は別 SVG・別 viewBox のため、同一式でまとめず状態別に分ける
+- `render()` 内では `placeToggleForMode()` を先に呼び、親要素切り替え後に `is-open-state` を反映する（クラスと親の瞬間不整合回避）。
+
+---
+
+## Group1 日付ナビ（年/日付矢印）ルール（2026-05 追記）
+
+- Group1 は「年矢印」「日付矢印」「日付ボタン（カレンダー）」を併用する時点コントローラとする。
+- 年矢印の基本動作は **同じ月日を維持して年のみ変更**。
+- 例外として、**2/29 を持たない年へ移動した場合は 2/28 に丸める（固定）**。
+- 日付矢印は 1 日単位で前後移動し、年またぎは自然処理する。
+- 状態の単一ソースは `window.__ANNUAL_DATA.daily.selectedDate` とし、Group5〜8 と Focus Bar はこの日付に追従して同時更新する。
+- 実装上は `shiftDailyDateToCalendarYear()` で `Math.min(day, daysInMonth(...))` を使い、上記の丸め規則を担保する。
+
+---
+
 ## CSV アップロード
 
 - プロダクト方針: `docs/csv-upload-pos-import-memo.md`  

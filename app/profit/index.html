@@ -1,103 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Change Email Address | KPI Navigator | FORGE LABORATORY</title>
+  <title>利益 | KPI Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../../en/setting/style.css">
+  <style>
+    /* Global Menu (Office): keep the same slot geometry as Sci-Fi */
+    .profile-page.office-mode .global-nav-list .global-nav-item {
+      flex: 0 0 auto;
+    }
+    .profile-page.office-mode .global-nav-list {
+      gap: 28px !important;
+    }
+    .profile-page.office-mode .global-nav-list .nav-frame-btn {
+      display: inline-block !important;
+      width: 120px !important;
+    }
+    .profile-page.office-mode .global-nav-list .nav-frame-btn .btn-mode-frame {
+      position: relative !important;
+      display: inline-flex !important;
+      justify-content: center;
+      align-items: center;
+      width: 120px !important;
+      max-width: 120px !important;
+    }
+    .profile-page.office-mode .global-nav-list .nav-frame-btn .btn-mode-frame-img {
+      display: none !important;
+    }
+    .profile-page.office-mode .global-nav-list .nav-frame-btn .btn-mode-text {
+      position: static !important;
+      inset: auto !important;
+      display: inline-block !important;
+      white-space: nowrap;
+      padding: 0 !important;
+    }
+    html[lang='en'] .profile-page.office-mode .global-nav-list {
+      gap: 28px !important;
+    }
+    html[lang='ja'] .profile-page.office-mode .global-nav-list {
+      gap: 28px !important;
+    }
+
+    .profit-hub-wrap {
+      width: min(100%, 720px);
+      margin: 24px auto;
+      padding: 0 16px 48px;
+      box-sizing: border-box;
+    }
+    .profit-hub-title {
+      font-family: 'Orbitron', sans-serif;
+      color: #58e1f3;
+      font-size: 1.25rem;
+      margin: 0 0 12px;
+    }
+    .profit-hub-lead {
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.65;
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+    }
+    body.office-mode .profit-hub-title {
+      color: #111;
+    }
+    body.office-mode .profit-hub-lead {
+      color: #333;
+    }
+    .profit-hub-cards {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+      display: grid;
+      gap: 12px;
+    }
+    .profit-hub-card {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 6px;
+      color: #58e1f3;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .profit-hub-card.is-placeholder {
+      cursor: default;
+      opacity: 0.92;
+    }
+    .profit-hub-card-note {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 400;
+      opacity: 0.78;
+      margin-top: 6px;
+    }
+    body.office-mode .profit-hub-card {
+      color: #111;
+      border-color: #999;
+    }
+  </style>
 </head>
-<body class="si-fi profile-page profile-fixed-page email-change-page" id="body-el">
+<body class="si-fi profile-page" id="body-el">
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
-        <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+        <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
           <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
-      <nav class="global-nav" aria-label="Main navigation">
+      <nav class="global-nav" aria-label="メインナビゲーション">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="../app/annual/index.html" class="nav-frame-btn" aria-label="Go to Annual view">
+            <a href="../annual/index.html" class="nav-frame-btn" aria-label="年間ビュー">
               <span class="btn-mode-frame">
                 <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">Annual</span>
+                <span class="btn-mode-text nav-btn-text">年次</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="../app/monthly/index.html" class="nav-frame-btn" aria-label="Go to Monthly view">
+            <a href="../monthly/index.html" class="nav-frame-btn" aria-label="月間ビュー">
               <span class="btn-mode-frame">
                 <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">Monthly</span>
+                <span class="btn-mode-text nav-btn-text">月次</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn is-disabled" aria-label="Go to Daily view" aria-disabled="true" tabindex="-1">
+            <a href="../annual/index.html" class="nav-frame-btn" aria-label="年次ページで日次ビュー（Daily）を開く">
               <span class="btn-mode-frame">
                 <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">Daily</span>
+                <span class="btn-mode-text nav-btn-text">日次</span>
               </span>
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="#" class="nav-frame-btn is-disabled" aria-label="Go to Index view" aria-disabled="true" tabindex="-1">
+            <a href="index.html" class="nav-frame-btn" aria-label="利益サマリー（現在のページ）" aria-current="page">
               <span class="btn-mode-frame">
                 <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">Index</span>
+                <span class="btn-mode-text nav-btn-text">考察</span>
               </span>
             </a>
           </li>
         </ul>
       </nav>
       <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Switch to Office Mode">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="Office Mode に切り替え">
           <span class="btn-mode-frame">
             <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
+        <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
           <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
           <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
-      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
+      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
         <h3 class="account-settings-popup-title">Account Settings</h3>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
-            <a href="profile.html" class="account-settings-item" role="menuitem">Profile</a>
-            <a href="change_email.html" class="account-settings-item is-current" role="menuitem">Change Email</a>
-            <a href="#" class="account-settings-item" role="menuitem">Change Password</a>
-            <a href="session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="../../setting/profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
+            <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
+            <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">Subscription</h4>
           <nav class="account-settings-nav">
-            <a href="plan_details.html" class="account-settings-item" role="menuitem">Plan Details</a>
-            <a href="change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
+            <a href="../../setting/plan_details.html" class="account-settings-item" role="menuitem">プラン詳細</a>
+            <a href="../../setting/change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
+        <a href="../../setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">アカウント削除</a>
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="Open Expense settings">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" aria-label="経費設定を開く（準備中）">
             <span class="btn-mode-frame">
               <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text">Expense</span>
             </span>
           </a>
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Toggle Office Mode">
+          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="Office Mode を切り替え">
             <span class="btn-mode-frame">
               <img src="../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
               <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
@@ -111,61 +204,58 @@
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
       <div class="workspace-selector-wrap">
-        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="現在のワークスペース" aria-expanded="false" aria-haspopup="true">
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
           <span class="profile-workspace-label">Workspace : Personal</span>
         </button>
-        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
           <div class="workspace-popup-inner">
             <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
         </div>
       </div>
 
-      <h1 class="profile-title-main">KPI Navigator</h1>
-      <h2 class="profile-title-sub">Change Email Address</h2>
-
-      <div class="profile-alert profile-alert-success" id="email-change-success" role="status" aria-live="polite" hidden>
-        Updated successfully.
-      </div>
-
-      <div class="profile-readonly-group">
-        <div class="form-group form-group-email-display">
-          <label>Current Email Address :</label>
-          <p class="profile-email-value" id="current-email" aria-live="polite">—</p>
-        </div>
-      </div>
-
-      <div class="form-actions profile-actions">
-        <a href="change_email_edit.html" class="btn-submit btn-register profile-save-button">Edit</a>
+      <div class="profit-hub-wrap">
+        <h1 class="profit-hub-title">利益サマリー（プロ）</h1>
+        <p class="profit-hub-lead">
+          収支の詳細と利益を<strong>読み取り専用</strong>でまとめるページです。Daily は目標売上と実績の照合、本ページでは PL 観点の参照を想定しています。
+        </p>
+        <p class="profit-hub-lead">
+          日次利益のフロートは、<strong>年次・月次</strong>ページのメニュー「Daily」から開けます。
+        </p>
+        <ul class="profit-hub-cards">
+          <li><span class="profit-hub-card is-placeholder">日次利益<span class="profit-hub-card-note">準備中（読み取り専用）</span></span></li>
+          <li><span class="profit-hub-card is-placeholder">月次利益<span class="profit-hub-card-note">準備中（読み取り専用）</span></span></li>
+          <li><span class="profit-hub-card is-placeholder">年次利益<span class="profit-hub-card-note">準備中（読み取り専用）</span></span></li>
+        </ul>
       </div>
     </main>
   </div>
 
   <footer class="site-footer">
-    <button class="footer-backtotop" id="footerBackToTop" aria-label="Back to top">
-      <img src="../../images/arrow_up.svg" alt="Back to top" class="footer-backtotop__icon">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="ページ先頭へ戻る">
+      <img src="../../images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
     </button>
     <div class="footer-separator"></div>
     <div class="footer-logo">
-      <a href="https://forge-laboratory.com/en" class="logo-link" aria-label="FORGE LABORATORY - Top page" target="_blank" rel="noopener noreferrer">
+      <a href="https://forge-laboratory.com" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
         <img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
     <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
   </footer>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="change_email.html" data-url-ja="../../setting/change_email.html">
-    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
-      <span class="lang-code" aria-hidden="true">EN</span>
-      <span class="lang-name">English</span>
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/app/profit/index.html" data-url-ja="index.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
       <span class="lang-chevron" aria-hidden="true"></span>
     </button>
-    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="Language options" hidden>
-      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
-      <button type="button" class="lang-option lang-option-en lang-option-active" role="option" data-lang="en">EN - English</button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
     </div>
   </div>
 
@@ -180,23 +270,16 @@
         if (!btnModeText || !btnModeToggle) return;
         var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
-        btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
-        if (settingsOfficeLabel) {
-          settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
-        }
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi Mode に切り替え' : 'Office Mode に切り替え');
+        if (settingsOfficeLabel) settingsOfficeLabel.textContent = isOffice ? 'Sci-Fi Mode' : 'Office Mode';
       }
       if (bodyEl && btnModeToggle) {
-        if (sessionStorage.getItem(STORAGE_KEY) === '1') {
-          bodyEl.classList.add('office-mode');
-        }
+        if (sessionStorage.getItem(STORAGE_KEY) === '1') bodyEl.classList.add('office-mode');
         btnModeToggle.addEventListener('click', function (e) {
           e.preventDefault();
           bodyEl.classList.toggle('office-mode');
-          if (bodyEl.classList.contains('office-mode')) {
-            sessionStorage.setItem(STORAGE_KEY, '1');
-          } else {
-            sessionStorage.removeItem(STORAGE_KEY);
-          }
+          if (bodyEl.classList.contains('office-mode')) sessionStorage.setItem(STORAGE_KEY, '1');
+          else sessionStorage.removeItem(STORAGE_KEY);
           updateModeButton();
         });
         updateModeButton();
@@ -207,27 +290,21 @@
       var dropdown = document.getElementById('settings-dropdown');
       var officeToggle = document.getElementById('settings-office-toggle');
       if (!menuBtn || !dropdown) return;
-
       menuBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         dropdown.hidden = !dropdown.hidden;
       });
-
       if (officeToggle) {
         officeToggle.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
           var modeBtn = document.getElementById('btn-mode-toggle');
-          if (modeBtn) {
-            modeBtn.click();
-          }
+          if (modeBtn) modeBtn.click();
         });
       }
-
       dropdown.addEventListener('click', function (e) {
         e.stopPropagation();
       });
-
       document.addEventListener('click', function () {
         dropdown.hidden = true;
       });
@@ -237,7 +314,6 @@
       var accountPopup = document.getElementById('account-settings-popup');
       var menuDropdown = document.getElementById('settings-dropdown');
       if (!gearBtn || !accountPopup) return;
-
       gearBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         var isOpen = !accountPopup.hidden;
@@ -245,11 +321,9 @@
         gearBtn.setAttribute('aria-expanded', !isOpen);
         if (!isOpen && menuDropdown) menuDropdown.hidden = true;
       });
-
       accountPopup.addEventListener('click', function (e) {
         e.stopPropagation();
       });
-
       document.addEventListener('click', function () {
         accountPopup.hidden = true;
         gearBtn.setAttribute('aria-expanded', 'false');
@@ -259,18 +333,15 @@
       var trigger = document.getElementById('workspace-trigger');
       var popup = document.getElementById('workspace-popup');
       if (!trigger || !popup) return;
-
       trigger.addEventListener('click', function (e) {
         e.stopPropagation();
         var isOpen = !popup.hidden;
         popup.hidden = isOpen;
         trigger.setAttribute('aria-expanded', !isOpen);
       });
-
       popup.addEventListener('click', function (e) {
         e.stopPropagation();
       });
-
       document.addEventListener('click', function () {
         popup.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
@@ -282,31 +353,25 @@
       var langOptions = document.querySelectorAll('.lang-option');
       var langWrap = document.getElementById('lang-select-wrap');
       if (!langBtn || !langDropdown || !langWrap) return;
-
       langBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         var isOpen = !langDropdown.hidden;
         langDropdown.hidden = isOpen;
         langBtn.setAttribute('aria-expanded', !isOpen);
       });
-
       document.addEventListener('click', function () {
         langDropdown.hidden = true;
         langBtn.setAttribute('aria-expanded', 'false');
       });
-
       var urlEn = langWrap.getAttribute('data-url-en');
       var urlJa = langWrap.getAttribute('data-url-ja');
       var bodyElForLang = document.getElementById('body-el');
-
       langOptions.forEach(function (opt) {
         opt.addEventListener('click', function (e) {
           e.stopPropagation();
-          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) {
-            sessionStorage.setItem('kpi-office-mode', '1');
-          }
+          if (bodyElForLang && bodyElForLang.classList.contains('office-mode')) sessionStorage.setItem('kpi-office-mode', '1');
           var lang = this.getAttribute('data-lang');
-          var href = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+          var href = lang === 'ja' && urlJa ? urlJa : lang === 'en' && urlEn ? urlEn : null;
           if (href) window.location.href = href;
         });
       });
@@ -318,31 +383,6 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     })();
-    (function () {
-      var el = document.getElementById('current-email');
-      if (!el) return;
-
-      var email = '';
-      try {
-        var raw = localStorage.getItem('kpi-profile-last');
-        if (raw) {
-          var data = JSON.parse(raw);
-          email = (data && data.email) ? String(data.email) : '';
-        }
-      } catch (e) {}
-      email = (email || '').trim() || 's.matsushita@forge-laboratory.com';
-      el.textContent = email;
-    })();
-    (function () {
-      var flagKey = 'kpi-email-change-success';
-      var banner = document.getElementById('email-change-success');
-      if (!banner) return;
-      if (sessionStorage.getItem(flagKey) === '1') {
-        banner.hidden = false;
-        sessionStorage.removeItem(flagKey);
-      }
-    })();
   </script>
 </body>
 </html>
-

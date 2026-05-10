@@ -16,3 +16,6 @@ venv/
 
 # 動画（GitHubは100MB超を拒否するため）
 *.mov
+
+# SpecStory 履歴にトークン等が混入しうるため push 対象外（ローカルのみ）
+.specstory/history/
