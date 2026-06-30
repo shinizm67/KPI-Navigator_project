@@ -1,0 +1,17 @@
+
+      <section class="monthly-edit-float__strategy-note" aria-label="Strategy Note">
+        <h3 class="monthly-edit-float__strategy-note-title">Strategy Note</h3>
+        <div class="monthly-edit-float__strategy-note-row">
+          <label class="monthly-edit-float__strategy-note-label" for="monthly-edit-strategy-user-note">User Note</label>
+          <div class="monthly-edit-float__strategy-note-field">
+            <textarea
+              id="monthly-edit-strategy-user-note"
+              class="monthly-edit-float__strategy-note-input"
+              maxlength="200"
+              rows="8"
+              aria-describedby="monthly-edit-strategy-char-count"
+            ></textarea>
+            <span class="monthly-edit-float__strategy-char-count" id="monthly-edit-strategy-char-count" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>

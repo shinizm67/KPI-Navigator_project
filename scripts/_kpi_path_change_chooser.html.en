@@ -1,0 +1,26 @@
+
+  <div
+    class="sales-data-modal__close-chooser"
+    id="kpi-path-change-chooser"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="kpi-path-change-chooser-title"
+    hidden
+  >
+    <div class="sales-data-modal__close-chooser-scrim" id="kpi-path-change-chooser-scrim" aria-hidden="true"></div>
+    <div class="sales-data-modal__close-chooser-panel">
+      <p id="kpi-path-change-chooser-title" class="sales-data-modal__close-chooser-title">Switch input surface</p>
+      <p class="sales-data-modal__close-chooser-msg">You have unsaved changes. Save before switching, or discard and switch.</p>
+      <div class="sales-data-modal__close-chooser-actions">
+        <button type="button" class="sales-data-modal__close-chooser-btn sales-data-modal__close-chooser-btn--save" id="kpi-path-change-save">
+          Save and switch
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="kpi-path-change-discard">
+          Switch without saving
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="kpi-path-change-cancel">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>

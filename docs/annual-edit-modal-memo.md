@@ -4,6 +4,10 @@
 
 **関連**: 本丸の営業日数連携・Focus Bar 幅・Graph 方針などは **`docs/annual-surface-integration-memo.md`**。
 
+**Past Sales（過去売上）**: 別窓 `#past-sales-modal`。確定値は **`docs/past-sales-floating-window-memo.md`**。
+
+**今年の日次売上（計画）**: Past Sales 完了後、姉妹窓としてコックピット右上に追加予定。設計・プロンプト骨子は **`docs/annual-current-year-sales-floating-window-plan.md`**。本 `#annual-edit-modal` は段階的に役割移行・廃止候補。
+
 ---
 
 ## パネルレイアウト（確定）

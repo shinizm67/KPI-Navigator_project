@@ -1,92 +1,98 @@
-# Annual Focus Bar / Graph Window 仕様メモ
+# Annual / Monthly Focus Bar — Graph ポップオーバー仕様
 
-更新日: 2026-04-07
-
-## フォント（プロダクト共通）
-
-- **Sci-Fi モードかつ英語（`html[lang="en"]`）ページのみ**、本文フォントに **`Orbitron`** を用いる。
-- **上記以外**（日本語ページ、Office モード、Sci-Fi の日本語ページなど）**すべて** **`BIZ UDPGothic`** に統一する。
-- **例外として別のフォントファミリーを追加しない**（全体でこの 2 種類のみとする）
+更新日: 2026-06-17  
+**Phase:** **9**（依存: **Phase 8** 読取面同期 → Table Window KPI が正本）  
+**索引:** `docs/year-rollover-data-architecture.md` §15-E
 
 ---
 
-## 1) Focus Bar（Annual パネル2）
+## 1) 概要
 
-対象:
-- `app/annual/index.html`
-- `en/app/annual/index.html`
+Annual / Monthly 両ページの Focus Bar 右端 **Graph** ボタンから、**フォーカス中の日付**に対応する KPI をポップオーバー表示する。
 
-主要仕様:
-- Focus Bar の SVG は 91px 高を基準（Close/Open で画像差し替え）。
-- Focus Bar 上で 365 日行のフォーカスと日付 UI を同期。
-- Open / Close どちらでもフォーカス追従し、店休日（OFF）表示を反映。
-- 右ウィング / 左ウィングは展開・縮小と行送り導線。
-- 横スクロール同期対象:
-  - 365日行
-  - Global Menu
-  - Focus Bar 上段
-  - Focus Bar 下段
+- Annual: `#annual-daily-focus-bar-graph-btn`
+- Monthly: `#monthly-vfocus-graph-btn`
+- ポップオーバー DOM は **共有**: `#annual-graph-popover`（Monthly ページにも同一 ID）
 
-補足:
-- 詳細なセクション定義は `docs/annual-daily-focus-table-window-notes.md` の Section 1/2/3 を参照。
+**データ源:** Focus Bar / Table Window にハマっている日付行の KPI（将来は `KpiYearStore` + plan から直接計算も可）。  
+~~一時手入力上書き（2026-04 プロトタイプ）~~ → Phase 9 では **Store 連動を正** とする。
 
 ---
 
-## 2) Graph ボタン（Focus Bar 右端）
+## 2) モード別 KPI（確定ラベル）
 
-役割:
-- Focus Bar から Graph フローティングウィンドウを開閉するトリガー。
+ドロップダウンで **Daily / Monthly / Annual** を切替。いずれも **同一フォーカス日** を基準とする。
 
-仕様:
-- `#annual-daily-focus-bar-graph-btn` 押下でポップオーバーを開く。
-- 再押下または `×`、外側クリック、`Esc` で閉じる。
-- 表示モード切替:
-  - Daily / Monthly / Annual
-  - ドロップダウンで切替時、表示値とグラフを即時更新。
+### Daily
 
----
+| 項目 | EN（例） | JA（例） |
+|------|----------|----------|
+| 実績 | Today's Sales | 本日売上 |
+| 目標 | Today's Target Sales | 本日目標売上 |
+| 差額 | Difference | 差額 |
+| 達成率 | Achievement | 達成率 |
 
-## 3) Hover Graph Window（Graph ポップオーバー）
+### Monthly
 
-外枠（16px 版）:
-- 幅: `510px`
-- 高さ: `342px`
-- 位置計算: `positionPanel()` 内 `pw=510`, `ph=342`
+| 項目 | EN（例） | JA（例） |
+|------|----------|----------|
+| 実績 | Cumulative Actual Sales | 月次累計実績売上 |
+| 目標 | Cumulative Target Sales | 月次累計目標売上 |
+| 差額 | Difference | 差額 |
+| 達成率 | Achievement | 達成率 |
 
-表示順序:
-1. 横棒線グラフ
-2. Achievement : %
-3. Target Sales : 金額
-4. Actual Sales : 金額
-5. Difference : 金額
+### Annual
 
-グラフルール（Area1 Achievement と同一）:
-- KPI 100% は常にバー幅の **2/3** 位置（黄色縦棒）。
-- KGI（三角）位置は Achievement% 比率で算出。
-- 右側最低余白を確保（実質 150% 以上は見た目上限を設ける挙動）。
-- 逆三角色:
-  - `>= 100%`: 黄
-  - `90/80/70/60/50%`: 10% 刻みでアンバー→赤
-  - `< 50%`: 濃い赤
+| 項目 | EN（例） | JA（例） |
+|------|----------|----------|
+| 実績 | Cumulative Actual Sales | 年次累計実績売上 |
+| 目標 | Cumulative Target Sales | 年次累計目標売上 |
+| 差額 | Difference | 差額 |
+| 達成率 | Achievement | 達成率 |
 
-Achievement 連動:
-- Achievement % 表示値と横棒グラフは同一値で連動。
-- 何もない場合は `0%` 表示。
-
-一時手入力（保存なし）:
-- Target Sales / Actual Sales はポップオーバー内でクリック編集可能。
-- 入力はモード別（Daily/Monthly/Annual）に一時保持。
-- 入力後に以下を即時再計算:
-  - Achievement %
-  - 横棒グラフ
-  - Difference
-- 空入力で当該項目の手入力上書きを解除（元データへ戻す）。
+**算出:** Table Window 行の `--base`（Daily）/ `--monthly` / `--annual` グループ — `scripts/focus_tw_metrics_client.py`（`KPI-FOCUS-TW-METRICS`）と一致させる。
 
 ---
 
-## 関連ファイル
+## 3) グラフ（達成率横棒）
 
-- `app/annual/index.html`
-- `en/app/annual/index.html`
-- `docs/annual-daily-focus-table-window-notes.md`
-- `docs/annual-kpi-strip-memo.md`
+- Area1 **Achievement graph** と同一ルール（100% = バー幅 2/3、KGI 三角、色段階）
+- Achievement % 表示値と横棒は **同一数値**で連動
+- データなし / 店休日: neutral、`0%` または `—`
+
+---
+
+## 4) 開閉 UX
+
+- Graph ボタン押下で開く
+- 再押下 / `×` / 外側クリック / `Esc` で閉じる
+- フォーカス日変更・`kpi:selectedDateChanged`・TW 再描画時に **中身を refresh**（開いたままでも可）
+
+---
+
+## 5) 実装状態（2026-06-17）
+
+| 項目 | 状態 |
+|------|------|
+| ポップオーバー UI（Annual / Monthly） | ✅ DOM/CSS |
+| Annual JS（TW 行 scrape） | 🟡 プロトタイプ（TW 空だと Graph も空） |
+| Monthly JS 配線 | 🟡 要確認 |
+| Store 直読み | ⬜ Phase 9 |
+| ラベル（Today's / Cumulative） | ⬜ Phase 9 |
+| 過去年（2024/2025） | ⬜ Phase **8** 後 |
+
+---
+
+## 6) 関連ファイル
+
+- `app/annual/index.html` / `en/app/annual/index.html` — Graph ボタン + popover JS
+- `app/monthly/index.html` / `en/app/monthly/index.html` — 縦 Focus Bar Graph ボタン + 共有 popover
+- `scripts/focus_tw_metrics_client.py` — TW 行 KPI 算出
+- `docs/press-release-backlog.md` §12 Daily Graph ポップアップ
+
+---
+
+## 7) フォント（プロダクト共通・変更なし）
+
+- Sci-Fi + EN: **Orbitron**
+- それ以外: **BIZ UDPGothic**

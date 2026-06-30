@@ -33,5 +33,8 @@
 
 ## 関連ドキュメント
 
+- プレス／後回し機能索引（**PL Insight** たたき台含む）: `docs/press-release-backlog.md`
+- **PL Insight フローティング**（描画シェル・最終調整タスク）: `docs/pl-insight-final-adjustments-memo.md`
+- PL 表ラベル階層（縦書き大見出し＋中見出し2列）: `docs/pl-table-label-layout-memo.md`
 - グローバルメニュー挙動: `docs/global-menu.md`
 - 変動人件費（アルバイト）と Monthly Expected 連携の将来検討: `docs/part-time-labor-cost.md`

@@ -1,0 +1,77 @@
+    .monthly-edit-float__strategy-note {
+      flex: 0 0 auto;
+      width: min(1400px, 100%);
+      margin: 12px auto 0;
+      padding: 16px 20px 20px;
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      border-radius: 8px;
+      background: rgba(30, 30, 30, 0.72);
+      box-sizing: border-box;
+    }
+    .monthly-edit-float__strategy-note-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #58e1f3;
+    }
+    .monthly-edit-float__strategy-note-row {
+      display: grid;
+      grid-template-columns: 113px minmax(0, 1fr);
+      gap: 12px 16px;
+      align-items: start;
+    }
+    .monthly-edit-float__strategy-note-label {
+      margin: 8px 0 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #e8e8e8;
+    }
+    .monthly-edit-float__strategy-note-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 496px;
+    }
+    .monthly-edit-float__strategy-note-input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 196px;
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 6px;
+      background: #1e1e1e;
+      color: #f5f5f5;
+      font: 16px/1.45 inherit;
+      resize: vertical;
+    }
+    .monthly-edit-float__strategy-note-input:focus {
+      outline: 2px solid rgba(88, 225, 243, 0.65);
+      outline-offset: 1px;
+    }
+    .monthly-edit-float__strategy-char-count {
+      align-self: flex-end;
+      font-size: 13px;
+      color: #bdbdbd;
+    }
+    .monthly-edit-float__strategy-char-count--warn-120 {
+      color: #ffb347;
+    }
+    .monthly-edit-float__strategy-char-count--warn-150 {
+      color: #ff7b7b;
+    }
+    body.office-mode .monthly-edit-float__strategy-note {
+      border-color: rgba(0, 0, 0, 0.15);
+      background: #fff;
+    }
+    body.office-mode .monthly-edit-float__strategy-note-title {
+      color: #0d6efd;
+    }
+    body.office-mode .monthly-edit-float__strategy-note-label,
+    body.office-mode .monthly-edit-float__strategy-note-input {
+      color: #222;
+    }
+    body.office-mode .monthly-edit-float__strategy-note-input {
+      background: #fff;
+      border-color: rgba(0, 0, 0, 0.2);
+    }

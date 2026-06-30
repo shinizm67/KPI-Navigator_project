@@ -6,6 +6,10 @@
 
 年次ページ（Annual）の **Table Window** 内 **Global Menu** 左端の **Edit** から開く、日次データ編集用 **フローティング UI**（本書では **Edit ページ** とも呼ぶ）の仕様メモ。中央モーダル（`#annual-edit-modal`）の**描画・開閉・表生成**は JP/EN 年次ページに実装済み（保存・DB・ソート等は後続）。Annual 関連の議論では本書を単一の参照元とし、DOM・データ・イベントの対応関係の説明を省略できるようにする。
 
+**Past Sales（過去売上）**は別窓 `#past-sales-modal`（コックピット右上 **Past Sales / 過去売上** から起動）。確定値は **`docs/past-sales-floating-window-memo.md`**。
+
+**今年の日次売上（計画）**は Past Sales と同型の別窓をコックピットに追加予定（Focus Bar Edit から役割移行）。設計メモ: **`docs/annual-current-year-sales-floating-window-plan.md`**。
+
 ## フォント（プロダクト共通）
 
 - **Sci-Fi モードかつ英語（`html[lang="en"]`）ページのみ**、本文フォントに **`Orbitron`** を用いる。

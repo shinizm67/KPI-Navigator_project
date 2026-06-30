@@ -1,0 +1,26 @@
+
+  <div
+    class="sales-data-modal__close-chooser"
+    id="kpi-path-change-chooser"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="kpi-path-change-chooser-title"
+    hidden
+  >
+    <div class="sales-data-modal__close-chooser-scrim" id="kpi-path-change-chooser-scrim" aria-hidden="true"></div>
+    <div class="sales-data-modal__close-chooser-panel">
+      <p id="kpi-path-change-chooser-title" class="sales-data-modal__close-chooser-title">入力面を切り替えます</p>
+      <p class="sales-data-modal__close-chooser-msg">未保存の変更があります。保存してから切り替えるか、破棄して切り替えるかを選んでください。</p>
+      <div class="sales-data-modal__close-chooser-actions">
+        <button type="button" class="sales-data-modal__close-chooser-btn sales-data-modal__close-chooser-btn--save" id="kpi-path-change-save">
+          保存して切り替え
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="kpi-path-change-discard">
+          保存せずに切り替え
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="kpi-path-change-cancel">
+          キャンセル
+        </button>
+      </div>
+    </div>
+  </div>

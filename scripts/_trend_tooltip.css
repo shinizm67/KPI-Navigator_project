@@ -1,0 +1,80 @@
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip {
+      position: absolute;
+      z-index: 6;
+      width: 400px;
+      height: 240px;
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      background: #1e1e1e;
+      color: #58e1f3;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip.is-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-date {
+      margin: 0;
+      padding: 24px 22px 0;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-body {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 64px;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-row + .insight-graph-monthly-trend__tooltip-row {
+      margin-top: 20px;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-label {
+      flex: 1 1 auto;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-value {
+      flex: 0 0 auto;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__guide-v {
+      stroke: #58e1f3;
+      stroke-width: 1;
+      stroke-dasharray: 4 3;
+      opacity: 0.65;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__hit-dot {
+      fill: #1e1e1e;
+      stroke-width: 2;
+      opacity: 0;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__hit-dot.is-visible {
+      opacity: 1;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__hit-dot--kgi {
+      stroke: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__hit-dot--kpi {
+      stroke: #f00;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__guide-v.is-visible {
+      opacity: 0.65;
+    }

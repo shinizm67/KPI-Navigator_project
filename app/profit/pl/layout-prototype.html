@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PL レイアウト試作 | KPI Navigator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pl-cyan: #58e1f3;
+      --pl-green: #0f9403;
+      --pl-panel-bg: #0a1418;
+      --pl-major-w: 36px;
+      --pl-mid-w: 32px;
+      --pl-minor-w: 200px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #050a0c;
+      color: var(--pl-cyan);
+      font-family: 'Orbitron', sans-serif;
+    }
+    .proto-header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px 16px 8px;
+    }
+    .proto-header h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .proto-header p {
+      margin: 0 0 12px;
+      font-size: 11px;
+      opacity: 0.85;
+      line-height: 1.5;
+      font-family: system-ui, sans-serif;
+    }
+    .proto-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .proto-toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .proto-toolbar select {
+      height: 28px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      background: rgba(8, 18, 22, 0.95);
+      color: var(--pl-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0 8px;
+    }
+    .proto-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border: 1px solid var(--pl-green);
+      color: #b8ffb0;
+      border-radius: 3px;
+    }
+    .proto-back {
+      color: var(--pl-cyan);
+      font-size: 12px;
+      margin-left: auto;
+    }
+
+    /* Insight Summary 風パネル */
+    .pl-panel {
+      position: relative;
+      width: 1100px;
+      max-width: calc(100vw - 24px);
+      margin: 12px auto 48px;
+      padding: 24px 24px 32px 56px;
+      border: 2px solid var(--pl-green);
+      background: var(--pl-panel-bg);
+      min-height: 400px;
+    }
+
+    /* 縦書き — Insight Summary と同型（頭←腹→） */
+    .pl-v-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: var(--pl-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .pl-v-label--major {
+      width: var(--pl-major-w);
+      min-width: var(--pl-major-w);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .pl-v-label--mid {
+      width: var(--pl-mid-w);
+      min-width: var(--pl-mid-w);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* 収入ブロック */
+    .pl-income-block {
+      position: relative;
+      display: grid;
+      grid-template-columns: var(--pl-major-w) 1fr;
+      column-gap: 0;
+      margin-bottom: 28px;
+    }
+    .pl-income-block .pl-v-label--major {
+      grid-row: 1 / -1;
+      align-self: stretch;
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      background: rgba(88, 225, 243, 0.06);
+    }
+    .pl-income-rows {
+      padding-left: 20px;
+    }
+    .pl-data-row {
+      display: grid;
+      grid-template-columns: var(--pl-minor-w) 1fr 1fr;
+      column-gap: 16px;
+      align-items: center;
+      min-height: 40px;
+    }
+    .pl-data-row + .pl-data-row { margin-top: 15px; }
+    .pl-data-row--vs-top + .pl-data-row--vs { margin-top: 31px; }
+    .pl-h-label {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 400;
+      text-align: center;
+      position: relative;
+      left: 8px;
+    }
+    .pl-h-label--primary {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .pl-value-box {
+      border: 1px solid var(--pl-cyan);
+      background: rgba(88, 225, 243, 0.44);
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .pl-value-box--lg {
+      height: 60px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .pl-value-box--neg {
+      color: #ffb4b4;
+    }
+
+    /* KPI 折りたたみ */
+    .pl-kpi-block {
+      margin: 0 0 20px calc(var(--pl-major-w) + 20px);
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      background: rgba(88, 225, 243, 0.04);
+    }
+    .pl-kpi-toggle {
+      width: 100%;
+      margin: 0;
+      padding: 8px 12px;
+      border: 0;
+      border-bottom: 1px solid rgba(88, 225, 243, 0.25);
+      background: rgba(88, 225, 243, 0.1);
+      color: var(--pl-cyan);
+      font-family: inherit;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .pl-kpi-body {
+      padding: 12px 16px;
+    }
+    .pl-kpi-body.is-collapsed { display: none; }
+    .pl-kpi-row {
+      display: grid;
+      grid-template-columns: 200px 120px;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .pl-kpi-row:last-child { margin-bottom: 0; }
+
+    /* 利益 — 常時 */
+    .pl-profit-block {
+      margin: 0 0 32px calc(var(--pl-major-w) + 20px);
+      padding: 12px 16px;
+      border: 2px solid rgba(15, 148, 3, 0.7);
+      background: rgba(15, 148, 3, 0.08);
+    }
+    .pl-profit-block .pl-data-row {
+      grid-template-columns: 200px 1fr 120px;
+    }
+
+    /* 支出テーブル */
+    .pl-expense-scroll {
+      overflow-x: auto;
+      margin-left: 0;
+    }
+    .pl-expense-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      min-width: 720px;
+    }
+    .pl-expense-table th,
+    .pl-expense-table td {
+      border: 0.5px solid rgba(88, 225, 243, 0.35);
+      padding: 6px 8px;
+      vertical-align: middle;
+      background: #0a1418;
+    }
+    .pl-expense-table thead th {
+      background: #12252b;
+      text-align: center;
+      font-weight: 600;
+    }
+    .pl-expense-table .pl-num,
+    .pl-expense-table .pl-pct {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .pl-expense-table td.pl-v-cell {
+      padding: 0;
+      text-align: center;
+      background: rgba(88, 225, 243, 0.06);
+    }
+    .pl-expense-table td.pl-v-cell--major {
+      background: rgba(88, 225, 243, 0.1);
+    }
+    .pl-expense-table td.pl-v-cell--mid {
+      background: rgba(88, 225, 243, 0.07);
+    }
+    .pl-h-detail {
+      text-align: left;
+      font-weight: 400;
+      min-width: var(--pl-minor-w);
+    }
+    .pl-h-detail--edit {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pl-edit-icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(88, 225, 243, 0.5);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.12);
+      color: var(--pl-cyan);
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+      cursor: default;
+    }
+    .pl-add-row td {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(88, 225, 243, 0.7);
+      background: rgba(88, 225, 243, 0.03);
+    }
+    .pl-add-btn {
+      border: 1px dashed rgba(88, 225, 243, 0.45);
+      background: transparent;
+      color: var(--pl-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="proto-header">
+    <h1>PL レイアウト試作（飲食店 v1）</h1>
+    <p>
+      Insight › Summary の縦書き（頭←腹→）に合わせたラベル試作です。数値は <code>excel/PL表例4.pdf</code> の1月サンプル。
+      本番実装前の確認用 — <span class="proto-badge">PROTOTYPE</span>
+    </p>
+    <div class="proto-toolbar">
+      <label>年度
+        <select aria-label="年度"><option selected>2024</option></select>
+      </label>
+      <label>業態
+        <select aria-label="業態"><option selected>飲食店</option></select>
+      </label>
+      <label>表示月
+        <select aria-label="月"><option selected>1月</option></select>
+      </label>
+      <a class="proto-back" href="index.html">← 現行 PL 表へ</a>
+    </div>
+  </header>
+
+  <main class="pl-panel" aria-label="PL レイアウト試作">
+    <!-- 【収入】大=縦 / 小=横 -->
+    <section class="pl-income-block" aria-label="収入">
+      <div class="pl-v-label pl-v-label--major" aria-hidden="true">収入</div>
+      <div class="pl-income-rows">
+        <div class="pl-data-row pl-data-row--vs-top">
+          <p class="pl-h-label pl-h-label--primary">総収入</p>
+          <div class="pl-value-box pl-value-box--lg">¥4,982,374</div>
+          <div class="pl-value-box pl-value-box--lg">100.00%</div>
+        </div>
+        <div class="pl-data-row pl-data-row--vs">
+          <p class="pl-h-label pl-h-label--primary">総支出</p>
+          <div class="pl-value-box pl-value-box--lg">¥6,540,459</div>
+          <div class="pl-value-box pl-value-box--lg">131.27%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI（折りたたみ可） -->
+    <section class="pl-kpi-block" aria-label="支出の健康診断">
+      <button type="button" class="pl-kpi-toggle" id="kpi-toggle" aria-expanded="true" aria-controls="kpi-body">
+        ▼ 健康診断（食材原価率・労働分配率・FL・粗利）
+      </button>
+      <div class="pl-kpi-body" id="kpi-body">
+        <div class="pl-kpi-row"><span>食材原価率</span><span>37.86%</span></div>
+        <div class="pl-kpi-row"><span>労働分配率（人件費）</span><span>43.11%</span></div>
+        <div class="pl-kpi-row"><span>FL率</span><span>53.68%</span></div>
+        <div class="pl-kpi-row"><span>粗利益率</span><span>46%</span></div>
+      </div>
+    </section>
+
+    <!-- 利益 — 常時 Open -->
+    <section class="pl-profit-block" aria-label="利益">
+      <div class="pl-data-row">
+        <p class="pl-h-label pl-h-label--primary">利益</p>
+        <div class="pl-value-box pl-value-box--neg">(¥1,558,085)</div>
+        <div class="pl-value-box pl-value-box--neg">-31.27%</div>
+      </div>
+    </section>
+
+    <!-- 【支出】大=縦 / 中=縦(Fix,Expected) / 小=横 -->
+    <section class="pl-expense-scroll" aria-label="支出明細">
+      <table class="pl-expense-table">
+        <thead>
+          <tr>
+            <th colspan="3" scope="colgroup">科目</th>
+            <th scope="col">金額</th>
+            <th scope="col">売上比</th>
+          </tr>
+        </thead>
+        <tbody id="expense-body">
+          <!-- JS で rowspan 付き tbody を生成 -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var FIXED = [
+        { id: 'rent', label: '家賃◉', amt: '¥696,429', pct: '13.98%', occupancy: 'rent' },
+        { id: 'asset_tax', label: '償却資産税', amt: '¥17,860', pct: '0.36%', occupancy: 'owned' },
+        { id: 'labor_staff', label: '人件費(社員)', amt: '¥1,359,735', pct: '27.29%' },
+        { id: 'depreciation', label: '減価償却費（想定）', amt: '¥220,485', pct: '4.43%' },
+        { id: 'shop_insurance', label: '店舗用損害賠償保険', amt: '¥19,120', pct: '0.38%' }
+      ];
+      var VARIABLE = [
+        { id: 'food', label: '食材仕入費', amt: '¥1,886,544', pct: '37.86%' },
+        { id: 'drink', label: 'ドリンク仕入費', amt: '¥486,956', pct: '9.77%' },
+        { id: 'petty', label: '雑費（小口・小物）', amt: '¥66,179', pct: '1.33%' },
+        { id: 'electric', label: '電気代', amt: '¥174,792', pct: '3.51%' },
+        { id: 'gas', label: 'ガス代', amt: '¥112,613', pct: '2.26%' },
+        { id: 'water', label: '水道代', amt: '¥45,267', pct: '0.91%' },
+        { id: 'card_fee', label: 'クレジットカード手数料', amt: '¥59,471', pct: '1.19%' },
+        { id: 'labor_pt', label: 'アルバイト人件費', amt: '¥788,242', pct: '15.82%' },
+        { id: 'ad', label: '広告宣伝費', amt: '¥27,500', pct: '0.55%' },
+        { id: 'telecom', label: '通信費', amt: '¥13,346', pct: '0.27%' },
+        { id: 'emp_ins', label: '雇用保険料', amt: '¥16,242', pct: '0.33%' },
+        { id: 'workers_comp', label: '労災保険料', amt: '¥11,675', pct: '0.23%' },
+        { id: 'consumption_tax', label: '消費税（想定）', amt: '¥108,225', pct: '2.17%' }
+      ];
+
+      function detailCell(label) {
+        return (
+          '<td class="pl-h-detail pl-h-detail--edit">' +
+          '<span class="pl-edit-icon" title="ラベル編集可">✎</span>' +
+          '<span>' + label + '</span></td>'
+        );
+      }
+
+      function renderExpenses(occupancy) {
+        var fixed = FIXED.filter(function (r) {
+          if (r.occupancy === 'rent') return occupancy === 'rent';
+          if (r.occupancy === 'owned') return occupancy === 'owned';
+          return true;
+        });
+        var totalRows = fixed.length + 1 + VARIABLE.length + 1;
+        var html = '';
+        var rowIndex = 0;
+
+        fixed.forEach(function (r, i) {
+          html += '<tr>';
+          if (rowIndex === 0) {
+            html +=
+              '<td class="pl-v-cell pl-v-cell--major" rowspan="' +
+              totalRows +
+              '"><span class="pl-v-label pl-v-label--major">Expenses</span></td>';
+          }
+          if (i === 0) {
+            html +=
+              '<td class="pl-v-cell pl-v-cell--mid" rowspan="' +
+              (fixed.length + 1) +
+              '"><span class="pl-v-label pl-v-label--mid">Fix</span></td>';
+          }
+          html += detailCell(r.label);
+          html += '<td class="pl-num">' + r.amt + '</td><td class="pl-pct">' + r.pct + '</td></tr>';
+          rowIndex++;
+        });
+
+        html += '<tr class="pl-add-row"><td colspan="1"></td>';
+        html += '<td colspan="3"><button type="button" class="pl-add-btn">＋ 固定費の行を追加</button></td></tr>';
+        rowIndex++;
+
+        VARIABLE.forEach(function (r, i) {
+          html += '<tr>';
+          if (i === 0) {
+            html +=
+              '<td class="pl-v-cell pl-v-cell--mid" rowspan="' +
+              (VARIABLE.length + 1) +
+              '"><span class="pl-v-label pl-v-label--mid">Expected</span></td>';
+          }
+          html += detailCell(r.label);
+          html += '<td class="pl-num">' + r.amt + '</td><td class="pl-pct">' + r.pct + '</td></tr>';
+          rowIndex++;
+        });
+
+        html += '<tr class="pl-add-row"><td colspan="1"></td>';
+        html += '<td colspan="3"><button type="button" class="pl-add-btn">＋ 変動費の行を追加</button></td></tr>';
+
+        document.getElementById('expense-body').innerHTML = html;
+      }
+
+      renderExpenses('rent');
+
+      var kpiBtn = document.getElementById('kpi-toggle');
+      var kpiBody = document.getElementById('kpi-body');
+      kpiBtn.addEventListener('click', function () {
+        var collapsed = kpiBody.classList.toggle('is-collapsed');
+        kpiBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        kpiBtn.textContent = (collapsed ? '▶ ' : '▼ ') + '健康診断（食材原価率・労働分配率・FL・粗利）';
+      });
+    })();
+  </script>
+</body>
+</html>

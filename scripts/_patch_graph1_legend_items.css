@@ -1,0 +1,15 @@
+
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kgi {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kpi {
+      color: #f00;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kgi .insight-graph-monthly-trend__legend-swatch {
+      margin-left: 133px;
+      background: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kpi .insight-graph-monthly-trend__legend-swatch {
+      margin-left: 133px;
+      background: #f00;
+    }

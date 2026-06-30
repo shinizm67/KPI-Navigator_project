@@ -1,0 +1,217 @@
+
+    /* Graph tab — Monthly: Cumulative Trend 折れ線（docs/insight-graph-cumulative-trend-line-chart.md） */
+    .insight-pane--graph .insight-graph-monthly-trend {
+      position: absolute;
+      left: 185px;
+      top: var(--insight-graph-monthly-trend-top);
+      width: var(--insight-graph-monthly-trend-frame-w);
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__heading {
+      margin: 0 0 var(--insight-graph-monthly-trend-heading-gap);
+      padding: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__frame {
+      position: relative;
+      width: var(--insight-graph-monthly-trend-frame-w);
+      height: var(--insight-graph-monthly-trend-frame-h);
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      background: #1e1e1e;
+      pointer-events: auto;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__period {
+      position: absolute;
+      left: 432px;
+      top: 27px;
+      margin: 0;
+      color: #58e1f3;
+      font-size: 23px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__chart {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__axis-label {
+      fill: #58e1f3;
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__line--kgi {
+      fill: none;
+      stroke: #58e1f3;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__line--kpi {
+      fill: none;
+      stroke: #f00;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__hover-band {
+      fill: transparent;
+      stroke: none;
+      cursor: crosshair;
+      pointer-events: all;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__endpoint-label {
+      position: absolute;
+      margin: 0;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__endpoint-label--kgi {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__endpoint-label--kpi {
+      color: #f00;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item + .insight-graph-monthly-trend__legend-item {
+      margin-top: 8px;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kgi {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kpi {
+      color: #f00;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-swatch {
+      flex: 0 0 40px;
+      width: 40px;
+      height: 1px;
+      margin-right: 12px;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kgi .insight-graph-monthly-trend__legend-swatch {
+      margin-left: 133px;
+      background: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__legend-item--kpi .insight-graph-monthly-trend__legend-swatch {
+      margin-left: 133px;
+      background: #f00;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__achievement {
+      position: absolute;
+      right: 18px;
+      bottom: 73px;
+      width: 400px;
+      height: 45px;
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      display: grid;
+      grid-template-columns: 280px 115px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__achievement-label,
+    .insight-pane--graph .insight-graph-monthly-trend__achievement-value {
+      margin: 0;
+      padding: 0 8px;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__achievement-label {
+      border-right: 1px solid #0f9403;
+      text-align: left;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__achievement-value {
+      text-align: center;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip {
+      position: absolute;
+      z-index: 6;
+      min-width: 200px;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      background: rgba(30, 30, 30, 0.96);
+      color: #58e1f3;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.35;
+      font-family: 'Orbitron', sans-serif;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip.is-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-row {
+      margin: 0;
+    }
+    .insight-pane--graph .insight-graph-monthly-trend__tooltip-row + .insight-graph-monthly-trend__tooltip-row {
+      margin-top: 2px;
+    }
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__heading,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__period,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__axis-label,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__endpoint-label,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__achievement-label,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__achievement-value,
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__tooltip {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__frame {
+      border-color: #2a2a2a;
+      background: #e8e8e8;
+    }
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__achievement {
+      border-color: #2a2a2a;
+    }
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__achievement-label {
+      border-right-color: #2a2a2a;
+    }
+    .office-mode .insight-pane--graph .insight-graph-monthly-trend__tooltip {
+      background: #fff;
+      border-color: #2a2a2a;
+    }
