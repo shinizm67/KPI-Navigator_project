@@ -93,7 +93,8 @@ PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
             recomputeModalDirty();
             syncUndoButton();
             renderPastSalesTable();
-            if (typeof updateSalesDataSummary === 'function') updateSalesDataSummary();
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
           },
         });
       }"""
@@ -179,16 +180,18 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 PSM_CSV_STUB_RE = re.compile(
     r"if \(btnCsv\) \{\n"
     r"        btnCsv\.addEventListener\('click', function \(\) \{\n"
-    r"          window\.alert\(MSG_CSV_STUB\);\n"
+    r"          window\.alert\((?:MSG_CSV_STUB|isJa \? '[^']*' : '[^']*')\);\n"
     r"        \}\);\n"
     r"      \}",
     re.MULTILINE,
 )
 
 
-def replace_modal_csv_stub(text: str, btn_anchor: str, new: str, label: str) -> str:
+def replace_modal_csv_stub(text: str, btn_anchor: str, new: str, label: str, *, optional: bool = False) -> str:
     idx = text.find(btn_anchor)
     if idx < 0:
+        if optional:
+            return text
         raise SystemExit(f"js anchor missing ({label})")
     tail = text[idx:]
     m = PSM_CSV_STUB_RE.search(tail)
@@ -246,6 +249,7 @@ def patch_annual_page(path: Path) -> None:
         "var btnCsv = document.getElementById('sales-data-modal-csv');",
         SDM_CSV_NEW,
         "sales data csv",
+        optional=True,
     )
     path.write_text(text, encoding="utf-8")
     print(f"wrote {path.relative_to(ROOT)}")

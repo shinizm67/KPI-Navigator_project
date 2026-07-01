@@ -70,6 +70,73 @@ MONTHLY_TARGET_SEED_JA_NEW = """      if (window.__ANNUAL_UI && typeof window.__
 MONTHLY_TARGET_SEED_EN_OLD = MONTHLY_TARGET_SEED_JA_OLD
 MONTHLY_TARGET_SEED_EN_NEW = MONTHLY_TARGET_SEED_JA_NEW
 
+ANNUAL_TARGET_SEED_JA_OLD = """    (function () {
+      var targetEl = document.getElementById('annual-target-sales-value');
+      if (!targetEl) return;
+      var fallback = 652528.55;
+      var raw = fallback;
+      if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.targetSales != null) {
+        raw = window.__ANNUAL_DATA.targetSales;
+      }
+      if (typeof raw === 'number' && Number.isFinite(raw)) {
+        targetEl.textContent = '¥' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else {
+        targetEl.textContent = String(raw);
+      }
+    })();"""
+
+ANNUAL_TARGET_SEED_JA_NEW = """    (function () {
+      if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function') {
+        window.__ANNUAL_UI.syncCockpitForCalendarYear();
+      }
+    })();"""
+
+ANNUAL_TARGET_SEED_EN_OLD = """    (function () {
+      var targetEl = document.getElementById('annual-target-sales-value');
+      if (!targetEl) return;
+      var fallback = 652528.55;
+      var raw = fallback;
+      if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.targetSales != null) {
+        raw = window.__ANNUAL_DATA.targetSales;
+      }
+      if (typeof raw === 'number' && Number.isFinite(raw)) {
+        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else {
+        targetEl.textContent = String(raw);
+      }
+    })();"""
+
+ANNUAL_TARGET_SEED_EN_NEW = ANNUAL_TARGET_SEED_JA_NEW
+
+COMMIT_REFERENCE_OLD = """      function commitReferenceForYear(y) {
+        if (!isFinite(y)) return;
+        var ps = ensurePastSalesDaily();
+        ps.referenceAnnualSalesByYear = ps.referenceAnnualSalesByYear || {};
+        var parsed = getReferenceFromInputEl();
+        if (parsed == null) {
+          delete ps.referenceAnnualSalesByYear[String(y)];
+        } else {
+          ps.referenceAnnualSalesByYear[String(y)] = parsed;
+        }
+        persistPastSalesShared();
+      }"""
+
+COMMIT_REFERENCE_NEW = """      function commitReferenceForYear(y) {
+        if (!isFinite(y)) return;
+        var ps = ensurePastSalesDaily();
+        ps.referenceAnnualSalesByYear = ps.referenceAnnualSalesByYear || {};
+        var parsed = getReferenceFromInputEl();
+        if (parsed == null) {
+          delete ps.referenceAnnualSalesByYear[String(y)];
+        } else {
+          ps.referenceAnnualSalesByYear[String(y)] = parsed;
+        }
+        persistPastSalesShared();
+        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
+          detail: { year: y, targetSales: parsed, source: 'past-sales-reference' }
+        }));
+      }"""
+
 
 def inject_cockpit_sync(text: str) -> str:
     block = cockpit_year_sync_js().rstrip() + "\n"
@@ -118,6 +185,17 @@ def patch_file(path: Path) -> None:
             text = text.replace(MONTHLY_TARGET_SEED_JA_OLD, MONTHLY_TARGET_SEED_JA_NEW, 1)
         elif seed_marker in text and "syncCockpitForCalendarYear();" not in text.split(seed_marker)[1].split("})();")[0]:
             print(f"warn: monthly target seed patch skipped in {path.name}", file=sys.stderr)
+    if "annual" in str(path):
+        if ANNUAL_TARGET_SEED_JA_OLD in text:
+            text = text.replace(ANNUAL_TARGET_SEED_JA_OLD, ANNUAL_TARGET_SEED_JA_NEW, 1)
+        elif ANNUAL_TARGET_SEED_EN_OLD in text:
+            text = text.replace(ANNUAL_TARGET_SEED_EN_OLD, ANNUAL_TARGET_SEED_EN_NEW, 1)
+        elif "syncCockpitForCalendarYear();" not in text:
+            print(f"warn: annual target seed patch skipped in {path.name}", file=sys.stderr)
+        if COMMIT_REFERENCE_OLD in text:
+            text = text.replace(COMMIT_REFERENCE_OLD, COMMIT_REFERENCE_NEW, 1)
+        elif "source: 'past-sales-reference'" not in text:
+            print(f"warn: commitReferenceForYear patch skipped in {path.name}", file=sys.stderr)
     path.write_text(text, encoding="utf-8")
     print(f"wrote {path.relative_to(ROOT)}")
 

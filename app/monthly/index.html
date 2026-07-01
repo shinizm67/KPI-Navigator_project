@@ -17189,7 +17189,7 @@ Target Sales</p>
         });
       })();
 
-            /* KPI-COCKPIT-YEAR-SYNC */
+                  /* KPI-COCKPIT-YEAR-SYNC */
       (function () {
         var MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
         var DEFAULT_HL_WEIGHTS = [85, 85, 100, 110, 120, 85, 100, 100, 100, 110, 110, 115];
@@ -17346,6 +17346,15 @@ Target Sales</p>
             var dom = parseTargetFromDom();
             if (dom != null) return dom;
           }
+          var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
+          if (
+            past &&
+            past.referenceAnnualSalesByYear &&
+            past.referenceAnnualSalesByYear[year] != null
+          ) {
+            var pastTarget = Number(past.referenceAnnualSalesByYear[year]);
+            if (Number.isFinite(pastTarget) && pastTarget > 0) return pastTarget;
+          }
           return null;
         }
 
@@ -17473,39 +17482,7 @@ Target Sales</p>
         document.addEventListener('annual:calendarYearChanged', function () {
           syncCockpitForCalendarYear();
         });
-        /* KPI-READ-SURFACE-SYNC */
-      document.addEventListener('kpi:readSurfacesRefresh', function () {
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
-        }
-        invalidateMonthlyMepMetricsCache();
-        var keepIso =
-          currentFocusIso ||
-          readDailySelectedIso() ||
-          toISODateLocal(new Date(state.year, state.month0, 1));
-        rebuildColumns();
-        scheduleScroll(keepIso);
-      });
-      window.addEventListener('storage', function (ev) {
-        if (!ev || !ev.key) return;
-        if (
-          ev.key === 'kpiNavigator.kpiYearStore' ||
-          ev.key === 'kpiNavigator.annualDailyShared' ||
-          ev.key === 'kpiNavigator.pastSalesShared'
-        ) {
-          if (window.KpiYearStore && typeof KpiYearStore.reload === 'function') {
-            KpiYearStore.reload();
-          }
-          invalidateMonthlyMepMetricsCache();
-          var isoKeep =
-            currentFocusIso ||
-            readDailySelectedIso() ||
-            toISODateLocal(new Date(state.year, state.month0, 1));
-          rebuildColumns();
-          scheduleScroll(isoKeep);
-        }
-      });
-      document.addEventListener('annual:salesMapChanged', function () {
+        document.addEventListener('annual:salesMapChanged', function () {
           syncCockpitForCalendarYear();
         });
         document.addEventListener('annual:businessDayMapChanged', function () {
@@ -17514,11 +17491,12 @@ Target Sales</p>
         document.addEventListener('kpi:annualPlanChanged', function () {
           syncCockpitForCalendarYear();
         });
-        document.addEventListener('kpi:dailySalesChanged', function () {
+        document.addEventListener('annual:targetSalesChanged', function () {
           syncCockpitForCalendarYear();
         });
-
-        // Monthly page runs this block before year picker + target-sales seed IIFEs.
+        document.addEventListener('annual:pastSalesSaved', function () {
+          syncCockpitForCalendarYear();
+        });
         // Defer so calendarYear, __ANNUAL_DATA.targetSales, and DOM fallbacks exist.
         function scheduleInitialCockpitSync() {
           setTimeout(function () {

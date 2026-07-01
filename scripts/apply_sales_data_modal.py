@@ -209,6 +209,13 @@ def transform_js(block: str) -> str:
         var v = daily.referenceAnnualSales;
         if (v == null || !isFinite(Number(v))) return null;
         return Math.round(Number(v));
+      }
+
+      function getReferenceFromInputEl() {
+        if (!summaryReferenceInput) return null;
+        var parsed = parseSalesInputRaw(summaryReferenceInput);
+        if (parsed == null || !isFinite(parsed) || parsed <= 0) return null;
+        return Math.round(parsed);
       }""",
         block,
         count=1,

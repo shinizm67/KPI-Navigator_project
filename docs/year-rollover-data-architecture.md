@@ -36,7 +36,7 @@ KPI Navigator のコアは「ユーザーと一緒に作る年間月次 KPI」�
 
 | 課題 | 現状 |
 |------|------|
-| Sales Data → Past Sales の自動引き継ぎ | **なし** |
+| Sales Data → Past Sales の自動引き継ぎ | **なし**（Phase **1b** / Sales Data plan §11 で実装予定） |
 | 年次目標売上の年別永続化 | **なし**（メモリ + 未接続フック） |
 | 繁閑期%の永続化 | **なし**（Cockpit DOM 編集のみ） |
 | 入力面の正本統一 | `annualDailyShared` と `pastSalesShared` が**別箱・移行ルールなし** |
@@ -49,6 +49,22 @@ KPI Navigator のコアは「ユーザーと一緒に作る年間月次 KPI」�
 - 「入力面」と「保存面」を分離する（UI は複数、正本は一つ）。
 - 「今年」と「過去」は**ビューの切り替え**であり、別ストアへの手動コピーではない。
 - 年跨ぎ時は**移動ではなく確定（ロック）+ 当年バケットの初期化**とする。
+
+### 1.6 年跨ぎ時の Sales Data → Past Sales 引き継ぎ（合意・2026-07）
+
+**プロダクト期待（ユーザー合意）:**
+
+- 例: **2027 年運用開始**時、**2026 年に Sales Data（当年窓）で入力・Save 済みの日次売上・営業日・年次目標**は、**再入力なし**で **Past Sales Data の 2026 年**として参照・編集できること。
+- 窓は **Sales Data（当年）** と **Past Sales（過去年）** の 2 つだが、正本は **単一 `timeline` / `KpiYearStore`**。年跨ぎは**別ストアへの手動コピーではない**。
+- 当年データは `years.{operatingYear}` に確定し、翌年の `operatingYear` 切替後は **過去年ビュー（Past Sales・MEP・Focus Bar）** から同じ ISO の事実が読めること。
+
+**実装タイミング:** **Sales Data 窓 Phase**（`docs/annual-current-year-sales-floating-window-plan.md` §11）+ **Phase 1b**（本表）。Past Sales Input 単体では行わない。
+
+**受け入れ（Phase 1b 完了時）:**
+
+- [ ] 12/31 まで Sales Data で Save した年が、翌年 1/1 以降 Past Sales の当該年セレクタで開ける
+- [ ] 日次売上・営業日チェック・年間目標が Sales Data 保存時点と一致（`timeline` 正本）
+- [ ] ユーザーによる再 CSV / 再手入力は不要（補正は Past Sales から可能）
 
 **本基盤が無い限り、Annual / Monthly でいくら数値を入力しても意味がなく、アプリは完成しない。**  
 KPI の提案・過去との比較グラフという強みは、すべてこのデータの一貫性に依存する。
@@ -533,6 +549,7 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | **P0** | **`KpiYearStore` + `timeline` + マイグレーション + 全入力面を API 経由に** | — | ✅ |
 | **P0** | **時系列ナビ（スクロール・カレンダージャンプ・selectedDate 共有）** Annual + Monthly | P0 Store | ✅ |
 | **1** | `maybeRolloverYear()` + `observed` 算出 | P0 | ✅ |
+| **1b** | **年跨ぎ — Sales Data → Past Sales 自動引き継ぎ**（詳細 §1.6） | 1 + Sales Data 窓 Save 経路 | ⬜ |
 | **2** | `annualPlan` 保存 + Cockpit 繁閑% read-only | P0 | 🟡 |
 | **3** | **複数年 `observed` → Seasonality % 算出** + Sales Data Analyze 表示 + plan 繁閑% ▲▼ 5% 初期値（詳細 §15-C） | 1 | ✅ |
 | **4** | MEP `dailyExpenses` / `dailyMeta` 永続化 | P0 | ✅ |

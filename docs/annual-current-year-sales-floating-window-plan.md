@@ -189,6 +189,21 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 ---
 
+## 11. Sales Data Phase — 年跨ぎ引き継ぎ（Step）
+
+**正本:** `docs/year-rollover-data-architecture.md` **§1.6** · Phase **1b**
+
+| Step | 内容 | 状態 |
+|------|------|------|
+| **SD-R1** | Sales Data 窓で当年の日次売上・営業日・年次目標を `KpiYearStore` / `timeline` に Save | 🟡 窓本体は接続済み・経路要確認 |
+| **SD-R2** | `maybeRolloverYear()` 実行時、前年 `years.{Y}` を lock + `observed` 確定 | ✅ Phase 1 |
+| **SD-R3** | 翌年開始後、Past Sales の年セレクタ **Y** で前年データが再入力なしで表示 | ⬜ Phase 1b |
+| **SD-R4** | MEP / Focus Bar / Analyze が同じ `timeline` ISO を参照（Phase 8 連携） | 🟡 |
+
+**ユーザー合意（2026-07）:** 2027 運用時、2026 の Sales Data 内容は Past Sales 2026 にそのまま現れる。再入力不要。
+
+---
+
 ## 10. 変更履歴
 
 | 日付 | 内容 |

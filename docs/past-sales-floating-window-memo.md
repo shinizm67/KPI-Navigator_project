@@ -32,7 +32,9 @@
 
 - 過去売上と今年の実績は **別データストア・別 Floating Window**（混在させない）。
 - Past Sales 永続化: `kpiNavigator.pastSalesShared`（§11）。今年 Edit は `kpiNavigator.annualDailyShared`。
-- CSV 取込は別フェーズ（§13 未実装一覧）。
+- CSV 取込は **実装済み**（`scripts/apply_daily_sales_import.py` → `window.__KPI_DAILY_IMPORT`）。
+- **年セレクタ**: **2000 〜 当年−1**。データがない年はサマリー `—`・日次は未入力状態（手入力 / CSV で追加）。
+- **年跨ぎ引き継ぎ**（例: 2027 開始時に Sales Data の 2026 が Past Sales へ自動反映）: **未実装**。`docs/year-rollover-data-architecture.md` **§1.6** · Phase **1b** · Sales Data plan **§11**。
 
 ---
 
@@ -251,9 +253,9 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 
 | 行 | JA | EN |
 |----|----|----|
-| 1 | 累計入力売上 ｜ 数値 | Cumulative Input Sales ｜ value |
-| 2 | 年間目標売上 ｜ 入力 | Annual Target Sales ｜ `#past-sales-summary-reference`（**`--psm-bg-reference`・左右同色**）。ホバー／フォーカス時にツールチップ（JA: 年間目標売上を設定してください / EN: Please set your annual target sales） |
-| 3 | 残り／入力進捗 ｜ 数値 ｜ % | Remaining / Input Progress ｜ `#past-sales-summary-remaining` ｜ `#past-sales-summary-progress-pct` |
+| 1 | 累計入力売上 ｜ 数値 | Cumulative Input Sales ｜ **年次実質売上額** — **最新の入力日**の Annual Total 列と同値。当該年に売上データなしは `—` |
+| 2 | 年間目標売上 ｜ 入力 | Annual Target Sales ｜ **年次目標売上額** — `referenceAnnualSalesByYear[年]` |
+| 3 | 残り／入力進捗 ｜ 数値 ｜ % | Remaining / Input Progress ｜ **差額** = 目標 − 実質（`formatSignedSummaryAmount`）／**達成率** = 実質 ÷ 目標 × 100（四捨五入 %）。目標未設定または実質なしは `—`。**年切替（◀▶・select）で `updatePastSalesSummary()` を必ず呼ぶ** |
 
 #### サマリー 2 行目のラベル（年間目標売上 / Annual Target Sales）
 
@@ -294,7 +296,7 @@ Import CSV / UNDO / Save は **上端 = 大外枠上から 22px**、**142×40px 
 
 1. **タブ**: Input / Analyze（`setPastSalesTab()`。`data-psm-tab` は `#past-sales-modal-body` と `.past-sales-modal__panel` に同期）
 2. **サマリー** 3 行（§6）
-3. **年・月バー**（2 セル。年は **当年−1 〜 当年−10** を select 生成）
+3. **年・月バー**（2 セル。年は **2000 〜 当年−1** を select 生成。データ未入力年はサマリー `—`・日次表は空状態。手入力 or CSV で追加）
 4. **列見出し** 5 列: Date | B. DAY | Sales | Monthly Total | Annual Total
 5. **スクロール域**: `#past-sales-modal-table`（365/366 行。縦月は **表内** の rowspan 列）
 
@@ -327,13 +329,28 @@ Import CSV / UNDO / Save は **上端 = 大外枠上から 22px**、**142×40px 
 - **Clear filter** / Esc（パネル開時）/ 外側クリックでパネル閉じ
 - 参照: `#annual-edit-modal` の `getDateFilteredRowItems()` / `dayPassesFilter()` 同等ロジック
 
+### 9.0 未入力年の B.DAY チェック初期状態（確定・2026-07）
+
+**採用: 全行チェック OFF（後者）**
+
+| 案 | 内容 | 判定 |
+|----|------|------|
+| A | 平日 ON / 土日 OFF（暦日テンプレ） | 未採用 — 「データなし」と「平日営業」が混同しやすい |
+| B | **当該年に Save / CSV / 手入力が無い日はすべて OFF** | **採用** — 空の年が一目で分かる。一括 ON は **Select all** で対応 |
+
+- `businessDayByDate` / `salesByDate` / `rowStateByIso` のいずれにも無い日 → `{ off: true }`（`baseRowDefaults`）
+- **未コミット年**（当該年の `salesByDate` が 1 件も無い年 — **2022 年以前を含む**）は `businessDayByDate` のみがあっても **全行 OFF**（Store 由来の幽霊営業日を無視）
+- **コミット済み**＝その年に `salesByDate` がある、またはモーダル内で未 Save の行編集（`rowStateByIso`）がある
+- CSV 取込・手入力・Save 後は保存値どおり
+- 土日を営業日にする店は CSV または手動で ON
+
 ### 9.2 行のアクティブ／非アクティブ（Annual Edit と同一ルール）
 
 - クラス: `.past-sales-modal__row--off`（B.DAY チェック **OFF** = 非営業日）
 - **アクティブ**（チェック ON）: 行背景は列ごと（日付・月次/年次合計 = `--psm-bg-inactive`、B.DAY・売上 = `--psm-bg-active-55`）。売上・月次合計・年間合計に数値を表示（売上未入力は `—`、累計 0 は `$0` / `0`）
 - **非アクティブ**（チェック OFF）: 行全体 `--psm-row-off-fill`（Annual の `--aem-row-off-fill` と同値 22%）。縦月セルのみ `--psm-bg-inactive` のまま。日付末尾に **OFF**。売上・月次合計・年間合計はすべて **`—`**
 - **CSS 注意**: 列クラス（`.past-sales-modal__cb-td` 等）の `background` が `.row--off` より後に書かれると非アクティブ色が効かない。`:not(.row--off)` / `.row--off` を列ルールの**後**に置く（2026-05-20 修正）
-- OFF にする前の売上は `data-last-active` に退避。再度 ON にすると復元（未入力時は Annual Edit 同様デモ値 `1234`）
+- OFF にする前の売上は `data-last-active` に退避。再度 ON にすると復元（未入力時は **0**）
 - JS: `pastSalesRowApplyOffState()` / `applyPastSalesTotalsToTable()`。**`change` / `input` は `#past-sales-modal-table` に1回だけ委譲**
 
 ### 9.1 縦月セル（Annual Edit と同一仕様）
@@ -412,8 +429,19 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 |------|------|
 | 起動ボタン | `openModal()` — 年・月 select を組み立て、`sessionSaved = false`、`undoStack = []` |
 | 月変更 / ◀︎▶︎ | `scrollToViewMonth()` |
-| Import CSV | `alert` スタブ |
 | 売上入力 | `input` で累計リアルタイム更新、`change` で UNDO スナップショット + フォーマット |
+
+### Import CSV（Input タブ）
+
+| 項目 | 内容 |
+|------|------|
+| 実装 | `scripts/daily_sales_import_client.py` → `window.__KPI_DAILY_IMPORT`（MEP / Annual Edit と共通） |
+| 対応形式 | `.csv` / `.txt` / `.tsv` / `.xlsx` / `.xls` |
+| 列検出 | 1 行目ヘッダーから **日付**（date / 日付 等）・**営業日**（任意）・**売上**（sales / 売上 等）を自動認識 |
+| 適用範囲 | **表示中の年**の行のみ `rowStateByIso` に反映（確認ダイアログあり） |
+| 取込後 | `renderPastSalesTable()` + `updatePastSalesSummary()` + `refreshPastSalesTableTotals()`。UNDO 可。**Save するまで localStorage には書かない** |
+| 営業日列なし | 売上 > 0 を営業日、それ以外を店休として扱う |
+
 
 ---
 
@@ -485,7 +513,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 ### 未実装・別フェーズ
 - [ ] Input タブ Sales 列 ▼ ソート
-- [ ] CSV 取込
+- [x] CSV 取込（`__KPI_DAILY_IMPORT` — MEP と同型。日付・営業日・売上列を自動検出）
 - [ ] Focus Bar / Monthly への過去売上反映（イベント受け側）
 - [ ] Focus Bar Edit 廃止（今年窓安定後）
 
@@ -495,6 +523,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-02 | §9.0 未入力年 B.DAY 全 OFF 確定。§1 年跨ぎ §1.6 参照 |
 | 2026-06-17 | 年間目標売上ラベル確定、背景色 `--psm-bg-reference` 確定、サマリー折りたたみ、閉じる 3 択統一 |
 | 2026-06-01 | §12 Analyze 確定、左右ボタン・`past_sales_button.svg`、Sales 枠ボタン配置 |
 | 2026-05-31 | 設計メモ整備・今年窓 plan 分離 |

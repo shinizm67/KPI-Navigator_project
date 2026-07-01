@@ -182,6 +182,15 @@ def cockpit_year_sync_js() -> str:
             var dom = parseTargetFromDom();
             if (dom != null) return dom;
           }}
+          var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
+          if (
+            past &&
+            past.referenceAnnualSalesByYear &&
+            past.referenceAnnualSalesByYear[year] != null
+          ) {{
+            var pastTarget = Number(past.referenceAnnualSalesByYear[year]);
+            if (Number.isFinite(pastTarget) && pastTarget > 0) return pastTarget;
+          }}
           return null;
         }}
 
@@ -318,11 +327,12 @@ def cockpit_year_sync_js() -> str:
         document.addEventListener('kpi:annualPlanChanged', function () {{
           syncCockpitForCalendarYear();
         }});
-        document.addEventListener('kpi:dailySalesChanged', function () {{
+        document.addEventListener('annual:targetSalesChanged', function () {{
           syncCockpitForCalendarYear();
         }});
-
-        // Monthly page runs this block before year picker + target-sales seed IIFEs.
+        document.addEventListener('annual:pastSalesSaved', function () {{
+          syncCockpitForCalendarYear();
+        }});
         // Defer so calendarYear, __ANNUAL_DATA.targetSales, and DOM fallbacks exist.
         function scheduleInitialCockpitSync() {{
           setTimeout(function () {{
