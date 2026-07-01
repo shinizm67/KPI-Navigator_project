@@ -1,6 +1,6 @@
 # Past Sales Floating Window（過去売上）実装メモ
 
-更新日: 2026-06-01  
+更新日: 2026-06-17  
 対象: `app/annual/index.html` / `en/app/annual/index.html`（JP / EN 同一構造・同一 CSS 変数。文言・画像パス・`lang` のみ差分）
 
 **関連ドキュメント**
@@ -81,6 +81,7 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | `--psm-line` | `#333`（罫線） |
 | `--psm-bg-inactive` | `rgba(0,0,0,0.06)` |
 | `--psm-bg-active-55` | `rgba(0,0,0,0.10)` |
+| `--psm-bg-reference` | `rgba(0,0,0,0.064)` |
 | `--psm-bg-active-70` | `rgba(0,0,0,0.14)` |
 
 ---
@@ -94,6 +95,7 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | `--psm-bg-inactive` | `rgba(88, 225, 243, 0.44)` | 非アクティブ／閲覧寄り（44%） |
 | `--psm-bg-active-55` | `rgba(88, 225, 243, 0.55)` | 触れる・編集寄り（55%） |
 | `--psm-bg-active-70` | `rgba(88, 225, 243, 0.70)` | 最も強調（70%） |
+| `--psm-bg-reference` | `rgba(88, 225, 243, 0.35)` | **参考年間売上行専用**（active-55 から約 35% 暗く。ラベル・数値 input で同色） |
 
 ### どこにどの透過率を使うか（確定）
 
@@ -102,7 +104,8 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | **Input タブ**（`#past-sales-tab-input.is-active`） | **70%** |
 | **Analyze タブ**（無効・非選択） | 44% |
 | × / Import CSV / UNDO / Save | 44%（ホバー 55%） |
-| サマリー 3 行全体 | 44% |
+| サマリー 1・3 行 | 44% |
+| **サマリー 2 行（参考年間売上）** | **`--psm-bg-reference`（35%）** — ラベル左セルと数値 input 右セルは **必ず同色** |
 | 年セル・月セル（`.past-sales-modal__ym-cell`） | **55%**（セル全体。内部の ◀︎・select・▶︎ に **個別 border なし**） |
 | 年・月セルホバー | 70% |
 | 列見出し **Date** / **Monthly Total** / **Annual Total** | 44% |
@@ -147,7 +150,8 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 |------|-----|
 | Import CSV 下端 → Input タブ上端 | **60px**（`--psm-csv-to-tabs`） |
 | Input タブ上端 | `22 + 40 + 60` = **122px**（`--psm-tab-top`） |
-| Input タブ左端 | 大外枠左から **106px**（`--psm-tab-left`） |
+| Input タブ左端 | 大外枠左から **80px**（`--psm-tab-left`）— **▼/▶︎ 折りたたみボタン（32px）の直右**に Input タブ |
+| サマリー折りたたみ | `#past-sales-summary-toggle` **32×30px**（`--psm-summary-toggle-w` × `--psm-tab-input-h`）。展開 **▼** / 折りたたみ **▶︎**。Analyze タブ時は非表示 |
 | Input（アクティブ） | **131×30px** |
 | Analyze（非アクティブ） | **118×27px** |
 | タブ間隔 | **5px**（`--psm-tab-gap`） |
@@ -168,7 +172,36 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 - `border: 0`（タブ自体に枠線なし）
 - `border-radius: 5px 5px 0 0`（**上左右のみ**角丸、下は直角）
 - タブ下の**横線 1 本**（Insight の `.insight-overlay__divider` 相当）: `.past-sales-modal__summary` の **`border-top: 1px solid #58E1F3`**（サマリー枠の上辺＝ Cumulative Input Sales 行の上端の線）。
-- **二重線を避ける**: `.past-sales-modal__tabs { margin-bottom: -1px; z-index: 3 }` でタブ帯がその上辺線の上に 1px かぶさる（アクティブタブ直下は線が隠れ、Analyze 側などタブのない幅では 1 本の線が見える）。
+- **二重線を避ける**: `.past-sales-modal__tab-bar { margin-bottom: -1px; z-index: 3 }` でタブ帯がサマリー上辺線の上に 1px かぶさる。
+
+### サマリー折りたたみ（Input タブ左横）
+
+| 項目 | 値 |
+|------|-----|
+| ボタン ID | `#past-sales-summary-toggle` |
+| ラップ | `#past-sales-summary-wrap`（`.is-collapsed` で 3 行非表示） |
+| パネル | `#past-sales-summary-panel`（`data-psm-summary-panel`） |
+| サイズ | **32×30px**、フォント **14px**、背景 44%（ホバー 55%） |
+| 状態 | 展開 **▼** `aria-expanded="true"` / 折りたたみ **▶︎** `aria-expanded="false"` |
+| 永続化 | `sessionStorage` キー `kpiNavigator.pastSalesSummaryCollapsed`（`1` = 折りたたみ） |
+| 表示条件 | **Input タブのみ**（Analyze では `.past-sales-modal__summary-toggle { display: none }`） |
+
+### 閉じる確認（統一アラート — MEP / PL / Sales Data と同型）
+
+`window.confirm` は **使わない**。正本は `scripts/kpi_leave_close_chooser.py` の **3 択ダイアログ**（`.sales-data-modal__close-chooser`）。MEP（`#sales-data-close-chooser`）・PL・Past Sales・将来の Sales Data で **HTML / CSS / 挙動を同一**にする。
+
+| 項目 | Past Sales | Sales Data（当年窓） / MEP / PL |
+|------|------------|--------------------------------|
+| ダイアログ ID | `#past-sales-close-chooser` | `#sales-data-close-chooser` |
+| 配置 | **`#past-sales-modal` の外**（body 直下。モーダル内に置かない） | 同左 |
+| タイトル JA | 過去売上データを閉じます | 売上データを閉じます |
+| タイトル EN | Close Past Sales Data | Close Sales Data |
+| ボタン | 保存して閉じる / 保存せずに閉じる / キャンセル | 同左（EN: Save and close / Close without saving / Cancel） |
+| z-index | **20150**（モーダル 20055 より上） |
+| 見た目 | 黒パネル `#000`、枠・文字 `#58E1F3`（`--sdm-cyan`）、保存ボタンは 50% シアン塗り |
+| 未保存判定 | `hasPastSalesUnsavedChanges()` — `modalDirty \|\| rowStateByIso` にキーあり | MEP: `hasUnsavedChanges()` / PL: 同型 |
+| JS API | `requestPastSalesLeaveNavigation()` → Promise。× / バックドロップは `requestCloseModal()` 経由 | `requestLeaveNavigation()` |
+| Escape | ダイアログ表示中は `finishPastSalesLeaveNavigate(false)`（キャンセル） |
 
 ### 本体（サマリー以降）
 
@@ -185,50 +218,51 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 |----------|--------|------|
 | `--psm-fs-body` | **16px** | ボタン、サマリー、年・月、タブ、表セル、プレースホルダ |
 | `--psm-fs-colhead` | **13px** | Date / B. DAY / Sales / Monthly Total / Annual Total |
-| `--psm-fs-title` | **15px Bold** | 中央タイトル（過去売上データ / Past Sales Data）※仕様メモ「5px」は **15px** として実装 |
+| `--psm-fs-title` | **25px Bold** | 中央タイトル（過去売上データ / Past Sales Data）— **Figma 基準（2026-06）** |
 | `--psm-fs-month` | **20px** | 縦書き月ラベル（`.past-sales-modal__month-td-label`） |
 
-### サマリー 3 行（Figma 確定）
+### サマリー 3 行（Figma 基準 2026-06）
 
 - サマリー枠 **`width: 100%`**（1020px、下段と同幅）。
 - セル内テキストは **中央揃え**（`justify-content: center` / `text-align: center`）。
-- **注意**: `var(--n) fr` は CSS 無効。列比は `5fr` / `3.5fr` 等を直接指定すること。
+- 行高 **40px**（`--psm-summary-row-h`）。
+- フォント **16px**（`--psm-fs-body`）。
 
-| 行 | 列構成 | `grid-template-columns` |
-|----|--------|-------------------------|
-| 1・2 | ラベル ｜ 数値 | `5fr 5fr`（`.past-sales-modal__summary-row--cols-2`） |
-| 3 | ラベル ｜ 数値 ｜ % | `5fr 3.5fr 1.5fr`（`.past-sales-modal__summary-row--cols-3`） |
+| 行 | 列幅（Figma 基準 → 1020px 内で比率維持） | 備考 |
+|----|------------|------|
+| 1・2（2列） | ラベル **429** ｜ 数値 **496**（合計 925 → `--psm-inner-w` に比例スケール） | `--psm-summary-label-w` / `--psm-summary-value-w` |
+| 3（3列） | ラベル **429** ｜ 数値 **347** ｜ **% 149** | 数値側 496px 相当を 3.5:1.5 で分割 |
 
 | 行 | JA | EN |
 |----|----|----|
 | 1 | 累計入力売上 ｜ 数値 | Cumulative Input Sales ｜ value |
-| 2 | 参考年間売上 ｜ 数値 | Reference Annual Sales ｜ value |
+| 2 | 参考年間売上 ｜ 入力 | Reference Annual Sales ｜ `#past-sales-summary-reference`（**`--psm-bg-reference`・左右同色**） |
 | 3 | 残り／入力進捗 ｜ 数値 ｜ % | Remaining / Input Progress ｜ `#past-sales-summary-remaining` ｜ `#past-sales-summary-progress-pct` |
-
-行の高さ: **40px**。
 
 **年・月行（`.past-sales-modal__ym`）** もサマリー 1・2 行目と同じ **`grid-template-columns: 5fr 5fr`**（`display: grid`）。flex `1:1` だと内側 `min-width` の影響で中央縦線が 1〜3px ずれるため。
 
 ---
 
-## 8. ヘッダーボタン配置（大外枠基準・確定 2026-05-20）
+## 8. ヘッダーボタン配置（大外枠基準・Figma 基準 2026-06）
 
-いずれも **上端 = 大外枠上から 22px**、**高さ 40px**（× を除く幅は下表）。
+Import CSV / UNDO / Save は **上端 = 大外枠上から 22px**、**142×40px または 118×40px**、フォント **16px**。
 
 | コントロール | 位置・サイズ |
 |--------------|----------------|
-| **×** | 左 **26px**、`40×40px`、`font-size: 18px`（× グリフ） |
-| **Import CSV** | 左 **92px**、`142×40px` |
-| **UNDO** | **右端**が大外枠右から **206px**、`118×40px` |
-| **Save** | UNDO の右隣 **4px** → `right: 84px`（= 206 − 4 − 118）、`118×40px` |
+| **×** | **28×28px**（Daily `.daily-overlay__close` 同型）。Past Sales は**左** `left:10px; top:8px`（Daily は右 `right:10px`） |
+| **Import CSV** | 左 **92px**、`142×40px`、フォント 16px |
+| **UNDO** | **右端**が大外枠右から **206px**、`118×40px`、フォント 16px |
+| **Save** | UNDO の右隣 **4px** → `right: 84px`（= 206 − 4 − 118）、`118×40px`、フォント 16px |
 
 ```css
 /* コピペ用（.panel 基準の absolute） */
-.past-sales-modal__close  { top: 22px; left: 26px;  width: 40px;  height: 40px; }
-.past-sales-modal__csv    { top: 22px; left: 92px;  width: 142px; height: 40px; }
-.past-sales-modal__undo   { top: 22px; right: 206px; width: 118px; height: 40px; }
-.past-sales-modal__save{ top: 22px; right: 84px;  width: 118px; height: 40px; }
+.past-sales-modal__close  { top: 32px; left: 26px;  width: 20px;  height: 20px; font-size: 14px; }
+.past-sales-modal__csv    { top: 22px; left: 92px;  width: 142px; height: 40px; font-size: 16px; }
+.past-sales-modal__undo   { top: 22px; right: 206px; width: 118px; height: 40px; font-size: 16px; }
+.past-sales-modal__save   { top: 22px; right: 84px;  width: 118px; height: 40px; font-size: 16px; }
 ```
+
+> **正本**: 寸法の最終判断は **Figma**。docs と実装がずれたら Figma を優先して docs を更新する。
 
 ---
 
@@ -316,7 +350,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 | 大外枠背景 | `#100052` | `#414141`（既存 AEM） |
 | 大外枠枠線 | `#370AFF` | `#58E1F3`（既存 AEM 線色） |
 | クラス接頭辞 | `past-sales-modal` / `--psm-*` | `annual-edit-modal` / `--aem-*` |
-| 閉じる | **sessionSaved && !modalDirty** ならそのまま。それ以外は 3 択（保存して閉じる／保存せずに閉じる／キャンセル） |
+| 閉じる | **`!hasPastSalesUnsavedChanges()`** ならそのまま。それ以外は 3 択（保存して閉じる／保存せずに閉じる／キャンセル） |
 | パネル幅 | 1100px | 704px（現状。拡張時は別途 doc 更新） |
 
 ---
@@ -338,7 +372,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 |------|------|
 | **Save** | `savePastSalesModal()` — 表示年の365日を `getRowDefaults` から書き込み（**前**に `lastSession` スナップショット）→ `persistPastSalesShared()` → カスタムイベント発火 → 表再描画 |
 | **UNDO** | `undoStack` に `rowStateByIso` の JSON スナップショット。チェック変更・売上 `change` の直前に `pushUndoSnapshot()`。復元で `renderPastSalesTable()` |
-| 閉じる（× / バックドロップ / Esc） | **`sessionSaved && !modalDirty`** ならそのまま閉じる。それ以外は **3 択ダイアログ**（保存して閉じる／保存せずに閉じる／キャンセル） |
+| 閉じる（× / バックドロップ / Esc） | **`!hasPastSalesUnsavedChanges()`** ならそのまま閉じる。それ以外は **3 択ダイアログ**（保存して閉じる／保存せずに閉じる／キャンセル） |
 | 再開位置（A） | Save 時（全年書き込み**前**）に `lastSession`（年・月・`focusIso`・タブ）を保存。次回 `openModal()` で `scrollToIsoDate(focusIso)` へ復帰 |
 | 年変更 / カレンダーで年跨ぎ | `rowStateByIso` クリア + `undoStack` クリア |
 
@@ -421,7 +455,9 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 - [x] Input タブ（365 行・Save/UNDO/閉じる3択・永続化・参考年間売上・累計）
 - [x] Analyze タブ（§12 — KPI・月次表・動的スケール繁閑グラフ・Input 連動）
 - [x] コックピットボタン **左** Past Sales（`images/past_sales_button.svg`）
-- [x] コックピットボタン **右** Sales → **`#sales-data-modal`**（売上データ / Sales Data・黒 `#000`・緑枠 `#0F9403`・当年固定）
+- [x] コックピットボタン **右** Sales → **`#sales-data-modal`**（当年・黒/緑枠）
+- [x] サマリー折りたたみ（Input 左 **▼/▶︎**）
+- [x] 閉じる 3 択（`#past-sales-close-chooser` — Sales Data `#sales-data-close-chooser` と同型・`window.confirm` 禁止）
 
 ### 未実装・別フェーズ
 - [ ] Input タブ Sales 列 ▼ ソート
@@ -435,13 +471,36 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-17 | 参考年間売上 `--psm-bg-reference`（明度 -20%）、サマリー ▼/▶︎ 折りたたみ復活、閉じる 3 択ダイアログ統一、§15 Sales Data チェックリスト |
 | 2026-06-01 | §12 Analyze 確定、左右ボタン・`past_sales_button.svg`、Sales 枠ボタン配置 |
 | 2026-05-31 | 設計メモ整備・今年窓 plan 分離 |
 | 2026-05-20 | Input 中心の初版 |
 
 ---
 
-## 15. 変更時チェックリスト
+## 15. Sales Data 実装時のコピー元チェックリスト
+
+Past Sales で確定した細部仕様。**当年売上窓（`#sales-data-modal`）** を描画するときは本表を正として `sdm-*` 変数へ写す（`scripts/apply_sales_data_modal.py` / `scripts/kpi_leave_close_chooser.py` 参照）。
+
+| # | 項目 | Past Sales 確定値 | Sales Data での ID / 変数 |
+|---|------|---------------------|---------------------------|
+| 1 | パネル外枠 | 青 `#100052` / `#370AFF` | 黒 `#000` / 緑 `#0F9403` |
+| 2 | 内部線・文字 | `#58E1F3` 系（§4） | 同左（トークン名のみ `--sdm-*`） |
+| 3 | サマリー 3 行 | 40px 高・列幅 429/496/347/149 | 同構造・`sales-data-modal__summary-*` |
+| 4 | 参考年間売上行背景 | `--psm-bg-reference`（35%） | `--sdm-bg-reference`（要追加） |
+| 5 | サマリー折りたたみ | `#past-sales-summary-toggle` 32px | `#sales-data-summary-toggle` |
+| 6 | タブ Input / Analyze | 131×30 / 118×27 | 同寸 |
+| 7 | 年・月バー | grid 5fr 5fr、セル 55% | 同左 |
+| 8 | 列見出し 5 列 | 190/90/215/215/219（929 比率） | 同左 |
+| 9 | 表 colgroup | 40+150 / 90 / 215 / 215 / 219 | 同左 |
+| 10 | Monthly / Annual 累計列 | `buildPastSalesTotalsMap` | Sales Data 用に写す |
+| 11 | 閉じる 3 択 | `#past-sales-close-chooser` | `#sales-data-close-chooser` |
+| 12 | スクロールバー | 非表示デフォルト、hover/scroll 時のみ緑 | 同左 |
+| 13 | フォント body / colhead / title | 16 / 13 / 25 px | 同左 |
+
+---
+
+## 16. 変更時チェックリスト
 
 - [ ] `app/annual/index.html` と `en/app/annual/index.html` を **同時**に更新
 - [ ] 色・フォント・寸法を変えたら **本ファイルの該当 § を更新**

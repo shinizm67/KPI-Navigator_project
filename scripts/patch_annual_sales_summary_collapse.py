@@ -88,7 +88,7 @@ JS_BLOCK = """
       }
       function initWrap(wrap, btn, storageKey) {
         if (!wrap || !btn) return;
-        var panel = wrap.querySelector('[data-sdm-summary-panel]');
+        var panel = wrap.querySelector('[data-psm-summary-panel], [data-sdm-summary-panel]');
         if (!panel) return;
         function setCollapsed(collapsed) {
           wrap.classList.toggle('is-collapsed', collapsed);

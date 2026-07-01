@@ -1,4 +1,4 @@
-"""Annual Sales Data close chooser — shared HTML/CSS/JS for PL and Monthly Edit."""
+"""KPI leave / close chooser — shared HTML/CSS/JS for MEP, PL, Past Sales, and Sales Data."""
 
 from __future__ import annotations
 
@@ -142,6 +142,63 @@ CLOSE_CHOOSER_HTML = {
 """,
 }
 
+PAST_SALES_CLOSE_CHOOSER_HTML = {
+    "ja": """
+  <div
+    class="sales-data-modal__close-chooser"
+    id="past-sales-close-chooser"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="past-sales-close-chooser-title"
+    hidden
+  >
+    <div class="sales-data-modal__close-chooser-scrim" id="past-sales-close-chooser-scrim" aria-hidden="true"></div>
+    <div class="sales-data-modal__close-chooser-panel">
+      <p id="past-sales-close-chooser-title" class="sales-data-modal__close-chooser-title">過去売上データを閉じます</p>
+      <p class="sales-data-modal__close-chooser-msg">保存するか、保存せずに閉じるかを選んでください。</p>
+      <div class="sales-data-modal__close-chooser-actions">
+        <button type="button" class="sales-data-modal__close-chooser-btn sales-data-modal__close-chooser-btn--save" id="past-sales-close-save">
+          保存して閉じる
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-discard">
+          保存せずに閉じる
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-cancel">
+          キャンセル
+        </button>
+      </div>
+    </div>
+  </div>
+""",
+    "en": """
+  <div
+    class="sales-data-modal__close-chooser"
+    id="past-sales-close-chooser"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="past-sales-close-chooser-title"
+    hidden
+  >
+    <div class="sales-data-modal__close-chooser-scrim" id="past-sales-close-chooser-scrim" aria-hidden="true"></div>
+    <div class="sales-data-modal__close-chooser-panel">
+      <p id="past-sales-close-chooser-title" class="sales-data-modal__close-chooser-title">Close Past Sales Data</p>
+      <p class="sales-data-modal__close-chooser-msg">Choose whether to save your changes before closing.</p>
+      <div class="sales-data-modal__close-chooser-actions">
+        <button type="button" class="sales-data-modal__close-chooser-btn sales-data-modal__close-chooser-btn--save" id="past-sales-close-save">
+          Save and close
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-discard">
+          Close without saving
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-cancel">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+""",
+}
+
 
 def close_chooser_js(
     save_on_leave: str,
@@ -219,4 +276,83 @@ def close_chooser_js(
         }});
       }}
       window.requestLeaveNavigation = requestLeaveNavigation;
+"""
+
+
+def past_sales_close_chooser_js(*, save_on_leave: str = "savePastSalesModal();") -> str:
+    """Inject inside Past Sales modal IIFE after savePastSalesModal() exists."""
+    return f"""
+      var pastSalesCloseChooser = document.getElementById('past-sales-close-chooser');
+      var pastSalesCloseChooserScrim = document.getElementById('past-sales-close-chooser-scrim');
+      var pastSalesCloseChooserSave = document.getElementById('past-sales-close-save');
+      var pastSalesCloseChooserDiscard = document.getElementById('past-sales-close-discard');
+      var pastSalesCloseChooserCancel = document.getElementById('past-sales-close-cancel');
+      var pastSalesCloseChooserReturnFocus = null;
+      var pastSalesLeaveResolve = null;
+
+      function hasPastSalesUnsavedChanges() {{
+        return !!state.modalDirty || Object.keys(state.rowStateByIso || {{}}).length > 0;
+      }}
+      function isPastSalesCloseChooserOpen() {{
+        return pastSalesCloseChooser && !pastSalesCloseChooser.hasAttribute('hidden');
+      }}
+      function showPastSalesCloseChooser() {{
+        if (!pastSalesCloseChooser) return;
+        pastSalesCloseChooserReturnFocus = document.activeElement;
+        pastSalesCloseChooser.removeAttribute('hidden');
+        if (pastSalesCloseChooserCancel) pastSalesCloseChooserCancel.focus();
+      }}
+      function hidePastSalesCloseChooser() {{
+        if (!pastSalesCloseChooser || pastSalesCloseChooser.hasAttribute('hidden')) return;
+        pastSalesCloseChooser.setAttribute('hidden', '');
+        var el = pastSalesCloseChooserReturnFocus;
+        pastSalesCloseChooserReturnFocus = null;
+        if (el && typeof el.focus === 'function') el.focus();
+      }}
+      function finishPastSalesLeaveNavigate(ok) {{
+        var fn = pastSalesLeaveResolve;
+        pastSalesLeaveResolve = null;
+        hidePastSalesCloseChooser();
+        if (fn) fn(!!ok);
+      }}
+      if (pastSalesCloseChooserSave) {{
+        pastSalesCloseChooserSave.addEventListener('click', function () {{
+          {save_on_leave}
+          finishPastSalesLeaveNavigate(true);
+        }});
+      }}
+      if (pastSalesCloseChooserDiscard) {{
+        pastSalesCloseChooserDiscard.addEventListener('click', function () {{
+          finishPastSalesLeaveNavigate(true);
+        }});
+      }}
+      if (pastSalesCloseChooserCancel) {{
+        pastSalesCloseChooserCancel.addEventListener('click', function () {{
+          finishPastSalesLeaveNavigate(false);
+        }});
+      }}
+      if (pastSalesCloseChooserScrim) {{
+        pastSalesCloseChooserScrim.addEventListener('click', function () {{
+          finishPastSalesLeaveNavigate(false);
+        }});
+      }}
+      function requestPastSalesLeaveNavigation() {{
+        return new Promise(function (resolve) {{
+          if (!hasPastSalesUnsavedChanges()) {{
+            resolve(true);
+            return;
+          }}
+          if (isPastSalesCloseChooserOpen()) {{
+            resolve(false);
+            return;
+          }}
+          pastSalesLeaveResolve = resolve;
+          showPastSalesCloseChooser();
+        }});
+      }}
+      function requestCloseModal() {{
+        requestPastSalesLeaveNavigation().then(function (ok) {{
+          if (ok) closeModal();
+        }});
+      }}
 """

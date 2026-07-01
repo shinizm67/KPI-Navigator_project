@@ -8046,6 +8046,1117 @@
       box-shadow: 0 0 20px rgba(88, 225, 243, 0.18);
     }
 
+
+
+    /* KPI leave / close chooser — canonical: scripts/kpi_leave_close_chooser.py (MEP / PL / Past Sales / Sales Data) */
+    :root {
+      --sdm-panel-bg: #000000;
+      --sdm-cyan: #58e1f3;
+      --sdm-fs-body: 14px;
+      --sdm-bg-active-editable: rgba(88, 225, 243, 0.5);
+      --sdm-bg-active-focus: rgba(88, 225, 243, 0.567);
+      --sdm-bg-active-55: var(--sdm-bg-active-editable);
+      --sdm-bg-active-70: var(--sdm-bg-active-focus);
+    }
+    .sales-data-modal__close-chooser {
+      position: fixed;
+      inset: 0;
+      z-index: 20150;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .sales-data-modal__close-chooser[hidden] {
+      display: none !important;
+    }
+    .sales-data-modal__close-chooser-scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .sales-data-modal__close-chooser-panel {
+      position: relative;
+      z-index: 1;
+      width: min(420px, 100%);
+      padding: 24px 22px 20px;
+      border: 2px solid var(--sdm-cyan);
+      border-radius: 8px;
+      background: var(--sdm-panel-bg);
+      color: var(--sdm-cyan);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+    }
+    .sales-data-modal__close-chooser-title {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .sales-data-modal__close-chooser-msg {
+      margin: 0 0 20px;
+      font-size: var(--sdm-fs-body);
+      line-height: 1.5;
+      opacity: 0.92;
+    }
+    .sales-data-modal__close-chooser-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sales-data-modal__close-chooser-btn {
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid var(--sdm-cyan);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sdm-cyan);
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .sales-data-modal__close-chooser-btn--save {
+      background: var(--sdm-bg-active-55);
+      font-weight: 700;
+    }
+    .sales-data-modal__close-chooser-btn:hover,
+    .sales-data-modal__close-chooser-btn:focus-visible {
+      background: var(--sdm-bg-active-70);
+      outline: 2px solid var(--sdm-cyan);
+      outline-offset: 2px;
+    }
+
+    /* Past Sales modal — PS-1 shell (see docs/past-sales-floating-window-memo.md) */
+    .past-sales-modal {
+      --psm-cyan: #58e1f3;
+      --psm-line: #58e1f3;
+      --psm-bg-inactive: rgba(88, 225, 243, 0.44);
+      --psm-bg-active-55: rgba(88, 225, 243, 0.55);
+      --psm-bg-active-70: rgba(88, 225, 243, 0.7);
+      --psm-row-off-fill: rgba(88, 225, 243, 0.22);
+      --psm-panel-bg: #100052;
+      --psm-frame: #370aff;
+      --psm-panel-w: 1100px;
+      --psm-inner-w: 1020px;
+      --psm-pad-x: calc((var(--psm-panel-w) - var(--psm-inner-w)) / 2);
+      --psm-title-top: 29px;
+      --psm-tab-top: 122px;
+      --psm-tab-left: 80px;
+      --psm-tab-gap: 5px;
+      --psm-body-top: 152px;
+      --psm-fs-body: 16px;
+      --psm-fs-colhead: 13px;
+      --psm-fs-title: 25px;
+      --psm-close-size: 20px;
+      --psm-header-btn-h: 40px;
+      --psm-header-btn-top: 22px;
+      --psm-summary-row-h: 40px;
+      --psm-tab-input-h: 30px;
+      --psm-bg-reference: rgba(88, 225, 243, 0.35);
+      --psm-summary-toggle-w: 32px;
+      --psm-fs-month: 20px;
+      --psm-scrollbar-w: 8px;
+      --psm-col-month: calc(var(--psm-inner-w) * 40 / 929);
+      --psm-col-date: calc(var(--psm-inner-w) * 150 / 929);
+      --psm-col-date-merged: calc(var(--psm-col-month) + var(--psm-col-date));
+      --psm-col-bday: calc(var(--psm-inner-w) * 90 / 929);
+      --psm-col-sales: calc(var(--psm-inner-w) * 215 / 929);
+      --psm-col-monthly: calc(var(--psm-inner-w) * 215 / 929);
+      --psm-col-annual: calc(var(--psm-inner-w) * 219 / 929);
+      --psm-table-w: var(--psm-inner-w);
+      font-family: 'BIZ UDPGothic', sans-serif;
+      box-sizing: border-box;
+    }
+    html[lang='en'] body.si-fi:not(.office-mode) .past-sales-modal {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .past-sales-modal[hidden] {
+      display: none !important;
+    }
+    .past-sales-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20055;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      cursor: pointer;
+    }
+    .past-sales-modal__panel {
+      position: relative;
+      width: var(--psm-panel-w);
+      height: min(1100px, calc(100vh - 32px));
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      box-sizing: border-box;
+      background: var(--psm-panel-bg);
+      border: 2px solid var(--psm-frame);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      padding: 0 var(--psm-pad-x) 14px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+      z-index: 1;
+      color: var(--psm-cyan);
+      overflow: hidden;
+    }
+    .past-sales-modal__title {
+      position: absolute;
+      top: var(--psm-title-top);
+      left: 0;
+      right: 0;
+      margin: 0;
+      text-align: center;
+      font-size: var(--psm-fs-title);
+      font-weight: 700;
+      line-height: 1.2;
+      pointer-events: none;
+    }
+    .past-sales-modal__csv,
+    .past-sales-modal__undo,
+    .past-sales-modal__save {
+      position: absolute;
+      padding: 0;
+      margin: 0;
+      border: 1px solid var(--psm-line);
+      border-radius: 2px;
+      background: var(--psm-bg-inactive);
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-body);
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .past-sales-modal__close {
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      z-index: 10;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+      padding: 0;
+      margin: 0;
+      border: 1px solid rgba(88, 225, 243, 0.72);
+      border-radius: 4px;
+      background: rgba(88, 225, 243, 0.12);
+      color: #58e1f3;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .past-sales-modal__undo:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .past-sales-modal__close:hover,
+    .past-sales-modal__close:focus-visible {
+      background: rgba(88, 225, 243, 0.22);
+      outline: none;
+    }
+    .past-sales-modal__csv:hover,
+    .past-sales-modal__csv:focus-visible,
+    .past-sales-modal__undo:hover,
+    .past-sales-modal__undo:focus-visible,
+    .past-sales-modal__save:hover,
+    .past-sales-modal__save:focus-visible {
+      background: var(--psm-bg-active-70);
+      outline: none;
+    }
+    .past-sales-modal__csv {
+      top: var(--psm-header-btn-top);
+      left: 92px;
+      width: 142px;
+      height: var(--psm-header-btn-h);
+    }
+    .past-sales-modal__undo {
+      top: var(--psm-header-btn-top);
+      right: 206px;
+      width: 118px;
+      height: var(--psm-header-btn-h);
+    }
+    .past-sales-modal__save {
+      top: var(--psm-header-btn-top);
+      right: 84px;
+      width: 118px;
+      height: var(--psm-header-btn-h);
+    }
+    .past-sales-modal__tab-bar {
+      position: absolute;
+      top: var(--psm-tab-top);
+      left: var(--psm-tab-left);
+      display: flex;
+      align-items: flex-end;
+      gap: var(--psm-tab-gap);
+      margin-bottom: -1px;
+      z-index: 3;
+    }
+    .past-sales-modal__summary-toggle {
+      flex: 0 0 var(--psm-summary-toggle-w);
+      width: var(--psm-summary-toggle-w);
+      min-width: var(--psm-summary-toggle-w);
+      height: var(--psm-tab-input-h);
+      margin: 0;
+      padding: 0;
+      border: 1px solid var(--psm-line);
+      background: var(--psm-bg-inactive);
+      color: var(--psm-cyan);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1;
+      font-family: inherit;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary-toggle:hover,
+    .past-sales-modal__summary-toggle:focus-visible {
+      background: var(--psm-bg-active-55);
+      outline: 2px solid var(--psm-cyan);
+      outline-offset: 1px;
+    }
+    .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__summary-toggle {
+      display: none !important;
+    }
+    .past-sales-modal__summary-wrap {
+      width: 100%;
+      margin: 0;
+      flex-shrink: 0;
+    }
+    .past-sales-modal__summary-wrap.is-collapsed {
+      display: none;
+    }
+    .past-sales-modal__tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--psm-tab-gap);
+    }
+    .past-sales-modal__tab {
+      border: 0;
+      border-radius: 5px 5px 0 0;
+      color: var(--psm-cyan);
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      width: 118px;
+      height: 27px;
+      font-size: 16px;
+      background: rgba(88, 225, 243, 0.33);
+    }
+    .past-sales-modal__tab.is-active {
+      width: 131px;
+      height: 30px;
+      font-size: 20px;
+      background: rgba(88, 225, 243, 0.7);
+    }
+    .past-sales-modal__body {
+      margin-top: var(--psm-body-top);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+    .past-sales-modal__input-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+    .past-sales-modal__input-stack > .past-sales-modal__summary,
+    .past-sales-modal__input-stack > .past-sales-modal__ym,
+    .past-sales-modal__input-stack > .past-sales-modal__colhead,
+    .past-sales-modal__input-stack > .past-sales-modal__scroll,
+    .past-sales-modal__input-stack > .past-sales-modal__analyze-scroll {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary {
+      flex-shrink: 0;
+      border: 1px solid var(--psm-line);
+      border-top: 1px solid #58e1f3;
+      background: var(--psm-bg-inactive);
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary-row {
+      display: grid;
+      align-items: stretch;
+      width: 100%;
+      height: var(--psm-summary-row-h);
+      min-height: var(--psm-summary-row-h);
+      border-bottom: 1px solid var(--psm-line);
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary-row:last-child {
+      border-bottom: 0;
+    }
+    .past-sales-modal__summary-row--cols-2 {
+      grid-template-columns: calc(100% * 429 / 925) calc(100% * 496 / 925);
+    }
+    .past-sales-modal__summary-row--cols-3 {
+      grid-template-columns:
+        calc(100% * 429 / 925)
+        calc(100% * 347.2 / 925)
+        calc(100% * 148.8 / 925);
+    }
+    .past-sales-modal__summary-row > * {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: var(--psm-summary-row-h);
+      padding: 0 8px;
+      font-size: var(--psm-fs-body);
+      border-right: 1px solid var(--psm-line);
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary-row--reference {
+      background-color: var(--psm-bg-reference);
+    }
+    .past-sales-modal__summary-row--reference > * {
+      background-color: var(--psm-bg-reference);
+    }
+    .past-sales-modal__summary-reference-input {
+      width: 100%;
+      height: var(--psm-summary-row-h);
+      min-height: var(--psm-summary-row-h);
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background-color: var(--psm-bg-reference);
+      -webkit-appearance: none;
+      appearance: none;
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-body);
+      font-family: inherit;
+      font-weight: 600;
+      text-align: center;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__summary-reference-input::placeholder {
+      color: var(--psm-cyan);
+      opacity: 0.85;
+    }
+    .past-sales-modal__summary-reference-input:focus {
+      outline: 1px solid var(--psm-cyan);
+      outline-offset: -1px;
+      background: var(--psm-bg-active-70);
+    }
+    .past-sales-modal__summary-row > *:last-child {
+      border-right: 0;
+    }
+    .past-sales-modal__ym {
+      display: grid;
+      grid-template-columns: 5fr 5fr;
+      margin: 0;
+      flex-shrink: 0;
+      border: 1px solid var(--psm-line);
+      border-top: 0;
+      border-bottom: 0;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__ym-cell {
+      min-width: 0;
+      height: 40px;
+      box-sizing: border-box;
+      border: 0;
+      border-right: 1px solid var(--psm-line);
+      background: var(--psm-bg-active-55);
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: var(--psm-fs-body);
+      line-height: 1;
+      color: var(--psm-cyan);
+    }
+    .past-sales-modal__ym-cell:last-child {
+      border-right: 0;
+    }
+    .past-sales-modal__ym-arrow,
+    .past-sales-modal__ym-select {
+      border: none;
+      background: transparent;
+      color: inherit;
+      font-family: inherit;
+      font-size: var(--psm-fs-body);
+      cursor: pointer;
+    }
+    .past-sales-modal__ym-select {
+      text-decoration: underline;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .past-sales-modal__colhead {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 190fr)
+        minmax(0, 90fr)
+        minmax(0, 215fr)
+        minmax(0, 215fr)
+        minmax(0, 219fr);
+      flex-shrink: 0;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--psm-line);
+      border-bottom: 0;
+      box-sizing: border-box;
+    }
+    .past-sales-modal__colhead > div {
+      box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
+      border-right: 1px solid var(--psm-line);
+      background: var(--psm-bg-inactive);
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-colhead);
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .past-sales-modal__colhead > div:last-child {
+      border-right: 0;
+    }
+    .past-sales-modal__colhead-bday,
+    .past-sales-modal__colhead-sales {
+      background: var(--psm-bg-active-55);
+    }
+    .past-sales-modal__colhead-monthly,
+    .past-sales-modal__colhead-annual {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .past-sales-modal__scroll {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid var(--psm-line);
+      box-sizing: border-box;
+      background: var(--psm-bg-inactive);
+      font-size: var(--psm-fs-body);
+    }
+    .past-sales-modal__scroll:not(:hover):not(.is-scrolling) {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .past-sales-modal__scroll:not(:hover):not(.is-scrolling)::-webkit-scrollbar {
+      display: none;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    .past-sales-modal__scroll:hover,
+    .past-sales-modal__scroll.is-scrolling {
+      scrollbar-width: thin;
+      scrollbar-color: #0f9403 rgba(88, 225, 243, 0.15);
+    }
+    .past-sales-modal__analyze-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 24px;
+      font-size: var(--psm-fs-body);
+      color: var(--psm-cyan);
+    }
+    .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__input-only {
+      display: none !important;
+    }
+    .past-sales-modal__panel[data-psm-tab='input'] #past-sales-pane-analyze {
+      display: none !important;
+    }
+    .past-sales-modal__panel[data-psm-tab='analyze'] #past-sales-pane-analyze {
+      display: block;
+    }
+    .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__ym-cell--month {
+      display: none;
+    }
+    body.office-mode .past-sales-modal__panel {
+      border-color: #2b6cb0;
+      color: #111;
+      --psm-cyan: #111;
+      --psm-line: #333;
+      --psm-bg-inactive: rgba(0, 0, 0, 0.06);
+      --psm-bg-active-55: rgba(0, 0, 0, 0.1);
+      --psm-bg-active-70: rgba(0, 0, 0, 0.14);
+      --psm-bg-reference: rgba(0, 0, 0, 0.064);
+      --psm-row-off-fill: rgba(0, 0, 0, 0.04);
+      --psm-panel-bg: #e8f2ff;
+      --psm-frame: #2b6cb0;
+    }
+    .office-mode .monthly-access-btn--past-sales {
+      background: #dcecff;
+      border-radius: 2px;
+    }
+
+    /* Past Sales modal — table & colhead detail (PS-1 supplement) */
+    .past-sales-modal__colhead-date-merged {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      min-height: 40px;
+      min-width: 0;
+      max-width: 100%;
+      position: relative;
+      font-size: var(--psm-fs-colhead);
+    }
+    .past-sales-modal__colhead-date-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 0;
+      padding: 4px 6px;
+      border: 0;
+      background: none;
+      color: inherit;
+      font-family: inherit;
+      font-size: var(--psm-fs-colhead);
+      line-height: 1;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(88, 225, 243, 0.75);
+      text-underline-offset: 3px;
+    }
+    .past-sales-modal__colhead-date-btn:hover,
+    .past-sales-modal__colhead-date-btn:focus-visible {
+      color: #9ef6ff;
+      text-decoration-color: var(--psm-cyan);
+      outline: none;
+    }
+    .past-sales-modal__colhead-date-native {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      opacity: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .past-sales-modal__colhead-sales {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      font-size: var(--psm-fs-colhead);
+    }
+    .past-sales-modal__sales-sort {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .past-sales-modal__sales-sort-toggle {
+      margin: 0;
+    }
+    .past-sales-modal__sales-sort-orders {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .past-sales-modal__sales-sort-section-label {
+      font-size: 11px;
+      line-height: 1.3;
+      color: var(--psm-cyan);
+      opacity: 0.85;
+      margin: 0 0 6px;
+    }
+    .past-sales-modal__sales-sort-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--psm-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.15);
+      color: var(--psm-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: left;
+      cursor: pointer;
+    }
+    .past-sales-modal__sales-sort-amounts {
+      max-height: min(50vh, 280px);
+      overflow-y: auto;
+      margin: 0 0 8px;
+    }
+    .past-sales-modal__sales-sort-amounts .past-sales-modal__sales-sort-btn {
+      margin-top: 6px;
+    }
+    .past-sales-modal__sales-sort-amounts .past-sales-modal__sales-sort-btn:first-child {
+      margin-top: 0;
+    }
+    .past-sales-modal__sales-sort-btn:hover,
+    .past-sales-modal__sales-sort-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.3);
+      outline: none;
+    }
+    .past-sales-modal__sales-sort-btn.is-active {
+      background: rgba(88, 225, 243, 0.38);
+      box-shadow: 0 0 0 1px var(--psm-cyan);
+    }
+    .past-sales-modal__colhead-dayoff {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 40px;
+      padding: 4px 2px;
+    }
+    .past-sales-modal__colhead-dayoff-title {
+      font-size: var(--psm-fs-colhead);
+      line-height: 1;
+    }
+    .past-sales-modal__select-all {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-colhead);
+      line-height: 1;
+      text-decoration: underline;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .past-sales-modal__select-all:hover,
+    .past-sales-modal__select-all:focus-visible {
+      color: #9ef6ff;
+      outline: none;
+    }
+    .past-sales-modal__sort-icon {
+      font-size: 9px;
+      opacity: 0.85;
+    }
+    .past-sales-modal__date-filter {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .past-sales-modal__date-filter-toggle {
+      margin: 0 0 0 2px;
+      padding: 2px 8px;
+      border: 1px solid var(--psm-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.15);
+      color: var(--psm-cyan);
+      font-family: inherit;
+      font-size: 10px;
+      line-height: 1.2;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .past-sales-modal__date-filter-toggle:hover,
+    .past-sales-modal__date-filter-toggle:focus-visible {
+      background: rgba(88, 225, 243, 0.32);
+      outline: none;
+    }
+    .past-sales-modal__date-filter-toggle.is-active {
+      background: rgba(88, 225, 243, 0.38);
+      box-shadow: 0 0 0 1px var(--psm-cyan);
+    }
+    .past-sales-modal__date-filter-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 220px;
+      z-index: 20;
+      padding: 10px 12px 12px;
+      box-sizing: border-box;
+      background: #2f2f2f;
+      border: 1px solid var(--psm-line);
+      border-radius: 3px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+      color: var(--psm-cyan);
+    }
+    .past-sales-modal__date-filter-panel[hidden] {
+      display: none !important;
+    }
+    .past-sales-modal__filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 5px 0;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .past-sales-modal__filter-row input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #0f9403;
+    }
+    .past-sales-modal__filter-clear {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      border: 1px solid var(--psm-line);
+      border-radius: 2px;
+      background: rgba(88, 225, 243, 0.18);
+      color: var(--psm-cyan);
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .past-sales-modal__filter-clear:hover,
+    .past-sales-modal__filter-clear:focus-visible {
+      background: rgba(88, 225, 243, 0.35);
+      outline: none;
+    }
+    .past-sales-modal__scroll:hover::-webkit-scrollbar,
+    .past-sales-modal__scroll.is-scrolling::-webkit-scrollbar {
+      width: var(--psm-scrollbar-w);
+    }
+    .past-sales-modal__scroll:hover::-webkit-scrollbar-track,
+    .past-sales-modal__scroll.is-scrolling::-webkit-scrollbar-track {
+      background: rgba(88, 225, 243, 0.15);
+    }
+    .past-sales-modal__scroll:hover::-webkit-scrollbar-thumb,
+    .past-sales-modal__scroll.is-scrolling::-webkit-scrollbar-thumb {
+      background: #0f9403;
+      border-radius: 3px;
+    }
+    .past-sales-modal__table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+    .past-sales-modal__col-g-month {
+      width: calc(100% * 40 / 929);
+    }
+    .past-sales-modal__col-g-date {
+      width: calc(100% * 150 / 929);
+    }
+    .past-sales-modal__col-g-date-merged {
+      width: calc(100% * 190 / 929);
+    }
+    .past-sales-modal__col-g-bday {
+      width: calc(100% * 90 / 929);
+    }
+    .past-sales-modal__col-g-sales {
+      width: calc(100% * 215 / 929);
+    }
+    .past-sales-modal__col-g-monthly {
+      width: calc(100% * 215 / 929);
+    }
+    .past-sales-modal__col-g-annual {
+      width: calc(100% * 219 / 929);
+    }
+    .past-sales-modal__table td {
+      border: solid var(--psm-line);
+      border-width: 0 1px 1px 0;
+      box-sizing: border-box;
+      vertical-align: middle;
+      background: var(--psm-bg-inactive);
+      color: var(--psm-cyan);
+    }
+    .past-sales-modal__table tbody:first-child tr:first-child td {
+      border-top-width: 1px;
+    }
+    .past-sales-modal__table tr td:first-child {
+      border-left-width: 1px;
+    }
+    .past-sales-modal__table tr.past-sales-modal__row--off td {
+      background: var(--psm-row-off-fill);
+    }
+    .past-sales-modal__table td.past-sales-modal__month-td {
+      width: var(--psm-col-month);
+      padding: 0;
+      vertical-align: top;
+      text-align: center;
+      position: relative;
+      background: var(--psm-bg-inactive);
+    }
+    .past-sales-modal__table tr.past-sales-modal__row--off td.past-sales-modal__month-td {
+      background: var(--psm-bg-inactive);
+    }
+    .past-sales-modal__month-td-label {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: block;
+      box-sizing: border-box;
+      width: var(--psm-col-month);
+      margin: 0 auto;
+      padding: 12px 2px 10px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      outline: none;
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-month);
+      line-height: 1.1;
+      letter-spacing: 0.14em;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+    }
+    .past-sales-modal__date-td {
+      width: var(--psm-col-date);
+      height: 40px;
+      padding: 0 8px;
+      font-size: var(--psm-fs-body);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .past-sales-modal__table--no-month .past-sales-modal__date-td {
+      width: var(--psm-col-date-merged);
+    }
+    .past-sales-modal__cb-td {
+      width: var(--psm-col-bday);
+      height: 40px;
+      text-align: center;
+    }
+    .past-sales-modal__cb {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: #0f9403;
+    }
+    .past-sales-modal__sales-td {
+      width: var(--psm-col-sales);
+      height: 40px;
+      padding: 0 8px;
+    }
+    .past-sales-modal__monthly-td,
+    .past-sales-modal__annual-td {
+      height: 40px;
+      padding: 0 8px;
+      font-size: var(--psm-fs-body);
+      text-align: right;
+      background: var(--psm-bg-inactive);
+    }
+    .past-sales-modal__table tr.past-sales-modal__row--off td.past-sales-modal__monthly-td,
+    .past-sales-modal__table tr.past-sales-modal__row--off td.past-sales-modal__annual-td {
+      background: var(--psm-row-off-fill);
+    }
+    .past-sales-modal__monthly-td {
+      width: var(--psm-col-monthly);
+    }
+    .past-sales-modal__annual-td {
+      width: var(--psm-col-annual);
+    }
+    .past-sales-modal__sales-input {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      border: 0;
+      background: transparent;
+      color: var(--psm-cyan);
+      font-size: var(--psm-fs-body);
+      line-height: 1.2;
+      font-family: inherit;
+      text-align: right;
+      padding: 2px 0;
+    }
+    .past-sales-modal__sales-input:focus {
+      outline: 1px solid var(--psm-cyan);
+      outline-offset: 1px;
+    }
+    body.office-mode .past-sales-modal__close,
+    body.office-mode .past-sales-modal__undo,
+    body.office-mode .past-sales-modal__save,
+    body.office-mode .past-sales-modal__csv,
+    body.office-mode .past-sales-modal__ym-cell {
+      border-color: #333;
+      color: #111;
+    }
+    body.office-mode .past-sales-modal__close,
+    body.office-mode .past-sales-modal__undo,
+    body.office-mode .past-sales-modal__save,
+    body.office-mode .past-sales-modal__csv {
+      background: #f0f0f0;
+    }
+    body.office-mode .past-sales-modal__ym-arrow {
+      border-color: #333;
+      color: #111;
+      background: #e8e8e8;
+    }
+    body.office-mode .past-sales-modal__ym-arrow:hover,
+    body.office-mode .past-sales-modal__ym-arrow:focus-visible {
+      background: #ddd;
+    }
+    body.office-mode .past-sales-modal__close:hover,
+    body.office-mode .past-sales-modal__close:focus-visible,
+    body.office-mode .past-sales-modal__undo:hover,
+    body.office-mode .past-sales-modal__undo:focus-visible,
+    body.office-mode .past-sales-modal__save:hover,
+    body.office-mode .past-sales-modal__save:focus-visible,
+    body.office-mode .past-sales-modal__csv:hover,
+    body.office-mode .past-sales-modal__csv:focus-visible {
+      background: #ddd;
+    }
+    body.office-mode .past-sales-modal__ym-select {
+      color: #111;
+      background: transparent;
+      text-decoration-color: rgba(0, 0, 0, 0.45);
+    }
+    body.office-mode .past-sales-modal__ym-select:hover {
+      text-decoration-color: #111;
+    }
+    body.office-mode .past-sales-modal__ym-select option {
+      background: #fff;
+      color: #111;
+    }
+    body.office-mode .past-sales-modal__backdrop {
+      background: rgba(0, 0, 0, 0.35);
+    }
+    body.office-mode .past-sales-modal {
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+    }
+    body.office-mode .past-sales-modal__select-all {
+      color: #111;
+    }
+    body.office-mode .past-sales-modal__colhead-date-btn {
+      color: #111;
+      text-decoration-color: rgba(0, 0, 0, 0.45);
+    }
+    body.office-mode .past-sales-modal__colhead-date-btn:hover,
+    body.office-mode .past-sales-modal__colhead-date-btn:focus-visible {
+      color: #000;
+      text-decoration-color: #111;
+    }
+    body.office-mode .past-sales-modal__date-filter-toggle {
+      border-color: #333;
+      color: #111;
+      background: #e8e8e8;
+    }
+    body.office-mode .past-sales-modal__date-filter-panel {
+      background: #fff;
+      border-color: #333;
+      color: #111;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    body.office-mode .past-sales-modal__filter-clear {
+      border-color: #333;
+      color: #111;
+      background: #eee;
+    }
+    body.office-mode .past-sales-modal__scroll:hover,
+    body.office-mode .past-sales-modal__scroll.is-scrolling {
+      scrollbar-color: #555 #ddd;
+    }
+    body.office-mode .past-sales-modal__scroll:hover::-webkit-scrollbar-thumb,
+    body.office-mode .past-sales-modal__scroll.is-scrolling::-webkit-scrollbar-thumb {
+      background: #555;
+    }
+
+    .monthly-access-controls {
+      width: min(100%, 1020px);
+      margin: 8px auto 0;
+      padding-bottom: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+    }
+    .monthly-access-controls__spacer {
+      flex: 1 1 auto;
+      min-width: 12px;
+    }
+    .monthly-access-btn {
+      position: relative;
+      width: 112px;
+      height: 46px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: #58e1f3;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+    }
+    .monthly-access-btn__frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    .monthly-access-btn__label {
+      position: relative;
+      z-index: 1;
+      transform: translateY(0.5px);
+      white-space: nowrap;
+    }
+    .monthly-access-btn--past-sales:hover .monthly-access-btn__label,
+    .monthly-access-btn--past-sales:focus-visible .monthly-access-btn__label {
+      text-shadow: 0 0 8px rgba(55, 10, 255, 0.45);
+    }
+    .monthly-access-btn--current-sales:hover .monthly-access-btn__label,
+    .monthly-access-btn--current-sales:focus-visible .monthly-access-btn__label {
+      text-shadow: 0 0 8px rgba(88, 225, 243, 0.45);
+    }
+    .office-mode .monthly-access-btn--past-sales {
+      color: #0a2a5c;
+    }
+    .office-mode .monthly-access-btn--past-sales .monthly-access-btn__frame {
+      filter: none;
+    }
+
     /* Annual Edit modal — 614×700 (inset +7px each side vs 600); matches JP app/annual */
     .annual-edit-modal {
       --aem-cyan: #58e1f3;
@@ -8909,6 +10020,47 @@
           </div>
         </div>
       </div>
+      <div class="monthly-access-controls" aria-label="Annual sales controls">
+        <button
+          type="button"
+          class="monthly-access-btn monthly-access-btn--past-sales"
+          id="annual-past-sales-btn"
+          aria-label="Past Sales — Enter historical daily sales"
+          title="Historical daily sales only. Current year is not edited here."
+        >
+          <img
+            src="../../../images/past_sales_button.svg"
+            alt=""
+            class="monthly-access-btn__frame"
+            width="112"
+            height="46"
+            decoding="async"
+            aria-hidden="true"
+          >
+          <span class="monthly-access-btn__label">Past Sales</span>
+        </button>
+        <div class="monthly-access-controls__spacer" aria-hidden="true"></div>
+        <button
+          type="button"
+          class="monthly-access-btn monthly-access-btn--current-sales"
+          id="annual-current-sales-btn"
+          aria-label="Sales — This year's daily sales (coming soon)"
+          title="This year's daily sales (coming soon)"
+          hidden
+          disabled
+        >
+          <img
+            src="../../../images/monthly_decoration_frame_edit.svg"
+            alt=""
+            class="monthly-access-btn__frame"
+            width="112"
+            height="46"
+            decoding="async"
+            aria-hidden="true"
+          >
+          <span class="monthly-access-btn__label">Sales</span>
+        </button>
+      </div>
       <section class="annual-monthly-data" id="annual-monthly-data">
         <div class="annual-year-control" id="annual-year-control">
           <div class="annual-year-cluster">
@@ -9359,6 +10511,212 @@
           <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-diff">Difference :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-diff" id="annual-graph-popover-val-diff">—</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="past-sales-modal"
+    id="past-sales-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="past-sales-modal-title"
+    hidden
+  >
+    <div class="past-sales-modal__backdrop" id="past-sales-modal-backdrop" aria-hidden="true"></div>
+    <div class="past-sales-modal__panel" id="past-sales-modal-body" role="document" data-psm-tab="input">
+      <h2 id="past-sales-modal-title" class="past-sales-modal__title">Past Sales Data</h2>
+      <button type="button" class="past-sales-modal__close" id="past-sales-modal-close" aria-label="Close">
+        ×
+      </button>
+      <button type="button" class="past-sales-modal__csv" id="past-sales-modal-csv" aria-label="Import CSV">
+        Import CSV
+      </button>
+      <button type="button" class="past-sales-modal__undo" id="past-sales-modal-undo" aria-label="UNDO" disabled>
+        UNDO
+      </button>
+      <button type="button" class="past-sales-modal__save" id="past-sales-modal-save" aria-label="Save">
+        Save
+      </button>
+      <div class="past-sales-modal__tab-bar">
+        <button
+          type="button"
+          class="past-sales-modal__summary-toggle past-sales-modal__input-only"
+          id="past-sales-summary-toggle"
+          aria-expanded="true"
+          aria-controls="past-sales-summary-panel"
+          aria-label="Collapse summary"
+          title="Collapse summary"
+        >
+          ▼
+        </button>
+        <div class="past-sales-modal__tabs" role="tablist" aria-label="Past sales views">
+          <button
+            type="button"
+            class="past-sales-modal__tab is-active"
+            id="past-sales-tab-input"
+            role="tab"
+            aria-selected="true"
+            data-psm-tab="input"
+          >
+            Input
+          </button>
+          <button
+            type="button"
+            class="past-sales-modal__tab"
+            id="past-sales-tab-analyze"
+            role="tab"
+            aria-selected="false"
+            data-psm-tab="analyze"
+          >
+            Analyze
+          </button>
+        </div>
+      </div>
+      <div class="past-sales-modal__body">
+        <div class="past-sales-modal__input-stack">
+        <div
+          class="past-sales-modal__summary-wrap past-sales-modal__input-only"
+          id="past-sales-summary-wrap"
+        >
+        <div
+          class="past-sales-modal__summary"
+          id="past-sales-summary-panel"
+          data-psm-summary-panel
+          aria-label="Past sales summary"
+        >
+          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2">
+            <span>Cumulative Input Sales</span>
+            <span id="past-sales-summary-cumulative">—</span>
+          </div>
+          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2 past-sales-modal__summary-row--reference">
+            <span>Reference Annual Sales</span>
+            <input
+              type="text"
+              class="past-sales-modal__summary-reference-input"
+              id="past-sales-summary-reference"
+              inputmode="numeric"
+              placeholder="—"
+              aria-label="Reference Annual Sales"
+            />
+          </div>
+          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-3">
+            <span>Remaining / Input Progress</span>
+            <span id="past-sales-summary-remaining">—</span>
+            <span class="past-sales-modal__summary-pct" id="past-sales-summary-progress-pct">—</span>
+          </div>
+        </div>
+        </div>
+        <div class="past-sales-modal__ym past-sales-modal__input-only">
+          <div class="past-sales-modal__ym-cell">
+            <label class="past-sales-modal__sr-only" for="past-sales-year-select">Year</label>
+            <button type="button" class="past-sales-modal__ym-arrow" id="past-sales-year-prev" aria-label="Previous year">
+              ◀︎
+            </button>
+            <select id="past-sales-year-select" class="past-sales-modal__ym-select" aria-label="Year"></select>
+            <button type="button" class="past-sales-modal__ym-arrow" id="past-sales-year-next" aria-label="Next year">
+              ▶︎
+            </button>
+          </div>
+          <div class="past-sales-modal__ym-cell past-sales-modal__ym-cell--month">
+            <label class="past-sales-modal__sr-only" for="past-sales-month-select">Month</label>
+            <button type="button" class="past-sales-modal__ym-arrow" id="past-sales-month-prev" aria-label="Previous month">
+              ◀︎
+            </button>
+            <select id="past-sales-month-select" class="past-sales-modal__ym-select" aria-label="Month"></select>
+            <button type="button" class="past-sales-modal__ym-arrow" id="past-sales-month-next" aria-label="Next month">
+              ▶︎
+            </button>
+          </div>
+        </div>
+        <div class="past-sales-modal__colhead past-sales-modal__input-only" aria-hidden="false">
+          <div class="past-sales-modal__colhead-date-merged">
+            <button type="button" class="past-sales-modal__colhead-date-btn" id="past-sales-date-header-btn">Date</button>
+            <div class="past-sales-modal__date-filter" id="past-sales-date-filter-wrap">
+              <button
+                type="button"
+                class="past-sales-modal__date-filter-toggle"
+                id="past-sales-date-filter-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="past-sales-date-filter-panel"
+                aria-label="Filter by weekday or holiday"
+              >
+                <span class="past-sales-modal__sort-icon" aria-hidden="true">▼</span>
+              </button>
+              <div
+                id="past-sales-date-filter-panel"
+                class="past-sales-modal__date-filter-panel"
+                role="group"
+                aria-label="Weekdays and holidays to show"
+                hidden
+              >
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="0" /> Sunday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="1" /> Monday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="2" /> Tuesday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="3" /> Wednesday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="4" /> Thursday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="5" /> Friday</label>
+              <label class="past-sales-modal__filter-row"><input type="checkbox" class="past-sales-modal__filter-dow" value="6" /> Saturday</label>
+              <label class="past-sales-modal__filter-row">
+                <input type="checkbox" id="past-sales-filter-holiday" /> National holidays (when calendar linked)
+              </label>
+              <button type="button" class="past-sales-modal__filter-clear" id="past-sales-filter-clear">
+                Clear filter
+              </button>
+            </div>
+          </div>
+            <input
+              type="date"
+              id="past-sales-colhead-date-input"
+              class="past-sales-modal__colhead-date-native"
+              tabindex="-1"
+              aria-label="Pick a date to scroll the list"
+            />
+          </div>
+          <div class="past-sales-modal__colhead-dayoff past-sales-modal__colhead-bday">
+            <span class="past-sales-modal__colhead-dayoff-title">B. DAY</span>
+            <button type="button" class="past-sales-modal__select-all" id="past-sales-select-all">
+              Select all
+            </button>
+          </div>
+          <div class="past-sales-modal__colhead-sales">Sales</div>
+          <div class="past-sales-modal__colhead-monthly">Monthly Total</div>
+          <div class="past-sales-modal__colhead-annual">Annual Total</div>
+        </div>
+        <div class="past-sales-modal__scroll past-sales-modal__input-only" id="past-sales-pane-input">
+          <table class="past-sales-modal__table" id="past-sales-modal-table" aria-label="Past sales daily list"></table>
+        </div>
+        <div class="past-sales-modal__analyze-scroll" id="past-sales-pane-analyze" hidden>
+          <p>Analyze (coming soon)</p>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="sales-data-modal__close-chooser"
+    id="past-sales-close-chooser"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="past-sales-close-chooser-title"
+    hidden
+  >
+    <div class="sales-data-modal__close-chooser-scrim" id="past-sales-close-chooser-scrim" aria-hidden="true"></div>
+    <div class="sales-data-modal__close-chooser-panel">
+      <p id="past-sales-close-chooser-title" class="sales-data-modal__close-chooser-title">Close Past Sales Data</p>
+      <p class="sales-data-modal__close-chooser-msg">Choose whether to save your changes before closing.</p>
+      <div class="sales-data-modal__close-chooser-actions">
+        <button type="button" class="sales-data-modal__close-chooser-btn sales-data-modal__close-chooser-btn--save" id="past-sales-close-save">
+          Save and close
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-discard">
+          Close without saving
+        </button>
+        <button type="button" class="sales-data-modal__close-chooser-btn" id="past-sales-close-cancel">
+          Cancel
+        </button>
       </div>
     </div>
   </div>
@@ -14466,6 +15824,53 @@ Cumulative Target Annual Sales</p>
         }
         window.__ANNUAL_DATA.daily = daily;
       })();
+      (function hydratePastSalesShared() {
+        if (window.KpiYearStore) {
+          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
+            KpiYearStore.reconcileTimelineFromLegacy();
+          }
+          KpiYearStore.syncToAnnualDaily();
+          var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');
+          window.__ANNUAL_DATA.pastSales = window.__ANNUAL_DATA.pastSales || {
+            salesByDate: {},
+            businessDayByDate: {},
+            referenceAnnualSalesByYear: {}
+          };
+          var ps = window.__ANNUAL_DATA.pastSales;
+          if (parsed && parsed.referenceAnnualSalesByYear) {
+            ps.referenceAnnualSalesByYear = Object.assign(
+              {},
+              ps.referenceAnnualSalesByYear || {},
+              parsed.referenceAnnualSalesByYear
+            );
+          }
+          if (parsed && parsed.lastSession) ps.lastSession = parsed.lastSession;
+          return;
+        }
+        var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');
+        if (!parsed) return;
+        window.__ANNUAL_DATA.pastSales = window.__ANNUAL_DATA.pastSales || {
+          salesByDate: {},
+          businessDayByDate: {}
+        };
+        var ps = window.__ANNUAL_DATA.pastSales;
+        if (parsed.salesByDate && typeof parsed.salesByDate === 'object') {
+          ps.salesByDate = Object.assign({}, ps.salesByDate || {}, parsed.salesByDate);
+        }
+        if (parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
+          ps.businessDayByDate = Object.assign({}, ps.businessDayByDate || {}, parsed.businessDayByDate);
+        }
+        if (parsed.referenceAnnualSalesByYear && typeof parsed.referenceAnnualSalesByYear === 'object') {
+          ps.referenceAnnualSalesByYear = Object.assign(
+            {},
+            ps.referenceAnnualSalesByYear || {},
+            parsed.referenceAnnualSalesByYear
+          );
+        }
+        if (parsed.lastSession && typeof parsed.lastSession === 'object') {
+          ps.lastSession = parsed.lastSession;
+        }
+      })();
 
       /* KPI-SALES-INPUT-PATH-UI */
       (function () {
@@ -16655,6 +18060,1443 @@ Cumulative Target Annual Sales</p>
   </script>
   <script>
     (function () {
+      var modal = document.getElementById('past-sales-modal');
+      var backdrop = document.getElementById('past-sales-modal-backdrop');
+      var btnClose = document.getElementById('past-sales-modal-close');
+      var btnSave = document.getElementById('past-sales-modal-save');
+      var btnUndo = document.getElementById('past-sales-modal-undo');
+      var btnCsv = document.getElementById('past-sales-modal-csv');
+      var openBtn = document.getElementById('annual-past-sales-btn');
+      var modalTable = document.getElementById('past-sales-modal-table');
+      var yearSelect = document.getElementById('past-sales-year-select');
+      var monthSelect = document.getElementById('past-sales-month-select');
+      var yearPrev = document.getElementById('past-sales-year-prev');
+      var yearNext = document.getElementById('past-sales-year-next');
+      var monthPrev = document.getElementById('past-sales-month-prev');
+      var monthNext = document.getElementById('past-sales-month-next');
+      var dateHeaderBtn = document.getElementById('past-sales-date-header-btn');
+      var dateInput = document.getElementById('past-sales-colhead-date-input');
+      var dateFilterWrap = document.getElementById('past-sales-date-filter-wrap');
+      var dateFilterToggle = document.getElementById('past-sales-date-filter-toggle');
+      var dateFilterPanel = document.getElementById('past-sales-date-filter-panel');
+      var filterHolidayCb = document.getElementById('past-sales-filter-holiday');
+      var filterClearBtn = document.getElementById('past-sales-filter-clear');
+      var salesSortWrap = document.getElementById('past-sales-sales-sort-wrap');
+      var salesSortToggle = document.getElementById('past-sales-sales-sort-toggle');
+      var salesSortPanel = document.getElementById('past-sales-sales-sort-panel');
+      var salesSortResetBtn = document.getElementById('past-sales-sales-sort-reset');
+      var salesSortAmountsHost = document.getElementById('past-sales-sales-sort-amounts');
+      var selectAllBtn = document.getElementById('past-sales-select-all');
+      var scrollEl = modal ? modal.querySelector('.past-sales-modal__scroll') : null;
+      var summaryCumulativeEl = document.getElementById('past-sales-summary-cumulative');
+      var summaryReferenceInput = document.getElementById('past-sales-summary-reference');
+      var summaryRemainingEl = document.getElementById('past-sales-summary-remaining');
+      var summaryPctEl = document.getElementById('past-sales-summary-progress-pct');
+
+      if (!modal || !modalTable || !openBtn) return;
+
+      var isJa = document.documentElement.getAttribute('lang') === 'ja';
+      var MONTHS_JA = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      var MONTHS_EN = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ];
+      var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+      var state = {
+        year: 2026,
+        viewMonth: 0,
+        rowStateByIso: {},
+        salesPinnedAmount: null,
+        salesAmountSort: null,
+        modalDirty: false
+      };
+      var sessionSaved = false;
+      var undoStack = [];
+      var lastFocusEl = null;
+      var MSG_UNSAVED_CLOSE = isJa ? 'You have unsaved changes. Close without saving?' : 'You have unsaved changes. Close without saving?';
+      function ensurePastSalesDaily() {
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.pastSales = window.__ANNUAL_DATA.pastSales || {
+          salesByDate: {},
+          businessDayByDate: {},
+          referenceAnnualSalesByYear: {}
+        };
+        var ps = window.__ANNUAL_DATA.pastSales;
+        ps.salesByDate = ps.salesByDate || {};
+        ps.businessDayByDate = ps.businessDayByDate || {};
+        ps.referenceAnnualSalesByYear = ps.referenceAnnualSalesByYear || {};
+        return ps;
+      }
+      function persistPastSalesShared() {
+        var ps = ensurePastSalesDaily();
+        if (window.KpiYearStore) {
+          KpiYearStore.persistFromPastSales(ps);
+          var payload = {
+            salesByDate: ps.salesByDate || {},
+            businessDayByDate: ps.businessDayByDate || {},
+            referenceAnnualSalesByYear: ps.referenceAnnualSalesByYear || {}
+          };
+          if (ps.lastSession && typeof ps.lastSession === 'object') {
+            payload.lastSession = ps.lastSession;
+          }
+          window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.pastSalesShared', payload);
+          return;
+        }
+        var payload = {
+          salesByDate: ps.salesByDate || {},
+          businessDayByDate: ps.businessDayByDate || {},
+          referenceAnnualSalesByYear: ps.referenceAnnualSalesByYear || {}
+        };
+        if (ps.lastSession && typeof ps.lastSession === 'object') {
+          payload.lastSession = ps.lastSession;
+        }
+        window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.pastSalesShared', payload);
+      }
+
+      
+      function setPastSalesTab(tab) {
+        var t = tab === 'analyze' ? 'analyze' : 'input';
+        var panel = modal.querySelector('.past-sales-modal__panel');
+        var body = document.getElementById('past-sales-modal-body');
+        if (panel) panel.setAttribute('data-psm-tab', t);
+        if (body) body.setAttribute('data-psm-tab', t);
+        var tabInput = document.getElementById('past-sales-tab-input');
+        var tabAnalyze = document.getElementById('past-sales-tab-analyze');
+        if (tabInput) {
+          tabInput.classList.toggle('is-active', t === 'input');
+          tabInput.setAttribute('aria-selected', t === 'input' ? 'true' : 'false');
+        }
+        if (tabAnalyze) {
+          tabAnalyze.classList.toggle('is-active', t === 'analyze');
+          tabAnalyze.setAttribute('aria-selected', t === 'analyze' ? 'true' : 'false');
+        }
+        var paneAnalyze = document.getElementById('past-sales-pane-analyze');
+        if (paneAnalyze) paneAnalyze.hidden = t !== 'analyze';
+      }
+
+      function parseSalesInputRaw(inp) {
+        if (!inp) return null;
+        var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+        if (raw === '') return null;
+        var n = Number(raw);
+        return isFinite(n) ? n : null;
+      }
+
+      function getPastSalesRowDefaultsLive(iso, isWk) {
+        if (modalTable && modal && !modal.hasAttribute('hidden')) {
+          var inp = modalTable.querySelector(
+            '.past-sales-modal__sales-input[data-iso-date="' + iso + '"]'
+          );
+          if (inp) {
+            var tr = inp.closest('tr');
+            var cb = tr && tr.querySelector('.past-sales-modal__cb');
+            if (cb) {
+              if (!cb.checked) return { off: true, last: '0' };
+              var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+              if (raw !== '') {
+                var n = Number(raw);
+                if (isFinite(n)) return { off: false, last: String(Math.round(n)) };
+              }
+            }
+          }
+        }
+        return getRowDefaults(iso, isWk);
+      }
+
+      function buildPastSalesTotalsMap(y) {
+        var all = gatherYearDays(y);
+        var monthRunning = 0;
+        var yearRunning = 0;
+        var prevM0 = -1;
+        var map = Object.create(null);
+        for (var i = 0; i < all.length; i++) {
+          var item = all[i];
+          if (item.m0 !== prevM0) {
+            monthRunning = 0;
+            prevM0 = item.m0;
+          }
+          var defs = getPastSalesRowDefaultsLive(item.iso, item.isWk);
+          if (!defs.off) {
+            var n = Math.round(Number(defs.last));
+            if (isFinite(n)) {
+              monthRunning += n;
+              yearRunning += n;
+            }
+          }
+          map[item.iso] = {
+            off: defs.off,
+            monthly: defs.off ? null : monthRunning,
+            annual: defs.off ? null : yearRunning
+          };
+        }
+        return map;
+      }
+
+      function pastSalesTotalsCellText(off, n) {
+        if (off || n == null || !isFinite(Number(n))) return '—';
+        return formatAmountCell(n);
+      }
+
+      function refreshPastSalesTableTotals() {
+        if (!modalTable) return;
+        var totalsMap = buildPastSalesTotalsMap(state.year);
+        var trs = modalTable.querySelectorAll('tr[data-iso-date]');
+        for (var i = 0; i < trs.length; i++) {
+          var tr = trs[i];
+          var iso = tr.getAttribute('data-iso-date');
+          if (!iso) continue;
+          var monthlyTd = tr.querySelector('.past-sales-modal__monthly-td');
+          var annualTd = tr.querySelector('.past-sales-modal__annual-td');
+          if (!monthlyTd || !annualTd) continue;
+          var off = tr.classList.contains('past-sales-modal__row--off');
+          var entry = totalsMap[iso];
+          monthlyTd.textContent = pastSalesTotalsCellText(off, entry && entry.monthly);
+          annualTd.textContent = pastSalesTotalsCellText(off, entry && entry.annual);
+        }
+      }
+
+      function formatAmountCell(n) {
+        if (n == null || !isFinite(Number(n))) return '—';
+        var v = Math.round(Number(n));
+        if (isJa) return '¥' + v.toLocaleString('ja-JP');
+        return '$' + v.toLocaleString('en-US');
+      }
+
+      function formatSignedSummaryAmount(n) {
+        if (n == null || !isFinite(Number(n))) return '—';
+        var v = Math.round(Number(n));
+        var neg = v < 0;
+        var abs = Math.abs(v);
+        if (isJa) return (neg ? '−' : '') + '¥' + abs.toLocaleString('ja-JP');
+        return (neg ? '-' : '') + '$' + abs.toLocaleString('en-US');
+      }
+
+      function countYearPersistedSalesKeys(y) {
+        var ps = ensurePastSalesDaily();
+        var map = ps.salesByDate || {};
+        var prefix = y + '-';
+        var n = 0;
+        for (var k in map) {
+          if (Object.prototype.hasOwnProperty.call(map, k) && String(k).indexOf(prefix) === 0) n++;
+        }
+        return n;
+      }
+
+      function findLastInputIso(y) {
+        var all = gatherYearDays(y);
+        if (!all.length) return null;
+        var yearComplete = countYearPersistedSalesKeys(y) >= all.length;
+        if (yearComplete) {
+          for (var i = all.length - 1; i >= 0; i--) {
+            var defsEnd = getRowDefaults(all[i].iso, all[i].isWk);
+            if (!defsEnd.off) return all[i].iso;
+          }
+          return null;
+        }
+        var ps = ensurePastSalesDaily();
+        var lastIso = null;
+        for (var j = 0; j < all.length; j++) {
+          var iso = all[j].iso;
+          if (state.rowStateByIso[iso]) {
+            lastIso = iso;
+            continue;
+          }
+          if (
+            Object.prototype.hasOwnProperty.call(ps.salesByDate || {}, iso) ||
+            Object.prototype.hasOwnProperty.call(ps.businessDayByDate || {}, iso)
+          ) {
+            lastIso = iso;
+          }
+        }
+        return lastIso;
+      }
+
+      function getCumulativeInputAnnualTotal(y) {
+        var lastIso = findLastInputIso(y);
+        if (!lastIso) return null;
+        var totalsMap = buildPastSalesTotalsMap(y);
+        var entry = totalsMap[lastIso];
+        if (!entry || entry.annual == null) return null;
+        return entry.annual;
+      }
+
+      function getReferenceForYear(y) {
+        var ps = ensurePastSalesDaily();
+        var map = ps.referenceAnnualSalesByYear || {};
+        var v = map[String(y)];
+        if (v == null || !isFinite(Number(v))) return null;
+        return Math.round(Number(v));
+      }
+
+      function getReferenceFromInputEl() {
+        if (!summaryReferenceInput) return null;
+        var parsed = parseSalesInputRaw(summaryReferenceInput);
+        if (parsed == null || !isFinite(parsed) || parsed <= 0) return null;
+        return Math.round(parsed);
+      }
+
+      function commitReferenceForYear(y) {
+        if (!isFinite(y)) return;
+        var ps = ensurePastSalesDaily();
+        ps.referenceAnnualSalesByYear = ps.referenceAnnualSalesByYear || {};
+        var parsed = getReferenceFromInputEl();
+        if (parsed == null) {
+          delete ps.referenceAnnualSalesByYear[String(y)];
+        } else {
+          ps.referenceAnnualSalesByYear[String(y)] = parsed;
+        }
+        persistPastSalesShared();
+      }
+
+      function syncReferenceInputForYear(y) {
+        if (!summaryReferenceInput || document.activeElement === summaryReferenceInput) return;
+        var ref = getReferenceForYear(y);
+        summaryReferenceInput.value = ref != null ? fmtSalesInput(ref) : '';
+      }
+
+      function updatePastSalesSummary() {
+        var y = state.year;
+        if (!isFinite(y) && yearSelect) y = Number(yearSelect.value);
+        if (!isFinite(y)) return;
+
+        var cumulative = getCumulativeInputAnnualTotal(y);
+        if (summaryCumulativeEl) {
+          summaryCumulativeEl.textContent =
+            cumulative != null ? formatAmountCell(cumulative) : '—';
+        }
+
+        syncReferenceInputForYear(y);
+
+        var refNum = getReferenceFromInputEl();
+        if (refNum == null) refNum = getReferenceForYear(y);
+
+        if (summaryRemainingEl && summaryPctEl) {
+          if (cumulative == null || refNum == null || refNum <= 0) {
+            summaryRemainingEl.textContent = '—';
+            summaryPctEl.textContent = '—';
+          } else {
+            summaryRemainingEl.textContent = formatSignedSummaryAmount(refNum - cumulative);
+            var pct = Math.round((cumulative / refNum) * 100);
+            summaryPctEl.textContent = pct + '%';
+          }
+        }
+      }
+
+      function renderPastSalesAnalyze() {
+        /* PS-1 placeholder */
+      }
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+
+      function daysInMonth(y, m0) {
+        return new Date(y, m0 + 1, 0).getDate();
+      }
+
+      function getOperatingYear() {
+        var d = window.__ANNUAL_DATA;
+        if (d && d.calendarYear != null && isFinite(Number(d.calendarYear))) {
+          return Number(d.calendarYear);
+        }
+        return new Date().getFullYear();
+      }
+
+      function clampPastSalesYear(yr) {
+        var cy = getOperatingYear();
+        return Math.max(cy - 10, Math.min(cy - 1, yr));
+      }
+
+      function ensureYearOptions() {
+        if (!yearSelect) return;
+        var cy = getOperatingYear();
+        var minY = cy - 10;
+        var maxY = cy - 1;
+        var rebuild = yearSelect.options.length === 0;
+        if (!rebuild) {
+          var lo = Number(yearSelect.options[0].value);
+          var hi = Number(yearSelect.options[yearSelect.options.length - 1].value);
+          if (lo !== minY || hi !== maxY) rebuild = true;
+        }
+        if (rebuild) {
+          yearSelect.innerHTML = '';
+          for (var y = minY; y <= maxY; y++) {
+            var opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = isJa ? String(y) + '年' : String(y);
+            yearSelect.appendChild(opt);
+          }
+        }
+      }
+
+      function ensureMonthOptions() {
+        if (!monthSelect || monthSelect.options.length === 12) return;
+        monthSelect.innerHTML = '';
+        var labels = isJa ? MONTHS_JA : MONTHS_EN;
+        for (var i = 0; i < 12; i++) {
+          var opt = document.createElement('option');
+          opt.value = String(i);
+          opt.textContent = labels[i];
+          monthSelect.appendChild(opt);
+        }
+      }
+
+      function syncSelectsFromState() {
+        ensureYearOptions();
+        ensureMonthOptions();
+        if (yearSelect) {
+          var y = clampPastSalesYear(state.year);
+          state.year = y;
+          yearSelect.value = String(y);
+        }
+        if (monthSelect) {
+          monthSelect.value = String(state.viewMonth);
+        }
+      }
+
+      function syncYearMonthFromApp() {
+        var cy = getOperatingYear();
+        state.year = clampPastSalesYear(cy - 1);
+        state.viewMonth = 0;
+        syncSelectsFromState();
+      }
+
+      function syncColheadDatePickerBounds() {
+        if (!dateInput) return;
+        var cy = getOperatingYear();
+        dateInput.min = cy - 10 + '-01-01';
+        dateInput.max = cy - 1 + '-12-31';
+      }
+
+      function syncColheadDatePickerValue() {
+        if (!dateInput) return;
+        syncColheadDatePickerBounds();
+        var isoPick = null;
+        if (isoPick && typeof isoPick === 'string') {
+          var parts = isoPick.split('-');
+          if (parts.length >= 3) {
+            var py = Number(parts[0]);
+            if (py === state.year) {
+              var pm = Number(parts[1]);
+              var pd = Number(parts[2]);
+              if (pm >= 1 && pm <= 12 && pd >= 1 && pd <= daysInMonth(py, pm - 1)) {
+                dateInput.value = isoPick;
+                return;
+              }
+            }
+          }
+        }
+        dateInput.value = state.year + '-' + pad2(state.viewMonth + 1) + '-01';
+      }
+
+      function scrollToIsoDate(iso) {
+        if (!scrollEl || !modalTable || !iso) return;
+        var cb = modalTable.querySelector('.past-sales-modal__cb[data-iso-date="' + iso + '"]');
+        if (!cb) return;
+        var tr = cb.closest('tr');
+        if (tr) tr.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+
+      function openColheadDatePicker() {
+        if (!dateInput) return;
+        syncColheadDatePickerBounds();
+        syncColheadDatePickerValue();
+        dateInput.focus();
+        if (typeof dateInput.showPicker === 'function') {
+          try {
+            dateInput.showPicker();
+            return;
+          } catch (e) {}
+        }
+        dateInput.click();
+      }
+
+      function formatDateCell(y, m0, day, off) {
+        var d = new Date(y, m0, day);
+        var dow = d.getDay();
+        var label;
+        if (isJa) {
+          label = m0 + 1 + '/' + day + ' ' + WEEKDAYS_JA[dow];
+          if (off) label += ' OFF';
+        } else {
+          label = m0 + 1 + '/' + day + ' ' + WEEKDAYS_EN[dow];
+          if (off) label += ' OFF';
+        }
+        return label;
+      }
+
+      function fmtSalesInput(n) {
+        if (n == null || !isFinite(Number(n))) n = 0;
+        var v = Math.round(Number(n));
+        if (isJa) return '¥' + v.toLocaleString('ja-JP');
+        return '$' + v.toLocaleString('en-US');
+      }
+      function syncUndoButton() {
+        if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+      }
+      function pushUndoSnapshot() {
+        undoStack.push(JSON.stringify(state.rowStateByIso || {}));
+        syncUndoButton();
+      }
+      function recomputeModalDirty() {
+        state.modalDirty = Object.keys(state.rowStateByIso || {}).length > 0;
+      }
+      function restoreUndoSnapshot() {
+        if (!undoStack.length) return false;
+        var snap = JSON.parse(undoStack.pop());
+        state.rowStateByIso = snap && typeof snap === 'object' ? snap : {};
+        recomputeModalDirty();
+        syncUndoButton();
+        renderPastSalesTable();
+        updatePastSalesSummary();
+        return true;
+      }
+      function baseRowDefaults(iso, isWk) {
+        var ps = ensurePastSalesDaily();
+        var bmap = ps.businessDayByDate;
+        var map = ps.salesByDate;
+        if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
+          var isBusiness = !!bmap[iso];
+          if (!isBusiness) return { off: true, last: '1234' };
+          if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
+            var bn = Number(map[iso]);
+            if (isFinite(bn) && bn > 0) {
+              return { off: false, last: String(Math.round(bn)) };
+            }
+          }
+          return { off: false, last: '1234' };
+        }
+        if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
+          var n = Number(map[iso]);
+          if (!isFinite(n)) n = 0;
+          if (n === 0) {
+            return { off: true, last: '1234' };
+          }
+          return { off: false, last: String(Math.round(n)) };
+        }
+        return { off: !!isWk, last: '1234' };
+      }
+      function isWeekendIso(iso) {
+        var p = String(iso || '').split('-');
+        if (p.length < 3) return false;
+        var y = Number(p[0]);
+        var m = Number(p[1]);
+        var d = Number(p[2]);
+        if (!isFinite(y) || !isFinite(m) || !isFinite(d)) return false;
+        var dt = new Date(y, m - 1, d);
+        var wd = dt.getDay();
+        return wd === 0 || wd === 6;
+      }
+
+      function pastSalesRowApplyOffState(tr, cb, dateTd) {
+        var iso = cb.getAttribute('data-iso-date');
+        if (!iso) return;
+        var p = iso.split('-');
+        var y = Number(p[0]);
+        var m0 = Number(p[1]) - 1;
+        var day = Number(p[2]);
+        var off = !cb.checked;
+        dateTd.textContent = formatDateCell(y, m0, day, off);
+        tr.classList.toggle('past-sales-modal__row--off', off);
+        var inp = tr.querySelector('.past-sales-modal__sales-input');
+        if (!inp) return;
+        if (off) {
+          inp.readOnly = true;
+          inp.value = fmtSalesInput(0);
+        } else {
+          inp.readOnly = false;
+          var last = inp.getAttribute('data-last-active');
+          inp.value = fmtSalesInput(last != null && last !== '' ? Number(last) : 1234);
+        }
+        persistRowState(tr);
+      }
+
+      function persistRowState(tr) {
+        var cb = tr.querySelector('.past-sales-modal__cb');
+        var inp = tr.querySelector('.past-sales-modal__sales-input');
+        if (!cb) return;
+        var iso = cb.getAttribute('data-iso-date');
+        if (!iso) return;
+        var lastVal =
+          inp && inp.getAttribute('data-last-active') != null && inp.getAttribute('data-last-active') !== ''
+            ? String(inp.getAttribute('data-last-active'))
+            : '1234';
+        var offNow = !cb.checked;
+        var base = baseRowDefaults(iso, isWeekendIso(iso));
+        if (offNow === !!base.off && lastVal === String(base.last)) {
+          delete state.rowStateByIso[iso];
+        } else {
+          state.rowStateByIso[iso] = { off: offNow, last: lastVal };
+        }
+        recomputeModalDirty();
+      }
+
+      function getRowDefaults(iso, isWk) {
+        var s = state.rowStateByIso[iso];
+        if (s) {
+          return {
+            off: !!s.off,
+            last: s.last != null && s.last !== '' ? String(s.last) : '1234'
+          };
+        }
+        return baseRowDefaults(iso, isWk);
+      }
+
+      function savePastSalesModal() {
+        var ps = ensurePastSalesDaily();
+        ps.salesByDate = ps.salesByDate || {};
+        ps.businessDayByDate = ps.businessDayByDate || {};
+        var map = ps.salesByDate;
+        var bmap = ps.businessDayByDate;
+        var all = gatherYearDays(state.year);
+        for (var i = 0; i < all.length; i++) {
+          var item = all[i];
+          var defs = getRowDefaults(item.iso, item.isWk);
+          map[item.iso] = defs.off ? 0 : Math.round(Number(defs.last));
+          bmap[item.iso] = !defs.off;
+        }
+        state.rowStateByIso = {};
+        state.modalDirty = false;
+        undoStack = [];
+        syncUndoButton();
+        sessionSaved = true;
+        document.dispatchEvent(
+          new CustomEvent('annual:pastSalesSaved', { detail: { year: state.year } })
+        );
+        document.dispatchEvent(
+          new CustomEvent('annual:businessDayMapChanged', {
+            detail: { year: state.year, source: 'past-sales-modal' }
+          })
+        );
+        document.dispatchEvent(
+          new CustomEvent('annual:salesMapChanged', {
+            detail: { year: state.year, source: 'past-sales-modal' }
+          })
+        );
+        persistPastSalesShared();
+      }
+
+      function requestCloseModal() {
+        requestPastSalesLeaveNavigation().then(function (ok) {
+          if (ok) closeModal();
+        });
+      }
+
+      var pastSalesCloseChooser = document.getElementById('past-sales-close-chooser');
+      var pastSalesCloseChooserScrim = document.getElementById('past-sales-close-chooser-scrim');
+      var pastSalesCloseChooserSave = document.getElementById('past-sales-close-save');
+      var pastSalesCloseChooserDiscard = document.getElementById('past-sales-close-discard');
+      var pastSalesCloseChooserCancel = document.getElementById('past-sales-close-cancel');
+      var pastSalesCloseChooserReturnFocus = null;
+      var pastSalesLeaveResolve = null;
+
+      function hasPastSalesUnsavedChanges() {
+        return !!state.modalDirty || Object.keys(state.rowStateByIso || {}).length > 0;
+      }
+      function isPastSalesCloseChooserOpen() {
+        return pastSalesCloseChooser && !pastSalesCloseChooser.hasAttribute('hidden');
+      }
+      function showPastSalesCloseChooser() {
+        if (!pastSalesCloseChooser) return;
+        pastSalesCloseChooserReturnFocus = document.activeElement;
+        pastSalesCloseChooser.removeAttribute('hidden');
+        if (pastSalesCloseChooserCancel) pastSalesCloseChooserCancel.focus();
+      }
+      function hidePastSalesCloseChooser() {
+        if (!pastSalesCloseChooser || pastSalesCloseChooser.hasAttribute('hidden')) return;
+        pastSalesCloseChooser.setAttribute('hidden', '');
+        var el = pastSalesCloseChooserReturnFocus;
+        pastSalesCloseChooserReturnFocus = null;
+        if (el && typeof el.focus === 'function') el.focus();
+      }
+      function finishPastSalesLeaveNavigate(ok) {
+        var fn = pastSalesLeaveResolve;
+        pastSalesLeaveResolve = null;
+        hidePastSalesCloseChooser();
+        if (fn) fn(!!ok);
+      }
+      if (pastSalesCloseChooserSave) {
+        pastSalesCloseChooserSave.addEventListener('click', function () {
+          savePastSalesModal();
+          finishPastSalesLeaveNavigate(true);
+        });
+      }
+      if (pastSalesCloseChooserDiscard) {
+        pastSalesCloseChooserDiscard.addEventListener('click', function () {
+          finishPastSalesLeaveNavigate(true);
+        });
+      }
+      if (pastSalesCloseChooserCancel) {
+        pastSalesCloseChooserCancel.addEventListener('click', function () {
+          finishPastSalesLeaveNavigate(false);
+        });
+      }
+      if (pastSalesCloseChooserScrim) {
+        pastSalesCloseChooserScrim.addEventListener('click', function () {
+          finishPastSalesLeaveNavigate(false);
+        });
+      }
+      function requestPastSalesLeaveNavigation() {
+        return new Promise(function (resolve) {
+          if (!hasPastSalesUnsavedChanges()) {
+            resolve(true);
+            return;
+          }
+          if (isPastSalesCloseChooserOpen()) {
+            resolve(false);
+            return;
+          }
+          pastSalesLeaveResolve = resolve;
+          showPastSalesCloseChooser();
+        });
+      }
+
+      function isNationalHolidayIso(iso) {
+        var d = window.__ANNUAL_DATA;
+        if (!d || !iso) return false;
+        var h = d.nationalHolidays;
+        if (Array.isArray(h)) return h.indexOf(iso) >= 0;
+        if (h && typeof h === 'object') return !!h[iso];
+        return false;
+      }
+
+      function readDateFilterFromUi() {
+        var dow = {};
+        var els = modal.querySelectorAll('.past-sales-modal__filter-dow');
+        for (var i = 0; i < els.length; i++) {
+          if (els[i].checked) dow[els[i].value] = true;
+        }
+        return { dow: dow, holiday: !!(filterHolidayCb && filterHolidayCb.checked) };
+      }
+
+      function isDateFilterActive(optFilter) {
+        var f = optFilter || readDateFilterFromUi();
+        if (f.holiday) return true;
+        for (var k in f.dow) {
+          if (f.dow[k]) return true;
+        }
+        return false;
+      }
+
+      function dayPassesFilter(item, optFilter) {
+        var f = optFilter || readDateFilterFromUi();
+        if (!isDateFilterActive(f)) return true;
+        var dowOk = !!f.dow[String(item.dow)];
+        var holOk = f.holiday && isNationalHolidayIso(item.iso);
+        return dowOk || holOk;
+      }
+
+      function gatherYearDays(y) {
+        var list = [];
+        for (var m0 = 0; m0 < 12; m0++) {
+          var dc = daysInMonth(y, m0);
+          for (var day = 1; day <= dc; day++) {
+            var d = new Date(y, m0, day);
+            var dow = d.getDay();
+            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+            var isWk = dow === 0 || dow === 6;
+            list.push({ y: y, m0: m0, day: day, iso: iso, dow: dow, isWk: isWk });
+          }
+        }
+        return list;
+      }
+
+      function closeDateFilterPanel() {
+        if (!dateFilterPanel) return;
+        dateFilterPanel.hidden = true;
+        if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openDateFilterPanel() {
+        if (!dateFilterPanel) return;
+        dateFilterPanel.hidden = false;
+        if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function updateFilterToggleActive() {
+        if (!dateFilterToggle) return;
+        dateFilterToggle.classList.toggle('is-active', isDateFilterActive());
+      }
+
+      function clearDateFilterUi() {
+        var els = modal.querySelectorAll('.past-sales-modal__filter-dow');
+        for (var i = 0; i < els.length; i++) els[i].checked = false;
+        if (filterHolidayCb) filterHolidayCb.checked = false;
+        closeDateFilterPanel();
+        updateFilterToggleActive();
+      }
+
+      function getSortableSalesAmountForRow(item) {
+        var defs = getRowDefaults(item.iso, item.isWk);
+        if (defs.off) return 0;
+        var n = Number(defs.last);
+        return isFinite(n) ? n : 0;
+      }
+
+      function roundedSalesAmountForRow(item) {
+        return Math.round(getSortableSalesAmountForRow(item));
+      }
+
+      function getDateFilteredRowItems() {
+        var y = state.year;
+        var filterSnapshot = readDateFilterFromUi();
+        var all = gatherYearDays(y);
+        var rows = [];
+        for (var a = 0; a < all.length; a++) {
+          if (dayPassesFilter(all[a], filterSnapshot)) rows.push(all[a]);
+        }
+        return rows;
+      }
+
+      function collectUniqueSalesAmountsDesc(rows) {
+        var seen = Object.create(null);
+        for (var i = 0; i < rows.length; i++) {
+          seen[roundedSalesAmountForRow(rows[i])] = true;
+        }
+        var out = [];
+        for (var k in seen) {
+          if (Object.prototype.hasOwnProperty.call(seen, k)) out.push(Number(k));
+        }
+        out.sort(function (a, b) {
+          return b - a;
+        });
+        return out;
+      }
+
+      function syncSalesPinnedAmountValid(rows) {
+        if (state.salesPinnedAmount == null) return;
+        var list = collectUniqueSalesAmountsDesc(rows);
+        var ok = false;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] === state.salesPinnedAmount) {
+            ok = true;
+            break;
+          }
+        }
+        if (!ok) state.salesPinnedAmount = null;
+      }
+
+      function refreshSalesSortAmountButtons(amountsDesc) {
+        if (!salesSortAmountsHost) return;
+        salesSortAmountsHost.innerHTML = '';
+        for (var i = 0; i < amountsDesc.length; i++) {
+          var amt = amountsDesc[i];
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'past-sales-modal__sales-sort-btn';
+          btn.setAttribute('data-psm-sales-amount', String(amt));
+          btn.textContent = fmtSalesInput(amt);
+          if (state.salesPinnedAmount != null && state.salesPinnedAmount === amt) {
+            btn.classList.add('is-active');
+          }
+          salesSortAmountsHost.appendChild(btn);
+        }
+      }
+
+      function updateSalesSortOrderButtonsActive() {
+        var orderBtns = modal.querySelectorAll('[data-psm-sales-order]');
+        for (var i = 0; i < orderBtns.length; i++) {
+          var el = orderBtns[i];
+          var o = el.getAttribute('data-psm-sales-order');
+          var on = state.salesPinnedAmount == null && state.salesAmountSort === o;
+          el.classList.toggle('is-active', !!on);
+        }
+      }
+
+      function closeSalesSortPanel() {
+        if (!salesSortPanel) return;
+        salesSortPanel.hidden = true;
+        if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openSalesSortPanel() {
+        if (!salesSortPanel) return;
+        var rowItems = getDateFilteredRowItems();
+        syncSalesPinnedAmountValid(rowItems);
+        refreshSalesSortAmountButtons(collectUniqueSalesAmountsDesc(rowItems));
+        updateSalesSortOrderButtonsActive();
+        updateSalesSortToggleActive();
+        salesSortPanel.hidden = false;
+        if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function updateSalesSortToggleActive() {
+        if (!salesSortToggle) return;
+        salesSortToggle.classList.toggle(
+          'is-active',
+          state.salesPinnedAmount != null || state.salesAmountSort != null
+        );
+      }
+
+      function syncPastSalesTableColgroup(showMonthCol) {
+        if (!modalTable) return;
+        var cg = modalTable.querySelector('colgroup');
+        if (!cg) {
+          cg = document.createElement('colgroup');
+          modalTable.insertBefore(cg, modalTable.firstChild);
+        }
+        while (cg.firstChild) cg.removeChild(cg.firstChild);
+        function addCol(cls) {
+          var col = document.createElement('col');
+          col.className = cls;
+          cg.appendChild(col);
+        }
+        if (showMonthCol) {
+          addCol('past-sales-modal__col-g-month');
+          addCol('past-sales-modal__col-g-date');
+        } else {
+          addCol('past-sales-modal__col-g-date-merged');
+        }
+        addCol('past-sales-modal__col-g-bday');
+        addCol('past-sales-modal__col-g-sales');
+        addCol('past-sales-modal__col-g-monthly');
+        addCol('past-sales-modal__col-g-annual');
+      }
+
+      function renderPastSalesTable() {
+        var rows = getDateFilteredRowItems();
+        syncSalesPinnedAmountValid(rows);
+        var amountsDesc = collectUniqueSalesAmountsDesc(rows);
+        refreshSalesSortAmountButtons(amountsDesc);
+        updateSalesSortOrderButtonsActive();
+
+        var displayRows = rows.slice();
+        if (state.salesPinnedAmount != null) {
+          displayRows = displayRows.filter(function (item) {
+            return roundedSalesAmountForRow(item) === state.salesPinnedAmount;
+          });
+          displayRows.sort(function (a, b) {
+            if (a.iso < b.iso) return -1;
+            if (a.iso > b.iso) return 1;
+            return 0;
+          });
+        } else if (state.salesAmountSort === 'asc' || state.salesAmountSort === 'desc') {
+          var desc = state.salesAmountSort === 'desc';
+          displayRows.sort(function (a, b) {
+            var va = roundedSalesAmountForRow(a);
+            var vb = roundedSalesAmountForRow(b);
+            if (va !== vb) return desc ? vb - va : va - vb;
+            if (a.iso < b.iso) return -1;
+            if (a.iso > b.iso) return 1;
+            return 0;
+          });
+        }
+
+        var showMonthCol = state.salesPinnedAmount == null && state.salesAmountSort == null;
+        var tableEl = document.getElementById('past-sales-modal-table');
+        if (tableEl) {
+          tableEl.classList.toggle('past-sales-modal__table--no-month', !showMonthCol);
+        }
+
+        syncPastSalesTableColgroup(showMonthCol);
+        var tbodies = modalTable.querySelectorAll('tbody');
+        for (var tb = 0; tb < tbodies.length; tb++) {
+          modalTable.removeChild(tbodies[tb]);
+        }
+
+        var tbodySeg = null;
+        function ensureTbodySeg() {
+          if (!tbodySeg) {
+            tbodySeg = document.createElement('tbody');
+            modalTable.appendChild(tbodySeg);
+          }
+        }
+
+        var totalsMap = buildPastSalesTotalsMap(state.year);
+
+        for (var i = 0; i < displayRows.length; i++) {
+          var item = displayRows[i];
+          var segBoundary = showMonthCol && (i === 0 || displayRows[i - 1].m0 !== item.m0);
+          if (segBoundary) {
+            tbodySeg = null;
+          }
+          ensureTbodySeg();
+
+          let tr = document.createElement('tr');
+          tr.setAttribute('role', 'row');
+          tr.setAttribute('data-iso-date', item.iso);
+          tr.setAttribute('data-month-idx', String(item.m0));
+
+          if (showMonthCol) {
+            if (i === 0 || displayRows[i - 1].m0 !== item.m0) {
+              tr.setAttribute('data-month-start', String(item.m0));
+            }
+            var showMonthTd = i === 0 || displayRows[i - 1].m0 !== item.m0;
+            if (showMonthTd) {
+              var rowspan = 1;
+              for (var j = i + 1; j < displayRows.length && displayRows[j].m0 === item.m0; j++) rowspan++;
+              var tdM = document.createElement('td');
+              tdM.className = 'past-sales-modal__month-td';
+              tdM.rowSpan = rowspan;
+              var monthLab = document.createElement('span');
+              monthLab.className = 'past-sales-modal__month-td-label';
+              monthLab.textContent = isJa ? MONTHS_JA[item.m0] : MONTHS_EN[item.m0];
+              tdM.appendChild(monthLab);
+              tr.appendChild(tdM);
+            }
+          }
+
+          var defs = getRowDefaults(item.iso, item.isWk);
+          var off = defs.off;
+
+          let tdDate = document.createElement('td');
+          tdDate.className = 'past-sales-modal__date-td';
+          tdDate.textContent = formatDateCell(item.y, item.m0, item.day, off);
+
+          let tdCb = document.createElement('td');
+          tdCb.className = 'past-sales-modal__cb-td';
+          let cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = 'past-sales-modal__cb';
+          cb.setAttribute('data-iso-date', item.iso);
+          cb.checked = !off;
+          cb.setAttribute('aria-label', isJa ? '営業日' : 'Business day');
+          tdCb.appendChild(cb);
+
+          let tdSales = document.createElement('td');
+          tdSales.className = 'past-sales-modal__sales-td';
+          let inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = 'past-sales-modal__sales-input';
+          inp.setAttribute('data-iso-date', item.iso);
+          inp.setAttribute('inputmode', 'decimal');
+          inp.setAttribute('data-last-active', defs.last);
+          if (off) {
+            inp.value = fmtSalesInput(0);
+            inp.readOnly = true;
+          } else {
+            inp.value = fmtSalesInput(
+              defs.last != null && defs.last !== '' ? Number(defs.last) : 1234
+            );
+            inp.readOnly = false;
+          }
+          tdSales.appendChild(inp);
+
+          var totalsEntry = totalsMap[item.iso];
+          let tdMonthly = document.createElement('td');
+          tdMonthly.className = 'past-sales-modal__monthly-td';
+          tdMonthly.textContent = pastSalesTotalsCellText(off, totalsEntry && totalsEntry.monthly);
+          let tdAnnual = document.createElement('td');
+          tdAnnual.className = 'past-sales-modal__annual-td';
+          tdAnnual.textContent = pastSalesTotalsCellText(off, totalsEntry && totalsEntry.annual);
+
+          tr.appendChild(tdDate);
+          tr.appendChild(tdCb);
+          tr.appendChild(tdSales);
+          tr.appendChild(tdMonthly);
+          tr.appendChild(tdAnnual);
+          if (off) tr.classList.add('past-sales-modal__row--off');
+
+          cb.addEventListener('change', function () {
+            pushUndoSnapshot();
+            var inpEl = tr.querySelector('.past-sales-modal__sales-input');
+            if (!cb.checked && inpEl && !inpEl.readOnly) {
+              var raw = String(inpEl.value || '').replace(/[^\d.-]/g, '');
+              if (raw !== '') inpEl.setAttribute('data-last-active', String(Number(raw)));
+            }
+            pastSalesRowApplyOffState(tr, cb, tdDate);
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+            if (state.salesPinnedAmount != null || state.salesAmountSort != null) renderPastSalesTable();
+          });
+          inp.addEventListener('input', function () {
+            state.modalDirty = true;
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+          });
+          inp.addEventListener('change', function () {
+            pushUndoSnapshot();
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
+            persistRowState(tr);
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+            if (state.salesPinnedAmount != null || state.salesAmountSort != null) renderPastSalesTable();
+          });
+
+          tbodySeg.appendChild(tr);
+        }
+        updateFilterToggleActive();
+        updateSalesSortToggleActive();
+      }
+
+      function scrollToViewMonth() {
+        if (!scrollEl) return;
+        var target = modalTable.querySelector('tr[data-month-idx="' + state.viewMonth + '"]');
+        if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        else scrollEl.scrollTop = 0;
+      }
+
+      function openModal() {
+        lastFocusEl = document.activeElement;
+        state.rowStateByIso = {};
+        state.salesPinnedAmount = null;
+        state.salesAmountSort = null;
+        syncYearMonthFromApp();
+        syncColheadDatePickerValue();
+        clearDateFilterUi();
+        closeSalesSortPanel();
+        setPastSalesTab('input');
+        updatePastSalesSummary();
+        renderPastSalesTable();
+        modal.removeAttribute('hidden');
+        document.body.style.overflow = 'hidden';
+        scrollToViewMonth();
+        state.modalDirty = false;
+        sessionSaved = false;
+        undoStack = [];
+        syncUndoButton();
+        if (btnClose) btnClose.focus();
+      }
+
+      function closeModal() {
+        hidePastSalesCloseChooser();
+        closeDateFilterPanel();
+        closeSalesSortPanel();
+        modal.setAttribute('hidden', '');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (lastFocusEl && typeof lastFocusEl.focus === 'function') lastFocusEl.focus();
+        else if (openBtn) openBtn.focus();
+      }
+
+      
+      var tabInputBtn = document.getElementById('past-sales-tab-input');
+      var tabAnalyzeBtn = document.getElementById('past-sales-tab-analyze');
+      if (tabInputBtn) tabInputBtn.addEventListener('click', function () { setPastSalesTab('input'); });
+      if (tabAnalyzeBtn) tabAnalyzeBtn.addEventListener('click', function () { setPastSalesTab('analyze'); });
+
+      openBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openModal();
+      });
+      if (scrollEl) {
+        var psmScrollHideTimer;
+        scrollEl.addEventListener(
+          'scroll',
+          function () {
+            scrollEl.classList.add('is-scrolling');
+            clearTimeout(psmScrollHideTimer);
+            psmScrollHideTimer = setTimeout(function () {
+              scrollEl.classList.remove('is-scrolling');
+            }, 800);
+          },
+          { passive: true }
+        );
+      }
+      if (btnClose) btnClose.addEventListener('click', requestCloseModal);
+      if (backdrop) backdrop.addEventListener('click', requestCloseModal);
+      if (btnSave) btnSave.addEventListener('click', savePastSalesModal);
+      if (btnUndo) {
+        btnUndo.addEventListener('click', function () {
+          restoreUndoSnapshot();
+        });
+      }
+      if (btnCsv) {
+        btnCsv.addEventListener('click', function () {
+          window.alert(isJa ? 'CSV取込は次フェーズで実装予定です。' : 'CSV import will be implemented in a coming phase.');
+        });
+      }
+      document.addEventListener('annual:businessDayMapChanged', function (ev) {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (state.modalDirty) return;
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== state.year) return;
+        renderPastSalesTable();
+      });
+      document.addEventListener('annual:salesMapChanged', function (ev) {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (state.modalDirty) return;
+        var y = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(y) && y !== state.year) return;
+        renderPastSalesTable();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (e.key === 'Escape') {
+          if (isPastSalesCloseChooserOpen()) {
+            e.preventDefault();
+            finishPastSalesLeaveNavigate(false);
+            return;
+          }
+          if (salesSortPanel && !salesSortPanel.hidden) {
+            e.preventDefault();
+            closeSalesSortPanel();
+            return;
+          }
+          if (dateFilterPanel && !dateFilterPanel.hidden) {
+            e.preventDefault();
+            closeDateFilterPanel();
+            return;
+          }
+          e.preventDefault();
+          requestCloseModal();
+        }
+      });
+
+      document.addEventListener('mousedown', function (e) {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (dateFilterPanel && !dateFilterPanel.hidden) {
+          if (!dateFilterWrap || !dateFilterWrap.contains(e.target)) closeDateFilterPanel();
+        }
+        if (salesSortPanel && !salesSortPanel.hidden) {
+          if (!salesSortWrap || !salesSortWrap.contains(e.target)) closeSalesSortPanel();
+        }
+      });
+
+      if (dateFilterToggle) {
+        dateFilterToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (dateFilterPanel.hidden) openDateFilterPanel();
+          else closeDateFilterPanel();
+        });
+      }
+
+      if (salesSortToggle) {
+        salesSortToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (salesSortPanel.hidden) openSalesSortPanel();
+          else closeSalesSortPanel();
+        });
+      }
+      if (salesSortPanel) {
+        salesSortPanel.addEventListener('click', function (e) {
+          var orderBtn = e.target.closest('[data-psm-sales-order]');
+          if (orderBtn) {
+            var o = orderBtn.getAttribute('data-psm-sales-order');
+            if (o === 'asc' || o === 'desc') {
+              state.salesAmountSort = o;
+              state.salesPinnedAmount = null;
+              closeSalesSortPanel();
+              renderPastSalesTable();
+              if (scrollEl) scrollEl.scrollTop = 0;
+            }
+            return;
+          }
+          var btn = e.target.closest('[data-psm-sales-amount]');
+          if (!btn) return;
+          var v = Number(btn.getAttribute('data-psm-sales-amount'));
+          if (!isFinite(v)) return;
+          state.salesPinnedAmount = Math.round(v);
+          state.salesAmountSort = null;
+          closeSalesSortPanel();
+          renderPastSalesTable();
+          if (scrollEl) scrollEl.scrollTop = 0;
+        });
+      }
+      if (salesSortResetBtn) {
+        salesSortResetBtn.addEventListener('click', function () {
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          closeSalesSortPanel();
+          renderPastSalesTable();
+          scrollToViewMonth();
+        });
+      }
+
+      if (summaryReferenceInput) {
+        summaryReferenceInput.addEventListener('input', function () {
+          state.modalDirty = true;
+          updatePastSalesSummary();
+        });
+        summaryReferenceInput.addEventListener('change', function () {
+          var y = state.year;
+          if (!isFinite(y) && yearSelect) y = Number(yearSelect.value);
+          commitReferenceForYear(y);
+          updatePastSalesSummary();
+        });
+        summaryReferenceInput.addEventListener('blur', function () {
+          var parsed = parseSalesInputRaw(summaryReferenceInput);
+          summaryReferenceInput.value = parsed != null ? fmtSalesInput(parsed) : '';
+        });
+      }
+
+      function onDateFilterOptionChange() {
+        renderPastSalesTable();
+        scrollToViewMonth();
+      }
+
+      var dowEls = modal.querySelectorAll('.past-sales-modal__filter-dow');
+      for (var di = 0; di < dowEls.length; di++) {
+        dowEls[di].addEventListener('change', onDateFilterOptionChange);
+      }
+      if (filterHolidayCb) filterHolidayCb.addEventListener('change', onDateFilterOptionChange);
+      if (filterClearBtn) {
+        filterClearBtn.addEventListener('click', function () {
+          clearDateFilterUi();
+          renderPastSalesTable();
+          scrollToViewMonth();
+        });
+      }
+
+      if (yearSelect) {
+        yearSelect.addEventListener('change', function () {
+          var y = Number(yearSelect.value);
+          if (!isFinite(y)) return;
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          undoStack = [];
+          syncUndoButton();
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampPastSalesYear(y);
+          yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderPastSalesTable();
+          updatePastSalesSummary();
+          scrollToViewMonth();
+        });
+      }
+      if (monthSelect) {
+        monthSelect.addEventListener('change', function () {
+          var m = Number(monthSelect.value);
+          if (!isFinite(m) || m < 0 || m > 11) return;
+          state.viewMonth = m;
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+
+      if (dateHeaderBtn) {
+        dateHeaderBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          openColheadDatePicker();
+        });
+      }
+      if (dateInput) {
+        dateInput.addEventListener('change', function () {
+          var v = dateInput.value;
+          if (!v) return;
+          var p = v.split('-');
+          var y = clampPastSalesYear(Number(p[0]));
+          var m = Number(p[1]);
+          var d = Number(p[2]);
+          if (!isFinite(m) || !isFinite(d) || m < 1 || m > 12) return;
+          var dim = daysInMonth(y, m - 1);
+          if (d < 1 || d > dim) return;
+          var iso = y + '-' + pad2(m) + '-' + pad2(d);
+          var prevYear = state.year;
+          state.year = y;
+          state.viewMonth = m - 1;
+          if (yearSelect) yearSelect.value = String(state.year);
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          if (prevYear !== state.year) {
+            state.rowStateByIso = {};
+            state.modalDirty = false;
+            undoStack = [];
+            syncUndoButton();
+            state.salesPinnedAmount = null;
+            state.salesAmountSort = null;
+            renderPastSalesTable();
+          }
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              scrollToIsoDate(iso);
+            });
+          });
+        });
+      }
+
+      if (yearPrev) {
+        yearPrev.addEventListener('click', function () {
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          undoStack = [];
+          syncUndoButton();
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampPastSalesYear(state.year - 1);
+          if (yearSelect) yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderPastSalesTable();
+          scrollToViewMonth();
+        });
+      }
+      if (yearNext) {
+        yearNext.addEventListener('click', function () {
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          undoStack = [];
+          syncUndoButton();
+          state.salesPinnedAmount = null;
+          state.salesAmountSort = null;
+          state.year = clampPastSalesYear(state.year + 1);
+          if (yearSelect) yearSelect.value = String(state.year);
+          syncColheadDatePickerValue();
+          renderPastSalesTable();
+          scrollToViewMonth();
+        });
+      }
+      if (monthPrev) {
+        monthPrev.addEventListener('click', function () {
+          state.viewMonth = (state.viewMonth + 11) % 12;
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+      if (monthNext) {
+        monthNext.addEventListener('click', function () {
+          state.viewMonth = (state.viewMonth + 1) % 12;
+          if (monthSelect) monthSelect.value = String(state.viewMonth);
+          syncColheadDatePickerValue();
+          scrollToViewMonth();
+        });
+      }
+
+      if (selectAllBtn)
+        selectAllBtn.addEventListener('click', function () {
+          var rows = modalTable.querySelectorAll('tr');
+          var allChecked = true;
+          var any = false;
+          for (var j = 0; j < rows.length; j++) {
+            var tr0 = rows[j];
+            var cb0 = tr0.querySelector('.past-sales-modal__cb');
+            if (!cb0) continue;
+            any = true;
+            if (!cb0.checked) {
+              allChecked = false;
+              break;
+            }
+          }
+          if (!any) return;
+          pushUndoSnapshot();
+          var turnOn = !allChecked;
+          for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var cb = tr.querySelector('.past-sales-modal__cb');
+            var dateTd = tr.querySelector('.past-sales-modal__date-td');
+            if (!cb || !dateTd) continue;
+            var inpEl = tr.querySelector('.past-sales-modal__sales-input');
+            if (turnOn) {
+              cb.checked = true;
+            } else {
+              if (inpEl && cb.checked && !inpEl.readOnly) {
+                var raw2 = String(inpEl.value || '').replace(/[^\d.-]/g, '');
+                if (raw2 !== '') inpEl.setAttribute('data-last-active', String(Number(raw2)));
+              }
+              cb.checked = false;
+            }
+            pastSalesRowApplyOffState(tr, cb, dateTd);
+          }
+        });
+    })();
+  </script>
+<script>
+    (function () {
       var modal = document.getElementById('annual-edit-modal');
       var backdrop = document.getElementById('annual-edit-modal-backdrop');
       var btnClose = document.getElementById('annual-edit-modal-close');
@@ -17723,5 +20565,51 @@ Cumulative Target Annual Sales</p>
       </div>
     </div>
   </div>
+
+  <script>
+    (function () {
+      var STORAGE_PAST = 'kpiNavigator.pastSalesSummaryCollapsed';
+      function isJa() {
+        return document.documentElement.getAttribute('lang') === 'ja';
+      }
+      function label(collapsed) {
+        if (collapsed) {
+          return isJa() ? 'サマリーを表示' : 'Show summary';
+        }
+        return isJa() ? 'サマリーを折りたたむ' : 'Collapse summary';
+      }
+      function initWrap(wrap, btn, storageKey) {
+        if (!wrap || !btn) return;
+        var panel = wrap.querySelector('[data-psm-summary-panel]');
+        if (!panel) return;
+        function setCollapsed(collapsed) {
+          wrap.classList.toggle('is-collapsed', collapsed);
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+          btn.textContent = collapsed ? '▶︎' : '▼';
+          var text = label(collapsed);
+          btn.setAttribute('aria-label', text);
+          btn.setAttribute('title', text);
+          try {
+            sessionStorage.setItem(storageKey, collapsed ? '1' : '0');
+          } catch (_e) {}
+        }
+        var initialCollapsed = false;
+        try {
+          initialCollapsed = sessionStorage.getItem(storageKey) === '1';
+        } catch (_e) {}
+        setCollapsed(initialCollapsed);
+        btn.addEventListener('click', function () {
+          setCollapsed(wrap.classList.contains('is-collapsed') ? false : true);
+        });
+      }
+      initWrap(
+        document.getElementById('past-sales-summary-wrap'),
+        document.getElementById('past-sales-summary-toggle'),
+        STORAGE_PAST
+      );
+    })();
+  </script>
 </body>
+</html>
+
 </html>
