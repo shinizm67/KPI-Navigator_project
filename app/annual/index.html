@@ -8749,7 +8749,7 @@
         minmax(0, 219fr);
       flex-shrink: 0;
       width: 100%;
-      overflow: hidden;
+      overflow: visible;
       border: 1px solid var(--psm-line);
       border-bottom: 0;
       box-sizing: border-box;
@@ -9185,6 +9185,30 @@
       overflow-y: auto;
       margin: 0 0 8px;
     }
+    .past-sales-modal__date-filter-panel.past-sales-modal__sales-sort-panel {
+      top: auto;
+      bottom: calc(100% + 6px);
+      padding-bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      max-height: min(400px, 50vh);
+    }
+    .past-sales-modal__sales-sort-panel .past-sales-modal__sales-sort-orders,
+    .past-sales-modal__sales-sort-panel .past-sales-modal__sales-sort-section-label {
+      flex-shrink: 0;
+    }
+    .past-sales-modal__sales-sort-panel .past-sales-modal__sales-sort-amounts {
+      flex: 1 1 auto;
+      min-height: 72px;
+      max-height: none;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      margin: 0 0 8px;
+    }
+    .past-sales-modal__sales-sort-panel > .past-sales-modal__filter-clear {
+      flex-shrink: 0;
+      margin-top: 0;
+    }
     .past-sales-modal__sales-sort-amounts .past-sales-modal__sales-sort-btn {
       margin-top: 6px;
     }
@@ -9268,7 +9292,7 @@
       left: 50%;
       transform: translateX(-50%);
       min-width: 220px;
-      z-index: 20;
+      z-index: 50;
       padding: 10px 12px 12px;
       box-sizing: border-box;
       background: #2f2f2f;
@@ -9279,6 +9303,33 @@
     }
     .past-sales-modal__date-filter-panel[hidden] {
       display: none !important;
+    }
+    /* SDM-PSM-DATE-FILTER-OVERFLOW */
+    .past-sales-modal__colhead > .past-sales-modal__colhead-date-merged,
+    .past-sales-modal__colhead > .past-sales-modal__colhead-sales {
+      overflow: visible;
+    }
+    .past-sales-modal__colhead:has(.past-sales-modal__date-filter-panel:not([hidden])),
+    .past-sales-modal__colhead:has(.past-sales-modal__sales-sort-panel:not([hidden])) {
+      position: relative;
+      z-index: 40;
+    }
+    .past-sales-modal__input-stack:has(.past-sales-modal__date-filter-panel:not([hidden])),
+    .past-sales-modal__input-stack:has(.past-sales-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .past-sales-modal__body:has(.past-sales-modal__date-filter-panel:not([hidden])),
+    .past-sales-modal__body:has(.past-sales-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .past-sales-modal__panel:has(.past-sales-modal__date-filter-panel:not([hidden])),
+    .past-sales-modal__panel:has(.past-sales-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .past-sales-modal.is-sales-sort-open .past-sales-modal__panel,
+    .past-sales-modal.is-sales-sort-open .past-sales-modal__body,
+    .past-sales-modal.is-sales-sort-open .past-sales-modal__input-stack {
+      overflow: visible;
     }
     .past-sales-modal__filter-row {
       display: flex;
@@ -9626,7 +9677,7 @@
       --sdm-bg-inactive: rgba(88, 225, 243, 0.44);
       --sdm-bg-active-55: rgba(88, 225, 243, 0.55);
       --sdm-bg-active-70: rgba(88, 225, 243, 0.7);
-      --sdm-row-off-fill: rgba(15, 148, 3, 0.18);
+      --sdm-row-off-fill: #1d4a50;
       --sdm-panel-bg: #000000;
       --sdm-frame: #0f9403;
       --sdm-panel-w: 1100px;
@@ -9987,6 +10038,16 @@
       font-size: 20px;
       background: rgba(88, 225, 243, 0.7);
     }
+    .sales-data-modal__tab[data-sdm-tab='analyze'] {
+      width: 148px;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .sales-data-modal__tab[data-sdm-tab='analyze'].is-active {
+      width: 168px;
+      font-size: 17px;
+      white-space: nowrap;
+    }
     .sales-data-modal__body {
       margin-top: var(--sdm-body-top);
       display: flex;
@@ -10172,7 +10233,7 @@
         minmax(0, 219fr);
       flex-shrink: 0;
       width: 100%;
-      overflow: hidden;
+      overflow: visible;
       border: 1px solid var(--sdm-line);
       border-bottom: 0;
       box-sizing: border-box;
@@ -10326,6 +10387,9 @@
       border-right: 1px solid var(--sdm-line);
     }
     .sales-data-modal__analyze-table {
+      --sdm-analyze-hl-col-w: 170px;
+      --sdm-analyze-hl-bg: #2f555a;
+      --sdm-analyze-head-fs: 14px;
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
@@ -10333,23 +10397,29 @@
     }
     .sales-data-modal__analyze-table th:nth-child(1),
     .sales-data-modal__analyze-table td:nth-child(1) {
-      width: 16%;
+      width: 11%;
     }
     .sales-data-modal__analyze-table th:nth-child(2),
     .sales-data-modal__analyze-table td:nth-child(2) {
-      width: 16%;
+      width: 11%;
     }
     .sales-data-modal__analyze-table th:nth-child(3),
     .sales-data-modal__analyze-table td:nth-child(3) {
-      width: 25%;
+      width: 20%;
     }
     .sales-data-modal__analyze-table th:nth-child(4),
     .sales-data-modal__analyze-table td:nth-child(4) {
-      width: 25%;
+      width: 20%;
     }
     .sales-data-modal__analyze-table th:nth-child(5),
     .sales-data-modal__analyze-table td:nth-child(5) {
-      width: 18%;
+      width: calc(100% - var(--sdm-analyze-hl-col-w) - 62%);
+    }
+    .sales-data-modal__analyze-table th:nth-child(6),
+    .sales-data-modal__analyze-table td:nth-child(6) {
+      width: var(--sdm-analyze-hl-col-w);
+      min-width: var(--sdm-analyze-hl-col-w);
+      max-width: var(--sdm-analyze-hl-col-w);
     }
     .sales-data-modal__analyze-table th,
     .sales-data-modal__analyze-table td {
@@ -10363,17 +10433,129 @@
     .sales-data-modal__analyze-table thead th {
       background: var(--sdm-bg-active-55);
       font-weight: 700;
-      font-size: var(--sdm-fs-colhead);
+      font-size: var(--sdm-analyze-head-fs);
     }
     .sales-data-modal__analyze-table tbody td {
       background: var(--sdm-bg-inactive);
     }
-    .sales-data-modal__analyze-table tbody td:nth-child(n + 3) {
+    .sales-data-modal__analyze-table tbody td:nth-child(n + 3):not(.sales-data-modal__analyze-hl-cell) {
       text-align: right;
       padding-right: 10px;
     }
     .sales-data-modal__analyze-table tbody td:first-child {
       font-weight: 600;
+    }
+    .sales-data-modal__analyze-table th.sales-data-modal__analyze-hl-head,
+    .sales-data-modal__analyze-table td.sales-data-modal__analyze-hl-cell,
+    .sales-data-modal__analyze-table tfoot td {
+      background: var(--sdm-analyze-hl-bg);
+    }
+    .sales-data-modal__analyze-table tfoot td {
+      font-weight: 700;
+    }
+    .sales-data-modal__analyze-table tfoot td.sales-data-modal__analyze-total-label {
+      text-align: right;
+      padding-right: 10px;
+    }
+    .sales-data-modal__analyze-table tfoot td.sales-data-modal__analyze-hl-tip--footer,
+    .sales-data-modal__analyze-table tfoot td#sales-data-analyze-alloc-total {
+      text-align: right;
+      padding-right: 10px;
+    }
+    .sales-data-modal__analyze-hl-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .sales-data-modal__analyze-hl-step {
+      flex: 0 0 auto;
+      width: 24px;
+      height: 22px;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--sdm-cyan);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .sales-data-modal__analyze-hl-step:hover:not(:disabled),
+    .sales-data-modal__analyze-hl-step:focus-visible:not(:disabled) {
+      background: rgba(88, 225, 243, 0.28);
+      outline: none;
+    }
+    .sales-data-modal__analyze-hl-step:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .sales-data-modal__analyze-hl-value {
+      flex: 1 1 auto;
+      min-width: 42px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+    .sales-data-modal__analyze-alloc-total--warn {
+      color: #ff7070;
+      font-weight: 800;
+    }
+    body.office-mode .sales-data-modal__analyze-alloc-total--warn {
+      color: #c62828;
+    }
+    .sales-data-modal__analyze-hl-head-tip {
+      position: relative;
+      cursor: help;
+    }
+    .sales-data-modal__analyze-hl-head-tip:hover::after {
+      content: attr(data-hl-tip);
+      position: absolute;
+      z-index: 20;
+      left: 50%;
+      bottom: calc(100% + 4px);
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 180px;
+      padding: 5px 8px;
+      border: 1px solid var(--sdm-cyan);
+      background: rgba(0, 0, 0, 0.92);
+      color: var(--sdm-cyan);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      white-space: normal;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    }
+    .sales-data-modal__analyze-hl-tip--footer {
+      position: relative;
+      cursor: help;
+    }
+    .sales-data-modal__analyze-hl-tip--footer:hover::after {
+      content: attr(data-hl-tip);
+      position: absolute;
+      z-index: 20;
+      right: 6px;
+      bottom: calc(100% + 4px);
+      width: max-content;
+      max-width: 180px;
+      padding: 5px 8px;
+      border: 1px solid var(--sdm-cyan);
+      background: rgba(0, 0, 0, 0.92);
+      color: var(--sdm-cyan);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      white-space: normal;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
     }
     .sales-data-modal__seasonality {
       margin-top: var(--sdm-analyze-table-chart-gap, 100px);
@@ -10632,6 +10814,30 @@
       overflow-y: auto;
       margin: 0 0 8px;
     }
+    .sales-data-modal__date-filter-panel.sales-data-modal__sales-sort-panel {
+      top: auto;
+      bottom: calc(100% + 6px);
+      padding-bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      max-height: min(400px, 50vh);
+    }
+    .sales-data-modal__sales-sort-panel .sales-data-modal__sales-sort-orders,
+    .sales-data-modal__sales-sort-panel .sales-data-modal__sales-sort-section-label {
+      flex-shrink: 0;
+    }
+    .sales-data-modal__sales-sort-panel .sales-data-modal__sales-sort-amounts {
+      flex: 1 1 auto;
+      min-height: 72px;
+      max-height: none;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      margin: 0 0 8px;
+    }
+    .sales-data-modal__sales-sort-panel > .sales-data-modal__filter-clear {
+      flex-shrink: 0;
+      margin-top: 0;
+    }
     .sales-data-modal__sales-sort-amounts .sales-data-modal__sales-sort-btn {
       margin-top: 6px;
     }
@@ -10715,7 +10921,7 @@
       left: 50%;
       transform: translateX(-50%);
       min-width: 220px;
-      z-index: 20;
+      z-index: 50;
       padding: 10px 12px 12px;
       box-sizing: border-box;
       background: #2f2f2f;
@@ -10726,6 +10932,33 @@
     }
     .sales-data-modal__date-filter-panel[hidden] {
       display: none !important;
+    }
+    /* SDM-PSM-DATE-FILTER-OVERFLOW */
+    .sales-data-modal__colhead > .sales-data-modal__colhead-date-merged,
+    .sales-data-modal__colhead > .sales-data-modal__colhead-sales {
+      overflow: visible;
+    }
+    .sales-data-modal__colhead:has(.sales-data-modal__date-filter-panel:not([hidden])),
+    .sales-data-modal__colhead:has(.sales-data-modal__sales-sort-panel:not([hidden])) {
+      position: relative;
+      z-index: 40;
+    }
+    .sales-data-modal__input-stack:has(.sales-data-modal__date-filter-panel:not([hidden])),
+    .sales-data-modal__input-stack:has(.sales-data-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .sales-data-modal__body:has(.sales-data-modal__date-filter-panel:not([hidden])),
+    .sales-data-modal__body:has(.sales-data-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .sales-data-modal__panel:has(.sales-data-modal__date-filter-panel:not([hidden])),
+    .sales-data-modal__panel:has(.sales-data-modal__sales-sort-panel:not([hidden])) {
+      overflow: visible;
+    }
+    .sales-data-modal.is-sales-sort-open .sales-data-modal__panel,
+    .sales-data-modal.is-sales-sort-open .sales-data-modal__body,
+    .sales-data-modal.is-sales-sort-open .sales-data-modal__input-stack {
+      overflow: visible;
     }
     .sales-data-modal__filter-row {
       display: flex;
@@ -12671,7 +12904,43 @@
               すべて選択
             </button>
           </div>
-          <div class="past-sales-modal__colhead-sales">売上</div>
+          <div class="past-sales-modal__colhead-sales">
+            <span>売上</span>
+            <div class="past-sales-modal__sales-sort" id="past-sales-sales-sort-wrap">
+              <button
+                type="button"
+                class="past-sales-modal__date-filter-toggle past-sales-modal__sales-sort-toggle"
+                id="past-sales-sales-sort-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="past-sales-sales-sort-panel"
+                aria-label="売上で並べ替え"
+              >
+                <span class="past-sales-modal__sort-icon" aria-hidden="true">▼</span>
+              </button>
+              <div
+                id="past-sales-sales-sort-panel"
+                class="past-sales-modal__date-filter-panel past-sales-modal__sales-sort-panel"
+                role="group"
+                aria-label="売上の並べ替え"
+                hidden
+              >
+                <div class="past-sales-modal__sales-sort-orders">
+                  <button type="button" class="past-sales-modal__sales-sort-btn" data-psm-sales-order="desc">
+                    降り順（売上 高→低）
+                  </button>
+                  <button type="button" class="past-sales-modal__sales-sort-btn" data-psm-sales-order="asc">
+                    登り順（売上 低→高）
+                  </button>
+                </div>
+                <div class="past-sales-modal__sales-sort-section-label">数値順位</div>
+                <div class="past-sales-modal__sales-sort-amounts" id="past-sales-sales-sort-amounts"></div>
+                <button type="button" class="past-sales-modal__filter-clear" id="past-sales-sales-sort-reset">
+                  日付順に戻す
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="past-sales-modal__colhead-monthly">月次合計</div>
           <div class="past-sales-modal__colhead-annual">年間合計</div>
         </div>
@@ -12789,6 +13058,17 @@
           </div>
         </div>
       <div class="sales-data-modal__tab-bar">
+        <button
+          type="button"
+          class="sales-data-modal__summary-toggle sales-data-modal__input-only"
+          id="sales-data-summary-toggle"
+          aria-expanded="true"
+          aria-controls="sales-data-summary-panel"
+          aria-label="サマリーを折りたたむ"
+          title="サマリーを折りたたむ"
+        >
+          ▼
+        </button>
         <div class="sales-data-modal__tabs" role="tablist" aria-label="売上データビュー">
           <button
             type="button"
@@ -12808,7 +13088,7 @@
             aria-selected="false"
             data-sdm-tab="analyze"
           >
-            Analyze
+            Target Sales
           </button>
         </div>
       </div>
@@ -12874,7 +13154,7 @@
                 id="sales-data-date-filter-toggle"
                 aria-expanded="false"
                 aria-haspopup="true"
-                aria-controls="past-sales-date-filter-panel"
+                aria-controls="sales-data-date-filter-panel"
                 aria-label="曜日・祝日で表示を絞り込む"
               >
                 <span class="sales-data-modal__sort-icon" aria-hidden="true">▼</span>
@@ -12915,7 +13195,43 @@
               すべて選択
             </button>
           </div>
-          <div class="sales-data-modal__colhead-sales">売上</div>
+          <div class="sales-data-modal__colhead-sales">
+            <span>売上</span>
+            <div class="sales-data-modal__sales-sort" id="sales-data-sales-sort-wrap">
+              <button
+                type="button"
+                class="sales-data-modal__date-filter-toggle sales-data-modal__sales-sort-toggle"
+                id="sales-data-sales-sort-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="sales-data-sales-sort-panel"
+                aria-label="売上で並べ替え"
+              >
+                <span class="sales-data-modal__sort-icon" aria-hidden="true">▼</span>
+              </button>
+              <div
+                id="sales-data-sales-sort-panel"
+                class="sales-data-modal__date-filter-panel sales-data-modal__sales-sort-panel"
+                role="group"
+                aria-label="売上の並べ替え"
+                hidden
+              >
+                <div class="sales-data-modal__sales-sort-orders">
+                  <button type="button" class="sales-data-modal__sales-sort-btn" data-sdm-sales-order="desc">
+                    降り順（売上 高→低）
+                  </button>
+                  <button type="button" class="sales-data-modal__sales-sort-btn" data-sdm-sales-order="asc">
+                    登り順（売上 低→高）
+                  </button>
+                </div>
+                <div class="sales-data-modal__sales-sort-section-label">数値順位</div>
+                <div class="sales-data-modal__sales-sort-amounts" id="sales-data-sales-sort-amounts"></div>
+                <button type="button" class="sales-data-modal__filter-clear" id="sales-data-sales-sort-reset">
+                  日付順に戻す
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="sales-data-modal__colhead-monthly">月次合計</div>
           <div class="sales-data-modal__colhead-annual">年間合計</div>
         </div>
@@ -12926,8 +13242,8 @@
           <div class="sales-data-modal__analyze-stack">
             <div class="sales-data-modal__analyze-data">
               <div class="sales-data-modal__analyze-kpi sales-data-modal__analyze-kpi--2">
-                <p class="sales-data-modal__analyze-kpi-label">年間入力売上</p>
-                <p class="sales-data-modal__analyze-kpi-value" id="sales-data-analyze-input-sales">—</p>
+                <p class="sales-data-modal__analyze-kpi-label">年間目標売上</p>
+                <p class="sales-data-modal__analyze-kpi-value" id="sales-data-analyze-annual-target">—</p>
               </div>
               <div class="sales-data-modal__analyze-kpi sales-data-modal__analyze-kpi--4">
                 <p class="sales-data-modal__analyze-kpi-label">総営業日数</p>
@@ -12935,17 +13251,24 @@
                 <p class="sales-data-modal__analyze-kpi-label">平均日次売上</p>
                 <p class="sales-data-modal__analyze-kpi-value" id="sales-data-analyze-avg-daily">—</p>
               </div>
-              <table class="sales-data-modal__analyze-table" aria-label="月次繁閑分析">
+              <table class="sales-data-modal__analyze-table" aria-label="月次目標売上配分">
                 <thead>
                   <tr>
                     <th scope="col">月</th>
                     <th scope="col">B. DAY</th>
-                    <th scope="col">月次売上</th>
                     <th scope="col">基準月次売上</th>
-                    <th scope="col">繁閑期%</th>
+                    <th scope="col">月次目標売上</th>
+                    <th scope="col">前年繁閑期%</th>
+                    <th scope="col" class="sales-data-modal__analyze-hl-head sales-data-modal__analyze-hl-head-tip" data-hl-tip="▼左 ▲右 で5%刻み">繁閑期%設定</th>
                   </tr>
                 </thead>
                 <tbody id="sales-data-analyze-table-body"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" class="sales-data-modal__analyze-total-label">Monthly Allocated Total</td>
+                    <td id="sales-data-analyze-alloc-total" class="sales-data-modal__analyze-hl-tip--footer" data-hl-tip="各月%の平均が100%に">—</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             <section class="sales-data-modal__seasonality" aria-label="月次繁閑期グラフ">
@@ -21175,6 +21498,9 @@ Target Sales</p>
       var sessionSaved = false;
       var undoStack = [];
       var lastFocusEl = null;
+      document.addEventListener('kpi:annualPlanChanged', function () {
+        if (state.activeTab === 'analyze') renderSalesDataAnalyze();
+      });
       var MSG_UNSAVED_CLOSE = isJa ? '変更が保存されていません。保存せずに閉じますか？' : 'You have unsaved changes. Close without saving?';
       function ensurePastSalesDaily() {
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
@@ -22109,6 +22435,7 @@ Target Sales</p>
 
       function openDateFilterPanel() {
         if (!dateFilterPanel) return;
+        closeSalesSortPanel();
         dateFilterPanel.hidden = false;
         if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'true');
       }
@@ -22203,21 +22530,50 @@ Target Sales</p>
         }
       }
 
+      function fitSalesSortPanelToViewport() {
+        if (!salesSortPanel || !salesSortToggle) return;
+        salesSortPanel.style.removeProperty('top');
+        salesSortPanel.style.removeProperty('bottom');
+        salesSortPanel.style.removeProperty('max-height');
+        var rect = salesSortToggle.getBoundingClientRect();
+        var edge = 16;
+        var gap = 8;
+        var availAbove = rect.top - edge;
+        var availBelow = window.innerHeight - rect.bottom - edge;
+        var openUp = availAbove >= availBelow;
+        var maxH = Math.max(180, Math.min(420, (openUp ? availAbove : availBelow) - gap));
+        if (openUp) {
+          salesSortPanel.style.top = 'auto';
+          salesSortPanel.style.bottom = 'calc(100% + 6px)';
+        } else {
+          salesSortPanel.style.top = 'calc(100% + 6px)';
+          salesSortPanel.style.bottom = 'auto';
+        }
+        salesSortPanel.style.maxHeight = maxH + 'px';
+      }
+
       function closeSalesSortPanel() {
         if (!salesSortPanel) return;
         salesSortPanel.hidden = true;
+        salesSortPanel.style.removeProperty('top');
+        salesSortPanel.style.removeProperty('bottom');
+        salesSortPanel.style.removeProperty('max-height');
+        if (modal) modal.classList.remove('is-sales-sort-open');
         if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'false');
       }
 
       function openSalesSortPanel() {
         if (!salesSortPanel) return;
+        closeDateFilterPanel();
         var rowItems = getDateFilteredRowItems();
         syncSalesPinnedAmountValid(rowItems);
         refreshSalesSortAmountButtons(collectUniqueSalesAmountsDesc(rowItems));
         updateSalesSortOrderButtonsActive();
         updateSalesSortToggleActive();
         salesSortPanel.hidden = false;
+        if (modal) modal.classList.add('is-sales-sort-open');
         if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'true');
+        fitSalesSortPanelToViewport();
       }
 
       function updateSalesSortToggleActive() {
@@ -22841,10 +23197,11 @@ Target Sales</p>
       var summaryReferenceInput = document.getElementById('sales-data-summary-reference');
       var summaryRemainingEl = document.getElementById('sales-data-summary-remaining');
       var summaryPctEl = document.getElementById('sales-data-summary-progress-pct');
-      var analyzeInputSalesEl = document.getElementById('sales-data-analyze-input-sales');
+      var analyzeAnnualTargetEl = document.getElementById('sales-data-analyze-annual-target');
       var analyzeTotalBdEl = document.getElementById('sales-data-analyze-total-bd');
       var analyzeAvgDailyEl = document.getElementById('sales-data-analyze-avg-daily');
       var analyzeTableBody = document.getElementById('sales-data-analyze-table-body');
+      var analyzeAllocTotalEl = document.getElementById('sales-data-analyze-alloc-total');
       var seasonalityBarsEl = document.getElementById('sales-data-seasonality-bars');
       var MONTHS_SHORT_EN = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -23243,11 +23600,11 @@ Target Sales</p>
         return { scaleMax: scaleMax, baselinePct: (100 / scaleMax) * 100 };
       }
 
+      /* KPI-SDM-ANALYZE-PAST-SEASONALITY */
       function buildSalesDataAnalyzeModel(y) {
         var all = gatherYearDays(y);
-        var annualTarget = getReferenceAnnualForAnalyze(y);
-        var monthlySales = getMonthlyCumulativeSalesByMonth(y);
-        var hlWeights = getHlWeightsForSalesDataAnalyze(y);
+        var operatingYear = getOperatingYear();
+        var annualSales = getReferenceAnnualForAnalyze(y);
         var totalBD = 0;
         var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         for (var i = 0; i < all.length; i++) {
@@ -23258,42 +23615,258 @@ Target Sales</p>
             monthlyBD[item.m0]++;
           }
         }
-        var avgDaily = annualTarget != null && totalBD > 0 ? annualTarget / totalBD : null;
-        var cumulativeInput = getCumulativeInputAnnualTotal(y);
+        var avgDaily = null;
+        var seasonalityMonths = null;
+        if (window.KpiYearStore && y === operatingYear) {
+          if (typeof KpiYearStore.computePastAverageDailySales === 'function') {
+            avgDaily = KpiYearStore.computePastAverageDailySales(operatingYear, 2);
+          }
+          if (typeof KpiYearStore.computeAverageSeasonalityPct === 'function') {
+            var seasonPack = KpiYearStore.computeAverageSeasonalityPct(operatingYear, 2);
+            seasonalityMonths = seasonPack ? seasonPack.months : null;
+          }
+        }
+        if (avgDaily == null && annualSales != null && totalBD > 0) {
+          avgDaily = annualSales / totalBD;
+        }
         var months = [];
         for (var m0 = 0; m0 < 12; m0++) {
-          var w = Number(hlWeights[m0]);
-          if (!isFinite(w)) w = 100;
-          var baseline =
-            avgDaily != null && monthlyBD[m0] > 0 ? avgDaily * monthlyBD[m0] * (w / 100) : null;
-          var sales = monthlySales[m0];
-          var seasonality = baseline != null && baseline > 0 ? (sales / baseline) * 100 : null;
+          var baseline = avgDaily != null && monthlyBD[m0] > 0 ? avgDaily * monthlyBD[m0] : null;
+          var seasonality =
+            seasonalityMonths && seasonalityMonths[m0] != null ? seasonalityMonths[m0] : null;
           months.push({
             m0: m0,
             bd: monthlyBD[m0],
-            sales: sales,
+            sales: null,
             baseline: baseline,
-            seasonality: seasonality
+            seasonality: seasonality,
           });
         }
         return {
           year: y,
-          annualTarget: annualTarget,
-          cumulativeInput: cumulativeInput,
+          annualSales: annualSales,
           totalBD: totalBD,
           avgDaily: avgDaily,
-          months: months
+          months: months,
         };
       }
+      /* END KPI-SDM-ANALYZE-PAST-SEASONALITY */
+
+
+      /* KPI-SDM-HL-STEPPER-JS */
+      var SDM_HL_MIN = 60;
+      var SDM_HL_MAX = 200;
+      var SDM_HL_STEP = 5;
+      var sdmHlAllocWarnShown = false;
+      function sdmAll100HlWeights() {
+        return [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
+      }
+      function clampSdmHlWeight(n) {
+        n = Number(n);
+        if (!Number.isFinite(n)) n = 100;
+        if (n < SDM_HL_MIN) n = SDM_HL_MIN;
+        if (n > SDM_HL_MAX) n = SDM_HL_MAX;
+        return Math.round(n / SDM_HL_STEP) * SDM_HL_STEP;
+      }
+      function ensureSdmHlWeightsForYear(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y) && window.KpiYearStore) y = KpiYearStore.getOperatingYear();
+        if (!Number.isFinite(y)) return sdmAll100HlWeights();
+        if (!window.KpiYearStore) return sdmAll100HlWeights();
+        var fromStore = KpiYearStore.readMonthlyHlWeights(y);
+        if (fromStore && fromStore.length === 12) return fromStore.slice();
+        if (y === KpiYearStore.getOperatingYear()) {
+          KpiYearStore.ensureOperatingYearPlanDefaults();
+          fromStore = KpiYearStore.readMonthlyHlWeights(y);
+          if (fromStore && fromStore.length === 12) return fromStore.slice();
+        }
+        var baseline =
+          typeof KpiYearStore.computeBaselineHlWeights === 'function'
+            ? KpiYearStore.computeBaselineHlWeights(y, 2)
+            : null;
+        if (baseline && baseline.length === 12) {
+          KpiYearStore.writeMonthlyHlWeights(y, baseline, { source: 'observed-baseline' });
+          return baseline.slice();
+        }
+        var all100 = sdmAll100HlWeights();
+        KpiYearStore.writeMonthlyHlWeights(y, all100, { source: 'plan-default' });
+        return all100.slice();
+      }
+      function getSdmHlWeightsForYear(year) {
+        return ensureSdmHlWeightsForYear(year);
+      }
+      function saveSdmHlWeights(year, weights, source) {
+        if (!window.KpiYearStore) return false;
+        var y = Number(year);
+        if (!Number.isFinite(y)) y = getOperatingYear();
+        var payload = weights && weights.length === 12 ? weights.slice() : null;
+        if (!payload) return false;
+        var ok = KpiYearStore.writeMonthlyHlWeights(y, payload, {
+          source: source || 'sales-data-analyze',
+        });
+        if (ok && window.__ANNUAL_UI && typeof window.__ANNUAL_UI.refreshHlPlanFromStore === 'function') {
+          window.__ANNUAL_UI.refreshHlPlanFromStore();
+        }
+        return ok;
+      }
+      function calcMonthlyAllocatedTotal(weights) {
+        if (!weights || weights.length !== 12) return null;
+        var sum = 0;
+        for (var i = 0; i < 12; i++) {
+          var n = Number(weights[i]);
+          sum += Number.isFinite(n) ? n : 100;
+        }
+        return Math.round((sum / 12) * 100) / 100;
+      }
+      function isSdmAllocTotalOk(total) {
+        return total != null && Math.abs(total - 100) < 0.01;
+      }
+      function updateSdmAllocTotalDisplay(weights) {
+        if (!analyzeAllocTotalEl) return;
+        var total = calcMonthlyAllocatedTotal(weights);
+        analyzeAllocTotalEl.textContent = total != null ? total.toFixed(2) + '%' : '—';
+        analyzeAllocTotalEl.classList.toggle(
+          'sales-data-modal__analyze-alloc-total--warn',
+          total != null && !isSdmAllocTotalOk(total)
+        );
+      }
+      function maybeAlertSdmAllocTotal(weights) {
+        if (sdmHlAllocWarnShown) return;
+        var total = calcMonthlyAllocatedTotal(weights);
+        if (isSdmAllocTotalOk(total)) return;
+        sdmHlAllocWarnShown = true;
+        window.alert(
+          isJa
+            ? 'Monthly Allocated Total が ' +
+                total.toFixed(2) +
+                '% です。\n左の繁閑期%を参考に ▲▼ で各月を調整し、合計を 100% に近づけてください。'
+            : 'Monthly Allocated Total is ' +
+                total.toFixed(2) +
+                '%.\nUse ▲▼ to adjust each month (refer to Seasonality % on the left) until the total reaches 100%.'
+        );
+      }
+      function updateSdmTargetSalesCell(tr, weights, monthIndex) {
+        if (!tr) return;
+        var baseline = Number(tr.getAttribute('data-sdm-baseline'));
+        if (!isFinite(baseline) || baseline <= 0) return;
+        var targetTd = tr.children[3];
+        if (!targetTd) return;
+        var w = clampSdmHlWeight(weights[monthIndex]);
+        targetTd.textContent = formatAnalyzeMoney(baseline * (w / 100));
+      }
+      function bindSdmHlCell(td, year, monthIndex, weights) {
+        td.className = 'sales-data-modal__analyze-hl-cell';
+        var wrap = document.createElement('div');
+        wrap.className = 'sales-data-modal__analyze-hl-stepper';
+        var btnDown = document.createElement('button');
+        btnDown.type = 'button';
+        btnDown.className = 'sales-data-modal__analyze-hl-step sales-data-modal__analyze-hl-step--down';
+        btnDown.textContent = '▼';
+        btnDown.setAttribute('aria-label', isJa ? '5%減らす' : 'Decrease by 5%');
+        var valueEl = document.createElement('span');
+        valueEl.className = 'sales-data-modal__analyze-hl-value';
+        valueEl.setAttribute('aria-live', 'polite');
+        var btnUp = document.createElement('button');
+        btnUp.type = 'button';
+        btnUp.className = 'sales-data-modal__analyze-hl-step sales-data-modal__analyze-hl-step--up';
+        btnUp.textContent = '▲';
+        btnUp.setAttribute('aria-label', isJa ? '5%増やす' : 'Increase by 5%');
+        wrap.appendChild(btnDown);
+        wrap.appendChild(valueEl);
+        wrap.appendChild(btnUp);
+        function refreshStepper() {
+          var w = clampSdmHlWeight(weights[monthIndex]);
+          weights[monthIndex] = w;
+          valueEl.textContent = w + '%';
+          var locked = window.KpiYearStore && KpiYearStore.isYearLocked(year);
+          btnUp.disabled = locked || w >= SDM_HL_MAX;
+          btnDown.disabled = locked || w <= SDM_HL_MIN;
+        }
+        function step(delta) {
+          if (window.KpiYearStore && KpiYearStore.isYearLocked(year)) {
+            window.alert(
+              isJa ? '確定済みの年は繁閑%を編集できません。' : 'Cannot edit H/L % for a locked year.'
+            );
+            return;
+          }
+          var next = clampSdmHlWeight(Number(weights[monthIndex]) + delta);
+          if (next === weights[monthIndex]) return;
+          var prev = weights[monthIndex];
+          weights[monthIndex] = next;
+          if (!saveSdmHlWeights(year, weights, 'sales-data-analyze')) {
+            weights[monthIndex] = prev;
+            window.alert(isJa ? '保存できませんでした。' : 'Could not save.');
+            return;
+          }
+          refreshStepper();
+          updateSdmAllocTotalDisplay(weights);
+          updateSdmTargetSalesCell(td.parentElement, weights, monthIndex);
+          renderSdmPlanSeasonalityChart(weights);
+        }
+        btnUp.addEventListener('click', function () { step(SDM_HL_STEP); });
+        btnDown.addEventListener('click', function () { step(-SDM_HL_STEP); });
+        refreshStepper();
+        td.appendChild(wrap);
+      }
+      function renderSdmPlanSeasonalityChart(weights) {
+        if (!seasonalityBarsEl || !weights || weights.length !== 12) return;
+        var chartMonths = [];
+        for (var ci = 0; ci < 12; ci++) {
+          var w = Number(weights[ci]);
+          chartMonths.push({ m0: ci, seasonality: Number.isFinite(w) ? w : 100 });
+        }
+        var chartScale = getSeasonalityChartScale(chartMonths);
+        var baselineLeft = chartScale.baselinePct;
+        var seasonScaleMax = chartScale.scaleMax;
+        var barsHtml = '';
+        for (var bi = 0; bi < chartMonths.length; bi++) {
+          var bm = chartMonths[bi];
+          var fillW = 0;
+          if (bm.seasonality != null && isFinite(bm.seasonality) && seasonScaleMax > 0) {
+            fillW = (bm.seasonality / seasonScaleMax) * 100;
+            if (fillW < 0) fillW = 0;
+            if (fillW > 100) fillW = 100;
+          }
+          var markerLeft = fillW;
+          barsHtml +=
+            '<div class="sales-data-modal__season-row">' +
+            '<span class="sales-data-modal__season-month">' +
+            monthLabelShort(bm.m0) +
+            '</span>' +
+            '<div class="sales-data-modal__season-track">' +
+            '<div class="sales-data-modal__season-baseline-slot" style="left:' +
+            baselineLeft +
+            '%">' +
+            '<span class="sales-data-modal__season-baseline-rim" aria-hidden="true"></span>' +
+            '<span class="sales-data-modal__season-baseline-bar" aria-hidden="true"></span>' +
+            '<span class="sales-data-modal__season-baseline-rim" aria-hidden="true"></span>' +
+            '</div>' +
+            '<div class="sales-data-modal__season-fill" style="width:' +
+            fillW +
+            '%"></div>' +
+            '<div class="sales-data-modal__season-marker" style="left:' +
+            markerLeft +
+            '%"></div>' +
+            '</div>' +
+            '<span class="sales-data-modal__season-pct">' +
+            formatSeasonalityPct(bm.seasonality) +
+            '</span>' +
+            '</div>';
+        }
+        seasonalityBarsEl.innerHTML = barsHtml;
+      }
+      /* END KPI-SDM-HL-STEPPER-JS */
 
       function renderSalesDataAnalyze() {
         var y = state.year;
         if (!isFinite(y)) y = getOperatingYear();
         if (!isFinite(y)) return;
+        var planYear = getOperatingYear();
         var model = buildSalesDataAnalyzeModel(y);
-        if (analyzeInputSalesEl) {
-          analyzeInputSalesEl.textContent =
-            model.cumulativeInput != null ? formatAnalyzeMoney(model.cumulativeInput) : '—';
+        if (analyzeAnnualTargetEl) {
+          var annualVal = model.annualSales != null ? model.annualSales : model.annualTarget;
+          analyzeAnnualTargetEl.textContent =
+            annualVal != null ? formatAnalyzeMoney(annualVal) : '—';
         }
         if (analyzeTotalBdEl) {
           analyzeTotalBdEl.textContent = model.totalBD > 0 ? String(model.totalBD) : '—';
@@ -23302,70 +23875,44 @@ Target Sales</p>
           analyzeAvgDailyEl.textContent =
             model.avgDaily != null ? formatAnalyzeMoney(model.avgDaily) : '—';
         }
+        var hlWeights = getSdmHlWeightsForYear(planYear);
         if (analyzeTableBody) {
           while (analyzeTableBody.firstChild) analyzeTableBody.removeChild(analyzeTableBody.firstChild);
           for (var mi = 0; mi < model.months.length; mi++) {
             var row = model.months[mi];
             var tr = document.createElement('tr');
+            if (row.baseline != null && isFinite(row.baseline)) {
+              tr.setAttribute('data-sdm-baseline', String(row.baseline));
+            }
             var td0 = document.createElement('td');
             td0.textContent = monthLabelShort(row.m0);
             var td1 = document.createElement('td');
             td1.textContent = String(row.bd);
             var td2 = document.createElement('td');
-            td2.textContent = row.bd > 0 ? formatAnalyzeMoney(row.sales) : '—';
+            td2.textContent =
+              row.baseline != null && row.bd > 0 ? formatAnalyzeMoney(row.baseline) : '—';
             var td3 = document.createElement('td');
-            td3.textContent = row.baseline != null ? formatAnalyzeMoney(row.baseline) : '—';
+            var hlPct = Number(hlWeights[row.m0]);
+            var targetSales =
+              row.baseline != null && isFinite(hlPct) ? row.baseline * (hlPct / 100) : null;
+            td3.textContent =
+              targetSales != null && row.bd > 0 ? formatAnalyzeMoney(targetSales) : '—';
             var td4 = document.createElement('td');
             td4.textContent = formatSeasonalityPct(row.seasonality);
+            var td5 = document.createElement('td');
+            bindSdmHlCell(td5, planYear, row.m0, hlWeights);
             tr.appendChild(td0);
             tr.appendChild(td1);
             tr.appendChild(td2);
             tr.appendChild(td3);
             tr.appendChild(td4);
+            tr.appendChild(td5);
             analyzeTableBody.appendChild(tr);
           }
+          updateSdmAllocTotalDisplay(hlWeights);
+          maybeAlertSdmAllocTotal(hlWeights);
         }
-        if (seasonalityBarsEl) {
-          var barsHtml = '';
-          var chartScale = getSeasonalityChartScale(model.months);
-          var baselineLeft = chartScale.baselinePct;
-          var seasonScaleMax = chartScale.scaleMax;
-          for (var bi = 0; bi < model.months.length; bi++) {
-            var bm = model.months[bi];
-            var fillW = 0;
-            if (bm.seasonality != null && isFinite(bm.seasonality) && seasonScaleMax > 0) {
-              fillW = (bm.seasonality / seasonScaleMax) * 100;
-              if (fillW < 0) fillW = 0;
-              if (fillW > 100) fillW = 100;
-            }
-            var markerLeft = fillW;
-            barsHtml +=
-              '<div class="sales-data-modal__season-row">' +
-              '<span class="sales-data-modal__season-month">' +
-              monthLabelShort(bm.m0) +
-              '</span>' +
-              '<div class="sales-data-modal__season-track">' +
-              '<div class="sales-data-modal__season-baseline-slot" style="left:' +
-              baselineLeft +
-              '%">' +
-              '<span class="sales-data-modal__season-baseline-rim" aria-hidden="true"></span>' +
-              '<span class="sales-data-modal__season-baseline-bar" aria-hidden="true"></span>' +
-              '<span class="sales-data-modal__season-baseline-rim" aria-hidden="true"></span>' +
-              '</div>' +
-              '<div class="sales-data-modal__season-fill" style="width:' +
-              fillW +
-              '%"></div>' +
-              '<div class="sales-data-modal__season-marker" style="left:' +
-              markerLeft +
-              '%"></div>' +
-              '</div>' +
-              '<span class="sales-data-modal__season-pct">' +
-              formatSeasonalityPct(bm.seasonality) +
-              '</span>' +
-              '</div>';
-          }
-          seasonalityBarsEl.innerHTML = barsHtml;
-        }
+        renderSdmPlanSeasonalityChart(hlWeights);
       }
 
       function pad2(n) {
@@ -23779,6 +24326,7 @@ Target Sales</p>
 
       function openDateFilterPanel() {
         if (!dateFilterPanel) return;
+        closeSalesSortPanel();
         dateFilterPanel.hidden = false;
         if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'true');
       }
@@ -23873,21 +24421,50 @@ Target Sales</p>
         }
       }
 
+      function fitSalesSortPanelToViewport() {
+        if (!salesSortPanel || !salesSortToggle) return;
+        salesSortPanel.style.removeProperty('top');
+        salesSortPanel.style.removeProperty('bottom');
+        salesSortPanel.style.removeProperty('max-height');
+        var rect = salesSortToggle.getBoundingClientRect();
+        var edge = 16;
+        var gap = 8;
+        var availAbove = rect.top - edge;
+        var availBelow = window.innerHeight - rect.bottom - edge;
+        var openUp = availAbove >= availBelow;
+        var maxH = Math.max(180, Math.min(420, (openUp ? availAbove : availBelow) - gap));
+        if (openUp) {
+          salesSortPanel.style.top = 'auto';
+          salesSortPanel.style.bottom = 'calc(100% + 6px)';
+        } else {
+          salesSortPanel.style.top = 'calc(100% + 6px)';
+          salesSortPanel.style.bottom = 'auto';
+        }
+        salesSortPanel.style.maxHeight = maxH + 'px';
+      }
+
       function closeSalesSortPanel() {
         if (!salesSortPanel) return;
         salesSortPanel.hidden = true;
+        salesSortPanel.style.removeProperty('top');
+        salesSortPanel.style.removeProperty('bottom');
+        salesSortPanel.style.removeProperty('max-height');
+        if (modal) modal.classList.remove('is-sales-sort-open');
         if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'false');
       }
 
       function openSalesSortPanel() {
         if (!salesSortPanel) return;
+        closeDateFilterPanel();
         var rowItems = getDateFilteredRowItems();
         syncSalesPinnedAmountValid(rowItems);
         refreshSalesSortAmountButtons(collectUniqueSalesAmountsDesc(rowItems));
         updateSalesSortOrderButtonsActive();
         updateSalesSortToggleActive();
         salesSortPanel.hidden = false;
+        if (modal) modal.classList.add('is-sales-sort-open');
         if (salesSortToggle) salesSortToggle.setAttribute('aria-expanded', 'true');
+        fitSalesSortPanelToViewport();
       }
 
       function updateSalesSortToggleActive() {
@@ -24122,6 +24699,7 @@ Target Sales</p>
         scrollToViewMonth();
         state.modalDirty = false;
         sessionSaved = false;
+        sdmHlAllocWarnShown = false;
         undoStack = [];
         syncUndoButton();
         if (btnClose) btnClose.focus();
@@ -25500,6 +26078,7 @@ Target Sales</p>
 
   <script>
     (function () {
+      var STORAGE_SALES = 'kpiNavigator.salesDataSummaryCollapsed';
       var STORAGE_PAST = 'kpiNavigator.pastSalesSummaryCollapsed';
       function isJa() {
         return document.documentElement.getAttribute('lang') === 'ja';
@@ -25512,7 +26091,7 @@ Target Sales</p>
       }
       function initWrap(wrap, btn, storageKey) {
         if (!wrap || !btn) return;
-        var panel = wrap.querySelector('[data-psm-summary-panel]');
+        var panel = wrap.querySelector('[data-psm-summary-panel], [data-sdm-summary-panel]');
         if (!panel) return;
         function setCollapsed(collapsed) {
           wrap.classList.toggle('is-collapsed', collapsed);
@@ -25534,6 +26113,11 @@ Target Sales</p>
           setCollapsed(wrap.classList.contains('is-collapsed') ? false : true);
         });
       }
+      initWrap(
+        document.getElementById('sales-data-summary-wrap'),
+        document.getElementById('sales-data-summary-toggle'),
+        STORAGE_SALES
+      );
       initWrap(
         document.getElementById('past-sales-summary-wrap'),
         document.getElementById('past-sales-summary-toggle'),

@@ -84,7 +84,7 @@ SDM_THEME_OLD = """      --sdm-row-off-fill: rgba(88, 225, 243, 0.22);
       --sdm-panel-bg: #100052;
       --sdm-frame: #370aff;"""
 
-SDM_THEME_NEW = """      --sdm-row-off-fill: rgba(15, 148, 3, 0.18);
+SDM_THEME_NEW = """      --sdm-row-off-fill: #1d4a50;
       --sdm-panel-bg: #000000;
       --sdm-frame: #0f9403;"""
 
@@ -127,6 +127,17 @@ TAB_BAR_OLD = """      <div class="sales-data-modal__tab-bar">
         <div class="sales-data-modal__tabs" role="tablist" aria-label="売上データビュー">"""
 
 TAB_BAR_JA = """      <div class="sales-data-modal__tab-bar">
+        <button
+          type="button"
+          class="sales-data-modal__summary-toggle sales-data-modal__input-only"
+          id="sales-data-summary-toggle"
+          aria-expanded="true"
+          aria-controls="sales-data-summary-panel"
+          aria-label="サマリーを折りたたむ"
+          title="サマリーを折りたたむ"
+        >
+          ▼
+        </button>
         <div class="sales-data-modal__tabs" role="tablist" aria-label="売上データビュー">"""
 
 TAB_BAR_EN_OLD = """      <div class="sales-data-modal__tab-bar">
@@ -144,6 +155,17 @@ TAB_BAR_EN_OLD = """      <div class="sales-data-modal__tab-bar">
         <div class="sales-data-modal__tabs" role="tablist" aria-label="Sales data views">"""
 
 TAB_BAR_EN = """      <div class="sales-data-modal__tab-bar">
+        <button
+          type="button"
+          class="sales-data-modal__summary-toggle sales-data-modal__input-only"
+          id="sales-data-summary-toggle"
+          aria-expanded="true"
+          aria-controls="sales-data-summary-panel"
+          aria-label="Collapse summary"
+          title="Collapse summary"
+        >
+          ▼
+        </button>
         <div class="sales-data-modal__tabs" role="tablist" aria-label="Sales data views">"""
 
 YM_YEAR_OLD = """        <div class="sales-data-modal__ym">
