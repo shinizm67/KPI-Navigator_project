@@ -8144,7 +8144,7 @@
       --psm-pad-x: calc((var(--psm-panel-w) - var(--psm-inner-w)) / 2);
       --psm-title-top: 29px;
       --psm-tab-top: 122px;
-      --psm-tab-left: 80px;
+      --psm-tab-left: 60px;
       --psm-tab-gap: 5px;
       --psm-body-top: 152px;
       --psm-fs-body: 16px;
@@ -8155,7 +8155,8 @@
       --psm-header-btn-top: 22px;
       --psm-summary-row-h: 40px;
       --psm-tab-input-h: 30px;
-      --psm-bg-reference: rgba(88, 225, 243, 0.35);
+      --psm-bg-reference: rgba(88, 225, 243, 0.204);
+      --psm-bg-reference-focus: rgba(88, 225, 243, 0.353);
       --psm-summary-toggle-w: 32px;
       --psm-fs-month: 20px;
       --psm-scrollbar-w: 8px;
@@ -8330,6 +8331,8 @@
       font-family: inherit;
       cursor: pointer;
       box-sizing: border-box;
+      position: relative;
+      top: 1px;
     }
     .past-sales-modal__summary-toggle:hover,
     .past-sales-modal__summary-toggle:focus-visible {
@@ -8347,6 +8350,9 @@
     }
     .past-sales-modal__summary-wrap.is-collapsed {
       display: none;
+    }
+    .past-sales-modal__summary-wrap.is-collapsed + .past-sales-modal__ym {
+      border-top: 1px solid #58e1f3;
     }
     .past-sales-modal__tabs {
       display: flex;
@@ -8469,7 +8475,36 @@
     .past-sales-modal__summary-reference-input:focus {
       outline: 1px solid var(--psm-cyan);
       outline-offset: -1px;
-      background: var(--psm-bg-active-70);
+      background: var(--psm-bg-reference-focus);
+    }
+    .past-sales-modal__summary-row--reference[data-tooltip] {
+      position: relative;
+    }
+    .past-sales-modal__summary-row--reference[data-tooltip]:hover::after,
+    .past-sales-modal__summary-row--reference[data-tooltip]:focus-within::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      border: 1px solid var(--psm-cyan);
+      border-radius: 4px;
+      background: #102932;
+      color: var(--psm-cyan);
+      font-size: 13px;
+      line-height: 1.35;
+      white-space: nowrap;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(88, 225, 243, 0.4);
+    }
+    body.office-mode .past-sales-modal__summary-row--reference[data-tooltip]:hover::after,
+    body.office-mode .past-sales-modal__summary-row--reference[data-tooltip]:focus-within::after {
+      border-color: #666;
+      background: #f2f2f2;
+      color: #111;
+      box-shadow: none;
     }
     .past-sales-modal__summary-row > *:last-child {
       border-right: 0;
@@ -8611,7 +8646,8 @@
       --psm-bg-inactive: rgba(0, 0, 0, 0.06);
       --psm-bg-active-55: rgba(0, 0, 0, 0.1);
       --psm-bg-active-70: rgba(0, 0, 0, 0.14);
-      --psm-bg-reference: rgba(0, 0, 0, 0.064);
+      --psm-bg-reference: rgba(0, 0, 0, 0.046);
+      --psm-bg-reference-focus: rgba(0, 0, 0, 0.070);
       --psm-row-off-fill: rgba(0, 0, 0, 0.04);
       --psm-panel-bg: #e8f2ff;
       --psm-frame: #2b6cb0;
@@ -10589,15 +10625,18 @@
             <span>Cumulative Input Sales</span>
             <span id="past-sales-summary-cumulative">—</span>
           </div>
-          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2 past-sales-modal__summary-row--reference">
-            <span>Reference Annual Sales</span>
+          <div
+            class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2 past-sales-modal__summary-row--reference"
+            data-tooltip="Please set your annual target sales"
+          >
+            <span>Annual Target Sales</span>
             <input
               type="text"
               class="past-sales-modal__summary-reference-input"
               id="past-sales-summary-reference"
               inputmode="numeric"
               placeholder="—"
-              aria-label="Reference Annual Sales"
+              aria-label="Annual Target Sales"
             />
           </div>
           <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-3">

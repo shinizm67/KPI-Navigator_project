@@ -38,7 +38,8 @@ TEXT = {
         "tab_analyze": "Analyze",
         "summary_aria": "過去売上サマリー",
         "sum1_label": "累計入力売上",
-        "sum2_label": "参考年間売上",
+        "sum2_label": "年間目標売上",
+        "sum2_tooltip": "年間目標売上を設定してください",
         "sum3_label": "残り／入力進捗",
         "year": "年",
         "month": "月",
@@ -82,7 +83,8 @@ TEXT = {
         "tab_analyze": "Analyze",
         "summary_aria": "Past sales summary",
         "sum1_label": "Cumulative Input Sales",
-        "sum2_label": "Reference Annual Sales",
+        "sum2_label": "Annual Target Sales",
+        "sum2_tooltip": "Please set your annual target sales",
         "sum3_label": "Remaining / Input Progress",
         "year": "Year",
         "month": "Month",
@@ -188,7 +190,7 @@ PS_LAYOUT_CSS = """
       --psm-pad-x: calc((var(--psm-panel-w) - var(--psm-inner-w)) / 2);
       --psm-title-top: 29px;
       --psm-tab-top: 122px;
-      --psm-tab-left: 106px;
+      --psm-tab-left: 60px;
       --psm-tab-gap: 5px;
       --psm-body-top: 152px;
       --psm-fs-body: 16px;
@@ -473,6 +475,35 @@ PS_LAYOUT_CSS = """
       outline: 1px solid var(--psm-cyan);
       outline-offset: -1px;
       background: var(--psm-bg-active-70);
+    }
+    .past-sales-modal__summary-row--reference[data-tooltip] {
+      position: relative;
+    }
+    .past-sales-modal__summary-row--reference[data-tooltip]:hover::after,
+    .past-sales-modal__summary-row--reference[data-tooltip]:focus-within::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      border: 1px solid var(--psm-cyan);
+      border-radius: 4px;
+      background: #102932;
+      color: var(--psm-cyan);
+      font-size: 13px;
+      line-height: 1.35;
+      white-space: nowrap;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(88, 225, 243, 0.4);
+    }
+    body.office-mode .past-sales-modal__summary-row--reference[data-tooltip]:hover::after,
+    body.office-mode .past-sales-modal__summary-row--reference[data-tooltip]:focus-within::after {
+      border-color: #666;
+      background: #f2f2f2;
+      color: #111;
+      box-shadow: none;
     }
     .past-sales-modal__summary-row > *:last-child {
       border-right: 0;
@@ -797,7 +828,7 @@ def build_modal_html(lang: str) -> str:
             <span>{t["sum1_label"]}</span>
             <span id="past-sales-summary-cumulative">—</span>
           </div>
-          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2 past-sales-modal__summary-row--reference">
+          <div class="past-sales-modal__summary-row past-sales-modal__summary-row--cols-2 past-sales-modal__summary-row--reference" data-tooltip="{t["sum2_tooltip"]}">
             <span>{t["sum2_label"]}</span>
             <input
               type="text"

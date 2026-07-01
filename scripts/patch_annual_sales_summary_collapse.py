@@ -18,6 +18,12 @@ CSS_BLOCK = """
     .past-sales-modal__summary-wrap.is-collapsed {
       display: none;
     }
+    .sales-data-modal__summary-wrap.is-collapsed + .sales-data-modal__ym {
+      border-top: 1px solid var(--sdm-cyan);
+    }
+    .past-sales-modal__summary-wrap.is-collapsed + .past-sales-modal__ym {
+      border-top: 1px solid #58e1f3;
+    }
     .sales-data-modal__summary-toggle {
       flex: 0 0 32px;
       width: 32px;
@@ -51,6 +57,8 @@ CSS_BLOCK = """
       font-family: inherit;
       cursor: pointer;
       box-sizing: border-box;
+      position: relative;
+      top: 1px;
     }
     .sales-data-modal__summary-toggle:hover,
     .sales-data-modal__summary-toggle:focus-visible {

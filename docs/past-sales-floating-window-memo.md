@@ -81,7 +81,8 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | `--psm-line` | `#333`（罫線） |
 | `--psm-bg-inactive` | `rgba(0,0,0,0.06)` |
 | `--psm-bg-active-55` | `rgba(0,0,0,0.10)` |
-| `--psm-bg-reference` | `rgba(0,0,0,0.064)` |
+| `--psm-bg-reference` | `rgba(0,0,0,0.046)` |
+| `--psm-bg-reference-focus` | `rgba(0,0,0,0.070)` |
 | `--psm-bg-active-70` | `rgba(0,0,0,0.14)` |
 
 ---
@@ -95,7 +96,20 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | `--psm-bg-inactive` | `rgba(88, 225, 243, 0.44)` | 非アクティブ／閲覧寄り（44%） |
 | `--psm-bg-active-55` | `rgba(88, 225, 243, 0.55)` | 触れる・編集寄り（55%） |
 | `--psm-bg-active-70` | `rgba(88, 225, 243, 0.70)` | 最も強調（70%） |
-| `--psm-bg-reference` | `rgba(88, 225, 243, 0.35)` | **参考年間売上行専用**（active-55 から約 35% 暗く。ラベル・数値 input で同色） |
+| `--psm-bg-reference` | `rgba(88, 225, 243, 0.204)` | **年間目標売上行専用**（ラベル・数値 input で同色。CSS トークン名は reference のまま） |
+| `--psm-bg-reference-focus` | `rgba(88, 225, 243, 0.353)` | 年間目標売上 input **フォーカス時**（数値セルのみ） |
+
+#### 年間目標売上行の背景色（確定値・2026-06）
+
+文字の読みやすさを優先し、段階的に調整した**確定トークン**。以降はこの値を正とする。
+
+| 状態 | CSS 変数 | Sci-Fi モード | Office モード |
+|------|----------|---------------|---------------|
+| **通常**（ラベル左セル＋数値右セル） | `--psm-bg-reference` | `rgba(88, 225, 243, 0.204)` | `rgba(0, 0, 0, 0.046)` |
+| **編集時**（数値 input フォーカス） | `--psm-bg-reference-focus` | `rgba(88, 225, 243, 0.353)` | `rgba(0, 0, 0, 0.070)` |
+
+- ラベル・数値は **常に同色**（`background-color: var(--psm-bg-reference)`）。フォーカス時のみ input が `--psm-bg-reference-focus`。
+- 調整履歴（参考）: 初期 0.35 → 可読性のため段階的に暗くし、上記で確定。
 
 ### どこにどの透過率を使うか（確定）
 
@@ -105,7 +119,7 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | **Analyze タブ**（無効・非選択） | 44% |
 | × / Import CSV / UNDO / Save | 44%（ホバー 55%） |
 | サマリー 1・3 行 | 44% |
-| **サマリー 2 行（参考年間売上）** | **`--psm-bg-reference`（35%）** — ラベル左セルと数値 input 右セルは **必ず同色** |
+| **サマリー 2 行（年間目標売上）** | **`--psm-bg-reference`（20.4%）** — ラベル左セルと数値 input 右セルは **必ず同色** |
 | 年セル・月セル（`.past-sales-modal__ym-cell`） | **55%**（セル全体。内部の ◀︎・select・▶︎ に **個別 border なし**） |
 | 年・月セルホバー | 70% |
 | 列見出し **Date** / **Monthly Total** / **Annual Total** | 44% |
@@ -150,7 +164,7 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 |------|-----|
 | Import CSV 下端 → Input タブ上端 | **60px**（`--psm-csv-to-tabs`） |
 | Input タブ上端 | `22 + 40 + 60` = **122px**（`--psm-tab-top`） |
-| Input タブ左端 | 大外枠左から **80px**（`--psm-tab-left`）— **▼/▶︎ 折りたたみボタン（32px）の直右**に Input タブ |
+| Input タブ左端 | 大外枠左から **60px**（`--psm-tab-left`）— **▼/▶︎ 折りたたみボタン（32px）の直右**に Input タブ |
 | サマリー折りたたみ | `#past-sales-summary-toggle` **32×30px**（`--psm-summary-toggle-w` × `--psm-tab-input-h`）。展開 **▼** / 折りたたみ **▶︎**。Analyze タブ時は非表示 |
 | Input（アクティブ） | **131×30px** |
 | Analyze（非アクティブ） | **118×27px** |
@@ -182,9 +196,11 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | ラップ | `#past-sales-summary-wrap`（`.is-collapsed` で 3 行非表示） |
 | パネル | `#past-sales-summary-panel`（`data-psm-summary-panel`） |
 | サイズ | **32×30px**、フォント **14px**、背景 44%（ホバー 55%） |
+| 下辺の重なり | `position: relative; top: 1px` — サマリー／年月上辺の `border-top` と下枠が二重にならないよう **1px 下げて** タブ帯（`z-index: 3`）で上にかぶせる |
 | 状態 | 展開 **▼** `aria-expanded="true"` / 折りたたみ **▶︎** `aria-expanded="false"` |
 | 永続化 | `sessionStorage` キー `kpiNavigator.pastSalesSummaryCollapsed`（`1` = 折りたたみ） |
 | 表示条件 | **Input タブのみ**（Analyze では `.past-sales-modal__summary-toggle { display: none }`） |
+| 折りたたみ時の上線 | サマリー非表示時は `.past-sales-modal__summary-wrap.is-collapsed + .past-sales-modal__ym` で **Year / Month 行の全幅上辺**（`border-top: 1px solid #58E1F3`）を描画（タブ下の区切り線を維持） |
 
 ### 閉じる確認（統一アラート — MEP / PL / Sales Data と同型）
 
@@ -236,8 +252,16 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 | 行 | JA | EN |
 |----|----|----|
 | 1 | 累計入力売上 ｜ 数値 | Cumulative Input Sales ｜ value |
-| 2 | 参考年間売上 ｜ 入力 | Reference Annual Sales ｜ `#past-sales-summary-reference`（**`--psm-bg-reference`・左右同色**） |
+| 2 | 年間目標売上 ｜ 入力 | Annual Target Sales ｜ `#past-sales-summary-reference`（**`--psm-bg-reference`・左右同色**）。ホバー／フォーカス時にツールチップ（JA: 年間目標売上を設定してください / EN: Please set your annual target sales） |
 | 3 | 残り／入力進捗 ｜ 数値 ｜ % | Remaining / Input Progress ｜ `#past-sales-summary-remaining` ｜ `#past-sales-summary-progress-pct` |
+
+#### サマリー 2 行目のラベル（年間目標売上 / Annual Target Sales）
+
+**UI ラベル（確定・2026-06）:** **年間目標売上** / **Annual Target Sales**
+
+- 累計入力売上（1 行目）に対する**比較の分母**（残り・進捗 %）。過去年（例 2025）では**当時の年間目標**を後から入力する欄。
+- 旧ラベル「参考年間売上 / Reference Annual Sales」はユーザーに伝わりにくかったため変更。
+- **実装側**は Analyze の基準値という意味で `referenceAnnualSalesByYear`・`--psm-bg-reference` 等の識別子は維持（データキー rename 不要）。
 
 **年・月行（`.past-sales-modal__ym`）** もサマリー 1・2 行目と同じ **`grid-template-columns: 5fr 5fr`**（`display: grid`）。flex `1:1` だと内側 `min-width` の影響で中央縦線が 1〜3px ずれるため。
 
@@ -419,10 +443,10 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 |------|----------|
 | Annual Input Sales / 年間入力売上 | `getReferenceAnnualForAnalyze(y)` |
 | Total Business Days / 総営業日数 | 通年 B.DAY ON 件数 |
-| Average Daily Sales / 平均日次売上 | 参考年間 ÷ 総営業日数 |
+| Average Daily Sales / 平均日次売上 | 年間目標 ÷ 総営業日数 |
 | B. DAY（各月） | 月ごとチェック ON 件数 |
 | Monthly Sales ② | `getMonthlyCumulativeSalesByMonth`（Input 月次累計） |
-| Baseline ① | 参考年間 ÷ 総営業日 × 月営業日数 |
+| Baseline ① | 年間目標 ÷ 総営業日 × 月営業日数 |
 | Seasonality % | ②÷①×100 |
 
 更新: `applyPastSalesTotalsToTable` → `updatePastSalesSummary` → `renderPastSalesAnalyze`（Analyze 表示中）。
@@ -452,7 +476,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 ### 完了（Past Sales）
 
-- [x] Input タブ（365 行・Save/UNDO/閉じる3択・永続化・参考年間売上・累計）
+- [x] Input タブ（365 行・Save/UNDO/閉じる3択・永続化・年間目標売上・累計）
 - [x] Analyze タブ（§12 — KPI・月次表・動的スケール繁閑グラフ・Input 連動）
 - [x] コックピットボタン **左** Past Sales（`images/past_sales_button.svg`）
 - [x] コックピットボタン **右** Sales → **`#sales-data-modal`**（当年・黒/緑枠）
@@ -471,7 +495,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 | 日付 | 内容 |
 |------|------|
-| 2026-06-17 | 参考年間売上 `--psm-bg-reference`（明度 -20%）、サマリー ▼/▶︎ 折りたたみ復活、閉じる 3 択ダイアログ統一、§15 Sales Data チェックリスト |
+| 2026-06-17 | 年間目標売上ラベル確定、背景色 `--psm-bg-reference` 確定、サマリー折りたたみ、閉じる 3 択統一 |
 | 2026-06-01 | §12 Analyze 確定、左右ボタン・`past_sales_button.svg`、Sales 枠ボタン配置 |
 | 2026-05-31 | 設計メモ整備・今年窓 plan 分離 |
 | 2026-05-20 | Input 中心の初版 |
@@ -487,7 +511,7 @@ Past Sales で確定した細部仕様。**当年売上窓（`#sales-data-modal`
 | 1 | パネル外枠 | 青 `#100052` / `#370AFF` | 黒 `#000` / 緑 `#0F9403` |
 | 2 | 内部線・文字 | `#58E1F3` 系（§4） | 同左（トークン名のみ `--sdm-*`） |
 | 3 | サマリー 3 行 | 40px 高・列幅 429/496/347/149 | 同構造・`sales-data-modal__summary-*` |
-| 4 | 参考年間売上行背景 | `--psm-bg-reference`（35%） | `--sdm-bg-reference`（要追加） |
+| 4 | 年間目標売上行背景 | `--psm-bg-reference`（20.4%）/ focus（35.3%） | `--sdm-bg-reference`（要追加） |
 | 5 | サマリー折りたたみ | `#past-sales-summary-toggle` 32px | `#sales-data-summary-toggle` |
 | 6 | タブ Input / Analyze | 131×30 / 118×27 | 同寸 |
 | 7 | 年・月バー | grid 5fr 5fr、セル 55% | 同左 |

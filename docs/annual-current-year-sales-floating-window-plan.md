@@ -56,7 +56,7 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 | 対象年 | **当年より前**のみ | **当年のみ**（年セレクタなし・ラベル表示） |
 | 大外枠色 | 青系 `#100052` / `#370AFF` | **黒 `#000` / 緑枠 `#0F9403`**（内部線・文字は `#58E1F3` 系） |
 | 永続化 | `kpiNavigator.pastSalesShared` | `kpiNavigator.annualDailyShared`（既存今年 Edit と同系） |
-| 参考年間売上 | Input タブにあり | **要検討**（今年窓に必要かはプロンプト時に決める） |
+| 年間目標売上 | Input タブにあり | **要検討**（今年窓に必要かはプロンプト時に決める） |
 | Analyze タブ | あり（繁閑・ベースライン等） | **同型を想定**するが、廉価版なら項目削減も可 |
 | z-index | 20055 | Past Sales より下または同帯（重なり順は実装時） |
 
@@ -97,7 +97,7 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 | ストア | 用途 | 備考 |
 |--------|------|------|
-| `kpiNavigator.pastSalesShared` | 過去年の日次売上・営業日・参考年間売上・`lastSession` | Past Sales 専用 |
+| `kpiNavigator.pastSalesShared` | 過去年の日次売上・営業日・年間目標売上・`lastSession` | Past Sales 専用 |
 | `kpiNavigator.annualDailyShared` | 当年の日次（既存 Edit） | 今年窓はここへ書き込む想定 |
 
 **統合しない理由:** 過去入力は低頻度・一括 Save、今年は高頻度・Focus Bar 連携など**ライフサイクルが違う**。UI を分けたのと同型。
@@ -131,7 +131,7 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 **2026-06-01:** ユーザー判断で今年窓（Sales ボタン）へ進行。Past Sales のコアは完了済み。
 
-- [x] Input タブ（Save/UNDO/閉じる3択・永続化・365 表・参考年間売上）— Past Sales memo §11・§13
+- [x] Input タブ（Save/UNDO/閉じる3択・永続化・365 表・年間目標売上）— Past Sales memo §11・§13
 - [x] Analyze タブ（KPI・月次表・繁閑グラフ・Input 連動）— Past Sales memo **§12**
 - [x] コックピット左 `#annual-past-sales-btn`、右 `#annual-current-sales-btn`（枠のみ）
 - [ ] 任意残（ソート・CSV・Focus Bar 受け側）— 今年窓と**並行可**
@@ -183,7 +183,7 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 - 新モーダルの正式 ID・ボタン ID・イベント名一覧  
 - Analyze タブを今年窓にもフル搭載するか、Input のみ先行か  
-- 参考年間売上・サマリー3行を今年窓に載せるか  
+- 年間目標売上・サマリー3行を今年窓に載せるか  
 - `#annual-edit-modal` を削除するか、中身を薄く残すか  
 - Monthly ページへの同型ボタン要否（Annual のみでよいか）
 
