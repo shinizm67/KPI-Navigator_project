@@ -19674,6 +19674,9 @@ Target Sales</p>
         dateBtn.textContent = formatDateButtonLabel(d);
         if (targetEl) targetEl.textContent = formatTargetSalesValue(target);
         updatePastKpiByIso(iso);
+        if (window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
+          KpiYearStore.setSelectedDate(iso, source || 'annual-ui');
+        }
         document.dispatchEvent(
           new CustomEvent('annual:dailyDateChanged', {
             detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
@@ -19728,6 +19731,11 @@ Target Sales</p>
 
       var nowInit = new Date();
       var initialDate = new Date(nowInit.getFullYear(), nowInit.getMonth(), nowInit.getDate());
+      if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+        var storeIso = KpiYearStore.getSelectedDate();
+        var storeDate = storeIso ? parseISODateLocal(storeIso) : null;
+        if (storeDate) initialDate = storeDate;
+      }
       applyDailySelection(initialDate, 'initial', { skipJumpGuard: true });
 
       dateBtn.addEventListener('click', function () {
