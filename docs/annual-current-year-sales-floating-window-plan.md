@@ -195,12 +195,100 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 | Step | 内容 | 状態 |
 |------|------|------|
-| **SD-R1** | Sales Data 窓で当年の日次売上・営業日・年次目標を `KpiYearStore` / `timeline` に Save | 🟡 窓本体は接続済み・経路要確認 |
+| **SD-R1** | Sales Data 窓で当年の日次売上・営業日・年次目標を `KpiYearStore` / `timeline` に Save | ✅ `persistSalesDataShared` → `persistFromAnnualDaily` |
 | **SD-R2** | `maybeRolloverYear()` 実行時、前年 `years.{Y}` を lock + `observed` 確定 | ✅ Phase 1 |
-| **SD-R3** | 翌年開始後、Past Sales の年セレクタ **Y** で前年データが再入力なしで表示 | ⬜ Phase 1b |
+| **SD-R3** | 翌年開始後、Past Sales の年セレクタ **Y** で前年データが再入力なしで表示 | ✅ 2026-07-02 ユーザー受け入れ（§11.1） |
 | **SD-R4** | MEP / Focus Bar / Analyze が同じ `timeline` ISO を参照（Phase 8 連携） | 🟡 |
 
 **ユーザー合意（2026-07）:** 2027 運用時、2026 の Sales Data 内容は Past Sales 2026 にそのまま現れる。再入力不要。
+
+### 11.1 受け入れテスト手順（SD-R3）
+
+**合格判定の役割分担**
+
+| 担当 | 内容 |
+|------|------|
+| **Tars（実装側）** | コード対称性（Past Sales Save と同経路）、パッチ適用、コンソール smoke（SD-R1） |
+| **ユーザー（プロダクト側）** | ブラウザで Past Sales モーダルを開き、目視で値一致を確認 → **最終合格** |
+
+Tars だけでは「UI で Past Sales に正しく見える」までは保証できないため、**最終合格はユーザー確認**とする。
+
+#### A. SD-R1 smoke（Sales Data Save → timeline）
+
+1. Annual ページを開く（JA または EN）。
+2. **Sales Data** を開き、当年の任意の営業日に売上（例: `50000`）を入力し **Save**。
+3. DevTools コンソールで実行:
+
+```javascript
+(function () {
+  var y = KpiYearStore.getOperatingYear();
+  var store = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.kpiYearStore');
+  var keys = Object.keys(store.timeline.dailySales || {}).filter(function (k) {
+    return k.indexOf(String(y) + '-') === 0;
+  });
+  console.log('SD-R1', keys.length > 0 ? 'PASS' : 'FAIL', 'keys:', keys.length);
+})();
+```
+
+**合格:** `SD-R1 PASS` と表示され、Save した ISO が `timeline.dailySales` に存在する。
+
+#### B. SD-R3 年跨ぎシミュレーション（2027 待たずに検証）
+
+システム日付を変えずに、**開発用**に operating year を進める手順。
+
+**重要:**
+
+- 以前の `gw.setJson(...)` だけのコードは **動きません**（必ず下の新版を使う）
+- コードを貼ったあと **リロードしない**
+- DevTools は閉じてOK
+- シミュレーション**前**は Past Sales で **2026年は選べない**（最大 2025）。**後**に **2026** が選べるようになるのが変化のサイン
+- **Past Sales** を開いて年セレクタで **前年（例: 2026）** を選ぶ
+
+**CSV 取込済みの場合:** 新しいテスト値は不要。Sales Data で **Save 1 回** だけでよい。
+
+1. **Sales Data** を開き、当年データが見えることを確認 → **Save** → 窓を閉じる
+2. 照合用に、覚えている日付 1 件をメモ（例: 2026-04-10 の売上）
+3. Chrome の Console に貼って **Enter**（Annual ページ・窓は閉じたまま）:
+
+```javascript
+(function () {
+  var oy = KpiYearStore.getOperatingYear();
+  KpiYearStore.lockYear(oy);
+  var ny = oy + 1;
+  KpiYearStore.setOperatingYear(ny);
+  if (window.__ANNUAL_DATA) window.__ANNUAL_DATA.calendarYear = ny;
+  document.dispatchEvent(
+    new CustomEvent('annual:calendarYearChanged', { detail: { year: ny, source: 'dev-rollover-sim' } })
+  );
+  console.log(
+    '2027年になったふりをしました。Past Sales で ' + oy + ' 年を選んでください（リロードしない）'
+  );
+})();
+```
+
+4. **Past Sales** を開き、年セレクタで **oy**（前年・例: 2026）を選択
+5. メモした日付の売上・営業日が **再入力なし**で表示されることを確認
+
+**合格（ユーザー判定）** — **2026-07-02 合格**
+
+- [x] Past Sales **oy** 年で Save 済み日次が一致
+- [x] 営業日 ON/OFF が一致
+- [x] 年間目標が一致（`years.{oy}.observed` または Past Sales サマリー）
+
+6. 検証後、Console で元に戻して **Enter** → ページが再読み込みされる:
+
+```javascript
+(function () {
+  var oy = new Date().getFullYear();
+  KpiYearStore.setOperatingYear(oy);
+  if (window.__ANNUAL_DATA) window.__ANNUAL_DATA.calendarYear = oy;
+  location.reload();
+})();
+```
+
+#### C. 本番パス（翌年 1/1）
+
+実際の年跨ぎは起動時 `maybeRolloverYear()` が自動実行。手順 B と同じ Past Sales 確認を **翌年最初のセッション**で実施。
 
 ---
 
@@ -208,6 +296,9 @@ Past Sales Data Floating Window（`#past-sales-modal`）と**ほぼ同じ UI 仕
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-02 | §11.1 SD-R3 ユーザー受け入れ合格（年跨ぎシミュレーション） |
+| 2026-06-17 | §11.1 シミュレーション手順修正（リロード禁止・`setOperatingYear` 経路） |
+| 2026-06-17 | §11.1 受け入れ手順追加。SD-R1: `persistSalesDataShared` → `persistFromAnnualDaily` |
 | 2026-06-01 | Analyze 描画: `data-sdm-tab` CSS 修正・黒/緑枠（`--sdm-frame` / `--sdm-panel-bg`） |
 | 2026-06-01 | `#sales-data-modal` 実装（黒/緑外枠・当年固定・annualDailyShared） |
 | 2026-06-01 | Past Sales Input+Analyze 完了を反映。§6 着手ゲート更新。§8 ボタン位置を右 Sales に修正 |

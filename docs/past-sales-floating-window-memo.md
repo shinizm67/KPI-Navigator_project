@@ -34,7 +34,7 @@
 - Past Sales 永続化: `kpiNavigator.pastSalesShared`（§11）。今年 Edit は `kpiNavigator.annualDailyShared`。
 - CSV 取込は **実装済み**（`scripts/apply_daily_sales_import.py` → `window.__KPI_DAILY_IMPORT`）。
 - **年セレクタ**: **2000 〜 当年−1**。データがない年はサマリー `—`・日次は未入力状態（手入力 / CSV で追加）。
-- **年跨ぎ引き継ぎ**（例: 2027 開始時に Sales Data の 2026 が Past Sales へ自動反映）: **未実装**。`docs/year-rollover-data-architecture.md` **§1.6** · Phase **1b** · Sales Data plan **§11**。
+- **年跨ぎ引き継ぎ**（例: 2027 開始時に Sales Data の 2026 が Past Sales へ自動反映）: ✅ **受け入れ完了**（2026-07-02 · §11.1）。
 
 ---
 

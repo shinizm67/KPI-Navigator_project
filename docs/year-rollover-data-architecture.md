@@ -36,7 +36,7 @@ KPI Navigator のコアは「ユーザーと一緒に作る年間月次 KPI」�
 
 | 課題 | 現状 |
 |------|------|
-| Sales Data → Past Sales の自動引き継ぎ | **なし**（Phase **1b** / Sales Data plan §11 で実装予定） |
+| Sales Data → Past Sales の自動引き継ぎ | ✅ 実装 + 受け入れ完了（§11.1 · 2026-07-02） |
 | 年次目標売上の年別永続化 | **なし**（メモリ + 未接続フック） |
 | 繁閑期%の永続化 | **なし**（Cockpit DOM 編集のみ） |
 | 入力面の正本統一 | `annualDailyShared` と `pastSalesShared` が**別箱・移行ルールなし** |
@@ -60,11 +60,13 @@ KPI Navigator のコアは「ユーザーと一緒に作る年間月次 KPI」�
 
 **実装タイミング:** **Sales Data 窓 Phase**（`docs/annual-current-year-sales-floating-window-plan.md` §11）+ **Phase 1b**（本表）。Past Sales Input 単体では行わない。
 
-**受け入れ（Phase 1b 完了時）:**
+**受け入れ（Phase 1b 完了時）** — 手順: `docs/annual-current-year-sales-floating-window-plan.md` **§11.1**
 
-- [ ] 12/31 まで Sales Data で Save した年が、翌年 1/1 以降 Past Sales の当該年セレクタで開ける
-- [ ] 日次売上・営業日チェック・年間目標が Sales Data 保存時点と一致（`timeline` 正本）
-- [ ] ユーザーによる再 CSV / 再手入力は不要（補正は Past Sales から可能）
+- [x] 12/31 まで Sales Data で Save した年が、翌年 1/1 以降 Past Sales の当該年セレクタで開ける
+- [x] 日次売上・営業日チェック・年間目標が Sales Data 保存時点と一致（`timeline` 正本）
+- [x] ユーザーによる再 CSV / 再手入力は不要（補正は Past Sales から可能）
+
+**合格判定:** Tars = SD-R1 コンソール smoke · ユーザー = Past Sales 目視確認（最終合格）— **2026-07-02 ユーザー合格**
 
 **本基盤が無い限り、Annual / Monthly でいくら数値を入力しても意味がなく、アプリは完成しない。**  
 KPI の提案・過去との比較グラフという強みは、すべてこのデータの一貫性に依存する。
@@ -549,7 +551,7 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | **P0** | **`KpiYearStore` + `timeline` + マイグレーション + 全入力面を API 経由に** | — | ✅ |
 | **P0** | **時系列ナビ（スクロール・カレンダージャンプ・selectedDate 共有）** Annual + Monthly | P0 Store | ✅ |
 | **1** | `maybeRolloverYear()` + `observed` 算出 | P0 | ✅ |
-| **1b** | **年跨ぎ — Sales Data → Past Sales 自動引き継ぎ**（詳細 §1.6） | 1 + Sales Data 窓 Save 経路 | ⬜ |
+| **1b** | **年跨ぎ — Sales Data → Past Sales 自動引き継ぎ**（詳細 §1.6） | 1 + Sales Data 窓 Save 経路 | ✅ 2026-07-02 受け入れ完了 |
 | **2** | `annualPlan` 保存 + Cockpit 繁閑% read-only | P0 | 🟡 |
 | **3** | **複数年 `observed` → Seasonality % 算出** + Sales Data Analyze 表示 + plan 繁閑% ▲▼ 5% 初期値（詳細 §15-C） | 1 | ✅ |
 | **4** | MEP `dailyExpenses` / `dailyMeta` 永続化 | P0 | ✅ |

@@ -12136,7 +12136,6 @@
           <p class="annual-target-sales-label">Annual Target Sales</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
             <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
-            <button type="button" class="annual-target-inline-edit" id="annual-target-edit-btn" aria-label="Edit annual target sales"><span class="annual-target-inline-edit-text">Edit</span></button>
           </div>
         </div>
         <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">History</button>
@@ -15802,68 +15801,6 @@ Cumulative Target Annual Sales</p>
       }
     })();
     (function () {
-      var targetEl = document.getElementById('annual-target-sales-value');
-      var editBtn = document.getElementById('annual-target-edit-btn');
-      if (!targetEl || !editBtn) return;
-
-      function parseCurrencyInput(raw) {
-        var normalized = String(raw || '').replace(/[$,\s]/g, '');
-        var value = Number(normalized);
-        return Number.isFinite(value) && value >= 0 ? value : NaN;
-      }
-
-      function formatCurrency(value) {
-        return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-
-      function extractCurrentValue() {
-        var raw = String(targetEl.textContent || '').replace(/[$,\s]/g, '');
-        var v = Number(raw);
-        return Number.isFinite(v) ? v : 0;
-      }
-
-      function notifyChange(value) {
-        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-        window.__ANNUAL_DATA.targetSales = value;
-
-        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
-          detail: {
-            targetSales: value,
-            display: formatCurrency(value)
-          }
-        }));
-      }
-
-      async function persistTargetSales(value) {
-        if (typeof window.__saveAnnualTargetSales === 'function') {
-          await window.__saveAnnualTargetSales({
-            targetSales: value
-          });
-        }
-      }
-
-      editBtn.addEventListener('click', async function () {
-        var current = extractCurrentValue();
-        var input = window.prompt('Annual Target Sales (USD)', String(Math.round(current * 100) / 100));
-        if (input == null) return;
-
-        var next = parseCurrencyInput(input);
-        if (!Number.isFinite(next)) {
-          window.alert('Please enter a valid non-negative number.');
-          return;
-        }
-
-        targetEl.textContent = formatCurrency(next);
-        notifyChange(next);
-
-        try {
-          await persistTargetSales(next);
-        } catch (e) {
-          window.alert('Failed to save Annual Target Sales to DB.');
-        }
-      });
-    })();
-    (function () {
       /** Achievement only: 100%+ yellow; 50–100% in 10% bands (amber → red); below 50% critical red. */
       function getAchievementMarkerColor(percent) {
         var p = Number(percent);
@@ -18264,6 +18201,13 @@ Cumulative Target Annual Sales</p>
           var oy = window.KpiYearStore ? Number(KpiYearStore.getOperatingYear()) : NaN;
           var cy = resolveCalendarYear();
           if (year === oy || year === cy) {
+            var dailyRef =
+              window.__ANNUAL_DATA &&
+              window.__ANNUAL_DATA.daily &&
+              window.__ANNUAL_DATA.daily.referenceAnnualSales;
+            if (dailyRef != null && Number.isFinite(Number(dailyRef)) && Number(dailyRef) > 0) {
+              return Number(dailyRef);
+            }
             if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.targetSales != null) {
               var mem = Number(window.__ANNUAL_DATA.targetSales);
               if (Number.isFinite(mem) && mem > 0) return mem;
@@ -18887,6 +18831,9 @@ Cumulative Target Annual Sales</p>
           },
         };
       })();
+          if (window.__ANNUAL_DATA) {
+            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+          }
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
           try {
@@ -19004,6 +18951,9 @@ Cumulative Target Annual Sales</p>
         }
         if (parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
           daily.businessDayByDate = Object.assign({}, daily.businessDayByDate || {}, parsed.businessDayByDate);
+        }
+        if (parsed.referenceAnnualSales != null && isFinite(Number(parsed.referenceAnnualSales))) {
+          daily.referenceAnnualSales = Math.round(Number(parsed.referenceAnnualSales));
         }
         window.__ANNUAL_DATA.daily = daily;
       })();
@@ -23082,6 +23032,11 @@ Cumulative Target Annual Sales</p>
         if (daily.salesDataLastSession && typeof daily.salesDataLastSession === 'object') {
           payload.salesDataLastSession = daily.salesDataLastSession;
         }
+        if (window.KpiYearStore && typeof KpiYearStore.persistFromAnnualDaily === 'function') {
+          KpiYearStore.persistFromAnnualDaily(daily, { source: 'sales-data-save' });
+          window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
+          return;
+        }
         window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
       }
 
@@ -23285,6 +23240,12 @@ Cumulative Target Annual Sales</p>
 
       function getReferenceForYear(y) {
         if (y !== getOperatingYear()) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.readAnnualTarget === 'function') {
+          var fromStore = KpiYearStore.readAnnualTarget(y);
+          if (fromStore != null && isFinite(Number(fromStore)) && Number(fromStore) > 0) {
+            return Math.round(Number(fromStore));
+          }
+        }
         var daily = ensureSalesDataDaily();
         var v = daily.referenceAnnualSales;
         if (v == null || !isFinite(Number(v))) return null;
@@ -23301,9 +23262,17 @@ Cumulative Target Annual Sales</p>
       function commitReferenceForYear(y) {
         if (!isFinite(y)) return;
         stashReferenceForYear(y);
+        var parsed = getReferenceFromInputEl();
+        if (parsed == null) parsed = getReferenceForYear(y);
+        if (parsed != null && window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
+          KpiYearStore.writeAnnualTarget(y, parsed, { source: 'sales-data-reference' });
+        } else if (parsed != null) {
+          window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+          window.__ANNUAL_DATA.targetSales = parsed;
+        }
         persistSalesDataShared();
         document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
-          detail: { year: y, targetSales: getReferenceForYear(y), source: 'sales-data-reference' }
+          detail: { year: y, targetSales: parsed, source: 'sales-data-reference' }
         }));
       }
 
@@ -23972,6 +23941,13 @@ Cumulative Target Annual Sales</p>
       }
 
       function saveSalesDataModal() {
+        var y = state.year;
+        if (!isFinite(y)) y = getOperatingYear();
+        stashReferenceForYear(y);
+        var refParsed = getReferenceFromInputEl();
+        if (refParsed != null && window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
+          KpiYearStore.writeAnnualTarget(y, refParsed, { source: 'sales-data-save' });
+        }
         var ps = ensureSalesDataDaily();
         ps.targetSalesByDate = ps.targetSalesByDate || {};
         ps.businessDayByDate = ps.businessDayByDate || {};

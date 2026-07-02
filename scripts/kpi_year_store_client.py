@@ -1477,6 +1477,9 @@ def kpi_year_store_js() -> str:
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }}
           }})();
+          if (window.__ANNUAL_DATA) {{
+            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+          }}
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
           try {{
