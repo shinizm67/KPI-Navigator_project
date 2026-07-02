@@ -3586,10 +3586,125 @@
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
+    /* KPI-DIFF-STEP4-SEVERITY */
+    .annual-kpi-value.tw-diff--win {
+      color: #58e1f3;
+    }
+    .annual-kpi-value.tw-diff--neutral {
+      color: #58e1f3;
+    }
+    .annual-kpi-value.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    .annual-kpi-value.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    .annual-kpi-value.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    .annual-kpi-value.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    .annual-kpi-value.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    .annual-kpi-value.tw-diff--sev-below {
+      color: #b71c1c;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--win {
+      color: #58e1f3;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--neutral {
+      color: #58e1f3;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    .monthly-edit-float__kpi-cell-value.tw-diff--sev-below {
+      color: #b71c1c;
+    }
+    .memo-float-modal__row-value.tw-diff--win {
+      color: #58e1f3;
+    }
+    .memo-float-modal__row-value.tw-diff--neutral {
+      color: #58e1f3;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    .memo-float-modal__row-value.tw-diff--sev-below {
+      color: #b71c1c;
+    }
+    .office-mode .annual-kpi-value.tw-diff--win,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--win,
+    .office-mode .memo-float-modal__row-value.tw-diff--win {
+      color: #111;
+    }
+    .office-mode .annual-kpi-value.tw-diff--neutral,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--neutral,
+    .office-mode .memo-float-modal__row-value.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-90,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-90,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-90 {
+      color: #e65100;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-80,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-80,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-80 {
+      color: #d84315;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-70,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-70,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-70 {
+      color: #c62828;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-60,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-60,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-60 {
+      color: #b71c1c;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-50,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-50,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-50 {
+      color: #9a0007;
+    }
+    .office-mode .annual-kpi-value.tw-diff--sev-below,
+    .office-mode .monthly-edit-float__kpi-cell-value.tw-diff--sev-below,
+    .office-mode .memo-float-modal__row-value.tw-diff--sev-below {
+      color: #7f0000;
+    }
+    /* END KPI-DIFF-STEP4-CSS */
     .office-mode .annual-kpi-value {
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
+
     .office-mode .annual-kpi-strip-label {
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -16100,13 +16215,32 @@ Target Sales</p>
         editable: false,
         achievementAlertColors: false
       });
-      initAllocationWidget({
+      window.__area1CockpitWidgets = window.__area1CockpitWidgets || {};
+      window.__area1CockpitWidgets.dailyAch = initAllocationWidget({
         graphId: 'annual-achievement-graph',
         percentId: 'annual-achievement-percent',
         dataKey: 'achievementPercent',
         promptLabel: '達成率',
         editable: true,
         achievementAlertColors: true
+      });
+      window.__area1CockpitWidgets.monthlyAch = initAllocationWidget({
+        graphId: 'annual-group5-monthly-achievement-graph',
+        percentId: 'annual-group5-monthly-achievement-percent',
+        dataKey: 'group5MonthlyAchievementPercent',
+        promptLabel: '達成率（月次累積）',
+        editable: true,
+        achievementAlertColors: true,
+        fallbackPercent: 108
+      });
+      window.__area1CockpitWidgets.annualAch = initAllocationWidget({
+        graphId: 'annual-group5-annual-achievement-graph',
+        percentId: 'annual-group5-annual-achievement-percent',
+        dataKey: 'group5AnnualAchievementPercent',
+        promptLabel: '達成率（年次累積）',
+        editable: true,
+        achievementAlertColors: true,
+        fallbackPercent: 108
       });
       initAllocationWidget({
         graphId: 'insight-daily-alloc-graph',
@@ -18520,6 +18654,9 @@ Target Sales</p>
           ) {
             window.__ANNUAL_UI.recalcMonthlyAllocationTotal();
           }
+          if (typeof window.refreshArea1Cockpit === 'function') {
+            window.refreshArea1Cockpit();
+          }
         }
 
         window.__ANNUAL_UI = window.__ANNUAL_UI || {};
@@ -20743,6 +20880,188 @@ Target Sales</p>
       window.__twDiffSeverityClass = twDiffSeverityClass;
       window.__twDiffLevels = TW_DIFF_LEVELS;
       /* END KPI-FOCUS-TW-METRICS */
+    /* KPI-COCKPIT-REFRESH */
+    (function () {
+      function ensureTwDiffExports() {
+        if (typeof window.__twFmtDiff === 'function') return;
+        var isJa = document.documentElement.getAttribute('lang') === 'ja';
+        window.__twDiffLevels = [
+          'tw-diff--win',
+          'tw-diff--neutral',
+          'tw-diff--sev-90',
+          'tw-diff--sev-80',
+          'tw-diff--sev-70',
+          'tw-diff--sev-60',
+          'tw-diff--sev-50',
+          'tw-diff--sev-below',
+        ];
+        window.__twDiffSeverityClass = function (actual, target) {
+          if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) {
+            return 'tw-diff--neutral';
+          }
+          var diff = actual - target;
+          if (diff > 0) return 'tw-diff--win';
+          if (diff === 0) return 'tw-diff--neutral';
+          var ach = (actual / target) * 100;
+          if (ach >= 90) return 'tw-diff--sev-90';
+          if (ach >= 80) return 'tw-diff--sev-80';
+          if (ach >= 70) return 'tw-diff--sev-70';
+          if (ach >= 60) return 'tw-diff--sev-60';
+          if (ach >= 50) return 'tw-diff--sev-50';
+          return 'tw-diff--sev-below';
+        };
+        window.__twFmtDiff = function (actual, target) {
+          if (!Number.isFinite(actual) || !Number.isFinite(target)) return '—';
+          var n = actual - target;
+          if (n === 0) {
+            if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(0);
+            return isJa ? '¥0' : '$0';
+          }
+          var r = Math.round(Math.abs(n));
+          var body = isJa
+            ? '¥' + r.toLocaleString('ja-JP')
+            : '$' + r.toLocaleString('en-US');
+          return (n > 0 ? '+' : '−') + body;
+        };
+      }
+      function applyTwDiffSurfaceEl(el, actual, target) {
+        if (!el) return;
+        ensureTwDiffExports();
+        var levels = window.__twDiffLevels || [];
+        for (var i = 0; i < levels.length; i++) el.classList.remove(levels[i]);
+        if (typeof window.__twDiffSeverityClass === 'function') {
+          el.classList.add(window.__twDiffSeverityClass(actual, target));
+        }
+      }
+      window.applyTwDiffSurfaceEl = applyTwDiffSurfaceEl;
+      var DASH = '—';
+      function twAchPct(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return NaN;
+        return (actual / target) * 100;
+      }
+      function resolveArea1Iso() {
+        if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          var iso = KpiYearStore.getSelectedDate();
+          if (iso) return iso;
+        }
+        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+        if (daily && daily.selectedDate) return daily.selectedDate;
+        var now = new Date();
+        return (
+          now.getFullYear() +
+          '-' +
+          String(now.getMonth() + 1).padStart(2, '0') +
+          '-' +
+          String(now.getDate()).padStart(2, '0')
+        );
+      }
+      function fmtArea1Money(n) {
+        if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(n);
+        if (!Number.isFinite(Number(n))) return DASH;
+        var isJa = document.documentElement.getAttribute('lang') === 'ja';
+        var v = Math.round(Number(n));
+        if (isJa) return '¥' + v.toLocaleString('ja-JP');
+        return '$' + v.toLocaleString('en-US');
+      }
+      function setMoneyCell(el, value, enabled) {
+        if (!el) return;
+        el.textContent = enabled && Number.isFinite(Number(value)) ? fmtArea1Money(value) : DASH;
+      }
+      function setDiffCell(el, actual, target, hasPlan) {
+        if (!el) return;
+        if (!hasPlan || !Number.isFinite(Number(actual)) || !Number.isFinite(Number(target))) {
+          el.textContent = DASH;
+          applyTwDiffSurfaceEl(el, NaN, NaN);
+          return;
+        }
+        var a = Number(actual);
+        var t = Number(target);
+        el.textContent =
+          typeof window.__twFmtDiff === 'function' ? window.__twFmtDiff(a, t) : fmtArea1Money(a - t);
+        applyTwDiffSurfaceEl(el, a, t);
+      }
+      function setAchWidget(widget, actual, target, enabled) {
+        if (!widget) return;
+        if (!enabled) {
+          if (typeof widget.setDisabled === 'function') widget.setDisabled();
+          return;
+        }
+        var pct = twAchPct(actual, target);
+        if (!Number.isFinite(pct)) {
+          if (typeof widget.setDisabled === 'function') widget.setDisabled();
+          return;
+        }
+        if (typeof widget.setPercent === 'function') widget.setPercent(Math.max(0.1, pct));
+      }
+      function refreshArea1Cockpit(iso) {
+        iso = iso || resolveArea1Iso();
+        var compute =
+          typeof window.__computeTwMetricsForIso === 'function'
+            ? window.__computeTwMetricsForIso
+            : null;
+        var m = compute ? compute(iso) : null;
+        var dailySalesEl = document.getElementById('annual-group5-sales-value');
+        var dailyTargetEl = document.getElementById('annual-current-sales-value');
+        var dailyDiffEl = document.getElementById('annual-difference-value');
+        var monthlySalesEl = document.getElementById('annual-group5-monthly-cumulative-sales');
+        var monthlyTargetEl = document.getElementById('annual-group5-monthly-cumulative-target');
+        var monthlyDiffEl = document.getElementById('annual-group5-monthly-cumulative-diff');
+        var annualSalesEl = document.getElementById('annual-group5-annual-cumulative-sales');
+        var annualTargetEl = document.getElementById('annual-group5-annual-cumulative-target');
+        var annualDiffEl = document.getElementById('annual-group5-annual-cumulative-diff');
+        var widgets = window.__area1CockpitWidgets || {};
+        if (!m) {
+          setMoneyCell(dailySalesEl, NaN, false);
+          setMoneyCell(dailyTargetEl, NaN, false);
+          setDiffCell(dailyDiffEl, NaN, NaN, false);
+          setAchWidget(widgets.dailyAch, NaN, NaN, false);
+          setMoneyCell(monthlySalesEl, NaN, false);
+          setMoneyCell(monthlyTargetEl, NaN, false);
+          setDiffCell(monthlyDiffEl, NaN, NaN, false);
+          setAchWidget(widgets.monthlyAch, NaN, NaN, false);
+          setMoneyCell(annualSalesEl, NaN, false);
+          setMoneyCell(annualTargetEl, NaN, false);
+          setDiffCell(annualDiffEl, NaN, NaN, false);
+          setAchWidget(widgets.annualAch, NaN, NaN, false);
+          return;
+        }
+        var hasDailyPlan = m.isBusinessToday && m.dailyTarget != null;
+        setMoneyCell(dailySalesEl, m.dailySales, m.isBusinessToday);
+        setMoneyCell(dailyTargetEl, m.dailyTarget, hasDailyPlan);
+        setDiffCell(dailyDiffEl, m.dailySales, m.dailyTarget, hasDailyPlan);
+        setAchWidget(widgets.dailyAch, m.dailySales, m.dailyTarget, hasDailyPlan);
+        var hasMonthlyPlan = m.hasPlan;
+        setMoneyCell(monthlySalesEl, m.mtdA, hasMonthlyPlan);
+        setMoneyCell(monthlyTargetEl, m.mtdT, hasMonthlyPlan);
+        setDiffCell(monthlyDiffEl, m.mtdA, m.mtdT, hasMonthlyPlan);
+        setAchWidget(widgets.monthlyAch, m.mtdA, m.mtdT, hasMonthlyPlan);
+        setMoneyCell(annualSalesEl, m.ytdA, hasMonthlyPlan);
+        setMoneyCell(annualTargetEl, m.ytdT, hasMonthlyPlan);
+        setDiffCell(annualDiffEl, m.ytdA, m.ytdT, hasMonthlyPlan);
+        setAchWidget(widgets.annualAch, m.ytdA, m.ytdT, hasMonthlyPlan);
+      }
+      window.refreshArea1Cockpit = refreshArea1Cockpit;
+      window.refreshArea1KpiStripDiffs = refreshArea1Cockpit;
+      function onArea1CockpitRefresh() {
+        refreshArea1Cockpit(resolveArea1Iso());
+      }
+      onArea1CockpitRefresh();
+      document.addEventListener('annual:dailyDateChanged', onArea1CockpitRefresh);
+      document.addEventListener('kpi:selectedDateChanged', onArea1CockpitRefresh);
+      document.addEventListener('kpi:dailySalesChanged', onArea1CockpitRefresh);
+      document.addEventListener('kpi:annualPlanChanged', onArea1CockpitRefresh);
+      document.addEventListener('kpi:mepDataChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:timelineRowsRendered', onArea1CockpitRefresh);
+      document.addEventListener('annual:salesMapChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:businessDayMapChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:calendarYearChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:salesDataSaved', onArea1CockpitRefresh);
+      document.addEventListener('annual:targetSalesChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:pastSalesSaved', onArea1CockpitRefresh);
+      document.addEventListener('kpi:readSurfacesRefresh', onArea1CockpitRefresh);
+    })();
+    /* END KPI-COCKPIT-REFRESH */
+
 
 
 

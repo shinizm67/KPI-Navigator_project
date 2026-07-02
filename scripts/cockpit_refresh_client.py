@@ -254,6 +254,10 @@ def cockpit_refresh_js() -> str:
       document.addEventListener('annual:timelineRowsRendered', onArea1CockpitRefresh);
       document.addEventListener('annual:salesMapChanged', onArea1CockpitRefresh);
       document.addEventListener('annual:businessDayMapChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:calendarYearChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:salesDataSaved', onArea1CockpitRefresh);
+      document.addEventListener('annual:targetSalesChanged', onArea1CockpitRefresh);
+      document.addEventListener('annual:pastSalesSaved', onArea1CockpitRefresh);
       document.addEventListener('kpi:readSurfacesRefresh', onArea1CockpitRefresh);
     }})();
     {COCKPIT_REFRESH_END}"""

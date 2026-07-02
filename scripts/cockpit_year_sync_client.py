@@ -310,6 +310,9 @@ def cockpit_year_sync_js() -> str:
           ) {{
             window.__ANNUAL_UI.recalcMonthlyAllocationTotal();
           }}
+          if (typeof window.refreshArea1Cockpit === 'function') {{
+            window.refreshArea1Cockpit();
+          }}
         }}
 
         window.__ANNUAL_UI = window.__ANNUAL_UI || {{}};
