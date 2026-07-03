@@ -53,25 +53,28 @@ def cockpit_year_sync_js() -> str:
           return y;
         }}
 
+        function resolveBusinessDayMapForCockpit() {{
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.resolveBusinessDayMapForCockpit === 'function'
+          ) {{
+            return window.__ANNUAL_UI.resolveBusinessDayMapForCockpit();
+          }}
+          if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+            KpiYearStore.syncToAnnualDaily();
+          }}
+          var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+          return (daily && daily.businessDayByDate) || {{}};
+        }}
+
+        /** Cockpit: Sales Data B.DAY が明示的に true の日のみ */
         function isCalendarBusinessDay(y, m0, day) {{
           var d = new Date(y, m0, day);
           if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
-          var dow = d.getDay();
           var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-          var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
-          var bmap = daily && daily.businessDayByDate;
-          var map = daily && daily.targetSalesByDate;
-          var isWk = dow === 0 || dow === 6;
-          if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {{
-            return !!bmap[iso];
-          }}
-          if (map && Object.prototype.hasOwnProperty.call(map, iso)) {{
-            var n = Number(map[iso]);
-            if (!Number.isFinite(n)) return !isWk;
-            if (n === 0) return false;
-            return true;
-          }}
-          return !isWk;
+          var bmap = resolveBusinessDayMapForCockpit();
+          if (!Object.prototype.hasOwnProperty.call(bmap, iso)) return false;
+          return !!bmap[iso];
         }}
 
         function countBusinessDaysInMonth(y, m0) {{

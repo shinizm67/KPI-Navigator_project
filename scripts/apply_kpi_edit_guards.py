@@ -460,20 +460,25 @@ def inject_edit_guards_js(text: str) -> str:
     return empty.sub("\n" + guards.rstrip() + "\n", text, count=1)
 
 
+def remove_past_sales_edit_toggle(text: str) -> str:
+    text = re.sub(
+        r"\n        <div\n          class=\"past-sales-modal__edit-mode\"[\s\S]*?\n        </div>",
+        "",
+        text,
+        count=1,
+    )
+    text = re.sub(
+        r"\n    \.past-sales-modal__edit-mode \{[\s\S]*?\n    \}\n    \.past-sales-modal__edit-mode-btn\.is-active \{[\s\S]*?\n    \}",
+        "",
+        text,
+        count=1,
+    )
+    return text
+
+
 def patch_annual(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    is_ja = "/app/annual/" in str(path).replace("\\", "/")
-    toggle = PAST_SALES_TOGGLE_JA if is_ja else PAST_SALES_TOGGLE_EN
-    if "past-sales-edit-mode" not in text:
-        needle = '        <div class="past-sales-modal__tabs" role="tablist"'
-        if needle not in text:
-            raise SystemExit(f"past-sales tabs anchor not found in {path}")
-        text = text.replace(needle, toggle + "\n" + needle, 1)
-    if ".past-sales-modal__edit-mode" not in text:
-        anchor = ".past-sales-modal__tab-bar {"
-        if anchor not in text:
-            raise SystemExit(f"past-sales CSS anchor not found in {path}")
-        text = text.replace(anchor, PAST_SALES_TOGGLE_CSS + "\n    " + anchor, 1)
+    text = remove_past_sales_edit_toggle(text)
     if ANNUAL_PERSIST_OLD in text:
         text = text.replace(ANNUAL_PERSIST_OLD, ANNUAL_PERSIST_NEW, 1)
     if PAST_SALES_OPEN_PATCH_OLD in text:

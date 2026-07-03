@@ -468,6 +468,8 @@ def kpi_year_store_js() -> str:
           var path = salesSourceToPath(src);
           if (!path) return true;
           if (path !== getDailySalesInputPath()) return false;
+          /* Sales Data モーダル Save は path 一致時に timeline へ反映（lease 未取得だと sync で巻き戻る） */
+          if (src.indexOf('sales-data-save') >= 0) return true;
           return holdsEditLease('daily-sales');
         }}
 
@@ -1266,9 +1268,45 @@ def kpi_year_store_js() -> str:
           syncToPastSalesMemory();
         }}
 
+        function persistSalesDataModalSave(daily, meta) {{
+          if (!daily) return;
+          if (getDailySalesInputPath() !== 'annual') return;
+          var oy = getOperatingYear();
+          var prefix = oy + '-';
+          var salesMap = daily.targetSalesByDate || {{}};
+          var bizMap = daily.businessDayByDate || {{}};
+          var yearTouched = false;
+          Object.keys(salesMap).forEach(function (iso) {{
+            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
+            if (!canEditIso(iso)) return;
+            var n = Number(salesMap[iso]);
+            if (isLegacyPlaceholderSales(n)) {{
+              delete store.timeline.dailySales[iso];
+            }} else {{
+              store.timeline.dailySales[iso] = Number.isFinite(n) ? n : 0;
+            }}
+            yearTouched = true;
+          }});
+          Object.keys(bizMap).forEach(function (iso) {{
+            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
+            if (!canEditIso(iso)) return;
+            store.timeline.businessDays[iso] = !!bizMap[iso];
+            yearTouched = true;
+          }});
+          if (!yearTouched) return;
+          sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          persistStore();
+          syncLegacyKeys();
+          maybeRefreshObservedAfterTimelineChange({{ [String(oy)]: true }});
+        }}
+
         function persistFromAnnualDaily(daily, meta) {{
           if (!daily) return;
           var m = Object.assign({{ source: 'annual-daily-compat' }}, meta || {{}});
+          if (m.source === 'sales-data-save') {{
+            persistSalesDataModalSave(daily, m);
+            return;
+          }}
           mergeDailyMaps(daily.targetSalesByDate, daily.businessDayByDate, m);
           syncToAnnualDaily();
         }}

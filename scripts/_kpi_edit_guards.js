@@ -104,45 +104,12 @@
             '.annual-edit-modal__sales-input, .annual-edit-modal__cb'
           );
         }
-        function syncPastSalesEditToggleUi() {
-          var wrap = document.getElementById('past-sales-edit-mode');
-          if (!wrap) return;
-          var on = pastSalesEditable();
-          wrap.querySelectorAll('[data-ps-edit-mode]').forEach(function (btn) {
-            var mode = btn.getAttribute('data-ps-edit-mode');
-            var active = (mode === 'edit') === on;
-            btn.classList.toggle('is-active', active);
-            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-          });
-        }
         function applyAllGuards() {
-          syncPastSalesEditToggleUi();
           applyPastSalesGuards();
           applySalesDataGuards();
           applyAnnualEditGuards();
           document.dispatchEvent(new CustomEvent('kpi:editGuardsApplied'));
         }
-        function bindPastSalesEditToggle() {
-          var wrap = document.getElementById('past-sales-edit-mode');
-          if (!wrap || wrap.getAttribute('data-kpi-bound') === '1') return;
-          wrap.setAttribute('data-kpi-bound', '1');
-          wrap.addEventListener('click', function (ev) {
-            var btn = ev.target.closest('[data-ps-edit-mode]');
-            if (!btn || !storeReady()) return;
-            var mode = btn.getAttribute('data-ps-edit-mode');
-            if (mode === 'edit' && !KpiYearStore.getPastSalesEditEnabled()) {
-              var ok = window.confirm(
-                isJa()
-                  ? '過去売上データの編集モードに切り替えます。確定済みの年は編集できません。'
-                  : 'Switch to edit mode for past sales. Locked years remain read-only.'
-              );
-              if (!ok) return;
-            }
-            KpiYearStore.setPastSalesEditEnabled(mode === 'edit');
-            applyAllGuards();
-          });
-        }
-        bindPastSalesEditToggle();
         document.addEventListener('kpi:dailySalesInputPathChanged', applyAllGuards);
         document.addEventListener('kpi:pastSalesEditChanged', applyAllGuards);
         document.addEventListener('kpi:editLeaseChanged', applyAllGuards);

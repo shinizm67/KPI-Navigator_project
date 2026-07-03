@@ -81,8 +81,8 @@ def focus_tw_metrics_js() -> str:
         if (!Number.isFinite(n) || n === 1234) return 0;
         return n;
       }}
-      function twAll100Weights() {{
-        return [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
+      function twDefaultHlWeights() {{
+        return [85, 85, 100, 110, 120, 85, 100, 100, 100, 110, 110, 115];
       }}
       function resolveTwPlanForYear(year) {{
         var y = Number(year);
@@ -124,7 +124,7 @@ def focus_tw_metrics_js() -> str:
           }}
         }}
         if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
-        if (!weights || weights.length !== 12) weights = twAll100Weights();
+        if (!weights || weights.length !== 12) weights = twDefaultHlWeights();
         return {{ target: Number(target), weights: weights.slice() }};
       }}
       function buildDailyTargetMapForYear(year, bmap) {{
@@ -147,19 +147,24 @@ def focus_tw_metrics_js() -> str:
         }}
         var totalBD = days.length;
         if (totalBD <= 0) return out;
-        var dailyAvg = plan.target / totalBD;
-        var monthlyTarget = [];
+        var annualTarget = plan.target;
+        var monthlyDailyTarget = [];
         for (var mi = 0; mi < 12; mi++) {{
-          var w = Number(plan.weights[mi]);
-          if (!Number.isFinite(w)) w = 100;
-          monthlyTarget[mi] = dailyAvg * monthlyBD[mi] * (w / 100);
+          var hl = Number(plan.weights[mi]);
+          if (!Number.isFinite(hl)) hl = 100;
+          var bdCount = monthlyBD[mi];
+          if (bdCount <= 0) {{
+            monthlyDailyTarget[mi] = NaN;
+            continue;
+          }}
+          var monthlyAvg = (annualTarget * bdCount) / totalBD;
+          var monthlyTarget = (monthlyAvg * hl) / 100;
+          monthlyDailyTarget[mi] = monthlyTarget / bdCount;
         }}
         for (var i = 0; i < days.length; i++) {{
           var item = days[i];
-          var bdInMonth = monthlyBD[item.m0];
-          if (bdInMonth > 0 && monthlyTarget[item.m0] > 0) {{
-            out[item.iso] = monthlyTarget[item.m0] / bdInMonth;
-          }}
+          var dt = monthlyDailyTarget[item.m0];
+          if (Number.isFinite(dt) && dt > 0) out[item.iso] = dt;
         }}
         return out;
       }}

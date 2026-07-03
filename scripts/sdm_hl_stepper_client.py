@@ -290,6 +290,9 @@ def sdm_hl_stepper_js() -> str:
       var SDM_HL_MAX = 200;
       var SDM_HL_STEP = 5;
       var sdmHlAllocWarnShown = false;
+      function sdmDefaultHlWeights() {{
+        return [85, 85, 100, 110, 120, 85, 100, 100, 100, 110, 110, 115];
+      }}
       function sdmAll100HlWeights() {{
         return [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
       }}
@@ -320,9 +323,9 @@ def sdm_hl_stepper_js() -> str:
           KpiYearStore.writeMonthlyHlWeights(y, baseline, {{ source: 'observed-baseline' }});
           return baseline.slice();
         }}
-        var all100 = sdmAll100HlWeights();
-        KpiYearStore.writeMonthlyHlWeights(y, all100, {{ source: 'plan-default' }});
-        return all100.slice();
+        var planDefault = sdmDefaultHlWeights();
+        KpiYearStore.writeMonthlyHlWeights(y, planDefault, {{ source: 'plan-default' }});
+        return planDefault.slice();
       }}
       function getSdmHlWeightsForYear(year) {{
         return ensureSdmHlWeightsForYear(year);
