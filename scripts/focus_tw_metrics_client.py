@@ -78,7 +78,15 @@ def focus_tw_metrics_js() -> str:
       function readTwSalesAmt(iso, smap) {{
         if (!smap || !Object.prototype.hasOwnProperty.call(smap, iso)) return 0;
         var n = Number(smap[iso]);
-        if (!Number.isFinite(n) || n === 1234) return 0;
+        if (!Number.isFinite(n)) return 0;
+        if (n === 1234) {{
+          var oy = window.KpiYearStore
+            ? KpiYearStore.getOperatingYear()
+            : new Date().getFullYear();
+          var y = Number(String(iso || '').split('-')[0]);
+          if (Number.isFinite(y) && y < oy) return n;
+          return 0;
+        }}
         return n;
       }}
       function twDefaultHlWeights() {{
@@ -127,26 +135,14 @@ def focus_tw_metrics_js() -> str:
         if (!weights || weights.length !== 12) weights = twDefaultHlWeights();
         return {{ target: Number(target), weights: weights.slice() }};
       }}
-      function buildDailyTargetMapForYear(year, bmap) {{
-        var y = Number(year);
-        var plan = resolveTwPlanForYear(y);
+      function buildLegacyFlatDailyTargetMapForYear(plan, days) {{
         var out = {{}};
-        if (!plan) return out;
-        var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        var days = [];
-        for (var m0 = 0; m0 < 12; m0++) {{
-          var dc = new Date(y, m0 + 1, 0).getDate();
-          for (var day = 1; day <= dc; day++) {{
-            var dt = new Date(y, m0, day);
-            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
-            if (!isTimelineBusinessDay(iso, bmap, isWk)) continue;
-            monthlyBD[m0]++;
-            days.push({{ iso: iso, m0: m0 }});
-          }}
-        }}
         var totalBD = days.length;
         if (totalBD <= 0) return out;
+        var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (var di = 0; di < days.length; di++) {{
+          monthlyBD[days[di].m0]++;
+        }}
         var annualTarget = plan.target;
         var monthlyDailyTarget = [];
         for (var mi = 0; mi < 12; mi++) {{
@@ -167,6 +163,42 @@ def focus_tw_metrics_js() -> str:
           if (Number.isFinite(dt) && dt > 0) out[item.iso] = dt;
         }}
         return out;
+      }}
+      function twShouldUseDailyTargetResolver(year) {{
+        if (!window.KpiYearStore) return false;
+        if (typeof KpiYearStore.resolveDailyTargetByIso !== 'function') return false;
+        if (typeof KpiYearStore.getOperatingYear !== 'function') return false;
+        var y = Number(year);
+        var oy = KpiYearStore.getOperatingYear();
+        if (!Number.isFinite(y) || y !== oy) return false;
+        return true;
+      }}
+      function buildDailyTargetMapForYear(year, bmap) {{
+        var y = Number(year);
+        var plan = resolveTwPlanForYear(y);
+        var out = {{}};
+        if (!plan) return out;
+        var days = [];
+        for (var m0 = 0; m0 < 12; m0++) {{
+          var dc = new Date(y, m0 + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {{
+            var dt = new Date(y, m0, day);
+            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(iso, bmap, isWk)) continue;
+            days.push({{ iso: iso, m0: m0 }});
+          }}
+        }}
+        if (twShouldUseDailyTargetResolver(y)) {{
+          for (var ri = 0; ri < days.length; ri++) {{
+            var row = days[ri];
+            var resolved = KpiYearStore.resolveDailyTargetByIso(y, row.iso);
+            var val = resolved && resolved.value;
+            if (Number.isFinite(val) && val > 0) out[row.iso] = val;
+          }}
+          return out;
+        }}
+        return buildLegacyFlatDailyTargetMapForYear(plan, days);
       }}
       function createTwCumState() {{
         return {{ month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false }};
@@ -246,7 +278,12 @@ def focus_tw_metrics_js() -> str:
           var dash = '—';
           function createCell(fieldKey, value, extraClass) {{
             var cell = document.createElement('div');
-            cell.className = 'annual-daily-row__cell' + (extraClass ? ' ' + extraClass : '');
+            var cls = 'annual-daily-row__cell';
+            if (extraClass) cls += ' ' + extraClass;
+            if (fieldKey === 'target' || fieldKey === 'monthlyTarget' || fieldKey === 'annualTarget') {{
+              cls += ' annual-daily-row__cell--plan-target';
+            }}
+            cell.className = cls;
             if (fieldKey) {{
               cell.setAttribute('data-field', 'annual.dailyTable.' + iso + '.' + fieldKey);
               applyDailyCellFillState(cell, fieldKey, value, !isBusiness, isOutsideYear, dash);
@@ -476,6 +513,21 @@ def focus_tw_metrics_js() -> str:
       window.__twFmtAchPct = fmtTwAchPct;
       window.__twDiffSeverityClass = twDiffSeverityClass;
       window.__twDiffLevels = TW_DIFF_LEVELS;
+      var __twTimelineRefreshTimer = null;
+      function scheduleRenderAnnualDailyTimeline(anchorYear, opts) {{
+        opts = opts || {{ preserveScroll: true }};
+        var cy = Number(anchorYear);
+        if (!Number.isFinite(cy)) {{
+          cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        }}
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        if (__twTimelineRefreshTimer != null) window.clearTimeout(__twTimelineRefreshTimer);
+        __twTimelineRefreshTimer = window.setTimeout(function () {{
+          __twTimelineRefreshTimer = null;
+          renderAnnualDailyTimeline(cy, opts);
+        }}, 32);
+      }}
+      window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
       {FOCUS_TW_END}"""
 
 
@@ -497,46 +549,63 @@ FOCUS_BAR_REFRESH_NEW = """      document.addEventListener('annual:calendarYearC
       document.addEventListener('annual:timelineRowsRendered', function () {
         setTimeout(refreshLower, 0);
       });
+      /* KPI-FOCUS-BAR-READ-SURFACES-11-5 */
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {
+        setTimeout(refreshLower, 0);
+      });
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        setTimeout(refreshLower, 0);
+      });
       setTimeout(refreshLower, 0);"""
 
 FOCUS_TW_LISTENERS_NEW = """      document.addEventListener('annual:salesMapChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('kpi:dailySalesChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('kpi:businessDayChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('kpi:annualPlanChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('annual:salesDataSaved', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('annual:pastSalesSaved', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('annual:pastSalesMapChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('annual:pastBusinessDayMapChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
-        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       renderAnnualDailyTimeline(window.__ANNUAL_DATA.calendarYear);"""

@@ -22,6 +22,10 @@ from focus_tw_metrics_client import (  # noqa: E402
     RENDER_TIMELINE_OLD,
     focus_tw_metrics_js,
 )
+from focus_bar_read_surfaces_client import (  # noqa: E402
+    FOCUS_BAR_READ_SURFACES_MARKER,
+    FOCUS_BAR_REFRESH_BEFORE_115,
+)
 
 PAGES = [
     ROOT / "app/annual/index.html",
@@ -37,7 +41,11 @@ def replace_timeline_render(text: str) -> str:
     block = focus_tw_metrics_js().rstrip() + "\n"
     if FOCUS_TW_MARKER in text:
         pattern = (
-            re.escape(FOCUS_TW_MARKER) + r"[\s\S]*?" + re.escape(FOCUS_TW_END) + r"\n?"
+            r"[\t ]*"
+            + re.escape(FOCUS_TW_MARKER)
+            + r"[\s\S]*?"
+            + re.escape(FOCUS_TW_END)
+            + r"\n?"
         )
         return re.sub(pattern, lambda _m: block.rstrip() + "\n", text, count=1)
     start = text.find(RENDER_TIMELINE_OLD)
@@ -52,11 +60,49 @@ def replace_timeline_render(text: str) -> str:
     return text[:start] + block + text[end:]
 
 
+FOCUS_TW_LISTENERS_PHASE11_4_OLD = """      document.addEventListener('kpi:annualPlanChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('annual:pastSalesSaved', function () {"""
+
+FOCUS_TW_LISTENERS_PHASE11_4_NEW = """      document.addEventListener('kpi:annualPlanChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        renderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('annual:pastSalesSaved', function () {"""
+
+
 def replace_listeners(text: str) -> str:
+    if FOCUS_TW_LISTENERS_PHASE11_4_OLD in text:
+        text = text.replace(FOCUS_TW_LISTENERS_PHASE11_4_OLD, FOCUS_TW_LISTENERS_PHASE11_4_NEW, 1)
     if FOCUS_TW_LISTENERS_OLD in text:
         return text.replace(FOCUS_TW_LISTENERS_OLD, FOCUS_TW_LISTENERS_NEW, 1)
-    if "document.addEventListener('annual:pastSalesSaved'" in text and "kpi:annualPlanChanged" in text:
+    if (
+        FOCUS_TW_LISTENERS_PHASE11_4_NEW.split("document.addEventListener('kpi:weekdayBaselineChanged'")[0]
+        in text
+        and "document.addEventListener('kpi:weekdayBaselineChanged'" in text
+        and "scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });" in text
+    ):
         return text
+    direct_listener = "renderAnnualDailyTimeline(cy, { preserveScroll: true });"
+    if direct_listener in text:
+        return text.replace(
+            direct_listener,
+            "scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });",
+        )
     anchor = """      document.addEventListener('annual:salesDataSaved', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
@@ -87,10 +133,16 @@ def replace_listeners(text: str) -> str:
 
 
 def replace_focus_bar_refresh(text: str) -> str:
+    if FOCUS_BAR_READ_SURFACES_MARKER in text:
+        return text
     if FOCUS_BAR_REFRESH_OLD in text:
         return text.replace(FOCUS_BAR_REFRESH_OLD, FOCUS_BAR_REFRESH_NEW, 1)
+    if FOCUS_BAR_REFRESH_BEFORE_115 in text:
+        return text.replace(FOCUS_BAR_REFRESH_BEFORE_115, FOCUS_BAR_REFRESH_NEW, 1)
     if "annual:timelineRowsRendered" in text and "refreshLower" in text:
-        return text
+        if "kpi:dailyTargetModeChanged', function () {\n        setTimeout(refreshLower" in text:
+            return text
+        raise SystemExit("focus bar refresh present but Phase 11-5 upgrade miss — run apply_phase_11_5_read_surfaces.py")
     raise SystemExit("focus bar refresh patch miss")
 
 
