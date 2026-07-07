@@ -548,12 +548,70 @@
       bottom: 0;
       width: var(--annual-date-left-mask-w);
       background: #2a2a2a;
+      border-top-left-radius: 13px;
       z-index: 10;
       pointer-events: none;
     }
     /* Edit: 54px frame + 3px opaque rail; Global Menu scrolls behind / to the right */
 
-    /* Annual: sales entry via cockpit Sales Data — not TW Global Menu Edit */
+    
+    .annual-daily-focus-tw-year {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      min-width: 54px;
+      height: 22px;
+      transform: translateY(-50%);
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      user-select: none;
+      background: #2a2a2a;
+    }
+    html[lang="ja"] .annual-daily-focus-tw-year {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-tw-year {
+      top: 0;
+      height: 100%;
+      transform: none;
+      align-items: center;
+    }
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-tw-year::after {
+      content: "";
+      position: absolute;
+      left: 100%;
+      top: 0;
+      bottom: 0;
+      width: var(--annual-global-menu-date-overhang);
+      background: #2a2a2a;
+      pointer-events: none;
+    }
+    .office-mode .annual-daily-focus-tw-year {
+      background: #e8e8e8;
+      color: #000;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-tw-year::after {
+      content: "";
+      position: absolute;
+      left: calc(100% + 1px);
+      top: 0;
+      bottom: 0;
+      width: max(0px, calc(var(--annual-daily-focus-table-pad-left) - 14px - 100% - 1px));
+      background: #e8e8e8;
+      pointer-events: none;
+    }
+/* Annual: sales entry via cockpit Sales Data — not TW Global Menu Edit */
     body.profile-page:not(.monthly-page) .annual-daily-focus-edit-btn {
       display: none !important;
       pointer-events: none;
@@ -921,6 +979,28 @@
       justify-content: flex-start;
       padding-left: 8px;
     }
+    /* KPI-PHASE-10-MEMO-MARKER-CSS */
+    .annual-daily-row__cell--date.annual-daily-row__cell--has-memo {
+      position: relative;
+      padding-right: 14px;
+    }
+    .annual-daily-row__cell--date.annual-daily-row__cell--has-memo::after {
+      content: '';
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      margin-top: -3px;
+      border-radius: 50%;
+      background: #58e1f3;
+      box-shadow: 0 0 4px rgba(88, 225, 243, 0.65);
+      pointer-events: none;
+    }
+    body.office-mode .annual-daily-row__cell--date.annual-daily-row__cell--has-memo::after {
+      background: #1565c0;
+      box-shadow: none;
+    }
     .annual-daily-row__group--base .annual-daily-row__cell--date {
       border-top-left-radius: 6px;
       border-bottom-left-radius: 6px;
@@ -1005,12 +1085,12 @@
       color: #0a3d7a;
     }
     /* END KPI-TW-DAILY-TARGET-EMPHASIS */
-    .annual-daily-row__cell.tw-diff--win,
-    .annual-daily-focus-bar-lower__cell.tw-diff--win {
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--win,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--win {
       color: #58e1f3;
     }
-    .annual-daily-row__cell.tw-diff--neutral,
-    .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--neutral,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
       color: #58e1f3;
     }
     .annual-daily-row__cell.tw-diff--sev-90,
@@ -2887,6 +2967,7 @@
     .office-mode.annual-focus-bar-expanded .annual-daily-focus-global-menu::before {
       background: #e8e8e8;
       width: calc(var(--annual-date-left-mask-w) + 1px);
+      border-top-left-radius: 13px;
     }
     body.office-mode.annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
       background: #e8e8e8;
@@ -3032,6 +3113,45 @@
     .office-mode .annual-daily-row__cell--neg {
       color: #b00020;
     }
+    .office-mode .annual-daily-row__cell.tw-diff--win,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--win {
+      color: #111;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--neutral,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #111;
+    }
+    /* KPI-ANNUAL-TW-OFFICE-DIFF-WIN */
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--win,
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--neutral,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--win,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-90,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {
+      color: #e65100;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-80,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-80 {
+      color: #d84315;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-70,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-70 {
+      color: #c62828;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-60,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-60 {
+      color: #b71c1c;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-50,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-50 {
+      color: #9a0007;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-below,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-below {
+      color: #7f0000;
+    }
     .office-mode .annual-daily-focus-bar-layer {
       top: 235px;
     }
@@ -3067,6 +3187,63 @@
     .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
       color: #6a6a6a;
       border-right-color: #bdbdbd;
+    }
+    /* KPI-ANNUAL-FB-OFFICE-TW-DIFF-LANE */
+    /* Focus Bar 下段: ベース色（#111 / OFF #6a6a6a）より TW diff severity を優先 */
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {
+      color: #e65100;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80 {
+      color: #d84315;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70 {
+      color: #c62828;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60 {
+      color: #b71c1c;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50 {
+      color: #9a0007;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below {
+      color: #7f0000;
+    }
+    /* Sci-Fi: 下段ベース #58e1f3 / OFF 薄シアンより TW diff severity を優先 */
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-below {
+      color: #b71c1c;
     }
     .office-mode .annual-daily-focus-wing-hit::before {
       background: rgba(0, 0, 0, 0.08);
@@ -13409,6 +13586,7 @@
         </button>
         <div class="annual-daily-focus-window" id="annual-daily-focus-window" aria-label="Daily sales list">
           <nav class="annual-daily-focus-global-menu" id="annual-daily-focus-global-menu" aria-label="Global menu">
+            <span class="annual-daily-focus-tw-year" id="annual-daily-focus-tw-year" aria-label="Display year">2026</span>
             <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn" aria-label="Edit day row">
               <img src="../../../images/button.svg" alt="" decoding="async">
               <span>Edit</span>
@@ -18162,7 +18340,7 @@ Cumulative Target Annual Sales</p>
         }
       };
 
-                                    /* KPI-YEAR-STORE */
+                                                /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -19553,6 +19731,37 @@ Cumulative Target Annual Sales</p>
           return null;
         }
 
+        function readDailyMemoFlagMapForYear(year) {
+          var y = Number(year);
+          var map = Object.create(null);
+          if (!Number.isFinite(y)) return map;
+          var rec = store.years[y];
+          if (!rec || !rec.dailyMeta || typeof rec.dailyMeta !== 'object') return map;
+          var meta = rec.dailyMeta;
+          if (meta.flags && typeof meta.flags === 'object') {
+            Object.keys(meta.flags).forEach(function (iso) {
+              if (meta.flags[iso]) map[iso] = true;
+            });
+          }
+          if (meta.memos && typeof meta.memos === 'object') {
+            Object.keys(meta.memos).forEach(function (rowId) {
+              var byIso = meta.memos[rowId];
+              if (!byIso || typeof byIso !== 'object') return;
+              Object.keys(byIso).forEach(function (iso) {
+                if (String(byIso[iso] || '').trim()) map[iso] = true;
+              });
+            });
+          }
+          return map;
+        }
+
+        function hasDailyMemoForIso(year, iso) {
+          var y = Number(year);
+          iso = String(iso || '').trim();
+          if (!Number.isFinite(y) || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+          return !!readDailyMemoFlagMapForYear(y)[iso];
+        }
+
         function loadMepYearPayload(year) {
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
@@ -20350,6 +20559,8 @@ Cumulative Target Annual Sales</p>
           buildDailyTargetDisplayMapForYear: buildDailyTargetDisplayMapForYear,
           clearDailyTargetDisplayCache: clearDailyTargetDisplayCache,
           resolveDailyTargetByIso: resolveDailyTargetByIso,
+          readDailyMemoFlagMapForYear: readDailyMemoFlagMapForYear,
+          hasDailyMemoForIso: hasDailyMemoForIso,
           loadMepYearPayload: loadMepYearPayload,
           readStrategyUserNote: readStrategyUserNote,
           bulkPersistMepYear: bulkPersistMepYear,
@@ -23172,6 +23383,21 @@ Cumulative Target Annual Sales</p>
         return { rangeStart: rangeStart, rangeEnd: rangeEnd, minYear: minY, maxYear: maxY };
       }
 
+      function computeAnchorYearTimelineBounds(anchorYear) {
+        anchorYear = Number(anchorYear);
+        if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
+        var rangeStart = new Date(anchorYear, 0, 1);
+        rangeStart.setDate(rangeStart.getDate() - 14);
+        var rangeEnd = new Date(anchorYear, 11, 31);
+        rangeEnd.setDate(rangeEnd.getDate() + 14);
+        return {
+          rangeStart: rangeStart,
+          rangeEnd: rangeEnd,
+          minYear: anchorYear,
+          maxYear: anchorYear,
+        };
+      }
+
       function isTimelineBusinessDay(iso, bmap, isWeekend) {
         if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
         return !isWeekend;
@@ -23399,6 +23625,10 @@ Cumulative Target Annual Sales</p>
       }
       function renderAnnualDailyTimeline(anchorYear, opts) {
         opts = opts || {};
+        /* KPI-ARP-PHASE1 */
+        if (!document.body.classList.contains('monthly-page') && !opts.boundsHint) {
+          opts.boundsHint = 'anchor-year-only';
+        }
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
@@ -23406,7 +23636,10 @@ Cumulative Target Annual Sales</p>
         }
         var scrollEl = document.getElementById('annual-daily-focus-scroll');
         var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
-        var bounds = computeFocusTimelineBounds(anchorYear);
+        var bounds =
+          opts.boundsHint === 'anchor-year-only'
+            ? computeAnchorYearTimelineBounds(anchorYear)
+            : computeFocusTimelineBounds(anchorYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
         window.__ANNUAL_DATA.calendarYear = anchorYear;
         var daily = window.__ANNUAL_DATA.daily || {};
@@ -23414,6 +23647,17 @@ Cumulative Target Annual Sales</p>
         var bmap = daily.businessDayByDate || {};
         var targetMapsByYear = {};
         var cumByYear = {};
+        var memoFlagMapsByYear = {};
+        function memoFlagMapForYear(y) {
+          if (!memoFlagMapsByYear[y]) {
+            memoFlagMapsByYear[y] =
+              window.KpiYearStore &&
+              typeof KpiYearStore.readDailyMemoFlagMapForYear === 'function'
+                ? KpiYearStore.readDailyMemoFlagMapForYear(y)
+                : {};
+          }
+          return memoFlagMapsByYear[y];
+        }
         function targetMapForYear(y) {
           if (!targetMapsByYear[y]) targetMapsByYear[y] = buildDailyTargetMapForYear(y, bmap);
           return targetMapsByYear[y];
@@ -23535,7 +23779,20 @@ Cumulative Target Annual Sales</p>
 
           var groupBase = document.createElement('div');
           groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
-          groupBase.appendChild(createCell(null, dateLabel, 'annual-daily-row__cell--date'));
+          var dateCell = createCell(null, dateLabel, 'annual-daily-row__cell--date');
+          if (memoFlagMapForYear(rowYear)[iso]) {
+            dateCell.classList.add('annual-daily-row__cell--has-memo');
+            dateCell.setAttribute('data-has-memo', '1');
+            dateCell.setAttribute(
+              'title',
+              isJa ? 'メモがあります' : 'Memo saved'
+            );
+            dateCell.setAttribute(
+              'aria-label',
+              isJa ? dateLabel + '（メモあり）' : dateLabel + ' (memo saved)'
+            );
+          }
+          groupBase.appendChild(dateCell);
           if (!isBusiness) {
             groupBase.appendChild(createCell('sales', dash));
             groupBase.appendChild(createCell('target', dash));
@@ -23958,6 +24215,11 @@ Cumulative Target Annual Sales</p>
         scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:mepDataChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
         scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
@@ -28312,6 +28574,22 @@ Cumulative Target Annual Sales</p>
       var btnSave = document.getElementById('annual-edit-modal-save');
       var btnUndo = document.getElementById('annual-edit-modal-undo');
       var btnCsv = document.getElementById('annual-edit-modal-csv');
+      
+      (function () {
+        var twYearEl = document.getElementById('annual-daily-focus-tw-year');
+        if (!twYearEl) return;
+        function syncTwYearBadge(y) {
+          if (y == null || !isFinite(Number(y))) {
+            y = window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear;
+          }
+          if (y == null || !isFinite(Number(y))) return;
+          twYearEl.textContent = String(Number(y));
+        }
+        syncTwYearBadge();
+        document.addEventListener('annual:calendarYearChanged', function (ev) {
+          syncTwYearBadge(ev && ev.detail ? ev.detail.year : null);
+        });
+      })();
       var btnEdit = document.getElementById('annual-daily-focus-edit-btn');
       var modalTable = document.getElementById('annual-edit-modal-table');
       var yearSelect = document.getElementById('annual-edit-year-select');
