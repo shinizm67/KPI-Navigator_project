@@ -17433,6 +17433,17 @@ Cumulative Target Annual Sales</p>
         currentYear = y;
         renderYear();
       };
+      /* KPI-ARP-PHASE2B: 年ナビ表示のみを軽量同期（イベント非発火・副作用なし） */
+      window.__ANNUAL_UI.setCalendarYearDisplayOnly = function (y) {
+        y = Number(y);
+        if (!Number.isFinite(y)) return;
+        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        currentYear = y;
+        yearBtn.textContent = String(currentYear);
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.calendarYear = currentYear;
+        buildYearMenu();
+      };
       renderYear();
     })();
     (function () {
@@ -23142,6 +23153,92 @@ Cumulative Target Annual Sales</p>
         });
       }
 
+      /* KPI-ARP-PHASE2 */
+      var ARP_EDGE_EPS = 6;
+      function annualRenderableYearBounds() {
+        var systemYear = new Date().getFullYear();
+        var minY = systemYear;
+        var maxY = systemYear;
+        if (window.KpiYearStore) {
+          try {
+            if (typeof KpiYearStore.listYearsWithData === 'function') {
+              KpiYearStore.listYearsWithData().forEach(function (y) {
+                y = Number(y);
+                if (!Number.isFinite(y)) return;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+              });
+            }
+            if (typeof KpiYearStore.getOperatingYear === 'function') {
+              var oy = Number(KpiYearStore.getOperatingYear());
+              if (Number.isFinite(oy)) {
+                if (oy < minY) minY = oy;
+                if (oy > maxY) maxY = oy;
+              }
+            }
+          } catch (e) {}
+        }
+        maxY = Math.max(maxY, systemYear + 1);
+        return { minYear: minY, maxYear: maxY };
+      }
+      function crossYearByEdge(dir) {
+        if (dir !== 1 && dir !== -1) return false;
+        /* ARP-2: Close モードのみ。Open は ARP-4 で対応 */
+        if (body.classList.contains('annual-focus-bar-expanded')) return false;
+        if (typeof window.__renderAnnualDailyTimeline !== 'function') return false;
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) return false;
+        var nextYear = cy + dir;
+        var b = annualRenderableYearBounds();
+        if (nextYear < b.minYear || nextYear > b.maxYear) return false;
+        snapping = true;
+        window.__renderAnnualDailyTimeline(nextYear, {
+          boundsHint: 'anchor-year-only',
+          preserveScroll: false,
+        });
+        var yearBadge = document.getElementById('annual-daily-focus-tw-year');
+        if (yearBadge) yearBadge.textContent = String(nextYear);
+        /* KPI-ARP-PHASE2B: Cockpit 年ナビ表示・営業日数を追従（表示のみ・副作用なし） */
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function') {
+          window.__ANNUAL_UI.setCalendarYearDisplayOnly(nextYear);
+        }
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function'
+        ) {
+          window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
+        }
+        var iso = dir > 0 ? nextYear + '-01-01' : nextYear + '-12-31';
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
+        }
+        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
+        var idx = -1;
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].getAttribute('data-iso-date') === iso) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx >= 0) {
+          var target = getScrollTopForRowIndex(idx);
+          /* KPI-ARP-PHASE2B: 慣性スクロールを打ち消して境界日に確実に着地 */
+          tableScroll.scrollTop = target;
+          requestAnimationFrame(function () {
+            tableScroll.scrollTop = target;
+            requestAnimationFrame(function () {
+              tableScroll.scrollTop = target;
+            });
+          });
+          setTimeout(function () {
+            snapping = false;
+            syncDailyDateFromFocusedRowForIndex(idx);
+          }, 160);
+        } else {
+          snapping = false;
+        }
+        return true;
+      }
       function scheduleSnap() {
         if (snapping) return;
         if (snapTimer) clearTimeout(snapTimer);
@@ -23150,6 +23247,12 @@ Cumulative Target Annual Sales</p>
           if (body.classList.contains('annual-focus-bar-expanded')) {
             snapTableToNearestRow();
           } else {
+            /* KPI-ARP-PHASE2: Close時、縦スクロール端で年跨ぎ */
+            var maxTop = Math.max(0, tableScroll.scrollHeight - tableScroll.clientHeight);
+            if (maxTop > 0) {
+              if (tableScroll.scrollTop <= ARP_EDGE_EPS && crossYearByEdge(-1)) return;
+              if (tableScroll.scrollTop >= maxTop - ARP_EDGE_EPS && crossYearByEdge(1)) return;
+            }
             syncDailyDateFromFocusedRow();
           }
         }, SNAP_DELAY_MS);
