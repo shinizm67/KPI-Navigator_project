@@ -4640,7 +4640,20 @@
       --monthly-vfocus-cell-row-h: calc(
         var(--monthly-vfocus-cell-inner-h) + var(--monthly-vfocus-line-w)
       );
-      --monthly-vfocus-bar-top: -42px;
+      /* KPI-VFOCUS-VER2 */
+      --monthly-vfocus-ver2-offset: 28px;
+      --monthly-vfocus-edit-header-h: 39px;
+      --monthly-vfocus-year-row-h: 28px;
+      --monthly-vfocus-header-h: calc(
+        var(--monthly-vfocus-edit-header-h) + var(--monthly-vfocus-year-row-h)
+      );
+      --monthly-vfocus-fill-top: var(--monthly-vfocus-header-h);
+      --monthly-vfocus-frame-h: 1103px;
+      --monthly-vfocus-frame-nudge-x: 1px;
+      --monthly-vfocus-frame-nudge-y: -1px;
+      --monthly-vfocus-tab-nudge-y: 2px;
+      --monthly-vfocus-today-nudge-x: 0.5px;
+      --monthly-vfocus-bar-top: calc(-42px - var(--monthly-vfocus-ver2-offset));
       --monthly-vfocus-date-top-in-tw: 12px;
       --monthly-vfocus-groups-gap-after-date: 19px;
       --monthly-vfocus-groups-gap-between: 31px;
@@ -4648,8 +4661,8 @@
       --monthly-vfocus-profit-gap-after-line: 10px;
       --monthly-vfocus-profit-raise: 1px;
       width: 1100px;
-      min-height: 1070px;
-      margin: 80px calc((100% - 1100px) / 2) 0;
+      min-height: calc(1070px + var(--monthly-vfocus-ver2-offset));
+      margin: calc(80px + var(--monthly-vfocus-ver2-offset)) calc((100% - 1100px) / 2) 0;
       border: 0;
       border-radius: 12px;
       background: #1f1e1e;
@@ -4662,15 +4675,15 @@
       left: 498px;
       top: var(--monthly-vfocus-bar-top);
       width: 135px;
-      height: 1075px;
+      height: var(--monthly-vfocus-frame-h);
       z-index: 5;
       pointer-events: none;
     }
-    /* SVG vertical_focus_bar.svg の内側ダーク領域（rect y=39 h=860）に合わせる */
+    /* SVG vertical_focus_bar_ver2.svg: Edit y=0-39, Year y=39-67, dark rect y=66 */
     .monthly-vertical-focus-bar .monthly-vfocus-frame {
       position: absolute;
-      left: 0;
-      top: 0;
+      left: var(--monthly-vfocus-frame-nudge-x);
+      top: var(--monthly-vfocus-frame-nudge-y);
       width: 100%;
       height: 100%;
       display: block;
@@ -4683,7 +4696,7 @@
       left: 1px;
       right: 1px;
       top: 0;
-      height: 39px;
+      height: var(--monthly-vfocus-header-h);
       z-index: 2;
       display: flex;
       align-items: center;
@@ -4733,7 +4746,7 @@
       position: absolute;
       left: 100%;
       transform: translateX(0.3px);
-      top: 14px;
+      top: calc(var(--monthly-vfocus-edit-header-h) + var(--monthly-vfocus-tab-nudge-y));
       min-width: 68px;
       height: 28px;
       box-sizing: border-box;
@@ -4780,8 +4793,8 @@
       position: absolute;
       right: 100%;
       left: auto;
-      transform: translateX(-0.3px);
-      top: 14px;
+      transform: translateX(calc(-0.3px + var(--monthly-vfocus-today-nudge-x)));
+      top: calc(var(--monthly-vfocus-edit-header-h) + var(--monthly-vfocus-tab-nudge-y));
       min-width: 68px;
       height: 28px;
       box-sizing: border-box;
@@ -4807,11 +4820,59 @@
     .monthly-vfocus-today-btn:focus-visible {
       outline: none;
     }
+    /* KPI-VFOCUS-VER2 */
+    .monthly-vfocus-edit-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: var(--monthly-vfocus-edit-header-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 4;
+      pointer-events: auto;
+    }
+    .monthly-vfocus-year-cell {
+      position: absolute;
+      left: 50%;
+      top: var(--monthly-vfocus-edit-header-h);
+      transform: translateX(-50%);
+      width: var(--monthly-vfocus-col-w);
+      height: var(--monthly-vfocus-year-row-h);
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      user-select: none;
+      z-index: 3;
+    }
+    html[lang='ja'] .monthly-vfocus-year-cell {
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-size: 13px;
+    }
+    .office-mode .monthly-vfocus-year-cell {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+
     .monthly-vfocus-fill {
       position: absolute;
       left: 1px;
       right: 1px;
-      top: 39px;
+      top: var(--monthly-vfocus-fill-top);
       bottom: 18px;
       z-index: 1;
       display: flex;
@@ -4830,7 +4891,7 @@
       flex: 0 0 auto;
       margin-left: 11px;
       margin-right: 11px;
-      margin-top: calc(var(--monthly-vfocus-date-top-in-tw) - var(--monthly-vfocus-bar-top) - 39px);
+      margin-top: calc(var(--monthly-vfocus-date-top-in-tw) - var(--monthly-vfocus-bar-top) - var(--monthly-vfocus-fill-top));
       box-sizing: border-box;
       overflow: hidden;
     }
@@ -12531,18 +12592,23 @@
           <p class="monthly-table-window__col-text monthly-table-window__col-text--profit">利益</p>
           <div class="monthly-vertical-focus-bar" aria-hidden="true">
             <img
-              src="../../images/vertical_focus_bar.svg"
+              src="../../images/vertical_focus_bar_ver2.svg"
               alt=""
               class="monthly-vfocus-frame monthly-focusbar-img-scifi"
               decoding="async"
             >
             <img
-              src="../../images/vertical_focus_bar_office.svg"
+              src="../../images/vertical_focus_bar_office_ver2.svg"
               alt=""
               class="monthly-vfocus-frame monthly-focusbar-img-office"
               decoding="async"
             >
             <div class="monthly-vfocus-top-controls" aria-label="フォーカスバー操作">
+              <div class="monthly-vfocus-edit-row">
+                <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-prev-day" aria-label="前の日">◀</button>
+                <button type="button" class="monthly-vfocus-top-edit" id="monthly-vfocus-edit" aria-label="編集">編集</button>
+                <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-next-day" aria-label="次の日">▶</button>
+              </div>
               <button
                 type="button"
                 class="monthly-vfocus-today-btn"
@@ -12551,9 +12617,7 @@
               >
                 <span class="monthly-vfocus-graph-btn__inner">今日</span>
               </button>
-              <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-prev-day" aria-label="前の日">◀</button>
-              <button type="button" class="monthly-vfocus-top-edit" id="monthly-vfocus-edit" aria-label="編集">編集</button>
-              <button type="button" class="monthly-vfocus-top-btn" id="monthly-vfocus-next-day" aria-label="次の日">▶</button>
+              <span class="monthly-vfocus-year-cell" id="monthly-vfocus-year" aria-label="表示年">2026</span>
               <button
                 type="button"
                 class="monthly-vfocus-graph-btn"
@@ -18731,6 +18795,19 @@ Target Sales</p>
         currentYear = y;
         renderYear();
       };
+      /* KPI-ARP-PHASE6: Monthly 横TW年跨ぎ用（表示のみ・副作用なし） */
+      window.__ANNUAL_UI.setCalendarYearDisplayOnly = function (y) {
+        y = Number(y);
+        if (!Number.isFinite(y)) return;
+        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        if (currentYear === y) return;
+        currentYear = y;
+        yearBtn.textContent = String(currentYear);
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.calendarYear = currentYear;
+        buildYearMenu();
+      };
+      window.__ANNUAL_UI.setCalendarYearSilent = window.__ANNUAL_UI.setCalendarYearDisplayOnly;
       renderYear();
     })();
     (function () {
@@ -24279,6 +24356,28 @@ Target Sales</p>
           .replace(/>/g, '&gt;')
           .replace(/"/g, '&quot;');
       }
+
+      /* KPI-VFOCUS-VER2 */
+      function syncMonthlyVfocusYearBadge(isoOrYear) {
+        var el = document.getElementById('monthly-vfocus-year');
+        if (!el) return;
+        if (isoOrYear === '' || (typeof isoOrYear === 'number' && !Number.isFinite(isoOrYear))) {
+          el.textContent = '';
+          return;
+        }
+        if (typeof isoOrYear === 'number' && Number.isFinite(isoOrYear)) {
+          el.textContent = String(isoOrYear);
+          return;
+        }
+        var m = /^(\d{4})/.exec(String(isoOrYear || ''));
+        if (m) {
+          el.textContent = m[1];
+          return;
+        }
+        if (typeof state !== 'undefined' && state && Number.isFinite(state.year)) {
+          el.textContent = String(state.year);
+        }
+      }
       function setFocusBarDateFromHeader(dateEl, hdrLane) {
         if (!dateEl) return;
         dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
@@ -24317,6 +24416,7 @@ Target Sales</p>
         ];
         var laneProfits = [vProfitPrev, vProfitBottom, vProfitNext];
         if (n === 0) {
+          syncMonthlyVfocusYearBadge(NaN);
           for (var le = 0; le < 3; le++) {
             if (laneDates[le]) {
               laneDates[le].textContent = '';
@@ -24433,7 +24533,10 @@ Target Sales</p>
         if (hdr) {
           currentFocusIso = hdr.getAttribute('data-iso') || currentFocusIso;
           var isoNow = hdr.getAttribute('data-iso');
-          if (isoNow) syncArea2ByIso(isoNow);
+          if (isoNow) {
+            syncArea2ByIso(isoNow);
+            syncMonthlyVfocusYearBadge(isoNow);
+          }
         }
       }
       /* KPI-MRP-PHASE1-7 */
@@ -24451,7 +24554,7 @@ Target Sales</p>
           : toISODateLocal(new Date(state.year, state.month0, 1));
         scheduleRebuildColumns(iso, undefined, function () {
           syncArea2ByIso(iso);
-          syncYearUi(state.year);
+          syncYearUiDisplayOnly(state.year);
           pendingCross = null;
         });
         return true;
@@ -24594,6 +24697,20 @@ Target Sales</p>
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYear === 'function') {
           window.__ANNUAL_UI.setCalendarYear(y);
         }
+        syncMonthlyVfocusYearBadge(Number(y));
+      }
+      /* KPI-ARP-PHASE6: Monthly 横TW年跨ぎ（スクロール境界）は表示同期のみ */
+      function syncYearUiDisplayOnly(y) {
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function'
+        ) {
+          window.__ANNUAL_UI.setCalendarYearDisplayOnly(y);
+        } else {
+          syncYearUi(y);
+          return;
+        }
+        syncMonthlyVfocusYearBadge(Number(y));
       }
       function syncArea2ByIso(iso) {
         if (!iso || focusedIso === iso) return;

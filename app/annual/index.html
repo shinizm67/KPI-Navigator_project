@@ -1537,6 +1537,10 @@
       z-index: 8;
       background-color: #35686f;
     }
+    /* KPI-ARP-PHASE5D: Open 時でも OFF 行は Date 列を非アクティブ色に揃える */
+    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
+      background-color: #263638;
+    }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base {
       position: relative;
       z-index: 4;
@@ -19813,7 +19817,26 @@ Target Sales</p>
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          persistStore();
+          /* KPI-ARP-PHASE5B: focus-sync は永続化を debounce（スクロール中の同期 I/O 回避） */
+          var navSrc = source || 'kpi-year-store';
+          var deferPersist =
+            navSrc === 'focus-sync' ||
+            navSrc === 'arrow' ||
+            navSrc === 'today' ||
+            navSrc === 'annual-ui' ||
+            navSrc === 'picker' ||
+            navSrc === 'selection';
+          if (!deferPersist) {
+            persistStore();
+          } else {
+            if (window.__kpiSelectedDatePersistTimer != null) {
+              window.clearTimeout(window.__kpiSelectedDatePersistTimer);
+            }
+            window.__kpiSelectedDatePersistTimer = window.setTimeout(function () {
+              window.__kpiSelectedDatePersistTimer = null;
+              persistStore();
+            }, 500);
+          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -22812,8 +22835,20 @@ Target Sales</p>
             detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
           })
         );
+        /* KPI-ARP-PHASE5B: focus-sync の nav 永続化も debounce */
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncAnnualNavToStorage === 'function') {
-          window.__ANNUAL_UI.syncAnnualNavToStorage();
+          var navSrc2 = source || 'selection';
+          if (navSrc2 === 'focus-sync') {
+            if (window.__annualNavPersistTimer != null) {
+              window.clearTimeout(window.__annualNavPersistTimer);
+            }
+            window.__annualNavPersistTimer = window.setTimeout(function () {
+              window.__annualNavPersistTimer = null;
+              window.__ANNUAL_UI.syncAnnualNavToStorage();
+            }, 500);
+          } else {
+            window.__ANNUAL_UI.syncAnnualNavToStorage();
+          }
         }
         return true;
       }
@@ -23248,44 +23283,63 @@ Target Sales</p>
         return tableScroll.scrollTop + (firstRect.top - tableRect.top);
       }
 
-      /* KPI-ARP-PHASE2E */
-      /* KPI-ARP-PHASE2E: 実測ピッチ（行0/行1から算出）。O(1) */
-      function getRowPitch() {
+      /* KPI-ARP-PHASE5A: ジオメトリは描画後1回だけ実測しキャッシュ（スクロール hot path から reflow を排除） */
+      var __geomCache = null;
+      function getAnnualGeom() {
+        if (__geomCache) return __geomCache;
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
-        if (!rows || rows.length < 2) return SNAP_ROW_PITCH;
+        var count = rows ? rows.length : 0;
+        var centerHalf = SNAP_ROW_HEIGHT / 2;
+        if (!rows || count < 1) {
+          return { ok: false, rowStart: null, pitch: SNAP_ROW_PITCH, anchorOffset: 0, count: 0, maxTop: 0, centerHalf: centerHalf };
+        }
+        var tableRect = tableScroll.getBoundingClientRect();
         var r0 = rows[0].getBoundingClientRect();
-        var r1 = rows[1].getBoundingClientRect();
-        var p = r1.top - r0.top;
-        return p > 0 ? p : SNAP_ROW_PITCH;
+        var pitch = SNAP_ROW_PITCH;
+        if (count >= 2) {
+          var p = rows[1].getBoundingClientRect().top - r0.top;
+          if (p > 0) pitch = p;
+        }
+        var rowStart = tableScroll.scrollTop + (r0.top - tableRect.top);
+        var anchorRect = lowerScroll ? lowerScroll.getBoundingClientRect() : tableRect;
+        var anchorOffset = (anchorRect.top + anchorRect.height / 2) - tableRect.top;
+        __geomCache = {
+          ok: true,
+          rowStart: rowStart,
+          pitch: pitch,
+          anchorOffset: anchorOffset,
+          count: count,
+          maxTop: tableScroll.scrollHeight - tableScroll.clientHeight,
+          centerHalf: centerHalf
+        };
+        return __geomCache;
       }
+      window.__annualGeom = getAnnualGeom;
+      window.addEventListener('resize', function () { __geomCache = null; }, { passive: true });
 
-      /* KPI-ARP-PHASE2E: Focus Bar アンカー最寄り行（算術・O(1)） */
+      /* KPI-ARP-PHASE5A: 実測ピッチ（キャッシュ） */
+      function getRowPitch() { return getAnnualGeom().pitch; }
+
+      /* KPI-ARP-PHASE5A: Focus Bar アンカー最寄り行（キャッシュ算術・reflow なし） */
       function getNearestFocusRowIndex() {
-        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
-        if (!rows || !rows.length) return 0;
-        var rowStart = getRowStartYInContent();
-        if (rowStart == null) return 0;
-        var pitch = getRowPitch();
-        var anchorOffset = getFocusAnchorOffsetY();
-        var anchorYInContent = tableScroll.scrollTop + anchorOffset;
-        var idx = Math.round((anchorYInContent - (rowStart + SNAP_ROW_HEIGHT / 2)) / pitch);
+        var g = getAnnualGeom();
+        if (!g.ok || g.rowStart == null) return 0;
+        var anchorYInContent = tableScroll.scrollTop + g.anchorOffset;
+        var idx = Math.round((anchorYInContent - (g.rowStart + g.centerHalf)) / g.pitch);
         if (idx < 0) idx = 0;
-        if (idx >= rows.length) idx = rows.length - 1;
+        if (idx >= g.count) idx = g.count - 1;
         return idx;
       }
 
-      /* KPI-ARP-PHASE2E: 行中心をアンカーに一致させる scrollTop（算術・O(1)） */
+      /* KPI-ARP-PHASE5A: 行中心をアンカーに一致させる scrollTop（キャッシュ算術・reflow なし） */
       function getScrollTopForRowIndex(idx) {
-        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
-        if (!rows || !rows.length) return tableScroll.scrollTop;
+        var g = getAnnualGeom();
+        if (!g.ok || g.rowStart == null) return tableScroll.scrollTop;
         if (idx < 0) idx = 0;
-        if (idx >= rows.length) idx = rows.length - 1;
-        var rowStart = getRowStartYInContent();
-        if (rowStart == null) return tableScroll.scrollTop;
-        var pitch = getRowPitch();
-        var anchorOffset = getFocusAnchorOffsetY();
-        var target = rowStart + idx * pitch + SNAP_ROW_HEIGHT / 2 - anchorOffset;
-        var maxTop = tableScroll.scrollHeight - tableScroll.clientHeight;
+        if (idx >= g.count) idx = g.count - 1;
+        var target = g.rowStart + idx * g.pitch + g.centerHalf - g.anchorOffset;
+        var maxTop = g.maxTop;
+        if (maxTop <= 0) maxTop = tableScroll.scrollHeight - tableScroll.clientHeight;
         if (target < 0) target = 0;
         if (target > maxTop) target = maxTop;
         return target;
@@ -23345,6 +23399,7 @@ Target Sales</p>
       }
       document.addEventListener('annual:timelineRowsRendered', function () {
         __anchorRangeCache = null;
+        __geomCache = null;
       });
       /* KPI-ARP-PHASE2D */
       var lastScrollTop = tableScroll.scrollTop;
@@ -23465,19 +23520,18 @@ Target Sales</p>
           tableScroll.scrollLeft = 0;
           syncScrollLeft(tableScroll);
         }
-        /* KPI-ARP-PHASE2B: Cockpit 年ナビ表示・営業日数を追従（表示のみ・副作用なし） */
-        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function') {
-          window.__ANNUAL_UI.setCalendarYearDisplayOnly(nextYear);
-        }
-        if (
-          window.__ANNUAL_UI &&
-          typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function'
-        ) {
-          window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
-        }
         var iso = dir > 0 ? nextYear + '-01-01' : nextYear + '-12-31';
-        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
-          window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
+        /* KPI-ARP-PHASE5A: 重い表示同期（Cockpit 年ナビ・営業日数）は着地後に遅延実行 */
+        function __arpDeferredYearSync() {
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function') {
+            window.__ANNUAL_UI.setCalendarYearDisplayOnly(nextYear);
+          }
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function'
+          ) {
+            window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
+          }
         }
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         var idx = -1;
@@ -23491,21 +23545,33 @@ Target Sales</p>
           var target = getScrollTopForRowIndex(idx);
           /* KPI-ARP-PHASE2B: 慣性スクロールを打ち消して境界日に確実に着地 */
           tableScroll.scrollTop = target;
-          requestAnimationFrame(function () {
-            tableScroll.scrollTop = target;
-            requestAnimationFrame(function () {
-              tableScroll.scrollTop = target;
-            });
-          });
-          setTimeout(function () {
+          var __crossFinalized = false;
+          function __finalizeCrossLanding() {
+            if (__crossFinalized) return;
+            __crossFinalized = true;
             snapping = false;
             syncDailyDateFromFocusedRowForIndex(idx);
+            __arpDeferredYearSync();
             /* KPI-ARP-PHASE3: 年跨ぎ後に Focus Bar 行を確実に同期 */
             if (typeof window.__refreshAnnualFocusBarLower === 'function') {
               window.__refreshAnnualFocusBarLower();
             }
-          }, 160);
+          }
+          requestAnimationFrame(function () {
+            tableScroll.scrollTop = target;
+            requestAnimationFrame(function () {
+              tableScroll.scrollTop = target;
+              /* KPI-ARP-PHASE5C: 着地検知後に短い保持のみで解除（固定160msを廃止） */
+              waitForVerticalScrollSettle(target, function () {
+                setTimeout(__finalizeCrossLanding, 48);
+              });
+            });
+          });
         } else {
+          __arpDeferredYearSync();
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+            window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
+          }
           snapping = false;
         }
         return true;
@@ -23634,6 +23700,8 @@ Target Sales</p>
       document.addEventListener('annual:focusBarStateChanged', function () {
         if (snapTimer) clearTimeout(snapTimer);
         snapping = false;
+        __geomCache = null;
+        __anchorRangeCache = null;
         syncScrollLeft(tableScroll);
       });
       document.addEventListener('annual:focusBarStepRequested', function (ev) {
@@ -24050,6 +24118,8 @@ Target Sales</p>
           return cumByYear[y];
         }
         rowsRoot.innerHTML = '';
+        /* KPI-ARP-PHASE5A: 行は DocumentFragment に構築し1回で挿入（reflow削減） */
+        var __rowsFrag = document.createDocumentFragment();
         rowsRoot.setAttribute('data-year', String(anchorYear));
         rowsRoot.setAttribute('data-timeline-min-year', String(bounds.minYear));
         rowsRoot.setAttribute('data-timeline-max-year', String(bounds.maxYear));
@@ -24240,8 +24310,9 @@ Target Sales</p>
           row.appendChild(groupBase);
           row.appendChild(groupMonthly);
           row.appendChild(groupAnnual);
-          rowsRoot.appendChild(row);
+          __rowsFrag.appendChild(row);
         }
+        rowsRoot.appendChild(__rowsFrag);
 
         if (prevScroll != null && scrollEl) {
           scrollEl.scrollTop = prevScroll;
@@ -24534,8 +24605,31 @@ Target Sales</p>
         }, 0);
       }
       /* Initial refresh: scheduleInitialCockpitSync after refreshArea1Cockpit exists. */
-      document.addEventListener('annual:dailyDateChanged', onArea1CockpitRefresh);
-      document.addEventListener('kpi:selectedDateChanged', onArea1CockpitRefresh);
+      /* KPI-ARP-PHASE5B: focus-sync 中の Cockpit 再計算を debounce（着地後1回） */
+      var __area1CockpitLowPriorityTimer = null;
+      function onArea1CockpitRefreshLowPriority() {
+        if (__area1CockpitLowPriorityTimer != null) window.clearTimeout(__area1CockpitLowPriorityTimer);
+        __area1CockpitLowPriorityTimer = window.setTimeout(function () {
+          __area1CockpitLowPriorityTimer = null;
+          refreshArea1Cockpit(resolveArea1Iso());
+        }, 320);
+      }
+      document.addEventListener('annual:dailyDateChanged', function (ev) {
+        var src = ev && ev.detail && ev.detail.source;
+        if (src === 'focus-sync') {
+          onArea1CockpitRefreshLowPriority();
+          return;
+        }
+        onArea1CockpitRefresh();
+      });
+      document.addEventListener('kpi:selectedDateChanged', function (ev) {
+        var src = ev && ev.detail && ev.detail.source;
+        if (src === 'focus-sync') {
+          onArea1CockpitRefreshLowPriority();
+          return;
+        }
+        onArea1CockpitRefresh();
+      });
       document.addEventListener('kpi:dailySalesChanged', onArea1CockpitRefresh);
       document.addEventListener('kpi:annualPlanChanged', onArea1CockpitRefresh);
       document.addEventListener('kpi:mepDataChanged', onArea1CockpitRefresh);
@@ -24713,6 +24807,17 @@ Target Sales</p>
       function getFocusedRowState() {
         var rows = rowsRoot.children;
         if (!rows || !rows.length) return { row: null, offset: 0, idx: 0 };
+        /* KPI-ARP-PHASE5A: geom キャッシュがあれば reflow なしで算出 */
+        if (typeof window.__annualGeom === 'function' && typeof window.__annualTwFocusRowIndex === 'function') {
+          var g5a = window.__annualGeom();
+          if (g5a && g5a.ok && g5a.rowStart != null) {
+            var idx5a = window.__annualTwFocusRowIndex();
+            if (idx5a < 0) idx5a = 0;
+            if (idx5a >= rows.length) idx5a = rows.length - 1;
+            var center5a = (g5a.rowStart + idx5a * g5a.pitch + g5a.centerHalf) - tableScroll.scrollTop;
+            return { row: rows[idx5a], offset: center5a - g5a.anchorOffset, idx: idx5a };
+          }
+        }
         var tableRect = tableScroll.getBoundingClientRect();
         var anchorRect = lowerScroll ? lowerScroll.getBoundingClientRect() : tableRect;
         var anchorOffset = (anchorRect.top + anchorRect.height / 2) - tableRect.top;
@@ -24741,20 +24846,26 @@ Target Sales</p>
 
       var raf = 0;
       var LOWER_ROW_STEP_PX = 49;
+      /* KPI-ARP-PHASE5B: 行 index が変わったときだけセル内容を更新 */
+      var __lowerLastIdx = -1;
 
       function refreshLower() {
         if (raf) cancelAnimationFrame(raf);
         raf = requestAnimationFrame(function () {
           var state = getFocusedRowState();
-          writeLowerFromRow(state.row);
+          var idx = state.idx;
+          if (idx !== __lowerLastIdx) {
+            __lowerLastIdx = idx;
+            writeLowerFromRow(state.row);
+            var rows = rowsRoot.children;
+            var prevRow = idx > 0 ? rows[idx - 1] : state.row;
+            var nextRow = idx < rows.length - 1 ? rows[idx + 1] : state.row;
+            writeLowerFromRowTo(lowerPrev, prevRow);
+            writeLowerFromRowTo(lowerNext, nextRow);
+            lowerPrev.style.display = 'flex';
+            lowerNext.style.display = 'flex';
+          }
           var expanded = document.body.classList.contains('annual-focus-bar-expanded');
-          var rows = rowsRoot.children;
-          var prevRow = state.idx > 0 ? rows[state.idx - 1] : state.row;
-          var nextRow = state.idx < rows.length - 1 ? rows[state.idx + 1] : state.row;
-          writeLowerFromRowTo(lowerPrev, prevRow);
-          writeLowerFromRowTo(lowerNext, nextRow);
-          lowerPrev.style.display = 'flex';
-          lowerNext.style.display = 'flex';
           var oy = state.offset;
           if (expanded) {
             lower.style.transform = 'translateY(' + oy + 'px)';
@@ -24776,6 +24887,7 @@ Target Sales</p>
         setTimeout(refreshLower, 0);
       });
       document.addEventListener('annual:timelineRowsRendered', function () {
+        __lowerLastIdx = -1;
         setTimeout(refreshLower, 0);
       });
       /* KPI-FOCUS-BAR-READ-SURFACES-11-5 */
