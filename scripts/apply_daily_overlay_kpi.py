@@ -25,6 +25,7 @@ from daily_overlay_kpi_client import (  # noqa: E402
     OPEN_OLD,
     OVERLAY_LISTENERS_ANCHOR,
     OVERLAY_LISTENERS_NEW,
+    OVERLAY_LISTENERS_PRE_115,
     daily_overlay_kpi_js,
 )
 from focus_tw_metrics_client import FOCUS_TW_END, FOCUS_TW_MARKER  # noqa: E402
@@ -73,6 +74,8 @@ def patch_open(text: str) -> str:
         return text.replace(OPEN_OLD, OPEN_NEW, 1)
     if OPEN_MONTHLY_OLD in text:
         return text.replace(OPEN_MONTHLY_OLD, OPEN_MONTHLY_NEW, 1)
+    if FILL_NEW in text:
+        return text
     raise SystemExit("daily-overlay open() patch miss")
 
 
@@ -89,10 +92,14 @@ def patch_fill(text: str) -> str:
 
 
 def patch_overlay_listeners(text: str) -> str:
-    if "refreshDailyOverlayFromStore" in text:
+    if "kpi:dailyTargetModeChanged', refreshDailyOverlayFromStore" in text:
         return text
+    if OVERLAY_LISTENERS_PRE_115 in text:
+        return text.replace(OVERLAY_LISTENERS_PRE_115, OVERLAY_LISTENERS_NEW, 1)
     if OVERLAY_LISTENERS_ANCHOR in text:
         return text.replace(OVERLAY_LISTENERS_ANCHOR, OVERLAY_LISTENERS_NEW, 1)
+    if "refreshDailyOverlayFromStore" in text:
+        raise SystemExit("daily-overlay listeners present but Phase 11-5 upgrade miss")
     raise SystemExit("daily-overlay listeners patch miss")
 
 

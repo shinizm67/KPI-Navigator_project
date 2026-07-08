@@ -104,7 +104,22 @@ Global Menu の **Daily** から開く UI は、独立した Daily URL ではな
 
 ## データ・今後
 
-- 現状、オーバーレイ内の数値・バーは**プレースホルダー**。**実データ**は `window.__ANNUAL_DATA`・`localStorage`・将来の `window.__KPI_DATA_GATEWAY` 等と接続する想定。
+### Phase 10 — KPI 配線（2026-07-08）
+
+`#daily-overlay` の数値・達成率バーは **`window.__computeTwMetricsForIso(iso)`**（Focus TW と同算出）から描画する。
+
+| API / フック | 役割 |
+|--------------|------|
+| `window.renderDailyOverlayKpis(iso)` | Daily / Monthly / Annual 各 KPI ボックス + 横棒グラフ更新 |
+| `fill(iso)` | 日付表示後に `renderDailyOverlayKpis` を呼ぶ |
+| Store イベント | `kpi:dailySalesChanged` / `kpi:businessDayChanged` / `kpi:annualPlanChanged` / `annual:salesMapChanged` / Save 系 / `kpi:readSurfacesRefresh` / `kpi:dailyTargetModeChanged` / `kpi:weekdayBaselineChanged` で、開いているときだけ再描画 |
+
+**再適用:** `python3 scripts/apply_daily_overlay_kpi.py`（idempotent）
+
+**OFF 日:** Daily 行は売上・目標・差額・達成率が `—`。Monthly / Annual 累計は当日までの MTD/YTD を表示（Focus Bar Graph と同方針）。
+
+**未着手（別サブフェーズ）:** メモ日付マーカーの Focus Bar / Daily 窓反映（`docs/phase-10-memo-flags-memo.md` の **10-c**）。
+
 - 通貨・桁区切りはアプリ全体のルール（`docs/currency-and-markets-memo.md` 等）に合わせる。
 
 ---
@@ -113,3 +128,4 @@ Global Menu の **Daily** から開く UI は、独立した Daily URL ではな
 
 - Global Menu 全般: `docs/global-menu.md`
 - Target Sales の日/月/年の概念: `docs/target-sales-daily-monthly-annual.md`
+- Phase 10 メモ印（TW 点）: `docs/phase-10-memo-flags-memo.md`

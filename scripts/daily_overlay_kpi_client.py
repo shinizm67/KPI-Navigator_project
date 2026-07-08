@@ -317,4 +317,25 @@ OVERLAY_LISTENERS_NEW = """      document.addEventListener('annual:dailyDateChan
       document.addEventListener('annual:salesDataSaved', refreshDailyOverlayFromStore);
       document.addEventListener('annual:pastSalesSaved', refreshDailyOverlayFromStore);
       document.addEventListener('kpi:readSurfacesRefresh', refreshDailyOverlayFromStore);
+      document.addEventListener('kpi:dailyTargetModeChanged', refreshDailyOverlayFromStore);
+      document.addEventListener('kpi:weekdayBaselineChanged', refreshDailyOverlayFromStore);
+    })();"""
+
+OVERLAY_LISTENERS_PRE_115 = """      document.addEventListener('annual:dailyDateChanged', function () {
+        if (!root.hidden) {
+          selectedIso = resolveIso();
+          fill(selectedIso);
+        }
+      });
+      function refreshDailyOverlayFromStore() {
+        if (root.hidden) return;
+        fill(selectedIso || resolveIso());
+      }
+      document.addEventListener('kpi:dailySalesChanged', refreshDailyOverlayFromStore);
+      document.addEventListener('kpi:businessDayChanged', refreshDailyOverlayFromStore);
+      document.addEventListener('kpi:annualPlanChanged', refreshDailyOverlayFromStore);
+      document.addEventListener('annual:salesMapChanged', refreshDailyOverlayFromStore);
+      document.addEventListener('annual:salesDataSaved', refreshDailyOverlayFromStore);
+      document.addEventListener('annual:pastSalesSaved', refreshDailyOverlayFromStore);
+      document.addEventListener('kpi:readSurfacesRefresh', refreshDailyOverlayFromStore);
     })();"""
