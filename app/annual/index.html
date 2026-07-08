@@ -25069,6 +25069,10 @@ Target Sales</p>
         var iso = row.getAttribute('data-iso-date');
         return iso && String(iso).trim() !== '' ? String(iso).trim() : '—';
       }
+      function isOffFocusedRow(row) {
+        if (!row || !row.classList) return false;
+        return row.classList.contains('annual-daily-row--off');
+      }
 
       function graphTwDiffLevels() {
         return (
@@ -25131,6 +25135,16 @@ Target Sales</p>
         var g = graphMetricsForMode(m, mode);
 
         valDate.textContent = row ? getFocusedDateText(row) : iso;
+        if (mode === 'daily' && isOffFocusedRow(row)) {
+          panel.classList.add('annual-graph-popover--neutral');
+          valAch.textContent = '—';
+          valTarget.textContent = '—';
+          valActual.textContent = '—';
+          valDiff.textContent = '—';
+          clearGraphTwDiffClass(valDiff);
+          setGraphBarFromAchievementPercent(NaN);
+          return;
+        }
 
         if (!g || !g.hasData) {
           panel.classList.add('annual-graph-popover--neutral');

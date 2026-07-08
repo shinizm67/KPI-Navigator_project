@@ -1,7 +1,7 @@
 # 年跨ぎデータ引き継ぎ — 設計メモ（ドラフト）
 
 更新日: 2026-06-17  
-ステータス: **実装中** — P0 / 1 / 3 / 4 / 5 / 5b / 5c / 6 / 6b / **8** 完了。**Phase 2 / 10 / 9 / 11** 残。
+ステータス: **実装中** — P0 / 1 / 3 / 4 / 5 / 5b / 5c / 6 / 6b / **8** / **11** 完了。**Phase 2 / 10 / 9** 残（11 は 11-7 まで完了）。
 
 **優先度:** 繁閑期%・Cockpit・PL/MEP 同期・Insight グラフより**先**。  
 三本柱の**単一時系列ストア**が無い限り、入力はすべて無意味になる。
@@ -563,7 +563,7 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | **6b** | **Weekly Insight 連携** + DN 固定 6 行 / 自由 Memo 二層 + **Strategy User Note**（Insight 読取のみ・MEP UI は撤回） | 6 | 🟡 |
 | **8** | **読取面同期** — Table Window（Annual / Monthly）・MEP 過去年が `timeline` を表示（詳細 §15-A/B/D） | P0 | ✅ |
 | **10** | **Daily Floating Window KPI 配線** — `#daily-overlay` を Store / TW 算出と同期（詳細 `docs/daily-page-graph.md`） | 8 | 🟡 |
-| **9** | **Focus Bar Graph ポップオーバー** — フォーカス日の Daily / Monthly / Annual KPI + 達成率バー（Annual / Monthly 共通・詳細 §15.5） | 8 | ⬜ |
+| **9** | **Focus Bar Graph ポップオーバー** — フォーカス日の Daily / Monthly / Annual KPI + 達成率バー（Annual / Monthly 共通・詳細 §15.5） | 8 | ✅（OFF は Daily のみ neutral・MTD/YTD は累計表示） |
 | **11** | **曜日別日次目標 KPI** — ベースライン年選択・構成比平均 → 月×曜日 1 日 KPI → TW / Focus Bar（`docs/weekday-target-sales-kpi-memo.md` §6） | 3 + 8 + §15.0 | ⬜ |
 | **7** | CSV 監査ログ・POS 連携・DB 移行（本格） | P0+ | ⬜ |
 
@@ -848,3 +848,4 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | 2026-06-17 | §15 追加 — TW / Seasonality / MEP 過去年バックログ。Phase 5d / 8 / 3 表更新 |
 | 2026-06-17 | **Phase 9** Focus Bar Graph ポップオーバー（§15.5）。バックログ運用 §15.6 |
 | 2026-06-28 | Phase 11 §6 ベースライン年選択 UI・§7 丸め・推奨順更新（10→9→11）。Phase 3・8 ✅ |
+| 2026-07-08 | Phase 9 着手。Focus Bar Graph（Annual/Monthly・JA/EN）で **OFF 行は実績 `—` + panel neutral** を保証するガードを追加。 |
