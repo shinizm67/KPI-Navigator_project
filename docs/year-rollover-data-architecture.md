@@ -848,4 +848,4 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | 2026-06-17 | §15 追加 — TW / Seasonality / MEP 過去年バックログ。Phase 5d / 8 / 3 表更新 |
 | 2026-06-17 | **Phase 9** Focus Bar Graph ポップオーバー（§15.5）。バックログ運用 §15.6 |
 | 2026-06-28 | Phase 11 §6 ベースライン年選択 UI・§7 丸め・推奨順更新（10→9→11）。Phase 3・8 ✅ |
-| 2026-07-08 | Phase 9 着手。Focus Bar Graph（Annual/Monthly・JA/EN）で **OFF 行は実績 `—` + panel neutral** を保証するガードを追加。 |
+| 2026-07-08 | Phase 9 着手・確定。Focus Bar Graph（Annual/Monthly・JA/EN）は Store KPI 連動済み。**OFF は Daily のみ** `—`/neutral。**Monthly/Annual は当日まで累計（MTD/YTD）を表示**。Graph 内 ◀▶ 日付送りはプレス/マイナー枠に退避。 |
