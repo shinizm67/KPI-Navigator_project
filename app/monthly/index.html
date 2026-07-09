@@ -981,6 +981,75 @@
       justify-content: flex-start;
       padding-left: 8px;
     }
+    /* KPI-PHASE-10-MEMO-MARKER-CSS */
+    .annual-daily-row__cell--date.annual-daily-row__cell--has-memo {
+      position: relative;
+      padding-right: 14px;
+    }
+    .annual-daily-row__cell--date.annual-daily-row__cell--has-memo::after {
+      content: '';
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      margin-top: -3px;
+      border-radius: 50%;
+      background: #58e1f3;
+      box-shadow: 0 0 4px rgba(88, 225, 243, 0.65);
+      pointer-events: none;
+    }
+    body.office-mode .annual-daily-row__cell--date.annual-daily-row__cell--has-memo::after {
+      background: #1565c0;
+      box-shadow: none;
+    }
+    /* KPI-PHASE-10C-MEMO-MARKER-CSS */
+    .annual-daily-focus-bar-lower__cell--date.kpi-date-has-memo,
+    .annual-date-btn.kpi-date-has-memo,
+    .daily-overlay__date-btn.kpi-date-has-memo,
+    .monthly-vfocus-date.kpi-date-has-memo,
+    .monthly-date-header-cell.kpi-date-has-memo {
+      position: relative;
+    }
+    .annual-daily-focus-bar-lower__cell--date.kpi-date-has-memo::after,
+    .annual-date-btn.kpi-date-has-memo::after,
+    .daily-overlay__date-btn.kpi-date-has-memo::after,
+    .monthly-vfocus-date.kpi-date-has-memo::after,
+    .monthly-date-header-cell.kpi-date-has-memo::after {
+      content: '';
+      position: absolute;
+      right: -2px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      margin-top: -3px;
+      border-radius: 50%;
+      background: #58e1f3;
+      box-shadow: 0 0 4px rgba(88, 225, 243, 0.65);
+      pointer-events: none;
+    }
+    .annual-daily-focus-bar-lower__cell--date.kpi-date-has-memo {
+      padding-right: 10px;
+    }
+    .annual-date-btn.kpi-date-has-memo,
+    .daily-overlay__date-btn.kpi-date-has-memo {
+      padding-right: 12px;
+    }
+    .monthly-vfocus-date.kpi-date-has-memo {
+      padding-right: 12px;
+    }
+    .monthly-date-header-cell.kpi-date-has-memo {
+      padding-right: 10px;
+    }
+    body.office-mode .annual-daily-focus-bar-lower__cell--date.kpi-date-has-memo::after,
+    body.office-mode .annual-date-btn.kpi-date-has-memo::after,
+    body.office-mode .daily-overlay__date-btn.kpi-date-has-memo::after,
+    body.office-mode .monthly-vfocus-date.kpi-date-has-memo::after,
+    body.office-mode .monthly-date-header-cell.kpi-date-has-memo::after {
+      background: #1565c0;
+      box-shadow: none;
+    }
+
     /* base グループ左端＝行カプセル角に合わせ、Date 塗りの角がはみ出さない（Open 時 overflow:visible 対策） */
     .annual-daily-row__group--base .annual-daily-row__cell--date {
       border-top-left-radius: 6px;
@@ -15135,7 +15204,47 @@ Target Sales</p>
         if (ev.key === 'Escape' && !root.hidden) close();
       });
     })();
-                    /* KPI-DAILY-OVERLAY-METRICS */
+                    /* KPI-PHASE-10C-MEMO-HELPER */
+    (function () {
+      function yearFromIso(iso) {
+        var y = Number(String(iso || '').slice(0, 4));
+        return Number.isFinite(y) ? y : NaN;
+      }
+      function hasMemoForIso(iso) {
+        if (!iso || !window.KpiYearStore) return false;
+        var y = yearFromIso(iso);
+        if (!Number.isFinite(y)) return false;
+        if (typeof KpiYearStore.hasDailyMemoForIso === 'function') {
+          return !!KpiYearStore.hasDailyMemoForIso(y, iso);
+        }
+        if (typeof KpiYearStore.readDailyMemoFlagMapForYear === 'function') {
+          var map = KpiYearStore.readDailyMemoFlagMapForYear(y) || {};
+          return !!map[iso];
+        }
+        return false;
+      }
+      function setDateMemoMark(el, on, iso) {
+        if (!el) return;
+        var has = !!on;
+        el.classList.toggle('kpi-date-has-memo', has);
+        if (has) {
+          el.setAttribute('data-has-memo', '1');
+          var isJa = (document.documentElement.lang || '').toLowerCase().indexOf('ja') === 0;
+          el.setAttribute('title', isJa ? 'メモがあります' : 'Memo saved');
+        } else {
+          el.removeAttribute('data-has-memo');
+          el.removeAttribute('title');
+        }
+        if (iso) el.setAttribute('data-memo-iso', iso);
+      }
+      window.__KPI_MEMO_MARK = {
+        hasMemoForIso: hasMemoForIso,
+        setDateMemoMark: setDateMemoMark
+      };
+    })();
+    /* END KPI-PHASE-10C-MEMO-HELPER */
+
+    /* KPI-DAILY-OVERLAY-METRICS */
     (function () {
       var DASH = '—';
 
@@ -15380,6 +15489,13 @@ Target Sales</p>
         dateBtnEl.textContent = fmtDate(iso);
         todayBtnEl.hidden = iso === getTodayIso();
         if (dateInputEl) dateInputEl.value = iso;
+        if (window.__KPI_MEMO_MARK && typeof window.__KPI_MEMO_MARK.setDateMemoMark === 'function') {
+          window.__KPI_MEMO_MARK.setDateMemoMark(
+            dateBtnEl,
+            window.__KPI_MEMO_MARK.hasMemoForIso(iso),
+            iso
+          );
+        }
         try {
           if (typeof window.renderDailyOverlayKpis === 'function') {
             window.renderDailyOverlayKpis(iso);
@@ -20837,6 +20953,13 @@ Target Sales</p>
         window.__ANNUAL_DATA.daily.targetSales = target;
         dateInput.value = iso;
         dateBtn.textContent = formatDateButtonLabel(d);
+        if (window.__KPI_MEMO_MARK && typeof window.__KPI_MEMO_MARK.setDateMemoMark === 'function') {
+          window.__KPI_MEMO_MARK.setDateMemoMark(
+            dateBtn,
+            window.__KPI_MEMO_MARK.hasMemoForIso(iso),
+            iso
+          );
+        }
         if (targetEl) targetEl.textContent = formatTargetSalesValue(target);
         updatePastKpiByIso(iso);
         document.dispatchEvent(
@@ -22762,6 +22885,22 @@ Target Sales</p>
           targetCells[i].textContent = item.text != null ? item.text : '—';
           if (TW_DIFF_FB_INDICES[i]) syncTwDiffClasses(targetCells[i], item.el);
         }
+        /* KPI-PHASE-10C: Focus Bar date memo mark from TW row */
+        var dateCell = target.querySelector('.annual-daily-focus-bar-lower__cell--date');
+        var srcDate = row.querySelector('.annual-daily-row__cell--date');
+        var iso = row.getAttribute('data-iso-date') || '';
+        var hasMemo = !!(
+          srcDate &&
+          (srcDate.classList.contains('annual-daily-row__cell--has-memo') ||
+            srcDate.getAttribute('data-has-memo') === '1')
+        );
+        if (window.__KPI_MEMO_MARK && typeof window.__KPI_MEMO_MARK.setDateMemoMark === 'function') {
+          window.__KPI_MEMO_MARK.setDateMemoMark(dateCell, hasMemo, iso);
+        } else if (dateCell) {
+          dateCell.classList.toggle('kpi-date-has-memo', hasMemo);
+          if (hasMemo) dateCell.setAttribute('data-has-memo', '1');
+          else dateCell.removeAttribute('data-has-memo');
+        }
       }
 
       function writeLowerFromRow(row) {
@@ -24397,6 +24536,12 @@ Target Sales</p>
         dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
         if (!hdrLane) {
           dateEl.textContent = '';
+          if (window.__KPI_MEMO_MARK && typeof window.__KPI_MEMO_MARK.setDateMemoMark === 'function') {
+            window.__KPI_MEMO_MARK.setDateMemoMark(dateEl, false, '');
+          } else {
+            dateEl.classList.remove('kpi-date-has-memo');
+            dateEl.removeAttribute('data-has-memo');
+          }
           return;
         }
         var raw = hdrLane.textContent || '';
@@ -24417,6 +24562,17 @@ Target Sales</p>
             '</span>';
         } else {
           dateEl.textContent = raw;
+        }
+        var hdrIso = hdrLane.getAttribute('data-iso') || '';
+        var hasMemo =
+          hdrLane.classList.contains('kpi-date-has-memo') ||
+          hdrLane.getAttribute('data-has-memo') === '1';
+        if (window.__KPI_MEMO_MARK && typeof window.__KPI_MEMO_MARK.setDateMemoMark === 'function') {
+          window.__KPI_MEMO_MARK.setDateMemoMark(dateEl, hasMemo, hdrIso);
+        } else {
+          dateEl.classList.toggle('kpi-date-has-memo', !!hasMemo);
+          if (hasMemo) dateEl.setAttribute('data-has-memo', '1');
+          else dateEl.removeAttribute('data-has-memo');
         }
       }
       function updateVerticalFocus() {
@@ -24467,7 +24623,8 @@ Target Sales</p>
           if (colIdx < 0 || colIdx >= n) {
             if (dateEl) {
               dateEl.textContent = '';
-              dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer');
+              dateEl.classList.remove('monthly-vfocus-date--off', 'monthly-vfocus-date--buffer', 'kpi-date-has-memo');
+              dateEl.removeAttribute('data-has-memo');
             }
             if (profitEl) profitEl.textContent = '';
             for (var gi = 0; gi < 3; gi++) {
@@ -25671,6 +25828,22 @@ Target Sales</p>
           p.className = 'monthly-date-header-cell';
           if (off) p.classList.add('monthly-date-header-cell--off');
           if (buffer) p.classList.add('monthly-date-header-cell--buffer');
+          /* KPI-PHASE-10C */
+          if (
+            !buffer &&
+            window.__KPI_MEMO_MARK &&
+            typeof window.__KPI_MEMO_MARK.hasMemoForIso === 'function' &&
+            window.__KPI_MEMO_MARK.hasMemoForIso(iso)
+          ) {
+            p.classList.add('kpi-date-has-memo');
+            p.setAttribute('data-has-memo', '1');
+            p.setAttribute(
+              'title',
+              (document.documentElement.lang || '').toLowerCase().indexOf('ja') === 0
+                ? 'メモがあります'
+                : 'Memo saved'
+            );
+          }
           p.setAttribute('data-iso', iso);
           p.textContent = dateLabelText(dayObj);
           p.setAttribute('aria-label', ariaDateLabel(dayObj, inMonth));
@@ -25777,6 +25950,22 @@ Target Sales</p>
           p.className = 'monthly-date-header-cell';
           if (off) p.classList.add('monthly-date-header-cell--off');
           if (buffer) p.classList.add('monthly-date-header-cell--buffer');
+          /* KPI-PHASE-10C */
+          if (
+            !buffer &&
+            window.__KPI_MEMO_MARK &&
+            typeof window.__KPI_MEMO_MARK.hasMemoForIso === 'function' &&
+            window.__KPI_MEMO_MARK.hasMemoForIso(iso)
+          ) {
+            p.classList.add('kpi-date-has-memo');
+            p.setAttribute('data-has-memo', '1');
+            p.setAttribute(
+              'title',
+              (document.documentElement.lang || '').toLowerCase().indexOf('ja') === 0
+                ? 'メモがあります'
+                : 'Memo saved'
+            );
+          }
           p.setAttribute('data-iso', iso);
           p.textContent = dateLabelText(d);
           p.setAttribute('aria-label', ariaDateLabel(d, inMonth));

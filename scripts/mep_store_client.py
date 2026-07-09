@@ -37,6 +37,7 @@ def mep_store_client_js() -> str:
             labelEn: s.labelEn,
             editableLabel: !!s.editableLabel,
             deletable: !!s.deletable,
+            weeklyFixed: !!s.weeklyFixed,
             sub: !!s.sub,
           }};
         }});
@@ -54,18 +55,56 @@ def mep_store_client_js() -> str:
           Object.assign(rowValueById[rowId], payload.dailyExpenses[rowId]);
         }});
         var meta = payload.dailyMeta || {{}};
+        /* KPI-MEP-MEMO-MERGE: do not wipe non-empty local memo with empty store string
+           (CreateYear seed / partial payload used to erase typed Daily Notes). */
         Object.keys(meta.memos || {{}}).forEach(function (rowId) {{
           if (!memoValueById[rowId]) memoValueById[rowId] = {{}};
-          Object.assign(memoValueById[rowId], meta.memos[rowId]);
+          var dest = memoValueById[rowId];
+          var src = meta.memos[rowId] || {{}};
+          Object.keys(src).forEach(function (iso) {{
+            var incoming = String(src[iso] == null ? '' : src[iso]);
+            var current = dest[iso];
+            if (String(current || '').trim() && !String(incoming || '').trim()) return;
+            dest[iso] = incoming;
+          }});
         }});
         Object.assign(weatherByIso, meta.weather || {{}});
         if (payload.mepMemoRows && payload.mepMemoRows.length) {{
           restoreMemoRowsFromSnapshot(payload.mepMemoRows);
         }}
+        syncWeeklyMemoItems();
       }}
       function loadMepFromYearStore(year) {{
         if (!mepStoreReady()) return;
+        /* Capture open Daily Notes DOM before Store merge can race with re-render. */
+        if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {{
+          flushPendingMemoFloatTextareasFromDom();
+        }}
         mergeMepYearPayload(KpiYearStore.loadMepYearPayload(year));
+      }}
+      function flushPendingMemoInputsFromDom() {{
+        if (!root) return;
+        root.querySelectorAll('[data-action="memo-input"]').forEach(function (inp) {{
+          var rowId = inp.getAttribute('data-row-id');
+          var iso = inp.getAttribute('data-iso');
+          if (!rowId || !iso) return;
+          writeMemo(rowId, iso, inp.value);
+        }});
+      }}
+      function flushPendingMemoFloatTextareasFromDom() {{
+        if (typeof memoFloatRoot === 'undefined' || !memoFloatRoot || memoFloatRoot.hasAttribute('hidden')) {{
+          return;
+        }}
+        memoFloatRoot.querySelectorAll('.memo-float-modal__textarea[data-row-id]').forEach(function (ta) {{
+          var rowId = ta.getAttribute('data-row-id');
+          var iso = ta.getAttribute('data-iso');
+          if (!rowId || !iso) return;
+          writeMemo(rowId, iso, ta.value);
+        }});
+      }}
+      function flushPendingMemoEditsFromDom() {{
+        flushPendingMemoFloatTextareasFromDom();
+        flushPendingMemoInputsFromDom();
       }}
       function buildMepPersistPayload(year) {{
         var y = Number(year);
@@ -84,6 +123,7 @@ def mep_store_client_js() -> str:
         Object.keys(memos).forEach(function (rowId) {{
           Object.keys(memos[rowId]).forEach(function (iso) {{
             if (String(memos[rowId][iso] || '').trim()) flags[iso] = true;
+            else flags[iso] = false;
           }});
         }});
         return {{
@@ -94,6 +134,7 @@ def mep_store_client_js() -> str:
       }}
       function persistMepToYearStore(year) {{
         if (!mepStoreReady()) return false;
+        flushPendingMemoEditsFromDom();
         if (!KpiYearStore.canWriteMepYear(year)) return false;
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {{
           source: 'monthly-edit-float',

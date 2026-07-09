@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from weekday_target_kpi_client import weekday_target_kpi_js
+
 KPI_YEAR_STORE_MARKER = "/* KPI-YEAR-STORE */"
 KPI_YEAR_STORE_KEY = "kpiNavigator.kpiYearStore"
 EDIT_LEASE_KEY = "kpiNavigator.kpiEditLeases"
@@ -78,11 +80,12 @@ def kpi_year_store_js() -> str:
         function sanitizePlaceholderSalesMap(map) {{
           if (!map || typeof map !== 'object') return false;
           var changed = false;
+          var oy = getOperatingYear();
           Object.keys(map).forEach(function (iso) {{
-            if (isLegacyPlaceholderSales(map[iso])) {{
-              delete map[iso];
-              changed = true;
-            }}
+            if (!isLegacyPlaceholderSales(map[iso])) return;
+            if (validIso(iso) && isoYear(iso) < oy) return;
+            delete map[iso];
+            changed = true;
           }});
           return changed;
         }}
@@ -166,10 +169,13 @@ def kpi_year_store_js() -> str:
           var changed = false;
           function fillSales(map) {{
             if (!map || typeof map !== 'object') return;
+            var oy = getOperatingYear();
             Object.keys(map).forEach(function (iso) {{
               if (!validIso(iso)) return;
               var n = Number(map[iso]);
-              if (isLegacyPlaceholderSales(n)) return;
+              if (isLegacyPlaceholderSales(n)) {{
+                if (!(isoYear(iso) < oy)) return;
+              }}
               if (!Number.isFinite(n)) return;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {{
                 var cur = Number(store.timeline.dailySales[iso]);
@@ -1108,31 +1114,38 @@ def kpi_year_store_js() -> str:
 
         function mergePastSalesMaps(salesMap, bizMap, meta) {{
           var src = (meta && meta.source) || 'past-sales-compat';
+          var limitY =
+            meta && meta.limitToYear != null ? Number(meta.limitToYear) : null;
           var yearsSales = {{}};
           var yearsBiz = {{}};
+          function matchesLimit(iso) {{
+            if (!validIso(iso)) return false;
+            if (limitY == null || !Number.isFinite(limitY)) return true;
+            return isoYear(iso) === limitY;
+          }}
           if (salesMap && typeof salesMap === 'object') {{
             Object.keys(salesMap).forEach(function (iso) {{
-              if (!validIso(iso)) return;
+              if (!matchesLimit(iso)) return;
               var n = Number(salesMap[iso]);
-              if (isLegacyPlaceholderSales(n)) {{
-                delete store.timeline.dailySales[iso];
-              }} else {{
-                store.timeline.dailySales[iso] = Number.isFinite(n) ? n : 0;
-              }}
+              store.timeline.dailySales[iso] = Number.isFinite(n) ? n : 0;
               yearsSales[isoYear(iso)] = true;
             }});
           }}
           if (bizMap && typeof bizMap === 'object') {{
             Object.keys(bizMap).forEach(function (iso) {{
-              if (!validIso(iso)) return;
+              if (!matchesLimit(iso)) return;
               store.timeline.businessDays[iso] = !!bizMap[iso];
               yearsBiz[isoYear(iso)] = true;
             }});
           }}
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           var yearsAll = {{}};
-          Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
-          Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
+          if (limitY != null && Number.isFinite(limitY)) {{
+            yearsAll[String(limitY)] = true;
+          }} else {{
+            Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
+            Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
+          }}
           persistStore();
           Object.keys(yearsAll).forEach(function (y) {{
             var yn = Number(y);
@@ -1311,9 +1324,10 @@ def kpi_year_store_js() -> str:
           syncToAnnualDaily();
         }}
 
-        function persistFromPastSales(ps) {{
+        function persistFromPastSales(ps, meta) {{
           if (!ps) return;
-          mergePastSalesMaps(ps.salesByDate, ps.businessDayByDate, {{ source: 'past-sales-compat' }});
+          var m = Object.assign({{ source: 'past-sales-compat' }}, meta || {{}});
+          mergePastSalesMaps(ps.salesByDate, ps.businessDayByDate, m);
           syncToAnnualDaily();
         }}
 
@@ -1389,6 +1403,37 @@ def kpi_year_store_js() -> str:
             return Number(window.__ANNUAL_DATA.targetSales);
           }}
           return null;
+        }}
+
+        function readDailyMemoFlagMapForYear(year) {{
+          var y = Number(year);
+          var map = Object.create(null);
+          if (!Number.isFinite(y)) return map;
+          var rec = store.years[y];
+          if (!rec || !rec.dailyMeta || typeof rec.dailyMeta !== 'object') return map;
+          var meta = rec.dailyMeta;
+          if (meta.flags && typeof meta.flags === 'object') {{
+            Object.keys(meta.flags).forEach(function (iso) {{
+              if (meta.flags[iso]) map[iso] = true;
+            }});
+          }}
+          if (meta.memos && typeof meta.memos === 'object') {{
+            Object.keys(meta.memos).forEach(function (rowId) {{
+              var byIso = meta.memos[rowId];
+              if (!byIso || typeof byIso !== 'object') return;
+              Object.keys(byIso).forEach(function (iso) {{
+                if (String(byIso[iso] || '').trim()) map[iso] = true;
+              }});
+            }});
+          }}
+          return map;
+        }}
+
+        function hasDailyMemoForIso(year, iso) {{
+          var y = Number(year);
+          iso = String(iso || '').trim();
+          if (!Number.isFinite(y) || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(iso)) return false;
+          return !!readDailyMemoFlagMapForYear(y)[iso];
         }}
 
         function loadMepYearPayload(year) {{
@@ -1527,6 +1572,7 @@ def kpi_year_store_js() -> str:
           }} catch (_eInit) {{}}
         }}
 
+{weekday_target_kpi_js()}
         window.KpiYearStore = {{
           init: init,
           reload: function () {{
@@ -1586,6 +1632,31 @@ def kpi_year_store_js() -> str:
           computeBaselineHlWeights: computeBaselineHlWeights,
           applyObservedBaselineToPlan: applyObservedBaselineToPlan,
           ensureOperatingYearPlanDefaults: ensureOperatingYearPlanDefaults,
+          readWeekdayBaselineYears: readWeekdayBaselineYears,
+          writeWeekdayBaselineYears: writeWeekdayBaselineYears,
+          getDefaultWeekdayBaselineYears: getDefaultWeekdayBaselineYears,
+          listEligibleWeekdayBaselineYears: listEligibleWeekdayBaselineYears,
+          computeWeekdayShareForYear: computeWeekdayShareForYear,
+          computeWeekdayShareAvg: computeWeekdayShareAvg,
+          computeWeekdayShareMatrix: computeWeekdayShareMatrix,
+          countOperatingWeekdaysInMonth: countOperatingWeekdaysInMonth,
+          computePlanMonthlyTargets: computePlanMonthlyTargets,
+          computeDailyKpiByMonthDow: computeDailyKpiByMonthDow,
+          computeDailyTargetByIso: computeDailyTargetByIso,
+          DAILY_TARGET_MODE_FLAT: DAILY_TARGET_MODE_FLAT,
+          DAILY_TARGET_MODE_WEEKDAY: DAILY_TARGET_MODE_WEEKDAY,
+          readDailyTargetMode: readDailyTargetMode,
+          writeDailyTargetMode: writeDailyTargetMode,
+          weekdayTargetDataReady: weekdayTargetDataReady,
+          assessWeekdayTargetQuality: assessWeekdayTargetQuality,
+          computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
+          resolveDailyTargetRawByIso: resolveDailyTargetRawByIso,
+          buildDailyTargetDisplayMapForMonth: buildDailyTargetDisplayMapForMonth,
+          buildDailyTargetDisplayMapForYear: buildDailyTargetDisplayMapForYear,
+          clearDailyTargetDisplayCache: clearDailyTargetDisplayCache,
+          resolveDailyTargetByIso: resolveDailyTargetByIso,
+          readDailyMemoFlagMapForYear: readDailyMemoFlagMapForYear,
+          hasDailyMemoForIso: hasDailyMemoForIso,
           loadMepYearPayload: loadMepYearPayload,
           readStrategyUserNote: readStrategyUserNote,
           bulkPersistMepYear: bulkPersistMepYear,

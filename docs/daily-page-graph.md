@@ -118,7 +118,7 @@ Global Menu の **Daily** から開く UI は、独立した Daily URL ではな
 
 **OFF 日:** Daily 行は売上・目標・差額・達成率が `—`。Monthly / Annual 累計は当日までの MTD/YTD を表示（Focus Bar Graph と同方針）。
 
-**未着手（別サブフェーズ）:** メモ日付マーカーの Focus Bar / Daily 窓反映（`docs/phase-10-memo-flags-memo.md` の **10-c**）。
+**10-c（2026-07-09）:** メモ日付マーカーを Focus Bar / Daily 窓日付ボタン / Cockpit 日付ボタン / Monthly 縦 Focus・日付ヘッダーへ反映（`docs/phase-10-memo-flags-memo.md`）。再適用: `python3 scripts/apply_phase_10c_memo_flags.py`。
 
 - 通貨・桁区切りはアプリ全体のルール（`docs/currency-and-markets-memo.md` 等）に合わせる。
 

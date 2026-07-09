@@ -20,6 +20,7 @@
         year: mefYear,
         month0: mefMonth0,
         focusIso: null,
+        focusRowId: null,
         dirty: false,
         sessionSaved: true
       };
@@ -72,6 +73,9 @@
         });
       }
       function ensureMemoFloatYearData(year, month0) {
+        if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {
+          flushPendingMemoFloatTextareasFromDom();
+        }
         if (mepStoreReady()) loadMepFromYearStore(year);
         syncBizDayForMemoFloatMonth(year, month0);
       }
@@ -306,6 +310,7 @@
       function appendMemoFloatBlock(parent, row, idx, iso, withControls) {
         var block = document.createElement('div');
         block.className = 'memo-float-modal__memo-block';
+        block.setAttribute('data-memo-row-id', row.id);
         if (row.weeklyFixed) block.classList.add('memo-float-modal__memo-block--fixed');
         var head = document.createElement('div');
         head.className = 'memo-float-modal__memo-head';
@@ -353,6 +358,10 @@
         updateMemoCharCount(ta, counter);
         ta.addEventListener('input', function () {
           updateMemoCharCount(ta, counter);
+          writeMemo(row.id, iso, ta.value);
+          memoFloatState.dirty = true;
+          memoFloatState.sessionSaved = false;
+          markDirty();
         });
         ta.addEventListener('focus', function () {
           ta.dataset.memoPrev = readMemo(row.id, iso);
@@ -468,10 +477,39 @@
           appendMemoFloatBlock(freeSection, state.memoItems[fi], fi, iso, true);
         }
         memoFloatDayPanel.appendChild(freeSection);
+        if (memoFloatState.focusRowId) {
+          var rowToFocus = memoFloatState.focusRowId;
+          memoFloatState.focusRowId = null;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              focusMemoFloatMemoRow(rowToFocus);
+            });
+          });
+        }
+      }
+      function focusMemoFloatMemoRow(rowId) {
+        if (!rowId || !memoFloatDayPanel) return;
+        var block = memoFloatDayPanel.querySelector('[data-memo-row-id="' + rowId + '"]');
+        if (!block) return;
+        block.classList.add('memo-float-modal__memo-block--jump-focus');
+        if (block.scrollIntoView) {
+          block.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        var ta = block.querySelector('.memo-float-modal__textarea');
+        if (ta && !ta.disabled && typeof ta.focus === 'function') {
+          ta.focus({ preventScroll: true });
+        }
+        window.setTimeout(function () {
+          block.classList.remove('memo-float-modal__memo-block--jump-focus');
+        }, 2200);
       }
       function setMemoFloatFocusIso(iso) {
         if (!iso) return;
+        if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {
+          flushPendingMemoFloatTextareasFromDom();
+        }
         memoFloatState.focusIso = iso;
+        memoFloatState.focusRowId = null;
         renderMemoFloatDateRail();
         renderMemoFloatDayPanel();
       }
@@ -482,12 +520,21 @@
         var monthChanged = y !== mefYear || m0 !== mefMonth0;
         if (monthChanged) {
           var prevYear = mefYear;
+          /* Flush current textareas before year/month context swap can reload Store. */
+          if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {
+            flushPendingMemoFloatTextareasFromDom();
+          }
+          if (prevYear !== y && Number.isFinite(prevYear)) {
+            persistMepToYearStore(prevYear);
+          }
           mefYear = y;
           mefMonth0 = m0;
           if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
           persistMefMonth();
         }
-        persistMepToYearStore(mefYear);
+        return persistMepToYearStore(mefYear);
+      }
+      function afterMemoFloatPersistUi(iso, monthChanged) {
         buildGrid();
         if (iso) {
           if (monthChanged) scrollToIsoColumn(iso);
@@ -502,7 +549,20 @@
         }
       }
       function saveMemoFloatModal() {
-        syncMepFromMemoFloatSave();
+        flushPendingMemoEditsFromDom();
+        var y = memoFloatState.year;
+        var m0 = memoFloatState.month0;
+        var iso = memoFloatState.focusIso;
+        var monthChanged = y !== mefYear || m0 !== mefMonth0;
+        var ok = syncMepFromMemoFloatSave();
+        if (!ok) {
+          var lockedMsg = useJa
+            ? 'メモを保存できませんでした（年がロックされているか、ストアが未準備です）。'
+            : 'Could not save memos (year may be locked, or store is not ready).';
+          window.alert(lockedMsg);
+          return false;
+        }
+        afterMemoFloatPersistUi(iso, monthChanged);
         memoFloatState.dirty = false;
         memoFloatState.sessionSaved = true;
         memoFloatUndoStack = [];
@@ -510,6 +570,7 @@
         editSessionCommitted = true;
         confirmedSnapshot = buildConfirmedSnapshot();
         clearDirty();
+        return true;
       }
       function hideMemoFloatCloseChooser() {
         if (!memoFloatCloseChooser || memoFloatCloseChooser.hasAttribute('hidden')) return;
@@ -547,7 +608,7 @@
         memoFloatRoot.setAttribute('hidden', '');
         document.body.style.overflow = '';
       }
-      function openMemoModal(iso) {
+      function openMemoModal(iso, rowId) {
         if (!memoFloatRoot) return;
         var parts = String(iso || '').split('-');
         if (parts.length >= 2) {
@@ -558,6 +619,7 @@
           memoFloatState.month0 = mefMonth0;
         }
         memoFloatState.focusIso = iso || mepIsoForMemoOpen();
+        memoFloatState.focusRowId = rowId || null;
         memoFloatState.dirty = false;
         memoFloatState.sessionSaved = true;
         memoFloatUndoStack = [];
@@ -571,12 +633,12 @@
         renderMemoFloatDayPanel();
         memoFloatRoot.removeAttribute('hidden');
         document.body.style.overflow = 'hidden';
-        if (memoFloatClose) memoFloatClose.focus();
+        if (!rowId && memoFloatClose) memoFloatClose.focus();
       }
-      function openMemoForIso(iso, allowNonBizDay) {
+      function openMemoForIso(iso, allowNonBizDay, rowId) {
         if (!iso) return;
         if (!allowNonBizDay && !bizDayByIso[iso]) return;
-        openMemoModal(iso);
+        openMemoModal(iso, rowId);
       }
       if (memoFloatDateRail) {
         memoFloatDateRail.addEventListener('click', function (ev) {
@@ -587,6 +649,9 @@
       }
       if (memoFloatPrevMonth) {
         memoFloatPrevMonth.addEventListener('click', function () {
+          if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {
+            flushPendingMemoFloatTextareasFromDom();
+          }
           var d = memoFloatState.focusIso ? isoToDate(memoFloatState.focusIso) : null;
           var day = d ? d.getDate() : 1;
           if (memoFloatState.month0 <= 0) {
@@ -606,6 +671,9 @@
       }
       if (memoFloatNextMonth) {
         memoFloatNextMonth.addEventListener('click', function () {
+          if (typeof flushPendingMemoFloatTextareasFromDom === 'function') {
+            flushPendingMemoFloatTextareasFromDom();
+          }
           var d = memoFloatState.focusIso ? isoToDate(memoFloatState.focusIso) : null;
           var day = d ? d.getDate() : 1;
           if (memoFloatState.month0 >= 11) {
@@ -658,7 +726,7 @@
       if (memoFloatBackdrop) memoFloatBackdrop.addEventListener('click', requestCloseMemoFloatModal);
       if (memoFloatCloseSave) {
         memoFloatCloseSave.addEventListener('click', function () {
-          saveMemoFloatModal();
+          if (!saveMemoFloatModal()) return;
           finishMemoFloatClose(true);
           closeMemoFloatModal();
         });

@@ -188,6 +188,11 @@
       margin: 0 auto 16px;
       box-sizing: border-box;
     }
+    .memo-float-modal__memo-block--jump-focus {
+      outline: 1px solid rgba(88, 225, 243, 0.75);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
     .memo-float-modal__memo-head {
       display: flex;
       align-items: center;

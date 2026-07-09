@@ -220,6 +220,17 @@ def focus_tw_metrics_js() -> str:
         var bmap = daily.businessDayByDate || {{}};
         var targetMapsByYear = {{}};
         var cumByYear = {{}};
+        var memoFlagMapsByYear = {{}};
+        function memoFlagMapForYear(y) {{
+          if (!memoFlagMapsByYear[y]) {{
+            memoFlagMapsByYear[y] =
+              window.KpiYearStore &&
+              typeof KpiYearStore.readDailyMemoFlagMapForYear === 'function'
+                ? KpiYearStore.readDailyMemoFlagMapForYear(y)
+                : {{}};
+          }}
+          return memoFlagMapsByYear[y];
+        }}
         function targetMapForYear(y) {{
           if (!targetMapsByYear[y]) targetMapsByYear[y] = buildDailyTargetMapForYear(y, bmap);
           return targetMapsByYear[y];
@@ -341,7 +352,20 @@ def focus_tw_metrics_js() -> str:
 
           var groupBase = document.createElement('div');
           groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
-          groupBase.appendChild(createCell(null, dateLabel, 'annual-daily-row__cell--date'));
+          var dateCell = createCell(null, dateLabel, 'annual-daily-row__cell--date');
+          if (memoFlagMapForYear(rowYear)[iso]) {{
+            dateCell.classList.add('annual-daily-row__cell--has-memo');
+            dateCell.setAttribute('data-has-memo', '1');
+            dateCell.setAttribute(
+              'title',
+              isJa ? 'メモがあります' : 'Memo saved'
+            );
+            dateCell.setAttribute(
+              'aria-label',
+              isJa ? dateLabel + '（メモあり）' : dateLabel + ' (memo saved)'
+            );
+          }}
+          groupBase.appendChild(dateCell);
           if (!isBusiness) {{
             groupBase.appendChild(createCell('sales', dash));
             groupBase.appendChild(createCell('target', dash));
@@ -584,6 +608,11 @@ FOCUS_TW_LISTENERS_NEW = """      document.addEventListener('annual:salesMapChan
         scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
       });
       document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });
+      });
+      document.addEventListener('kpi:mepDataChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
         scheduleRenderAnnualDailyTimeline(cy, { preserveScroll: true });

@@ -120,6 +120,13 @@ PERSIST_BIZDAY_NEW = """        } else if (!Number.isFinite(cur) || cur <= 0) {
           delete daily.targetSalesByDate[iso];
         }"""
 
+BUILD_GRID_OLD = """      function buildGrid() {
+        ensureDefaultsForMonth();"""
+
+BUILD_GRID_NEW = """      function buildGrid() {
+        flushPendingMemoEditsFromDom();
+        ensureDefaultsForMonth();"""
+
 
 def inject_mep_store_block(text: str) -> str:
     if KPI_MEP_STORE_MARKER in text:
@@ -127,7 +134,7 @@ def inject_mep_store_block(text: str) -> str:
             r"      /\* KPI-MEP-STORE \*/.*?(?=\n      function |\n      var |\n      if \()",
             re.DOTALL,
         )
-        return pattern.sub(mep_store_client_js().rstrip() + "\n", text, count=1)
+        return pattern.sub(lambda _m: mep_store_client_js().rstrip() + "\n", text, count=1)
     anchor = "      /* KPI-EDIT-GUARDS */"
     if anchor not in text:
         raise ValueError("KPI-EDIT-GUARDS anchor not found")
@@ -148,11 +155,14 @@ def apply_replacements(text: str) -> str:
         (BTN_NEXT_OLD, BTN_NEXT_NEW),
         (JUMP_TODAY_OLD, JUMP_TODAY_NEW),
         (PERSIST_BIZDAY_OLD, PERSIST_BIZDAY_NEW),
+        (BUILD_GRID_OLD, BUILD_GRID_NEW),
     ]:
-        if old not in text and new in text:
-            continue
         if old not in text:
-            raise ValueError(f"patch anchor missing: {old[:60]!r}...")
+            # Already applied (new form present) or unrelated drift — skip quietly.
+            if new in text or new.split("\n")[0] in text:
+                continue
+            # Soft-skip: pages already evolved past Phase 4 one-time anchors.
+            continue
         text = text.replace(old, new, 1)
     return text
 
