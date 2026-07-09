@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="../../../images/area_close.svg" fetchpriority="high">
+  <link rel="preload" as="image" href="../../../images/area_close.svg" fetchpriority="high">
   <link rel="stylesheet" href="../../../register/style.css">
   <link rel="stylesheet" href="../../setting/style.css">
   <style>
@@ -460,15 +462,49 @@
       background: rgba(88, 225, 243, 0.24);
       outline: none;
     }
+    /* KPI-ANNUAL-CLS-FIX */
     .annual-frame-img {
       width: 100%;
       display: block;
       height: auto;
     }
+    .annual-frame-close .annual-frame-img,
+    .annual-area-top-svg .annual-frame-img[src*="area_close"] {
+      aspect-ratio: 1017 / 362;
+    }
+    .annual-frame-open .annual-area-top-svg .annual-frame-img {
+      aspect-ratio: 1017 / 358;
+    }
+    .annual-frame-img[src*="area_open_bottom"] {
+      aspect-ratio: 1017 / 20;
+    }
     .annual-area-top-svg {
       position: relative;
       display: block;
       width: 100%;
+    }
+    .annual-frame-close .annual-area-top-svg {
+      aspect-ratio: 1017 / 362;
+    }
+    .annual-frame-open .annual-area-top-svg {
+      aspect-ratio: 1017 / 358;
+    }
+    .annual-total-bd-value,
+    .annual-target-sales-value,
+    .annual-target-sales-amount,
+    .annual-kpi-value,
+    .annual-daily-row__cell,
+    .annual-daily-focus-bar-lower__cell,
+    .annual-daily-focus-bar-upper__cell,
+    .annual-open-table td {
+      font-variant-numeric: tabular-nums;
+    }
+    .annual-daily-focus-bar-img {
+      aspect-ratio: 757 / 91;
+      height: auto;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-img {
+      aspect-ratio: 1132 / 91;
     }
     /* Bottom row: same outer width as annual_close / open (1017 artboard). Columns 471 + gap 89 + 457 = 1017 */
     .annual-summary-bottom-row {
@@ -11450,6 +11486,9 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
     }
 /* SDM-WEEKDAY-BASELINE-CSS */
+    .sdm-weekday-baseline[hidden] {
+      display: none !important;
+    }
     .sdm-weekday-baseline {
       margin-top: var(--sdm-analyze-table-chart-gap, 48px);
       margin-bottom: var(--sdm-season-gap-to-outer, 24px);
@@ -13215,6 +13254,8 @@
   </style>
 </head>
 <body class="si-fi profile-page" id="body-el">
+  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open.svg':'focus_bar_open.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
+  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open.svg':'focus_bar_open.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -13578,7 +13619,7 @@
         </div>
         <div class="annual-frame-close" id="annual-frame-close">
           <div class="annual-area-top-svg">
-            <img src="../../../images/area_close.svg" alt="" class="annual-frame-img" aria-hidden="true">
+            <img src="../../../images/area_close.svg" alt="" class="annual-frame-img" width="1017" height="362" decoding="async" fetchpriority="high" aria-hidden="true">
           </div>
         </div>
         <div class="annual-frame-open" id="annual-frame-open" hidden>
@@ -14459,7 +14500,7 @@
               <p class="sdm-weekday-quality__badge" id="sdm-weekday-quality-badge">Notice</p>
               <p class="sdm-weekday-quality__msg" id="sdm-weekday-quality-msg"></p>
             </section>
-            <section
+                        <section
               class="sdm-weekday-baseline"
               id="sdm-weekday-baseline"
               aria-label="Weekday baseline years"
@@ -14487,6 +14528,7 @@
               ></div>
               <p class="sdm-weekday-baseline__status" id="sdm-weekday-baseline-status" hidden></p>
             </section>
+
             <section class="sales-data-modal__seasonality" aria-label="Monthly seasonality chart">
               <h3 class="sales-data-modal__seasonality-title">Monthly Seasonality %</h3>
               <div id="sales-data-seasonality-bars"></div>
@@ -20027,18 +20069,28 @@ Cumulative Target Annual Sales</p>
         }
 
 
+        
+        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
+
+        var __planMonthlyTargetsCache = {};
+        var __weekdayShareMatrixCache = {};
+        var __yearHasPositiveSalesCache = {};
 
         function yearHasPositiveTimelineSales(year) {
           var y = Number(year);
           if (!Number.isFinite(y)) return false;
+          if (Object.prototype.hasOwnProperty.call(__yearHasPositiveSalesCache, y)) {
+            return __yearHasPositiveSalesCache[y];
+          }
           var has = false;
           Object.keys(store.timeline.dailySales).forEach(function (iso) {
             if (isoYear(iso) !== y) return;
             var n = Number(store.timeline.dailySales[iso]);
             if (Number.isFinite(n) && n > 0) has = true;
           });
+          __yearHasPositiveSalesCache[y] = has;
           return has;
         }
 
@@ -20176,7 +20228,7 @@ Cumulative Target Annual Sales</p>
           return dowSales / monthSales;
         }
 
-        function computeWeekdayShareAvg(operatingYear, m0, dow, baselineYears) {
+        function computeWeekdayShareAvgUncached(operatingYear, m0, dow, baselineYears) {
           var oy = Number(operatingYear);
           var month = Number(m0);
           var weekday = Number(dow);
@@ -20199,6 +20251,33 @@ Cumulative Target Annual Sales</p>
           return sum / n;
         }
 
+        function weekdayShareMatrixCacheKey(oy, baselineYears) {
+          var yrs = (baselineYears || readWeekdayBaselineYears(oy)).join(',');
+          return oy + ':' + yrs;
+        }
+
+        function getWeekdayShareMatrixCached(operatingYear, baselineYears) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var key = weekdayShareMatrixCacheKey(oy, baselineYears);
+          if (__weekdayShareMatrixCache[key]) return __weekdayShareMatrixCache[key];
+          var matrix = computeWeekdayShareMatrix(oy, baselineYears);
+          __weekdayShareMatrixCache[key] = matrix;
+          return matrix;
+        }
+
+        function computeWeekdayShareAvg(operatingYear, m0, dow, baselineYears) {
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return null;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return null;
+          var matrix = getWeekdayShareMatrixCached(oy, baselineYears);
+          if (!matrix || !matrix.months || !matrix.months[month]) return WEEKDAY_SHARE_FALLBACK;
+          var share = matrix.months[month][weekday];
+          return share == null || !Number.isFinite(share) ? WEEKDAY_SHARE_FALLBACK : share;
+        }
+
         function countOperatingWeekdaysInMonth(year, m0, dow) {
           var y = Number(year);
           var month = Number(m0);
@@ -20219,6 +20298,7 @@ Cumulative Target Annual Sales</p>
         function computePlanMonthlyTargets(year) {
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
+          if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
           var annualTarget = readAnnualTarget(y);
           if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
             return null;
@@ -20248,7 +20328,7 @@ Cumulative Target Annual Sales</p>
             var monthlyAvg = (Number(annualTarget) * bdCount) / totalBD;
             monthlyTargets.push((monthlyAvg * hl) / 100);
           }
-          return {
+          var plan = {
             year: y,
             annualTarget: Number(annualTarget),
             weights: weights.slice(),
@@ -20256,6 +20336,8 @@ Cumulative Target Annual Sales</p>
             totalBD: totalBD,
             monthlyTargets: monthlyTargets,
           };
+          __planMonthlyTargetsCache[y] = plan;
+          return plan;
         }
 
         function computeWeekdayShareMatrix(operatingYear, baselineYears) {
@@ -20271,7 +20353,7 @@ Cumulative Target Annual Sales</p>
             var row = [];
             var usedFallback = false;
             for (var dow = 0; dow < 7; dow++) {
-              var share = computeWeekdayShareAvg(oy, m0, dow, years);
+              var share = computeWeekdayShareAvgUncached(oy, m0, dow, years);
               if (share == null || !Number.isFinite(share)) {
                 share = WEEKDAY_SHARE_FALLBACK;
                 usedFallback = true;
@@ -20419,6 +20501,9 @@ Cumulative Target Annual Sales</p>
 
         function clearDailyTargetDisplayCache() {
           __dailyTargetDisplayCache = {};
+          __planMonthlyTargetsCache = {};
+          __weekdayShareMatrixCache = {};
+          __yearHasPositiveSalesCache = {};
         }
 
         function dailyTargetDisplayCacheKey(oy, m0, mode, effectiveMode, fallback, monthlyTarget, baselineYears) {
@@ -20605,7 +20690,7 @@ Cumulative Target Annual Sales</p>
           };
         }
 
-        window.KpiYearStore = {
+                window.KpiYearStore = {
           init: init,
           reload: function () {
             loadStore();
@@ -21238,11 +21323,8 @@ Cumulative Target Annual Sales</p>
 
         function syncCockpitForCalendarYearCore(explicitYear) {
           var year = resolveCalendarYear(explicitYear);
-          if (
-            window.__ANNUAL_UI &&
-            typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function'
-          ) {
-            window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
+          if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+            KpiYearStore.syncToAnnualDaily();
           }
 
           var annualTarget = resolveAnnualTarget(year);
@@ -21256,16 +21338,39 @@ Cumulative Target Annual Sales</p>
 
           syncAnnualTargetDisplay(year, hasPlan ? Number(annualTarget) : null);
 
-          var monthlyBD = [];
+          var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+          var monthlySales = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
           var totalBD = 0;
-          for (var mi = 0; mi < 12; mi++) {
-            var bd = countBusinessDaysInMonth(year, mi);
-            monthlyBD.push(bd);
-            totalBD += bd;
+          var anySales = false;
+          var bmap = null;
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.resolveBusinessDayMapForCockpit === 'function'
+          ) {
+            bmap = window.__ANNUAL_UI.resolveBusinessDayMapForCockpit();
           }
-
-          var gathered = gatherMonthlySales(year);
-          var monthlySales = gathered.sales;
+          if (!bmap || typeof bmap !== 'object') {
+            var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
+            bmap = (daily && daily.businessDayByDate) || {};
+          }
+          var yearPrefix = String(year) + '-';
+          Object.keys(bmap || {}).forEach(function (iso) {
+            if (!bmap[iso]) return;
+            if (String(iso).indexOf(yearPrefix) !== 0) return;
+            var m0 = Number(String(iso).slice(5, 7)) - 1;
+            if (!Number.isFinite(m0) || m0 < 0 || m0 > 11) return;
+            monthlyBD[m0] += 1;
+            totalBD += 1;
+            var amt = readDailySalesAmount(iso);
+            if (Number.isFinite(amt) && amt > 0) {
+              monthlySales[m0] += amt;
+              anySales = true;
+            }
+          });
+          window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+          window.__ANNUAL_DATA.totalBusinessDay = totalBD;
+          var bdEl = document.getElementById('annual-total-bd-value');
+          if (bdEl) bdEl.textContent = String(totalBD);
 
           for (var m0 = 0; m0 < 12; m0++) {
             var mk = MONTH_KEYS[m0];
@@ -21285,7 +21390,7 @@ Cumulative Target Annual Sales</p>
                 Number.isFinite(monthlyAvg) ? (monthlyAvg * hl) / 100 : NaN;
               var dailyTarget =
                 bdCount > 0 && Number.isFinite(monthlyTarget)
-                  ? monthlyTarget / bdCount
+                  ? monthlyTarget / bdCount /* Cockpit Open: flat monthly average; not weekday-weighted */
                   : NaN;
               setField(mk, 'monthlyAverageTarget', fmtMoney(monthlyAvg));
               setField(mk, 'hlSeasonPct', Number.isFinite(hl) ? hl + '%' : DASH);
@@ -21293,7 +21398,7 @@ Cumulative Target Annual Sales</p>
               setField(mk, 'dailyTarget', fmtMoney(dailyTarget));
 
               var salesAmt = monthlySales[m0];
-              if (gathered.any && Number.isFinite(salesAmt) && salesAmt > 0) {
+              if (anySales && Number.isFinite(salesAmt) && salesAmt > 0) {
                 setField(mk, 'monthlyProfit', fmtMoney(salesAmt));
                 setField(
                   mk,
@@ -22149,8 +22254,23 @@ Cumulative Target Annual Sales</p>
           });
         }
 
+        function isWeekdayMode() {
+          if (!storeReady() || typeof KpiYearStore.readDailyTargetMode !== 'function') {
+            return true;
+          }
+          return KpiYearStore.readDailyTargetMode(getOperatingYear()) === 'weekday-weighted';
+        }
+
+        function updateVisibility() {
+          if (!root) return;
+          if (isWeekdayMode()) root.removeAttribute('hidden');
+          else root.setAttribute('hidden', '');
+        }
+
         function render() {
           if (!listEl) return;
+          updateVisibility();
+          if (!isWeekdayMode()) return;
           hideStatus();
           var oy = getOperatingYear();
           var selected = readSelectedYears(oy);
@@ -22242,6 +22362,9 @@ Cumulative Target Annual Sales</p>
         }
 
         document.addEventListener('kpi:weekdayBaselineChanged', function () {
+          render();
+        });
+        document.addEventListener('kpi:dailyTargetModeChanged', function () {
           render();
         });
 
@@ -22624,6 +22747,8 @@ Cumulative Target Annual Sales</p>
       var achPastEl = document.getElementById('annual-daily-ach-rate');
       if (!dateBtn || !dateInput || !todayBtn) return;
 
+      /* KPI-ANNUAL-PLACE-PERF */
+      var __placeTargetSalesLeft = null;
       function placeTargetSalesGroup() {
         if (!targetGroup) return;
         var root = document.getElementById('annual-monthly-data');
@@ -22631,6 +22756,13 @@ Cumulative Target Annual Sales</p>
         var rootRect = root.getBoundingClientRect();
         var todayRect = todayBtn.getBoundingClientRect();
         var left = Math.round(todayRect.right - rootRect.left + 45);
+        if (__placeTargetSalesLeft === left) {
+          if (!targetGroup.classList.contains('annual-target-sales-group--positioned')) {
+            targetGroup.classList.add('annual-target-sales-group--positioned');
+          }
+          return;
+        }
+        __placeTargetSalesLeft = left;
         targetGroup.style.left = left + 'px';
         targetGroup.classList.add('annual-target-sales-group--positioned');
       }
@@ -22909,20 +23041,26 @@ Cumulative Target Annual Sales</p>
         });
       }
       /* KPI-ANNUAL-LOAD-PERF */
-      var __placeTargetSalesTimer = null;
+      var __placeTargetSalesRaf = null;
       function schedulePlaceTargetSalesGroup() {
-        if (__placeTargetSalesTimer != null) window.clearTimeout(__placeTargetSalesTimer);
-        __placeTargetSalesTimer = window.setTimeout(function () {
-          __placeTargetSalesTimer = null;
-          window.requestAnimationFrame(placeTargetSalesGroup);
-        }, 0);
+        if (__placeTargetSalesRaf != null) return;
+        __placeTargetSalesRaf = window.requestAnimationFrame(function () {
+          __placeTargetSalesRaf = null;
+          placeTargetSalesGroup();
+        });
       }
       schedulePlaceTargetSalesGroup();
       window.addEventListener('resize', schedulePlaceTargetSalesGroup);
       document.addEventListener('annual:timelineRowsRendered', schedulePlaceTargetSalesGroup);
       document.addEventListener('kpi:readSurfacesRefresh', schedulePlaceTargetSalesGroup);
       document.addEventListener('annual:calendarYearChanged', schedulePlaceTargetSalesGroup);
-      setTimeout(schedulePlaceTargetSalesGroup, 150);
+      if (typeof ResizeObserver !== 'undefined') {
+        var __placeTargetSalesRo = new ResizeObserver(schedulePlaceTargetSalesGroup);
+        var __placeRoot = document.getElementById('annual-monthly-data');
+        if (__placeRoot) __placeTargetSalesRo.observe(__placeRoot);
+        if (todayBtn) __placeTargetSalesRo.observe(todayBtn);
+      }
+      window.addEventListener('load', schedulePlaceTargetSalesGroup);
 
       function goToTodayFromDailyUi() {
         var now = new Date();
@@ -23164,7 +23302,22 @@ Cumulative Target Annual Sales</p>
       try {
         initialExpanded = localStorage.getItem(STORAGE_FOCUS_BAR) === '1';
       } catch (e1) {}
-      setFocusBarExpanded(initialExpanded);
+      var alreadyExpanded = document.body.classList.contains('annual-focus-bar-expanded');
+      if (initialExpanded === alreadyExpanded) {
+        updateFocusBarImage(initialExpanded);
+        if (moreBtn) moreBtn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
+        wingHitBtn.setAttribute('aria-label', initialExpanded ? 'Collapse daily table' : 'Expand daily table');
+        window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+        window.__ANNUAL_UI.focusBarExpanded = initialExpanded;
+        window.__ANNUAL_UI.refreshFocusBarAsset = function () {
+          updateFocusBarImage(document.body.classList.contains('annual-focus-bar-expanded'));
+        };
+        if (twToggleBtn) {
+          twToggleBtn.setAttribute('aria-checked', initialExpanded ? 'true' : 'false');
+        }
+      } else {
+        setFocusBarExpanded(initialExpanded);
+      }
     })();
     (function () {
       var body = document.body;
@@ -24007,6 +24160,14 @@ Cumulative Target Annual Sales</p>
         var plan = resolveTwPlanForYear(y);
         var out = {};
         if (!plan) return out;
+        if (twShouldUseDailyTargetResolver(y)) {
+          if (
+            window.KpiYearStore &&
+            typeof KpiYearStore.buildDailyTargetDisplayMapForYear === 'function'
+          ) {
+            return KpiYearStore.buildDailyTargetDisplayMapForYear(y);
+          }
+        }
         var days = [];
         for (var m0 = 0; m0 < 12; m0++) {
           var dc = new Date(y, m0 + 1, 0).getDate();
@@ -24029,15 +24190,33 @@ Cumulative Target Annual Sales</p>
         }
         return buildLegacyFlatDailyTargetMapForYear(plan, days);
       }
+      var __twTargetMapCacheByYear = {};
+      function buildDailyTargetMapForYearCached(year, bmap) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return {};
+        if (__twTargetMapCacheByYear[y]) return __twTargetMapCacheByYear[y];
+        var map = buildDailyTargetMapForYear(y, bmap);
+        __twTargetMapCacheByYear[y] = map;
+        return map;
+      }
+      window.clearTwTargetMapsByYear = function () {
+        __twTargetMapCacheByYear = {};
+      };
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      document.addEventListener('kpi:annualPlanChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      window.__buildDailyTargetMapForYear = buildDailyTargetMapForYear;
       function createTwCumState() {
         return { month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false };
       }
       function renderAnnualDailyTimeline(anchorYear, opts) {
         opts = opts || {};
-        /* KPI-ARP-PHASE1 */
-        if (!document.body.classList.contains('monthly-page') && !opts.boundsHint) {
-          opts.boundsHint = 'anchor-year-only';
-        }
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
@@ -24046,7 +24225,8 @@ Cumulative Target Annual Sales</p>
         var scrollEl = document.getElementById('annual-daily-focus-scroll');
         var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
         var bounds =
-          opts.boundsHint === 'anchor-year-only'
+          opts.boundsHint === 'anchor-year-only' &&
+          typeof computeAnchorYearTimelineBounds === 'function'
             ? computeAnchorYearTimelineBounds(anchorYear)
             : computeFocusTimelineBounds(anchorYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
@@ -24076,8 +24256,6 @@ Cumulative Target Annual Sales</p>
           return cumByYear[y];
         }
         rowsRoot.innerHTML = '';
-        /* KPI-ARP-PHASE5A: 行は DocumentFragment に構築し1回で挿入（reflow削減） */
-        var __rowsFrag = document.createDocumentFragment();
         rowsRoot.setAttribute('data-year', String(anchorYear));
         rowsRoot.setAttribute('data-timeline-min-year', String(bounds.minYear));
         rowsRoot.setAttribute('data-timeline-max-year', String(bounds.maxYear));
@@ -24268,12 +24446,19 @@ Cumulative Target Annual Sales</p>
           row.appendChild(groupBase);
           row.appendChild(groupMonthly);
           row.appendChild(groupAnnual);
-          __rowsFrag.appendChild(row);
+          rowsRoot.appendChild(row);
         }
-        rowsRoot.appendChild(__rowsFrag);
 
         if (prevScroll != null && scrollEl) {
           scrollEl.scrollTop = prevScroll;
+        }
+        if (document.body.classList.contains('monthly-page')) {
+          if (opts.boundsHint === 'anchor-year-only') {
+            window.__monthlyVerticalTwPartialRendered = true;
+          } else {
+            window.__monthlyVerticalTwPartialRendered = true;
+            window.__monthlyVerticalTwFullRendered = true;
+          }
         }
         document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
       }
@@ -24289,7 +24474,7 @@ Cumulative Target Annual Sales</p>
         if (!isFinite(d.getTime())) return null;
         var y = d.getFullYear();
         var m0 = d.getMonth();
-        var tgtMap = buildDailyTargetMapForYear(y, bmap);
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
         var plan = resolveTwPlanForYear(y);
         var annualTarget = plan && Number.isFinite(Number(plan.target)) ? Number(plan.target) : null;
         var hasPlan = false;

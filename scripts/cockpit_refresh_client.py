@@ -259,5 +259,7 @@ def cockpit_refresh_js() -> str:
       document.addEventListener('annual:targetSalesChanged', onArea1CockpitRefresh);
       document.addEventListener('annual:pastSalesSaved', onArea1CockpitRefresh);
       document.addEventListener('kpi:readSurfacesRefresh', onArea1CockpitRefresh);
+      document.addEventListener('kpi:dailyTargetModeChanged', onArea1CockpitRefresh);
+      document.addEventListener('kpi:weekdayBaselineChanged', onArea1CockpitRefresh);
     }})();
     {COCKPIT_REFRESH_END}"""

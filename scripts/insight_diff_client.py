@@ -218,7 +218,7 @@ def insight_diff_js() -> str:
         }});
       }};
 
-      document.addEventListener('annual:dailyDateChanged', function () {{
+      function refreshInsightTwDiffsFromStore() {{
         var root = document.getElementById('insight-overlay');
         if (!root || root.hidden) return;
         var iso =
@@ -228,6 +228,10 @@ def insight_diff_js() -> str:
         if (iso && typeof window.renderInsightTwDiffs === 'function') {{
           window.renderInsightTwDiffs(iso);
         }}
-      }});
+      }}
+
+      document.addEventListener('annual:dailyDateChanged', refreshInsightTwDiffsFromStore);
+      document.addEventListener('kpi:dailyTargetModeChanged', refreshInsightTwDiffsFromStore);
+      document.addEventListener('kpi:weekdayBaselineChanged', refreshInsightTwDiffsFromStore);
     }})();
     {INSIGHT_DIFF_JS_END}"""

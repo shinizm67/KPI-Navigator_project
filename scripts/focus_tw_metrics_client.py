@@ -178,6 +178,14 @@ def focus_tw_metrics_js() -> str:
         var plan = resolveTwPlanForYear(y);
         var out = {{}};
         if (!plan) return out;
+        if (twShouldUseDailyTargetResolver(y)) {{
+          if (
+            window.KpiYearStore &&
+            typeof KpiYearStore.buildDailyTargetDisplayMapForYear === 'function'
+          ) {{
+            return KpiYearStore.buildDailyTargetDisplayMapForYear(y);
+          }}
+        }}
         var days = [];
         for (var m0 = 0; m0 < 12; m0++) {{
           var dc = new Date(y, m0 + 1, 0).getDate();
@@ -200,6 +208,28 @@ def focus_tw_metrics_js() -> str:
         }}
         return buildLegacyFlatDailyTargetMapForYear(plan, days);
       }}
+      var __twTargetMapCacheByYear = {{}};
+      function buildDailyTargetMapForYearCached(year, bmap) {{
+        var y = Number(year);
+        if (!Number.isFinite(y)) return {{}};
+        if (__twTargetMapCacheByYear[y]) return __twTargetMapCacheByYear[y];
+        var map = buildDailyTargetMapForYear(y, bmap);
+        __twTargetMapCacheByYear[y] = map;
+        return map;
+      }}
+      window.clearTwTargetMapsByYear = function () {{
+        __twTargetMapCacheByYear = {{}};
+      }};
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {{
+        __twTargetMapCacheByYear = {{}};
+      }});
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {{
+        __twTargetMapCacheByYear = {{}};
+      }});
+      document.addEventListener('kpi:annualPlanChanged', function () {{
+        __twTargetMapCacheByYear = {{}};
+      }});
+      window.__buildDailyTargetMapForYear = buildDailyTargetMapForYear;
       function createTwCumState() {{
         return {{ month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false }};
       }}
@@ -212,7 +242,11 @@ def focus_tw_metrics_js() -> str:
         }}
         var scrollEl = document.getElementById('annual-daily-focus-scroll');
         var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
-        var bounds = computeFocusTimelineBounds(anchorYear);
+        var bounds =
+          opts.boundsHint === 'anchor-year-only' &&
+          typeof computeAnchorYearTimelineBounds === 'function'
+            ? computeAnchorYearTimelineBounds(anchorYear)
+            : computeFocusTimelineBounds(anchorYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {{}};
         window.__ANNUAL_DATA.calendarYear = anchorYear;
         var daily = window.__ANNUAL_DATA.daily || {{}};
@@ -436,6 +470,14 @@ def focus_tw_metrics_js() -> str:
         if (prevScroll != null && scrollEl) {{
           scrollEl.scrollTop = prevScroll;
         }}
+        if (document.body.classList.contains('monthly-page')) {{
+          if (opts.boundsHint === 'anchor-year-only') {{
+            window.__monthlyVerticalTwPartialRendered = true;
+          }} else {{
+            window.__monthlyVerticalTwPartialRendered = true;
+            window.__monthlyVerticalTwFullRendered = true;
+          }}
+        }}
         document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
       }}
       function computeTwMetricsForIso(iso) {{
@@ -450,7 +492,7 @@ def focus_tw_metrics_js() -> str:
         if (!isFinite(d.getTime())) return null;
         var y = d.getFullYear();
         var m0 = d.getMonth();
-        var tgtMap = buildDailyTargetMapForYear(y, bmap);
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
         var plan = resolveTwPlanForYear(y);
         var annualTarget = plan && Number.isFinite(Number(plan.target)) ? Number(plan.target) : null;
         var hasPlan = false;

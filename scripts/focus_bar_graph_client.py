@@ -465,6 +465,8 @@ STORE_LISTENERS_NEW = """      window.addEventListener(
       document.addEventListener('annual:pastSalesSaved', refreshGraphPopoverFromStore);
       document.addEventListener('kpi:readSurfacesRefresh', refreshGraphPopoverFromStore);
       document.addEventListener('annual:timelineRowsRendered', refreshGraphPopoverFromStore);
+      document.addEventListener('kpi:dailyTargetModeChanged', refreshGraphPopoverFromStore);
+      document.addEventListener('kpi:weekdayBaselineChanged', refreshGraphPopoverFromStore);
 
       syncLabels();
     })();
