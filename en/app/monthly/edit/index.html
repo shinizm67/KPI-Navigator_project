@@ -4383,18 +4383,28 @@
         }
 
 
+        
+        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
+
+        var __planMonthlyTargetsCache = {};
+        var __weekdayShareMatrixCache = {};
+        var __yearHasPositiveSalesCache = {};
 
         function yearHasPositiveTimelineSales(year) {
           var y = Number(year);
           if (!Number.isFinite(y)) return false;
+          if (Object.prototype.hasOwnProperty.call(__yearHasPositiveSalesCache, y)) {
+            return __yearHasPositiveSalesCache[y];
+          }
           var has = false;
           Object.keys(store.timeline.dailySales).forEach(function (iso) {
             if (isoYear(iso) !== y) return;
             var n = Number(store.timeline.dailySales[iso]);
             if (Number.isFinite(n) && n > 0) has = true;
           });
+          __yearHasPositiveSalesCache[y] = has;
           return has;
         }
 
@@ -4532,7 +4542,7 @@
           return dowSales / monthSales;
         }
 
-        function computeWeekdayShareAvg(operatingYear, m0, dow, baselineYears) {
+        function computeWeekdayShareAvgUncached(operatingYear, m0, dow, baselineYears) {
           var oy = Number(operatingYear);
           var month = Number(m0);
           var weekday = Number(dow);
@@ -4555,6 +4565,33 @@
           return sum / n;
         }
 
+        function weekdayShareMatrixCacheKey(oy, baselineYears) {
+          var yrs = (baselineYears || readWeekdayBaselineYears(oy)).join(',');
+          return oy + ':' + yrs;
+        }
+
+        function getWeekdayShareMatrixCached(operatingYear, baselineYears) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var key = weekdayShareMatrixCacheKey(oy, baselineYears);
+          if (__weekdayShareMatrixCache[key]) return __weekdayShareMatrixCache[key];
+          var matrix = computeWeekdayShareMatrix(oy, baselineYears);
+          __weekdayShareMatrixCache[key] = matrix;
+          return matrix;
+        }
+
+        function computeWeekdayShareAvg(operatingYear, m0, dow, baselineYears) {
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return null;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return null;
+          var matrix = getWeekdayShareMatrixCached(oy, baselineYears);
+          if (!matrix || !matrix.months || !matrix.months[month]) return WEEKDAY_SHARE_FALLBACK;
+          var share = matrix.months[month][weekday];
+          return share == null || !Number.isFinite(share) ? WEEKDAY_SHARE_FALLBACK : share;
+        }
+
         function countOperatingWeekdaysInMonth(year, m0, dow) {
           var y = Number(year);
           var month = Number(m0);
@@ -4575,6 +4612,7 @@
         function computePlanMonthlyTargets(year) {
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
+          if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
           var annualTarget = readAnnualTarget(y);
           if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
             return null;
@@ -4604,7 +4642,7 @@
             var monthlyAvg = (Number(annualTarget) * bdCount) / totalBD;
             monthlyTargets.push((monthlyAvg * hl) / 100);
           }
-          return {
+          var plan = {
             year: y,
             annualTarget: Number(annualTarget),
             weights: weights.slice(),
@@ -4612,6 +4650,8 @@
             totalBD: totalBD,
             monthlyTargets: monthlyTargets,
           };
+          __planMonthlyTargetsCache[y] = plan;
+          return plan;
         }
 
         function computeWeekdayShareMatrix(operatingYear, baselineYears) {
@@ -4627,7 +4667,7 @@
             var row = [];
             var usedFallback = false;
             for (var dow = 0; dow < 7; dow++) {
-              var share = computeWeekdayShareAvg(oy, m0, dow, years);
+              var share = computeWeekdayShareAvgUncached(oy, m0, dow, years);
               if (share == null || !Number.isFinite(share)) {
                 share = WEEKDAY_SHARE_FALLBACK;
                 usedFallback = true;
@@ -4775,6 +4815,9 @@
 
         function clearDailyTargetDisplayCache() {
           __dailyTargetDisplayCache = {};
+          __planMonthlyTargetsCache = {};
+          __weekdayShareMatrixCache = {};
+          __yearHasPositiveSalesCache = {};
         }
 
         function dailyTargetDisplayCacheKey(oy, m0, mode, effectiveMode, fallback, monthlyTarget, baselineYears) {
@@ -4961,7 +5004,7 @@
           };
         }
 
-        window.KpiYearStore = {
+                window.KpiYearStore = {
           init: init,
           reload: function () {
             loadStore();

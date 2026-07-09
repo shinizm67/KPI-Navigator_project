@@ -18,6 +18,7 @@ from monthly_tw_mep_metrics_client import (  # noqa: E402
     MONTHLY_TW_DIFF_CSS_ANCHOR,
     MONTHLY_TW_DIFF_CSS_BLOCK,
     MONTHLY_TW_DIFF_CSS_MARKER,
+    MONTHLY_VFOCUS_TW_DIFF_LANE_MARKER,
     MONTHLY_TW_LISTENERS_MARKER,
     MONTHLY_TW_MEP_END,
     MONTHLY_TW_MEP_LISTENERS,
@@ -85,9 +86,110 @@ def inject_metrics_block(text: str) -> str:
     raise SystemExit("getActiveDummyGroupValues block not found")
 
 
+MONTHLY_TW_OFFICE_DIFF_WIN_MARKER = "/* KPI-MONTHLY-TW-OFFICE-DIFF-WIN */"
+
+MONTHLY_TW_SCI_FI_DIFF_OLD = """    .monthly-data-column__cell.tw-diff--win,
+    .monthly-vfocus-cell.tw-diff--win {
+      color: #58e1f3;
+    }
+    .monthly-data-column__cell.tw-diff--neutral,
+    .monthly-vfocus-cell.tw-diff--neutral {
+      color: #58e1f3;
+    }"""
+
+MONTHLY_TW_SCI_FI_DIFF_NEW = """    body:not(.office-mode) .monthly-data-column__cell.tw-diff--win,
+    body:not(.office-mode) .monthly-vfocus-cell.tw-diff--win {
+      color: #58e1f3;
+    }
+    body:not(.office-mode) .monthly-data-column__cell.tw-diff--neutral,
+    body:not(.office-mode) .monthly-vfocus-cell.tw-diff--neutral {
+      color: #58e1f3;
+    }"""
+
+MONTHLY_TW_OFFICE_WIN_OLD = """    .office-mode .monthly-data-column__cell.tw-diff--win,
+    .office-mode .monthly-vfocus-cell.tw-diff--win {
+      color: #0d7a8c;
+    }
+    .office-mode .monthly-data-column__cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }"""
+
+MONTHLY_TW_OFFICE_WIN_NEW = """    .office-mode .monthly-data-column__cell.tw-diff--win,
+    .office-mode .monthly-vfocus-cell.tw-diff--win {
+      color: #111;
+    }
+    .office-mode .monthly-data-column__cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }
+    /* KPI-MONTHLY-TW-OFFICE-DIFF-WIN */
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--win,
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--neutral,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--win,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }"""
+
+MONTHLY_VFOCUS_OFFICE_WIN_ANCHOR = """    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-below,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-below {
+      color: #7a0f0f;
+    }
+    /* buffer/off はベースの border より後で指定（border 略式で上書きされないようにする） */"""
+
+MONTHLY_VFOCUS_OFFICE_WIN_BLOCK = """    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-below,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-below {
+      color: #7a0f0f;
+    }
+    /* Office: 中央レーンのベース色より TW diff win/neutral を優先 */
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--win,
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--win,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }
+    /* buffer/off はベースの border より後で指定（border 略式で上書きされないようにする） */"""
+
+MONTHLY_TW_OFFICE_WIN_INSERT_ANCHOR = """    .office-mode .monthly-data-column__cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .monthly-data-column__cell.tw-diff--sev-90,"""
+
+MONTHLY_TW_OFFICE_WIN_INSERT_BLOCK = """    .office-mode .monthly-data-column__cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }
+    /* KPI-MONTHLY-TW-OFFICE-DIFF-WIN */
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--win,
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--neutral,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--win,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .monthly-data-column__cell.tw-diff--sev-90,"""
+
+
+def patch_monthly_tw_office_diff(text: str) -> str:
+    if "body:not(.office-mode) .monthly-data-column__cell.tw-diff--win" not in text:
+        if MONTHLY_TW_SCI_FI_DIFF_OLD in text:
+            text = text.replace(MONTHLY_TW_SCI_FI_DIFF_OLD, MONTHLY_TW_SCI_FI_DIFF_NEW, 1)
+    if MONTHLY_TW_OFFICE_DIFF_WIN_MARKER not in text:
+        if MONTHLY_TW_OFFICE_WIN_OLD in text:
+            text = text.replace(MONTHLY_TW_OFFICE_WIN_OLD, MONTHLY_TW_OFFICE_WIN_NEW, 1)
+        elif MONTHLY_TW_OFFICE_WIN_INSERT_ANCHOR in text:
+            text = text.replace(MONTHLY_TW_OFFICE_WIN_INSERT_ANCHOR, MONTHLY_TW_OFFICE_WIN_INSERT_BLOCK, 1)
+    if "Office: 中央レーンのベース色より TW diff win/neutral を優先" not in text:
+        if MONTHLY_VFOCUS_OFFICE_WIN_ANCHOR in text:
+            text = text.replace(MONTHLY_VFOCUS_OFFICE_WIN_ANCHOR, MONTHLY_VFOCUS_OFFICE_WIN_BLOCK, 1)
+    return text
+
+
 def inject_diff_css(text: str) -> str:
-    if MONTHLY_TW_DIFF_CSS_MARKER in text:
-        return text
+    if MONTHLY_TW_DIFF_CSS_MARKER in text and MONTHLY_VFOCUS_TW_DIFF_LANE_MARKER in text:
+        return patch_monthly_tw_office_diff(text)
+    if MONTHLY_TW_DIFF_CSS_MARKER in text and MONTHLY_VFOCUS_TW_DIFF_LANE_MARKER not in text:
+        raise SystemExit("monthly TW diff CSS present but vfocus lane override missing — re-run from anchor")
     if MONTHLY_TW_DIFF_CSS_ANCHOR not in text:
         raise SystemExit("monthly TW diff CSS anchor miss")
     return text.replace(MONTHLY_TW_DIFF_CSS_ANCHOR, MONTHLY_TW_DIFF_CSS_BLOCK, 1)

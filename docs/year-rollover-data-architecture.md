@@ -552,7 +552,7 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | **P0** | **時系列ナビ（スクロール・カレンダージャンプ・selectedDate 共有）** Annual + Monthly | P0 Store | ✅ |
 | **1** | `maybeRolloverYear()` + `observed` 算出 | P0 | ✅ |
 | **1b** | **年跨ぎ — Sales Data → Past Sales 自動引き継ぎ**（詳細 §1.6） | 1 + Sales Data 窓 Save 経路 | ✅ 2026-07-02 受け入れ完了 |
-| **2** | `annualPlan` 保存 + Cockpit 繁閑% read-only | P0 | 🟡 |
+| **2** | `annualPlan` 保存 + Cockpit 繁閑% read-only | P0 | ✅ |
 | **3** | **複数年 `observed` → Seasonality % 算出** + Sales Data Analyze 表示 + plan 繁閑% ▲▼ 5% 初期値（詳細 §15-C） | 1 | ✅ |
 | **4** | MEP `dailyExpenses` / `dailyMeta` 永続化 | P0 | ✅ |
 | **5** | 編集ロック・入力経路排他（基本・`canWrite*` ガード） | P0 | ✅ |
@@ -564,7 +564,7 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 | **8** | **読取面同期** — Table Window（Annual / Monthly）・MEP 過去年が `timeline` を表示（詳細 §15-A/B/D） | P0 | ✅ |
 | **10** | **Daily Floating Window KPI 配線** + **10-c メモ印**（Focus Bar / Daily 窓 / 日付ボタン） | 8 | ✅（2026-07-09） |
 | **9** | **Focus Bar Graph ポップオーバー** — フォーカス日の Daily / Monthly / Annual KPI + 達成率バー（Annual / Monthly 共通・詳細 §15.5） | 8 | ✅（OFF は Daily のみ neutral・MTD/YTD は累計表示） |
-| **11** | **曜日別日次目標 KPI** — ベースライン年選択・構成比平均 → 月×曜日 1 日 KPI → TW / Focus Bar（`docs/weekday-target-sales-kpi-memo.md` §6） | 3 + 8 + §15.0 | ⬜ |
+| **11** | **曜日別日次目標 KPI** — ベースライン年選択・構成比平均 → 月×曜日 1 日 KPI → TW / Focus Bar（`docs/weekday-target-sales-kpi-memo.md` §6） | 3 + 8 + §15.0 | ✅ |
 | **7** | CSV 監査ログ・POS 連携・DB 移行（本格） | P0+ | ⬜ |
 
 **他機能との関係:**
@@ -576,20 +576,24 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 
 ## 11. 受け入れ確認（チェックリスト）
 
-- [ ] **timeline 上の 2025-04-05 が Sales Data・Past Sales・MEP のいずれから編集しても同一値**
-- [ ] **Focus Bar / Table Window からスクロールまたはカレンダーで 2024 年の日付に到達できる**
-- [ ] **Annual ↔ Monthly 遷移後も selectedDate が同じ ISO を指す**
-- [ ] 2025 年に入力した日次売上が、2026 年開始後も timeline から参照できる（Past Sales 窓・MEP 2025 月）
-- [ ] MEP で入力した売上が Sales Data と同一値（同一タブ・別タブ）
-- [ ] 2025 の plan（目標・繁閑%）が 2026 から振り返り可能
-- [ ] 2026 初回に plan.monthlyHlWeights が 2024+2025 平均（またはフォールバック）で初期化される
-- [ ] Cockpit 繁閑%列は編集不可・plan から表示
-- [ ] レガシー `annualDailyShared` / `pastSalesShared` からのマイグレーションが 1 回だけ成功する
-- [ ] locked 年の誤編集がブロックされる
-- [ ] **4/5 の日次売上が Annual Focus Bar と Monthly Daily で常に同一値**
-- [ ] **年次目標が Annual Cockpit と Monthly Area2 で同一値**
-- [ ] **過去年選択時、Focus Bar / Table Window がその年の実績・目標を表示**
+> **更新:** 2026-07-09 — コード確認済み項目は `[x]`、ブラウザ手動確認が必要な項目は `[ ] 手動` と表記。
+
+- [ ] 手動 **timeline 上の 2025-04-05 が Sales Data・Past Sales・MEP のいずれから編集しても同一値**
+- [x] **Focus Bar / Table Window からスクロールまたはカレンダーで 2024 年の日付に到達できる**（ARP-2〜7 完了）
+- [ ] 手動 **Annual ↔ Monthly 遷移後も selectedDate が同じ ISO を指す**
+- [ ] 手動 2025 年に入力した日次売上が、2026 年開始後も timeline から参照できる（Past Sales 窓・MEP 2025 月）
+- [ ] 手動 MEP で入力した売上が Sales Data と同一値（同一タブ・別タブ）
+- [x] 2025 の plan（目標・繁閑%）が 2026 から振り返り可能（`KpiYearStore.readMonthlyHlWeights` / `readAnnualTarget`）
+- [ ] 手動 2026 初回に plan.monthlyHlWeights が 2024+2025 平均（またはフォールバック）で初期化される
+- [x] Cockpit 繁閑%列は編集不可・plan から表示（`kpi-hl-plan-readonly` + Sales Data で編集 tooltip）
+- [x] レガシー `annualDailyShared` / `pastSalesShared` からのマイグレーションが 1 回だけ成功する（Store `migrateFromLegacy`）
+- [x] locked 年の誤編集がブロックされる（`canWriteDailySalesFrom` / `rec.status === 'locked'`）
+- [ ] 手動 **4/5 の日次売上が Annual Focus Bar と Monthly Daily で常に同一値**
+- [ ] 手動 **年次目標が Annual Cockpit と Monthly Area2 で同一値**
+- [ ] 手動 **過去年選択時、Focus Bar / Table Window がその年の実績・目標を表示**
 - [x] メモ入力日にフラグが立ち、月次一覧から読み返せる（Phase 10 / 10-c）
+
+**手動確認の推奨手順（15分）:** 同一日付で Annual → Monthly 往復、Sales Data / MEP / Past Sales の3経路編集、過去年スクロール、Cockpit Open の繁閑%が Sales Data 変更に追従すること。
 
 ---
 

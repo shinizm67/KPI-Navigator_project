@@ -43,6 +43,8 @@ MONTHLY_TW_MEP_LISTENERS = """      /* KPI-MONTHLY-TW-LISTENERS */
       document.addEventListener('kpi:dailySalesChanged', monthlyTwRebuildKeepFocus);
       document.addEventListener('kpi:annualPlanChanged', monthlyTwRebuildKeepFocus);
       document.addEventListener('kpi:businessDayChanged', monthlyTwRebuildKeepFocus);
+      document.addEventListener('kpi:dailyTargetModeChanged', monthlyTwRebuildKeepFocus);
+      document.addEventListener('kpi:weekdayBaselineChanged', monthlyTwRebuildKeepFocus);
       /* END KPI-MONTHLY-TW-LISTENERS */"""
 
 MONTHLY_TW_LISTENERS_MARKER = "/* KPI-MONTHLY-TW-LISTENERS */"
@@ -69,13 +71,21 @@ VFOCUS_CELL_COPY_OLD = """              if (cell) cell.textContent = valuesLane[
 VFOCUS_CELL_COPY_NEW = """              if (cell) {
                 cell.textContent = valuesLane[gi2 * 6 + ci2] || demoMoney;
                 if (gi2 === 0 && ci2 === 4) {
+                  cell.classList.remove('monthly-vfocus-cell--plan-target');
                   syncMonthlyVfocusDiffClass(cell, colIdx);
+                } else if (gi2 === 0 && ci2 === 3) {
+                  clearMonthlyTwDiffClasses(cell);
+                  cell.classList.add('monthly-vfocus-cell--plan-target');
                 } else if (gi2 === 0) {
                   clearMonthlyTwDiffClasses(cell);
+                  cell.classList.remove('monthly-vfocus-cell--plan-target');
+                } else {
+                  cell.classList.remove('monthly-vfocus-cell--plan-target');
                 }
               }"""
 
 MONTHLY_TW_DIFF_CSS_MARKER = "/* KPI-MONTHLY-TW-DIFF-SEVERITY */"
+MONTHLY_VFOCUS_TW_DIFF_LANE_MARKER = "/* KPI-MONTHLY-VFOCUS-TW-DIFF-LANE */"
 
 MONTHLY_TW_DIFF_CSS_ANCHOR = """    .monthly-data-column__cell:last-child {
       border-bottom: 0;
@@ -85,12 +95,12 @@ MONTHLY_TW_DIFF_CSS_BLOCK = f"""    .monthly-data-column__cell:last-child {{
       border-bottom: 0;
     }}
     {MONTHLY_TW_DIFF_CSS_MARKER}
-    .monthly-data-column__cell.tw-diff--win,
-    .monthly-vfocus-cell.tw-diff--win {{
+    body:not(.office-mode) .monthly-data-column__cell.tw-diff--win,
+    body:not(.office-mode) .monthly-vfocus-cell.tw-diff--win {{
       color: #58e1f3;
     }}
-    .monthly-data-column__cell.tw-diff--neutral,
-    .monthly-vfocus-cell.tw-diff--neutral {{
+    body:not(.office-mode) .monthly-data-column__cell.tw-diff--neutral,
+    body:not(.office-mode) .monthly-vfocus-cell.tw-diff--neutral {{
       color: #58e1f3;
     }}
     .monthly-data-column__cell.tw-diff--sev-90,
@@ -119,10 +129,17 @@ MONTHLY_TW_DIFF_CSS_BLOCK = f"""    .monthly-data-column__cell:last-child {{
     }}
     .office-mode .monthly-data-column__cell.tw-diff--win,
     .office-mode .monthly-vfocus-cell.tw-diff--win {{
-      color: #0d7a8c;
+      color: #111;
     }}
     .office-mode .monthly-data-column__cell.tw-diff--neutral,
     .office-mode .monthly-vfocus-cell.tw-diff--neutral {{
+      color: #111;
+    }}
+    /* KPI-MONTHLY-TW-OFFICE-DIFF-WIN */
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--win,
+    body.office-mode .monthly-data-column .monthly-data-column__cell.tw-diff--neutral,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--win,
+    body.office-mode .monthly-vfocus-lane .monthly-vfocus-cell.tw-diff--neutral {{
       color: #111;
     }}
     .office-mode .monthly-data-column__cell.tw-diff--sev-90,
@@ -148,6 +165,63 @@ MONTHLY_TW_DIFF_CSS_BLOCK = f"""    .monthly-data-column__cell:last-child {{
     .office-mode .monthly-data-column__cell.tw-diff--sev-below,
     .office-mode .monthly-vfocus-cell.tw-diff--sev-below {{
       color: #7a0f0f;
+    }}
+    /* KPI-MONTHLY-VFOCUS-TW-DIFF-LANE */
+    /* Focus Bar 中央レーンのベース色より TW diff severity を優先 */
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-90,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-90 {{
+      color: #f9a825;
+    }}
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-80,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-80 {{
+      color: #ef6c00;
+    }}
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-70,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-70 {{
+      color: #e65100;
+    }}
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-60,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-60 {{
+      color: #e53935;
+    }}
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-50,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-50 {{
+      color: #c62828;
+    }}
+    body:not(.office-mode) .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-below,
+    body:not(.office-mode) .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-below {{
+      color: #b71c1c;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-90,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-90 {{
+      color: #9a6b00;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-80,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-80 {{
+      color: #a84300;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-70,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-70 {{
+      color: #8f3600;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-60,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-60 {{
+      color: #b71c1c;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-50,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-50 {{
+      color: #9e1414;
+    }}
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--sev-below,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--sev-below {{
+      color: #7a0f0f;
+    }}
+    /* Office: 中央レーンのベース色より TW diff win/neutral を優先 */
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--win,
+    .office-mode .monthly-vfocus-lane--center:not(.monthly-vfocus-lane--tw-off):not(.monthly-vfocus-lane--tw-buffer) .monthly-vfocus-cell.tw-diff--neutral,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--win,
+    .office-mode .monthly-vfocus-lane--center.monthly-vfocus-lane--tw-off .monthly-vfocus-cell.tw-diff--neutral {{
+      color: #111;
     }}"""
 
 
@@ -360,7 +434,11 @@ def monthly_tw_mep_metrics_js() -> str:
       }}
 
       function decorateMonthlyGroup1Cell(cell, cellIndex, iso) {{
-        if (!cell || cellIndex !== 4) return;
+        if (!cell) return;
+        if (cellIndex === 3) {{
+          cell.classList.add('monthly-data-column__cell--plan-target');
+        }}
+        if (cellIndex !== 4) return;
         var snap = readGroup1TwSnapshot(iso);
         applyMonthlyTwDiffClass(cell, snap.diffActual, snap.diffTarget);
       }}
