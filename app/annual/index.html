@@ -544,6 +544,8 @@
     }
     /* 展開時: 365 行・Global Menu・Focus Bar の横スクロール開始を同一 X に。Edit(14+57px) 右に余白し窓内のまま */
     body.annual-focus-bar-expanded {
+      /* layer 用。lead-inset の calc も body 上で解決するためここで定義（子の window だけだと body 側 var が無効になる） */
+      --focus-bar-w: 1132px;
       --annual-daily-focus-table-pad-left: 76px;
       /* Edit 右端〜Date 起点までの理論値に、SVGはみ出し／サブピクセル用の微調整を加算 */
       --annual-global-menu-date-overhang-fudge: 2px;
@@ -560,6 +562,15 @@
       --annual-focus-bar-scroll-inner-w: calc(
         637px + var(--annual-focus-bar-group-gap) + 511px + var(--annual-focus-bar-group-gap) + 511px
       );
+      /* Open: Section2 先頭〜Date 左端（▲▼内側線から約10〜12px） */
+      --focus-bar-open-section2-inset: 22px;
+      --focus-bar-open-date-pull: 9px;
+      /* ▲▼内側線〜Date 左端（22−9=13）。上段は Date 左枠 1px を露出、下段のみ +1px でチラ見え防止 */
+      --focus-bar-open-date-left-cap-base: calc(var(--focus-bar-open-section2-inset) - var(--focus-bar-open-date-pull));
+      --focus-bar-open-date-left-cap-lower-overlap: 1px;
+      --focus-bar-open-date-left-cap-lower: calc(var(--focus-bar-open-date-left-cap-base) + var(--focus-bar-open-date-left-cap-lower-overlap));
+      /* 1132 バー − 1100 TW = 左右ウィング各 16px（穴の外・不透明蓋） */
+      --focus-bar-wing-w: 16px;
       /* Date 右端までの X（Table Window マスク等の参照用） */
       --annual-date-cut-x: calc(var(--annual-daily-focus-table-pad-left) + 120px);
       --annual-date-left-mask-w: var(--annual-daily-focus-table-pad-left);
@@ -875,6 +886,18 @@
       z-index: 10;
       pointer-events: none;
     }
+    /* Open: Focus Bar 帯の背面で 365 行が横スクロール透けしないよう TW 全幅を不透明マスク（layer z:3 の下） */
+    body.annual-focus-bar-expanded .annual-daily-focus-scroll-clip::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 185px;
+      height: 91px;
+      background: #1f1e1e;
+      z-index: 5;
+      pointer-events: none;
+    }
     .annual-daily-focus-scroll {
       height: 100%;
       overflow: auto;
@@ -1071,7 +1094,7 @@
     .monthly-date-header-cell.kpi-date-has-memo::after {
       content: '';
       position: absolute;
-      right: -2px;
+      right: 6px;
       top: 50%;
       width: 6px;
       height: 6px;
@@ -1242,6 +1265,13 @@
       box-sizing: border-box;
       overflow: visible;
     }
+    /* Open: layer / SVG は必ず 1132px（757 のまま残ると TW 1100 に対し中央の狭いバーになり全症状が連鎖する） */
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-layer {
+      --focus-bar-w: 1132px;
+      width: 1132px;
+      min-width: 1132px;
+      max-width: none;
+    }
     .annual-daily-focus-wing-hit {
       position: absolute;
       right: 3px;
@@ -1262,15 +1292,35 @@
       inset: 0;
       opacity: 0;
       pointer-events: none;
-      background: rgba(88, 225, 243, 0.2);
-      box-shadow: inset 0 0 8px rgba(88, 225, 243, 0.42);
+      background: rgba(88, 225, 243, 0.32);
+      box-shadow: inset 0 0 10px rgba(88, 225, 243, 0.55);
       transition: opacity 0.12s ease;
     }
+    /* Close: 757×91 表示 ← SVG viewBox 758×92。シアン帯 bounds を % で合わせる */
+    .annual-daily-focus-wing-hit--left {
+      left: calc(6.20068 / 758 * 100%);
+      right: auto;
+      width: calc((14.2007 - 3.20068) / 758 * 100%);
+      top: calc(4.20801 / 92 * 100%);
+      bottom: auto;
+      height: calc((88.208 - 4.20801) / 92 * 100%);
+    }
     .annual-daily-focus-wing-hit--left::before {
-      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+      clip-path: polygon(100% 100%, 45.45% 100%, 0 94.05%, 0 5.95%, 45.45% 0, 100% 0);
+    }
+    #annual-daily-focus-wing-hit {
+      left: calc(740.201 / 758 * 100%);
+      right: auto;
+      width: calc((754.201 - 743.201) / 758 * 100%);
+      top: calc(3.20801 / 92 * 100%);
+      bottom: auto;
+      height: calc((88.208 - 3.20801) / 92 * 100%);
     }
     #annual-daily-focus-wing-hit::before {
-      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+      /* Close 左 Wing ::before を scaleX(-1) で反転。左 +3px 補正の線対称で left −3px */
+      clip-path: polygon(100% 100%, 45.45% 100%, 0 94.05%, 0 5.95%, 45.45% 0, 100% 0);
+      transform: scaleX(-1);
+      transform-origin: center;
     }
     .annual-daily-focus-wing-hit:hover,
     .annual-daily-focus-wing-hit:focus-visible {
@@ -1288,35 +1338,35 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
     }
-    .annual-daily-focus-wing-hit--left {
-      left: 3px;
-      right: auto;
-    }
-    /* Open 時: 右ウィング◀タブは可視幅が広い。左ウィング▲▼も同様に広いヒット領域（右ボタンだけに right:0 を当てる） */
+    /* Open ver2: 1132×91 SVG（focus_bar_*_open_ver2.svg）の #439CA9 帯 bounds */
     body.annual-focus-bar-expanded #annual-daily-focus-wing-hit {
-      right: 0;
-      top: 3px;
-      bottom: 3px;
-      width: 28px;
+      left: calc(1118 / 1132 * 100%);
+      right: auto;
+      width: calc(11 / 1132 * 100%);
+      top: calc(3 / 91 * 100%);
+      bottom: auto;
+      height: calc(85 / 91 * 100%);
       z-index: 6;
     }
     body.annual-focus-bar-expanded #annual-daily-focus-wing-hit::before {
-      /* Open時は内側の縦帯まで光らないよう、発光を外側タブ領域へ限定 */
-      left: 10px;
-      right: 0;
-      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+      inset: 0;
+      /* Open 左 Wing と同一 clip-path を scaleX(-1) で反転（座標手計算より SVG 一致） */
+      clip-path: polygon(100% 100%, 45.45% 100%, 0 94.05%, 0 5.95%, 45.45% 0, 100% 0);
+      transform: scaleX(-1);
+      transform-origin: center;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-wing-hit--left {
-      left: 0;
-      top: 3px;
-      bottom: 3px;
-      width: 28px;
+      left: calc(3 / 1132 * 100%);
+      right: auto;
+      width: calc(11 / 1132 * 100%);
+      top: calc(3 / 91 * 100%);
+      bottom: auto;
+      height: calc(85 / 91 * 100%);
       z-index: 6;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-wing-hit--left::before {
-      left: 0;
-      right: 10px;
-      clip-path: polygon(0 10%, 22% 0, 78% 0, 100% 10%, 100% 90%, 78% 100%, 22% 100%, 0 90%);
+      inset: 0;
+      clip-path: polygon(100% 100%, 45.45% 100%, 0 94.05%, 0 5.95%, 45.45% 0, 100% 0);
     }
     .annual-daily-focus-bar-stack {
       position: relative;
@@ -1508,15 +1558,18 @@
       gap: var(--annual-focus-bar-group-gap);
       justify-content: flex-start;
       align-items: stretch;
-      margin-left: 9px;
+      margin-left: var(--focus-bar-open-section2-inset);
       box-sizing: border-box;
     }
     body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-upper__group--base .annual-daily-focus-bar-upper__cell--date {
-      min-width: calc(127px + 9px);
-      max-width: calc(127px + 9px);
-      margin-left: -9px;
+      min-width: calc(127px + var(--focus-bar-open-date-pull));
+      max-width: calc(127px + var(--focus-bar-open-date-pull));
+      margin-left: calc(-1 * var(--focus-bar-open-date-pull));
+      border: 1px solid #58e1f3;
       border-top-left-radius: 3px;
       border-bottom-left-radius: 3px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       position: relative;
       z-index: 8;
       box-sizing: border-box;
@@ -1526,6 +1579,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: visible;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper__group--base {
       width: 637px;
@@ -1563,14 +1617,14 @@
       align-items: stretch;
       justify-content: flex-start;
       gap: var(--annual-focus-bar-group-gap);
-      margin-left: 9px;
+      margin-left: var(--focus-bar-open-section2-inset);
       z-index: 2;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower--ghost {
       position: absolute;
       left: 0;
       top: 8px;
-      margin-left: 9px;
+      margin-left: var(--focus-bar-open-section2-inset);
       opacity: 0.42;
       pointer-events: none;
       z-index: 1;
@@ -1595,6 +1649,10 @@
       width: 637px;
       flex: 0 0 637px;
       max-width: none;
+      position: relative;
+      z-index: 4;
+      overflow: visible;
+      isolation: isolate;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--monthly,
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--annual {
@@ -1608,27 +1666,24 @@
     body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
       background-color: #263638;
     }
-    /* Open 時: 下段 Date を上段と同色に。.lower を含めソース順で --off の #263638 を上書き */
+    /* Open 時: 下段 Date — 上段と同じ 22/−9px、不透明で左漏れを遮断 */
     body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
-      min-width: calc(127px + 9px);
-      max-width: calc(127px + 9px);
-      margin-left: -9px;
-      padding-left: calc(8px + 9px);
+      min-width: calc(127px + var(--focus-bar-open-date-pull));
+      max-width: calc(127px + var(--focus-bar-open-date-pull));
+      margin-left: calc(-1 * var(--focus-bar-open-date-pull));
+      padding-left: calc(8px + var(--focus-bar-open-date-pull));
+      border: 1px solid #58e1f3;
       border-top-left-radius: 3px;
       border-bottom-left-radius: 3px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       position: relative;
       z-index: 8;
       background-color: #35686f;
     }
-    /* KPI-ARP-PHASE5D: Open 時でも OFF 行は Date 列を非アクティブ色に揃える */
     body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
       background-color: #263638;
-    }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--base {
-      position: relative;
-      z-index: 4;
-      overflow: visible;
-      isolation: isolate;
+      border-color: rgba(88, 225, 243, 0.45);
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--monthly,
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower__group--annual {
@@ -1644,47 +1699,72 @@
       color: rgba(88, 225, 243, 0.62);
       border-right-color: rgba(88, 225, 243, 0.28);
     }
+    /* Open: 穴=TW 1100px（16+1100+16=1132）。全面不透明底板→scroll→SVG の順で 365 行を遮る */
     body.annual-focus-bar-expanded .annual-daily-focus-bar-stack {
       overflow: hidden;
+      isolation: isolate;
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-stack::before {
-      /* 左ウィング下も含め背面を塗る。::after で同領域を z-index 10 塗りすると SVG 装飾が黒塗りに潰れる */
       left: 0;
-      right: 17px;
+      right: 0;
+      z-index: 2;
+      background: #1f1e1e;
     }
-    /* Open時: セクション2の「穴」全幅で横スクロール表示する */
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-stack::after {
+      /* 上段 13px / 下段 14px: Date 左隙間を不透明で埋める（上段 Date 左枠 1px は露出） */
+      content: "";
+      position: absolute;
+      left: var(--focus-bar-wing-w);
+      top: 0;
+      bottom: 0;
+      width: var(--focus-bar-open-date-left-cap-lower);
+      background: #1f1e1e;
+      z-index: 3;
+      pointer-events: none;
+      clip-path: polygon(
+        0 0,
+        var(--focus-bar-open-date-left-cap-base) 0,
+        var(--focus-bar-open-date-left-cap-base) 24px,
+        var(--focus-bar-open-date-left-cap-lower) 24px,
+        var(--focus-bar-open-date-left-cap-lower) 100%,
+        0 100%
+      );
+    }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll,
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
       box-sizing: border-box;
-      left: 16px;
-      right: 17px;
+      left: var(--focus-bar-wing-w);
+      right: var(--focus-bar-wing-w);
       width: auto;
       padding-left: 0;
       padding-right: var(--annual-daily-focus-scroll-end-gap);
+      z-index: 3;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-img {
+      z-index: 4;
+    }
+    /* ▲▼内側線〜Date 左端の不透明蓋（上段 13px / 下段 14px） */
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll::before,
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: #1f1e1e;
+      z-index: 5;
+      pointer-events: none;
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll::before {
+      width: var(--focus-bar-open-date-left-cap-base);
+    }
+    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll::before {
+      width: var(--focus-bar-open-date-left-cap-lower);
     }
     body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
       display: block;
       top: 24px;
       height: 67px;
-    }
-    /* Open 時: 枠 SVG が z-index:3 でスクロール内容(2)より上に来て右側セルが塗り潰されるのを防ぐ */
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-img {
-      z-index: 1;
-    }
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-upper-scroll,
-    body.annual-focus-bar-expanded .annual-daily-focus-bar-lower-scroll {
-      z-index: 4;
-    }
-    /* 横3グループの間は gap 分 #1f1e1e が見え、365 行の 2px 溝と同系の奥行きに */
-    /* 不透明化で SVG 枠線(z-index:1)が隠れるため、Open 時は同等のシアン横線をここで補う */
-    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-upper-scroll {
-      background: #1f1e1e;
-      border-top: 1px solid #58e1f3;
-    }
-    body.annual-focus-bar-expanded:not(.office-mode) .annual-daily-focus-bar-lower-scroll {
-      background: #1f1e1e;
-      border-top: 1px solid #58e1f3;
-      border-bottom: 1px solid #58e1f3;
     }
     .annual-daily-focus-bar-lower__cell {
       min-width: 0;
@@ -1875,6 +1955,10 @@
     .focus-bar-back-to-cockpit:focus-visible {
       color: #9ef6ff;
       outline: none;
+    }
+    /* Close: focus_bar.svg 右 Wing 右端(754.201/758)〜layer 右端の隙間分だけ左へ（Open は 1129/1132 でほぼ一致） */
+    body:not(.annual-focus-bar-expanded) .focus-bar-back-to-cockpit {
+      margin-left: calc(var(--focus-bar-w) * (754.201 / 758 - 1));
     }
     .office-mode .focus-bar-back-to-cockpit {
       border: 1px solid #000;
@@ -3241,19 +3325,26 @@
       min-width: calc(127px + 9px);
       max-width: calc(127px + 9px);
       margin-left: -9px;
+      border: 1px solid #000;
       border-top-left-radius: 3px;
       border-bottom-left-radius: 3px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       position: relative;
       z-index: 8;
       background: #e8e8e8;
+      overflow: visible;
     }
     body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower__group--base .annual-daily-focus-bar-lower__cell--date {
       min-width: calc(127px + 9px);
       max-width: calc(127px + 9px);
       margin-left: -9px;
       padding-left: calc(8px + 9px);
+      border: 1px solid #000;
       border-top-left-radius: 3px;
       border-bottom-left-radius: 3px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       position: relative;
       z-index: 8;
       background: #d2d2d2;
@@ -3378,6 +3469,32 @@
       top: 235px;
     }
     .office-mode .annual-daily-focus-bar-stack::before {
+      background: #e8e8e8;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-stack::after {
+      content: "";
+      position: absolute;
+      left: var(--focus-bar-wing-w);
+      top: 0;
+      bottom: 0;
+      width: var(--focus-bar-open-date-left-cap-lower);
+      background: #e8e8e8;
+      z-index: 3;
+      pointer-events: none;
+      clip-path: polygon(
+        0 0,
+        var(--focus-bar-open-date-left-cap-base) 0,
+        var(--focus-bar-open-date-left-cap-base) 24px,
+        var(--focus-bar-open-date-left-cap-lower) 24px,
+        var(--focus-bar-open-date-left-cap-lower) 100%,
+        0 100%
+      );
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-upper-scroll::before,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower-scroll::before {
+      background: #e8e8e8;
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-scroll-clip::after {
       background: #e8e8e8;
     }
     .office-mode.annual-focus-bar-expanded .annual-daily-focus-scroll-clip::before {
@@ -13392,8 +13509,8 @@
   </style>
 </head>
 <body class="si-fi profile-page" id="body-el">
-  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open.svg':'focus_bar_open.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
-  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open.svg':'focus_bar_open.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
+  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open_ver2.svg':'focus_bar_open_ver2.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
+  <script>/* KPI-ANNUAL-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open_ver2.svg':'focus_bar_open_ver2.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
   <header class="site-header">
     <div class="header-inner">
       <div class="header-logo">
@@ -17650,10 +17767,30 @@ Target Sales</p>
           menu.appendChild(li);
         }
       }
+      function readAnnualNav() {
+        var gwNav = window.__KPI_DATA_GATEWAY;
+        try {
+          if (gwNav && typeof gwNav.getJson === 'function') return gwNav.getJson('kpiNavigator.annualNav');
+          var raw = localStorage.getItem('kpiNavigator.annualNav');
+          return raw ? JSON.parse(raw) : null;
+        } catch (_eNav) {
+          return null;
+        }
+      }
       function syncAnnualNavToStorage() {
         var data = window.__ANNUAL_DATA || {};
         var cy = data.calendarYear;
         var iso = data.daily && data.daily.selectedDate;
+        if ((!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) && typeof readAnnualNav === 'function') {
+          var existingNav = readAnnualNav();
+          if (
+            existingNav &&
+            existingNav.selectedIso &&
+            /^\d{4}-\d{2}-\d{2}$/.test(String(existingNav.selectedIso))
+          ) {
+            iso = String(existingNav.selectedIso);
+          }
+        }
         if (cy == null) return;
         var gw = window.__KPI_DATA_GATEWAY;
         if (!gw || typeof gw.setJson !== 'function') {
@@ -17723,6 +17860,18 @@ Target Sales</p>
         window.__ANNUAL_DATA.calendarYear = currentYear;
         buildYearMenu();
       };
+      (function hydrateYearControlFromNav() {
+        var nav = readAnnualNav();
+        if (!nav || typeof nav !== 'object') return;
+        if (nav.calendarYear != null && Number.isFinite(Number(nav.calendarYear))) {
+          currentYear = Number(nav.calendarYear);
+          window.__ANNUAL_DATA.calendarYear = currentYear;
+        }
+        if (nav.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(nav.selectedIso))) {
+          window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+          window.__ANNUAL_DATA.daily.selectedDate = String(nav.selectedIso);
+        }
+      })();
       renderYear();
     })();
     (function () {
@@ -19950,6 +20099,14 @@ Target Sales</p>
           syncToAnnualDaily();
         }
 
+        function hydrateNavFromStorage() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (!nav || typeof nav !== 'object') return;
+          if (nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+          }
+        }
+
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
@@ -19990,6 +20147,11 @@ Target Sales</p>
         }
 
         function getSelectedDate() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (nav && nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+            return nav.selectedIso;
+          }
           if (store.meta.selectedDate) return store.meta.selectedDate;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
             return window.__ANNUAL_DATA.daily.selectedDate;
@@ -20198,8 +20360,16 @@ Target Sales</p>
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }
           })();
+          hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
-            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            var navCy = gw().getJson(SELECTED_DATE_KEY);
+            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
+            } else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            } else {
+              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            }
           }
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
@@ -20836,6 +21006,7 @@ Target Sales</p>
           init: init,
           reload: function () {
             loadStore();
+            hydrateNavFromStorage();
             reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
@@ -23314,10 +23485,10 @@ Target Sales</p>
         var office = document.body.classList.contains('office-mode');
         var file = office
           ? expanded
-            ? 'focus_bar_office_mode_open.svg'
+            ? 'focus_bar_office_mode_open_ver2.svg'
             : 'focus_bar_office_mode.svg'
           : expanded
-            ? 'focus_bar_open.svg'
+            ? 'focus_bar_open_ver2.svg'
             : 'focus_bar.svg';
         var next = dir + file;
         if (focusBarImg.getAttribute('src') !== next) focusBarImg.setAttribute('src', next);
@@ -23863,12 +24034,63 @@ Target Sales</p>
         });
       }
 
+      var __focusDateLockIso = null;
+      var __focusDateLockTimer = null;
+      function lockFocusDateSync(iso, ms) {
+        if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return;
+        __focusDateLockIso = String(iso);
+        if (__focusDateLockTimer != null) window.clearTimeout(__focusDateLockTimer);
+        __focusDateLockTimer = window.setTimeout(function () {
+          __focusDateLockIso = null;
+          __focusDateLockTimer = null;
+        }, Number(ms) > 0 ? Number(ms) : 1500);
+      }
+      window.__ANNUAL_UI = window.__ANNUAL_UI || {};
+      window.__ANNUAL_UI.lockFocusDateSync = lockFocusDateSync;
+      window.__ANNUAL_UI.getFocusDateLockIso = function () {
+        return __focusDateLockIso;
+      };
+
+      function scrollTableToIso(iso, opts) {
+        opts = opts || {};
+        if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return false;
+        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
+        if (!rows || !rows.length) return false;
+        var idx = -1;
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].getAttribute('data-iso-date') === String(iso)) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx < 0) return false;
+        if (snapTimer) clearTimeout(snapTimer);
+        snapping = true;
+        __geomCache = null;
+        __anchorRangeCache = null;
+        if (opts.lockMs) lockFocusDateSync(String(iso), opts.lockMs);
+        var target = getScrollTopForRowIndex(idx);
+        tableScroll.scrollTop = target;
+        requestAnimationFrame(function () {
+          __geomCache = null;
+          var t2 = getScrollTopForRowIndex(idx);
+          tableScroll.scrollTop = t2;
+          snapping = false;
+          if (typeof window.__refreshAnnualFocusBarLower === 'function') {
+            window.__refreshAnnualFocusBarLower();
+          }
+        });
+        return true;
+      }
+      window.__ANNUAL_UI.scrollTableToIso = scrollTableToIso;
+
       function syncDailyDateFromFocusedRowForIndex(idx) {
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return;
         if (idx < 0 || idx >= rows.length) return;
         var iso = rows[idx].getAttribute('data-iso-date');
         if (!iso) return;
+        if (__focusDateLockIso && iso !== __focusDateLockIso) return;
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
           window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
         }
@@ -23967,12 +24189,31 @@ Target Sales</p>
         var source = ev && ev.detail && ev.detail.source;
         if (!iso) return;
         if (source === 'focus-sync') return;
+        if (
+          source === 'timeline-bootstrap' ||
+          source === 'initial-sync' ||
+          source === 'initial'
+        ) {
+          lockFocusDateSync(iso, 1800);
+        }
 
+        var hardBootstrap =
+          source === 'timeline-bootstrap' ||
+          source === 'initial-sync' ||
+          source === 'initial';
         // Year変更やテーブル再描画直後に飛んだ場合に備えて短いリトライを入れる
         var tries = 0;
-        var maxTries = 6;
+        var maxTries = hardBootstrap ? 20 : 6;
         function tryScrollToISO() {
           tries += 1;
+          if (
+            hardBootstrap &&
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.scrollTableToIso === 'function' &&
+            window.__ANNUAL_UI.scrollTableToIso(iso, { lockMs: 1800 })
+          ) {
+            return;
+          }
           var row = document.querySelector('#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]');
           if (!row) {
             if (tries < maxTries) {
@@ -24592,8 +24833,33 @@ Target Sales</p>
           rowsRoot.appendChild(row);
         }
 
+        var bootIsoForScroll = null;
         if (prevScroll != null && scrollEl) {
           scrollEl.scrollTop = prevScroll;
+        } else if (scrollEl) {
+          try {
+            if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+              bootIsoForScroll = KpiYearStore.getSelectedDate();
+            }
+          } catch (_bootE) {}
+          if (!bootIsoForScroll && daily && daily.selectedDate) bootIsoForScroll = daily.selectedDate;
+          if (bootIsoForScroll && /^\d{4}-\d{2}-\d{2}$/.test(String(bootIsoForScroll))) {
+            window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
+            window.__ANNUAL_DATA.daily.selectedDate = String(bootIsoForScroll);
+          }
+        }
+        if (
+          bootIsoForScroll &&
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.scrollTableToIso === 'function'
+        ) {
+          window.__ANNUAL_UI.scrollTableToIso(String(bootIsoForScroll), { lockMs: 1800 });
+        } else if (bootIsoForScroll) {
+          document.dispatchEvent(
+            new CustomEvent('annual:dailyDateChanged', {
+              detail: { isoDate: String(bootIsoForScroll), source: 'timeline-bootstrap' },
+            })
+          );
         }
         if (document.body.classList.contains('monthly-page')) {
           if (opts.boundsHint === 'anchor-year-only') {
@@ -25177,6 +25443,28 @@ Target Sales</p>
         if (raf) cancelAnimationFrame(raf);
         raf = requestAnimationFrame(function () {
           var state = getFocusedRowState();
+          var lockIso =
+            window.__ANNUAL_UI && typeof window.__ANNUAL_UI.getFocusDateLockIso === 'function'
+              ? window.__ANNUAL_UI.getFocusDateLockIso()
+              : null;
+          if (lockIso) {
+            var lockRow = rowsRoot.querySelector(
+              '.annual-daily-row[data-iso-date="' + lockIso + '"]'
+            );
+            if (lockRow) {
+              var lockRows = rowsRoot.children;
+              var lockIdx = -1;
+              for (var li = 0; li < lockRows.length; li++) {
+                if (lockRows[li] === lockRow) {
+                  lockIdx = li;
+                  break;
+                }
+              }
+              if (lockIdx >= 0) {
+                state = { row: lockRow, offset: state.offset, idx: lockIdx };
+              }
+            }
+          }
           var idx = state.idx;
           if (idx !== __lowerLastIdx) {
             __lowerLastIdx = idx;
@@ -30622,6 +30910,432 @@ Target Sales</p>
         document.getElementById('past-sales-summary-toggle'),
         STORAGE_PAST
       );
+    })();
+  </script>
+  <script>
+    /* INSIGHT-WEEKLY-MEMO */
+    (function () {
+      var MEMO_COLS = ['store', 'area', 'social', 'marketing', 'promo', 'reservation'];
+      var WD_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEATHER_PRESETS = [
+        { code: '', ja: '—', en: '—' },
+        { code: 'sunny', ja: '晴れ', en: 'Sunny' },
+        { code: 'cloudy', ja: '曇り', en: 'Cloudy' },
+        { code: 'rain', ja: '雨', en: 'Rain' },
+        { code: 'snow', ja: '雪', en: 'Snow' },
+        { code: 'thunder', ja: '雷', en: 'Thunder' },
+        { code: 'storm', ja: '嵐', en: 'Storm' },
+        { code: 'gale', ja: '暴風', en: 'Gale' }
+      ];
+      var useJa =
+        String(document.documentElement.getAttribute('lang') || '')
+          .toLowerCase()
+          .indexOf('ja') === 0;
+      var memoTooltipMax = useJa ? 300 : 500;
+      var noneLabel = useJa ? 'なし' : 'None';
+      var offSuffix = useJa ? ' OFF' : ' OFF';
+      var todayNavLabel = useJa ? '本日' : 'Today';
+      var dash = '—';
+      var sharedAnchorIso = null;
+      var roots = [];
+
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
+
+      function isoFromParts(y, m0, d) {
+        return y + '-' + pad2(m0 + 1) + '-' + pad2(d);
+      }
+
+      function parseIso(iso) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+        if (!m) return null;
+        return {
+          y: Number(m[1]),
+          m0: Number(m[2]) - 1,
+          d: Number(m[3])
+        };
+      }
+
+      function dateFromIso(iso) {
+        var p = parseIso(iso);
+        if (!p) return null;
+        return new Date(p.y, p.m0, p.d);
+      }
+
+      function isoFromDate(dt) {
+        return isoFromParts(dt.getFullYear(), dt.getMonth(), dt.getDate());
+      }
+
+      function addDaysIso(iso, delta) {
+        var dt = dateFromIso(iso);
+        if (!dt) return iso;
+        dt.setDate(dt.getDate() + delta);
+        return isoFromDate(dt);
+      }
+
+      function operatingYear() {
+        if (window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+          var oy = Number(KpiYearStore.getOperatingYear());
+          if (Number.isFinite(oy)) return oy;
+        }
+        if (window.__ANNUAL_DATA && Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))) {
+          return Number(window.__ANNUAL_DATA.calendarYear);
+        }
+        return new Date().getFullYear();
+      }
+
+      function defaultAnchorIso() {
+        if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          var storeSel = String(KpiYearStore.getSelectedDate() || '').trim();
+          if (parseIso(storeSel)) return storeSel;
+        }
+        if (
+          window.__ANNUAL_DATA &&
+          window.__ANNUAL_DATA.daily &&
+          window.__ANNUAL_DATA.daily.selectedDate
+        ) {
+          var sel = String(window.__ANNUAL_DATA.daily.selectedDate);
+          if (parseIso(sel)) return sel;
+        }
+        var now = new Date();
+        var y = operatingYear();
+        if (now.getFullYear() === y) return isoFromDate(now);
+        return y + '-01-01';
+      }
+
+      function todayIso() {
+        var now = new Date();
+        var y = operatingYear();
+        if (now.getFullYear() === y) return isoFromDate(now);
+        return y + '-01-01';
+      }
+
+      function weatherLabel(code) {
+        var s = String(code == null ? '' : code);
+        for (var i = 0; i < WEATHER_PRESETS.length; i++) {
+          if (WEATHER_PRESETS[i].code === s) {
+            return useJa ? WEATHER_PRESETS[i].ja : WEATHER_PRESETS[i].en;
+          }
+        }
+        return dash;
+      }
+
+      function readBusinessDay(iso) {
+        if (window.KpiYearStore && typeof KpiYearStore.readBusinessDay === 'function') {
+          return KpiYearStore.readBusinessDay(iso);
+        }
+        return null;
+      }
+
+      function loadYearPayload(year) {
+        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {
+          return null;
+        }
+        return KpiYearStore.loadMepYearPayload(year);
+      }
+
+      function memoRowIdsForYear(year) {
+        var payload = loadYearPayload(year);
+        if (!payload) return [];
+        if (payload.mepMemoRows && payload.mepMemoRows.length) {
+          return payload.mepMemoRows.slice(0, 6).map(function (row) {
+            return row.id;
+          });
+        }
+        var memos = (payload.dailyMeta && payload.dailyMeta.memos) || {};
+        return Object.keys(memos);
+      }
+
+      function readMemoText(year, rowId, iso) {
+        var payload = loadYearPayload(year);
+        if (!payload || !payload.dailyMeta || !payload.dailyMeta.memos) return '';
+        var byRow = payload.dailyMeta.memos[rowId];
+        if (!byRow) return '';
+        return String(byRow[iso] == null ? '' : byRow[iso]).trim();
+      }
+
+      function readWeatherCode(year, iso) {
+        var payload = loadYearPayload(year);
+        if (!payload || !payload.dailyMeta || !payload.dailyMeta.weather) return '';
+        return String(payload.dailyMeta.weather[iso] == null ? '' : payload.dailyMeta.weather[iso]);
+      }
+
+      function truncateTooltip(text) {
+        text = String(text || '');
+        if (text.length <= memoTooltipMax) return text;
+        return text.slice(0, memoTooltipMax);
+      }
+
+      function memoDisplayText(text) {
+        var t = String(text || '').trim();
+        return t ? t : noneLabel;
+      }
+
+      function setCellInner(td, text) {
+        var inner = td.querySelector('.insight-analyze-weekly__cell-inner');
+        if (inner) inner.textContent = text;
+        else td.textContent = text;
+      }
+
+      function applyMemoCell(td, rawText) {
+        var full = truncateTooltip(rawText);
+        var display = memoDisplayText(full);
+        setCellInner(td, display);
+        if (full) {
+          td.classList.add('insight-analyze-weekly__memo');
+          td.setAttribute('data-memo', full);
+        } else {
+          td.classList.remove('insight-analyze-weekly__memo');
+          td.removeAttribute('data-memo');
+        }
+      }
+
+      function weekIsoList(anchorIso) {
+        var list = [];
+        var i;
+        for (i = -3; i <= 3; i++) list.push(addDaysIso(anchorIso, i));
+        return list;
+      }
+
+      function formatNavDate(iso) {
+        var p = parseIso(iso);
+        if (!p) return iso;
+        var dt = new Date(p.y, p.m0, p.d);
+        return p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+      }
+
+      function formatRowDate(iso, isOff) {
+        var p = parseIso(iso);
+        if (!p) return iso;
+        var dt = new Date(p.y, p.m0, p.d);
+        var base = p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        return isOff ? base + offSuffix : base;
+      }
+
+      function updateNav(root, anchorIso) {
+        var yearEl = root.querySelector('.insight-analyze-weekly__year');
+        var dateBtn = root.querySelector('[data-weekly-nav="date-pick"]');
+        var todayBtn = root.querySelector('[data-weekly-nav="today"]');
+        var dateInput = root.querySelector('.insight-analyze-weekly__date-input');
+        var p = parseIso(anchorIso);
+        if (yearEl && p) yearEl.textContent = String(p.y);
+        if (dateBtn) dateBtn.textContent = formatNavDate(anchorIso);
+        if (todayBtn) todayBtn.textContent = todayNavLabel;
+        if (dateInput) dateInput.value = anchorIso;
+      }
+
+      function renderRoot(root) {
+        var anchorIso = root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+        root.__weeklyAnchorIso = anchorIso;
+        sharedAnchorIso = anchorIso;
+        var tbody = root.querySelector('.insight-analyze-weekly__table tbody');
+        if (!tbody) return;
+        updateNav(root, anchorIso);
+        var isoList = weekIsoList(anchorIso);
+        tbody.innerHTML = '';
+        isoList.forEach(function (iso) {
+          var p = parseIso(iso);
+          if (!p) return;
+          var biz = readBusinessDay(iso);
+          var isOff = biz === false;
+          var isToday = iso === anchorIso;
+          var tr = document.createElement('tr');
+          if (isOff) tr.className = 'insight-analyze-weekly__row--off';
+          else if (isToday) tr.className = 'insight-analyze-weekly__row--today';
+
+          var tdDate = document.createElement('td');
+          tdDate.className = 'insight-analyze-weekly__col--date';
+          var spanDate = document.createElement('span');
+          spanDate.className = 'insight-analyze-weekly__cell-inner';
+          spanDate.textContent = formatRowDate(iso, isOff);
+          tdDate.appendChild(spanDate);
+          tr.appendChild(tdDate);
+
+          var tdWeather = document.createElement('td');
+          tdWeather.className = 'insight-analyze-weekly__col--weather';
+          var spanWeather = document.createElement('span');
+          spanWeather.className = 'insight-analyze-weekly__cell-inner';
+          spanWeather.textContent = isOff ? dash : weatherLabel(readWeatherCode(p.y, iso));
+          tdWeather.appendChild(spanWeather);
+          tr.appendChild(tdWeather);
+
+          var rowIds = memoRowIdsForYear(p.y);
+          MEMO_COLS.forEach(function (colKey, idx) {
+            var td = document.createElement('td');
+            td.className = 'insight-analyze-weekly__col--' + colKey;
+            var span = document.createElement('span');
+            span.className = 'insight-analyze-weekly__cell-inner';
+            td.appendChild(span);
+            if (isOff) setCellInner(td, dash);
+            else {
+              var rowId = rowIds[idx];
+              applyMemoCell(td, rowId ? readMemoText(p.y, rowId, iso) : '');
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderAll() {
+        roots.forEach(renderRoot);
+      }
+
+      function setAnchor(iso) {
+        if (!parseIso(iso)) return;
+        sharedAnchorIso = iso;
+        roots.forEach(function (root) {
+          root.__weeklyAnchorIso = iso;
+        });
+        renderAll();
+      }
+
+      function bindRoot(root) {
+        if (root.__weeklyMemoBound) return;
+        root.__weeklyMemoBound = true;
+        var scroll = root.querySelector('.insight-analyze-weekly__table-scroll');
+        if (scroll) scroll.style.pointerEvents = 'auto';
+        var nav = root.querySelector('.insight-analyze-weekly__nav');
+        var dateInput = root.querySelector('.insight-analyze-weekly__date-input');
+        if (!nav) return;
+        nav.addEventListener('click', function (ev) {
+          var btn = ev.target.closest('[data-weekly-nav]');
+          if (!btn || !root.contains(btn)) return;
+          var action = btn.getAttribute('data-weekly-nav');
+          var anchor = root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+          var p = parseIso(anchor);
+          if (!p) return;
+          if (action === 'year-prev') {
+            setAnchor(isoFromParts(p.y - 1, p.m0, p.d));
+            return;
+          }
+          if (action === 'year-next') {
+            setAnchor(isoFromParts(p.y + 1, p.m0, p.d));
+            return;
+          }
+          if (action === 'day-prev') {
+            setAnchor(addDaysIso(anchor, -1));
+            return;
+          }
+          if (action === 'day-next') {
+            setAnchor(addDaysIso(anchor, 1));
+            return;
+          }
+          if (action === 'today') {
+            setAnchor(todayIso());
+            return;
+          }
+          if (action === 'date-pick' && dateInput) {
+            dateInput.value = anchor;
+            if (typeof dateInput.showPicker === 'function') dateInput.showPicker();
+            else dateInput.click();
+          }
+        });
+        if (dateInput) {
+          dateInput.addEventListener('change', function () {
+            if (dateInput.value) setAnchor(dateInput.value);
+          });
+        }
+      }
+
+      function init() {
+        roots = Array.prototype.slice.call(document.querySelectorAll('.insight-analyze-weekly'));
+        if (!roots.length) return;
+        if (!sharedAnchorIso) sharedAnchorIso = defaultAnchorIso();
+        roots.forEach(bindRoot);
+        renderAll();
+      }
+
+      document.addEventListener('kpi:mepDataChanged', function () {
+        renderAll();
+      });
+      document.addEventListener('kpi:selectedDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
+      });
+      document.addEventListener('annual:dailyDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
+      });
+      window.addEventListener('storage', function (ev) {
+        if (!ev || !ev.key) return;
+        if (ev.key === 'kpiNavigator.kpiYearStore') renderAll();
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+  <script>
+    /* INSIGHT-STRATEGY-USER-NOTE */
+    (function () {
+      var HARD = 200;
+      var TOOLTIP_MAX = 200;
+
+      function parseIso(iso) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+        if (!m) return null;
+        return { y: Number(m[1]), m0: Number(m[2]) - 1 };
+      }
+
+      function focusYearMonth() {
+        var iso = null;
+        if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          iso = KpiYearStore.getSelectedDate();
+        }
+        if (!iso && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
+          iso = window.__ANNUAL_DATA.daily.selectedDate;
+        }
+        var p = parseIso(iso);
+        if (p) return p;
+        var now = new Date();
+        var y = now.getFullYear();
+        if (window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+          var oy = Number(KpiYearStore.getOperatingYear());
+          if (Number.isFinite(oy)) y = oy;
+        }
+        return { y: y, m0: now.getMonth() };
+      }
+
+      function readNote(year, month0) {
+        if (!window.KpiYearStore || typeof KpiYearStore.readStrategyUserNote !== 'function') return '';
+        return String(KpiYearStore.readStrategyUserNote(year, month0) || '').trim().slice(0, HARD);
+      }
+
+      function targets() {
+        return Array.prototype.slice.call(
+          document.querySelectorAll('#insight-strategy-user-note[data-insight-source="monthly-edit-float"]')
+        );
+      }
+
+      function applyText(el, text) {
+        el.textContent = text;
+        if (text) {
+          el.setAttribute('title', text.length > TOOLTIP_MAX ? text.slice(0, TOOLTIP_MAX) : text);
+        } else {
+          el.removeAttribute('title');
+        }
+      }
+
+      function refresh() {
+        var fm = focusYearMonth();
+        var text = readNote(fm.y, fm.m0);
+        targets().forEach(function (el) {
+          applyText(el, text);
+        });
+      }
+
+      refresh();
+      document.addEventListener('kpi:mepDataChanged', refresh);
+      document.addEventListener('monthly:editFloatConfirmed', refresh);
+      document.addEventListener('kpi:selectedDateChanged', refresh);
+      window.addEventListener('storage', function (ev) {
+        if (ev.key === 'kpiNavigator.kpiYearStore') refresh();
+      });
     })();
   </script>
 </body>
