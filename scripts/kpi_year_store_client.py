@@ -1331,6 +1331,14 @@ def kpi_year_store_js() -> str:
           syncToAnnualDaily();
         }}
 
+        function hydrateNavFromStorage() {{
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (!nav || typeof nav !== 'object') return;
+          if (nav.selectedIso && validIso(nav.selectedIso)) {{
+            store.meta.selectedDate = nav.selectedIso;
+          }}
+        }}
+
         function setSelectedDate(iso, source) {{
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
@@ -1352,6 +1360,11 @@ def kpi_year_store_js() -> str:
         }}
 
         function getSelectedDate() {{
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (nav && nav.selectedIso && validIso(nav.selectedIso)) {{
+            store.meta.selectedDate = nav.selectedIso;
+            return nav.selectedIso;
+          }}
           if (store.meta.selectedDate) return store.meta.selectedDate;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {{
             return window.__ANNUAL_DATA.daily.selectedDate;
@@ -1560,8 +1573,16 @@ def kpi_year_store_js() -> str:
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }}
           }})();
+          hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {{
-            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            var navCy = gw().getJson(SELECTED_DATE_KEY);
+            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {{
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
+            }} else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {{
+              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            }} else {{
+              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            }}
           }}
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
@@ -1577,6 +1598,7 @@ def kpi_year_store_js() -> str:
           init: init,
           reload: function () {{
             loadStore();
+            hydrateNavFromStorage();
             reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();

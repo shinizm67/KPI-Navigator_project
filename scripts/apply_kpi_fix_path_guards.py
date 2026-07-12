@@ -50,15 +50,35 @@ MEP_GUARD_RE = re.compile(
     re.MULTILINE,
 )
 
+MEP_PATH_BLOCKED_CSS = """
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table tr.mef-row--daily-input td .monthly-edit-float__input,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__cb[data-action='bizday-toggle'] {
+      opacity: 0.72;
+    }
+"""
+
+MEP_CSS_ANCHOR = "    .kpi-daily-input-path__side.is-inactive {"
+
+
+def inject_annual_guards(text: str) -> str:
+    if "/* KPI-EDIT-GUARDS */" in text and GUARD_BLOCK_RE.search(text):
+        return GUARD_BLOCK_RE.sub("\n" + GUARDS.rstrip() + "\n", text, count=1)
+    if "/* KPI-EDIT-GUARDS */" in text:
+        return ANNUAL_EMPTY_GUARD_RE.sub("\n" + GUARDS.rstrip() + "\n", text, count=1)
+    anchor = "/* KPI-YEAR-STORE */"
+    pos = text.find(anchor)
+    if pos < 0:
+        raise SystemExit("KPI-YEAR-STORE anchor not found")
+    end = text.find("})();", pos)
+    if end < 0:
+        raise SystemExit("KPI-YEAR-STORE block end not found")
+    end = text.find("\n", end) + 1
+    return text[:end] + "\n" + GUARDS.rstrip() + "\n" + text[end:]
+
 
 def patch_annual(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    if "/* KPI-EDIT-GUARDS */" not in text:
-        raise SystemExit(f"KPI-EDIT-GUARDS marker missing: {path}")
-    if not GUARD_BLOCK_RE.search(text):
-        text = ANNUAL_EMPTY_GUARD_RE.sub("\n" + GUARDS.rstrip() + "\n", text, count=1)
-    else:
-        text = GUARD_BLOCK_RE.sub("\n" + GUARDS.rstrip() + "\n", text, count=1)
+    text = inject_annual_guards(text)
     text = text.replace(
         ".sales-data-modal__pane--path-blocked .sales-data-modal__sales-input,\n"
         "    .annual-edit-modal--path-blocked .annual-edit-modal__sales-input {",
@@ -86,6 +106,10 @@ def patch_mep(path: Path) -> None:
     if not MEP_GUARD_RE.search(text):
         raise SystemExit(f"MEP guard block not found: {path}")
     text = MEP_GUARD_RE.sub("\n" + MEP_REFRESH.rstrip() + "\n", text, count=1)
+    if ".monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table" not in text:
+        if MEP_CSS_ANCHOR not in text:
+            raise SystemExit(f"MEP CSS anchor not found: {path}")
+        text = text.replace(MEP_CSS_ANCHOR, MEP_PATH_BLOCKED_CSS + "\n" + MEP_CSS_ANCHOR, 1)
     path.write_text(text, encoding="utf-8")
     print(f"patched mep guards: {path}")
 

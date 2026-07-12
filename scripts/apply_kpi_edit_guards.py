@@ -65,7 +65,11 @@ EDIT_GUARDS_JS = """      /* KPI-EDIT-GUARDS */
         function applyPastSalesGuards() {
           var modal = document.getElementById('past-sales-modal');
           if (!modal || modal.hidden) return;
-          var inputTab = modal.getAttribute('data-psm-tab') === 'input';
+          var inputTab = (function () {
+            var panel = document.getElementById('past-sales-modal-body');
+            if (!panel && modal) panel = modal.querySelector('.past-sales-modal__panel');
+            return !panel || panel.getAttribute('data-psm-tab') !== 'analyze';
+          })();
           var viewOnly = inputTab && !pastSalesEditable();
           var pane = document.getElementById('past-sales-pane-input');
           if (pane) {
@@ -440,24 +444,16 @@ ANNUAL_EDIT_OPEN_PATCH_NEW = """        renderTable();
 
 def inject_edit_guards_js(text: str) -> str:
     guards = (ROOT / "scripts" / "_kpi_edit_guards.js").read_text(encoding="utf-8")
-    if KPI_EDIT_GUARDS_MARKER not in text:
-        anchor = "/* KPI-YEAR-STORE */"
-        pos = text.find(anchor)
-        if pos < 0:
-            raise SystemExit("KPI-YEAR-STORE anchor not found")
-        end = text.find("})();", pos)
-        if end < 0:
-            raise SystemExit("KPI-YEAR-STORE block end not found")
-        end = text.find("\n", end) + 1
-        return text[:end] + "\n" + guards + text[end:]
-    if "window.__KPI_EDIT_GUARDS" in text:
+    lease_anchor = "      /* KPI-EDIT-LEASE-HOOKS */"
+    if lease_anchor not in text:
+        raise SystemExit("KPI-EDIT-LEASE-HOOKS anchor not found")
+    if KPI_EDIT_GUARDS_MARKER in text:
         pattern = re.compile(
-            r"/\* KPI-EDIT-GUARDS \*/.*?\n      \(function \(\) \{.*?\n      \}\)\(\);\n",
-            re.DOTALL,
+            r"/\* KPI-EDIT-GUARDS \*/[\s\S]*?\n      \}\)\(\);\n",
+            re.MULTILINE,
         )
         return pattern.sub(guards.rstrip() + "\n", text, count=1)
-    empty = re.compile(r"\n\s*/\* KPI-EDIT-GUARDS \*/\s*\n+(?=\s*/\* KPI-)", re.MULTILINE)
-    return empty.sub("\n" + guards.rstrip() + "\n", text, count=1)
+    return text.replace(lease_anchor, guards.rstrip() + "\n\n" + lease_anchor, 1)
 
 
 def remove_past_sales_edit_toggle(text: str) -> str:
@@ -478,7 +474,6 @@ def remove_past_sales_edit_toggle(text: str) -> str:
 
 def patch_annual(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    text = remove_past_sales_edit_toggle(text)
     if ANNUAL_PERSIST_OLD in text:
         text = text.replace(ANNUAL_PERSIST_OLD, ANNUAL_PERSIST_NEW, 1)
     if PAST_SALES_OPEN_PATCH_OLD in text:

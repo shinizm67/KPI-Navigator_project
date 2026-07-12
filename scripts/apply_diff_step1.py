@@ -20,6 +20,11 @@ PAGES = [
     ROOT / "en/app/monthly/index.html",
 ]
 
+ANNUAL_PAGES = {
+    ROOT / "app/annual/index.html",
+    ROOT / "en/app/annual/index.html",
+}
+
 DIFF_CSS_MARKER = "/* KPI-TW-DIFF-SEVERITY */"
 
 DIFF_CSS_OLD = """    .annual-daily-row__cell--neg {
@@ -37,12 +42,12 @@ DIFF_CSS_NEW_MONTHLY = f"""    .annual-daily-row__cell--neg {{
       color: #ff6b6b;
     }}
     {DIFF_CSS_MARKER}
-    .annual-daily-row__cell.tw-diff--win,
-    .annual-daily-focus-bar-lower__cell.tw-diff--win {{
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--win,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--win {{
       color: #58e1f3;
     }}
-    .annual-daily-row__cell.tw-diff--neutral,
-    .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--neutral,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
       color: #58e1f3;
     }}
     .annual-daily-row__cell.tw-diff--sev-90,
@@ -76,12 +81,12 @@ DIFF_CSS_NEW = f"""    .annual-daily-row__cell--neg {{
       color: #ff6b6b;
     }}
     {DIFF_CSS_MARKER}
-    .annual-daily-row__cell.tw-diff--win,
-    .annual-daily-focus-bar-lower__cell.tw-diff--win {{
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--win,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--win {{
       color: #58e1f3;
     }}
-    .annual-daily-row__cell.tw-diff--neutral,
-    .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--neutral,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
       color: #58e1f3;
     }}
     .annual-daily-row__cell.tw-diff--sev-90,
@@ -126,6 +131,13 @@ OFFICE_DIFF_CSS_NEW = f"""    .office-mode .annual-daily-row__cell--neg {{
     .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
       color: #111;
     }}
+    /* KPI-ANNUAL-TW-OFFICE-DIFF-WIN */
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--win,
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--neutral,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--win,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--neutral {{
+      color: #111;
+    }}
     .office-mode .annual-daily-row__cell.tw-diff--sev-90,
     .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {{
       color: #e65100;
@@ -151,6 +163,116 @@ OFFICE_DIFF_CSS_NEW = f"""    .office-mode .annual-daily-row__cell--neg {{
       color: #7f0000;
     }}
     /* Office: Table Window 上端から Sci-Fi と同じ top:235px。閉じ SVG = focus_bar_office_mode.svg */"""
+
+ANNUAL_FB_DIFF_LANE_MARKER = "/* KPI-ANNUAL-FB-OFFICE-TW-DIFF-LANE */"
+
+ANNUAL_FB_DIFF_LANE_ANCHOR = """    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
+      color: #6a6a6a;
+      border-right-color: #bdbdbd;
+    }
+    .office-mode .annual-daily-focus-wing-hit::before {"""
+
+ANNUAL_FB_DIFF_LANE_BLOCK = """    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell {
+      color: #6a6a6a;
+      border-right-color: #bdbdbd;
+    }
+    /* KPI-ANNUAL-FB-OFFICE-TW-DIFF-LANE */
+    /* Focus Bar 下段: ベース色（#111 / OFF #6a6a6a）より TW diff severity を優先 */
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {
+      color: #e65100;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80 {
+      color: #d84315;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70 {
+      color: #c62828;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60 {
+      color: #b71c1c;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50 {
+      color: #9a0007;
+    }
+    .office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    .office-mode .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    body.annual-focus-bar-expanded.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below {
+      color: #7f0000;
+    }
+    /* Sci-Fi: 下段ベース #58e1f3 / OFF 薄シアンより TW diff severity を優先 */
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-90,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-80,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-70,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-60,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-50,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    body:not(.office-mode) .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--sev-below,
+    body:not(.office-mode) .annual-daily-focus-bar-lower.annual-daily-focus-bar-lower--off .annual-daily-focus-bar-lower__cell.tw-diff--sev-below {
+      color: #b71c1c;
+    }
+    .office-mode .annual-daily-focus-wing-hit::before {"""
+
+SCI_FI_DIFF_WIN_OLD = """    .annual-daily-row__cell.tw-diff--win,
+    .annual-daily-focus-bar-lower__cell.tw-diff--win {
+      color: #58e1f3;
+    }
+    .annual-daily-row__cell.tw-diff--neutral,
+    .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #58e1f3;
+    }"""
+
+SCI_FI_DIFF_WIN_NEW = """    body:not(.office-mode) .annual-daily-row__cell.tw-diff--win,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--win {
+      color: #58e1f3;
+    }
+    body:not(.office-mode) .annual-daily-row__cell.tw-diff--neutral,
+    body:not(.office-mode) .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #58e1f3;
+    }"""
+
+ANNUAL_TW_OFFICE_DIFF_WIN_MARKER = "/* KPI-ANNUAL-TW-OFFICE-DIFF-WIN */"
+
+ANNUAL_TW_OFFICE_DIFF_WIN_ANCHOR = """    .office-mode .annual-daily-row__cell.tw-diff--neutral,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-90,"""
+
+ANNUAL_TW_OFFICE_DIFF_WIN_BLOCK = """    .office-mode .annual-daily-row__cell.tw-diff--neutral,
+    .office-mode .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #111;
+    }
+    /* KPI-ANNUAL-TW-OFFICE-DIFF-WIN */
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--win,
+    body.office-mode .annual-daily-row .annual-daily-row__cell.tw-diff--neutral,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--win,
+    body.office-mode .annual-daily-focus-bar-lower .annual-daily-focus-bar-lower__cell.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .annual-daily-row__cell.tw-diff--sev-90,"""
 
 FOCUS_BAR_SYNC_OLD = """      function copyGroupText(row, groupClass) {
         var group = row.querySelector(groupClass);
@@ -231,7 +353,23 @@ FOCUS_BAR_SYNC_NEW = """      var TW_DIFF_FB_INDICES = { 3: true, 7: true, 11: t
       }"""
 
 
-def patch_css(text: str) -> str:
+def patch_sci_fi_diff_scoping(text: str) -> str:
+    if "body:not(.office-mode) .annual-daily-row__cell.tw-diff--win" in text:
+        return text
+    if SCI_FI_DIFF_WIN_OLD not in text:
+        return text
+    return text.replace(SCI_FI_DIFF_WIN_OLD, SCI_FI_DIFF_WIN_NEW, 1)
+
+
+def patch_annual_tw_office_diff_win(text: str) -> str:
+    if ANNUAL_TW_OFFICE_DIFF_WIN_MARKER in text:
+        return text
+    if ANNUAL_TW_OFFICE_DIFF_WIN_ANCHOR not in text:
+        return text
+    return text.replace(ANNUAL_TW_OFFICE_DIFF_WIN_ANCHOR, ANNUAL_TW_OFFICE_DIFF_WIN_BLOCK, 1)
+
+
+def patch_css(text: str, *, annual_only: bool = False) -> str:
     if DIFF_CSS_MARKER in text:
         text = text
     elif DIFF_CSS_OLD in text:
@@ -240,11 +378,26 @@ def patch_css(text: str) -> str:
         text = text.replace(DIFF_CSS_OLD_MONTHLY, DIFF_CSS_NEW_MONTHLY, 1)
     else:
         raise SystemExit("TW diff severity CSS patch miss")
+    if not annual_only:
+        return patch_sci_fi_diff_scoping(text)
     if OFFICE_DIFF_CSS_NEW.split("office-mode .annual-daily-row__cell.tw-diff--win")[0] in text:
-        return text
+        text = patch_annual_fb_diff_lane(text)
+        text = patch_sci_fi_diff_scoping(text)
+        return patch_annual_tw_office_diff_win(text)
     if OFFICE_DIFF_CSS_OLD not in text:
         raise SystemExit("office TW diff severity CSS patch miss")
-    return text.replace(OFFICE_DIFF_CSS_OLD, OFFICE_DIFF_CSS_NEW, 1)
+    text = text.replace(OFFICE_DIFF_CSS_OLD, OFFICE_DIFF_CSS_NEW, 1)
+    text = patch_annual_fb_diff_lane(text)
+    text = patch_sci_fi_diff_scoping(text)
+    return patch_annual_tw_office_diff_win(text)
+
+
+def patch_annual_fb_diff_lane(text: str) -> str:
+    if ANNUAL_FB_DIFF_LANE_MARKER in text:
+        return text
+    if ANNUAL_FB_DIFF_LANE_ANCHOR not in text:
+        raise SystemExit("annual FB diff lane CSS anchor miss")
+    return text.replace(ANNUAL_FB_DIFF_LANE_ANCHOR, ANNUAL_FB_DIFF_LANE_BLOCK, 1)
 
 
 def patch_focus_bar_sync(text: str) -> str:
@@ -257,7 +410,7 @@ def patch_focus_bar_sync(text: str) -> str:
 
 def patch_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    text = patch_css(text)
+    text = patch_css(text, annual_only=path in ANNUAL_PAGES)
     text = patch_focus_bar_sync(text)
     path.write_text(text, encoding="utf-8")
     print(f"wrote {path.relative_to(ROOT)}")

@@ -23613,6 +23613,18 @@ Cumulative Target Annual Sales</p>
         return idx;
       }
 
+      /* KPI-ARP-PHASE5D: Focus row is active-year only (no snap to ±14d padding) */
+      function clampRowIndexToActiveYear(idx) {
+        var range = anchorYearRowRange();
+        if (range.first < 0 || range.last < 0) return idx;
+        if (idx < range.first) return range.first;
+        if (idx > range.last) return range.last;
+        return idx;
+      }
+      function getNearestActiveFocusRowIndex() {
+        return clampRowIndexToActiveYear(getNearestFocusRowIndex());
+      }
+
       /* KPI-ARP-PHASE5A: 行中心をアンカーに一致させる scrollTop（キャッシュ算術・reflow なし） */
       function getScrollTopForRowIndex(idx) {
         var g = getAnnualGeom();
@@ -23634,7 +23646,7 @@ Cumulative Target Annual Sales</p>
           syncDailyDateFromFocusedRow();
           return;
         }
-        var idx = getNearestFocusRowIndex();
+        var idx = getNearestActiveFocusRowIndex();
         var target = getScrollTopForRowIndex(idx);
         if (Math.abs(target - tableScroll.scrollTop) < 1) {
           syncDailyDateFromFocusedRowForIndex(idx);
@@ -23647,7 +23659,7 @@ Cumulative Target Annual Sales</p>
         tableScroll.scrollTo({ top: target, behavior: 'smooth' });
         waitForVerticalScrollSettle(target, function () {
           snapping = false;
-          syncDailyDateFromFocusedRowForIndex(idx);
+          syncDailyDateFromFocusedRowForIndex(getNearestActiveFocusRowIndex());
           if (typeof window.__refreshAnnualFocusBarLower === 'function') {
             window.__refreshAnnualFocusBarLower();
           }
@@ -23663,6 +23675,16 @@ Cumulative Target Annual Sales</p>
       var ARP_EDGE_EPS = 6;
       /* KPI-ARP-PHASE2C: 2段階年跨ぎ用アーム状態（-1=年始で待機, 1=年末で待機） */
       var edgeArmedDir = 0;
+      /* KPI-ARP-PHASE5D: Suppress chained year-cross from momentum after landing */
+      var __yearCrossGuardUntil = 0;
+      var __crossYearInFlight = false;
+      var YEAR_CROSS_GUARD_MS = 420;
+      function isYearCrossGuardActive() {
+        return Date.now() < __yearCrossGuardUntil;
+      }
+      function armYearCrossGuard() {
+        __yearCrossGuardUntil = Date.now() + YEAR_CROSS_GUARD_MS;
+      }
       /* KPI-ARP-PHASE2E: 描画毎に無効化するキャッシュ */
       var __anchorRangeCache = null;
       function anchorYearRowRange() {
@@ -23703,6 +23725,17 @@ Cumulative Target Annual Sales</p>
           return true;
         }
         if (focusIdx === range.first && lastScrollDir < 0) {
+          if (isYearCrossGuardActive() || __crossYearInFlight) {
+            edgeArmedDir = 0;
+            var guardTopTarget = getScrollTopForRowIndex(range.first);
+            if (Math.abs(tableScroll.scrollTop - guardTopTarget) > 1) {
+              snapping = true;
+              tableScroll.scrollTop = guardTopTarget;
+              snapping = false;
+            }
+            syncDailyDateFromFocusedRowForIndex(range.first);
+            return true;
+          }
           if (edgeArmedDir === -1) {
             edgeArmedDir = 0;
             crossYearByEdge(-1);
@@ -23719,6 +23752,17 @@ Cumulative Target Annual Sales</p>
           return true;
         }
         if (focusIdx === range.last && lastScrollDir > 0) {
+          if (isYearCrossGuardActive() || __crossYearInFlight) {
+            edgeArmedDir = 0;
+            var guardBotTarget = getScrollTopForRowIndex(range.last);
+            if (Math.abs(tableScroll.scrollTop - guardBotTarget) > 1) {
+              snapping = true;
+              tableScroll.scrollTop = guardBotTarget;
+              snapping = false;
+            }
+            syncDailyDateFromFocusedRowForIndex(range.last);
+            return true;
+          }
           if (edgeArmedDir === 1) {
             edgeArmedDir = 0;
             crossYearByEdge(1);
@@ -23781,6 +23825,7 @@ Cumulative Target Annual Sales</p>
       }
       function crossYearByEdge(dir) {
         if (dir !== 1 && dir !== -1) return false;
+        if (__crossYearInFlight) return false;
         /* KPI-ARP-PHASE4: Close / Open 両方で年跨ぎ */
         if (typeof window.__renderAnnualDailyTimeline !== 'function') return false;
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
@@ -23788,12 +23833,22 @@ Cumulative Target Annual Sales</p>
         var nextYear = cy + dir;
         var b = annualRenderableYearBounds();
         if (nextYear < b.minYear || nextYear > b.maxYear) return false;
-        /* KPI-ARP-PHASE2C: 跨ぎ後に着地側で即再跨ぎしないようアーム解除 */
+        /* KPI-ARP-PHASE2C/5D: Block double cross during landing */
+        __crossYearInFlight = true;
+        armYearCrossGuard();
         edgeArmedDir = 0;
+        lastScrollDir = 0;
+        if (snapTimer) {
+          clearTimeout(snapTimer);
+          snapTimer = 0;
+        }
+        var iso = dir > 0 ? nextYear + '-01-01' : nextYear + '-12-31';
         snapping = true;
+        lockFocusDateSync(iso, YEAR_CROSS_GUARD_MS + 200);
         window.__renderAnnualDailyTimeline(nextYear, {
           boundsHint: 'anchor-year-only',
           preserveScroll: false,
+          skipBootstrapScroll: true,
         });
         var yearBadge = document.getElementById('annual-daily-focus-tw-year');
         if (yearBadge) yearBadge.textContent = String(nextYear);
@@ -23802,7 +23857,6 @@ Cumulative Target Annual Sales</p>
           tableScroll.scrollLeft = 0;
           syncScrollLeft(tableScroll);
         }
-        var iso = dir > 0 ? nextYear + '-01-01' : nextYear + '-12-31';
         /* KPI-ARP-PHASE5A: 重い表示同期（Cockpit 年ナビ・営業日数）は着地後に遅延実行 */
         function __arpDeferredYearSync() {
           if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function') {
@@ -23815,12 +23869,25 @@ Cumulative Target Annual Sales</p>
             window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
           }
         }
+        __geomCache = null;
+        __anchorRangeCache = null;
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         var idx = -1;
         for (var i = 0; i < rows.length; i++) {
-          if (rows[i].getAttribute('data-iso-date') === iso) {
+          if (
+            rows[i].getAttribute('data-iso-date') === iso &&
+            rows[i].getAttribute('data-active-year') === '1'
+          ) {
             idx = i;
             break;
+          }
+        }
+        if (idx < 0) {
+          for (var j = 0; j < rows.length; j++) {
+            if (rows[j].getAttribute('data-iso-date') === iso) {
+              idx = j;
+              break;
+            }
           }
         }
         if (idx >= 0) {
@@ -23832,6 +23899,10 @@ Cumulative Target Annual Sales</p>
             if (__crossFinalized) return;
             __crossFinalized = true;
             snapping = false;
+            __crossYearInFlight = false;
+            edgeArmedDir = 0;
+            lastScrollDir = 0;
+            armYearCrossGuard();
             syncDailyDateFromFocusedRowForIndex(idx);
             __arpDeferredYearSync();
             /* KPI-ARP-PHASE3: 年跨ぎ後に Focus Bar 行を確実に同期 */
@@ -23855,11 +23926,15 @@ Cumulative Target Annual Sales</p>
             window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
           }
           snapping = false;
+          __crossYearInFlight = false;
+          edgeArmedDir = 0;
+          lastScrollDir = 0;
+          armYearCrossGuard();
         }
         return true;
       }
       function scheduleSnap() {
-        if (snapping) return;
+        if (snapping || isYearCrossGuardActive() || __crossYearInFlight) return;
         if (snapTimer) clearTimeout(snapTimer);
         snapTimer = setTimeout(function () {
           snapTimer = 0;
@@ -23874,9 +23949,15 @@ Cumulative Target Annual Sales</p>
         if (!Number.isFinite(step) || step === 0) return;
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return;
-        var idx = getNearestFocusRowIndex() + (step > 0 ? 1 : -1);
-        if (idx < 0) idx = 0;
-        if (idx >= rows.length) idx = rows.length - 1;
+        var range = anchorYearRowRange();
+        var idx = getNearestActiveFocusRowIndex() + (step > 0 ? 1 : -1);
+        if (range.first >= 0 && range.last >= 0) {
+          if (idx < range.first) idx = range.first;
+          if (idx > range.last) idx = range.last;
+        } else {
+          if (idx < 0) idx = 0;
+          if (idx >= rows.length) idx = rows.length - 1;
+        }
         var target = getScrollTopForRowIndex(idx);
         if (snapTimer) clearTimeout(snapTimer);
         if (Math.abs(target - tableScroll.scrollTop) < 1) {
@@ -23915,9 +23996,20 @@ Cumulative Target Annual Sales</p>
         if (!rows || !rows.length) return false;
         var idx = -1;
         for (var i = 0; i < rows.length; i++) {
-          if (rows[i].getAttribute('data-iso-date') === String(iso)) {
+          if (
+            rows[i].getAttribute('data-iso-date') === String(iso) &&
+            rows[i].getAttribute('data-active-year') === '1'
+          ) {
             idx = i;
             break;
+          }
+        }
+        if (idx < 0) {
+          for (var j = 0; j < rows.length; j++) {
+            if (rows[j].getAttribute('data-iso-date') === String(iso)) {
+              idx = j;
+              break;
+            }
           }
         }
         if (idx < 0) return false;
@@ -23954,7 +24046,7 @@ Cumulative Target Annual Sales</p>
       }
 
       function syncDailyDateFromFocusedRow() {
-        syncDailyDateFromFocusedRowForIndex(getNearestFocusRowIndex());
+        syncDailyDateFromFocusedRowForIndex(getNearestActiveFocusRowIndex());
       }
 
       window.__annualTwFocusRowIndex = getNearestFocusRowIndex;
@@ -24692,13 +24784,17 @@ Cumulative Target Annual Sales</p>
         var bootIsoForScroll = null;
         if (prevScroll != null && scrollEl) {
           scrollEl.scrollTop = prevScroll;
-        } else if (scrollEl) {
-          try {
-            if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
-              bootIsoForScroll = KpiYearStore.getSelectedDate();
-            }
-          } catch (_bootE) {}
-          if (!bootIsoForScroll && daily && daily.selectedDate) bootIsoForScroll = daily.selectedDate;
+        } else if (scrollEl && !opts.skipBootstrapScroll) {
+          if (opts.bootstrapIso && /^\d{4}-\d{2}-\d{2}$/.test(String(opts.bootstrapIso))) {
+            bootIsoForScroll = String(opts.bootstrapIso);
+          } else {
+            try {
+              if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+                bootIsoForScroll = KpiYearStore.getSelectedDate();
+              }
+            } catch (_bootE) {}
+            if (!bootIsoForScroll && daily && daily.selectedDate) bootIsoForScroll = daily.selectedDate;
+          }
           if (bootIsoForScroll && /^\d{4}-\d{2}-\d{2}$/.test(String(bootIsoForScroll))) {
             window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
             window.__ANNUAL_DATA.daily.selectedDate = String(bootIsoForScroll);

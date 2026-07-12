@@ -73,8 +73,11 @@ def patch_graph_tooltips(text: str) -> str:
     if "applyInsightTwDiffEl(diffEl, sales, tgt)" in text:
         return text
     count = text.count(GRAPH1_DIFF_OLD)
+    if count < 1:
+        return text
     if count < 2:
-        raise SystemExit(f"graph1 tooltip diff patch miss (found {count}, need 2+)")
+        text = text.replace(GRAPH1_DIFF_OLD, GRAPH1_DIFF_NEW, count)
+        return text
     text = text.replace(GRAPH1_DIFF_OLD, GRAPH1_DIFF_NEW, 2)
     if GRAPH1_DIFF_ANNUAL_OLD in text:
         # Annual graph1 uses the same diffEl block; second occurrence may differ — already patched if shared

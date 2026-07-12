@@ -8,13 +8,13 @@
           );
         }
         function tryMepLeaseForPath() {
-          if (
-            window.KpiYearStore &&
-            KpiYearStore.getDailySalesInputPath() === 'mep' &&
-            window.__KPI_EDIT_LEASE &&
-            typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function'
-          ) {
-            window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit');
+          if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
+          if (KpiYearStore.getDailySalesInputPath() === 'mep') {
+            if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
+              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit');
+            }
+          } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
+            window.__KPI_EDIT_LEASE.release();
           }
         }
         function mepDailySalesPathBlocked() {

@@ -476,10 +476,19 @@
       background: rgba(88, 225, 243, 0.22);
       outline: none;
     }
-    .monthly-edit-float__memo-btn {
+    .monthly-edit-float__tool-actions {
       grid-column: 2;
       grid-row: 1;
       justify-self: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .monthly-edit-float__memo-btn,
+    .monthly-edit-float__strategy-note-btn {
+      position: static;
+      min-width: 210px;
     }
     .monthly-edit-float__month-label {
       font-size: 15px;
@@ -961,6 +970,7 @@
       overflow-x: auto;
       overflow-y: hidden;
       box-sizing: border-box;
+      padding: 0 10px 0 0;
     }
     .monthly-edit-float__date-rail-scale {
       display: inline-block;
@@ -969,6 +979,7 @@
     .monthly-edit-float__date-rail-table {
       border-collapse: separate;
       border-spacing: 0;
+      table-layout: fixed;
     }
     .monthly-edit-float__date-rail-th {
       min-width: var(--mef-col-min);
@@ -2252,6 +2263,128 @@
       z-index: 20160;
     }
 
+
+    /* MEP-STRATEGY-NOTE-MODAL-CSS */
+    /* MEP-STRATEGY-NOTE-MODAL-CSS */
+    .strategy-note-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 12050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .strategy-note-modal[hidden] {
+      display: none !important;
+    }
+    .strategy-note-modal__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+    }
+    .strategy-note-modal__panel {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 100%);
+      max-height: min(90vh, 720px);
+      padding: 20px 22px 22px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 10px;
+      background: #1e1e1e;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .strategy-note-modal__close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .strategy-note-modal__title {
+      margin: 0;
+      padding-right: 36px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #58e1f3;
+    }
+    .strategy-note-modal__month {
+      margin: 0;
+      font-size: 15px;
+      color: #bdbdbd;
+    }
+    .strategy-note-modal__label {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #e8e8e8;
+    }
+    .strategy-note-modal__input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 196px;
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 6px;
+      background: #141414;
+      color: #f5f5f5;
+      font: 16px/1.45 inherit;
+      resize: vertical;
+    }
+    .strategy-note-modal__input:focus {
+      outline: 2px solid rgba(88, 225, 243, 0.65);
+      outline-offset: 1px;
+    }
+    .strategy-note-modal__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .strategy-note-modal__char-count {
+      font-size: 13px;
+      color: #bdbdbd;
+    }
+    .strategy-note-modal__char-count--warn-120 {
+      color: #ffb347;
+    }
+    .strategy-note-modal__char-count--warn-150 {
+      color: #ff7b7b;
+    }
+    .strategy-note-modal__hint {
+      margin: 0;
+      font-size: 13px;
+      color: #9a9a9a;
+    }
+    body.office-mode .strategy-note-modal__panel {
+      background: #fff;
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+    body.office-mode .strategy-note-modal__title {
+      color: #0d6efd;
+    }
+    body.office-mode .strategy-note-modal__label,
+    body.office-mode .strategy-note-modal__input,
+    body.office-mode .strategy-note-modal__month {
+      color: #222;
+    }
+    body.office-mode .strategy-note-modal__input {
+      background: #fff;
+      border-color: rgba(0, 0, 0, 0.2);
+    }
   </style>
 </head>
 <body class="si-fi profile-page monthly-page monthly-edit-page" id="body-el">
@@ -2438,9 +2571,14 @@
             <div class="monthly-edit-float__month-grid" id="monthly-edit-float-month-grid"></div>
           </div>
         </div>
+        <div class="monthly-edit-float__tool-actions">
         <button type="button" class="monthly-edit-float__pl-btn monthly-edit-float__memo-btn" id="monthly-edit-float-memo" aria-label="日次メモを開く" title="日次メモを開く">
           日次メモ
         </button>
+        <button type="button" class="monthly-edit-float__pl-btn monthly-edit-float__strategy-note-btn" id="monthly-edit-float-strategy-note" aria-label="Strategy Note を開く" title="Strategy Note を開く">
+          Strategy Note
+        </button>
+        </div>
         <div class="monthly-edit-float__zoom">
           <div class="monthly-edit-float__zoom-controls">
             <label for="monthly-edit-float-zoom">表示</label>
@@ -2533,7 +2671,30 @@
   </div>
 
 
-  <div
+
+  <div class="strategy-note-modal" id="strategy-note-modal" hidden>
+    <div class="strategy-note-modal__backdrop" id="strategy-note-backdrop" aria-hidden="true"></div>
+    <div class="strategy-note-modal__panel" role="dialog" aria-modal="true" aria-labelledby="strategy-note-title">
+      <button type="button" class="strategy-note-modal__close" id="strategy-note-close" aria-label="閉じる">×</button>
+      <h2 class="strategy-note-modal__title" id="strategy-note-title">Strategy Note</h2>
+      <p class="strategy-note-modal__month" id="strategy-note-month-label"></p>
+      <label class="strategy-note-modal__label" for="monthly-edit-strategy-user-note">User Note</label>
+      <textarea
+        id="monthly-edit-strategy-user-note"
+        class="strategy-note-modal__input"
+        maxlength="200"
+        rows="8"
+        aria-describedby="monthly-edit-strategy-char-count strategy-note-hint"
+      ></textarea>
+      <div class="strategy-note-modal__footer">
+        <p class="strategy-note-modal__hint" id="strategy-note-hint">Monthly Edit の Save で Insight に反映されます。</p>
+        <span class="strategy-note-modal__char-count" id="monthly-edit-strategy-char-count" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+
+
+    <div
     class="sales-data-modal__close-chooser"
     id="kpi-path-change-chooser"
     role="dialog"
@@ -5441,6 +5602,7 @@
           restoreMemoRowsFromSnapshot(payload.mepMemoRows);
         }
         syncWeeklyMemoItems();
+        mergeStrategyNotesFromPayload(payload);
       }
       function loadMepFromYearStore(year) {
         if (!mepStoreReady()) return;
@@ -5498,6 +5660,7 @@
           dailyExpenses: dailyExpenses,
           dailyMeta: { memos: memos, weather: weather, flags: flags },
           mepMemoRows: rowSnapshot(state.memoItems),
+          monthlyStrategyUserNotes: strategyNotesForPersist(),
         };
       }
       function persistMepToYearStore(year) {
@@ -5585,6 +5748,7 @@
           restoreMemoRowsFromSnapshot(payload.mepMemoRows);
         }
         syncWeeklyMemoItems();
+        mergeStrategyNotesFromPayload(payload);
       }
       function loadMepFromYearStore(year) {
         if (!mepStoreReady()) return;
@@ -5637,11 +5801,13 @@
           dailyExpenses: dailyExpenses,
           dailyMeta: { memos: memos, weather: weather, flags: flags },
           mepMemoRows: rowSnapshot(state.memoItems),
+          monthlyStrategyUserNotes: strategyNotesForPersist(),
         };
       }
       function persistMepToYearStore(year) {
         if (!mepStoreReady()) return false;
         flushPendingMemoEditsFromDom();
+        if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
         if (!KpiYearStore.canWriteMepYear(year)) return false;
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {
           source: 'monthly-edit-float',
@@ -5694,6 +5860,111 @@
       var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
       var WD_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+
+            /* MEP-STRATEGY-NOTE-MODAL */
+      var strategyUserNotesByMonth = {};
+      var strategyNoteModal = document.getElementById('strategy-note-modal');
+      var strategyNoteInput = document.getElementById('monthly-edit-strategy-user-note');
+      var strategyNoteCounter = document.getElementById('monthly-edit-strategy-char-count');
+      var strategyNoteMonthLabel = document.getElementById('strategy-note-month-label');
+      var strategyNoteOpenBtn = document.getElementById('monthly-edit-float-strategy-note');
+      var STRATEGY_NOTE_HARD = 200;
+
+      function strategyNoteTierClass(tier) {
+        if (tier === 150) return 'strategy-note-modal__char-count--warn-150';
+        if (tier === 120) return 'strategy-note-modal__char-count--warn-120';
+        return '';
+      }
+
+      function syncStrategyCharCounter() {
+        if (!strategyNoteInput || !strategyNoteCounter) return;
+        var len = String(strategyNoteInput.value || '').length;
+        var activeTier = 0;
+        if (len > 150) activeTier = 150;
+        else if (len > 120) activeTier = 120;
+        strategyNoteCounter.textContent = len + ' / ' + STRATEGY_NOTE_HARD;
+        strategyNoteCounter.classList.remove(
+          strategyNoteTierClass(120),
+          strategyNoteTierClass(150)
+        );
+        if (activeTier) strategyNoteCounter.classList.add(strategyNoteTierClass(activeTier));
+      }
+
+      function flushStrategyNoteToCache() {
+        if (!strategyNoteInput) return;
+        strategyUserNotesByMonth[String(mefMonth0)] = String(strategyNoteInput.value || '').slice(
+          0,
+          STRATEGY_NOTE_HARD
+        );
+      }
+
+      function formatStrategyNoteMonthLabel() {
+        var monthsJa = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        var monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var months = useJa ? monthsJa : monthsEn;
+        return mefYear + ' / ' + (months[mefMonth0] || String(mefMonth0 + 1));
+      }
+
+      function loadStrategyNoteFromCache() {
+        if (!strategyNoteInput) return;
+        strategyNoteInput.value = String(strategyUserNotesByMonth[String(mefMonth0)] || '');
+        syncStrategyCharCounter();
+        if (strategyNoteMonthLabel) strategyNoteMonthLabel.textContent = formatStrategyNoteMonthLabel();
+      }
+
+      function mergeStrategyNotesFromPayload(payload) {
+        strategyUserNotesByMonth = {};
+        var src = payload && payload.monthlyStrategyUserNotes;
+        if (!src || typeof src !== 'object') {
+          loadStrategyNoteFromCache();
+          return;
+        }
+        Object.keys(src).forEach(function (mKey) {
+          strategyUserNotesByMonth[String(mKey)] = String(src[mKey] == null ? '' : src[mKey]).slice(
+            0,
+            STRATEGY_NOTE_HARD
+          );
+        });
+        loadStrategyNoteFromCache();
+      }
+
+      function strategyNotesForPersist() {
+        flushStrategyNoteToCache();
+        var out = {};
+        Object.keys(strategyUserNotesByMonth).forEach(function (mKey) {
+          var text = String(strategyUserNotesByMonth[mKey] || '').trim();
+          if (text) out[mKey] = text.slice(0, STRATEGY_NOTE_HARD);
+        });
+        return out;
+      }
+
+      function openStrategyNoteModal() {
+        if (!strategyNoteModal) return;
+        loadStrategyNoteFromCache();
+        strategyNoteModal.removeAttribute('hidden');
+      }
+
+      function closeStrategyNoteModal() {
+        if (!strategyNoteModal) return;
+        flushStrategyNoteToCache();
+        strategyNoteModal.setAttribute('hidden', '');
+      }
+
+      if (strategyNoteInput) {
+        strategyNoteInput.addEventListener('input', function () {
+          syncStrategyCharCounter();
+          markDirty();
+        });
+      }
+      if (strategyNoteOpenBtn) {
+        strategyNoteOpenBtn.addEventListener('click', function () {
+          openStrategyNoteModal();
+        });
+      }
+      document.getElementById('strategy-note-close') &&
+        document.getElementById('strategy-note-close').addEventListener('click', closeStrategyNoteModal);
+      document.getElementById('strategy-note-backdrop') &&
+        document.getElementById('strategy-note-backdrop').addEventListener('click', closeStrategyNoteModal);
 
             var mefYear = new Date().getFullYear();
       var mefMonth0 = new Date().getMonth();
@@ -6728,10 +6999,12 @@
         if (lblMonth) lblMonth.setAttribute('aria-expanded', 'false');
       }
       function applyMonthSelection(month0) {
+        flushStrategyNoteToCache();
         var prevYear = mefYear;
         mefYear = pickerYear;
         mefMonth0 = month0;
         if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
+        loadStrategyNoteFromCache();
         closeMonthPicker();
         buildGrid();
         persistMefMonth();
@@ -7131,6 +7404,7 @@
         if (zoomPlus) zoomPlus.disabled = v >= max;
         syncLabelScroll();
         pinLabelsToRight();
+        queueSyncDateRailColumnWidths();
       }
       function bindZoomStepButton(btn, sign) {
         if (!btn || !zoom) return;
@@ -7178,6 +7452,50 @@
       function syncDateRailScroll() {
         if (!dateRailScroll || !scroller) return;
         dateRailScroll.scrollLeft = scroller.scrollLeft;
+      }
+      var __mefDateRailColSyncRaf = 0;
+      function syncDateRailColumnWidths() {
+        if (!tbl || !dateRailScale) return;
+        var ths = dateRailScale.querySelectorAll('.monthly-edit-float__date-rail-th');
+        if (!ths || !ths.length) return;
+        var refRow = null;
+        var trs = tbl.querySelectorAll('tbody tr');
+        for (var ri = 0; ri < trs.length; ri++) {
+          var tr = trs[ri];
+          if (tr.classList.contains('monthly-edit-float__strip-row')) continue;
+          if (tr.classList.contains('monthly-edit-float__bottom-spacer')) continue;
+          var cells = tr.querySelectorAll(':scope > td');
+          if (cells.length === ths.length) {
+            refRow = tr;
+            break;
+          }
+        }
+        if (!refRow) return;
+        var tds = refRow.querySelectorAll(':scope > td');
+        var tableLeft = tbl.getBoundingClientRect().left;
+        var firstTdLeft = tds[0].getBoundingClientRect().left;
+        var borderPad = Math.max(0, Math.round(firstTdLeft - tableLeft));
+        dateRailScale.style.paddingLeft = borderPad ? borderPad + 'px' : '';
+        for (var i = 0; i < ths.length; i++) {
+          var w = Math.max(1, Math.round(tds[i].getBoundingClientRect().width));
+          ths[i].style.width = w + 'px';
+          ths[i].style.minWidth = w + 'px';
+          ths[i].style.maxWidth = w + 'px';
+        }
+        var dateRailTable = dateRailScale.querySelector('.monthly-edit-float__date-rail-table');
+        if (dateRailTable) {
+          dateRailTable.style.width = Math.max(1, Math.round(tbl.getBoundingClientRect().width)) + 'px';
+        }
+      }
+      function queueSyncDateRailColumnWidths() {
+        if (__mefDateRailColSyncRaf) cancelAnimationFrame(__mefDateRailColSyncRaf);
+        __mefDateRailColSyncRaf = requestAnimationFrame(function () {
+          __mefDateRailColSyncRaf = requestAnimationFrame(function () {
+            __mefDateRailColSyncRaf = 0;
+            syncDateRailColumnWidths();
+            syncDateRailScroll();
+          });
+        });
       }
       function pinLabelsToRight() {
         if (!labelsWrap) return;
@@ -7746,7 +8064,7 @@
         tbl.innerHTML = '';
         tbl.appendChild(thead);
         tbl.appendChild(tbody);
-        syncDateRailScroll();
+        queueSyncDateRailColumnWidths();
         if (!tbl.hasAttribute('data-kpi-fill-bound')) {
           tbl.setAttribute('data-kpi-fill-bound', '1');
           tbl.addEventListener('input', function (ev) {
@@ -7766,6 +8084,53 @@
         syncLabelScroll();
         pinLabelsToRight();
       }
+      /* KPI-EDIT-GUARDS */
+      (function () {
+        function isJa() {
+          return (
+            String(document.documentElement.getAttribute('lang') || '')
+              .toLowerCase()
+              .indexOf('ja') === 0
+          );
+        }
+        function tryMepLeaseForPath() {
+          if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
+          if (KpiYearStore.getDailySalesInputPath() === 'mep') {
+            if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
+              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit');
+            }
+          } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
+            window.__KPI_EDIT_LEASE.release();
+          }
+        }
+        function mepDailySalesPathBlocked() {
+          return !!(
+            window.KpiYearStore &&
+            KpiYearStore.getDailySalesInputPath &&
+            KpiYearStore.getDailySalesInputPath() === 'annual'
+          );
+        }
+        function applyMepDailySalesPathGuards() {
+          var mepRoot = document.getElementById('monthly-edit-float');
+          if (mepRoot) {
+            mepRoot.classList.toggle('monthly-edit-float--daily-sales-path-blocked', mepDailySalesPathBlocked());
+          }
+        }
+        function refreshMepSalesGuards() {
+          var mepRoot = document.getElementById('monthly-edit-float');
+          if (mepRoot && mepRoot.hidden) return;
+          applyMepDailySalesPathGuards();
+          if (typeof buildGrid === 'function') buildGrid();
+        }
+        document.addEventListener('kpi:dailySalesInputPathChanged', function () {
+          tryMepLeaseForPath();
+          refreshMepSalesGuards();
+        });
+        document.addEventListener('kpi:editGuardsApplied', refreshMepSalesGuards);
+        document.addEventListener('kpi:editGuardsRefresh', refreshMepSalesGuards);
+        document.addEventListener('kpi:editLeaseChanged', refreshMepSalesGuards);
+        applyMepDailySalesPathGuards();
+      })();
       var MEF_STORAGE_MONTHLY_LAST = 'kpiNavigator.monthlyLast';
       var mefPreferredIso = null;
       function mepIsoFromParts(y, m0, d) {
@@ -7827,7 +8192,14 @@
           typeof KpiYearStore.getSelectedDate === 'function'
         ) {
           var storeIso = String(KpiYearStore.getSelectedDate() || '').trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(storeIso)) applyMepSelectedIso(storeIso);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(storeIso)) {
+            var oy =
+              typeof KpiYearStore.getOperatingYear === 'function'
+                ? Number(KpiYearStore.getOperatingYear())
+                : new Date().getFullYear();
+            var sy = Number(storeIso.slice(0, 4));
+            if (Number.isFinite(oy) && sy === oy) applyMepSelectedIso(storeIso);
+          }
         }
       }
       function persistMefMonth() {
@@ -7858,6 +8230,7 @@
         clearDirty();
         editSessionCommitted = false;
         onMepYearContextChanged(mefYear);
+        loadStrategyNoteFromCache();
         if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
           window.__KPI_SALES_INPUT_PATH_UI.sync();
         }
@@ -7880,11 +8253,13 @@
         pinLabelsToRight();
       }
       function jumpToToday() {
+        flushStrategyNoteToCache();
         var now = new Date();
         var prevYear = mefYear;
         mefYear = now.getFullYear();
         mefMonth0 = now.getMonth();
         if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
+        loadStrategyNoteFromCache();
         buildGrid();
         persistMefMonth();
         scrollToPreferredDayLeft();
@@ -7951,7 +8326,8 @@
           variableItems: rowSnapshot(state.variableItems),
           memoItems: rowSnapshot(state.memoItems),
           memoValueById: sortedNestedMap(memoValueById),
-          weatherByIso: sortedIsoMap(weatherByIso)
+          weatherByIso: sortedIsoMap(weatherByIso),
+          strategyUserNotesByMonth: JSON.parse(JSON.stringify(strategyUserNotesByMonth))
         });
       }
       function restoreConfirmedSnapshot() {
@@ -7966,6 +8342,10 @@
         if (snap.fixedItems) state.fixedItems = snap.fixedItems;
         if (snap.variableItems) state.variableItems = snap.variableItems;
         if (snap.memoItems) restoreMemoRowsFromSnapshot(snap.memoItems);
+        if (snap.strategyUserNotesByMonth) {
+          strategyUserNotesByMonth = JSON.parse(JSON.stringify(snap.strategyUserNotesByMonth));
+        }
+        loadStrategyNoteFromCache();
         clearDirty();
         undoStack = [];
         syncUndoButton();
@@ -8178,6 +8558,7 @@
       }
       btnPrev && btnPrev.addEventListener('click', function () {
         markDirty();
+        flushStrategyNoteToCache();
         var prevYear = mefYear;
         mefMonth0 -= 1;
         if (mefMonth0 < 0) {
@@ -8185,11 +8566,13 @@
           mefYear -= 1;
         }
         if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
+        loadStrategyNoteFromCache();
         buildGrid();
         persistMefMonth();
       });
       btnNext && btnNext.addEventListener('click', function () {
         markDirty();
+        flushStrategyNoteToCache();
         var prevYear = mefYear;
         mefMonth0 += 1;
         if (mefMonth0 > 11) {
@@ -8197,6 +8580,7 @@
           mefYear += 1;
         }
         if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
+        loadStrategyNoteFromCache();
         buildGrid();
         persistMefMonth();
       });
@@ -8229,6 +8613,17 @@
       if (btnSummaryToggle) {
         btnSummaryToggle.addEventListener('click', toggleSummaryCollapsed);
       }
+      if (typeof ResizeObserver !== 'undefined' && tbl) {
+        try {
+          var __mefColResizeObs = new ResizeObserver(function () {
+            queueSyncDateRailColumnWidths();
+          });
+          __mefColResizeObs.observe(tbl);
+        } catch (_mefObsErr) {}
+      }
+      window.addEventListener('resize', function () {
+        queueSyncDateRailColumnWidths();
+      });
       if (zoom) {
         zoom.addEventListener('input', applyZoom);
         zoom.addEventListener('change', applyZoom);

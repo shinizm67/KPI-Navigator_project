@@ -1,0 +1,21 @@
+
+  <div class="strategy-note-modal" id="strategy-note-modal" hidden>
+    <div class="strategy-note-modal__backdrop" id="strategy-note-backdrop" aria-hidden="true"></div>
+    <div class="strategy-note-modal__panel" role="dialog" aria-modal="true" aria-labelledby="strategy-note-title">
+      <button type="button" class="strategy-note-modal__close" id="strategy-note-close" aria-label="閉じる">×</button>
+      <h2 class="strategy-note-modal__title" id="strategy-note-title">Strategy Note</h2>
+      <p class="strategy-note-modal__month" id="strategy-note-month-label"></p>
+      <label class="strategy-note-modal__label" for="monthly-edit-strategy-user-note">User Note</label>
+      <textarea
+        id="monthly-edit-strategy-user-note"
+        class="strategy-note-modal__input"
+        maxlength="200"
+        rows="8"
+        aria-describedby="monthly-edit-strategy-char-count strategy-note-hint"
+      ></textarea>
+      <div class="strategy-note-modal__footer">
+        <p class="strategy-note-modal__hint" id="strategy-note-hint">Monthly Edit の Save で Insight に反映されます。</p>
+        <span class="strategy-note-modal__char-count" id="monthly-edit-strategy-char-count" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>

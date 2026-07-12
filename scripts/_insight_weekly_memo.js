@@ -71,6 +71,10 @@
       }
 
       function defaultAnchorIso() {
+        if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          var storeSel = String(KpiYearStore.getSelectedDate() || '').trim();
+          if (parseIso(storeSel)) return storeSel;
+        }
         if (
           window.__ANNUAL_DATA &&
           window.__ANNUAL_DATA.daily &&
@@ -330,6 +334,14 @@
 
       document.addEventListener('kpi:mepDataChanged', function () {
         renderAll();
+      });
+      document.addEventListener('kpi:selectedDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
+      });
+      document.addEventListener('annual:dailyDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;

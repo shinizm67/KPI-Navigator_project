@@ -490,15 +490,27 @@
       width: 100%;
       display: block;
       height: auto;
+    }
+    .annual-frame-close .annual-frame-img,
+    .annual-area-top-svg .annual-frame-img[src*="area_close"] {
       aspect-ratio: 1017 / 362;
     }
-    .annual-area-top-svg {
-      aspect-ratio: 1017 / 362;
+    .annual-frame-open .annual-area-top-svg .annual-frame-img {
+      aspect-ratio: 1017 / 358;
+    }
+    .annual-frame-img[src*="area_open_bottom"] {
+      aspect-ratio: 1017 / 20;
     }
     .annual-area-top-svg {
       position: relative;
       display: block;
       width: 100%;
+    }
+    .annual-frame-close .annual-area-top-svg {
+      aspect-ratio: 1017 / 362;
+    }
+    .annual-frame-open .annual-area-top-svg {
+      aspect-ratio: 1017 / 358;
     }
     /* 下段: 上段 annual 枠と同じ外幅（1017）。471 + ギャップ 89 + 457 = 1017 */
     .annual-summary-bottom-row {
@@ -1023,7 +1035,7 @@
     .monthly-date-header-cell.kpi-date-has-memo::after {
       content: '';
       position: absolute;
-      right: -2px;
+      right: 6px;
       top: 50%;
       width: 6px;
       height: 6px;
@@ -17277,6 +17289,14 @@ Target Sales</p>
           syncToAnnualDaily();
         }
 
+        function hydrateNavFromStorage() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (!nav || typeof nav !== 'object') return;
+          if (nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+          }
+        }
+
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
@@ -17315,6 +17335,11 @@ Target Sales</p>
         }
 
         function getSelectedDate() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (nav && nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+            return nav.selectedIso;
+          }
           if (store.meta.selectedDate) return store.meta.selectedDate;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
             return window.__ANNUAL_DATA.daily.selectedDate;
@@ -17492,8 +17517,16 @@ Target Sales</p>
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }
           })();
+          hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
-            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            var navCy = gw().getJson(SELECTED_DATE_KEY);
+            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
+            } else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            } else {
+              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            }
           }
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
@@ -18132,6 +18165,7 @@ Target Sales</p>
           init: init,
           reload: function () {
             loadStore();
+            hydrateNavFromStorage();
             reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
@@ -26623,6 +26657,10 @@ Target Sales</p>
       }
 
       function defaultAnchorIso() {
+        if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          var storeSel = String(KpiYearStore.getSelectedDate() || '').trim();
+          if (parseIso(storeSel)) return storeSel;
+        }
         if (
           window.__ANNUAL_DATA &&
           window.__ANNUAL_DATA.daily &&
@@ -26882,6 +26920,14 @@ Target Sales</p>
 
       document.addEventListener('kpi:mepDataChanged', function () {
         renderAll();
+      });
+      document.addEventListener('kpi:selectedDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
+      });
+      document.addEventListener('annual:dailyDateChanged', function (ev) {
+        var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
+        if (iso && parseIso(iso)) setAnchor(String(iso));
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;

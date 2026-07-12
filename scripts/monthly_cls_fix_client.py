@@ -28,10 +28,27 @@ FRAME_IMG_CSS_NEW = f"""    {MONTHLY_CLS_MARKER}
       width: 100%;
       display: block;
       height: auto;
+    }}
+    .annual-frame-close .annual-frame-img,
+    .annual-area-top-svg .annual-frame-img[src*="area_close"] {{
       aspect-ratio: 1017 / 362;
     }}
+    .annual-frame-open .annual-area-top-svg .annual-frame-img {{
+      aspect-ratio: 1017 / 358;
+    }}
+    .annual-frame-img[src*="area_open_bottom"] {{
+      aspect-ratio: 1017 / 20;
+    }}
     .annual-area-top-svg {{
+      position: relative;
+      display: block;
+      width: 100%;
+    }}
+    .annual-frame-close .annual-area-top-svg {{
       aspect-ratio: 1017 / 362;
+    }}
+    .annual-frame-open .annual-area-top-svg {{
+      aspect-ratio: 1017 / 358;
     }}"""
 
 MONTHLY_CELL_CSS_OLD = """    .monthly-data-column__cell {

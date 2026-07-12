@@ -33,7 +33,7 @@ CSS_BLOCK = f"""    {CSS_MARKER}
     .monthly-date-header-cell.kpi-date-has-memo::after {{
       content: '';
       position: absolute;
-      right: -2px;
+      right: 6px;
       top: 50%;
       width: 6px;
       height: 6px;

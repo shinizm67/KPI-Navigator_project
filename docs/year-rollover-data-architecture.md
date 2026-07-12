@@ -576,11 +576,30 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 
 ## 11. 受け入れ確認（チェックリスト）
 
-> **更新:** 2026-07-09 — コード確認済み項目は `[x]`、ブラウザ手動確認が必要な項目は `[ ] 手動` と表記。
+> **更新:** 2026-07-10 — コード確認済み項目は `[x]`、ブラウザ手動確認が必要な項目は `[ ] 手動` と表記。
 
-- [ ] 手動 **timeline 上の 2025-04-05 が Sales Data・Past Sales・MEP のいずれから編集しても同一値**
+### 11.0 「3経路」の意味（よくある誤解）
+
+**3経路** = Sales Data・Past Sales・MEP の **3つの入力面** から同じ `timeline` に書き込めること。  
+**「今年の Sales Data と過去年の Past Sales の売上が一致する」ことではない**（年が違うので当然別データ）。
+
+確認したいのは次のこと:
+
+| 観点 | 内容 |
+|------|------|
+| **同一 ISO** | ある日（例: 2026-06-15）をどの経路で編集しても、`timeline` 上は **1 つの値** |
+| **閲覧面の一致** | その値が **TW・Daily FW・Cockpit・MEP グリッド** など全サーフェスに同じように出る |
+| **経路と年** | **当年** → Sales Data + MEP / **過去年** → Past Sales + MEP（Sales Data は当年窓） |
+
+推奨: 当年日は **Sales Data ↔ MEP**、過去年日は **Past Sales ↔ MEP** で往復確認する。
+
+### 11.1 チェックリスト
+
+- [ ] 手動 **同一 ISO（当年例: 2026-06-15）を Sales Data で編集 → TW / Daily / MEP で同一値**
+- [ ] 手動 **同一 ISO（過去年例: 2025-04-05）を Past Sales で編集 → TW / MEP で同一値**
+- [ ] 手動 **同一 ISO を MEP で編集 → Sales Data（当年）または Past Sales（過去年）と同一値**
 - [x] **Focus Bar / Table Window からスクロールまたはカレンダーで 2024 年の日付に到達できる**（ARP-2〜7 完了）
-- [ ] 手動 **Annual ↔ Monthly 遷移後も selectedDate が同じ ISO を指す**
+- [x] 手動 **Annual ↔ Monthly 遷移後も selectedDate が同じ ISO を指す**（2026-07-10 ユーザー合格: 6/15 遷移・リロード）
 - [ ] 手動 2025 年に入力した日次売上が、2026 年開始後も timeline から参照できる（Past Sales 窓・MEP 2025 月）
 - [ ] 手動 MEP で入力した売上が Sales Data と同一値（同一タブ・別タブ）
 - [x] 2025 の plan（目標・繁閑%）が 2026 から振り返り可能（`KpiYearStore.readMonthlyHlWeights` / `readAnnualTarget`）
@@ -588,12 +607,12 @@ MEP グリッド内のメモ行は、移行期は残しつつ **正本は Store*
 - [x] Cockpit 繁閑%列は編集不可・plan から表示（`kpi-hl-plan-readonly` + Sales Data で編集 tooltip）
 - [x] レガシー `annualDailyShared` / `pastSalesShared` からのマイグレーションが 1 回だけ成功する（Store `migrateFromLegacy`）
 - [x] locked 年の誤編集がブロックされる（`canWriteDailySalesFrom` / `rec.status === 'locked'`）
-- [ ] 手動 **4/5 の日次売上が Annual Focus Bar と Monthly Daily で常に同一値**
+- [ ] 手動 **選択日の日次売上が Annual Focus Bar と Monthly Daily で常に同一値**
 - [ ] 手動 **年次目標が Annual Cockpit と Monthly Area2 で同一値**
 - [ ] 手動 **過去年選択時、Focus Bar / Table Window がその年の実績・目標を表示**
 - [x] メモ入力日にフラグが立ち、月次一覧から読み返せる（Phase 10 / 10-c）
 
-**手動確認の推奨手順（15分）:** 同一日付で Annual → Monthly 往復、Sales Data / MEP / Past Sales の3経路編集、過去年スクロール、Cockpit Open の繁閑%が Sales Data 変更に追従すること。
+**手動確認の推奨手順（15分）:** 同一日付で Annual → Monthly 往復、**当年は Sales Data + MEP・過去年は Past Sales + MEP** の経路編集、過去年スクロール、Cockpit Open の繁閑%が Sales Data 変更に追従すること。
 
 ---
 
