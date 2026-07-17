@@ -64,8 +64,9 @@ LABELS = {
         "dl_label": "DL",
         "dl_aria": "支出の雛形（テンプレート）をダウンロード",
         "dl_menu_aria": "雛形ダウンロード",
-        "dl_daily": "支出雛形（日次）",
-        "dl_monthly": "支出雛形（月次）",
+        "dl_heading": "支出雛形のダウンロード",
+        "dl_daily": "支出雛形をダウンロード（日次）",
+        "dl_monthly": "支出雛形をダウンロード（月次）",
         "dl_daily_file": "支出入力_日次_雛形.csv",
         "dl_monthly_file": "支出入力_月次_雛形.csv",
     },
@@ -105,8 +106,9 @@ LABELS = {
         "dl_label": "DL",
         "dl_aria": "Download expense templates",
         "dl_menu_aria": "Template downloads",
-        "dl_daily": "Expense template (daily)",
-        "dl_monthly": "Expense template (monthly)",
+        "dl_heading": "Download Expense Templates",
+        "dl_daily": "Download Expense Template (Daily)",
+        "dl_monthly": "Download Expense Template (Monthly)",
         "dl_daily_file": "expense-import_daily_template.csv",
         "dl_monthly_file": "expense-import_monthly_template.csv",
     },
@@ -278,6 +280,7 @@ def build_header(
         <details class="header-dl" id="header-dl">
           <summary class="header-dl-btn" aria-label="{L['dl_aria']}">{L['dl_label']}</summary>
           <div class="template-dl-menu" role="menu" aria-label="{L['dl_menu_aria']}">
+            <p class="template-dl-heading">{L['dl_heading']}</p>
             <a href="{img}excel/{L['dl_daily_file']}" download class="template-dl-item" role="menuitem">{L['dl_daily']}</a>
             <a href="{img}excel/{L['dl_monthly_file']}" download class="template-dl-item" role="menuitem">{L['dl_monthly']}</a>
           </div>
@@ -327,6 +330,21 @@ def build_header(
         </div>
       </div>
     </div>
+    <script>
+    (function () {{
+      if (window.__headerDlBound) return;
+      window.__headerDlBound = true;
+      document.addEventListener('click', function (e) {{
+        var dl = document.getElementById('header-dl');
+        if (dl && dl.open && !dl.contains(e.target)) dl.removeAttribute('open');
+      }});
+      document.addEventListener('keydown', function (e) {{
+        if (e.key !== 'Escape') return;
+        var dl = document.getElementById('header-dl');
+        if (dl && dl.open) dl.removeAttribute('open');
+      }});
+    }})();
+    </script>
   </header>"""
 
 
