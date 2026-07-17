@@ -405,8 +405,8 @@ LABELS_JA = {
     "back_edit_aria": "月次編集ページへ戻る",
     "year_label": "年度",
     "year_aria": "表示する会計年度を選択",
-    "csv_upload": "CSV取込",
-    "csv_upload_tooltip": "PL支出のCSV/Excel取込は準備中です。日次売上は Sales Data / 過去売上 の CSV取込（Excel .xlsx 可）をご利用ください。",
+    "csv_upload": "支出CSV取込",
+    "csv_upload_tooltip": "支出をCSV/Excel（.xlsx）で取り込みます。雛形は右上「DL」からダウンロードできます（費目名は雛形＝カタログのラベルに合わせてください）。",
     "download_excel": "Download Excel",
     "download_excel_aria": "PL表を Excel 用 CSV でダウンロード",
     "toolbar_graph": "PL Insight",
@@ -561,8 +561,8 @@ LABELS_EN = {
     "back_edit_aria": "Back to Monthly Edit page",
     "year_label": "Year",
     "year_aria": "Select fiscal year to display",
-    "csv_upload": "Upload CSV",
-    "csv_upload_tooltip": "PL expense CSV/Excel import is coming soon. For daily sales, use Sales Data or Past Sales (CSV or Excel .xlsx).",
+    "csv_upload": "Upload Expenses",
+    "csv_upload_tooltip": "Import expenses from CSV/Excel (.xlsx). Download a template from \"DL\" (top-right); item names must match the catalog labels.",
     "download_excel": "Download Excel",
     "download_excel_aria": "Download PL table as CSV for Excel",
     "toolbar_graph": "PL Insight",
@@ -617,6 +617,7 @@ LABELS_EN = {
 
 
 from pl_expense_detail_client import expense_detail_client_js  # noqa: E402
+from pl_expense_import_client import pl_expense_import_client_js  # noqa: E402
 from pl_monthly_allocate_client import pl_monthly_allocate_client_js  # noqa: E402
 from pl_income_client import pl_income_client_js  # noqa: E402
 from pl_ratio_client import pl_ratio_client_js  # noqa: E402
@@ -7756,16 +7757,7 @@ def render_page(lang: str, lang_switch: str) -> str:
         }});
       }}
 
-      if (btnCsv) {{
-        btnCsv.addEventListener('click', function () {{
-          window.alert(
-            t(
-              'PL支出のCSV/Excel取込は準備中です。\\n日次売上は Annual の Sales Data / 過去売上、または Monthly Edit の CSV取込（Excel .xlsx 可）をご利用ください。',
-              'PL expense CSV/Excel import is coming soon.\\nFor daily sales, use Sales Data or Past Sales on Annual, or Upload CSV on Monthly Edit (CSV or Excel .xlsx).'
-            )
-          );
-        }});
-      }}
+      // Upload CSV button is wired by pl_expense_import_client_js (income/expense chooser).
 
       function csvEscape(value) {{
         var text = String(value == null ? '' : value);
@@ -7984,6 +7976,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       }}
 
 {pl_monthly_allocate_client_js()}
+{pl_expense_import_client_js()}
 {pl_income_client_js()}
 {pl_ratio_client_js()}
 {pl_reference_budget_client_js()}

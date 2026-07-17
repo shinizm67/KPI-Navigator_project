@@ -1,9 +1,11 @@
 date,item,amount
-2025-01,Part-time Labor,180000
 2025-01,Rent,250000
-2025-01,Electricity,42000
-2025-01,Gas,18000
-2025-01,Water,9000
-2025-02,Part-time Labor,172000
+2025-01,Fixed Labor,300000
+2025-01,Electricity Cost,42000
+2025-01,Gas Cost,18000
+2025-01,Water Cost,9000
+2025-01,Non-life insurance,12000
+2025-01,Communication,8000
 2025-02,Rent,250000
-2025-02,Electricity,39000
+2025-02,Fixed Labor,300000
+2025-02,Electricity Cost,39000
