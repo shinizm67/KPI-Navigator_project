@@ -1,5 +1,7 @@
 # CSV アップロードによる入力簡略化（POS 前提）メモ
 
+> 本メモは**売上（POS）**取り込みが対象。**支出（費目）の CSV/Excel 取り込み**は姉妹メモ [expense-csv-excel-import-memo.md](./expense-csv-excel-import-memo.md) を参照（費目名マッピング・雛形DL・日次/月次の論点）。
+
 ## フォント（プロダクト共通）
 
 - **Sci-Fi モードかつ英語（`html[lang="en"]`）ページのみ**、本文フォントに **`Orbitron`** を用いる。

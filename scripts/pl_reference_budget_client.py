@@ -5,8 +5,13 @@ L1 (row var_ref_budget):
 
 L2 (per-line expense detail cells, independent of L1 — method A):
   amount = sales × median(same-month lineExpense/sales over past years)
-  Fallback: median across any past months for that lineId when same-month
-  samples are missing. No data → hide guideline.
+  Fallback chain per lineId/month (PRIOR YEARS ONLY, for consistency &
+  defensibility — current-year other months are NOT used because they do
+  not reflect seasonality/busy-slow patterns):
+    1. past years, same month
+    2. past years, any month
+    3. no data → hide guideline (row height not expanded; a brief notice
+       is shown instead — see build_pl_table_page toggle wiring)
   Applies to both fixed and variable expense lines. Gated by the corner
   +/- toggle (body.pl-guide-on); off → all L2 hints cleared.
 """
@@ -21,6 +26,30 @@ def pl_reference_budget_client_js() -> str:
       var PL_REF_BUDGET_ROW = 'var_ref_budget';
       var PL_REF_PLACEHOLDER = 1234;
       var PL_REF_L2_LOOKBACK = 3;
+
+      /* 1 リフレッシュ内メモ化: localStorage / 年ストアの全体 JSON.parse を
+         セル×年×月ごとに繰り返さず、パス内で使い回して軽量化する。
+         同期処理の間だけ有効で、終了時に必ず破棄するため陳腐化しない。 */
+      var _plRefCache = null;
+      var _plRefCacheDepth = 0;
+      function plRefCacheEnter() {
+        if (_plRefCacheDepth === 0) {
+          _plRefCache = {
+            store: undefined,
+            sales: {},
+            expMap: {},
+            forecast: undefined,
+          };
+        }
+        _plRefCacheDepth++;
+      }
+      function plRefCacheExit() {
+        _plRefCacheDepth--;
+        if (_plRefCacheDepth <= 0) {
+          _plRefCacheDepth = 0;
+          _plRefCache = null;
+        }
+      }
       var PL_REF_L2_OVER_RATIO = 1.05;
       var PL_REF_ANNUAL_DAILY_KEY = 'kpiNavigator.annualDailyShared';
 
@@ -40,13 +69,20 @@ def pl_reference_budget_client_js() -> str:
       }
 
       function plRefBudgetReadYearStore() {
-        var gw = window.__KPI_DATA_GATEWAY;
-        if (!gw || typeof gw.getJson !== 'function') return null;
-        try {
-          return gw.getJson('kpiNavigator.kpiYearStore');
-        } catch (_e) {
-          return null;
+        if (_plRefCache && _plRefCache.store !== undefined) {
+          return _plRefCache.store;
         }
+        var gw = window.__KPI_DATA_GATEWAY;
+        var result = null;
+        if (gw && typeof gw.getJson === 'function') {
+          try {
+            result = gw.getJson('kpiNavigator.kpiYearStore');
+          } catch (_e) {
+            result = null;
+          }
+        }
+        if (_plRefCache) _plRefCache.store = result;
+        return result;
       }
 
       function plRefBudgetMedian(values) {
@@ -85,12 +121,26 @@ def pl_reference_budget_client_js() -> str:
       }
 
       function plRefBudgetSalesByMonth(year) {
+        if (_plRefCache && _plRefCache.sales[year] !== undefined) {
+          return _plRefCache.sales[year];
+        }
         var store = plRefBudgetReadYearStore();
         var ds = store && store.timeline && store.timeline.dailySales;
-        return plRefBudgetSalesMapFromObject(ds, year);
+        var result = plRefBudgetSalesMapFromObject(ds, year);
+        if (_plRefCache) _plRefCache.sales[year] = result;
+        return result;
       }
 
       function plRefBudgetForecastSalesByMonth(year) {
+        if (_plRefCache && _plRefCache.forecast !== undefined && _plRefCache.forecast.year === year) {
+          return _plRefCache.forecast.value;
+        }
+        var _forecastResult = plRefBudgetForecastSalesByMonthCompute(year);
+        if (_plRefCache) _plRefCache.forecast = { year: year, value: _forecastResult };
+        return _forecastResult;
+      }
+
+      function plRefBudgetForecastSalesByMonthCompute(year) {
         var gw = window.__KPI_DATA_GATEWAY;
         var map = null;
         if (gw && typeof gw.getJson === 'function') {
@@ -176,13 +226,19 @@ def pl_reference_budget_client_js() -> str:
       }
 
       function plRefBudgetReadExpenseMap(year) {
+        if (_plRefCache && _plRefCache.expMap[year] !== undefined) {
+          return _plRefCache.expMap[year];
+        }
+        var map = {};
         try {
           var raw = localStorage.getItem('kpi-pl-expenses-v1:' + year);
-          var map = raw ? JSON.parse(raw) : {};
-          return map && typeof map === 'object' ? map : {};
+          var parsed = raw ? JSON.parse(raw) : {};
+          if (parsed && typeof parsed === 'object') map = parsed;
         } catch (_e) {
-          return {};
+          map = {};
         }
+        if (_plRefCache) _plRefCache.expMap[year] = map;
+        return map;
       }
 
       function plRefBudgetDailyExpenseMonth(year, lineId, mi) {
@@ -254,6 +310,8 @@ def pl_reference_budget_client_js() -> str:
             if (m === mi) sameMonth.push(rate);
           }
         }
+        // 前年以前のデータのみを根拠にする（一貫性・説明可能性を優先）。
+        // 今年の他月は繁閑（季節性）を反映しないため目安の根拠にしない。
         var med = plRefBudgetMedian(sameMonth);
         if (med != null) return { rate: med, sample: sameMonth.length, basis: 'same-month' };
         med = plRefBudgetMedian(anyMonth);
@@ -305,14 +363,16 @@ def pl_reference_budget_client_js() -> str:
           info.amount > 0 &&
           actualParsed.value > info.amount * PL_REF_L2_OVER_RATIO;
         amtTd.classList.toggle('pl-amt-cell--over-l2', !!over);
+        var basisJa = info.basis === 'same-month' ? '過去同月' : '過去実績';
+        var basisEn = info.basis === 'same-month' ? 'past same-month' : 'past sample';
         var tip = isJa
-          ? '費目の参考予算（過去' +
-            (info.basis === 'same-month' ? '同月' : '実績') +
+          ? '費目の参考予算（' +
+            basisJa +
             '中央値 ' +
             (info.rate * 100).toFixed(1) +
             '% × 売上）。断定の適正値ではありません'
-          : 'Line guideline (median past ' +
-            (info.basis === 'same-month' ? 'same-month' : 'sample') +
+          : 'Line guideline (median ' +
+            basisEn +
             ' ' +
             (info.rate * 100).toFixed(1) +
             '% × sales). Not a prescribed ideal';
@@ -347,8 +407,15 @@ def pl_reference_budget_client_js() -> str:
         return ids;
       }
 
+      function plRefBudgetSetHasData(hasData) {
+        try {
+          document.body.classList.toggle('pl-guide-has-data', !!hasData);
+        } catch (_e) {}
+      }
+
       function refreshPlReferenceBudgetL2() {
         if (!plRefBudgetGuideOn()) {
+          plRefBudgetSetHasData(false);
           document
             .querySelectorAll(
               '#pl-expense-detail-data-body .pl-amt-cell[data-field="amount"]'
@@ -358,53 +425,73 @@ def pl_reference_budget_client_js() -> str:
             });
           return;
         }
-        var sales = plRefBudgetForecastSalesByMonth(plYear);
-        var lineIds = plRefBudgetAllLineIds();
-        var rateCache = {};
-        document
-          .querySelectorAll(
-            '#pl-expense-detail-data-body .pl-amt-cell[data-field="amount"][data-month]'
-          )
-          .forEach(function (amtTd) {
-            var lineId = amtTd.getAttribute('data-row') || amtTd.getAttribute('data-line-id');
-            var miRaw = amtTd.getAttribute('data-month');
-            if (!lineId || miRaw === 'year') {
-              plRefL2ClearCell(amtTd);
-              return;
-            }
-            var mi = Number(miRaw);
-            if (!Number.isFinite(mi) || mi < 0 || mi > 11) {
-              plRefL2ClearCell(amtTd);
-              return;
-            }
-            if (lineIds.indexOf(lineId) < 0) {
-              plRefL2ClearCell(amtTd);
-              return;
-            }
-            if (!sales.has[mi] || !(sales.totals[mi] > 0)) {
-              plRefL2ClearCell(amtTd);
-              return;
-            }
-            var cacheKey = lineId + ':' + mi;
-            if (!Object.prototype.hasOwnProperty.call(rateCache, cacheKey)) {
-              rateCache[cacheKey] = plRefL2RateForLineMonth(lineId, mi);
-            }
-            var stat = rateCache[cacheKey];
-            if (!stat || !(stat.rate > 0)) {
-              plRefL2ClearCell(amtTd);
-              return;
-            }
-            var amount = Math.round(sales.totals[mi] * stat.rate);
-            plRefL2ApplyCell(amtTd, {
-              amount: amount,
-              rate: stat.rate,
-              basis: stat.basis,
-              sample: stat.sample,
+        plRefCacheEnter();
+        try {
+          var sales = plRefBudgetForecastSalesByMonth(plYear);
+          var lineIds = plRefBudgetAllLineIds();
+          var rateCache = {};
+          document
+            .querySelectorAll(
+              '#pl-expense-detail-data-body .pl-amt-cell[data-field="amount"][data-month]'
+            )
+            .forEach(function (amtTd) {
+              var lineId = amtTd.getAttribute('data-row') || amtTd.getAttribute('data-line-id');
+              var miRaw = amtTd.getAttribute('data-month');
+              if (!lineId || miRaw === 'year') {
+                plRefL2ClearCell(amtTd);
+                return;
+              }
+              var mi = Number(miRaw);
+              if (!Number.isFinite(mi) || mi < 0 || mi > 11) {
+                plRefL2ClearCell(amtTd);
+                return;
+              }
+              if (lineIds.indexOf(lineId) < 0) {
+                plRefL2ClearCell(amtTd);
+                return;
+              }
+              if (!sales.has[mi] || !(sales.totals[mi] > 0)) {
+                plRefL2ClearCell(amtTd);
+                return;
+              }
+              var cacheKey = lineId + ':' + mi;
+              if (!Object.prototype.hasOwnProperty.call(rateCache, cacheKey)) {
+                rateCache[cacheKey] = plRefL2RateForLineMonth(lineId, mi);
+              }
+              var stat = rateCache[cacheKey];
+              if (!stat || !(stat.rate > 0)) {
+                plRefL2ClearCell(amtTd);
+                return;
+              }
+              var amount = Math.round(sales.totals[mi] * stat.rate);
+              plRefL2ApplyCell(amtTd, {
+                amount: amount,
+                rate: stat.rate,
+                basis: stat.basis,
+                sample: stat.sample,
+              });
             });
-          });
+          // 目安が1つでも出せた時だけ行高を拡張（データ皆無なら行高そのまま）
+          var hasAnyL2 =
+            document.querySelectorAll(
+              '#pl-expense-detail-data-body .pl-amt-cell--has-l2'
+            ).length > 0;
+          plRefBudgetSetHasData(hasAnyL2);
+        } finally {
+          plRefCacheExit();
+        }
       }
 
       function refreshPlReferenceBudget() {
+        plRefCacheEnter();
+        try {
+          refreshPlReferenceBudgetInner();
+        } finally {
+          plRefCacheExit();
+        }
+      }
+
+      function refreshPlReferenceBudgetInner() {
         var targetRate = plRefBudgetLoadTargetRate();
         var sales = plRefBudgetForecastSalesByMonth(plYear);
         var fixed = plRefBudgetFixedByMonth(plYear);

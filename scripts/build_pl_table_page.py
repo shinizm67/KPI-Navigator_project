@@ -310,6 +310,7 @@ LABELS_JA = {
     "guide_toggle_hide_title": "費目別の参考予算を隠す",
     "guide_toggle_tip": "＋ 費目別の参考予算（定規）を表示。過去実績の中央値比率 × 今月の売上で「使いすぎ」を各セルに目安表示します（断定の適正値ではありません）。",
     "guide_toggle_tip_on": "− 費目別の参考予算（定規）を隠します。",
+    "guide_toggle_tip_nodata": "参考予算は、過去の売上・支出データが貯まると自動で表示されます（あなたの店の実績から算出）。",
     "year": "2024",
     "store_sales": "店舗売上",
     "sales_a": "売上A",
@@ -465,6 +466,7 @@ LABELS_EN = {
     "guide_toggle_hide_title": "Hide per-line reference budget",
     "guide_toggle_tip": "+ Show per-line reference budget (guideline). Median of your past ratios × this month's sales flags likely overspending per cell (not a prescribed ideal).",
     "guide_toggle_tip_on": "− Hide the per-line reference budget (guideline).",
+    "guide_toggle_tip_nodata": "Reference budget appears automatically once you have past sales & expense data (computed from your own store's records).",
     "year": "2024",
     "store_sales": "Store sales",
     "sales_a": "Sales A",
@@ -6350,9 +6352,10 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-table--v1 .pl-amt-cell--expense-detail {{
       position: relative;
     }}
-    /* 費目別参考予算(L2)は既定で非表示。コーナーの +/- で一括表示 */
-    body.pl-guide-on .pl-table--labels-expense-detail,
-    body.pl-guide-on .pl-table--data-expense-detail {{
+    /* 費目別参考予算(L2)は既定で非表示。コーナーの +/- で一括表示。
+       行高の拡張は「目安が1つでも出せた時」だけ（データ皆無なら行高そのまま） */
+    body.pl-guide-on.pl-guide-has-data .pl-table--labels-expense-detail,
+    body.pl-guide-on.pl-guide-has-data .pl-table--data-expense-detail {{
       --pl-row-label-h: 52px;
     }}
     .pl-table--v1 .pl-amt-cell__l2 {{
@@ -7220,16 +7223,22 @@ def render_page(lang: str, lang_switch: str) -> str:
       var plGuideToggle = document.getElementById('pl-guide-toggle');
       var plGuideTipShow = {json.dumps(L["guide_toggle_tip"], ensure_ascii=False)};
       var plGuideTipHide = {json.dumps(L["guide_toggle_tip_on"], ensure_ascii=False)};
+      var plGuideTipNoData = {json.dumps(L["guide_toggle_tip_nodata"], ensure_ascii=False)};
       function plGuideIsOn() {{
         try {{ return localStorage.getItem(PL_GUIDE_KEY) === '1'; }} catch (_e) {{ return false; }}
+      }}
+      function plGuideHasData() {{
+        try {{ return document.body.classList.contains('pl-guide-has-data'); }} catch (_e) {{ return false; }}
       }}
 
       /* body 直下の固定ツールチップ（セルの overflow:hidden に切られない） */
       var plGuideTipEl = null;
+      var plGuideTipTimer = null;
       function plGuideTipText() {{
-        return plGuideIsOn() ? plGuideTipHide : plGuideTipShow;
+        if (!plGuideIsOn()) return plGuideTipShow;
+        return plGuideHasData() ? plGuideTipHide : plGuideTipNoData;
       }}
-      function showPlGuideTip() {{
+      function showPlGuideTip(autoHideMs) {{
         if (!plGuideToggle) return;
         if (!plGuideTipEl) {{
           plGuideTipEl = document.createElement('div');
@@ -7237,6 +7246,7 @@ def render_page(lang: str, lang_switch: str) -> str:
           plGuideTipEl.setAttribute('role', 'tooltip');
           document.body.appendChild(plGuideTipEl);
         }}
+        if (plGuideTipTimer) {{ clearTimeout(plGuideTipTimer); plGuideTipTimer = null; }}
         plGuideTipEl.textContent = plGuideTipText();
         plGuideTipEl.style.visibility = 'hidden';
         plGuideTipEl.classList.add('is-visible');
@@ -7252,8 +7262,12 @@ def render_page(lang: str, lang_switch: str) -> str:
         plGuideTipEl.style.left = Math.round(left) + 'px';
         plGuideTipEl.style.top = Math.round(top) + 'px';
         plGuideTipEl.style.visibility = 'visible';
+        if (autoHideMs && autoHideMs > 0) {{
+          plGuideTipTimer = setTimeout(hidePlGuideTip, autoHideMs);
+        }}
       }}
       function hidePlGuideTip() {{
+        if (plGuideTipTimer) {{ clearTimeout(plGuideTipTimer); plGuideTipTimer = null; }}
         if (plGuideTipEl) plGuideTipEl.classList.remove('is-visible');
       }}
 
@@ -7277,7 +7291,8 @@ def render_page(lang: str, lang_switch: str) -> str:
           var next = !plGuideIsOn();
           try {{ localStorage.setItem(PL_GUIDE_KEY, next ? '1' : '0'); }} catch (_e) {{}}
           applyPlGuideState(next);
-          showPlGuideTip();
+          // ON にしたが目安が1つも出せない（過去データ皆無）→ 案内を少し長めに出す
+          showPlGuideTip(next && !plGuideHasData() ? 4500 : 0);
         }});
         plGuideToggle.addEventListener('mouseenter', showPlGuideTip);
         plGuideToggle.addEventListener('mouseleave', hidePlGuideTip);

@@ -73,7 +73,12 @@ MEP（Monthly Edit Page）・PL（損益表）は KPI Navigator の**サブス�
 
 - **refresh 連鎖の多重発火**（2.3）: 入力・年移動・MEP↔PL 同期イベントでの重複呼び出し。
 - **`querySelectorAll` の繰り返し**: 明細セル全走査を毎回行う箇所。対象を絞る / 結果を保持する余地。
-- **売上マップ再構築**: `plRefBudgetSalesMapFromObject` 等を月ごと・セルごとに再生成している箇所。
+- ~~**売上マップ再構築**: `plRefBudgetSalesMapFromObject` 等を月ごと・セルごとに再生成している箇所。~~
+  **【2026-07-17 対応済み】** L2 の目安計算で `kpiYearStore` 全体・費目マップ・売上マップを
+  セル×年×月ごとに毎回 `JSON.parse` していたのを、**1 リフレッシュ内メモ化**（`_plRefCache`、
+  同期パス終了時に破棄→陳腐化なし）に変更。`__plRefreshReferenceBudget` が **約38ms→約5ms**、
+  +/- トグルのクリック処理が **約88ms→約13ms**（過去3年データのシード計測）。実データが大きいほど効果大。
+  実装 `scripts/pl_reference_budget_client.py`。§2.2 メモ化の実例。
 - **行高同期 `syncPlSplitLayout`**: 全ペア再測定。描画イベント連発時にまとめられる可能性。
 - **MEP 二重注入の掃除**（高リスク）: 既知の重複注入。安全に外せるかは要検証、単独 PR 推奨。
 

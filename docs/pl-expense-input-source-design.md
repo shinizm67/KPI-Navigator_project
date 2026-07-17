@@ -13,6 +13,7 @@
 - [pl-table-label-layout-memo.md](./pl-table-label-layout-memo.md) — 行ラベル・科目カタログ
 - [pl-table-v1-implementation-spec.md](./pl-table-v1-implementation-spec.md) — 現行 PL 表 UI の実装状況
 - [monthly-page-memo.md](./monthly-page-memo.md) — Monthly Edit
+- [expense-csv-excel-import-memo.md](./expense-csv-excel-import-memo.md) — 支出（費目）CSV/Excel 取り込み設計（費目名を Excel 由来の正にする構想・列マッピング）
 
 ---
 

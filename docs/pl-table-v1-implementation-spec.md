@@ -306,7 +306,10 @@ PL 表ツールバー **PL Insight** から開く読み取り専用オーバー�
 - [x] **入力元切替時の旧データ整理（2026-07-16）** — daily↔monthly 切替で使わなくなる側を掃除（daily→monthly: `dailyExpenses[lineId]` 削除 / monthly→daily: `kpi-pl-expenses-v1` の当該キー削除）。同スタイル再設定は保持。実装 `scripts/pl_expense_detail_client.py`、検証 `scripts/verify_pl_input_style_cleanup.py`。
 - [x] **参考予算 L1（2026-07-17・最小版）** — 総支出サマリー直下に「変動費の参考枠」行。`売上 × max(0, 目標総費率65% − 固定費率)`。固定費は `kpi-pl-expenses-v1` の fixed 行合計。目標総費率は `kpiNavigator.plTargetCostRate`（未設定時 0.65）。実装 `scripts/pl_reference_budget_client.py`、検証 `scripts/verify_pl_reference_budget.py`。
 - [x] **参考予算 L2（2026-07-17・最小版）** — 明細セルに過去同月中央値比率×売上の「目安」。方式 A（L1 と独立）。実績 > 目安×1.05 で強調。検証 `verify_pl_reference_budget_l2.py`。同曜日・枠内按分は未着手。
-- [x] **参考予算 L2 トグル化（2026-07-17）** — コーナー（損益表/Profit & Loss）セルに +/- ボタン。既定 OFF で目安は非表示、ON で全 Amount セルに目安を出し明細行高を +12px 拡張（`body.pl-guide-on`）。**変動費だけでなく固定費行も対象**。over 強調はトグル ON 時のみ。状態は `kpiNavigator.plGuideOn` に保存。実装 `scripts/pl_reference_budget_client.py`＋`scripts/build_pl_table_page.py`、検証 `scripts/verify_pl_l2_toggle.py`。
+- [x] **参考予算 L2 トグル化（2026-07-17）** — コーナー（損益表/Profit & Loss）セルに +/- ボタン。既定 OFF で目安は非表示、ON で全 Amount セルに目安を出し明細行高を +12px 拡張（`body.pl-guide-on`）。**変動費だけでなく固定費行も対象**。over 強調はトグル ON 時のみ。状態は `kpiNavigator.plGuideOn` に保存。ホバー/フォーカスでツールチップ（`body` 直下の固定要素）。実装 `scripts/pl_reference_budget_client.py`＋`scripts/build_pl_table_page.py`、検証 `scripts/verify_pl_l2_toggle.py`。
+- [x] **参考予算 L2「前年以前のみ」方針に確定（2026-07-17 改訂）** — 一度は「今年の他月」フォールバックを入れたが、**今年の他月は繁閑（季節性）を反映せず根拠として説明できない**ため撤去。フォールバック順は ①過去年同月 ②過去年任意月 ③皆無→非表示（行高は上げず案内のみ）。前年データが揃えば自動的にその店の傾向へ切り替わる。basis は `same-month` / `past sample` のみ。検証 `scripts/verify_pl_l2_prior_year_only.py`（今年のみ→出さない／前年あり→出す）。
+- [x] **参考予算 L2 データ皆無時のUX（2026-07-17）** — 業界目安テンプレは不採用（根拠説明の負担・軸ブレ回避）。目安が1つも出せない時は **行高を上げず**（`body.pl-guide-has-data` が付く時だけ +12px 拡張）、トグル ON 時にさりげない案内を数秒表示。検証 `scripts/verify_pl_l2_nodata.py`。
+- [x] **参考予算 L2 高速化（2026-07-17）** — 年ストア/費目/売上マップの全体 `JSON.parse` を 1 リフレッシュ内メモ化（`_plRefCache`）。目安再計算 約38→5ms、+/- クリック 約88→13ms。実装 `scripts/pl_reference_budget_client.py`。
 
 ---
 
