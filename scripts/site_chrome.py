@@ -276,12 +276,7 @@ def build_header(
           </span>
         </a>
         <details class="header-dl" id="header-dl">
-          <summary class="btn-mode btn-template-dl" aria-label="{L['dl_aria']}">
-            <span class="btn-mode-frame">
-              <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-              <span class="btn-mode-text">{L['dl_label']}</span>
-            </span>
-          </summary>
+          <summary class="header-dl-btn" aria-label="{L['dl_aria']}">{L['dl_label']}</summary>
           <div class="template-dl-menu" role="menu" aria-label="{L['dl_menu_aria']}">
             <a href="{img}excel/{L['dl_daily_file']}" download class="template-dl-item" role="menuitem">{L['dl_daily']}</a>
             <a href="{img}excel/{L['dl_monthly_file']}" download class="template-dl-item" role="menuitem">{L['dl_monthly']}</a>

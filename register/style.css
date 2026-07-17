@@ -176,20 +176,50 @@ html[lang="ja"] .si-fi .btn-mode-text {
 
 /* --- ヘッダーの雛形（テンプレート）DL メニュー ---
    <details>/<summary> によるネイティブ開閉（JS 不要 = 全ページ共通で動く）。
-   ボタンは OFFICE MODE と同じ装飾フレーム、開くと日次/月次の雛形リンクを表示。 */
+   ボタンは「四角い枠に DL」だけのシンプル形。btn-mode 系は使わない
+   （profile-page で .btn-mode が Sci-Fi/Office スイッチに変形するため巻き込まれない）。 */
 .si-fi .header-dl {
   position: relative;
   display: inline-block;
   vertical-align: middle;
 }
 .si-fi .header-dl > summary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   list-style: none;
   cursor: pointer;
+  min-width: 46px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--si-fi-cyan);
+  border-radius: 3px;
+  color: var(--si-fi-cyan);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 .si-fi .header-dl > summary::-webkit-details-marker { display: none; }
 .si-fi .header-dl > summary::marker { content: ""; }
-.si-fi .btn-template-dl .btn-mode-frame { max-width: 84px; }
+.si-fi .header-dl > summary:hover {
+  background: rgba(88, 225, 243, 0.12);
+  box-shadow: 0 0 8px rgba(88, 225, 243, 0.4);
+}
+.si-fi .header-dl[open] > summary {
+  background: rgba(88, 225, 243, 0.15);
+}
+html[lang="ja"] .si-fi .header-dl > summary {
+  letter-spacing: 0.06em;
+}
+.si-fi.office-mode .header-dl > summary {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+.si-fi.office-mode .header-dl > summary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
 .si-fi .template-dl-menu {
   position: absolute;
   top: calc(100% + 8px);
