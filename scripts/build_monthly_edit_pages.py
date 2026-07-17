@@ -11,6 +11,7 @@ from kpi_leave_close_chooser import (
     CLOSE_CHOOSER_HTML,
     close_chooser_js,
 )
+from site_chrome import build_header
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,6 +26,8 @@ CONFIGS = [
         "register_css": "../../../../register/style.css",
         "setting_css": "../../../setting/style.css",
         "images_prefix": "../../../../images/",
+        "img": "../../../../",
+        "base": "../../../",
         "setting_prefix": "../../../setting/",
         "forge_href": "https://forge-laboratory.com/en",
         "forge_aria": "FORGE LABORATORY - Top page",
@@ -59,6 +62,8 @@ CONFIGS = [
         "register_css": "../../../register/style.css",
         "setting_css": "../../../en/setting/style.css",
         "images_prefix": "../../../images/",
+        "img": "../../../",
+        "base": "../../../",
         "setting_prefix": "../../../en/setting/",
         "forge_href": "https://forge-laboratory.com/",
         "forge_aria": "FORGE LABORATORY - トップページ",
@@ -990,20 +995,6 @@ def patch_html(html: str, cfg: dict) -> str:
     return html
 
 
-def extract_header_tail(src: str, setting_prefix: str) -> str:
-    m = re.search(
-        r'(<div class="account-settings-popup" id="account-settings-popup".*?</div>\s*</div>\s*</header>)',
-        src,
-        re.DOTALL,
-    )
-    if not m:
-        raise ValueError("header tail (account popup + settings dropdown) not found")
-    block = m.group(1)
-    block = block.replace("../../setting/", setting_prefix)
-    block = block.replace('../../../en/setting/', setting_prefix)
-    return block
-
-
 def build_page(cfg: dict) -> str:
     src_text = cfg["src"].read_text(encoding="utf-8")
     css = patch_css(extract_between(src_text, CSS_START, CSS_END))
@@ -1014,7 +1005,12 @@ def build_page(cfg: dict) -> str:
     js_body = patch_js(
         extract_between(src_text, JS_START, JS_END_MARKER).rstrip()
     )
-    header_tail = extract_header_tail(src_text, cfg["setting_prefix"])
+    header = build_header(
+        cfg["lang"], cfg["base"], cfg["img"], "monthly",
+        daily_mode="overlay",
+        daily_href=cfg["daily_href"],
+        profit_href=cfg["profit_href"],
+    )
 
     lang_attr = cfg["lang"]
     if cfg["lang"] == "en":
@@ -1038,71 +1034,7 @@ def build_page(cfg: dict) -> str:
   </style>
 </head>
 <body class="si-fi profile-page monthly-page monthly-edit-page{cfg["body_extra_class"]}" id="body-el">
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="header-logo">
-        <a href="{cfg["forge_href"]}" class="logo-link" aria-label="{cfg["forge_aria"]}" target="_blank" rel="noopener noreferrer">
-          <img src="{cfg["images_prefix"]}forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
-        </a>
-      </div>
-      <nav class="global-nav" aria-label="{cfg["nav_aria"]}">
-        <ul class="global-nav-list">
-          <li class="global-nav-item">
-            <a href="{cfg["annual_href"]}" class="nav-frame-btn" aria-label="{cfg["annual_label"]}">
-              <span class="btn-mode-frame">
-                <img src="{cfg["images_prefix"]}button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">{cfg["annual_label"]}</span>
-              </span>
-            </a>
-          </li>
-          <li class="global-nav-item">
-            <a href="{cfg["monthly_nav_href"]}" class="nav-frame-btn" aria-label="{cfg["monthly_label"]}" aria-current="page">
-              <span class="btn-mode-frame">
-                <img src="{cfg["images_prefix"]}button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">{cfg["monthly_label"]}</span>
-              </span>
-            </a>
-          </li>
-          <li class="global-nav-item">
-            <a href="{cfg["daily_href"]}" class="nav-frame-btn" id="global-nav-daily-btn" aria-label="{cfg["daily_label"]}">
-              <span class="btn-mode-frame">
-                <img src="{cfg["images_prefix"]}button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">{cfg["daily_label"]}</span>
-              </span>
-            </a>
-          </li>
-          <li class="global-nav-item">
-            <a
-              href="{cfg["profit_href"]}"
-              class="nav-frame-btn"
-              id="global-nav-index-btn"
-              data-href-pro="{cfg["profit_href"]}"
-              data-href-basic="{cfg["profit_basic_href"]}"
-              aria-label="{cfg["insight_label"]}"
-            >
-              <span class="btn-mode-frame">
-                <img src="{cfg["images_prefix"]}button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-                <span class="btn-mode-text nav-btn-text">{cfg["insight_label"]}</span>
-              </span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="{cfg["office_toggle_aria"]}">
-          <span class="btn-mode-frame">
-            <img src="{cfg["images_prefix"]}button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-            <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
-          </span>
-        </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="{cfg["menu_aria"]}">
-          <img src="{cfg["images_prefix"]}dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
-        </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="{cfg["gear_aria"]}" aria-expanded="false" aria-haspopup="true">
-          <img src="{cfg["images_prefix"]}setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
-        </button>
-      </div>
-      {header_tail}
+{header}
 
   {html_block}
 

@@ -50,10 +50,11 @@ def check_page(cfg: dict) -> list[str]:
     text = path.read_text(encoding="utf-8")
 
     header = _region(text, HEADER_MARK_START, HEADER_MARK_END)
-    footer = _region(text, FOOTER_MARK_START, FOOTER_MARK_END)
+    has_footer = cfg.get("footer", True)
+    footer = _region(text, FOOTER_MARK_START, FOOTER_MARK_END) if has_footer else ""
     if not header:
         errs.append(f"{cfg['path']}: header markers not found")
-    if not footer:
+    if has_footer and not footer:
         errs.append(f"{cfg['path']}: footer markers not found")
 
     page_dir = path.parent

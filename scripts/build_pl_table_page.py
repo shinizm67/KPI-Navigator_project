@@ -15,6 +15,7 @@ from kpi_leave_close_chooser import (  # noqa: E402
     CLOSE_CHOOSER_HTML,
     close_chooser_js,
 )
+from site_chrome import build_header  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -3604,19 +3605,25 @@ def render_page(lang: str, lang_switch: str) -> str:
     }
     compare_js = pl_compare_client_js(monthly_edit=p["monthly_edit"], labels=compare_labels)
     html_lang = "en" if lang == "en" else "ja"
-    nav = header_nav_html(lang, p, L)
+    # Canonical Global Menu (single source: scripts/site_chrome.py). PL keeps its
+    # page-specific wiring via overrides: pl-* classes for the PL CSS, a
+    # data-pl-nav="1" leave-guard on every nav item, and the Insight deep link.
+    # base is the language-root prefix (JA=repo root, EN=en/) — both 3 levels up
+    # from app/profit/pl/. This also fixes the old JA→en/setting popup drift.
+    header = build_header(
+        lang, "../../../", p["asset"], None,
+        daily_mode="overlay",
+        header_class="pl-site-header",
+        nav_class="pl-header-global-nav",
+        nav_attr=' data-pl-nav="1"',
+        profit_href=p["insight"],
+    )
     if lang == "ja":
-        nav_aria = "メインナビゲーション"
         office_aria_off = "Office Mode に切り替え"
         office_aria_on = "Sci-Fi Mode に切り替え"
-        menu_aria = "ナビゲーションメニューを開く"
-        gear_aria = "アカウント設定"
     else:
-        nav_aria = "Main navigation"
         office_aria_off = "Switch to Office Mode"
         office_aria_on = "Switch to Sci-Fi Mode"
-        menu_aria = "Open navigation menu"
-        gear_aria = "Account settings"
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}">
 <head>
@@ -6727,62 +6734,7 @@ def render_page(lang: str, lang_switch: str) -> str:
   </style>
 </head>
 <body class="si-fi profile-page pl-page" id="body-el">
-  <header class="site-header pl-site-header">
-    <div class="header-inner">
-      <div class="header-logo">
-        <a href="{p['forge_url']}" class="logo-link" aria-label="FORGE LABORATORY" target="_blank" rel="noopener noreferrer">
-          <img src="{p['asset']}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
-        </a>
-      </div>
-      <nav class="global-nav pl-header-global-nav" aria-label="{nav_aria}">
-        <ul class="global-nav-list">
-{nav}
-        </ul>
-      </nav>
-      <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="{office_aria_off}">
-          <span class="btn-mode-frame">
-            <img src="{p['asset']}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-            <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
-          </span>
-        </a>
-        <button type="button" class="icon-button icon-button-menu" aria-label="{menu_aria}">
-          <img src="{p['asset']}images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
-        </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="{gear_aria}" aria-expanded="false" aria-haspopup="true">
-          <img src="{p['asset']}images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
-        </button>
-      </div>
-      <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="Account Settings" hidden>
-        <h3 class="account-settings-popup-title">Account Settings</h3>
-        <section class="account-settings-section">
-          <h4 class="account-settings-heading">Account</h4>
-          <nav class="account-settings-nav">
-            <a href="{p['setting']}profile.html" class="account-settings-item" role="menuitem">Profile</a>
-            <a href="{p['setting']}change_email.html" class="account-settings-item" role="menuitem">{"メールアドレスの変更" if lang == "ja" else "Change Email"}</a>
-            <a href="{p['setting']}change_password.html" class="account-settings-item" role="menuitem">{"パスワードの変更" if lang == "ja" else "Change Password"}</a>
-          </nav>
-        </section>
-        <section class="account-settings-section">
-          <h4 class="account-settings-heading">Subscription</h4>
-          <nav class="account-settings-nav">
-            <a href="{p['setting']}plan_details.html" class="account-settings-item" role="menuitem">{"プラン詳細" if lang == "ja" else "Plan Details"}</a>
-            <a href="{p['setting']}change_plan.html" class="account-settings-item" role="menuitem">{"プラン変更" if lang == "ja" else "Change Plan"}</a>
-          </nav>
-        </section>
-      </div>
-      <div class="settings-dropdown" id="settings-dropdown" hidden>
-        <div class="settings-dropdown-inner">
-          <a href="#" class="nav-frame-btn settings-dropdown-item" id="settings-office-toggle" aria-label="{"Office Mode を切り替え" if lang == "ja" else "Toggle Office Mode"}">
-            <span class="btn-mode-frame">
-              <img src="{p['asset']}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
-              <span class="btn-mode-text nav-btn-text" id="settings-office-label">Office Mode</span>
-            </span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </header>
+{header}
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
       <div class="pl-wrap">

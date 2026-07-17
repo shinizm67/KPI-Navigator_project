@@ -61,6 +61,13 @@ LABELS = {
         "office_dropdown_aria": "Office Mode を切り替え",
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "ページ先頭へ戻る",
+        "dl_label": "DL",
+        "dl_aria": "支出の雛形（テンプレート）をダウンロード",
+        "dl_menu_aria": "雛形ダウンロード",
+        "dl_daily": "支出雛形（日次）",
+        "dl_monthly": "支出雛形（月次）",
+        "dl_daily_file": "支出入力_日次_雛形.csv",
+        "dl_monthly_file": "支出入力_月次_雛形.csv",
     },
     "en": {
         "logo_href": "https://forge-laboratory.com/en",
@@ -95,16 +102,43 @@ LABELS = {
         "office_dropdown_aria": "Toggle Office Mode",
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "Back to top",
+        "dl_label": "DL",
+        "dl_aria": "Download expense templates",
+        "dl_menu_aria": "Template downloads",
+        "dl_daily": "Expense template (daily)",
+        "dl_monthly": "Expense template (monthly)",
+        "dl_daily_file": "expense-import_daily_template.csv",
+        "dl_monthly_file": "expense-import_monthly_template.csv",
     },
 }
 
 FOOTER_COPY = "© 2025 Forge-Laboratory. All rights reserved."
 
+# Public (pre-login) pages — login / register / plan / legal — share a *minimal*
+# chrome: logo + a Sci-Fi/Office mode toggle, no app nav and no account popup.
+# This is a distinct design from the app header, so it has its own label set to
+# preserve the exact current wording (e.g. JA text "オフィスモード", trailing-slash
+# logo href) rather than being unified with the app header.
+PUBLIC_LABELS = {
+    "ja": {
+        "logo_href": "https://forge-laboratory.com/",
+        "logo_aria": "FORGE LABORATORY - トップページ",
+        "office_aria": "オフィスモードに切り替え",
+        "office_text": "オフィスモード",
+    },
+    "en": {
+        "logo_href": "https://forge-laboratory.com/en",
+        "logo_aria": "FORGE LABORATORY - Top page",
+        "office_aria": "Switch to Office Mode",
+        "office_text": "OFFICE MODE",
+    },
+}
 
-def _nav_simple(view: str, href: str, img: str, label: str, aria: str, active: bool) -> str:
+
+def _nav_simple(view: str, href: str, img: str, label: str, aria: str, active: bool, nav_attr: str = "") -> str:
     current = ' aria-current="page"' if active else ""
     return f"""          <li class="global-nav-item">
-            <a href="{href}" class="nav-frame-btn" aria-label="{aria}"{current}>
+            <a href="{href}" class="nav-frame-btn"{nav_attr} aria-label="{aria}"{current}>
               <span class="btn-mode-frame">
                 <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">{label}</span>
@@ -113,17 +147,21 @@ def _nav_simple(view: str, href: str, img: str, label: str, aria: str, active: b
           </li>"""
 
 
-def _nav_daily(base: str, img: str, label: str, L: dict, daily_mode: str) -> str:
-    # "overlay": pages that host the Daily floating window (annual / monthly).
-    # "link":    pages without the overlay (e.g. profit) navigate to Annual.
+def _nav_daily(base: str, img: str, label: str, L: dict, daily_mode: str, nav_attr: str = "", daily_href: str | None = None) -> str:
+    # "overlay": pages that host / open the Daily floating window (annual /
+    #   monthly / profit-PL). href defaults to "#" but a page may pass a real
+    #   deep link (e.g. monthly-edit → "../index.html?open=daily").
+    # "link":    pages without the overlay navigate to Annual by default.
     if daily_mode == "link":
+        href = daily_href or f"{base}app/annual/index.html"
         anchor = (
-            f'            <a href="{base}app/annual/index.html" class="nav-frame-btn" '
+            f'            <a href="{href}" class="nav-frame-btn"{nav_attr} '
             f'aria-label="{L["daily_link_aria"]}">'
         )
     else:
+        href = daily_href or "#"
         anchor = (
-            f'            <a href="#" class="nav-frame-btn" id="global-nav-daily-btn" '
+            f'            <a href="{href}" class="nav-frame-btn"{nav_attr} id="global-nav-daily-btn" '
             f'aria-label="{L["daily_aria"]}">'
         )
     return f"""          <li class="global-nav-item">
@@ -136,23 +174,25 @@ def _nav_daily(base: str, img: str, label: str, L: dict, daily_mode: str) -> str
           </li>"""
 
 
-def _nav_profit(base: str, img: str, label: str, L: dict, active: bool) -> str:
-    href = f"{base}app/profit/index.html"
+def _nav_profit(base: str, img: str, label: str, L: dict, active: bool, nav_attr: str = "", profit_href: str | None = None) -> str:
+    href = profit_href or f"{base}app/profit/index.html"
     inner = f"""              <span class="btn-mode-frame">
                 <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">{label}</span>
               </span>"""
     if active:
         anchor = (
-            f'            <a href="{href}" class="nav-frame-btn" '
+            f'            <a href="{href}" class="nav-frame-btn"{nav_attr} '
             f'aria-label="{L["profit_aria_active"]}" aria-current="page">\n'
             f"{inner}\n            </a>"
         )
     else:
+        extra_attr = f"              {nav_attr.strip()}\n" if nav_attr.strip() else ""
         anchor = (
             f"            <a\n"
             f'              href="{href}"\n'
             f'              class="nav-frame-btn"\n'
+            f"{extra_attr}"
             f'              id="global-nav-index-btn"\n'
             f'              data-href-pro="{href}"\n'
             f'              data-href-basic="{base}setting/change_plan.html"\n'
@@ -184,30 +224,46 @@ def build_header(
     daily_mode: str = "overlay",
     profit_label: str | None = None,
     account_current: str | None = None,
+    header_class: str = "",
+    nav_class: str = "",
+    nav_attr: str = "",
+    daily_href: str | None = None,
+    profit_href: str | None = None,
 ) -> str:
+    """Canonical app header.
+
+    Optional overrides let generated pages (monthly-edit, PL) reuse the same
+    source while keeping their page-specific nav wiring:
+    - `header_class` / `nav_class`: extra classes (e.g. `pl-site-header`).
+    - `nav_attr`: attribute string added to every nav `<a>` (e.g. the PL
+      leave-guard's ` data-pl-nav="1"`). Must start with a space.
+    - `daily_href` / `profit_href`: deep-link targets (e.g. `?open=daily`).
+    """
     L = LABELS[lang]
+    header_cls = f"site-header {header_class}".strip()
+    nav_cls = f"global-nav {nav_class}".strip()
     items = "\n".join(
         [
             _nav_simple(
                 "annual", f"{base}app/annual/index.html", img,
-                L["annual_label"], L["annual_aria"], active == "annual",
+                L["annual_label"], L["annual_aria"], active == "annual", nav_attr,
             ),
             _nav_simple(
                 "monthly", f"{base}app/monthly/index.html", img,
-                L["monthly_label"], L["monthly_aria"], active == "monthly",
+                L["monthly_label"], L["monthly_aria"], active == "monthly", nav_attr,
             ),
-            _nav_daily(base, img, L["daily_label"], L, daily_mode),
-            _nav_profit(base, img, profit_label or L["profit_label"], L, active == "profit"),
+            _nav_daily(base, img, L["daily_label"], L, daily_mode, nav_attr, daily_href),
+            _nav_profit(base, img, profit_label or L["profit_label"], L, active == "profit", nav_attr, profit_href),
         ]
     )
-    return f"""  <header class="site-header">
+    return f"""  <header class="{header_cls}">
     <div class="header-inner">
       <div class="header-logo">
         <a href="{L['logo_href']}" class="logo-link" aria-label="{L['logo_aria']}" target="_blank" rel="noopener noreferrer">
           <img src="{img}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
         </a>
       </div>
-      <nav class="global-nav" aria-label="{L['nav_aria']}">
+      <nav class="{nav_cls}" aria-label="{L['nav_aria']}">
         <ul class="global-nav-list">
 {items}
         </ul>
@@ -219,6 +275,18 @@ def build_header(
             <span class="btn-mode-text" id="btn-mode-text">{L['office_text']}</span>
           </span>
         </a>
+        <details class="header-dl" id="header-dl">
+          <summary class="btn-mode btn-template-dl" aria-label="{L['dl_aria']}">
+            <span class="btn-mode-frame">
+              <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+              <span class="btn-mode-text">{L['dl_label']}</span>
+            </span>
+          </summary>
+          <div class="template-dl-menu" role="menu" aria-label="{L['dl_menu_aria']}">
+            <a href="{img}excel/{L['dl_daily_file']}" download class="template-dl-item" role="menuitem">{L['dl_daily']}</a>
+            <a href="{img}excel/{L['dl_monthly_file']}" download class="template-dl-item" role="menuitem">{L['dl_monthly']}</a>
+          </div>
+        </details>
         <button type="button" class="icon-button icon-button-menu" aria-label="{L['menu_aria']}">
           <img src="{img}images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
@@ -273,6 +341,49 @@ def build_footer(lang: str, img: str) -> str:
     <button class="footer-backtotop" id="footerBackToTop" aria-label="{L['footer_backtotop_aria']}">
       <img src="{img}images/arrow_up.svg" alt="" class="footer-backtotop__icon" aria-hidden="true">
     </button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo">
+      <a href="{L['logo_href']}" class="logo-link" aria-label="{L['logo_aria']}" target="_blank" rel="noopener noreferrer">
+        <img src="{img}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+      </a>
+    </div>
+    <p class="footer-copy">{FOOTER_COPY}</p>
+  </footer>"""
+
+
+def build_public_header(lang: str, img: str) -> str:
+    """Minimal header for pre-login pages (login / register / plan / legal).
+
+    Logo + mode toggle only. Keeps the ids used by each page's inline mode JS
+    (`btn-mode-toggle`, `btn-mode-text`).
+    """
+    L = PUBLIC_LABELS[lang]
+    return f"""  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="{L['logo_href']}" class="logo-link" aria-label="{L['logo_aria']}" target="_blank" rel="noopener noreferrer">
+          <img src="{img}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="{L['office_aria']}">
+          <span class="btn-mode-frame">
+            <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <span class="btn-mode-text" id="btn-mode-text">{L['office_text']}</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>"""
+
+
+def build_public_footer(lang: str, img: str) -> str:
+    """Minimal footer for pre-login pages: separator + logo + copyright.
+
+    No back-to-top button (these pages are short).
+    """
+    L = PUBLIC_LABELS[lang]
+    return f"""  <footer class="site-footer">
     <div class="footer-separator"></div>
     <div class="footer-logo">
       <a href="{L['logo_href']}" class="logo-link" aria-label="{L['logo_aria']}" target="_blank" rel="noopener noreferrer">

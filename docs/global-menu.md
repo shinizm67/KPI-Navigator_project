@@ -64,7 +64,7 @@ Office Mode 用の `.si-fi.office-mode .site-header { background: #2B2B2B; }` �
   ビジュアル品質は高い一方で、初見ユーザーにとっては同時表示される情報量がやや多い。初回利用時は理解の段差が出やすいため、説明導線の整備（チュートリアル、段階表示）を優先する。
 
 - **命名の直感性**  
-  収益ハブは **`利益`（JA） / `Profit`（EN）** のラベルを正とする（旧 `Index`）。Daily は目標対実績、利益ハブは PL・収支詳細の参照、と役割を分ける（詳細は `docs/index-profit-hub.md`）。
+  収益ハブは **`考察`（JA） / `Insight`（EN）** のラベルを正とする（旧 `Index`／一時期の `利益・Profit` 案は 2026-07-17 に「考察/Insight」で確定）。canonical は `scripts/site_chrome.py` の `LABELS`（`profit_label`）に集約。Daily は目標対実績、利益ハブは PL・収支詳細の参照、と役割を分ける（詳細は `docs/index-profit-hub.md`）。
 - **プランゲート（利益メニュー）**  
   `kpiNavigator.subscriptionTier === 'basic'` のとき、利益メニューは `setting/change_plan.html` へ遷移。未設定または `pro` は `app/profit/index.html`（または EN 同等）へ遷移（静的デモでは未設定＝プロ扱い）。
 
