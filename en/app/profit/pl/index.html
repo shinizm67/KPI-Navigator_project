@@ -1844,8 +1844,240 @@
     }
     body.pl-input-source-modal-open,
     body.pl-expense-attribute-modal-open,
-    body.pl-expense-label-edit-modal-open {
+    body.pl-expense-label-edit-modal-open,
+    body.pl-import-map-open {
       overflow: hidden;
+    }
+    /* ---- 支出取込：列マッピング＋未一致費目モーダル ---- */
+    .pl-import-map {
+      position: fixed;
+      inset: 0;
+      z-index: 12200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .pl-import-map__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.62);
+    }
+    .pl-import-map__panel {
+      position: relative;
+      width: min(560px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      padding: 22px 22px 18px;
+      border: 1px solid rgba(88, 225, 243, 0.55);
+      border-radius: 6px;
+      background: #1f1e1e;
+      color: #58e1f3;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+    }
+    html[lang='ja'] .pl-import-map__panel {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .pl-import-map__title {
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+    .pl-import-map__desc {
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.85);
+    }
+    .pl-import-map__section {
+      margin: 0 0 18px;
+    }
+    .pl-import-map__section-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid rgba(88, 225, 243, 0.28);
+      padding-bottom: 6px;
+    }
+    .pl-import-map__cols {
+      display: grid;
+      gap: 10px;
+    }
+    .pl-import-map__col-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .pl-import-map__col-label {
+      color: rgba(88, 225, 243, 0.9);
+    }
+    .pl-import-map__select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 4px;
+      background: #141313;
+      color: #d7fbff;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    .pl-import-map__ubody {
+      display: grid;
+      gap: 8px;
+    }
+    .pl-import-map__ok {
+      margin: 0;
+      font-size: 12px;
+      color: rgba(88, 225, 243, 0.8);
+    }
+    .pl-import-map__urow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      align-items: center;
+      gap: 8px;
+    }
+    .pl-import-map__uname {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      min-width: 0;
+      font-size: 13px;
+    }
+    .pl-import-map__uname-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pl-import-map__ucount {
+      font-size: 11px;
+      color: rgba(88, 225, 243, 0.6);
+      flex-shrink: 0;
+    }
+    .pl-import-map__ucreate {
+      grid-column: 2 / 3;
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .pl-import-map__ucreate[hidden] {
+      display: none;
+    }
+    .pl-import-map__suggest {
+      flex-shrink: 0;
+      padding: 1px 6px;
+      border: 1px solid rgba(88, 225, 243, 0.5);
+      border-radius: 999px;
+      font-size: 10px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.9);
+    }
+    .pl-import-map__conflict {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.85);
+    }
+    .pl-import-map__policy {
+      display: grid;
+      gap: 8px;
+    }
+    .pl-import-map__pol {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .pl-import-map__pol input {
+      accent-color: #58e1f3;
+      flex-shrink: 0;
+    }
+    .pl-import-map__pol-hint {
+      font-size: 11px;
+      color: rgba(88, 225, 243, 0.6);
+    }
+    body.office-mode .pl-import-map__suggest {
+      border-color: #999;
+      color: #333;
+    }
+    body.office-mode .pl-import-map__conflict {
+      color: rgba(0, 0, 0, 0.72);
+    }
+    body.office-mode .pl-import-map__pol input {
+      accent-color: #333;
+    }
+    body.office-mode .pl-import-map__pol-hint {
+      color: rgba(0, 0, 0, 0.5);
+    }
+    .pl-import-map__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .pl-import-map__btn {
+      min-width: 96px;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .pl-import-map__btn--ghost {
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      background: transparent;
+      color: #58e1f3;
+    }
+    .pl-import-map__btn--primary {
+      border: 1px solid rgba(88, 225, 243, 0.75);
+      background: rgba(88, 225, 243, 0.16);
+      color: #58e1f3;
+    }
+    body.office-mode .pl-import-map__panel {
+      background: #fff;
+      border-color: #999;
+      color: #111;
+      font-family: 'BIZ UDP Gothic', sans-serif;
+    }
+    body.office-mode .pl-import-map__desc,
+    body.office-mode .pl-import-map__col-label,
+    body.office-mode .pl-import-map__ok {
+      color: rgba(0, 0, 0, 0.72);
+    }
+    body.office-mode .pl-import-map__section-title {
+      border-bottom-color: #ccc;
+    }
+    body.office-mode .pl-import-map__select {
+      background: #fff;
+      border-color: #999;
+      color: #111;
+    }
+    body.office-mode .pl-import-map__ucount {
+      color: rgba(0, 0, 0, 0.5);
+    }
+    body.office-mode .pl-import-map__btn--ghost {
+      border-color: #999;
+      color: #111;
+    }
+    body.office-mode .pl-import-map__btn--primary {
+      border-color: #666;
+      background: #f0f0f0;
+      color: #111;
+    }
+    @media (max-width: 560px) {
+      .pl-import-map__urow {
+        grid-template-columns: 1fr;
+      }
+      .pl-import-map__ucreate {
+        grid-column: 1 / -1;
+      }
     }
     .pl-expense-label-edit-modal__field {
       display: flex;
@@ -5833,9 +6065,56 @@
         openLabelEditModal(lineId);
       });
 
+      // Create a catalog line with an explicit label (used by CSV/Excel import
+      // "新規作成"). Unlike addLine(), the label is provided up front instead of a
+      // placeholder. Returns the new lineId (or '' on invalid bucket).
+      function addCatalogLineWithLabel(labelJa, labelEn, bucket, inputStyle) {
+        var b = bucket === 'fixed' ? 'fixed' : 'variable';
+        var lines = loadLines();
+        var bucketLines = activeBucket(lines, b);
+        var maxOrder = -1;
+        bucketLines.forEach(function (line) {
+          if (line.sortOrder > maxOrder) maxOrder = line.sortOrder;
+        });
+        var base = 'exp_custom_' + b + '_' + Date.now().toString(36);
+        var lineId = base;
+        var n = 1;
+        while (lines.some(function (l) { return String(l.lineId) === lineId; })) {
+          lineId = base + '_' + n;
+          n++;
+        }
+        var resolvedStyle = b === 'fixed'
+          ? 'monthly'
+          : (inputStyle === 'daily' ? 'daily' : 'monthly');
+        var lj = (labelJa != null && String(labelJa).trim()) ? String(labelJa).trim() : newRowLabel;
+        var le = (labelEn != null && String(labelEn).trim()) ? String(labelEn).trim() : lj;
+        lines.push({
+          lineId: lineId,
+          labelJa: lj,
+          labelEn: le,
+          bucket: b,
+          inputStyle: resolvedStyle,
+          resolvedInputStyle: resolvedStyle,
+          isDefault: false,
+          active: true,
+          sortOrder: maxOrder + 1,
+        });
+        saveLines(lines);
+        renderExpenseDetail();
+        window.dispatchEvent(
+          new CustomEvent('pl-expense-line-added', { detail: { lineId: lineId } })
+        );
+        return lineId;
+      }
+
       window.__plSetLineInputStyle = setLineInputStyle;
       window.__plSetOccupancy = setOccupancy;
       window.__plGetOccupancy = loadOccupancy;
+      window.__plAddCatalogLineWithLabel = addCatalogLineWithLabel;
+      window.__plRenderExpenseDetail = renderExpenseDetail;
+      window.__plGetCatalogLines = function () {
+        try { return loadLines(); } catch (_e) { return []; }
+      };
 
       if (block) {
         block.addEventListener('change', function (e) {
@@ -8887,22 +9166,22 @@
       bindPlAdjModal();
 
 
-      /* ===== PL 支出 CSV/Excel 取込（雛形: 日付 / 費目 / 金額） ===== */
+      /* ===== PL 支出 CSV/Excel 取込（列マッピング＋未一致費目の割当/新規作成） ===== */
       (function () {
         var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
         var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
         var PL_EXP_PREFIX = 'kpi-pl-expenses-v1:';
+        var ALIAS_KEY = 'kpiNavigator.plExpenseImportAliases';
         var XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
 
         var fileInput = null;
+        var modalEl = null;
 
-        function tt(ja, en) {
-          return typeof t === 'function' ? t(ja, en) : (document.documentElement.lang === 'ja' ? ja : en);
+        function isJaLang() {
+          return document.documentElement.lang === 'ja';
         }
-        function money(n) {
-          return typeof formatMoney === 'function'
-            ? formatMoney(Math.round(Number(n) || 0))
-            : String(Math.round(Number(n) || 0));
+        function tt(ja, en) {
+          return typeof t === 'function' ? t(ja, en) : (isJaLang() ? ja : en);
         }
         function pad(n) {
           return typeof pad2 === 'function' ? pad2(n) : (n < 10 ? '0' + n : String(n));
@@ -9022,8 +9301,16 @@
           return readText(file).then(function (text) { return parseText(text); });
         }
 
-        /* ---------- catalog ---------- */
+        /* ---------- catalog + aliases ---------- */
         function loadCatalogLines() {
+          if (typeof window.__plGetCatalogLines === 'function') {
+            try {
+              var viaApi = window.__plGetCatalogLines();
+              if (Array.isArray(viaApi)) {
+                return viaApi.filter(function (l) { return l && l.lineId && l.active !== false; });
+              }
+            } catch (_e0) {}
+          }
           try {
             var raw = localStorage.getItem(CATALOG_KEY);
             if (!raw) return [];
@@ -9034,6 +9321,18 @@
             return [];
           }
         }
+        function loadAliases() {
+          try {
+            var raw = localStorage.getItem(ALIAS_KEY);
+            var m = raw ? JSON.parse(raw) : null;
+            return m && typeof m === 'object' ? m : {};
+          } catch (_e) {
+            return {};
+          }
+        }
+        function saveAliases(m) {
+          try { localStorage.setItem(ALIAS_KEY, JSON.stringify(m || {})); } catch (_e) {}
+        }
         function buildLabelIndex(lines) {
           var idx = {};
           lines.forEach(function (l) {
@@ -9043,6 +9342,65 @@
             });
           });
           return idx;
+        }
+        /** resolver(displayName) -> line | null (catalog label first, then alias). */
+        function makeResolver(lines, aliases) {
+          var idx = buildLabelIndex(lines);
+          var byId = {};
+          lines.forEach(function (l) { byId[String(l.lineId)] = l; });
+          return function (display) {
+            var k = normText(display);
+            if (idx[k]) return idx[k];
+            var aid = aliases && aliases[k];
+            if (aid && byId[String(aid)]) return byId[String(aid)];
+            return null;
+          };
+        }
+        function lineLabel(line) {
+          if (!line) return '';
+          return isJaLang()
+            ? (line.labelJa || line.labelEn || line.lineId)
+            : (line.labelEn || line.labelJa || line.lineId);
+        }
+
+        /* ---------- fuzzy name reconciliation (名寄せ候補) ---------- */
+        function levenshtein(a, b) {
+          a = String(a || ''); b = String(b || '');
+          var m = a.length, n = b.length;
+          if (!m) return n;
+          if (!n) return m;
+          var prev = [], cur = [], i, j;
+          for (j = 0; j <= n; j++) prev[j] = j;
+          for (i = 1; i <= m; i++) {
+            cur[0] = i;
+            for (j = 1; j <= n; j++) {
+              var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+              cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+            }
+            for (j = 0; j <= n; j++) prev[j] = cur[j];
+          }
+          return prev[n];
+        }
+        function similarity(a, b) {
+          a = normText(a); b = normText(b);
+          if (!a || !b) return 0;
+          if (a === b) return 1;
+          if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) {
+            return 0.5 + 0.5 * (Math.min(a.length, b.length) / Math.max(a.length, b.length));
+          }
+          var d = levenshtein(a, b);
+          return 1 - d / Math.max(a.length, b.length);
+        }
+        function bestCatalogMatch(display, lines) {
+          var best = null, bestScore = 0;
+          lines.forEach(function (l) {
+            [l.labelJa, l.labelEn].forEach(function (lab) {
+              if (!lab) return;
+              var s = similarity(display, lab);
+              if (s > bestScore) { bestScore = s; best = l; }
+            });
+          });
+          return (best && bestScore >= 0.6) ? { line: best, score: bestScore } : null;
         }
 
         /* ---------- column detection ---------- */
@@ -9062,26 +9420,59 @@
           }
           return -1;
         }
-
-        /* ---------- build import plan ---------- */
-        function buildPlan(rows) {
-          if (!rows || !rows.length) throw new Error('empty');
-          var header = rows[0].map(normText);
+        function detectColumns(rows) {
+          var header = (rows[0] || []).map(normText);
           var dateCol = findCol(header, DATE_KEYS);
           var itemCol = findCol(header, ITEM_KEYS);
           var amtCol = findCol(header, AMT_KEYS);
-          var start = 1;
-          if (dateCol === -1 || itemCol === -1 || amtCol === -1) {
-            // No recognizable header -> assume positional date/item/amount, no header row.
-            dateCol = 0; itemCol = 1; amtCol = 2; start = 0;
+          var confident = dateCol !== -1 && itemCol !== -1 && amtCol !== -1;
+          if (confident) {
+            return { dateCol: dateCol, itemCol: itemCol, amtCol: amtCol, start: 1, hasHeader: true, confident: true };
           }
-          var lines = loadCatalogLines();
-          var idx = buildLabelIndex(lines);
+          // Positional fallback. Treat row 0 as a header unless its first cell is a date.
+          var hasHeader = !normDate((rows[0] || [])[0]);
+          return {
+            dateCol: dateCol === -1 ? 0 : dateCol,
+            itemCol: itemCol === -1 ? 1 : itemCol,
+            amtCol: amtCol === -1 ? 2 : amtCol,
+            start: hasHeader ? 1 : 0,
+            hasHeader: hasHeader,
+            confident: false
+          };
+        }
+        function maxColCount(rows) {
+          var m = 0;
+          for (var i = 0; i < rows.length; i++) {
+            if (rows[i] && rows[i].length > m) m = rows[i].length;
+          }
+          return m;
+        }
+        function columnLabels(rows, cols) {
+          var n = maxColCount(rows);
+          var headerRow = cols.hasHeader ? (rows[0] || []) : null;
+          var sampleRow = rows[cols.start] || rows[cols.start + 1] || [];
+          var out = [];
+          for (var c = 0; c < n; c++) {
+            var name = (headerRow && headerRow[c] != null && String(headerRow[c]).trim() !== '')
+              ? String(headerRow[c]).trim()
+              : (isJaLang() ? ('列' + (c + 1)) : ('Col ' + (c + 1)));
+            var sample = sampleRow[c] != null ? String(sampleRow[c]).trim() : '';
+            if (sample.length > 18) sample = sample.slice(0, 18) + '…';
+            out.push(sample ? (name + '  ›  ' + sample) : name);
+          }
+          return out;
+        }
+
+        /* ---------- build import plan ---------- */
+        function buildPlan(rows, cols, resolver) {
+          if (!rows || !rows.length) throw new Error('empty');
+          var dateCol = cols.dateCol, itemCol = cols.itemCol, amtCol = cols.amtCol;
+          var start = cols.start || 0;
 
           var monthlyByYear = {};   // year -> { "lineId:month0": amount }
           var dailyByYear = {};     // year -> { lineId -> { iso -> amount } }
           var matchedLines = {};
-          var unmatched = {};
+          var unmatched = {};       // normName -> { display, count, hasDaily, hasMonthly }
           var mismatched = [];      // monthly data hitting a daily-style line
           var years = {};
           var parsed = 0;
@@ -9094,18 +9485,21 @@
             var amount = parseAmount(row[amtCol]);
             if (!date || !item) { skippedNoData++; continue; }
             parsed++;
-            var line = idx[normText(item)];
+            var isDaily = date.length === 10;
+            var line = resolver(item);
             if (!line) {
-              unmatched[item] = (unmatched[item] || 0) + 1;
+              var uk = normText(item);
+              if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false };
+              unmatched[uk].count++;
+              if (isDaily) unmatched[uk].hasDaily = true; else unmatched[uk].hasMonthly = true;
               continue;
             }
             var lineId = String(line.lineId);
             var year = Number(date.slice(0, 4));
             var month0 = Number(date.slice(5, 7)) - 1;
-            var isDaily = date.length === 10;
             var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
             years[year] = true;
-            matchedLines[lineId] = (line.labelJa || line.labelEn || lineId);
+            matchedLines[lineId] = lineLabel(line) || lineId;
 
             if (style === 'daily') {
               if (!isDaily) {
@@ -9128,28 +9522,80 @@
             matchedLines: matchedLines,
             unmatched: unmatched,
             mismatched: mismatched,
-            years: Object.keys(years).map(Number).sort(),
+            years: Object.keys(years).map(Number).sort(function (a, b) { return a - b; }),
             parsed: parsed,
-            skippedNoData: skippedNoData
+            skippedNoData: skippedNoData,
+            cols: cols
           };
         }
+        function buildPlanAuto(rows) {
+          var cols = detectColumns(rows);
+          return buildPlan(rows, cols, makeResolver(loadCatalogLines(), loadAliases()));
+        }
 
-        /* ---------- apply ---------- */
-        function applyMonthly(plan) {
+        /* ---------- conflict analysis (重複ポリシー) ---------- */
+        function readMonthlyMap(year) {
+          try {
+            var raw = localStorage.getItem(PL_EXP_PREFIX + year);
+            if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') return p; }
+          } catch (_e) {}
+          return {};
+        }
+        function readDailyStore() {
+          var g = window.__KPI_DATA_GATEWAY;
+          if (!g || typeof g.getJson !== 'function') return null;
+          var store = g.getJson(YEAR_STORE_KEY);
+          return (store && typeof store === 'object') ? store : null;
+        }
+        /** Count incoming cells that already have a stored value (overlap). */
+        function analyzeConflicts(plan) {
+          var monthly = 0, daily = 0;
+          Object.keys(plan.monthlyByYear).forEach(function (yStr) {
+            var map = readMonthlyMap(Number(yStr));
+            var inc = plan.monthlyByYear[yStr];
+            Object.keys(inc).forEach(function (k) {
+              if (Object.prototype.hasOwnProperty.call(map, k)) monthly++;
+            });
+          });
+          var store = readDailyStore();
+          if (store && store.years) {
+            Object.keys(plan.dailyByYear).forEach(function (yStr) {
+              var rec = store.years[yStr] || store.years[Number(yStr)];
+              var de = rec && rec.dailyExpenses;
+              if (!de) return;
+              var byLine = plan.dailyByYear[yStr];
+              Object.keys(byLine).forEach(function (lineId) {
+                var existing = de[lineId];
+                if (!existing) return;
+                Object.keys(byLine[lineId]).forEach(function (iso) {
+                  if (Object.prototype.hasOwnProperty.call(existing, iso)) daily++;
+                });
+              });
+            });
+          }
+          return { monthly: monthly, daily: daily, total: monthly + daily };
+        }
+
+        /* ---------- apply (policy: 'replace' | 'add' | 'skip') ---------- */
+        function mergeValue(existingHas, existing, incoming, policy) {
+          if (policy === 'add') return Math.round((Number(existing) || 0) + (Number(incoming) || 0));
+          if (policy === 'skip') return existingHas ? existing : Math.round(Number(incoming) || 0);
+          return Math.round(Number(incoming) || 0); // replace (default)
+        }
+        function applyMonthly(plan, policy) {
           Object.keys(plan.monthlyByYear).forEach(function (yStr) {
             var year = Number(yStr);
             var key = PL_EXP_PREFIX + year;
-            var map = {};
-            try {
-              var raw = localStorage.getItem(key);
-              if (raw) { var p = JSON.parse(raw); if (p && typeof p === 'object') map = p; }
-            } catch (_e) {}
+            var map = readMonthlyMap(year);
             var inc = plan.monthlyByYear[yStr];
-            Object.keys(inc).forEach(function (k) { map[k] = Math.round(Number(inc[k]) || 0); });
+            Object.keys(inc).forEach(function (k) {
+              var has = Object.prototype.hasOwnProperty.call(map, k);
+              map[k] = mergeValue(has, map[k], inc[k], policy);
+            });
             try { localStorage.setItem(key, JSON.stringify(map)); } catch (_e2) {}
           });
         }
-        function applyDaily(plan) {
+        function applyDaily(plan, policy) {
           var years = Object.keys(plan.dailyByYear);
           if (!years.length) return;
           var g = window.__KPI_DATA_GATEWAY;
@@ -9167,18 +9613,21 @@
             var byLine = plan.dailyByYear[yStr];
             Object.keys(byLine).forEach(function (lineId) {
               if (!rec.dailyExpenses[lineId] || typeof rec.dailyExpenses[lineId] !== 'object') rec.dailyExpenses[lineId] = {};
+              var target = rec.dailyExpenses[lineId];
               var byIso = byLine[lineId];
               Object.keys(byIso).forEach(function (iso) {
-                rec.dailyExpenses[lineId][iso] = Math.round(Number(byIso[iso]) || 0);
+                var has = Object.prototype.hasOwnProperty.call(target, iso);
+                target[iso] = mergeValue(has, target[iso], byIso[iso], policy);
               });
             });
             rec.mepUpdatedAt = Date.now();
           });
           g.setJson(YEAR_STORE_KEY, store);
         }
-        function applyPlan(plan) {
-          applyMonthly(plan);
-          applyDaily(plan);
+        function applyPlan(plan, policy) {
+          policy = (policy === 'add' || policy === 'skip') ? policy : 'replace';
+          applyMonthly(plan, policy);
+          applyDaily(plan, policy);
           var affected = {};
           plan.years.forEach(function (y) { affected[y] = true; });
           Object.keys(affected).forEach(function (yStr) {
@@ -9199,7 +9648,13 @@
         }
 
         /* ---------- summary / confirm ---------- */
-        function summarize(plan) {
+        function policyLabel(policy) {
+          if (policy === 'add') return tt('追記（加算）', 'Add (sum)');
+          if (policy === 'skip') return tt('スキップ（既存を残す）', 'Skip (keep existing)');
+          return tt('置換（上書き）', 'Replace (overwrite)');
+        }
+        function summarize(plan, policy, conflicts) {
+          policy = policy || 'replace';
           var lines = [];
           var matchedCount = Object.keys(plan.matchedLines).length;
           var unmatchedKeys = Object.keys(plan.unmatched);
@@ -9216,11 +9671,15 @@
           lines.push(tt('一致した費目', 'Matched items') + ': ' + matchedCount);
           lines.push(tt('月次セル書込', 'Monthly cells') + ': ' + monthlyWrites);
           lines.push(tt('日次エントリ書込', 'Daily entries') + ': ' + dailyWrites);
+          lines.push(tt('重複時の扱い', 'On conflict') + ': ' + policyLabel(policy));
+          if (conflicts && conflicts.total) {
+            lines.push(tt('既存と重複するセル', 'Cells overlapping existing') + ': ' + conflicts.total);
+          }
           if (unmatchedKeys.length) {
+            var disp = unmatchedKeys.map(function (k) { return plan.unmatched[k].display; });
             lines.push('');
             lines.push(tt('未一致（スキップ）の費目', 'Unmatched items (skipped)') + ':');
-            lines.push('  ' + unmatchedKeys.slice(0, 12).join(', ') + (unmatchedKeys.length > 12 ? ' …' : ''));
-            lines.push(tt('※ 費目カタログのラベルと完全一致する必要があります。', '* Must exactly match a line label in the catalog.'));
+            lines.push('  ' + disp.slice(0, 12).join(', ') + (disp.length > 12 ? ' …' : ''));
           }
           if (plan.mismatched.length) {
             lines.push('');
@@ -9236,24 +9695,305 @@
           return lines.join('\n');
         }
 
+        function finalizeImport(plan, useConfirm, policy) {
+          policy = (policy === 'add' || policy === 'skip') ? policy : 'replace';
+          var hasWrites = Object.keys(plan.monthlyByYear).length || Object.keys(plan.dailyByYear).length;
+          if (!hasWrites) {
+            window.alert(summarize(plan, policy, null) + '\n\n' + tt('取り込める行がありませんでした。',
+                                                        'No importable rows were found.'));
+            return false;
+          }
+          var conflicts = analyzeConflicts(plan);
+          if (useConfirm && !window.confirm(summarize(plan, policy, conflicts))) return false;
+          applyPlan(plan, policy);
+          window.alert(tt('取り込みが完了しました。', 'Import complete.'));
+          return true;
+        }
+
+        /* ---------- mapping modal ---------- */
+        function el(tag, cls, text) {
+          var e = document.createElement(tag);
+          if (cls) e.className = cls;
+          if (text != null) e.textContent = text;
+          return e;
+        }
+        function makeColSelect(colLabels, selectedIdx) {
+          var sel = el('select', 'pl-import-map__select');
+          colLabels.forEach(function (lab, i) {
+            var o = el('option', null, lab);
+            o.value = String(i);
+            if (i === selectedIdx) o.selected = true;
+            sel.appendChild(o);
+          });
+          return sel;
+        }
+        function catalogOptions(lines) {
+          return lines.map(function (l) {
+            var bkt = l.bucket === 'fixed' ? tt('固定費', 'Fixed') : tt('変動費', 'Variable');
+            var sty = (l.resolvedInputStyle || l.inputStyle) === 'daily' ? tt('日次', 'Daily') : tt('月次', 'Monthly');
+            return { lineId: String(l.lineId), text: lineLabel(l) + '（' + bkt + '・' + sty + '）' };
+          });
+        }
+        function closeMappingModal() {
+          if (modalEl && modalEl.parentNode) modalEl.parentNode.removeChild(modalEl);
+          modalEl = null;
+          document.body.classList.remove('pl-import-map-open');
+          document.removeEventListener('keydown', onModalKeydown);
+        }
+        function onModalKeydown(e) {
+          if (e.key === 'Escape' || e.keyCode === 27) closeMappingModal();
+        }
+
+        function openMappingModal(rows, cols) {
+          closeMappingModal();
+          var lines = loadCatalogLines();
+          var colLabels = columnLabels(rows, cols);
+          var optData = catalogOptions(lines);
+
+          var overlay = el('div', 'pl-import-map');
+          overlay.setAttribute('role', 'dialog');
+          overlay.setAttribute('aria-modal', 'true');
+          var backdrop = el('div', 'pl-import-map__backdrop');
+          backdrop.addEventListener('click', closeMappingModal);
+          overlay.appendChild(backdrop);
+
+          var panel = el('div', 'pl-import-map__panel');
+          overlay.appendChild(panel);
+
+          panel.appendChild(el('h2', 'pl-import-map__title',
+            tt('支出CSV/Excel の取込設定', 'Configure expense import')));
+          panel.appendChild(el('p', 'pl-import-map__desc',
+            tt('列の対応づけを確認し、未一致の費目は「既存へ割当」か「新規作成」を選んでください。',
+               'Confirm the column mapping and, for each unmatched item, choose "assign to existing" or "create new".')));
+
+          /* --- column mapping section --- */
+          var colSec = el('div', 'pl-import-map__section');
+          colSec.appendChild(el('h3', 'pl-import-map__section-title', tt('列の対応', 'Column mapping')));
+          var grid = el('div', 'pl-import-map__cols');
+          function colRow(labelText, selectedIdx) {
+            var wrap = el('label', 'pl-import-map__col-row');
+            wrap.appendChild(el('span', 'pl-import-map__col-label', labelText));
+            var sel = makeColSelect(colLabels, selectedIdx);
+            wrap.appendChild(sel);
+            grid.appendChild(wrap);
+            return sel;
+          }
+          var dateSel = colRow(tt('日付', 'Date'), cols.dateCol);
+          var itemSel = colRow(tt('費目', 'Item'), cols.itemCol);
+          var amtSel = colRow(tt('金額', 'Amount'), cols.amtCol);
+          colSec.appendChild(grid);
+          panel.appendChild(colSec);
+
+          /* --- unmatched section --- */
+          var unSec = el('div', 'pl-import-map__section');
+          unSec.appendChild(el('h3', 'pl-import-map__section-title', tt('未一致の費目', 'Unmatched items')));
+          var unBody = el('div', 'pl-import-map__ubody');
+          unSec.appendChild(unBody);
+          panel.appendChild(unSec);
+
+          /* --- duplicate policy section --- */
+          var polSec = el('div', 'pl-import-map__section');
+          polSec.appendChild(el('h3', 'pl-import-map__section-title', tt('重複時の扱い', 'On conflict')));
+          var polNote = el('p', 'pl-import-map__conflict', '');
+          polSec.appendChild(polNote);
+          var polWrap = el('div', 'pl-import-map__policy');
+          function polRadio(val, labelText, hintText) {
+            var lab = el('label', 'pl-import-map__pol');
+            var input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'pl-import-policy';
+            input.value = val;
+            if (val === 'replace') input.checked = true;
+            lab.appendChild(input);
+            lab.appendChild(el('span', 'pl-import-map__pol-label', labelText));
+            if (hintText) lab.appendChild(el('span', 'pl-import-map__pol-hint', hintText));
+            polWrap.appendChild(lab);
+          }
+          polRadio('replace', tt('置換（上書き）', 'Replace'), tt('取込値で上書き', 'overwrite with imported'));
+          polRadio('add', tt('追記（加算）', 'Add'), tt('既存＋取込値', 'existing + imported'));
+          polRadio('skip', tt('スキップ（既存を残す）', 'Skip'), tt('既存があれば据置', 'keep existing if present'));
+          polSec.appendChild(polWrap);
+          panel.appendChild(polSec);
+          function currentPolicy() {
+            var c = polWrap.querySelector('input[name="pl-import-policy"]:checked');
+            return c ? c.value : 'replace';
+          }
+
+          function currentCols() {
+            return {
+              dateCol: Number(dateSel.value),
+              itemCol: Number(itemSel.value),
+              amtCol: Number(amtSel.value),
+              start: cols.start,
+              hasHeader: cols.hasHeader,
+              confident: cols.confident
+            };
+          }
+
+          function buildUnmatchedRow(normKey, info) {
+            var row = el('div', 'pl-import-map__urow');
+            row.setAttribute('data-norm', normKey);
+            row.setAttribute('data-display', info.display);
+
+            var name = el('div', 'pl-import-map__uname');
+            name.appendChild(el('span', 'pl-import-map__uname-text', info.display));
+            name.appendChild(el('span', 'pl-import-map__ucount', '×' + info.count));
+            row.appendChild(name);
+
+            var action = el('select', 'pl-import-map__select pl-import-map__uaction');
+            var optSkip = el('option', null, tt('スキップ', 'Skip'));
+            optSkip.value = 'skip';
+            action.appendChild(optSkip);
+            if (optData.length) {
+              var grp = document.createElement('optgroup');
+              grp.label = tt('既存へ割当', 'Assign to existing');
+              optData.forEach(function (o) {
+                var op = el('option', null, o.text);
+                op.value = 'assign:' + o.lineId;
+                grp.appendChild(op);
+              });
+              action.appendChild(grp);
+            }
+            var optCreate = el('option', null, tt('＋ 新規作成', '+ Create new'));
+            optCreate.value = '__create';
+            action.appendChild(optCreate);
+            row.appendChild(action);
+
+            var createBox = el('span', 'pl-import-map__ucreate');
+            createBox.hidden = true;
+            var bucketSel = el('select', 'pl-import-map__select pl-import-map__ubucket');
+            var ob1 = el('option', null, tt('変動費', 'Variable')); ob1.value = 'variable';
+            var ob2 = el('option', null, tt('固定費', 'Fixed')); ob2.value = 'fixed';
+            bucketSel.appendChild(ob1); bucketSel.appendChild(ob2);
+            var styleSel = el('select', 'pl-import-map__select pl-import-map__ustyle');
+            var os1 = el('option', null, tt('月次', 'Monthly')); os1.value = 'monthly';
+            var os2 = el('option', null, tt('日次', 'Daily')); os2.value = 'daily';
+            styleSel.appendChild(os1); styleSel.appendChild(os2);
+            styleSel.value = (info.hasDaily && !info.hasMonthly) ? 'daily' : 'monthly';
+            createBox.appendChild(bucketSel);
+            createBox.appendChild(styleSel);
+            row.appendChild(createBox);
+
+            action.addEventListener('change', function () {
+              createBox.hidden = action.value !== '__create';
+            });
+            bucketSel.addEventListener('change', function () {
+              // Fixed bucket lines are always monthly.
+              if (bucketSel.value === 'fixed') { styleSel.value = 'monthly'; styleSel.disabled = true; }
+              else { styleSel.disabled = false; }
+            });
+
+            // 名寄せ候補: pre-select the closest catalog line (user can override).
+            var suggest = bestCatalogMatch(info.display, lines);
+            if (suggest) {
+              action.value = 'assign:' + String(suggest.line.lineId);
+              var badge = el('span', 'pl-import-map__suggest', tt('候補', 'suggested'));
+              badge.title = tt('近い費目を自動提案：' + lineLabel(suggest.line) + '（変更できます）',
+                               'Suggested closest item: ' + lineLabel(suggest.line) + ' (you can change it)');
+              name.appendChild(badge);
+            }
+            return row;
+          }
+
+          function refreshConflictNote(plan) {
+            var conflicts = analyzeConflicts(plan);
+            polNote.textContent = conflicts.total
+              ? tt('既存の値と重複するセル: ' + conflicts.total + ' 件。扱いを選んでください。',
+                   'Cells overlapping existing values: ' + conflicts.total + '. Choose how to handle.')
+              : tt('既存データとの重複はありません。', 'No overlap with existing data.');
+          }
+          function renderUnmatched() {
+            var plan = buildPlan(rows, currentCols(), makeResolver(loadCatalogLines(), loadAliases()));
+            refreshConflictNote(plan);
+            var keys = Object.keys(plan.unmatched);
+            unBody.innerHTML = '';
+            if (!keys.length) {
+              unBody.appendChild(el('p', 'pl-import-map__ok',
+                tt('未一致の費目はありません。そのまま取り込めます。', 'No unmatched items. Ready to import.')));
+              return;
+            }
+            keys.forEach(function (k) {
+              unBody.appendChild(buildUnmatchedRow(k, plan.unmatched[k]));
+            });
+          }
+          // Item column drives the unmatched list; recompute when it changes.
+          itemSel.addEventListener('change', renderUnmatched);
+          renderUnmatched();
+
+          /* --- actions --- */
+          var actions = el('div', 'pl-import-map__actions');
+          var cancel = el('button', 'pl-import-map__btn pl-import-map__btn--ghost',
+            tt('キャンセル', 'Cancel'));
+          cancel.type = 'button';
+          cancel.addEventListener('click', closeMappingModal);
+          var doImport = el('button', 'pl-import-map__btn pl-import-map__btn--primary',
+            tt('取込を実行', 'Run import'));
+          doImport.type = 'button';
+          doImport.addEventListener('click', function () {
+            var aliases = loadAliases();
+            var next = {};
+            Object.keys(aliases).forEach(function (k) { next[k] = aliases[k]; });
+            var urows = unBody.querySelectorAll('.pl-import-map__urow');
+            for (var i = 0; i < urows.length; i++) {
+              var uEl = urows[i];
+              var k = uEl.getAttribute('data-norm');
+              var display = uEl.getAttribute('data-display');
+              var val = uEl.querySelector('.pl-import-map__uaction').value;
+              if (val === 'skip') continue;
+              if (val.indexOf('assign:') === 0) {
+                next[k] = val.slice('assign:'.length);
+              } else if (val === '__create') {
+                var bucket = uEl.querySelector('.pl-import-map__ubucket').value;
+                var style = uEl.querySelector('.pl-import-map__ustyle').value;
+                var newId = (typeof window.__plAddCatalogLineWithLabel === 'function')
+                  ? window.__plAddCatalogLineWithLabel(display, display, bucket, style)
+                  : '';
+                if (newId) next[k] = newId;
+              }
+            }
+            saveAliases(next);
+            var cols2 = currentCols();
+            var policy = currentPolicy();
+            var plan2 = buildPlan(rows, cols2, makeResolver(loadCatalogLines(), next));
+            closeMappingModal();
+            // The modal itself was the confirmation step, so import without a second confirm.
+            finalizeImport(plan2, false, policy);
+          });
+          actions.appendChild(cancel);
+          actions.appendChild(doImport);
+          panel.appendChild(actions);
+
+          document.body.appendChild(overlay);
+          document.body.classList.add('pl-import-map-open');
+          document.addEventListener('keydown', onModalKeydown);
+          modalEl = overlay;
+        }
+
         function runExpenseImport(file) {
           parseFile(file).then(function (rows) {
+            if (!rows || !rows.length) {
+              window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。',
+                              'Could not read the file (empty or invalid format).'));
+              return;
+            }
+            var cols = detectColumns(rows);
             var plan;
-            try { plan = buildPlan(rows); }
+            try { plan = buildPlan(rows, cols, makeResolver(loadCatalogLines(), loadAliases())); }
             catch (e) {
               window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。',
                               'Could not read the file (empty or invalid format).'));
               return;
             }
-            var hasWrites = Object.keys(plan.monthlyByYear).length || Object.keys(plan.dailyByYear).length;
-            if (!hasWrites) {
-              window.alert(summarize(plan) + '\n\n' + tt('取り込める行がありませんでした。',
-                                                          'No importable rows were found.'));
+            var unmatchedCount = Object.keys(plan.unmatched).length;
+            var conflicts = analyzeConflicts(plan);
+            // Fast path: recognized header, everything maps, AND no overlap with
+            // existing data (nothing to decide). Otherwise open the modal so the
+            // user consciously handles mapping and/or the duplicate policy.
+            if (cols.confident && unmatchedCount === 0 && conflicts.total === 0) {
+              finalizeImport(plan, true, 'replace');
               return;
             }
-            if (!window.confirm(summarize(plan))) return;
-            applyPlan(plan);
-            window.alert(tt('取り込みが完了しました。', 'Import complete.'));
+            openMappingModal(rows, cols);
           }).catch(function () {
             window.alert(tt('Excel の読み込みに失敗しました。CSV でお試しください（オフライン時は .xlsx を読めません）。',
                             'Failed to read Excel. Try CSV instead (.xlsx needs to be online).'));
@@ -9277,11 +10017,21 @@
         }
 
         window.__plExpenseImport = {
-          buildPlan: buildPlan,
+          buildPlan: buildPlanAuto,
+          buildPlanWith: buildPlan,
+          detectColumns: detectColumns,
+          columnLabels: columnLabels,
+          makeResolver: makeResolver,
           parseText: parseText,
           applyPlan: applyPlan,
+          analyzeConflicts: analyzeConflicts,
+          bestCatalogMatch: bestCatalogMatch,
+          similarity: similarity,
           normDate: normDate,
           parseAmount: parseAmount,
+          loadAliases: loadAliases,
+          saveAliases: saveAliases,
+          openModal: openMappingModal,
           pickFile: pickExpenseFile
         };
 

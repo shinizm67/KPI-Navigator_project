@@ -1503,9 +1503,56 @@ def expense_detail_client_js(
         openLabelEditModal(lineId);
       }});
 
+      // Create a catalog line with an explicit label (used by CSV/Excel import
+      // "新規作成"). Unlike addLine(), the label is provided up front instead of a
+      // placeholder. Returns the new lineId (or '' on invalid bucket).
+      function addCatalogLineWithLabel(labelJa, labelEn, bucket, inputStyle) {{
+        var b = bucket === 'fixed' ? 'fixed' : 'variable';
+        var lines = loadLines();
+        var bucketLines = activeBucket(lines, b);
+        var maxOrder = -1;
+        bucketLines.forEach(function (line) {{
+          if (line.sortOrder > maxOrder) maxOrder = line.sortOrder;
+        }});
+        var base = 'exp_custom_' + b + '_' + Date.now().toString(36);
+        var lineId = base;
+        var n = 1;
+        while (lines.some(function (l) {{ return String(l.lineId) === lineId; }})) {{
+          lineId = base + '_' + n;
+          n++;
+        }}
+        var resolvedStyle = b === 'fixed'
+          ? 'monthly'
+          : (inputStyle === 'daily' ? 'daily' : 'monthly');
+        var lj = (labelJa != null && String(labelJa).trim()) ? String(labelJa).trim() : newRowLabel;
+        var le = (labelEn != null && String(labelEn).trim()) ? String(labelEn).trim() : lj;
+        lines.push({{
+          lineId: lineId,
+          labelJa: lj,
+          labelEn: le,
+          bucket: b,
+          inputStyle: resolvedStyle,
+          resolvedInputStyle: resolvedStyle,
+          isDefault: false,
+          active: true,
+          sortOrder: maxOrder + 1,
+        }});
+        saveLines(lines);
+        renderExpenseDetail();
+        window.dispatchEvent(
+          new CustomEvent('pl-expense-line-added', {{ detail: {{ lineId: lineId }} }})
+        );
+        return lineId;
+      }}
+
       window.__plSetLineInputStyle = setLineInputStyle;
       window.__plSetOccupancy = setOccupancy;
       window.__plGetOccupancy = loadOccupancy;
+      window.__plAddCatalogLineWithLabel = addCatalogLineWithLabel;
+      window.__plRenderExpenseDetail = renderExpenseDetail;
+      window.__plGetCatalogLines = function () {{
+        try {{ return loadLines(); }} catch (_e) {{ return []; }}
+      }};
 
       if (block) {{
         block.addEventListener('change', function (e) {{

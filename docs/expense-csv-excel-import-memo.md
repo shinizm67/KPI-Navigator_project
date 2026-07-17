@@ -224,6 +224,32 @@ L2 参考予算を「前年以前のデータがある時だけ」出す方針�
 ### 重要な訂正（現状調査で判明）
 本メモ §MEP調査で「MEP の CSV アップロードは完動」と記したが、**実際には取込エンジン `window.__KPI_DAILY_IMPORT` は現在 annual ページにしか注入されておらず、MEP / PL の生成HTMLには未ロード**（`scripts/apply_daily_sales_import.py` の再注入対象・生成タイミングのズレ）。PL 支出取込は本スライスで**エンジンに依存しない自己完結パーサ**を新規実装したため影響なし。MEP 側の収入取込を有効化するには、エンジンの再注入（または共通化）が別途必要。
 
+## 実装状況（2026-07-18 スライス2：列マッピング＋未一致費目の「既存へ割当／新規作成」）
+
+**PL 支出取込に、自由フォーマット対応の「取込設定モーダル」を追加。** クリーンな雛形（ヘッダー認識＋全費目一致）はこれまで通り**モーダル無しの即取込（ファストパス）**、そうでなければモーダルを開く。
+
+- **モーダルを開く条件**：ヘッダーが確信度高く認識できない（`detectColumns().confident===false`）**または**未一致費目が1件以上あるとき。クリーン雛形は従来と同じ `window.confirm` サマリだけで完了。
+- **列の対応（自由フォーマット）**：日付／費目／金額の3つを、ファイルの全列（ヘッダー名＋先頭データのサンプルを併記）から選び直せる。費目列を変えると未一致リストは即再計算。
+- **未一致費目の処理**：費目ごとに **スキップ／既存へ割当／＋新規作成** を選択。
+  - **既存へ割当** → エイリアス `kpiNavigator.plExpenseImportAliases`（`正規化名 → lineId`）に保存。**次回以降は同じ表記が自動一致**（＝名寄せの土台。②に接続）。
+  - **＋新規作成** → `window.__plAddCatalogLineWithLabel(label, label, bucket, style)` でカタログへ費目を追加（変動費/固定費・月次/日次を選択。固定費は自動的に月次）。作成した lineId をエイリアスに紐付け。追加時に `renderExpenseDetail()` が走り PL 表へ即反映。
+- **カタログ側 API を公開**（`scripts/pl_expense_detail_client.py`）：`window.__plAddCatalogLineWithLabel`（特定ラベルで費目追加・lineId 重複回避）／`window.__plRenderExpenseDetail`／`window.__plGetCatalogLines`。取込クライアントはこれら `window.__pl*` 経由で連携。
+- 実装：`scripts/pl_expense_import_client.py` を全面改訂（`detectColumns` / `columnLabels` / `makeResolver` / `buildPlan(rows, cols, resolver)` に分離、モーダル `openMappingModal` を追加）。モーダル CSS（`.pl-import-map*`・office-mode 対応）は `scripts/build_pl_table_page.py` に追加。`window.__plExpenseImport` に `detectColumns`/`columnLabels`/`makeResolver`/`buildPlanWith`/`loadAliases`/`saveAliases`/`openModal` を追加公開。
+- 検証：JavaScriptCore ハーネスで、ヘッダー認識・列マッピング・費目一致/未一致・**エイリアス割当で未一致→一致に統合（rent Jan 205,000 へ合算）**・日次/月次振り分け・`localStorage` 書込・エイリアス永続化を確認（全 PASS）。PL 日英ページ再生成後の構造確認済み。
+
+## 実装状況（2026-07-18 スライス3：重複ポリシー＋名寄せ・月跨ぎの精緻化）
+
+②に着手。**「無言の上書き」をやめ、重複時の扱いをユーザーが選べる**ようにし、未一致費目には**近い費目を自動提案（名寄せ候補）**を出す。
+
+- **重複ポリシー（追記/置換/スキップ）**：取込値が既存の保存値と重複するセルに対して **置換（上書き）／追記（加算）／スキップ（既存を残す）** を選択（既定＝置換）。
+  - 取込前に `analyzeConflicts(plan)` で重複セル数を検出。**重複が1件でもあれば、クリーンな雛形でもモーダルを開く**（上書きを無言で行わない）。重複ゼロ・ヘッダー認識・全一致のときのみ従来通りモーダル無しの即取込。
+  - 適用は `mergeValue(既存有無, 既存, 取込, policy)` に集約。月次（`kpi-pl-expenses-v1`）・日次（`dailyExpenses`）の両方に同一ロジックで適用。確認サマリにもポリシーと重複件数を明記。
+- **名寄せ（曖昧一致の候補提示）**：未一致費目ごとに、カタログの `labelJa`/`labelEn` から**最も近い費目**を算出（Levenshtein＋包含関係で類似度、しきい値 0.6）。近い候補があればモーダルで **「候補」バッジ付きで自動プリセレクト**（ユーザーは変更可）。確定した割当はスライス2のエイリアスとして永続化＝次回から自動一致。
+- **月跨ぎ**：行は正しい月/日に振り分け、同一 `lineId`＋同月の複数行はファイル内で**合算**（＝取引明細をそのまま月次へ集計）。複数年・複数月を1ファイルで投入しても各月へ正しく着地。
+  - **前払い/発生主義の按分（例：一括前払家賃を各月へ配分）は自動化しない**方針。数値の妥当性が会計方針に依存し、勝手に按分すると「信じられない数値」を作ってしまうため、当面は手動編集に委ねる（本メモの「信じられるデータ」原則）。
+- 実装：`scripts/pl_expense_import_client.py` に `levenshtein`/`similarity`/`bestCatalogMatch`/`analyzeConflicts`/`mergeValue` を追加、`applyMonthly`/`applyDaily`/`applyPlan`/`finalizeImport`/`summarize` をポリシー対応化。モーダルに**重複ポリシー選択・重複件数表示・候補バッジ**を追加（CSS は `scripts/build_pl_table_page.py` の `.pl-import-map__policy/__pol/__conflict/__suggest`）。`window.__plExpenseImport` に `analyzeConflicts`/`bestCatalogMatch`/`similarity` を公開。
+- 検証：JavaScriptCore ハーネスで **置換=100,000／追記=150,000／スキップ=据置／未保存セルはスキップでも書込**、重複検出、曖昧一致（`家賃代→家賃`・完全一致 score=1・無関係→提案なし・`rent~rents>0.6`）まで全 PASS。PL 日英ページ再生成・構造確認済み。
+
 ## 次アクション候補（着手順の案）
 
 1. **雛形（推奨フォーマット）を先に定義** — 日次用・月次用の CSV/Excel サンプルを 1 つずつ。列・費目・粒度の基準を固定。**【完了】**（`excel/` に4ファイル・§雛形フォーマット確定。**2026-07-17 カタログ正式ラベルへ整合済み**）
@@ -232,7 +258,7 @@ L2 参考予算を「前年以前のデータがある時だけ」出す方針�
    - **【完了 2026-07-18】** MEP の取込エンジン `__KPI_DAILY_IMPORT` を再注入（`scripts/apply_daily_sales_import.py` の `patch_mep_page` を MEP 日英に適用）。§重要な訂正で判明した「MEP にエンジン未ロード」を解消し、**売上CSV取込が実動化**（ヘッドレス検証：`ENGINE=true / BOUND=1`・JSエラー無し）。ボタンを「売上CSV取込 / Upload Sales」に明示リネーム、ツールチップに「支出は PL の支出CSV取込へ」を明記。
    - 注：MEP は生成物を in-place パッチする運用（`build_monthly_edit_pages.py` は非冪等）。エンジンの真実源は `apply_daily_sales_import.py`、ボタン文言は生成 HTML を直接編集。将来 MEP を再生成した場合は `apply_daily_sales_import.py` の再実行とボタン文言の再適用が必要。
 4. 雛形一致ファイルの取り込み（マッピング不要ルート）を実装。**【PL 支出＝完了 2026-07-17】**
-5. 列マッピング画面（自由ルート）＋費目カタログ登録（未一致費目の「既存へ割当 / 新規作成」）。**【未】**
-6. 名寄せ・月跨ぎ・重複ポリシー（追記/置換/スキップ）などの精緻化。**【未】**（現状は取込分のみ上書き）
+5. 列マッピング画面（自由ルート）＋費目カタログ登録（未一致費目の「既存へ割当 / 新規作成」）。**【完了 2026-07-18】**（上記スライス2。エイリアス永続化で名寄せの土台も敷設）
+6. 名寄せ・月跨ぎ・重複ポリシー（追記/置換/スキップ）などの精緻化。**【完了 2026-07-18】**（上記スライス3。前払い按分のみ意図的に手動運用として保留）
 
 > このメモは会話ベース。追加の論点が出たら都度ここに追記していく。

@@ -5471,8 +5471,240 @@ def render_page(lang: str, lang_switch: str) -> str:
     }}
     body.pl-input-source-modal-open,
     body.pl-expense-attribute-modal-open,
-    body.pl-expense-label-edit-modal-open {{
+    body.pl-expense-label-edit-modal-open,
+    body.pl-import-map-open {{
       overflow: hidden;
+    }}
+    /* ---- 支出取込：列マッピング＋未一致費目モーダル ---- */
+    .pl-import-map {{
+      position: fixed;
+      inset: 0;
+      z-index: 12200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }}
+    .pl-import-map__backdrop {{
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.62);
+    }}
+    .pl-import-map__panel {{
+      position: relative;
+      width: min(560px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      padding: 22px 22px 18px;
+      border: 1px solid rgba(88, 225, 243, 0.55);
+      border-radius: 6px;
+      background: #1f1e1e;
+      color: #58e1f3;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+    }}
+    html[lang='ja'] .pl-import-map__panel {{
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    .pl-import-map__title {{
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.45;
+    }}
+    .pl-import-map__desc {{
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.85);
+    }}
+    .pl-import-map__section {{
+      margin: 0 0 18px;
+    }}
+    .pl-import-map__section-title {{
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid rgba(88, 225, 243, 0.28);
+      padding-bottom: 6px;
+    }}
+    .pl-import-map__cols {{
+      display: grid;
+      gap: 10px;
+    }}
+    .pl-import-map__col-row {{
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }}
+    .pl-import-map__col-label {{
+      color: rgba(88, 225, 243, 0.9);
+    }}
+    .pl-import-map__select {{
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 4px;
+      background: #141313;
+      color: #d7fbff;
+      font-size: 12px;
+      box-sizing: border-box;
+    }}
+    .pl-import-map__ubody {{
+      display: grid;
+      gap: 8px;
+    }}
+    .pl-import-map__ok {{
+      margin: 0;
+      font-size: 12px;
+      color: rgba(88, 225, 243, 0.8);
+    }}
+    .pl-import-map__urow {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      align-items: center;
+      gap: 8px;
+    }}
+    .pl-import-map__uname {{
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      min-width: 0;
+      font-size: 13px;
+    }}
+    .pl-import-map__uname-text {{
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+    .pl-import-map__ucount {{
+      font-size: 11px;
+      color: rgba(88, 225, 243, 0.6);
+      flex-shrink: 0;
+    }}
+    .pl-import-map__ucreate {{
+      grid-column: 2 / 3;
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }}
+    .pl-import-map__ucreate[hidden] {{
+      display: none;
+    }}
+    .pl-import-map__suggest {{
+      flex-shrink: 0;
+      padding: 1px 6px;
+      border: 1px solid rgba(88, 225, 243, 0.5);
+      border-radius: 999px;
+      font-size: 10px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.9);
+    }}
+    .pl-import-map__conflict {{
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(88, 225, 243, 0.85);
+    }}
+    .pl-import-map__policy {{
+      display: grid;
+      gap: 8px;
+    }}
+    .pl-import-map__pol {{
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }}
+    .pl-import-map__pol input {{
+      accent-color: #58e1f3;
+      flex-shrink: 0;
+    }}
+    .pl-import-map__pol-hint {{
+      font-size: 11px;
+      color: rgba(88, 225, 243, 0.6);
+    }}
+    body.office-mode .pl-import-map__suggest {{
+      border-color: #999;
+      color: #333;
+    }}
+    body.office-mode .pl-import-map__conflict {{
+      color: rgba(0, 0, 0, 0.72);
+    }}
+    body.office-mode .pl-import-map__pol input {{
+      accent-color: #333;
+    }}
+    body.office-mode .pl-import-map__pol-hint {{
+      color: rgba(0, 0, 0, 0.5);
+    }}
+    .pl-import-map__actions {{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 4px;
+    }}
+    .pl-import-map__btn {{
+      min-width: 96px;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+    }}
+    .pl-import-map__btn--ghost {{
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      background: transparent;
+      color: #58e1f3;
+    }}
+    .pl-import-map__btn--primary {{
+      border: 1px solid rgba(88, 225, 243, 0.75);
+      background: rgba(88, 225, 243, 0.16);
+      color: #58e1f3;
+    }}
+    body.office-mode .pl-import-map__panel {{
+      background: #fff;
+      border-color: #999;
+      color: #111;
+      font-family: 'BIZ UDP Gothic', sans-serif;
+    }}
+    body.office-mode .pl-import-map__desc,
+    body.office-mode .pl-import-map__col-label,
+    body.office-mode .pl-import-map__ok {{
+      color: rgba(0, 0, 0, 0.72);
+    }}
+    body.office-mode .pl-import-map__section-title {{
+      border-bottom-color: #ccc;
+    }}
+    body.office-mode .pl-import-map__select {{
+      background: #fff;
+      border-color: #999;
+      color: #111;
+    }}
+    body.office-mode .pl-import-map__ucount {{
+      color: rgba(0, 0, 0, 0.5);
+    }}
+    body.office-mode .pl-import-map__btn--ghost {{
+      border-color: #999;
+      color: #111;
+    }}
+    body.office-mode .pl-import-map__btn--primary {{
+      border-color: #666;
+      background: #f0f0f0;
+      color: #111;
+    }}
+    @media (max-width: 560px) {{
+      .pl-import-map__urow {{
+        grid-template-columns: 1fr;
+      }}
+      .pl-import-map__ucreate {{
+        grid-column: 1 / -1;
+      }}
     }}
     .pl-expense-label-edit-modal__field {{
       display: flex;
