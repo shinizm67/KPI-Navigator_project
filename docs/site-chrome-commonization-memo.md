@@ -47,7 +47,7 @@
 | グループ | ページ | 状態 |
 |---|---|---|
 | **app** | app/{annual,monthly,profit}/index.html ＋ en/ 版（計6） | **完了**（behavior-preserving・リンク検証green） |
-| settings | setting/*.html, en/setting/*.html | 未（次） |
+| **settings** | setting/*.html, en/setting/*.html（計32） | **完了**（app と同一 canonical へ統一・リンク検証green） |
 | legal/login/register | legal/*, login/*, register/*, plan/* | 未 |
 | **生成ページ（別対応）** | app/monthly/edit（build_monthly_edit_pages.py 生成）, app/profit/pl（build_pl_table_page.py 生成） | 未。**ビルド側に site_chrome を統合**して対応する |
 
@@ -61,6 +61,21 @@
    - pilot 対応: en/profit は `profit_label:"Profit"` で現状維持。**canonical ラベルの確定は要ユーザー判断**（考察/Insight 統一 or 利益/Profit 統一）。
 2. **Profit ページの Daily ナビは「年次へ遷移」**  
    - profit ページには Daily 窓が無いため、Daily は `#`（窓を開く）ではなく **年次ページへのリンク**。これは仕様として `daily:"link"` で保持。
+
+## settings 統一で行った“整え”（2026-07-17・目視変化あり／ユーザー合意済み）
+
+settings は app と別の**旧・内部不整合バリアント**だった。app と同一 canonical に統一し、以下を是正（`daily:"link"`, `active:None`, ページ別 `account_current`）。
+
+- ナビを app と同一化：旧「英語ラベル＋Daily/Index 無効（"Index" は旧称）」→ **年次/月次/日次/考察（JA）・Annual/Monthly/Daily/Insight（EN）**。Daily は窓が無いので年次へ遷移（`daily:"link"`）、利益はゲート付きリンク。
+- アカウントポップアップの**デッドリンク `#` を実リンク化**（プラン詳細/プラン変更/アカウント削除）。ページ別に現在項目へ `is-current` ＋ `aria-current="page"`。
+- Expense ドロップダウン文言を app と統一（「経費設定を開く（準備中）」）。
+- minify されていたヘッダーも複数行へ整形（無害）。
+
+> ラベル言語ドリフト（settings が英語だった件）はこの統一で解消。利益ラベルの canonical（考察/Insight vs 利益/Profit）は引き続き未決（§ pilot ドリフト）。
+
+## ビルダーの冪等性（重要な修正）
+
+初期実装は**再ビルドのたびにマーカー行のインデントが2スペース増殖**するバグがあった（マーカー置換の正規表現が先頭空白を消費していなかった）。`[ \t]*` を前置して修正済み。**何度再実行しても安定**（2スペース固定）。
 
 ## 次アクション
 

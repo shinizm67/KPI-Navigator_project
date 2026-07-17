@@ -165,6 +165,17 @@ def _nav_profit(base: str, img: str, label: str, L: dict, active: bool) -> str:
           </li>"""
 
 
+def _account_link(href: str, label: str, key: str, current: str | None, danger: bool = False) -> str:
+    cls = "account-settings-item"
+    if danger:
+        cls += " account-settings-item-danger"
+    is_current = key == current
+    if is_current:
+        cls += " is-current"
+    cur = ' aria-current="page"' if is_current else ""
+    return f'<a href="{href}" class="{cls}" role="menuitem"{cur}>{label}</a>'
+
+
 def build_header(
     lang: str,
     base: str,
@@ -172,6 +183,7 @@ def build_header(
     active: str | None,
     daily_mode: str = "overlay",
     profit_label: str | None = None,
+    account_current: str | None = None,
 ) -> str:
     L = LABELS[lang]
     items = "\n".join(
@@ -219,21 +231,21 @@ def build_header(
         <section class="account-settings-section">
           <h4 class="account-settings-heading">{L['account_heading']}</h4>
           <nav class="account-settings-nav">
-            <a href="{base}setting/profile.html" class="account-settings-item" role="menuitem">{L['profile']}</a>
-            <a href="{base}setting/change_email.html" class="account-settings-item" role="menuitem">{L['change_email']}</a>
-            <a href="{base}setting/change_password.html" class="account-settings-item" role="menuitem">{L['change_password']}</a>
-            <a href="{base}setting/session_management.html" class="account-settings-item" role="menuitem">{L['session']}</a>
+            {_account_link(f"{base}setting/profile.html", L['profile'], 'profile', account_current)}
+            {_account_link(f"{base}setting/change_email.html", L['change_email'], 'change_email', account_current)}
+            {_account_link(f"{base}setting/change_password.html", L['change_password'], 'change_password', account_current)}
+            {_account_link(f"{base}setting/session_management.html", L['session'], 'session', account_current)}
           </nav>
         </section>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">{L['subscription_heading']}</h4>
           <nav class="account-settings-nav">
-            <a href="{base}setting/plan_details.html" class="account-settings-item" role="menuitem">{L['plan_details']}</a>
-            <a href="{base}setting/change_plan.html" class="account-settings-item" role="menuitem">{L['change_plan']}</a>
+            {_account_link(f"{base}setting/plan_details.html", L['plan_details'], 'plan_details', account_current)}
+            {_account_link(f"{base}setting/change_plan.html", L['change_plan'], 'change_plan', account_current)}
           </nav>
         </section>
         <div class="account-settings-sep"></div>
-        <a href="{base}setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">{L['delete_account']}</a>
+        {_account_link(f"{base}setting/delete_account1.html", L['delete_account'], 'delete', account_current, danger=True)}
       </div>
       <div class="settings-dropdown" id="settings-dropdown" hidden>
         <div class="settings-dropdown-inner">

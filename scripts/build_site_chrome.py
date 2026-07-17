@@ -42,11 +42,50 @@ PAGES_APP = [
     {"path": "en/app/profit/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "profit", "daily": "link", "profit_label": "Profit"},
 ]
 
-GROUPS = {"app": PAGES_APP}
+# Settings pages share ONE canonical chrome (unified with the app header).
+# Each maps to the account-popup item it should mark as current. Settings pages
+# host no Daily overlay, so daily = "link" (navigate to Annual).
+_SETTINGS_CURRENT = [
+    ("profile.html", "profile"),
+    ("profile_edit.html", "profile"),
+    ("change_email.html", "change_email"),
+    ("change_email_edit.html", "change_email"),
+    ("change_password.html", "change_password"),
+    ("change_password_success.html", "change_password"),
+    ("session_management.html", "session"),
+    ("plan_details.html", "plan_details"),
+    ("change_plan.html", "change_plan"),
+    ("delete_account1.html", "delete"),
+    ("delete_account2.html", "delete"),
+    ("delete_account3.html", "delete"),
+    ("delete_account4-1.html", "delete"),
+    ("delete_account4-2.html", "delete"),
+    ("delete_account5.html", "delete"),
+    ("delete_account_accomplished.html", "delete"),
+]
+
+
+def _settings_pages() -> list[dict]:
+    pages = []
+    for fname, current in _SETTINGS_CURRENT:
+        pages.append({
+            "path": f"setting/{fname}", "lang": "ja", "base": "../", "img": "../",
+            "active": None, "daily": "link", "account_current": current,
+        })
+        pages.append({
+            "path": f"en/setting/{fname}", "lang": "en", "base": "../", "img": "../../",
+            "active": None, "daily": "link", "account_current": current,
+        })
+    return pages
+
+
+PAGES_SETTINGS = _settings_pages()
+
+GROUPS = {"app": PAGES_APP, "settings": PAGES_SETTINGS}
 
 
 def _replace_block(text: str, start: str, end: str, raw_re: str, replacement: str, label: str, path: Path) -> str:
-    marked = re.compile(re.escape(start) + r"[\s\S]*?" + re.escape(end))
+    marked = re.compile(r"[ \t]*" + re.escape(start) + r"[\s\S]*?" + re.escape(end))
     if marked.search(text):
         return marked.sub(lambda _m: replacement, text, count=1)
     raw = re.compile(raw_re)
@@ -65,6 +104,7 @@ def patch_page(cfg: dict) -> None:
         cfg["lang"], cfg["base"], cfg["img"], cfg["active"],
         daily_mode=cfg.get("daily", "overlay"),
         profit_label=cfg.get("profit_label"),
+        account_current=cfg.get("account_current"),
     )
     footer = build_footer(cfg["lang"], cfg["img"])
     header_repl = f"  {HEADER_MARK_START}\n{header}\n  {HEADER_MARK_END}"
