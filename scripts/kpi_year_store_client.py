@@ -225,6 +225,7 @@ def kpi_year_store_js() -> str:
         function ensureYearMepData(year) {{
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {{}};
+          if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {{}};
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {{
             rec.dailyMeta = {{ memos: {{}}, flags: {{}}, weather: {{}} }};
           }}
@@ -1077,6 +1078,42 @@ def kpi_year_store_js() -> str:
           return !!store.timeline.businessDays[iso];
         }}
 
+        /* dailyIncome: 収入ストリーム別の日次額（store_sales は timeline.dailySales が正、
+           A/B 等の追加ストリームは years.{{Y}}.dailyIncome[streamId][iso] に保持）。
+           timeline.dailySales（＝総売上）には一切書き込まない副次データ。*/
+        function writeDailyIncome(streamId, iso, amount, meta) {{
+          if (!streamId || !validIso(iso)) return false;
+          if (!canEditIso(iso)) return false;
+          var y = isoYear(iso);
+          var rec = ensureYearMepData(y);
+          if (!rec.dailyIncome[streamId] || typeof rec.dailyIncome[streamId] !== 'object') {{
+            rec.dailyIncome[streamId] = {{}};
+          }}
+          var n = Number(amount);
+          if (!Number.isFinite(n) || n === 0) {{
+            delete rec.dailyIncome[streamId][iso];
+          }} else {{
+            rec.dailyIncome[streamId][iso] = Math.round(n);
+          }}
+          rec.mepUpdatedAt = Date.now();
+          persistStore();
+          document.dispatchEvent(
+            new CustomEvent('kpi:mepDataChanged', {{
+              detail: {{ year: y, source: (meta && meta.source) || 'kpi-year-store' }},
+            }})
+          );
+          return true;
+        }}
+
+        function readDailyIncome(streamId, iso) {{
+          if (!streamId || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyIncome || !rec.dailyIncome[streamId]) return null;
+          if (!Object.prototype.hasOwnProperty.call(rec.dailyIncome[streamId], iso)) return null;
+          var n = Number(rec.dailyIncome[streamId][iso]);
+          return Number.isFinite(n) ? n : null;
+        }}
+
         function readRange(startIso, endIso) {{
           if (!validIso(startIso) || !validIso(endIso)) return [];
           if (startIso > endIso) {{
@@ -1455,6 +1492,7 @@ def kpi_year_store_js() -> str:
           var rec = ensureYearMepData(y);
           return {{
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {{}})),
+            dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {{}})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || {{ memos: {{}}, flags: {{}}, weather: {{}} }})
             ),
@@ -1490,6 +1528,24 @@ def kpi_year_store_js() -> str:
                 if (!canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 rec.dailyExpenses[lineId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
+              }});
+            }});
+          }}
+          var srcInc = payload && payload.dailyIncome;
+          if (srcInc && typeof srcInc === 'object') {{
+            Object.keys(srcInc).forEach(function (streamId) {{
+              if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {{}};
+              var byIso = srcInc[streamId];
+              if (!byIso || typeof byIso !== 'object') return;
+              Object.keys(byIso).forEach(function (iso) {{
+                if (!validIso(iso) || isoYear(iso) !== y) return;
+                if (!canEditIso(iso)) return;
+                var n = Number(byIso[iso]);
+                if (!Number.isFinite(n) || n === 0) {{
+                  delete rec.dailyIncome[streamId][iso];
+                }} else {{
+                  rec.dailyIncome[streamId][iso] = Math.round(n);
+                }}
               }});
             }});
           }}
@@ -1616,6 +1672,8 @@ def kpi_year_store_js() -> str:
           }},
           writeDailySales: writeDailySales,
           writeBusinessDay: writeBusinessDay,
+          writeDailyIncome: writeDailyIncome,
+          readDailyIncome: readDailyIncome,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,

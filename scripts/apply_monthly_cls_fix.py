@@ -64,7 +64,7 @@ def _replace(text: str, old: str, new: str, label: str) -> str:
         return text
     if 'data-monthly-tw-hydrated="0"' in text and label == "html root":
         return text
-    if "TW_SKELETON_MONEY" in text and label == "dash row6":
+    if "fmtTwMoney(0)" in text and label == "dash row6":
         return text
     if "alreadyExpanded" in text and label.startswith("focus bar init"):
         return text

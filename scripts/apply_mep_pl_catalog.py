@@ -30,18 +30,25 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
         PL_CATALOG_BY_ID[entry.lineId] = entry;
       }});
       var PL_CATALOG_STORAGE_KEY = 'kpiNavigator.plLineCatalog';
-      function loadPlExpenseCatalogLines() {{
+      function loadPlCatalogLines() {{
         try {{
           var raw = localStorage.getItem(PL_CATALOG_STORAGE_KEY);
           if (!raw) return null;
           var parsed = JSON.parse(raw);
           if (!parsed || !Array.isArray(parsed.lines) || !parsed.lines.length) return null;
           return parsed.lines.filter(function (line) {{
-            return line && line.active !== false && line.bucket;
+            return line && line.active !== false;
           }});
         }} catch (_e) {{
           return null;
         }}
+      }}
+      function loadPlExpenseCatalogLines() {{
+        var lines = loadPlCatalogLines();
+        if (!lines) return null;
+        return lines.filter(function (line) {{
+          return !!line.bucket;
+        }});
       }}
       function plLineToMepDef(line) {{
         var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
@@ -75,6 +82,29 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
         }});
       }}
       function catalogIncomeDefs() {{
+        var fromStorage = loadPlCatalogLines();
+        if (fromStorage) {{
+          var defs = fromStorage
+            .filter(function (line) {{
+              return line.section === 'income';
+            }})
+            .map(function (line) {{
+              var base = PL_CATALOG_BY_ID[line.lineId] || line || {{}};
+              return {{
+                lineId: line.lineId,
+                section: 'income',
+                bucket: null,
+                labelJa: line.labelJa || base.labelJa || line.lineId,
+                labelEn: line.labelEn || base.labelEn || line.lineId,
+                editableLabel: base.editableLabel === true,
+                inputStyle: base.inputStyle || 'daily',
+                resolvedInputStyle: base.resolvedInputStyle || 'daily',
+                mepEditable: true,
+                active: line.active !== false,
+              }};
+            }});
+          if (defs.length) return defs;
+        }}
         return PL_LINE_CATALOG.filter(function (e) {{ return e.section === 'income'; }});
       }}
       function catalogFixedDefs() {{
@@ -94,7 +124,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           kind: 'money',
           labelJa: def.labelJa,
           labelEn: def.labelEn,
-          editableLabel: false,
+          editableLabel: !!def.editableLabel,
           deletable: false,
           sub: def.section === 'expense',
           mepEditable: !!def.mepEditable,
@@ -120,13 +150,41 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
             prev.mepEditable = !!d.mepEditable;
             prev.resolvedInputStyle = d.resolvedInputStyle || 'monthly';
             prev.bucket = d.bucket || null;
-            prev.editableLabel = false;
+            prev.editableLabel = !!d.editableLabel;
             prev.deletable = false;
             targetArr.push(prev);
           }} else {{
             targetArr.push(makeCatalogRow(d));
           }}
         }});
+      }}
+      function upsertPlIncomeLabelsFromState() {{
+        var lines = loadPlCatalogLines();
+        if (!lines) {{
+          lines = JSON.parse(JSON.stringify(PL_LINE_CATALOG));
+        }}
+        var changed = false;
+        var ids = {{ sales_a: true, sales_b: true }};
+        (state.incomeItems || []).forEach(function (row) {{
+          if (!row || !ids[row.lineId]) return;
+          var line = lines.find(function (l) {{ return l.lineId === row.lineId; }});
+          if (!line) return;
+          var nextJa = row.labelJa || line.labelJa;
+          var nextEn = row.labelEn || line.labelEn;
+          if (line.labelJa !== nextJa || line.labelEn !== nextEn) {{
+            line.labelJa = nextJa;
+            line.labelEn = nextEn;
+            changed = true;
+          }}
+        }});
+        if (!changed) return;
+        try {{
+          localStorage.setItem(
+            PL_CATALOG_STORAGE_KEY,
+            JSON.stringify({{ lines: lines, updatedAt: Date.now() }})
+          );
+          window.dispatchEvent(new Event('pl-expense-catalog-changed'));
+        }} catch (_e) {{}}
       }}
 """
 
@@ -263,11 +321,27 @@ def patch_create_label_row(text: str) -> str:
           main.appendChild(btnEdit);
         }
         rowEl.appendChild(main);"""
-    new = """        if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
+    new = """        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
+        if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
         else if (item.plReadonly) rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
         rowEl.appendChild(main);"""
     if old not in text:
-        raise ValueError("createLabelRow patch miss")
+        # Already patched variant (without edit button) -> upgrade to with-button variant.
+        old2 = """        if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
+        else if (item.plReadonly) rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
+        rowEl.appendChild(main);"""
+        if old2 not in text:
+            raise ValueError("createLabelRow patch miss")
+        return text.replace(old2, new, 1)
     return text.replace(old, new, 1)
 
 
@@ -348,8 +422,11 @@ def inject_sync(text: str) -> str:
 
 def inject_catalog(text: str) -> str:
     if CATALOG_MARKER in text:
+        # Include trailing duplicate upsert helpers left by older inject runs.
         text = re.sub(
-            re.escape(CATALOG_MARKER) + r"[\s\S]*?function syncSectionFromCatalog[\s\S]*?\n      \}\n",
+            re.escape(CATALOG_MARKER)
+            + r"[\s\S]*?function syncSectionFromCatalog[\s\S]*?\n      \}\n"
+            + r"(?:      function upsertPlIncomeLabelsFromState\(\) \{[\s\S]*?\n      \}\n)*",
             CATALOG_BLOCK.rstrip() + "\n",
             text,
             count=1,
@@ -399,8 +476,18 @@ def patch_file(path: Path) -> None:
         text = text.replace(REMOVE_ROW_OLD, REMOVE_ROW_NEW, 1)
     if "labelInfo.dailyInput" not in text:
         text = patch_current_rows(text)
-        text = patch_create_label_row(text)
         text = patch_build_grid(text)
+    text = patch_create_label_row(text)
+    commit_with_upsert = (
+        "              markDirty();\n"
+        "              if (typeof upsertPlIncomeLabelsFromState === 'function') {\n"
+        "                upsertPlIncomeLabelsFromState();\n"
+        "              }\n"
+        "            }\n            buildGrid();"
+    )
+    commit_bare = "              markDirty();\n            }\n            buildGrid();"
+    if commit_with_upsert not in text and commit_bare in text:
+        text = text.replace(commit_bare, commit_with_upsert, 1)
     path.write_text(text, encoding="utf-8")
     print(f"wrote {path.relative_to(ROOT)}")
 

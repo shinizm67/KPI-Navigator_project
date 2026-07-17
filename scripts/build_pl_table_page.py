@@ -305,6 +305,11 @@ def build_rows(lang: str, labels: dict) -> str:
 LABELS_JA = {
     "title": "損益表（PL）",
     "corner_title": "損益表",
+    "guide_toggle_aria": "費目別の参考予算を表示",
+    "guide_toggle_show_title": "費目別の参考予算を表示（過去実績の中央値比率 × 売上）",
+    "guide_toggle_hide_title": "費目別の参考予算を隠す",
+    "guide_toggle_tip": "＋ 費目別の参考予算（定規）を表示。過去実績の中央値比率 × 今月の売上で「使いすぎ」を各セルに目安表示します（断定の適正値ではありません）。",
+    "guide_toggle_tip_on": "− 費目別の参考予算（定規）を隠します。",
     "year": "2024",
     "store_sales": "店舗売上",
     "sales_a": "売上A",
@@ -330,6 +335,10 @@ LABELS_JA = {
     "amount": "金額",
     "ratio": "比率",
     "total": "合計",
+    "year_total_head": "年計",
+    "occupancy_aria": "物件形態",
+    "occupancy_rent": "賃貸",
+    "occupancy_owned": "自持",
     "analyze_band": "分析",
     "analyze_toggle_aria": "分析セクションの表示を切り替え",
     "expense_detail_add_aria": "行を追加",
@@ -358,6 +367,19 @@ LABELS_JA = {
     "input_source_skip": "今後この確認を表示しない",
     "input_source_confirm": "決定",
     "input_source_cancel": "キャンセル",
+    "label_edit_modal_title": "科目を編集",
+    "label_edit_modal_label": "科目名",
+    "label_edit_modal_source": "数値の入力先",
+    "label_edit_modal_confirm": "決定",
+    "label_edit_modal_cancel": "キャンセル",
+    "adj_modal_title": "月次調整額",
+    "adj_modal_daily": "日次合計",
+    "adj_modal_adj": "調整額",
+    "adj_modal_result": "PL表示額",
+    "adj_modal_hint": "請求書などとのズレを調整します。日次入力は消えません。",
+    "adj_modal_confirm": "決定",
+    "adj_modal_cancel": "キャンセル",
+    "variable_mid_edit_tip": "科目ラベルをダブルクリックすると、科目名の変更と入力先（月次 / 日次）の切り替えができます。",
     "expense_attribute_title": "この科目の属性を選択してください",
     "expense_attribute_variable_title": "この変動費科目の属性を選択してください",
     "expense_attribute_edit_title": "属性を変更",
@@ -373,6 +395,8 @@ LABELS_JA = {
     "graph_monthly_sales": "月次売上",
     "graph_expenses": "支出",
     "profit_row": "利益",
+    "ref_budget_row": "変動費の参考枠",
+    "ref_budget_tip": "目標総費率から固定費率を引いた、変動費の目安（断定の適正値ではありません）",
     "mock": "PL表 — 再描画準備中（表グリッドのみ削除・メニュー等は維持）",
     "back": "利益サマリーへ",
     "back_edit": "月次編集へ",
@@ -436,6 +460,11 @@ LABELS_JA = {
 LABELS_EN = {
     "title": "Profit & Loss (PL)",
     "corner_title": "Profit & Loss",
+    "guide_toggle_aria": "Show per-line reference budget",
+    "guide_toggle_show_title": "Show per-line reference budget (median past ratio × sales)",
+    "guide_toggle_hide_title": "Hide per-line reference budget",
+    "guide_toggle_tip": "+ Show per-line reference budget (guideline). Median of your past ratios × this month's sales flags likely overspending per cell (not a prescribed ideal).",
+    "guide_toggle_tip_on": "− Hide the per-line reference budget (guideline).",
     "year": "2024",
     "store_sales": "Store sales",
     "sales_a": "Sales A",
@@ -461,6 +490,10 @@ LABELS_EN = {
     "amount": "Amount",
     "ratio": "Ratio",
     "total": "Annual total",
+    "year_total_head": "Annual",
+    "occupancy_aria": "Occupancy",
+    "occupancy_rent": "Rented",
+    "occupancy_owned": "Owned",
     "analyze_band": "Analysis",
     "analyze_toggle_aria": "Toggle analysis section",
     "expense_detail_add_aria": "Add row",
@@ -489,6 +522,19 @@ LABELS_EN = {
     "input_source_skip": "Don't ask again",
     "input_source_confirm": "Confirm",
     "input_source_cancel": "Cancel",
+    "label_edit_modal_title": "Edit line item",
+    "label_edit_modal_label": "Label",
+    "label_edit_modal_source": "Where to enter amounts",
+    "label_edit_modal_confirm": "Confirm",
+    "label_edit_modal_cancel": "Cancel",
+    "adj_modal_title": "Monthly adjustment",
+    "adj_modal_daily": "Daily total",
+    "adj_modal_adj": "Adjustment",
+    "adj_modal_result": "PL amount",
+    "adj_modal_hint": "Adjust gaps vs invoice totals. Daily entries are kept.",
+    "adj_modal_confirm": "Confirm",
+    "adj_modal_cancel": "Cancel",
+    "variable_mid_edit_tip": "Double-click a line label to rename it and change the input location (Monthly / Daily).",
     "expense_attribute_title": "Select an expense attribute for this line",
     "expense_attribute_variable_title": "Select a variable expense attribute for this line",
     "expense_attribute_edit_title": "Change attribute",
@@ -504,6 +550,8 @@ LABELS_EN = {
     "graph_monthly_sales": "Monthly Sales",
     "graph_expenses": "Expenses",
     "profit_row": "Profit",
+    "ref_budget_row": "Variable expense guideline",
+    "ref_budget_tip": "Guideline for variable spend = target cost rate minus fixed-cost rate (not a prescribed ideal)",
     "mock": "PL table — redrawing (grid removed; nav and toolbar kept)",
     "back": "Back to profit hub",
     "back_edit": "Monthly Edit",
@@ -566,6 +614,11 @@ LABELS_EN = {
 
 
 from pl_expense_detail_client import expense_detail_client_js  # noqa: E402
+from pl_monthly_allocate_client import pl_monthly_allocate_client_js  # noqa: E402
+from pl_income_client import pl_income_client_js  # noqa: E402
+from pl_ratio_client import pl_ratio_client_js  # noqa: E402
+from pl_reference_budget_client import pl_reference_budget_client_js  # noqa: E402
+from pl_year_total_client import pl_year_total_client_js  # noqa: E402
 from pl_line_catalog import (  # noqa: E402
     CATALOG_SCHEMA_VERSION,
     EXPENSE_DETAIL_LINES_V1,
@@ -627,7 +680,7 @@ def pl_expense_detail_label_colgroup() -> str:
 
 def pl_data_colgroup() -> str:
     parts = ["<colgroup>"]
-    for _ in range(12):
+    for _ in range(13):
         parts.append('<col class="pl-col-amt"><col class="pl-col-ratio">')
     parts.append("</colgroup>")
     return "".join(parts)
@@ -682,16 +735,40 @@ def income_label_rows_v1(lang: str) -> str:
 
 
 def income_data_rows_v1(lang: str) -> str:
-    """Income data pane rows (12 months × single 260px amount cell, no ratio)."""
-    dummy = dummy_money(lang)
+    """Income data pane rows (12 months × Amount 160px + Ratio 100px).
+
+    All income rows are READ-ONLY in PL (income is entered daily on MEP; PL shows
+    the monthly cumulative). Filled by pl_income_client / pl_ratio_client:
+      - store_sales = Total Sales − (A + B)
+      - sales_a / sales_b = years.{Y}.dailyIncome[stream] monthly sum (—until MEP writes it)
+      - sales_total = timeline.dailySales monthly sum
+      - Ratio(%) = amount ÷ sales_total (same denominator as expense ratios)
+    """
     rows: list[str] = []
     for rid, _ja, _en, _editable, is_total in INCOME_ROWS_V1:
+        if is_total:
+            role = "total"
+        elif rid == "store_sales":
+            role = "store"
+        else:
+            role = "stream"
         data_cells: list[str] = []
         for mi in range(12):
             data_cells.append(
-                f'<td class="pl-month-cell" colspan="2" data-row="{rid}" data-month="{mi}">'
-                f'<span class="pl-month-cell__text">{dummy}</span></td>'
+                f'<td class="pl-amt-cell pl-amt-cell--income-{role}" data-row="{rid}" '
+                f'data-month="{mi}" data-field="amount" data-pl-income-role="{role}">'
+                f'<span class="pl-amt-cell__text">—</span></td>'
+                f'<td class="pl-ratio-cell pl-ratio-cell--income-{role}" data-row="{rid}" '
+                f'data-month="{mi}" data-field="ratio">'
+                f'<span class="pl-ratio-cell__text"></span></td>'
             )
+        data_cells.append(
+            year_amt_ratio_pair_html(
+                rid,
+                amt_class=f"pl-amt-cell pl-amt-cell--income-{role} pl-amt-cell--year-total",
+                ratio_class=f"pl-ratio-cell pl-ratio-cell--income-{role} pl-ratio-cell--year-total",
+            )
+        )
         row_cls = "pl-data-row pl-data-row--income"
         if is_total:
             row_cls += " pl-data-row--total"
@@ -746,6 +823,48 @@ def expenses_data_rows_v1(lang: str) -> str:
     return _section_data_rows_v1(lang, EXPENSES_ROWS_V1, "expenses")
 
 
+def reference_budget_label_row_v1(lang: str) -> str:
+    """L1 variable-expense guideline label (read-only, after expenses summary)."""
+    L = LABELS_EN if lang == "en" else LABELS_JA
+    label = L["ref_budget_row"]
+    tip = L["ref_budget_tip"]
+    return (
+        f'<tr class="pl-data-row pl-data-row--ref-budget" data-pl-section="ref-budget" '
+        f'data-row="var_ref_budget">'
+        f'<th scope="row" class="pl-h-label pl-h-label--ref-budget" colspan="2" '
+        f'title="{tip}"><span class="pl-h-label__text">{label}</span></th></tr>'
+    )
+
+
+def reference_budget_data_row_v1(lang: str) -> str:
+    """L1 guideline data cells — filled by pl_reference_budget_client."""
+    cells: list[str] = []
+    for mi in range(12):
+        cells.append(
+            month_amt_ratio_pair_html(
+                "var_ref_budget",
+                mi,
+                amt_class="pl-amt-cell pl-amt-cell--ref-budget",
+                ratio_class="pl-ratio-cell pl-ratio-cell--ref-budget",
+                amt_text="—",
+                ratio_text="—",
+            )
+        )
+    cells.append(
+        year_amt_ratio_pair_html(
+            "var_ref_budget",
+            amt_class="pl-amt-cell pl-amt-cell--ref-budget pl-amt-cell--year-total",
+            ratio_class="pl-ratio-cell pl-ratio-cell--ref-budget pl-ratio-cell--year-total",
+            amt_text="—",
+            ratio_text="—",
+        )
+    )
+    return (
+        f'<tr class="pl-data-row pl-data-row--ref-budget" data-row="var_ref_budget" '
+        f'data-pl-section="ref-budget">{"".join(cells)}</tr>'
+    )
+
+
 def _major_label_html(lang: str, lines_en: tuple[str, ...], lines_ja: tuple[str, ...]) -> str:
     lines = lines_ja if lang == "ja" else lines_en
     if len(lines) == 1:
@@ -791,6 +910,23 @@ def analyze_label_rows_v1(lang: str) -> str:
     return "".join(rows)
 
 
+def year_amt_ratio_pair_html(
+    row_id: str,
+    *,
+    amt_text: str = "—",
+    ratio_text: str = "",
+    amt_class: str = "pl-amt-cell pl-amt-cell--year-total",
+    ratio_class: str = "pl-ratio-cell pl-ratio-cell--year-total",
+) -> str:
+    """Year-total column: Amount 160px + Ratio 100px (= 260px), read-only."""
+    return (
+        f'<td class="{amt_class}" data-row="{row_id}" data-month="year" data-field="amount">'
+        f'<span class="pl-amt-cell__text">{amt_text}</span></td>'
+        f'<td class="{ratio_class}" data-row="{row_id}" data-month="year" data-field="ratio">'
+        f'<span class="pl-ratio-cell__text">{ratio_text}</span></td>'
+    )
+
+
 def month_amt_ratio_pair_html(
     row_id: str,
     month_index: int,
@@ -824,6 +960,13 @@ def analyze_data_rows_v1(lang: str) -> str:
                         ratio_class="pl-ratio-cell pl-ratio-cell--analyze",
                     )
                 )
+            data_cells.append(
+                year_amt_ratio_pair_html(
+                    rid,
+                    amt_class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total",
+                    ratio_class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total",
+                )
+            )
             row_cls = "pl-data-row pl-data-row--analyze pl-analyze-zone"
             if is_total:
                 row_cls += " pl-data-row--total"
@@ -847,6 +990,7 @@ def _section_data_rows_v1(
             data_cells.append(
                 month_amt_ratio_pair_html(rid, mi, amt_text=dummy)
             )
+        data_cells.append(year_amt_ratio_pair_html(rid, amt_text="—"))
         row_cls = f"pl-data-row pl-data-row--{section_id}"
         if is_total:
             row_cls += " pl-data-row--total"
@@ -886,7 +1030,7 @@ def expenses_detail_header_label_row(lang: str, L: dict) -> str:
 def expenses_detail_header_data_row() -> str:
     return (
         '<tr class="pl-data-row pl-data-row--expenses-head" data-pl-section="expense-detail">'
-        '<td colspan="24" class="pl-expenses-head__data-band"></td></tr>'
+        '<td colspan="26" class="pl-expenses-head__data-band"></td></tr>'
     )
 
 
@@ -898,6 +1042,11 @@ def profit_data_row_v1(lang: str) -> str:
             f'data-row="profit" data-month="{mi}">'
             f'<span class="pl-month-cell__text"></span></td>'
         )
+    cells.append(
+        '<td class="pl-month-cell pl-month-cell--profit pl-month-cell--year-total" colspan="2" '
+        'data-row="profit" data-month="year">'
+        '<span class="pl-month-cell__text">—</span></td>'
+    )
     return (
         f'<tr class="pl-data-row pl-data-row--profit" data-row="profit" data-pl-section="profit">'
         f'{"".join(cells)}</tr>'
@@ -957,12 +1106,28 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
       }}
 
       function applyLabelOverrides() {{
+        var catalogById = {{}};
+        try {{
+          var craw = localStorage.getItem(CATALOG_KEY);
+          if (craw) {{
+            var cparsed = JSON.parse(craw);
+            (cparsed && cparsed.lines ? cparsed.lines : []).forEach(function (line) {{
+              if (line && line.lineId) catalogById[line.lineId] = line;
+            }});
+          }}
+        }} catch (_e) {{}}
         var overrides = loadOverrides();
         document.querySelectorAll('[data-pl-label-editable="1"]').forEach(function (el) {{
           var scope = el.getAttribute('data-label-scope');
           if (scope === 'expense-detail') return;
           var id = el.getAttribute('data-label-id');
-          if (!id || !overrides[id]) return;
+          if (!id) return;
+          if (scope === 'income' && catalogById[id]) {{
+            var c = catalogById[id];
+            el.textContent = isJa ? (c.labelJa || el.textContent) : (c.labelEn || el.textContent);
+            return;
+          }}
+          if (!overrides[id]) return;
           var o = overrides[id];
           el.textContent = isJa ? (o.labelJa || el.textContent) : (o.labelEn || el.textContent);
         }});
@@ -977,7 +1142,7 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
         sel.addRange(range);
       }}
 
-      function finishEdit(save) {{
+      function finishEdit(save, reason) {{
         if (!editingEl) return;
         var el = editingEl;
         var original = el.getAttribute('data-original-label') || '';
@@ -992,28 +1157,12 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
           el.textContent = original;
           return;
         }}
-        if (next === original) return;
+        /* expense-detail は統合モーダル（pl-expense-label-edit-modal）で編集する */
         if (scope === 'expense-detail') {{
-          var lines = loadCatalogLines();
-          var line = lines.find(function (l) {{ return l.lineId === id; }});
-          if (!line) return;
-          if (isJa) line.labelJa = next;
-          else line.labelEn = next;
-          saveCatalogLines(lines);
-          el.textContent = next;
-          window.dispatchEvent(
-            new CustomEvent('pl-expense-label-changed', {{
-              detail: {{
-                lineId: id,
-                labelJa: line.labelJa,
-                labelEn: line.labelEn,
-                labelChanged: true,
-                previousLabel: original,
-              }},
-            }})
-          );
+          el.textContent = original;
           return;
         }}
+        if (next === original) return;
         var overrides = loadOverrides();
         if (!overrides[id]) overrides[id] = {{}};
         if (isJa) overrides[id].labelJa = next;
@@ -1024,7 +1173,15 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
 
       function startEdit(el) {{
         if (!el || el.classList.contains('pl-h-label__text--editing')) return;
-        if (editingEl && editingEl !== el) finishEdit(true);
+        var scope = el.getAttribute('data-label-scope');
+        var id = el.getAttribute('data-label-id');
+        if (scope === 'expense-detail' && id) {{
+          window.dispatchEvent(
+            new CustomEvent('pl-expense-label-edit-request', {{ detail: {{ lineId: id }} }})
+          );
+          return;
+        }}
+        if (editingEl && editingEl !== el) finishEdit(true, 'blur');
         editingEl = el;
         el.setAttribute('data-original-label', el.textContent || '');
         el.classList.add('pl-h-label__text--editing');
@@ -1057,10 +1214,10 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
           if (!editingEl) return;
           if (e.key === 'Enter') {{
             e.preventDefault();
-            finishEdit(true);
+            finishEdit(true, 'enter');
           }} else if (e.key === 'Escape') {{
             e.preventDefault();
-            finishEdit(false);
+            finishEdit(false, 'escape');
           }}
         }});
         windowEl.addEventListener('focusout', function (e) {{
@@ -1068,24 +1225,25 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
           var el = editingEl;
           setTimeout(function () {{
             if (editingEl === el && document.activeElement !== el) {{
-              finishEdit(true);
+              finishEdit(true, 'blur');
             }}
           }}, 0);
         }});
       }}
 
       applyLabelOverrides();
+      window.addEventListener('pl-expense-catalog-changed', applyLabelOverrides);
+      window.addEventListener('storage', function (ev) {{
+        if (ev.key === CATALOG_KEY || ev.key === OVERRIDES_KEY) applyLabelOverrides();
+      }});
 
       window.addEventListener('pl-expense-line-added', function (e) {{
         var lineId = e.detail && e.detail.lineId;
-        if (!lineId || !windowEl) return;
+        if (!lineId) return;
         setTimeout(function () {{
-          var el = windowEl.querySelector(
-            '[data-pl-label-editable="1"][data-label-scope="expense-detail"][data-label-id="' +
-              lineId +
-              '"]'
+          window.dispatchEvent(
+            new CustomEvent('pl-expense-label-edit-request', {{ detail: {{ lineId: lineId }} }})
           );
-          if (el) startEdit(el);
         }}, 50);
       }});
     }})();
@@ -2729,6 +2887,7 @@ def pl_graph_overlay_html(L: dict) -> str:
 
 
 def pl_input_source_modal_html(L: dict) -> str:
+    """Add-flow only (legacy). Label edit uses pl_expense_label_edit_modal_html."""
     return f"""
   <div class="pl-input-source-modal" id="pl-input-source-modal" hidden role="dialog"
     aria-modal="true" aria-labelledby="pl-input-source-modal-title">
@@ -2746,15 +2905,79 @@ def pl_input_source_modal_html(L: dict) -> str:
           <span>{L["input_source_monthly"]}</span>
         </label>
       </fieldset>
-      <label class="pl-input-source-modal__skip">
-        <input type="checkbox" id="pl-input-source-skip">
-        <span>{L["input_source_skip"]}</span>
-      </label>
       <div class="pl-input-source-modal__actions">
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--ghost"
           data-pl-input-source-action="cancel">{L["input_source_cancel"]}</button>
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--primary"
           data-pl-input-source-action="confirm">{L["input_source_confirm"]}</button>
+      </div>
+    </div>
+  </div>"""
+
+
+def pl_expense_label_edit_modal_html(L: dict) -> str:
+    """Unified: label rename + input source (variable). No Don't-ask-again."""
+    return f"""
+  <div class="pl-input-source-modal pl-expense-label-edit-modal" id="pl-expense-label-edit-modal" hidden role="dialog"
+    aria-modal="true" aria-labelledby="pl-expense-label-edit-modal-title">
+    <div class="pl-input-source-modal__backdrop" data-pl-label-edit-action="cancel"></div>
+    <div class="pl-input-source-modal__panel">
+      <h2 class="pl-input-source-modal__title" id="pl-expense-label-edit-modal-title">{L["label_edit_modal_title"]}</h2>
+      <label class="pl-expense-label-edit-modal__field">
+        <span class="pl-expense-label-edit-modal__field-label">{L["label_edit_modal_label"]}</span>
+        <input type="text" id="pl-expense-label-edit-input" class="pl-expense-label-edit-modal__input"
+          autocomplete="off" maxlength="80">
+      </label>
+      <fieldset class="pl-input-source-modal__choices" id="pl-expense-label-edit-source" hidden>
+        <legend class="pl-input-source-modal__legend">{L["label_edit_modal_source"]}</legend>
+        <label class="pl-input-source-modal__choice">
+          <input type="radio" name="pl-expense-label-edit-source" value="daily">
+          <span>{L["input_source_daily"]}</span>
+        </label>
+        <label class="pl-input-source-modal__choice">
+          <input type="radio" name="pl-expense-label-edit-source" value="monthly">
+          <span>{L["input_source_monthly"]}</span>
+        </label>
+      </fieldset>
+      <div class="pl-input-source-modal__actions">
+        <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--ghost"
+          data-pl-label-edit-action="cancel">{L["label_edit_modal_cancel"]}</button>
+        <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--primary"
+          data-pl-label-edit-action="confirm">{L["label_edit_modal_confirm"]}</button>
+      </div>
+    </div>
+  </div>"""
+
+
+def pl_expense_adj_modal_html(L: dict) -> str:
+    """Daily Aggregate + Adjustment — edit monthly adjustment without overwriting daily."""
+    return f"""
+  <div class="pl-input-source-modal pl-expense-adj-modal" id="pl-expense-adj-modal" hidden role="dialog"
+    aria-modal="true" aria-labelledby="pl-expense-adj-modal-title">
+    <div class="pl-input-source-modal__backdrop" data-pl-adj-action="cancel"></div>
+    <div class="pl-input-source-modal__panel">
+      <h2 class="pl-input-source-modal__title" id="pl-expense-adj-modal-title">{L["adj_modal_title"]}</h2>
+      <p class="pl-expense-adj-modal__hint">{L["adj_modal_hint"]}</p>
+      <div class="pl-expense-adj-modal__rows">
+        <div class="pl-expense-adj-modal__row">
+          <span class="pl-expense-adj-modal__label">{L["adj_modal_daily"]}</span>
+          <span class="pl-expense-adj-modal__value" id="pl-expense-adj-daily">—</span>
+        </div>
+        <label class="pl-expense-adj-modal__row pl-expense-adj-modal__row--input">
+          <span class="pl-expense-adj-modal__label">{L["adj_modal_adj"]}</span>
+          <input type="text" id="pl-expense-adj-input" class="pl-expense-adj-modal__input"
+            inputmode="decimal" autocomplete="off">
+        </label>
+        <div class="pl-expense-adj-modal__row pl-expense-adj-modal__row--result">
+          <span class="pl-expense-adj-modal__label">{L["adj_modal_result"]}</span>
+          <span class="pl-expense-adj-modal__value" id="pl-expense-adj-result">—</span>
+        </div>
+      </div>
+      <div class="pl-input-source-modal__actions">
+        <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--ghost"
+          data-pl-adj-action="cancel">{L["adj_modal_cancel"]}</button>
+        <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--primary"
+          data-pl-adj-action="confirm">{L["adj_modal_confirm"]}</button>
       </div>
     </div>
   </div>"""
@@ -3064,6 +3287,8 @@ def pl_graph_client_js(
         for (var mi = 0; mi < 12; mi++) {{
           html += renderMonthCell(mi, data[mi] || DUMMY_MONTHS[mi] || {{}});
         }}
+        html +=
+          '<td class="pl-graph-cell pl-graph-cell--year" colspan="2" data-month="year"></td>';
         html += '</tr>';
         body.innerHTML = html;
         window.dispatchEvent(new Event('pl-graph-rendered'));
@@ -3077,7 +3302,8 @@ def pl_graph_client_js(
 
 
 def month_head_row_v1(lang: str) -> str:
-    """Top month header cells only (Jan–Dec), 260×30 each (colspan 2 over Amount+Ratio)."""
+    """Top month header cells (Jan–Dec) + year total, 260×30 each (colspan 2)."""
+    L = LABELS_EN if lang == "en" else LABELS_JA
     months = MONTHS_EN if lang == "en" else MONTHS_JA
     parts: list[str] = []
     for i, m in enumerate(months, start=1):
@@ -3085,6 +3311,11 @@ def month_head_row_v1(lang: str) -> str:
             f'<th class="pl-month-head" scope="colgroup" colspan="2" id="pl-month-head-{i}">'
             f'<span class="pl-month-head__text">{m}</span></th>'
         )
+    parts.append(
+        f'<th class="pl-month-head pl-month-head--year" scope="colgroup" colspan="2" '
+        f'id="pl-month-head-year">'
+        f'<span class="pl-month-head__text">{L["year_total_head"]}</span></th>'
+    )
     return "".join(parts)
 
 
@@ -3101,6 +3332,12 @@ def month_subhead_row_v1(lang: str) -> str:
             f'<th class="pl-sub-ratio" scope="col" id="pl-sub-ratio-{i}">'
             f'<span class="pl-sub-ratio__text">{ratio}</span></th>'
         )
+    parts.append(
+        f'<th class="pl-sub-amt pl-sub-amt--year" scope="col" id="pl-sub-amt-year">'
+        f'<span class="pl-sub-amt__text">{amt}</span></th>'
+        f'<th class="pl-sub-ratio pl-sub-ratio--year" scope="col" id="pl-sub-ratio-year">'
+        f'<span class="pl-sub-ratio__text">{ratio}</span></th>'
+    )
     return "".join(parts)
 
 
@@ -3124,6 +3361,11 @@ def bizdays_data_row_v1(lang: str) -> str:
             f'data-pl-bizdays-month="{mi}">'
             f'<span class="pl-span-cell__text"></span></td>'
         )
+    cells.append(
+        '<td class="pl-span-cell pl-bizdays-val pl-bizdays-val--year" colspan="2" '
+        'data-pl-bizdays-month="year">'
+        '<span class="pl-span-cell__text"></span></td>'
+    )
     cells.append("</tr>")
     return "".join(cells)
 
@@ -3240,6 +3482,8 @@ def render_page(lang: str, lang_switch: str) -> str:
     income_data_rows = income_data_rows_v1(lang)
     expenses_label_rows = expenses_label_rows_v1(lang)
     expenses_data_rows = expenses_data_rows_v1(lang)
+    ref_budget_label_row = reference_budget_label_row_v1(lang)
+    ref_budget_data_row = reference_budget_data_row_v1(lang)
     analyze_only_label_rows = analyze_label_rows_v1(lang)
     analyze_only_data_rows = analyze_data_rows_v1(lang)
     profit_label_row = profit_label_row_v1(lang)
@@ -3291,7 +3535,11 @@ def render_page(lang: str, lang_switch: str) -> str:
         expense_attr_edit_toggle_aria=L["expense_attr_edit_toggle_aria"],
         expense_attr_edit_on=L["expense_attr_edit_on"],
         expense_attr_edit_off=L["expense_attr_edit_off"],
+        variable_mid_edit_tip=L["variable_mid_edit_tip"],
         schema_version=CATALOG_SCHEMA_VERSION,
+        occupancy_aria=L["occupancy_aria"],
+        occupancy_rent_option=L["occupancy_rent"],
+        occupancy_owned_option=L["occupancy_owned"],
     )
     graph_months_json = json.dumps(
         MONTHS_EN if lang == "en" else MONTHS_JA, ensure_ascii=False
@@ -3309,6 +3557,8 @@ def render_page(lang: str, lang_switch: str) -> str:
     )
     graph_band = L["graph_band"]
     input_source_modal_html = pl_input_source_modal_html(L)
+    label_edit_modal_html = pl_expense_label_edit_modal_html(L)
+    adj_modal_html = pl_expense_adj_modal_html(L)
     expense_attribute_modal_html = pl_expense_attribute_modal_html(L, lang)
     hide_line_modal_html = pl_hide_line_modal_html(L)
     line_manage_modal_html = pl_line_manage_modal_html(L)
@@ -4378,6 +4628,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       /* ビューポート高固定 + 内側 zoom。Business Days 下のみ縦スクロール */
       --pl-viewport-h: calc(100vh - 132px);
       --pl-zoom-factor: 1;
+      --pl-scrollbar-w: 8px;
       width: 100%;
       max-width: none;
       margin: 0;
@@ -4401,16 +4652,21 @@ def render_page(lang: str, lang_switch: str) -> str:
     }}
     .pl-table-frozen {{
       flex: 0 0 auto;
+      position: relative;
       z-index: 10;
       background: #1f1e1e;
+      /* 下の縦スクロールバー幅分を確保し、月列の縦線を揃える */
+      padding-right: var(--pl-scrollbar-w, 8px);
+      box-sizing: border-box;
     }}
     .pl-table-scroll-y {{
       flex: 1 1 auto;
       min-height: 0;
-      overflow-y: auto;
+      overflow-y: scroll;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       background: #1f1e1e;
+      scrollbar-gutter: stable;
       /* Business Days より下 — 縦ラベル用に行高を拡張（固定ペインは 30px のまま） */
       --pl-row-label-h: 40px;
       --pl-analyze-band-h: 40px;
@@ -4823,6 +5079,35 @@ def render_page(lang: str, lang_switch: str) -> str:
       justify-content: flex-end;
       gap: 4px;
     }}
+    .pl-table--v1 .pl-occupancy-select-wrap {{
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      max-width: 72px;
+    }}
+    .pl-table--v1 .pl-occupancy-select {{
+      width: 100%;
+      max-width: 72px;
+      height: 22px;
+      margin: 0;
+      padding: 0 2px;
+      border: 1px solid rgba(88, 225, 243, 0.55);
+      border-radius: 2px;
+      background: rgba(8, 18, 22, 0.95);
+      color: #58e1f3;
+      font-family: inherit;
+      font-size: 11px;
+      line-height: 1.2;
+      cursor: pointer;
+    }}
+    html[lang='ja'] .pl-table--v1 .pl-occupancy-select {{
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    body.office-mode .pl-table--v1 .pl-occupancy-select {{
+      border-color: #94a3b8;
+      background: #fff;
+      color: #0f172a;
+    }}
     .pl-table--v1 .pl-row-order {{
       display: inline-flex;
       flex-direction: column;
@@ -5175,10 +5460,110 @@ def render_page(lang: str, lang_switch: str) -> str:
       color: #111;
     }}
     body.pl-input-source-modal-open,
-    body.pl-expense-attribute-modal-open {{
+    body.pl-expense-attribute-modal-open,
+    body.pl-expense-label-edit-modal-open {{
       overflow: hidden;
     }}
-      overflow: hidden;
+    .pl-expense-label-edit-modal__field {{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 0 0 16px;
+    }}
+    .pl-expense-label-edit-modal__field-label {{
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(88, 225, 243, 0.88);
+    }}
+    .pl-expense-label-edit-modal__input {{
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #e8fbff;
+      font-size: 14px;
+      line-height: 1.3;
+    }}
+    .pl-expense-label-edit-modal__input:focus {{
+      outline: 2px solid rgba(88, 225, 243, 0.55);
+      outline-offset: 1px;
+    }}
+    body.office-mode .pl-expense-label-edit-modal__field-label {{
+      color: #444;
+    }}
+    body.office-mode .pl-expense-label-edit-modal__input {{
+      border-color: #999;
+      background: #fff;
+      color: #111;
+      font-family: 'BIZ UDP Gothic', sans-serif;
+    }}
+    .pl-expense-adj-modal__hint {{
+      margin: 0 0 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(210, 245, 255, 0.78);
+    }}
+    .pl-expense-adj-modal__rows {{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0 0 16px;
+    }}
+    .pl-expense-adj-modal__row {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }}
+    .pl-expense-adj-modal__label {{
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(88, 225, 243, 0.88);
+      flex: 0 0 auto;
+    }}
+    .pl-expense-adj-modal__value {{
+      font-size: 14px;
+      color: #e8fbff;
+      text-align: right;
+    }}
+    .pl-expense-adj-modal__row--result .pl-expense-adj-modal__value {{
+      font-weight: 700;
+      color: #58e1f3;
+    }}
+    .pl-expense-adj-modal__input {{
+      width: 140px;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #e8fbff;
+      font-size: 14px;
+      text-align: right;
+    }}
+    .pl-expense-adj-modal__input:focus {{
+      outline: 2px solid rgba(88, 225, 243, 0.55);
+      outline-offset: 1px;
+    }}
+    body.office-mode .pl-expense-adj-modal__hint {{
+      color: #555;
+    }}
+    body.office-mode .pl-expense-adj-modal__label {{
+      color: #444;
+    }}
+    body.office-mode .pl-expense-adj-modal__value {{
+      color: #111;
+    }}
+    body.office-mode .pl-expense-adj-modal__row--result .pl-expense-adj-modal__value {{
+      color: #0a5;
+    }}
+    body.office-mode .pl-expense-adj-modal__input {{
+      border-color: #999;
+      background: #fff;
+      color: #111;
+      font-family: 'BIZ UDP Gothic', sans-serif;
     }}
     .pl-graph-block {{
       width: 100%;
@@ -5499,6 +5884,15 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-table--v1 .pl-col-ratio {{
       width: var(--pl-sub-ratio-w);
     }}
+    .pl-table--v1 .pl-month-head--year,
+    .pl-table--v1 .pl-sub-amt--year,
+    .pl-table--v1 .pl-sub-ratio--year,
+    .pl-table--v1 .pl-amt-cell--year-total,
+    .pl-table--v1 .pl-ratio-cell--year-total,
+    .pl-table--v1 .pl-month-cell--year-total,
+    .pl-table--v1 .pl-bizdays-val--year {{
+      border-left: 2px solid rgba(88, 225, 243, 0.55);
+    }}
     .pl-table--v1 th,
     .pl-table--v1 td {{
       border: none;
@@ -5659,6 +6053,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       box-sizing: border-box;
     }}
     .pl-table--v1 .pl-label-corner {{
+      position: relative;
       width: var(--pl-label-band-w);
       min-width: var(--pl-label-band-w);
       max-width: var(--pl-label-band-w);
@@ -5668,6 +6063,80 @@ def render_page(lang: str, lang_switch: str) -> str:
       padding: 0;
       vertical-align: middle;
       text-align: center;
+    }}
+    .pl-table--v1 .pl-guide-toggle {{
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(88, 225, 243, 0.45);
+      border-radius: 3px;
+      background: rgba(88, 225, 243, 0.08);
+      color: #58e1f3;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }}
+    .pl-table--v1 .pl-guide-toggle:hover {{
+      background: rgba(88, 225, 243, 0.2);
+      border-color: rgba(88, 225, 243, 0.8);
+    }}
+    .pl-table--v1 .pl-guide-toggle[aria-pressed="true"] {{
+      background: rgba(88, 225, 243, 0.85);
+      border-color: rgba(88, 225, 243, 0.95);
+      color: #0c1b1f;
+    }}
+    body.office-mode .pl-table--v1 .pl-guide-toggle {{
+      border-color: rgba(37, 99, 235, 0.5);
+      background: rgba(37, 99, 235, 0.08);
+      color: #2563eb;
+    }}
+    body.office-mode .pl-table--v1 .pl-guide-toggle[aria-pressed="true"] {{
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+    }}
+    /* 目安トグルのツールチップは body 直下の固定要素で描画（セルの overflow:hidden 回避） */
+    .pl-guide-tip-pop {{
+      position: fixed;
+      z-index: 13000;
+      max-width: min(300px, 80vw);
+      padding: 9px 11px;
+      border: 1px solid rgba(88, 225, 243, 0.85);
+      border-radius: 4px;
+      background: #102932;
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.55;
+      letter-spacing: 0.01em;
+      text-align: left;
+      white-space: normal;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+    }}
+    .pl-guide-tip-pop.is-visible {{
+      opacity: 1;
+      transform: translateY(0);
+    }}
+    html[lang='ja'] .pl-guide-tip-pop {{
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    body.office-mode .pl-guide-tip-pop {{
+      background: #ffffff;
+      border-color: #2563eb;
+      color: #1e293b;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.22);
     }}
     .pl-table--labels thead {{
       height: var(--pl-corner-h);
@@ -5843,9 +6312,91 @@ def render_page(lang: str, lang_switch: str) -> str:
     html[lang='ja'] .pl-table--v1 .pl-month-cell__text {{
       font-family: 'BIZ UDPGothic', sans-serif;
     }}
-    .pl-table--v1 .pl-data-row--total .pl-month-cell__text {{
+    .pl-table--v1 .pl-data-row--total .pl-month-cell__text,
+    .pl-table--v1 .pl-data-row--total .pl-amt-cell__text {{
       font-size: 15px;
       font-weight: 700;
+    }}
+    .pl-table--v1 .pl-amt-cell--income-store .pl-amt-cell__text,
+    .pl-table--v1 .pl-amt-cell--income-stream .pl-amt-cell__text,
+    .pl-table--v1 .pl-amt-cell--income-total .pl-amt-cell__text {{
+      cursor: default;
+    }}
+    .pl-table--v1 .pl-data-row--ref-budget > th,
+    .pl-table--v1 .pl-data-row--ref-budget > td {{
+      background: rgba(88, 225, 243, 0.06) !important;
+    }}
+    .pl-table--v1 .pl-h-label--ref-budget .pl-h-label__text {{
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(196, 246, 252, 0.88);
+      opacity: 0.92;
+    }}
+    .pl-table--v1 .pl-amt-cell--ref-budget .pl-amt-cell__text,
+    .pl-table--v1 .pl-ratio-cell--ref-budget .pl-ratio-cell__text {{
+      color: rgba(180, 235, 245, 0.82);
+      cursor: default;
+      font-size: 12px;
+    }}
+    body.office-mode .pl-table--v1 .pl-data-row--ref-budget > th,
+    body.office-mode .pl-table--v1 .pl-data-row--ref-budget > td {{
+      background: rgba(200, 230, 220, 0.28) !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-h-label--ref-budget .pl-h-label__text,
+    body.office-mode .pl-table--v1 .pl-amt-cell--ref-budget .pl-amt-cell__text,
+    body.office-mode .pl-table--v1 .pl-ratio-cell--ref-budget .pl-ratio-cell__text {{
+      color: #2a5a4a;
+    }}
+    .pl-table--v1 .pl-amt-cell--expense-detail {{
+      position: relative;
+    }}
+    /* 費目別参考予算(L2)は既定で非表示。コーナーの +/- で一括表示 */
+    body.pl-guide-on .pl-table--labels-expense-detail,
+    body.pl-guide-on .pl-table--data-expense-detail {{
+      --pl-row-label-h: 52px;
+    }}
+    .pl-table--v1 .pl-amt-cell__l2 {{
+      display: none;
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      bottom: 3px;
+      margin: 0;
+      padding: 0;
+      font-size: 9px;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: rgba(88, 225, 243, 0.72);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }}
+    body.pl-guide-on .pl-table--v1 .pl-amt-cell--has-l2 .pl-amt-cell__text {{
+      padding-bottom: 12px;
+      box-sizing: border-box;
+    }}
+    body.pl-guide-on .pl-table--v1 .pl-amt-cell--has-l2 .pl-amt-cell__l2 {{
+      display: block;
+    }}
+    html[lang='ja'] .pl-table--v1 .pl-amt-cell__l2 {{
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    body.pl-guide-on .pl-table--v1 .pl-amt-cell--over-l2 {{
+      box-shadow: inset 0 0 0 1px rgba(240, 160, 120, 0.85);
+    }}
+    body.pl-guide-on .pl-table--v1 .pl-amt-cell--over-l2 .pl-amt-cell__l2 {{
+      color: rgba(240, 176, 128, 0.95);
+    }}
+    body.office-mode .pl-table--v1 .pl-amt-cell__l2 {{
+      color: rgba(71, 85, 105, 0.9);
+    }}
+    body.office-mode.pl-guide-on .pl-table--v1 .pl-amt-cell--over-l2 {{
+      box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.7);
+    }}
+    body.office-mode.pl-guide-on .pl-table--v1 .pl-amt-cell--over-l2 .pl-amt-cell__l2 {{
+      color: #b45309;
     }}
     .pl-table--v1 .pl-amt-cell,
     .pl-table--v1 .pl-ratio-cell {{
@@ -5883,6 +6434,18 @@ def render_page(lang: str, lang_switch: str) -> str:
       letter-spacing: 0.02em;
       color: #58e1f3;
       text-align: center;
+    }}
+    .pl-table--v1 .pl-amt-cell__text[data-pl-editable="1"] {{
+      cursor: text;
+      outline: none;
+    }}
+    .pl-table--v1 .pl-amt-cell__text[data-pl-editable="1"]:focus {{
+      box-shadow: inset 0 0 0 1px rgba(88, 225, 243, 0.85);
+      background-color: #152a32;
+    }}
+    .pl-table--v1 .pl-amt-cell--pl-daily-readonly .pl-amt-cell__text {{
+      color: rgba(88, 225, 243, 0.45);
+      cursor: default;
     }}
     html[lang='ja'] .pl-table--v1 .pl-amt-cell__text {{
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -6271,6 +6834,9 @@ def render_page(lang: str, lang_switch: str) -> str:
                     <tr class="pl-head-months">
                       <th class="pl-label-corner" scope="colgroup" colspan="2" id="pl-label-corner" rowspan="2">
                         <span class="pl-label-corner__text">{corner_title}</span>
+                        <button type="button" class="pl-guide-toggle" id="pl-guide-toggle"
+                          aria-pressed="false" aria-label="{L['guide_toggle_aria']}"
+                          data-tooltip="{L['guide_toggle_tip']}">+</button>
                       </th>
                     </tr>
                     <tr class="pl-head-sub pl-head-sub--label-gap" aria-hidden="true"></tr>
@@ -6306,6 +6872,7 @@ def render_page(lang: str, lang_switch: str) -> str:
                   <tbody id="pl-table-label-body">
                     {income_label_rows}
                     {expenses_label_rows}
+                    {ref_budget_label_row}
                   </tbody>
                 </table>
               </div>
@@ -6315,6 +6882,7 @@ def render_page(lang: str, lang_switch: str) -> str:
                   <tbody id="pl-table-body">
                     {income_data_rows}
                     {expenses_data_rows}
+                    {ref_budget_data_row}
                   </tbody>
                 </table>
               </div>
@@ -6406,6 +6974,8 @@ def render_page(lang: str, lang_switch: str) -> str:
     </main>
   </div>
 {input_source_modal_html}
+{label_edit_modal_html}
+{adj_modal_html}
 {expense_attribute_modal_html}
 {hide_line_modal_html}
 {line_manage_modal_html}
@@ -6644,6 +7214,78 @@ def render_page(lang: str, lang_switch: str) -> str:
       }}
       window.addEventListener('pl-expense-detail-rendered', syncPlSplitLayout);
       window.addEventListener('pl-graph-rendered', syncPlSplitLayout);
+
+      /* 費目別参考予算(L2)の +/- トグル: 一括表示・行高の拡張/縮小 */
+      var PL_GUIDE_KEY = 'kpiNavigator.plGuideOn';
+      var plGuideToggle = document.getElementById('pl-guide-toggle');
+      var plGuideTipShow = {json.dumps(L["guide_toggle_tip"], ensure_ascii=False)};
+      var plGuideTipHide = {json.dumps(L["guide_toggle_tip_on"], ensure_ascii=False)};
+      function plGuideIsOn() {{
+        try {{ return localStorage.getItem(PL_GUIDE_KEY) === '1'; }} catch (_e) {{ return false; }}
+      }}
+
+      /* body 直下の固定ツールチップ（セルの overflow:hidden に切られない） */
+      var plGuideTipEl = null;
+      function plGuideTipText() {{
+        return plGuideIsOn() ? plGuideTipHide : plGuideTipShow;
+      }}
+      function showPlGuideTip() {{
+        if (!plGuideToggle) return;
+        if (!plGuideTipEl) {{
+          plGuideTipEl = document.createElement('div');
+          plGuideTipEl.className = 'pl-guide-tip-pop';
+          plGuideTipEl.setAttribute('role', 'tooltip');
+          document.body.appendChild(plGuideTipEl);
+        }}
+        plGuideTipEl.textContent = plGuideTipText();
+        plGuideTipEl.style.visibility = 'hidden';
+        plGuideTipEl.classList.add('is-visible');
+        var r = plGuideToggle.getBoundingClientRect();
+        var tw = plGuideTipEl.offsetWidth;
+        var th = plGuideTipEl.offsetHeight;
+        var vw = document.documentElement.clientWidth;
+        var vh = document.documentElement.clientHeight;
+        var left = r.left + r.width / 2 - tw / 2;
+        left = Math.max(8, Math.min(left, vw - tw - 8));
+        var top = r.bottom + 8;
+        if (top + th > vh - 8) top = r.top - th - 8;
+        plGuideTipEl.style.left = Math.round(left) + 'px';
+        plGuideTipEl.style.top = Math.round(top) + 'px';
+        plGuideTipEl.style.visibility = 'visible';
+      }}
+      function hidePlGuideTip() {{
+        if (plGuideTipEl) plGuideTipEl.classList.remove('is-visible');
+      }}
+
+      function applyPlGuideState(on) {{
+        document.body.classList.toggle('pl-guide-on', !!on);
+        if (plGuideToggle) {{
+          plGuideToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+          plGuideToggle.textContent = on ? '\u2212' : '+';
+          plGuideToggle.setAttribute('data-tooltip', on ? plGuideTipHide : plGuideTipShow);
+        }}
+        if (plGuideTipEl && plGuideTipEl.classList.contains('is-visible')) {{
+          plGuideTipEl.textContent = plGuideTipText();
+        }}
+        if (typeof window.__plRefreshReferenceBudget === 'function') {{
+          window.__plRefreshReferenceBudget();
+        }}
+        syncPlSplitLayout();
+      }}
+      if (plGuideToggle) {{
+        plGuideToggle.addEventListener('click', function () {{
+          var next = !plGuideIsOn();
+          try {{ localStorage.setItem(PL_GUIDE_KEY, next ? '1' : '0'); }} catch (_e) {{}}
+          applyPlGuideState(next);
+          showPlGuideTip();
+        }});
+        plGuideToggle.addEventListener('mouseenter', showPlGuideTip);
+        plGuideToggle.addEventListener('mouseleave', hidePlGuideTip);
+        plGuideToggle.addEventListener('focus', showPlGuideTip);
+        plGuideToggle.addEventListener('blur', hidePlGuideTip);
+        window.addEventListener('scroll', hidePlGuideTip, true);
+      }}
+      applyPlGuideState(plGuideIsOn());
 
       var zoom = document.getElementById('pl-table-zoom');
       var zoomMinus = document.getElementById('pl-table-zoom-minus');
@@ -6914,6 +7556,88 @@ def render_page(lang: str, lang_switch: str) -> str:
         }} catch (_e) {{}}
       }}
 
+      function isFixedExpenseEditableCell(cell) {{
+        var tr = cell.closest && cell.closest('tr[data-pl-section="expense-detail"]');
+        return !!(tr && tr.getAttribute('data-bucket') === 'fixed');
+      }}
+
+      function applyAmountToAllMonthsForRow(rowId, amount) {{
+        document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]').forEach(function (c) {{
+          c.textContent = formatMoney(amount);
+        }});
+        markTouched();
+      }}
+
+      function maybePropagateFixedMonthly(sourceCell, amount) {{
+        if (!isFixedExpenseEditableCell(sourceCell)) return;
+        if (amount === 0) return;
+        var rowId = sourceCell.getAttribute('data-row');
+        var month = sourceCell.getAttribute('data-month');
+        var cells = Array.prototype.slice.call(
+          document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]')
+        );
+        if (!cells.length) return;
+        var allSame = cells.every(function (c) {{
+          return parseMoney(c.textContent) === amount;
+        }});
+        if (allSame) return;
+        var othersEmpty = cells.every(function (c) {{
+          if (c.getAttribute('data-month') === month) return true;
+          return parseMoney(c.textContent) === 0;
+        }});
+        if (othersEmpty) {{
+          pushUndoSnapshot();
+          applyAmountToAllMonthsForRow(rowId, amount);
+          return;
+        }}
+        var msg = t(
+          'この固定費を全ての月に同じ金額で反映しますか？',
+          'Apply this fixed cost amount to all months?'
+        );
+        if (window.confirm(msg)) {{
+          pushUndoSnapshot();
+          applyAmountToAllMonthsForRow(rowId, amount);
+        }}
+      }}
+
+      function bindPlEditableCells() {{
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
+          if (cell.getAttribute('data-pl-bound') === '1') return;
+          cell.setAttribute('data-pl-bound', '1');
+          cell.addEventListener('focus', function () {{
+            pushUndoSnapshot();
+            markTouched();
+          }});
+          cell.addEventListener('input', function () {{
+            markTouched();
+          }});
+          cell.addEventListener('blur', function () {{
+            var n = parseMoney(cell.textContent);
+            cell.textContent = formatMoney(n);
+            maybePropagateFixedMonthly(cell, n);
+            if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+            if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+          }});
+        }});
+      }}
+
+      function refreshPlExpenseAmountsFromStorage() {{
+        loadSavedExpenses();
+        bindPlEditableCells();
+        applyColumnFocus();
+        if (!plTouched) {{
+          confirmedSnapshot = buildSnapshot();
+          plSaved = true;
+        }}
+        syncUndoButton();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+      }}
+
+      window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
+
       function plSave(showAlert) {{
         var map = {{}};
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
@@ -6927,6 +7651,17 @@ def render_page(lang: str, lang_switch: str) -> str:
         plSaved = true;
         undoStack = [];
         syncUndoButton();
+        try {{
+          if (typeof writeMonthlyExpenseAllocationToMep === 'function') {{
+            var mepResult = writeMonthlyExpenseAllocationToMep({{ year: plYear }});
+            console.debug('[PL Phase C] monthly→MEP dailyExpenses write', mepResult);
+          }} else if (typeof previewMonthlyExpenseAllocation === 'function') {{
+            console.debug(
+              '[PL Phase B] monthly→bizDay allocation preview (no MEP write)',
+              previewMonthlyExpenseAllocation({{ year: plYear }})
+            );
+          }}
+        }} catch (_mepErr) {{}}
         if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
       }}
 
@@ -7003,18 +7738,37 @@ def render_page(lang: str, lang_switch: str) -> str:
         syncUndoButton();
       }}
 
-      document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
-        cell.addEventListener('focus', function () {{
-          pushUndoSnapshot();
-          markTouched();
-        }});
-        cell.addEventListener('input', function () {{
-          markTouched();
-        }});
-        cell.addEventListener('blur', function () {{
-          var n = parseMoney(cell.textContent);
-          cell.textContent = formatMoney(n);
-        }});
+      bindPlEditableCells();
+      window.addEventListener('pl-expense-detail-rendered', function () {{
+        refreshPlExpenseAmountsFromStorage();
+        if (typeof fillDailyExpenseRowsFromMep === 'function') {{
+          fillDailyExpenseRowsFromMep();
+        }}
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+      }});
+      document.addEventListener('kpi:mepDataChanged', function (ev) {{
+        var evYear = ev && ev.detail && Number(ev.detail.year);
+        if (Number.isFinite(evYear) && evYear !== plYear) return;
+        if (typeof fillDailyExpenseRowsFromMep === 'function') {{
+          fillDailyExpenseRowsFromMep();
+        }}
+        if (typeof refreshIncomeBlock === 'function') {{
+          refreshIncomeBlock();
+        }}
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+      }});
+      document.addEventListener('kpi:dailySalesChanged', function () {{
+        syncPlBusinessDays();
+        if (typeof refreshIncomeBlock === 'function') {{
+          refreshIncomeBlock();
+        }}
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
       }});
 
       if (btnUndo) {{
@@ -7207,23 +7961,79 @@ def render_page(lang: str, lang_switch: str) -> str:
         return count;
       }}
 
+      var PL_YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
+
+      /** 営業日/日次売上の真実源（Annual・MEP・Insight と同一の kpiYearStore）。 */
+      function plReadYearStore() {{
+        try {{
+          return window.__KPI_DATA_GATEWAY.getJson(PL_YEAR_STORE_KEY) || null;
+        }} catch (_e) {{
+          return null;
+        }}
+      }}
+
+      /**
+       * Annual/Insight/MEP と同一の営業日判定。
+       * 優先順位: timeline.businessDays[iso] 明示 → dailySales[iso]===0 は休業
+       *           → 上記なしは土日を既定休（平日は既定営業）。
+       */
+      function plIsCalendarBizDay(store, y, m0, day) {{
+        var d = new Date(y, m0, day);
+        if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
+        var dow = d.getDay();
+        var isWeekend = dow === 0 || dow === 6;
+        var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+        var tl = (store && store.timeline) || {{}};
+        var bmap = tl.businessDays || {{}};
+        var smap = tl.dailySales || {{}};
+        if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        if (Object.prototype.hasOwnProperty.call(smap, iso)) {{
+          var n = Number(smap[iso]);
+          if (!Number.isFinite(n)) return !isWeekend;
+          if (n === 0) return false;
+          return true;
+        }}
+        return !isWeekend;
+      }}
+
+      function countBizDaysInMonthStore(store, year, month0) {{
+        var daysInMonth = new Date(year, month0 + 1, 0).getDate();
+        var count = 0;
+        for (var day = 1; day <= daysInMonth; day++) {{
+          if (plIsCalendarBizDay(store, year, month0, day)) count++;
+        }}
+        return count;
+      }}
+
       function syncPlBusinessDays() {{
-        var maps = loadAnnualDailyMaps();
-        var bmap = maps.businessDayByDate;
-        var tmap = maps.targetSalesByDate;
+        var store = plReadYearStore();
         document.querySelectorAll('[data-pl-bizdays-month]').forEach(function (cell) {{
           var mi = Number(cell.getAttribute('data-pl-bizdays-month'));
           if (!Number.isFinite(mi) || mi < 0 || mi > 11) return;
           var span = cell.querySelector('.pl-span-cell__text, .pl-amt-cell__text');
           if (!span) return;
-          span.textContent = String(countBizDaysInMonth(plYear, mi, bmap, tmap));
+          span.textContent = String(countBizDaysInMonthStore(store, plYear, mi));
         }});
       }}
 
+{pl_monthly_allocate_client_js()}
+{pl_income_client_js()}
+{pl_ratio_client_js()}
+{pl_reference_budget_client_js()}
+{pl_year_total_client_js()}
+
       window.addEventListener('storage', function (ev) {{
-        if (ev.key === ANNUAL_DAILY_KEY) syncPlBusinessDays();
+        if (ev.key === ANNUAL_DAILY_KEY || ev.key === PL_YEAR_STORE_KEY) {{
+          syncPlBusinessDays();
+        }}
       }});
       document.addEventListener('annual:businessDayMapChanged', function () {{
+        syncPlBusinessDays();
+      }});
+      document.addEventListener('kpi:businessDayChanged', function () {{
+        syncPlBusinessDays();
+      }});
+      document.addEventListener('kpi:readSurfacesRefresh', function () {{
         syncPlBusinessDays();
       }});
 
@@ -7232,10 +8042,22 @@ def render_page(lang: str, lang_switch: str) -> str:
       syncPlBusinessDays();
       var cornerYear = document.getElementById('pl-corner-year');
       if (cornerYear) cornerYear.textContent = String(plYear);
-      loadSavedExpenses();
-      confirmedSnapshot = buildSnapshot();
-      plTouched = false;
-      plSaved = false;
+      refreshPlExpenseAmountsFromStorage();
+      if (typeof fillDailyExpenseRowsFromMep === 'function') {{
+        fillDailyExpenseRowsFromMep();
+      }}
+      if (typeof refreshIncomeBlock === 'function') {{
+        refreshIncomeBlock();
+      }}
+      if (typeof refreshPlRatios === 'function') {{
+        refreshPlRatios();
+      }}
+      if (typeof refreshPlYearTotals === 'function') {{
+        refreshPlYearTotals();
+      }}
+      if (typeof refreshPlReferenceBudget === 'function') {{
+        refreshPlReferenceBudget();
+      }}
       applyColumnFocus();
       var insightBtnInit = document.getElementById('global-nav-index-btn');
       if (insightBtnInit) {{

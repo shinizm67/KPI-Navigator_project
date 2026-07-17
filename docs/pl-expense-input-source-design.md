@@ -16,6 +16,81 @@
 
 ---
 
+## 実装状況（2026-07 時点）— Phase A〜D 実装済み
+
+本ドキュメントの「入力元分離」は **実装済み**（PL 表 `app/profit/pl/`）。要点:
+
+| フェーズ | 内容 | 実装場所 |
+|----------|------|----------|
+| **A** | PL 表で **monthly 行のセルを編集可**（`contenteditable` + `data-pl-editable`）。daily 行は読み取り専用（`—`）。固定費は 1 月入力で **全月一括反映**（他月が空なら無確認、差異があれば確認ダイアログ、Undo 対応） | `pl_expense_detail_client.py` / `build_pl_table_page.py` |
+| **B** | monthly の月次額を **営業日数で日割り**プレビュー（MEP 非書込。端数は当月最終営業日に寄せる） | `pl_monthly_allocate_client.py`（`previewMonthlyExpenseAllocation`） |
+| **C** | monthly 行の日割り額を **MEP `dailyExpenses` に書込**（`kpiNavigator.kpiYearStore`）。当月・当行の既存分をクリアしてから再配分。daily 行は不変。`kpi:mepDataChanged` 発火 | `pl_monthly_allocate_client.py`（`writeMonthlyExpenseAllocationToMep`） |
+| **D** | daily 行に **MEP 日次入力の月次合計を読取表示**（編集不可・`title` ツールチップで入力先を明示）。初回描画・`pl-expense-detail-rendered`・`kpi:mepDataChanged` で更新 | `pl_monthly_allocate_client.py`（`fillDailyExpenseRowsFromMep`） |
+
+### 入力元の選択（実装の要点）
+
+- **変動費（Expected）**: 行ごとに **日次（Monthly Edit）/ 月次（PL）を選択可**。追加時およびラベル **ダブルクリック / F2** で **統合モーダル**（科目名＋入力元）を開く。`inputStyle` / `resolvedInputStyle` を更新。
+  - **デフォルト方針（2026-07-17）**: **FL 近傍のみ daily**（食材仕入れ費 / ドリンク仕入れ費 / アルバイト人件費）。光熱・通信・備品・雑費などは **monthly**。いずれもユーザーが切替可能。
+- **固定費（Fixed）**: **月次固定**。統合モーダルでは科目名のみ（入力元ラジオ非表示）。
+- **UX 方針（2026-07-16）**: 各行トグル不採用。ラベル編集と入力元選択を1ポップアップに統合。Don't ask again なし（毎回表示）。
+- データフローは選択された入力元で一方向:
+  - **monthly 行** → PL 入力 → 営業日割り → MEP `dailyExpenses`（C）
+  - **daily 行** → MEP 日次入力 → PL 月次合計を読取表示（D）
+- **二重入力ガード**: monthly 行は PL のセルのみ編集可、daily 行は PL 側読み取り専用（ツールチップ「MEP（月次編集）で日次入力」/ "Enter daily on Monthly Edit"）。
+
+### ストレージキー
+
+| キー | 用途 |
+|------|------|
+| `kpiNavigator.plLineCatalog` | 科目カタログ（`lineId`・ラベル・bucket・`inputStyle`/`resolvedInputStyle`・`active`） |
+| `kpi-pl-expenses-v1:{year}` | PL 月次入力額（monthly 行）。キーは `lineId:month0` |
+| `kpiNavigator.kpiYearStore` | MEP 日次データ。`years.{Y}.dailyExpenses[lineId][ISO]` |
+
+### 検証スクリプト
+
+- `verify_pl_monthly_expense_edit.py`（A） / `verify_pl_fixed_fill_all_months.py`（固定費一括）
+- `verify_pl_monthly_expense_allocate.py`（B） / `verify_pl_monthly_expense_to_mep.py`（C）
+- `verify_pl_daily_expense_from_mep.py`（D）
+
+> 未実装/将来: 入力可能セル色の Daily/Monthly 意匠差別化、Adjustment の 3 行分割 UI。以下の設計節は引き続き将来指針として保持する。
+
+> **修正（2026-07-16）**: カタログ照合（`reconcileCatalogLines`）がデフォルト行の `inputStyle` を捨ててテンプレ値に戻していた不具合を修正。ラベル操作で選んだ記述先が保存・再描画後も維持される。
+
+> **追加（2026-07-16）**: 入力元切替時の旧データ整理を実装。`daily → monthly` で `dailyExpenses[lineId]` を削除、`monthly → daily` で `kpi-pl-expenses-v1` の当該行キーを削除（同スタイル再設定では保持）。検証 `verify_pl_input_style_cleanup.py`。
+
+> **追加（2026-07-17）**: 行ラベル横の `DAILY` / `MONTHLY` バッジを廃止。入力可否はセル色（緑／黒）のみで示す。入力先の切替 UI は統合モーダルに残す。
+
+> **追加（2026-07-17）**: 入力元デフォルトを FL 方針で確定（schema v7）。食材・ドリンク・アルバイト = daily／その他変動費・固定費 = monthly。旧デフォルトのままの行は schema 移行で更新。検証 `verify_pl_catalog_input_defaults.py`。
+
+---
+
+## 入力元の選び方（採用 UX — 統合モーダル）
+
+**2026-07-16 再合意:** 各行トグルは不採用。  
+**2026-07-16 さらに:** インラインラベル編集→別モーダルの2段は発見性が弱いため、**ラベル編集＋入力元を1枚のポップアップに統合**。Don't ask again は**この操作では不要**（毎回出す）。
+
+> 「売上入力パス」（Annual ↔ Monthly）とは別物。あちらは日次**売上**の入力経路。本節は支出科目ごとの **Daily(MEP) ↔ Monthly(PL)**。
+
+### 操作（正）
+
+| タイミング | 操作 | 内容 |
+|------------|------|------|
+| **変動費の行追加（＋）** | 属性モーダル → **統合モーダル** | 科目名＋入力元（Daily / Monthly）を同じ画面で設定 |
+| **既存行の編集・再選択** | ラベルを **ダブルクリック / F2** | 同上の統合モーダル（名前だけ／入力元だけの変更も可） |
+| **固定費** | 同上 | 科目名のみ（入力元ラジオは非表示・月次固定） |
+
+- モーダル ID: `pl-expense-label-edit-modal`（Don't ask again なし）
+- 切替は `inputStyle` / `resolvedInputStyle` 更新 → 再描画で緑/黒が入替
+- 旧データは切替時に**消さず保持**（掃除は別タスク）
+
+### 不採用（記録）
+
+- ~~変動費の該当行にインライン・ピル型トグル~~
+- ~~インライン contentEditable ラベル編集のあと、別モーダルで入力元だけ聞く2段UX~~
+- ~~統合モーダル内の Don't ask again~~（毎回出す前提）
+
+---
+
 ## 要旨
 
 **支出項目ごとに「入力元」を固定する。**  
@@ -25,7 +100,7 @@
 
 1. 項目ごとに **日次集計型** か **月次直接入力型** のどちらかを選ぶ
 2. 日次集計と請求書のズレは **上書きではなく調整額** で吸収する
-3. UI 上で **入力元を明示** する（`DAILY` / `MONTHLY` バッジやアイコン）
+3. UI 上で **入力元を明示** する（**緑＝編集可／黒＝閲覧** が主。行バッジは廃止。詳細は科目編集モーダル）
 
 ---
 
@@ -154,7 +229,9 @@ PL 項目ごとに以下を持つ。
 |------|----------------|
 | Food Cost | Daily Aggregate + Adjustment |
 | Drink Cost | Daily Aggregate + Adjustment |
+| Variable Labor | Daily Aggregate + Adjustment |
 | Electricity | Monthly Manual |
+| Supplies / Misc | Monthly Manual |
 | Rent | Monthly Manual |
 | Employment Insurance | Monthly Manual |
 
@@ -162,30 +239,21 @@ PL 項目ごとに以下を持つ。
 
 ## UI — 入力元の可視化
 
-PL 表の **項目名の横** に小さく表示する。
+**採用（2026-07-17）**: 行ごとの `DAILY` / `MONTHLY` バッジは **出さない**。
 
-```
-Food Cost          DAILY
-Electricity        MONTHLY
-Insurance          MONTHLY
-Drink Cost         DAILY
-```
+| 信号 | 意味 |
+|------|------|
+| **緑行** | この画面（PL）で編集可 = Monthly 入力 |
+| **黒行** | 閲覧のみ（日次は MEP。調整額はダブルクリック / F2） |
+| **科目編集モーダル** | 変動費の入力先（Daily / Monthly）を選ぶ場所 |
 
-またはアイコン:
-
-| アイコン | 意味 |
-|----------|------|
-| カレンダー | 日次集計 |
-| 請求書 | 月次入力 |
-| 調整 | 月次調整あり |
-
-「この数字はどこから来たか」が一目で分かるようにする。
+旧案の常時バッジ／アイコンは情報過多になりやすいため不採用（緑／黒で足りる）。
 
 ---
 
 ## UI — 入力可能セルの色分け（必須 UX）
 
-**「ここにしか入力できない」** を色で示す。バッジだけでは不十分で、**セル自体の見た目**で区別する。
+**「ここにしか入力できない」** を色で示す。行バッジは使わず、**セル／行自体の見た目**で区別する。
 
 ### 原則
 
@@ -319,7 +387,7 @@ ChatGPT メモ・ユーザー合意:
 
 ---
 
-## ユーザー追加科目と入力元の確認 UI（提案・未実装）
+## ユーザー追加科目と入力元の確認 UI（実装済み — § 実装状況 参照）
 
 **背景**: テンプレにない費目をユーザーが PL 表で追加するケースを想定する。追加した行は **Monthly Edit にも自動反映**し、**表示順（`sortOrder`）も PL と一致**させる。
 
@@ -330,38 +398,30 @@ ChatGPT メモ・ユーザー合意:
 | **支出明細** | PL で行追加 → Monthly Edit（Fixed / Expected）へ同期。**どちらで数値入力するか**をユーザーに選ばせる |
 | **収入** | 日次入力が前提。どこから入力しても PL に反映するだけ（詳細は別途精査） |
 
-### 新規行ラベル確定時のポップアップ（案）
+### 新規行・ラベル編集の統合ポップアップ（正）
 
-PL 表で **＋** により行を追加し、ラベル名を入力して **Enter で確定**したタイミングで、モーダルを表示する。
+PL 表で **＋** により行を追加したあと、または既存ラベルを **ダブルクリック / F2** したとき、**1枚のモーダル**（`pl-expense-label-edit-modal`）を表示する。
 
-**文言例（EN）**
-
-> Where will you enter amounts for this item?  
-> ☐ Monthly Edit (daily entries)  
-> ☐ Profit & Loss (monthly)  
-> ☐ Don't ask again  
-
-**文言例（JA）**
-
-> この科目の数値はどこで入力しますか？  
-> ☐ Monthly Edit（日次入力）  
-> ☐ PL表（月次入力）  
-> ☐ 今後この確認を表示しない  
+| 要素 | 変動費 | 固定費 |
+|------|--------|--------|
+| 科目名 | ○ | ○ |
+| 入力元（Daily / Monthly） | ○ | 非表示（月次固定） |
+| Don't ask again | **なし**（毎回表示） | **なし** |
 
 | ルール | 内容 |
 |--------|------|
-| **「今後表示しない」** | 同一 `lineId` について、次回以降は自動で前回選択を適用 |
-| **ラベル名変更後** | **再度ポップアップを表示** — 別科目として入力元を選び直せるようにする（永久に Monthly / PL のどちらかにロックされない） |
-| **ストア** | `lineId` ごとに `inputMethod`（`daily-aggregate` / `monthly-manual` 等）を保持 |
+| **名前だけ変更** | 入力元ラジオはそのままで決定すればよい |
+| **入力元だけ変更** | 科目名はそのままでラジオだけ変えて決定 |
+| **ストア** | `lineId` ごとに `inputStyle` / `resolvedInputStyle` を保持 |
 
-### 同期の原則（案）
+### 同期の原則
 
 1. PL 表が **科目マスタの正**（`lineId`・ラベル・Fixed/Expected・順序）
 2. Monthly Edit は PL カタログから **支出明細のみ**読み込み（収入は別ルール）
 3. 入力元が Daily の行 → Monthly で日次入力、PL は集計表示（編集不可）
 4. 入力元が Monthly の行 → PL で月次直接入力、Monthly Edit には数値行を出さない（またはグレーアウト）
 
-> **ステータス**: 上記は ChatGPT / ユーザー間の作戦メモ。**収入・支出の細部は精査後に確定**し、データ組み込みフェーズ（フェーズ B）で実装する。
+> **ステータス**: 統合モーダルによる支出明細の入力元選択は **実装済み**（§ 入力元の選び方）。収入側の細部は引き続き精査。
 
 ---
 
@@ -369,11 +429,12 @@ PL 表で **＋** により行を追加し、ラベル名を入力して **Enter
 
 **データ組み込みフェーズ開始時に Tars が本節を起点に確定・実装する。**
 
-- [ ] **科目ごとの Input Method 一覧**（Daily / Monthly / Daily+Adjustment）— 飲食店 `fnb` デフォルトテンプレから起案
-- [ ] 科目マスタ UI（**ダブルクリック / F2** ラベル編集）と `Input Method` の変更権限（店舗管理者のみ？）
-- [ ] **入力可能セルの色** — Sci-Fi / Office パレット、Daily vs Monthly の判別
+- [x] **科目ごとの Input Method 一覧**（Daily / Monthly）— `fnb` デフォルトは `pl_line_catalog.py`（schema v7）。**FL 近傍のみ daily**、他は monthly。固定費は monthly 固定、変動費は行ごとに選択可
+- [x] 科目マスタ UI（**ダブルクリック / F2** → 統合モーダル）と入力元選択
+- [x] Monthly Edit の行表示 — PL で monthly の項目は MEP 側非活性（daily 行のみ MEP 入力）
+- [x] **ユーザー追加科目の入力元確認** — 統合モーダルに統合
+- [ ] **入力可能セルの色** — Sci-Fi / Office パレット、Daily vs Monthly の判別（monthly 編集可セルは色分け済、Daily/Monthly の意匠差別化は残）
+- [x] **`Daily Aggregate + Adjustment`（最小版・2026-07-16）** — モーダルで調整額。3 行構成 UI は将来
+- [x] **入力元切替時の旧データ整理** — monthly↔daily 切替で使わなくなる側を掃除（調整額も daily→monthly 時に削除）
 - [ ] 既存 `kpi-pl-expenses-v1` ストアとのマイグレーション
-- [ ] Monthly Edit の行表示 — PL で `Monthly Manual` の項目は **非表示 or グレーアウト**
-- [ ] 調整額行の PL 表示（3 行構成か、ツールチップか）
 - [ ] Basic / Pro で日次 FL 系 KPI の出し分け
-- [ ] **ユーザー追加科目の入力元確認ポップアップ** — 本ドキュメント § ユーザー追加科目と入力元の確認 UI

@@ -200,3 +200,4 @@ SVG `viewBox="0 0 965 618"` を推奨。折れ線は JS で `<path>` をこの�
 - 横棒（累計目標 vs 累計実績）: 同一 Monthly Graph セクション内の `insight-graph-monthly__row--cumulative`
 - 黄マーカー寸法: `docs/insight-yellow-sales-marker-width-checklist.md`
 - Monthly Analyze グリッド: `docs/insight-monthly-analyze-grid-rules.md`
+- Graph Annual 復旧〜巨大空白の経緯・再発防止: `docs/insight-graph-annual-height-ghost-postmortem.md`

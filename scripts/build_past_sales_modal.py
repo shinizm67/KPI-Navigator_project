@@ -166,11 +166,50 @@ COCKPIT_CSS = """
     .monthly-access-btn--current-sales:focus-visible .monthly-access-btn__label {
       text-shadow: 0 0 8px rgba(88, 225, 243, 0.45);
     }
-    .office-mode .monthly-access-btn--past-sales {
-      color: #0a2a5c;
+    .office-mode .monthly-access-btn {
+      width: auto;
+      min-width: 112px;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid #000;
+      border-radius: 5px;
+      background: #e8e8e8;
+      color: #000;
+      font-family: 'BIZ UDPGothic', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+      box-sizing: border-box;
     }
-    .office-mode .monthly-access-btn--past-sales .monthly-access-btn__frame {
-      filter: none;
+    .office-mode .monthly-access-btn__frame {
+      display: none;
+    }
+    .office-mode .monthly-access-btn__label {
+      color: inherit;
+      transform: none;
+    }
+    .office-mode .monthly-access-btn--past-sales:hover .monthly-access-btn__label,
+    .office-mode .monthly-access-btn--past-sales:focus-visible .monthly-access-btn__label,
+    .office-mode .monthly-access-btn--current-sales:hover .monthly-access-btn__label,
+    .office-mode .monthly-access-btn--current-sales:focus-visible .monthly-access-btn__label {
+      text-shadow: none;
+    }
+    .office-mode .monthly-access-btn--past-sales {
+      background: #dce8f8;
+      border-color: #2b6cb0;
+      color: #0d3a6e;
+    }
+    .office-mode .monthly-access-btn--past-sales:hover,
+    .office-mode .monthly-access-btn--past-sales:focus-visible {
+      background: #c8daf0;
+    }
+    .office-mode .monthly-access-btn--current-sales {
+      background: #f0f0f0;
+      border-color: #000;
+      color: #000;
+    }
+    .office-mode .monthly-access-btn--current-sales:hover,
+    .office-mode .monthly-access-btn--current-sales:focus-visible {
+      background: #e0e0e0;
     }
 """
 
@@ -645,21 +684,27 @@ PS_LAYOUT_CSS = """
     .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__ym-cell--month {
       display: none;
     }
+    body.office-mode .past-sales-modal__tab {
+      background: #d0e0f5;
+      color: #0d3a6e;
+    }
+    body.office-mode .past-sales-modal__tab.is-active {
+      background: #94b8e8;
+      color: #0a2860;
+    }
     body.office-mode .past-sales-modal__panel {
       border-color: #2b6cb0;
       color: #111;
       --psm-cyan: #111;
       --psm-line: #333;
-      --psm-bg-inactive: rgba(0, 0, 0, 0.06);
-      --psm-bg-active-55: rgba(0, 0, 0, 0.1);
-      --psm-bg-active-70: rgba(0, 0, 0, 0.14);
+      --psm-bg-inactive: #dce8f8;
+      --psm-bg-active-55: #b8d0f0;
+      --psm-bg-active-70: #a3c4ed;
+      --psm-bg-reference: rgba(0, 0, 0, 0.046);
+      --psm-bg-reference-focus: rgba(0, 0, 0, 0.070);
       --psm-row-off-fill: rgba(0, 0, 0, 0.04);
-      --psm-panel-bg: #e8f2ff;
+      --psm-panel-bg: #edf4fb;
       --psm-frame: #2b6cb0;
-    }
-    .office-mode .monthly-access-btn--past-sales {
-      background: #dcecff;
-      border-radius: 2px;
     }
 """
 

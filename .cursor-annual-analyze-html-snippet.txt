@@ -1,0 +1,70 @@
+ANALYZE_BLOCK
+              <motion class="insight-annual-status" aria-label="Annual status">
+                <h4 class="insight-annual-status__title">Annual Status</h4>
+                <div class="insight-annual-status__row">
+                  <p class="insight-annual-status__label">Status</p>
+                  <div class="insight-annual-status__value-box">
+                    <p class="insight-annual-status__value">On Track</p>
+                  </div>
+                </div>
+                <div class="insight-annual-status__row">
+                  <p class="insight-annual-status__label">Alert</p>
+                  <motion class="insight-annual-status__value-box">
+                    <p class="insight-annual-status__value">Preliminary</p>
+                  </div>
+                </div>
+                <div class="insight-annual-status__row">
+                  <p class="insight-annual-status__label">Comment</p>
+                  <div class="insight-annual-status__value-box">
+                    <p class="insight-annual-status__value">Annual progress, profit, and target revision summary</p>
+                  </div>
+                </div>
+              </div>
+              <div class="insight-annual-sales-summary" aria-label="Annual sales summary">
+                <h4 class="insight-annual-sales-summary__title">Annual Sales Summary</h4>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label insight-annual-sales-summary__label--primary">Sales</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--lg">
+                    <p class="insight-annual-sales-summary__value insight-annual-sales-summary__value--lg">$1,456</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label">Target Sales</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
+                    <p class="insight-annual-sales-summary__value">$123,456</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label">Difference</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
+                    <p class="insight-annual-sales-summary__value">$123,456</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label">Profit Margin</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
+                    <p class="insight-annual-sales-summary__value">80%</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label">Remaining Business Days</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
+                    <p class="insight-annual-sales-summary__value">137</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__row">
+                  <p class="insight-annual-sales-summary__label">Daily Required Sales</p>
+                  <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
+                    <p class="insight-annual-sales-summary__value">$123,456</p>
+                  </div>
+                </div>
+                <div class="insight-annual-sales-summary__graph-visual insight-kpi-graph-wrap">
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">Today (Sales)</p>
+                  <div class="insight-daily-alloc-graph" id="GRAPH_ID">
+                    <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
+                    <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
+                  </div>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">Today's Target Sales</p>
+                </div>
+              </div>
+END

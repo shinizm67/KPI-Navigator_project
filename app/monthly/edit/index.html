@@ -372,15 +372,15 @@
       opacity: 0.35;
       cursor: default;
     }
-    .monthly-edit-float__today,
-    .monthly-edit-float__nav button,
-    .monthly-edit-float__pl-btn,
-    .monthly-edit-float__csv-upload,
-    .monthly-edit-float__undo,
-    .monthly-edit-float__confirm {
+    body:not(.office-mode) .monthly-edit-float__today,
+    body:not(.office-mode) .monthly-edit-float__nav button,
+    body:not(.office-mode) .monthly-edit-float__pl-btn,
+    body:not(.office-mode) .monthly-edit-float__csv-upload,
+    body:not(.office-mode) .monthly-edit-float__undo,
+    body:not(.office-mode) .monthly-edit-float__confirm {
       font-family: 'Orbitron', sans-serif;
     }
-                    /* KPI-CSV-UPLOAD-TOOLTIP */
+                            /* KPI-CSV-UPLOAD-TOOLTIP */
     .monthly-edit-float__csv-upload[data-tooltip] {
       z-index: 2;
     }
@@ -406,6 +406,14 @@
       z-index: 200;
       pointer-events: none;
       box-shadow: 0 4px 14px rgba(16, 0, 82, 0.35);
+    }
+    body.office-mode .monthly-edit-float__csv-upload[data-tooltip]:hover::after,
+    body.office-mode .monthly-edit-float__csv-upload[data-tooltip]:focus-visible::after {
+      background: #ffffff;
+      border-color: #666;
+      color: #111;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     /* END KPI-CSV-UPLOAD-TOOLTIP */
     .monthly-edit-float__top {
@@ -531,6 +539,9 @@
       letter-spacing: 0.04em;
       color: rgba(88, 225, 243, 0.75);
     }
+    body:not(.office-mode) .monthly-edit-float__month-picker-year {
+      font-family: 'Orbitron', sans-serif;
+    }
     .monthly-edit-float__month-picker-year {
       width: 104px;
       border: 1px solid rgba(88, 225, 243, 0.45);
@@ -539,13 +550,15 @@
       color: var(--mef-cyan);
       padding: 4px 6px;
       font-size: 12px;
-      font-family: 'Orbitron', sans-serif;
       box-sizing: border-box;
     }
     .monthly-edit-float__month-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 6px;
+    }
+    body:not(.office-mode) .monthly-edit-float__month-btn {
+      font-family: 'Orbitron', sans-serif;
     }
     .monthly-edit-float__month-btn {
       border: 1px solid rgba(88, 225, 243, 0.35);
@@ -555,7 +568,6 @@
       padding: 6px 4px;
       font-size: 11px;
       font-weight: 600;
-      font-family: 'Orbitron', sans-serif;
       letter-spacing: 0.02em;
       cursor: pointer;
       box-sizing: border-box;
@@ -609,10 +621,12 @@
     }
 
     /* KPI-PHASE5-TOGGLE-CSS */
+    body:not(.office-mode) .kpi-daily-input-path {
+      font-family: 'Orbitron', sans-serif;
+    }
     .kpi-daily-input-path {
       box-sizing: border-box;
       color: #0db13a;
-      font-family: 'Orbitron', sans-serif;
       z-index: 6;
       user-select: none;
       width: auto;
@@ -703,6 +717,7 @@
     }
     body.office-mode .kpi-daily-input-path {
       color: #4a4a4a;
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     body.office-mode .kpi-daily-input-path__title,
     body.office-mode .kpi-daily-input-path__side.is-active {
@@ -1042,7 +1057,7 @@
       justify-content: center;
       text-align: center;
     }
-                /* PL-MEP-DAILY-INPUT-STYLE */
+                                    /* PL-MEP-DAILY-INPUT-STYLE */
     .monthly-edit-float__label-row--daily-input {
       background: rgba(20, 72, 52, 0.72);
       color: rgba(210, 245, 225, 0.96);
@@ -1326,6 +1341,22 @@
       --mef-line: #000000;
       --mef-panel: #f4f4f4;
       --mef-fixed: #e8e8e8;
+    }
+    body.office-mode .monthly-edit-float__today,
+    body.office-mode .monthly-edit-float__nav button,
+    body.office-mode .monthly-edit-float__pl-btn,
+    body.office-mode .monthly-edit-float__csv-upload,
+    body.office-mode .monthly-edit-float__undo,
+    body.office-mode .monthly-edit-float__confirm,
+    body.office-mode .monthly-edit-float__month-trigger,
+    body.office-mode .monthly-edit-float__month-label,
+    body.office-mode .monthly-edit-float__month-picker-year,
+    body.office-mode .monthly-edit-float__month-btn,
+    body.office-mode .monthly-edit-float__zoom,
+    body.office-mode .monthly-edit-float__zoom-step,
+    body.office-mode .monthly-edit-float__summary-toggle,
+    body.office-mode .kpi-sales-input-path__btn {
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     body.office-mode .monthly-edit-float__backdrop {
       background: rgba(0, 0, 0, 0.35);
@@ -2986,7 +3017,7 @@
         }
       };
 
-                                                                                                                                                                                                                                    /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -3197,6 +3228,7 @@
         function ensureYearMepData(year) {
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
+          if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {};
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {
             rec.dailyMeta = { memos: {}, flags: {}, weather: {} };
           }
@@ -4049,6 +4081,42 @@
           return !!store.timeline.businessDays[iso];
         }
 
+        /* dailyIncome: 収入ストリーム別の日次額（store_sales は timeline.dailySales が正、
+           A/B 等の追加ストリームは years.{Y}.dailyIncome[streamId][iso] に保持）。
+           timeline.dailySales（＝総売上）には一切書き込まない副次データ。*/
+        function writeDailyIncome(streamId, iso, amount, meta) {
+          if (!streamId || !validIso(iso)) return false;
+          if (!canEditIso(iso)) return false;
+          var y = isoYear(iso);
+          var rec = ensureYearMepData(y);
+          if (!rec.dailyIncome[streamId] || typeof rec.dailyIncome[streamId] !== 'object') {
+            rec.dailyIncome[streamId] = {};
+          }
+          var n = Number(amount);
+          if (!Number.isFinite(n) || n === 0) {
+            delete rec.dailyIncome[streamId][iso];
+          } else {
+            rec.dailyIncome[streamId][iso] = Math.round(n);
+          }
+          rec.mepUpdatedAt = Date.now();
+          persistStore();
+          document.dispatchEvent(
+            new CustomEvent('kpi:mepDataChanged', {
+              detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
+            })
+          );
+          return true;
+        }
+
+        function readDailyIncome(streamId, iso) {
+          if (!streamId || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyIncome || !rec.dailyIncome[streamId]) return null;
+          if (!Object.prototype.hasOwnProperty.call(rec.dailyIncome[streamId], iso)) return null;
+          var n = Number(rec.dailyIncome[streamId][iso]);
+          return Number.isFinite(n) ? n : null;
+        }
+
         function readRange(startIso, endIso) {
           if (!validIso(startIso) || !validIso(endIso)) return [];
           if (startIso > endIso) {
@@ -4303,6 +4371,14 @@
           syncToAnnualDaily();
         }
 
+        function hydrateNavFromStorage() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (!nav || typeof nav !== 'object') return;
+          if (nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+          }
+        }
+
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
@@ -4324,6 +4400,11 @@
         }
 
         function getSelectedDate() {
+          var nav = gw().getJson(SELECTED_DATE_KEY);
+          if (nav && nav.selectedIso && validIso(nav.selectedIso)) {
+            store.meta.selectedDate = nav.selectedIso;
+            return nav.selectedIso;
+          }
           if (store.meta.selectedDate) return store.meta.selectedDate;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
             return window.__ANNUAL_DATA.daily.selectedDate;
@@ -4414,6 +4495,7 @@
           var rec = ensureYearMepData(y);
           return {
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {})),
+            dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || { memos: {}, flags: {}, weather: {} })
             ),
@@ -4449,6 +4531,24 @@
                 if (!canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 rec.dailyExpenses[lineId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
+              });
+            });
+          }
+          var srcInc = payload && payload.dailyIncome;
+          if (srcInc && typeof srcInc === 'object') {
+            Object.keys(srcInc).forEach(function (streamId) {
+              if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {};
+              var byIso = srcInc[streamId];
+              if (!byIso || typeof byIso !== 'object') return;
+              Object.keys(byIso).forEach(function (iso) {
+                if (!validIso(iso) || isoYear(iso) !== y) return;
+                if (!canEditIso(iso)) return;
+                var n = Number(byIso[iso]);
+                if (!Number.isFinite(n) || n === 0) {
+                  delete rec.dailyIncome[streamId][iso];
+                } else {
+                  rec.dailyIncome[streamId][iso] = Math.round(n);
+                }
               });
             });
           }
@@ -4532,8 +4632,16 @@
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }
           })();
+          hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
-            window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            var navCy = gw().getJson(SELECTED_DATE_KEY);
+            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
+            } else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            } else {
+              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+            }
           }
           ensureOperatingYearPlanDefaults();
           syncToAnnualDaily();
@@ -4545,8 +4653,6 @@
         }
 
 
-        
-        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
 
@@ -5166,10 +5272,11 @@
           };
         }
 
-                window.KpiYearStore = {
+        window.KpiYearStore = {
           init: init,
           reload: function () {
             loadStore();
+            hydrateNavFromStorage();
             reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
@@ -5187,6 +5294,8 @@
           },
           writeDailySales: writeDailySales,
           writeBusinessDay: writeBusinessDay,
+          writeDailyIncome: writeDailyIncome,
+          readDailyIncome: readDailyIncome,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,
@@ -5823,8 +5932,11 @@
           syncBizDayFromAnnualStoreForMonth();
         }
       }
-      function refreshMepSalesFromStore() {
+      function refreshMepSalesFromStore(ev) {
         if (root.hidden) return;
+        var src = ev && ev.detail && ev.detail.source;
+        /* Confirm 自己発火の再hydrateは二重計上の原因なのでスキップ */
+        if (src === 'monthly-edit-float' || src === 'mep') return;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
@@ -5993,7 +6105,7 @@
         memoItems: []
       };
 
-                        /* PL-MEP-LINE-CATALOG */
+                                                      /* PL-MEP-LINE-CATALOG */
       var PL_LINE_CATALOG = [
   {
     "lineId": "store_sales",
@@ -6155,9 +6267,9 @@
     "labelJa": "備品・消耗品仕入費",
     "labelEn": "Supplies & Consumables",
     "editableLabel": false,
-    "inputStyle": "daily",
-    "resolvedInputStyle": "daily",
-    "mepEditable": true,
+    "inputStyle": "monthly",
+    "resolvedInputStyle": "monthly",
+    "mepEditable": false,
     "active": true
   },
   {
@@ -6167,9 +6279,9 @@
     "labelJa": "雑費・小口精算費",
     "labelEn": "Miscellaneous Expense",
     "editableLabel": false,
-    "inputStyle": "daily",
-    "resolvedInputStyle": "daily",
-    "mepEditable": true,
+    "inputStyle": "monthly",
+    "resolvedInputStyle": "monthly",
+    "mepEditable": false,
     "active": true
   },
   {
@@ -6215,9 +6327,9 @@
     "labelJa": "アルバイト人件費",
     "labelEn": "Variable Labor",
     "editableLabel": false,
-    "inputStyle": "monthly",
-    "resolvedInputStyle": "monthly",
-    "mepEditable": false,
+    "inputStyle": "daily",
+    "resolvedInputStyle": "daily",
+    "mepEditable": true,
     "active": true
   },
   {
@@ -6310,18 +6422,25 @@
         PL_CATALOG_BY_ID[entry.lineId] = entry;
       });
       var PL_CATALOG_STORAGE_KEY = 'kpiNavigator.plLineCatalog';
-      function loadPlExpenseCatalogLines() {
+      function loadPlCatalogLines() {
         try {
           var raw = localStorage.getItem(PL_CATALOG_STORAGE_KEY);
           if (!raw) return null;
           var parsed = JSON.parse(raw);
           if (!parsed || !Array.isArray(parsed.lines) || !parsed.lines.length) return null;
           return parsed.lines.filter(function (line) {
-            return line && line.active !== false && line.bucket;
+            return line && line.active !== false;
           });
         } catch (_e) {
           return null;
         }
+      }
+      function loadPlExpenseCatalogLines() {
+        var lines = loadPlCatalogLines();
+        if (!lines) return null;
+        return lines.filter(function (line) {
+          return !!line.bucket;
+        });
       }
       function plLineToMepDef(line) {
         var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
@@ -6355,6 +6474,29 @@
         });
       }
       function catalogIncomeDefs() {
+        var fromStorage = loadPlCatalogLines();
+        if (fromStorage) {
+          var defs = fromStorage
+            .filter(function (line) {
+              return line.section === 'income';
+            })
+            .map(function (line) {
+              var base = PL_CATALOG_BY_ID[line.lineId] || line || {};
+              return {
+                lineId: line.lineId,
+                section: 'income',
+                bucket: null,
+                labelJa: line.labelJa || base.labelJa || line.lineId,
+                labelEn: line.labelEn || base.labelEn || line.lineId,
+                editableLabel: base.editableLabel === true,
+                inputStyle: base.inputStyle || 'daily',
+                resolvedInputStyle: base.resolvedInputStyle || 'daily',
+                mepEditable: true,
+                active: line.active !== false,
+              };
+            });
+          if (defs.length) return defs;
+        }
         return PL_LINE_CATALOG.filter(function (e) { return e.section === 'income'; });
       }
       function catalogFixedDefs() {
@@ -6374,7 +6516,7 @@
           kind: 'money',
           labelJa: def.labelJa,
           labelEn: def.labelEn,
-          editableLabel: false,
+          editableLabel: !!def.editableLabel,
           deletable: false,
           sub: def.section === 'expense',
           mepEditable: !!def.mepEditable,
@@ -6400,13 +6542,41 @@
             prev.mepEditable = !!d.mepEditable;
             prev.resolvedInputStyle = d.resolvedInputStyle || 'monthly';
             prev.bucket = d.bucket || null;
-            prev.editableLabel = false;
+            prev.editableLabel = !!d.editableLabel;
             prev.deletable = false;
             targetArr.push(prev);
           } else {
             targetArr.push(makeCatalogRow(d));
           }
         });
+      }
+      function upsertPlIncomeLabelsFromState() {
+        var lines = loadPlCatalogLines();
+        if (!lines) {
+          lines = JSON.parse(JSON.stringify(PL_LINE_CATALOG));
+        }
+        var changed = false;
+        var ids = { sales_a: true, sales_b: true };
+        (state.incomeItems || []).forEach(function (row) {
+          if (!row || !ids[row.lineId]) return;
+          var line = lines.find(function (l) { return l.lineId === row.lineId; });
+          if (!line) return;
+          var nextJa = row.labelJa || line.labelJa;
+          var nextEn = row.labelEn || line.labelEn;
+          if (line.labelJa !== nextJa || line.labelEn !== nextEn) {
+            line.labelJa = nextJa;
+            line.labelEn = nextEn;
+            changed = true;
+          }
+        });
+        if (!changed) return;
+        try {
+          localStorage.setItem(
+            PL_CATALOG_STORAGE_KEY,
+            JSON.stringify({ lines: lines, updatedAt: Date.now() })
+          );
+          window.dispatchEvent(new Event('pl-expense-catalog-changed'));
+        } catch (_e) {}
       }
 
       function t(ja, en) {
@@ -6645,8 +6815,19 @@
         var isoList = monthIsoList(mefYear, mefMonth0);
         isoList.forEach(function (iso) {
           if (!Object.prototype.hasOwnProperty.call(tmap, iso)) return;
-          var n = Number(tmap[iso]);
-          writeValue(primary.id, iso, Number.isFinite(n) ? n : 0);
+          var total = Number(tmap[iso]);
+          if (!Number.isFinite(total)) total = 0;
+          /* timeline.dailySales = 総売上。店舗 = 総額 − (A+B)（PL と同式） */
+          var streams = 0;
+          (state.incomeItems || []).forEach(function (row) {
+            if (!row) return;
+            var lid = row.lineId || row.id;
+            if (lid !== 'sales_a' && lid !== 'sales_b') return;
+            streams += Number(readValue(row.id, iso)) || 0;
+          });
+          var storeVal = total - streams;
+          if (storeVal < 0) storeVal = 0;
+          writeValue(primary.id, iso, storeVal);
         });
       }
       function syncMonthlySalesToAnnualStoreForMonth() {
@@ -6764,6 +6945,624 @@
         }
         return new Date(mefYear, mefMonth0 + 1, 0);
       }
+      var isJa = useJa;
+      function isTimelineBusinessDay(iso, bmap, isWeekend) {
+        if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        return !isWeekend;
+      }
+
+      /* KPI-FOCUS-TW-METRICS */
+
+        var DAILY_DERIVED_KEYS = {
+          diff: true,
+          ach: true,
+          monthlyDiff: true,
+          monthlyAch: true,
+          annualDiff: true,
+          annualAch: true
+        };
+        function dailyCellMoneyNumber(display, dashToken) {
+          if (display === dashToken || display === '—' || display === '-') return NaN;
+          var t = String(display || '').trim();
+          if (!t) return NaN;
+          var n = parseFloat(t.replace(/[¥$,\s]/g, ''));
+          return Number.isFinite(n) ? n : NaN;
+        }
+        function applyDailyCellFillState(cell, fieldKey, display, isWk, isOy, dashToken) {
+          if (!fieldKey) return;
+          if (isWk || isOy) {
+            cell.removeAttribute('data-fill-state');
+            cell.classList.remove('kpi-fill-empty', 'kpi-fill-has');
+            return;
+          }
+          if (DAILY_DERIVED_KEYS[fieldKey]) {
+            cell.setAttribute('data-fill-state', 'derived');
+            cell.classList.remove('kpi-fill-empty');
+            cell.classList.add('kpi-fill-has');
+            return;
+          }
+          var n = dailyCellMoneyNumber(display, dashToken);
+          if (!Number.isFinite(n) || n === 0) {
+            cell.setAttribute('data-fill-state', 'empty');
+            cell.classList.add('kpi-fill-empty');
+            cell.classList.remove('kpi-fill-has');
+          } else {
+            cell.setAttribute('data-fill-state', 'has');
+            cell.classList.remove('kpi-fill-empty');
+            cell.classList.add('kpi-fill-has');
+          }
+        }
+      function fmtTwAchPct(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return '—';
+        return Math.round((actual / target) * 100) + '%';
+      }
+      var TW_DIFF_LEVELS = [
+        'tw-diff--win',
+        'tw-diff--neutral',
+        'tw-diff--sev-90',
+        'tw-diff--sev-80',
+        'tw-diff--sev-70',
+        'tw-diff--sev-60',
+        'tw-diff--sev-50',
+        'tw-diff--sev-below',
+      ];
+      function twDiffAchPct(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return NaN;
+        return (actual / target) * 100;
+      }
+      function twDiffSeverityClass(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return 'tw-diff--neutral';
+        var diff = actual - target;
+        if (diff > 0) return 'tw-diff--win';
+        if (diff === 0) return 'tw-diff--neutral';
+        var ach = twDiffAchPct(actual, target);
+        if (ach >= 90) return 'tw-diff--sev-90';
+        if (ach >= 80) return 'tw-diff--sev-80';
+        if (ach >= 70) return 'tw-diff--sev-70';
+        if (ach >= 60) return 'tw-diff--sev-60';
+        if (ach >= 50) return 'tw-diff--sev-50';
+        return 'tw-diff--sev-below';
+      }
+      function fmtTwSignedMoney(n) {
+        if (!Number.isFinite(n)) return '—';
+        if (n === 0) return fmtMoney(0);
+        var r = Math.round(Math.abs(n));
+        var body = isJa ? '¥' + r.toLocaleString('ja-JP') : '$' + r.toLocaleString('en-US');
+        return (n > 0 ? '+' : '−') + body;
+      }
+      function fmtTwDiff(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target)) return '—';
+        return fmtTwSignedMoney(actual - target);
+      }
+      function applyTwDiffCellClass(cell, actual, target) {
+        if (!cell) return;
+        for (var i = 0; i < TW_DIFF_LEVELS.length; i++) {
+          cell.classList.remove(TW_DIFF_LEVELS[i]);
+        }
+        cell.classList.remove('annual-daily-row__cell--neg');
+        cell.classList.add(twDiffSeverityClass(actual, target));
+      }
+      function readTwSalesAmt(iso, smap) {
+        if (!smap || !Object.prototype.hasOwnProperty.call(smap, iso)) return 0;
+        var n = Number(smap[iso]);
+        if (!Number.isFinite(n)) return 0;
+        if (n === 1234) {
+          var oy = window.KpiYearStore
+            ? KpiYearStore.getOperatingYear()
+            : new Date().getFullYear();
+          var y = Number(String(iso || '').split('-')[0]);
+          if (Number.isFinite(y) && y < oy) return n;
+          return 0;
+        }
+        return n;
+      }
+      function twDefaultHlWeights() {
+        return [85, 85, 100, 110, 120, 85, 100, 100, 100, 110, 110, 115];
+      }
+      function resolveTwPlanForYear(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        var oy = window.KpiYearStore ? KpiYearStore.getOperatingYear() : new Date().getFullYear();
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = oy;
+        var target = null;
+        var weights = null;
+        if (window.KpiYearStore) {
+          target = KpiYearStore.readAnnualTarget(y);
+          weights = KpiYearStore.readMonthlyHlWeights(y);
+          if (KpiYearStore.isYearLocked(y)) {
+            if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
+          } else if (y === oy || y === cy) {
+            if (
+              (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) &&
+              window.__ANNUAL_DATA &&
+              window.__ANNUAL_DATA.targetSales != null
+            ) {
+              target = Number(window.__ANNUAL_DATA.targetSales);
+            }
+          } else if (y < oy) {
+            /* past year: fall through to referenceAnnualSalesByYear fallback */
+          } else {
+            return null;
+          }
+        } else if (window.__ANNUAL_DATA && y === cy && window.__ANNUAL_DATA.targetSales != null) {
+          target = Number(window.__ANNUAL_DATA.targetSales);
+        }
+        if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) {
+          var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
+          if (
+            past &&
+            past.referenceAnnualSalesByYear &&
+            past.referenceAnnualSalesByYear[y] != null
+          ) {
+            target = Number(past.referenceAnnualSalesByYear[y]);
+          }
+        }
+        if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
+        if (!weights || weights.length !== 12) weights = twDefaultHlWeights();
+        return { target: Number(target), weights: weights.slice() };
+      }
+      function buildLegacyFlatDailyTargetMapForYear(plan, days) {
+        var out = {};
+        var totalBD = days.length;
+        if (totalBD <= 0) return out;
+        var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (var di = 0; di < days.length; di++) {
+          monthlyBD[days[di].m0]++;
+        }
+        var annualTarget = plan.target;
+        var monthlyDailyTarget = [];
+        for (var mi = 0; mi < 12; mi++) {
+          var hl = Number(plan.weights[mi]);
+          if (!Number.isFinite(hl)) hl = 100;
+          var bdCount = monthlyBD[mi];
+          if (bdCount <= 0) {
+            monthlyDailyTarget[mi] = NaN;
+            continue;
+          }
+          var monthlyAvg = (annualTarget * bdCount) / totalBD;
+          var monthlyTarget = (monthlyAvg * hl) / 100;
+          monthlyDailyTarget[mi] = monthlyTarget / bdCount;
+        }
+        for (var i = 0; i < days.length; i++) {
+          var item = days[i];
+          var dt = monthlyDailyTarget[item.m0];
+          if (Number.isFinite(dt) && dt > 0) out[item.iso] = dt;
+        }
+        return out;
+      }
+      function twShouldUseDailyTargetResolver(year) {
+        if (!window.KpiYearStore) return false;
+        if (typeof KpiYearStore.resolveDailyTargetByIso !== 'function') return false;
+        if (typeof KpiYearStore.getOperatingYear !== 'function') return false;
+        var y = Number(year);
+        var oy = KpiYearStore.getOperatingYear();
+        if (!Number.isFinite(y) || y !== oy) return false;
+        return true;
+      }
+      function buildDailyTargetMapForYear(year, bmap) {
+        var y = Number(year);
+        var plan = resolveTwPlanForYear(y);
+        var out = {};
+        if (!plan) return out;
+        if (twShouldUseDailyTargetResolver(y)) {
+          if (
+            window.KpiYearStore &&
+            typeof KpiYearStore.buildDailyTargetDisplayMapForYear === 'function'
+          ) {
+            return KpiYearStore.buildDailyTargetDisplayMapForYear(y);
+          }
+        }
+        var days = [];
+        for (var m0 = 0; m0 < 12; m0++) {
+          var dc = new Date(y, m0 + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {
+            var dt = new Date(y, m0, day);
+            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(iso, bmap, isWk)) continue;
+            days.push({ iso: iso, m0: m0 });
+          }
+        }
+        if (twShouldUseDailyTargetResolver(y)) {
+          for (var ri = 0; ri < days.length; ri++) {
+            var row = days[ri];
+            var resolved = KpiYearStore.resolveDailyTargetByIso(y, row.iso);
+            var val = resolved && resolved.value;
+            if (Number.isFinite(val) && val > 0) out[row.iso] = val;
+          }
+          return out;
+        }
+        return buildLegacyFlatDailyTargetMapForYear(plan, days);
+      }
+      var __twTargetMapCacheByYear = {};
+      function buildDailyTargetMapForYearCached(year, bmap) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return {};
+        if (__twTargetMapCacheByYear[y]) return __twTargetMapCacheByYear[y];
+        var map = buildDailyTargetMapForYear(y, bmap);
+        __twTargetMapCacheByYear[y] = map;
+        return map;
+      }
+      window.clearTwTargetMapsByYear = function () {
+        __twTargetMapCacheByYear = {};
+      };
+      document.addEventListener('kpi:dailyTargetModeChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      document.addEventListener('kpi:weekdayBaselineChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      document.addEventListener('kpi:annualPlanChanged', function () {
+        __twTargetMapCacheByYear = {};
+      });
+      window.__buildDailyTargetMapForYear = buildDailyTargetMapForYear;
+      function createTwCumState() {
+        return { month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false };
+      }
+      function renderAnnualDailyTimeline(anchorYear, opts) {
+        opts = opts || {};
+        anchorYear = Number(anchorYear);
+        if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var scrollEl = document.getElementById('annual-daily-focus-scroll');
+        var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
+        var bounds =
+          opts.boundsHint === 'anchor-year-only' &&
+          typeof computeAnchorYearTimelineBounds === 'function'
+            ? computeAnchorYearTimelineBounds(anchorYear)
+            : computeFocusTimelineBounds(anchorYear);
+        window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+        window.__ANNUAL_DATA.calendarYear = anchorYear;
+        var daily = window.__ANNUAL_DATA.daily || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var targetMapsByYear = {};
+        var cumByYear = {};
+        var memoFlagMapsByYear = {};
+        function memoFlagMapForYear(y) {
+          if (!memoFlagMapsByYear[y]) {
+            memoFlagMapsByYear[y] =
+              window.KpiYearStore &&
+              typeof KpiYearStore.readDailyMemoFlagMapForYear === 'function'
+                ? KpiYearStore.readDailyMemoFlagMapForYear(y)
+                : {};
+          }
+          return memoFlagMapsByYear[y];
+        }
+        function targetMapForYear(y) {
+          if (!targetMapsByYear[y]) targetMapsByYear[y] = buildDailyTargetMapForYear(y, bmap);
+          return targetMapsByYear[y];
+        }
+        function cumForYear(y) {
+          if (!cumByYear[y]) cumByYear[y] = createTwCumState();
+          return cumByYear[y];
+        }
+        rowsRoot.innerHTML = '';
+        rowsRoot.setAttribute('data-year', String(anchorYear));
+        rowsRoot.setAttribute('data-timeline-min-year', String(bounds.minYear));
+        rowsRoot.setAttribute('data-timeline-max-year', String(bounds.maxYear));
+        rowsRoot.setAttribute(
+          'aria-label',
+          isJa
+            ? bounds.minYear + '〜' + bounds.maxYear + '年の日次一覧'
+            : 'Daily rows ' + bounds.minYear + '–' + bounds.maxYear
+        );
+
+        var prevYearMarker = null;
+        for (var d = new Date(bounds.rangeStart); d <= bounds.rangeEnd; d.setDate(d.getDate() + 1)) {
+          var iso =
+            d.getFullYear() +
+            '-' +
+            pad2(d.getMonth() + 1) +
+            '-' +
+            pad2(d.getDate());
+          var dow = d.getDay();
+          var isWeekend = dow === 0 || dow === 6;
+          var isBusiness = isTimelineBusinessDay(iso, bmap, isWeekend);
+          var rowYear = d.getFullYear();
+          var isOutsideYear = rowYear !== anchorYear;
+          var row = document.createElement('div');
+          row.className =
+            'annual-daily-row' +
+            (!isBusiness ? ' annual-daily-row--off' : '') +
+            (isOutsideYear ? ' annual-daily-row--outside-year' : '');
+          if (d.getMonth() === 0 && d.getDate() === 1 && prevYearMarker !== rowYear) {
+            row.classList.add('annual-daily-row--year-boundary');
+            prevYearMarker = rowYear;
+          }
+          row.setAttribute('role', 'listitem');
+          row.setAttribute('data-iso-date', iso);
+          row.setAttribute('data-row-year', String(rowYear));
+          row.setAttribute('data-active-year', isOutsideYear ? '0' : '1');
+
+          var dateLabel;
+          if (isJa) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
+            if (!isBusiness) dateLabel += ' OFF';
+          } else {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
+            if (!isBusiness) dateLabel += ' OFF';
+          }
+
+          var dash = '—';
+          function createCell(fieldKey, value, extraClass) {
+            var cell = document.createElement('div');
+            var cls = 'annual-daily-row__cell';
+            if (extraClass) cls += ' ' + extraClass;
+            if (fieldKey === 'target' || fieldKey === 'monthlyTarget' || fieldKey === 'annualTarget') {
+              cls += ' annual-daily-row__cell--plan-target';
+            }
+            cell.className = cls;
+            if (fieldKey) {
+              cell.setAttribute('data-field', 'annual.dailyTable.' + iso + '.' + fieldKey);
+              applyDailyCellFillState(cell, fieldKey, value, !isBusiness, isOutsideYear, dash);
+            }
+            cell.textContent = value;
+            return cell;
+          }
+          function createDiffCell(fieldKey, actual, target, enabled) {
+            var cell = document.createElement('div');
+            cell.className = 'annual-daily-row__cell';
+            var display = enabled ? fmtTwDiff(actual, target) : dash;
+            if (fieldKey) {
+              cell.setAttribute('data-field', 'annual.dailyTable.' + iso + '.' + fieldKey);
+              applyDailyCellFillState(cell, fieldKey, display, !isBusiness, isOutsideYear, dash);
+            }
+            cell.textContent = display;
+            if (enabled) applyTwDiffCellClass(cell, actual, target);
+            return cell;
+          }
+
+          var salesNum = 0;
+          var dailyTgt = null;
+          var mtdA = 0;
+          var mtdT = 0;
+          var ytdA = 0;
+          var ytdT = 0;
+          var rowHasPlan = false;
+          if (isBusiness) {
+            salesNum = readTwSalesAmt(iso, smap);
+            var tgtMap = targetMapForYear(rowYear);
+            if (Object.prototype.hasOwnProperty.call(tgtMap, iso)) {
+              dailyTgt = Number(tgtMap[iso]);
+              if (!Number.isFinite(dailyTgt)) dailyTgt = null;
+            }
+            var c = cumForYear(rowYear);
+            var m0 = d.getMonth();
+            if (c.month !== m0) {
+              c.month = m0;
+              c.mtdA = 0;
+              c.mtdT = 0;
+            }
+            c.mtdA += salesNum;
+            c.ytdA += salesNum;
+            if (dailyTgt != null) {
+              c.mtdT += dailyTgt;
+              c.ytdT += dailyTgt;
+              c.hasPlan = true;
+            }
+            mtdA = c.mtdA;
+            mtdT = c.mtdT;
+            ytdA = c.ytdA;
+            ytdT = c.ytdT;
+            rowHasPlan = c.hasPlan;
+          }
+
+          var groupBase = document.createElement('div');
+          groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
+          var dateCell = createCell(null, dateLabel, 'annual-daily-row__cell--date');
+          if (memoFlagMapForYear(rowYear)[iso]) {
+            dateCell.classList.add('annual-daily-row__cell--has-memo');
+            dateCell.setAttribute('data-has-memo', '1');
+            dateCell.setAttribute(
+              'title',
+              isJa ? 'メモがあります' : 'Memo saved'
+            );
+            dateCell.setAttribute(
+              'aria-label',
+              isJa ? dateLabel + '（メモあり）' : dateLabel + ' (memo saved)'
+            );
+          }
+          groupBase.appendChild(dateCell);
+          if (!isBusiness) {
+            groupBase.appendChild(createCell('sales', dash));
+            groupBase.appendChild(createCell('target', dash));
+            groupBase.appendChild(createCell('diff', dash));
+            groupBase.appendChild(createCell('ach', dash));
+          } else {
+            groupBase.appendChild(createCell('sales', fmtMoney(salesNum)));
+            groupBase.appendChild(
+              createCell('target', dailyTgt != null ? fmtMoney(dailyTgt) : dash)
+            );
+            groupBase.appendChild(
+              createDiffCell('diff', salesNum, dailyTgt, dailyTgt != null)
+            );
+            groupBase.appendChild(
+              createCell(
+                'ach',
+                dailyTgt != null ? fmtTwAchPct(salesNum, dailyTgt) : dash
+              )
+            );
+          }
+
+          var groupMonthly = document.createElement('div');
+          groupMonthly.className = 'annual-daily-row__group annual-daily-row__group--monthly';
+          if (!isBusiness) {
+            groupMonthly.appendChild(createCell('monthlyTarget', dash));
+            groupMonthly.appendChild(createCell('monthlySales', dash));
+            groupMonthly.appendChild(createCell('monthlyDiff', dash));
+            groupMonthly.appendChild(createCell('monthlyAch', dash));
+          } else {
+            groupMonthly.appendChild(
+              createCell('monthlyTarget', rowHasPlan ? fmtMoney(mtdT) : dash)
+            );
+            groupMonthly.appendChild(createCell('monthlySales', fmtMoney(mtdA)));
+            groupMonthly.appendChild(
+              createDiffCell('monthlyDiff', mtdA, mtdT, rowHasPlan)
+            );
+            groupMonthly.appendChild(
+              createCell('monthlyAch', rowHasPlan ? fmtTwAchPct(mtdA, mtdT) : dash)
+            );
+          }
+
+          var groupAnnual = document.createElement('div');
+          groupAnnual.className = 'annual-daily-row__group annual-daily-row__group--annual';
+          if (!isBusiness) {
+            groupAnnual.appendChild(createCell('annualTarget', dash));
+            groupAnnual.appendChild(createCell('annualSales', dash));
+            groupAnnual.appendChild(createCell('annualDiff', dash));
+            groupAnnual.appendChild(createCell('annualAch', dash));
+          } else {
+            groupAnnual.appendChild(
+              createCell('annualTarget', rowHasPlan ? fmtMoney(ytdT) : dash)
+            );
+            groupAnnual.appendChild(createCell('annualSales', fmtMoney(ytdA)));
+            groupAnnual.appendChild(
+              createDiffCell('annualDiff', ytdA, ytdT, rowHasPlan)
+            );
+            groupAnnual.appendChild(
+              createCell('annualAch', rowHasPlan ? fmtTwAchPct(ytdA, ytdT) : dash)
+            );
+          }
+
+          row.appendChild(groupBase);
+          row.appendChild(groupMonthly);
+          row.appendChild(groupAnnual);
+          rowsRoot.appendChild(row);
+        }
+
+        if (prevScroll != null && scrollEl) {
+          scrollEl.scrollTop = prevScroll;
+        }
+        if (document.body.classList.contains('monthly-page')) {
+          if (opts.boundsHint === 'anchor-year-only') {
+            window.__monthlyVerticalTwPartialRendered = true;
+          } else {
+            window.__monthlyVerticalTwPartialRendered = true;
+            window.__monthlyVerticalTwFullRendered = true;
+          }
+        }
+        document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+      }
+      function computeTwMetricsForIso(iso) {
+        if (!iso) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var d = new Date(String(iso).trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        var y = d.getFullYear();
+        var m0 = d.getMonth();
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var plan = resolveTwPlanForYear(y);
+        var annualTarget = plan && Number.isFinite(Number(plan.target)) ? Number(plan.target) : null;
+        var hasPlan = false;
+        var isBusinessToday = false;
+        var dailySales = 0;
+        var dailyTarget = null;
+        var mtdA = 0;
+        var mtdT = 0;
+        var ytdA = 0;
+        var ytdT = 0;
+        var monthlyFullTarget = 0;
+        var monthRemainingBD = 0;
+        var yearRemainingBD = 0;
+        for (var m = 0; m < 12; m++) {
+          var dc = new Date(y, m + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {
+            var dt = new Date(y, m, day);
+            var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            var dayTarget = null;
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+              dayTarget = Number(tgtMap[dayIso]);
+              if (!Number.isFinite(dayTarget)) dayTarget = null;
+            }
+            if (m === m0 && dayTarget != null) monthlyFullTarget += dayTarget;
+            if (dayIso <= iso) {
+              var salesAmt = readTwSalesAmt(dayIso, smap);
+              ytdA += salesAmt;
+              if (m === m0) mtdA += salesAmt;
+              if (dayTarget != null) {
+                ytdT += dayTarget;
+                hasPlan = true;
+                if (m === m0) mtdT += dayTarget;
+              }
+            }
+            if (dayIso >= iso) {
+              if (m === m0) monthRemainingBD++;
+              yearRemainingBD++;
+            }
+            if (dayIso === iso) {
+              isBusinessToday = true;
+              dailySales = readTwSalesAmt(dayIso, smap);
+              dailyTarget = dayTarget;
+            }
+          }
+        }
+        var monthlyNeed =
+          hasPlan && Number.isFinite(monthlyFullTarget) ? monthlyFullTarget - mtdA : null;
+        var monthlyDailyNeed =
+          monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
+            ? monthlyNeed / monthRemainingBD
+            : null;
+        var annualRemaining =
+          annualTarget != null && Number.isFinite(annualTarget) ? annualTarget - ytdA : null;
+        var annualDailyNeed =
+          yearRemainingBD > 0 &&
+          annualRemaining != null &&
+          Number.isFinite(annualRemaining)
+            ? annualRemaining / yearRemainingBD
+            : null;
+        return {
+          iso: iso,
+          isBusinessToday: isBusinessToday,
+          hasPlan: hasPlan,
+          dailySales: dailySales,
+          dailyTarget: dailyTarget,
+          mtdA: mtdA,
+          mtdT: mtdT,
+          ytdA: ytdA,
+          ytdT: ytdT,
+          monthlyFullTarget: monthlyFullTarget,
+          monthRemainingBD: monthRemainingBD,
+          monthlyDailyNeed: monthlyDailyNeed,
+          annualTarget: annualTarget,
+          annualRemaining: annualRemaining,
+          yearRemainingBD: yearRemainingBD,
+          annualDailyNeed: annualDailyNeed,
+        };
+      }
+      window.__computeTwMetricsForIso = computeTwMetricsForIso;
+      window.__twFmtMoney = fmtMoney;
+      window.__twFmtDiff = fmtTwDiff;
+      window.__twFmtAchPct = fmtTwAchPct;
+      window.__twDiffSeverityClass = twDiffSeverityClass;
+      window.__twDiffLevels = TW_DIFF_LEVELS;
+      var __twTimelineRefreshTimer = null;
+      function scheduleRenderAnnualDailyTimeline(anchorYear, opts) {
+        opts = opts || { preserveScroll: true };
+        var cy = Number(anchorYear);
+        if (!Number.isFinite(cy)) {
+          cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        }
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        if (__twTimelineRefreshTimer != null) window.clearTimeout(__twTimelineRefreshTimer);
+        __twTimelineRefreshTimer = window.setTimeout(function () {
+          __twTimelineRefreshTimer = null;
+          renderAnnualDailyTimeline(cy, opts);
+        }, 32);
+      }
+      window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
+      /* END KPI-FOCUS-TW-METRICS */
+
       function sumTargetByDateRange(startDate, endDate) {
         var data = window.__ANNUAL_DATA || {};
         var daily = data.daily || {};
@@ -6781,39 +7580,65 @@
         });
         return { total: total, hasAny: hasAny };
       }
+      /* KPI-MEP-STRIP */
+      function mepKpiAsOfIso() {
+        var end = monthCutoffDate();
+        return dateToIso(end);
+      }
       function getKpiSummary() {
-        var monthStart = new Date(mefYear, mefMonth0, 1);
-        var monthEnd = analyzeMonthEndDate();
-        var yearStart = new Date(mefYear, 0, 1);
-        var yearEnd = analyzeYearEndDate();
-        var monthlyActual = sumActualSalesForRange(monthStart, monthEnd);
-        var annualActual = sumActualSalesForRange(yearStart, yearEnd);
-        var monthTargetRes = sumTargetByDateRange(monthStart, monthEnd);
-        var monthlyTarget = monthTargetRes.total;
-        var yearTargetRes = sumTargetByDateRange(yearStart, yearEnd);
-        var annualTarget = yearTargetRes.total;
-        if (!yearTargetRes.hasAny) {
-          var annualData = window.__ANNUAL_DATA || {};
-          var annualFixedTarget = Number(annualData.targetSales);
-          if (Number.isFinite(annualFixedTarget) && annualFixedTarget > 0) {
-            annualTarget = annualFixedTarget;
-          }
+        var empty = {
+          monthly: { actual: 0, target: 0, diff: 0, rate: 0, hasPlan: false },
+          annual: { actual: 0, target: 0, diff: 0, rate: 0, hasPlan: false }
+        };
+        var iso = mepKpiAsOfIso();
+        if (!iso || typeof window.__computeTwMetricsForIso !== 'function') {
+          return empty;
         }
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var m = window.__computeTwMetricsForIso(iso);
+        if (!m) return empty;
+        var hasPlan = !!m.hasPlan;
+        var monthlyActual = Math.round(Number(m.mtdA) || 0);
+        var annualActual = Math.round(Number(m.ytdA) || 0);
+        var monthlyTarget = hasPlan ? Math.round(Number(m.mtdT) || 0) : 0;
+        var annualTarget = hasPlan ? Math.round(Number(m.ytdT) || 0) : 0;
         return {
           monthly: {
             actual: monthlyActual,
             target: monthlyTarget,
             diff: monthlyActual - monthlyTarget,
-            rate: monthlyTarget > 0 ? (monthlyActual / monthlyTarget) * 100 : 0
+            rate: monthlyTarget > 0 ? (monthlyActual / monthlyTarget) * 100 : 0,
+            hasPlan: hasPlan
           },
           annual: {
             actual: annualActual,
             target: annualTarget,
             diff: annualActual - annualTarget,
-            rate: annualTarget > 0 ? (annualActual / annualTarget) * 100 : 0
+            rate: annualTarget > 0 ? (annualActual / annualTarget) * 100 : 0,
+            hasPlan: hasPlan
           }
         };
       }
+      function bindMepKpiStripRefresh() {
+        if (window.__MEP_KPI_STRIP_BOUND__) return;
+        window.__MEP_KPI_STRIP_BOUND__ = true;
+        [
+          'kpi:dailySalesChanged',
+          'kpi:dailyTargetModeChanged',
+          'kpi:annualPlanChanged',
+          'kpi:weekdayBaselineChanged',
+          'annual:salesMapChanged',
+          'annual:calendarYearChanged',
+          'kpi:selectedDateChanged'
+        ].forEach(function (name) {
+          document.addEventListener(name, function () {
+            if (typeof renderKpiStrip === 'function') renderKpiStrip();
+          });
+        });
+      }
+      /* END KPI-MEP-STRIP */
       function getKpiStripDummySummary() {
         return {
           monthly: {
@@ -7162,7 +7987,8 @@
         syncSectionFromCatalog(state.incomeItems, catalogIncomeDefs());
         syncSectionFromCatalog(state.fixedItems, catalogFixedDefs());
         syncSectionFromCatalog(state.variableItems, catalogVariableDefs());
-        syncWeeklyMemoItems();
+        if (state.memoItems.length === 0)
+          state.memoItems.push(makeRow('memo', 'メモ1', 'Memo 1', { editableLabel: true, deletable: true }));
       }
       function currentRows() {
         createInitialRowsIfNeeded();
@@ -7472,19 +8298,20 @@
         }
         if (!refRow) return;
         var tds = refRow.querySelectorAll(':scope > td');
+        var z = currentScale > 0 ? currentScale : 1;
         var tableLeft = tbl.getBoundingClientRect().left;
         var firstTdLeft = tds[0].getBoundingClientRect().left;
-        var borderPad = Math.max(0, Math.round(firstTdLeft - tableLeft));
+        var borderPad = Math.max(0, Math.round((firstTdLeft - tableLeft) / z));
         dateRailScale.style.paddingLeft = borderPad ? borderPad + 'px' : '';
         for (var i = 0; i < ths.length; i++) {
-          var w = Math.max(1, Math.round(tds[i].getBoundingClientRect().width));
+          var w = Math.max(1, Math.round(tds[i].getBoundingClientRect().width / z));
           ths[i].style.width = w + 'px';
           ths[i].style.minWidth = w + 'px';
           ths[i].style.maxWidth = w + 'px';
         }
         var dateRailTable = dateRailScale.querySelector('.monthly-edit-float__date-rail-table');
         if (dateRailTable) {
-          dateRailTable.style.width = Math.max(1, Math.round(tbl.getBoundingClientRect().width)) + 'px';
+          dateRailTable.style.width = Math.max(1, Math.round(tbl.getBoundingClientRect().width / z)) + 'px';
         }
       }
       function queueSyncDateRailColumnWidths() {
@@ -7660,6 +8487,46 @@
           text.setAttribute('title', hint);
         }
 
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
         if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
         else if (item.plReadonly) rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
         rowEl.appendChild(main);
@@ -8153,54 +9020,46 @@
           KpiYearStore.setSelectedDate(iso, 'monthly-edit-float');
         }
       }
+      function mepOperatingYear() {
+        var now = new Date();
+        var oy =
+          window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+            ? Number(KpiYearStore.getOperatingYear())
+            : now.getFullYear();
+        return Number.isFinite(oy) ? oy : now.getFullYear();
+      }
+      function applyMepDefaultMonth() {
+        var now = new Date();
+        var oy = mepOperatingYear();
+        mefYear = oy;
+        mefMonth0 = oy === now.getFullYear() ? now.getMonth() : 0;
+        mefPreferredIso = null;
+        if (oy === now.getFullYear()) {
+          mefPreferredIso = mepIsoFromParts(mefYear, mefMonth0, now.getDate());
+        }
+      }
       function syncFromPage() {
+        mefPreferredIso = null;
         var params = new URLSearchParams(window.location.search);
         var y = Number(params.get('year'));
         var m = Number(params.get('month'));
         var iso = String(params.get('iso') || '').trim();
+        if (Number.isFinite(y) && m >= 1 && m <= 12) {
+          mefYear = y;
+          mefMonth0 = m - 1;
+          if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+            var parts = iso.split('-');
+            if (Number(parts[0]) === mefYear && Number(parts[1]) - 1 === mefMonth0) {
+              mefPreferredIso = iso;
+            }
+          }
+          return;
+        }
         if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
           applyMepSelectedIso(iso);
           return;
         }
-        if (Number.isFinite(y) && m >= 1 && m <= 12) {
-          mefYear = y;
-          mefMonth0 = m - 1;
-          return;
-        }
-        try {
-          var raw = sessionStorage.getItem(MEF_STORAGE_MONTHLY_LAST);
-          if (raw) {
-            var o = JSON.parse(raw);
-            if (o && Number.isFinite(o.year) && Number.isFinite(o.month0)) {
-              mefYear = o.year;
-              mefMonth0 = o.month0;
-              return;
-            }
-          }
-        } catch (_e) {}
-        var ui = window.__MONTHLY_UI;
-        if (ui && typeof ui.getState === 'function') {
-          var st = ui.getState();
-          if (st && Number.isFinite(st.year) && Number.isFinite(st.month0)) {
-            mefYear = st.year;
-            mefMonth0 = st.month0;
-          }
-        }
-        if (
-          !mefPreferredIso &&
-          window.KpiYearStore &&
-          typeof KpiYearStore.getSelectedDate === 'function'
-        ) {
-          var storeIso = String(KpiYearStore.getSelectedDate() || '').trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(storeIso)) {
-            var oy =
-              typeof KpiYearStore.getOperatingYear === 'function'
-                ? Number(KpiYearStore.getOperatingYear())
-                : new Date().getFullYear();
-            var sy = Number(storeIso.slice(0, 4));
-            if (Number.isFinite(oy) && sy === oy) applyMepSelectedIso(storeIso);
-          }
-        }
+        applyMepDefaultMonth();
       }
       function persistMefMonth() {
         try {
@@ -8242,6 +9101,7 @@
         ) {
           window.__KPI_EDIT_LEASE.tryAcquire(useJa ? 'Monthly Edit' : 'Monthly Edit');
         }
+        bindMepKpiStripRefresh();
         buildGrid();
         confirmedSnapshot = buildConfirmedSnapshot();
         persistMefMonth();
@@ -8500,6 +9360,50 @@
           editSessionCommitted = true;
         });
       }
+                        /* KPI-MEP-INCOME-STREAMS */
+      var MEP_INCOME_STREAM_IDS = ['sales_a', 'sales_b'];
+      var __mepIncomeStreamsBusy = false;
+      function mepIncomeStreamIsoYear(iso) {
+        if (!iso || iso.length < 4) return NaN;
+        var y = Number(iso.slice(0, 4));
+        return Number.isFinite(y) ? y : NaN;
+      }
+      function collectMepIncomeStreamsPayload(year) {
+        var y = Number(year);
+        var out = {};
+        if (typeof rowValueById === 'undefined' || !rowValueById) return out;
+        MEP_INCOME_STREAM_IDS.forEach(function (id) {
+          var byIso = rowValueById[id];
+          if (!byIso || typeof byIso !== 'object') return;
+          var filtered = {};
+          Object.keys(byIso).forEach(function (iso) {
+            if (mepIncomeStreamIsoYear(iso) !== y) return;
+            filtered[iso] = byIso[iso];
+          });
+          out[id] = filtered;
+        });
+        return out;
+      }
+      document.addEventListener('kpi:mepDataChanged', function (ev) {
+        var d = ev && ev.detail;
+        if (!d || d.source !== 'monthly-edit-float') return;
+        if (__mepIncomeStreamsBusy) return;
+        var year = Number(d.year);
+        if (!Number.isFinite(year)) return;
+        if (!window.KpiYearStore || typeof KpiYearStore.bulkPersistMepYear !== 'function') return;
+        var streams = collectMepIncomeStreamsPayload(year);
+        __mepIncomeStreamsBusy = true;
+        try {
+          KpiYearStore.bulkPersistMepYear(
+            year,
+            { dailyIncome: streams },
+            { source: 'monthly-edit-float' }
+          );
+        } finally {
+          __mepIncomeStreamsBusy = false;
+        }
+      });
+      /* KPI-MEP-INCOME-STREAMS-END */
       window.__KPI_PATH_CHANGE_HOOKS__ = {
         hasUnsaved: hasUnsavedChanges,
         save: function () {
@@ -8815,6 +9719,9 @@
               if (useJa) row.labelJa = val;
               else row.labelEn = val;
               markDirty();
+              if (typeof upsertPlIncomeLabelsFromState === 'function') {
+                upsertPlIncomeLabelsFromState();
+              }
             }
             buildGrid();
           };
@@ -8986,7 +9893,7 @@
         true
       );
 
-      /* PL-MEP-PL-CATALOG-SYNC */
+                                    /* PL-MEP-PL-CATALOG-SYNC */
       function refreshExpenseCatalogFromPl() {
         createInitialRowsIfNeeded();
         syncSectionFromCatalog(state.fixedItems, catalogFixedDefs());
@@ -8999,16 +9906,6 @@
       }
       window.addEventListener('storage', function (ev) {
         if (ev.key === PL_CATALOG_STORAGE_KEY) refreshExpenseCatalogFromPl();
-        if (
-          ev.key === 'kpiNavigator.kpiYearStore' ||
-          ev.key === 'kpiNavigator.annualDailyShared'
-        ) {
-          if (window.KpiYearStore) {
-            KpiYearStore.reload();
-            syncMonthlySalesFromAnnualStoreForMonth();
-            buildGrid();
-          }
-        }
       });
       window.addEventListener('pl-expense-catalog-changed', refreshExpenseCatalogFromPl);
       window.addEventListener('pl-expense-label-changed', refreshExpenseCatalogFromPl);

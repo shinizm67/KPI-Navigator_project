@@ -36,17 +36,25 @@ def expense_detail_client_js(
     expense_attr_edit_toggle_aria: str,
     expense_attr_edit_on: str,
     expense_attr_edit_off: str,
+    variable_mid_edit_tip: str = "",
     schema_version: int = 3,
+    occupancy_aria: str = "Occupancy",
+    occupancy_rent_option: str = "Rented",
+    occupancy_owned_option: str = "Owned",
 ) -> str:
     return f"""
     (function () {{
       var isJa = document.documentElement.lang === 'ja';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
+      var OCCUPANCY_KEY = 'kpiNavigator.plOccupancy';
+      var OCC_RENT_LINE = 'exp_rent';
+      var OCC_OWNED_LINE = 'exp_depreciable_asset_tax';
       var INPUT_PREFS_KEY = 'kpiNavigator.plInputSourcePrefs';
       var ATTR_EDIT_KEY = 'kpiNavigator.plExpenseAttrEditMode';
       var DEFAULT_LINES = {catalog_json};
       var midFixed = {json.dumps(mid_fixed, ensure_ascii=False)};
       var midVar = {json.dumps(mid_var, ensure_ascii=False)};
+      var variableMidEditTip = {json.dumps(variable_mid_edit_tip, ensure_ascii=False)};
       var addAria = {json.dumps(add_aria, ensure_ascii=False)};
       var hideAria = {json.dumps(hide_aria, ensure_ascii=False)};
       var hideConfirmTitle = {json.dumps(hide_confirm_title, ensure_ascii=False)};
@@ -71,10 +79,15 @@ def expense_detail_client_js(
       var attributeBtnAria = {json.dumps(expense_attribute_btn_aria, ensure_ascii=False)};
       var attrEditOnLabel = {json.dumps(expense_attr_edit_on, ensure_ascii=False)};
       var attrEditOffLabel = {json.dumps(expense_attr_edit_off, ensure_ascii=False)};
+      var occupancyAria = {json.dumps(occupancy_aria, ensure_ascii=False)};
+      var occupancyRentOption = {json.dumps(occupancy_rent_option, ensure_ascii=False)};
+      var occupancyOwnedOption = {json.dumps(occupancy_owned_option, ensure_ascii=False)};
       var block = document.getElementById('pl-expense-detail-block');
       var attrToggle = document.getElementById('pl-expense-attr-toggle');
       var modal = document.getElementById('pl-input-source-modal');
-      var modalSkip = document.getElementById('pl-input-source-skip');
+      var labelEditModal = document.getElementById('pl-expense-label-edit-modal');
+      var labelEditInput = document.getElementById('pl-expense-label-edit-input');
+      var labelEditSource = document.getElementById('pl-expense-label-edit-source');
       var attributeModal = document.getElementById('pl-expense-attribute-modal');
       var attributeModalTitle = document.getElementById('pl-expense-attribute-modal-title');
       var hideModal = document.getElementById('pl-hide-line-modal');
@@ -88,6 +101,7 @@ def expense_detail_client_js(
       var manageOpen = document.getElementById('pl-line-manage-open');
       var CATALOG_SCHEMA_VERSION = {schema_version};
       var pendingInputSource = null;
+      var pendingLabelEdit = null;
       var pendingHideLineId = null;
       var pendingHideMode = null;
       var pendingAttributePick = null;
@@ -128,6 +142,15 @@ def expense_detail_client_js(
             if (prev.labelJa) line.labelJa = prev.labelJa;
             if (prev.labelEn) line.labelEn = prev.labelEn;
             if (prev.expenseAttribute) line.expenseAttribute = prev.expenseAttribute;
+            /* ユーザーが選んだ入力元(daily/monthly)をデフォルトに戻さない */
+            if (prev.inputStyle === 'daily' || prev.inputStyle === 'monthly') {{
+              line.inputStyle = prev.inputStyle;
+            }}
+            if (prev.resolvedInputStyle === 'daily' || prev.resolvedInputStyle === 'monthly') {{
+              line.resolvedInputStyle = prev.resolvedInputStyle;
+            }} else if (line.inputStyle === 'daily' || line.inputStyle === 'monthly') {{
+              line.resolvedInputStyle = line.inputStyle;
+            }}
           }}
           if (line.expenseAttribute == null) {{
             delete line.expenseAttribute;
@@ -164,10 +187,96 @@ def expense_detail_client_js(
         return changed;
       }}
 
+      function applyInputStyleDefaultMigrations(lines) {{
+        /* schema v7: FL 方針に合わせたデフォルト移行（旧デフォルトのままの行だけ） */
+        var rules = {{
+          exp_supplies: {{ from: 'daily', to: 'monthly' }},
+          exp_misc: {{ from: 'daily', to: 'monthly' }},
+          exp_variable_labor: {{ from: 'monthly', to: 'daily' }},
+        }};
+        var changed = false;
+        (lines || []).forEach(function (line) {{
+          if (!line || !line.lineId) return;
+          var rule = rules[line.lineId];
+          if (!rule) return;
+          var cur = line.resolvedInputStyle || line.inputStyle;
+          if (cur !== rule.from) return;
+          line.inputStyle = rule.to;
+          line.resolvedInputStyle = rule.to;
+          changed = true;
+        }});
+        return changed;
+      }}
+
+      function isOccupancyLineId(lineId) {{
+        return lineId === OCC_RENT_LINE || lineId === OCC_OWNED_LINE;
+      }}
+
+      function loadOccupancy() {{
+        try {{
+          var raw = localStorage.getItem(OCCUPANCY_KEY);
+          if (raw === 'owned' || raw === 'rent') return raw;
+        }} catch (_e) {{}}
+        return 'rent';
+      }}
+
+      function saveOccupancy(mode) {{
+        var next = mode === 'owned' ? 'owned' : 'rent';
+        try {{
+          localStorage.setItem(OCCUPANCY_KEY, next);
+        }} catch (_e) {{}}
+        return next;
+      }}
+
+      function occupancyVisibleLineId(mode) {{
+        return (mode || loadOccupancy()) === 'owned' ? OCC_OWNED_LINE : OCC_RENT_LINE;
+      }}
+
+      function syncOccupancyActiveFlags(lines) {{
+        var mode = loadOccupancy();
+        var rentLine = null;
+        var ownedLine = null;
+        (lines || []).forEach(function (line) {{
+          if (line.lineId === OCC_RENT_LINE) rentLine = line;
+          if (line.lineId === OCC_OWNED_LINE) ownedLine = line;
+        }});
+        var changed = false;
+        if (rentLine) {{
+          var wantRent = mode === 'rent';
+          if (rentLine.active !== wantRent) {{
+            rentLine.active = wantRent;
+            changed = true;
+          }}
+        }}
+        if (ownedLine) {{
+          var wantOwned = mode === 'owned';
+          if (ownedLine.active !== wantOwned) {{
+            ownedLine.active = wantOwned;
+            changed = true;
+          }}
+          if (wantOwned && rentLine && typeof rentLine.sortOrder === 'number') {{
+            if (ownedLine.sortOrder !== rentLine.sortOrder) {{
+              ownedLine.sortOrder = rentLine.sortOrder;
+              changed = true;
+            }}
+          }}
+        }}
+        return changed;
+      }}
+
+      function setOccupancy(mode) {{
+        saveOccupancy(mode);
+        var lines = loadLines();
+        if (syncOccupancyActiveFlags(lines)) saveLines(lines);
+        renderExpenseDetail();
+      }}
+
       function mergeCatalogFromDefaults(oldLines) {{
         var lines = reconcileCatalogLines(oldLines);
+        applyInputStyleDefaultMigrations(lines);
         normalizeAllBucketSortOrders(lines);
         if (normalizeFixedBucketLines(lines)) {{}}
+        syncOccupancyActiveFlags(lines);
         saveLines(lines);
         return lines;
       }}
@@ -186,6 +295,7 @@ def expense_detail_client_js(
           }}
         }} catch (_e) {{}}
         var fresh = JSON.parse(JSON.stringify(DEFAULT_LINES));
+        syncOccupancyActiveFlags(fresh);
         saveLines(fresh);
         return fresh;
       }}
@@ -224,6 +334,7 @@ def expense_detail_client_js(
         }});
         if (normalizeAllBucketSortOrders(reconciled)) changed = true;
         if (normalizeFixedBucketLines(reconciled)) changed = true;
+        if (syncOccupancyActiveFlags(reconciled)) changed = true;
         if (changed) saveLines(reconciled);
         return reconciled;
       }}
@@ -243,8 +354,13 @@ def expense_detail_client_js(
       }}
 
       function activeBucket(lines, bucket) {{
+        var visibleOcc = occupancyVisibleLineId();
         return lines
-          .filter(function (line) {{ return line.active && line.bucket === bucket; }})
+          .filter(function (line) {{
+            if (!(line.active && line.bucket === bucket)) return false;
+            if (isOccupancyLineId(line.lineId) && line.lineId !== visibleOcc) return false;
+            return true;
+          }})
           .sort(function (a, b) {{ return a.sortOrder - b.sortOrder; }});
       }}
 
@@ -277,7 +393,12 @@ def expense_detail_client_js(
 
       function inactiveLines(lines) {{
         return lines
-          .filter(function (line) {{ return !line.active; }})
+          .filter(function (line) {{
+            if (line.active) return false;
+            /* 物件切替で隠している行は科目管理に出さない */
+            if (isOccupancyLineId(line.lineId)) return false;
+            return true;
+          }})
           .sort(function (a, b) {{
             if (a.bucket !== b.bucket) return a.bucket === 'fixed' ? -1 : 1;
             return a.sortOrder - b.sortOrder;
@@ -339,7 +460,6 @@ def expense_detail_client_js(
           return Promise.resolve(prefs.lastChoice);
         }}
         setModalInputStyle(options.initialStyle || prefs.lastChoice || 'monthly');
-        if (modalSkip) modalSkip.checked = false;
         pendingInputSource = {{
           mode: options.mode || 'add',
           bucket: options.bucket || null,
@@ -370,9 +490,107 @@ def expense_detail_client_js(
         }}
         var prefs = loadInputPrefs();
         prefs.lastChoice = style;
-        if (modalSkip && modalSkip.checked) prefs.skipPrompt = true;
         saveInputPrefs(prefs);
         resolve(style);
+      }}
+
+      function getLabelEditSourceStyle() {{
+        if (!labelEditSource || labelEditSource.hidden) return null;
+        var picked = labelEditSource.querySelector(
+          'input[name="pl-expense-label-edit-source"]:checked'
+        );
+        return picked ? picked.value : null;
+      }}
+
+      function setLabelEditSourceStyle(style) {{
+        if (!labelEditSource) return;
+        var radio = labelEditSource.querySelector(
+          'input[name="pl-expense-label-edit-source"][value="' + style + '"]'
+        );
+        if (radio) radio.checked = true;
+      }}
+
+      function closeLabelEditModal() {{
+        if (!labelEditModal) return;
+        labelEditModal.hidden = true;
+        document.body.classList.remove('pl-expense-label-edit-modal-open');
+        pendingLabelEdit = null;
+      }}
+
+      function openLabelEditModal(lineId) {{
+        if (!labelEditModal || !labelEditInput) return;
+        var lines = loadLines();
+        var line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }});
+        if (!line) return;
+        pendingLabelEdit = {{ lineId: lineId }};
+        labelEditInput.value = labelText(line);
+        var showSource = line.bucket === 'variable';
+        if (labelEditSource) {{
+          labelEditSource.hidden = !showSource;
+          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {{
+            inp.disabled = !showSource;
+          }});
+          if (showSource) {{
+            setLabelEditSourceStyle(line.resolvedInputStyle || line.inputStyle || 'monthly');
+          }}
+        }}
+        labelEditModal.hidden = false;
+        document.body.classList.add('pl-expense-label-edit-modal-open');
+        labelEditInput.focus();
+        labelEditInput.select();
+      }}
+
+      function commitLabelEdit() {{
+        if (!pendingLabelEdit || !labelEditInput) return false;
+        var lineId = pendingLabelEdit.lineId;
+        var next = String(labelEditInput.value || '').replace(/\\s+/g, ' ').trim();
+        if (!next) {{
+          labelEditInput.focus();
+          return false;
+        }}
+        var lines = loadLines();
+        var line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }});
+        if (!line) {{
+          closeLabelEditModal();
+          return false;
+        }}
+        var prevJa = line.labelJa;
+        var prevEn = line.labelEn;
+        var prevStyle = line.resolvedInputStyle || line.inputStyle || 'monthly';
+        if (isJa) line.labelJa = next;
+        else line.labelEn = next;
+        if (line.bucket === 'variable') {{
+          var style = getLabelEditSourceStyle();
+          if (style === 'daily' || style === 'monthly') {{
+            line.inputStyle = style;
+            line.resolvedInputStyle = style;
+            cleanupAbandonedInputDataOnStyleChange(lineId, prevStyle, style);
+          }}
+        }}
+        saveLines(lines);
+        closeLabelEditModal();
+        renderExpenseDetail();
+        window.dispatchEvent(
+          new CustomEvent('pl-expense-label-changed', {{
+            detail: {{
+              lineId: lineId,
+              labelJa: line.labelJa,
+              labelEn: line.labelEn,
+              labelChanged: prevJa !== line.labelJa || prevEn !== line.labelEn,
+              previousLabel: isJa ? prevJa : prevEn,
+            }},
+          }})
+        );
+        return true;
+      }}
+
+      function finishLabelEditModal(confirmed) {{
+        if (!pendingLabelEdit) return;
+        if (!confirmed) {{
+          closeLabelEditModal();
+          return;
+        }}
+        commitLabelEdit();
       }}
 
       function showAttributeChoicesForBucket(bucket) {{
@@ -504,15 +722,6 @@ def expense_detail_client_js(
         }}).then(function (attrId) {{
           if (!attrId) return;
           setLineExpenseAttribute(lineId, attrId);
-          openInputSourceModal({{
-            mode: 'edit-source',
-            lineId: lineId,
-            initialStyle: line.inputStyle || line.resolvedInputStyle || 'monthly',
-            skipPrefs: true,
-          }}).then(function (style) {{
-            if (!style) return;
-            setLineInputStyle(lineId, style);
-          }});
         }});
       }}
 
@@ -543,10 +752,15 @@ def expense_detail_client_js(
       }}
 
       function midCell(bucket, bucketLines, midLabel) {{
+        var tipAttr =
+          bucket === 'variable' && variableMidEditTip
+            ? ' title="' + escapeHtml(variableMidEditTip) + '"'
+            : '';
         return (
           '<td class="pl-v-mid pl-v-mid--expense-detail" rowspan="' +
           bucketLines.length +
           '"' +
+          tipAttr +
           rowHeightStyle(bucketLines.length) +
           '><div class="pl-v-mid__inner"><span class="pl-v-mid__text">' +
           escapeHtml(midLabel) +
@@ -560,13 +774,34 @@ def expense_detail_client_js(
       }}
 
       function rowHideBtn(line) {{
-        if (!isNonDefault(line)) return '';
+        if (!isNonDefault(line) || isOccupancyLineId(line.lineId)) return '';
         return (
           '<span class="pl-row-hide"><button type="button" class="pl-row-hide__btn pl-v-mid__pm-btn" data-action="hide-line" data-line-id="' +
           line.lineId +
           '" aria-label="' +
           escapeHtml(hideAria) +
           '">−</button></span>'
+        );
+      }}
+
+      function occupancySelectHtml() {{
+        var mode = loadOccupancy();
+        return (
+          '<label class="pl-occupancy-select-wrap">' +
+          '<select class="pl-occupancy-select" data-pl-occupancy-select="1" aria-label="' +
+          escapeHtml(occupancyAria) +
+          '">' +
+          '<option value="rent"' +
+          (mode === 'rent' ? ' selected' : '') +
+          '>' +
+          escapeHtml(occupancyRentOption) +
+          '</option>' +
+          '<option value="owned"' +
+          (mode === 'owned' ? ' selected' : '') +
+          '>' +
+          escapeHtml(occupancyOwnedOption) +
+          '</option>' +
+          '</select></label>'
         );
       }}
 
@@ -604,8 +839,12 @@ def expense_detail_client_js(
       }}
 
       function labelCell(line, idx, bucketLines) {{
+        var occSelect = isOccupancyLineId(line.lineId) ? occupancySelectHtml() : '';
         return (
-          '<th scope="row" class="pl-h-label pl-h-label--detail"><span class="pl-h-label__row">' +
+          '<th scope="row" class="pl-h-label pl-h-label--detail' +
+          (isOccupancyLineId(line.lineId) ? ' pl-h-label--occupancy' : '') +
+          '"><span class="pl-h-label__row">' +
+          occSelect +
           editableLabelSpan(line.lineId, labelText(line)) +
           rowAttributeBtn(line) +
           rowHideBtn(line) +
@@ -616,15 +855,33 @@ def expense_detail_client_js(
 
       function dataRow(line) {{
         var cells = '';
+        var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
+        var isMonthly = style !== 'daily';
+        var dailyReadonlyHint = isJa
+          ? 'MEP（月次編集）で日次入力。ダブルクリック / F2 で調整額'
+          : 'Enter daily on Monthly Edit. Double-click / F2 for adjustment';
         for (var mi = 0; mi < 12; mi++) {{
+          var amountInner = isMonthly
+            ? '<span class="pl-amt-cell__text" contenteditable="true" data-pl-editable="1" data-pl-field="amount" data-row="' +
+              line.lineId +
+              '" data-month="' +
+              mi +
+              '"></span>'
+            : '<span class="pl-amt-cell__text" tabindex="0" role="button">—</span>';
           cells +=
-            '<td class="pl-amt-cell pl-amt-cell--expense-detail" data-row="' +
+            '<td class="pl-amt-cell pl-amt-cell--expense-detail' +
+            (isMonthly ? ' pl-amt-cell--pl-monthly-editable' : ' pl-amt-cell--pl-daily-readonly') +
+            '"' +
+            (isMonthly ? '' : ' title="' + dailyReadonlyHint + '" data-pl-adj-editable="1"') +
+            ' data-row="' +
             line.lineId +
             '" data-line-id="' +
             line.lineId +
             '" data-month="' +
             mi +
-            '" data-field="amount"><span class="pl-amt-cell__text"></span></td>' +
+            '" data-field="amount">' +
+            amountInner +
+            '</td>' +
             '<td class="pl-ratio-cell pl-ratio-cell--expense-detail" data-row="' +
             line.lineId +
             '" data-line-id="' +
@@ -633,6 +890,19 @@ def expense_detail_client_js(
             mi +
             '" data-field="ratio"><span class="pl-ratio-cell__text"></span></td>';
         }}
+        cells +=
+          '<td class="pl-amt-cell pl-amt-cell--expense-detail pl-amt-cell--year-total" data-row="' +
+          line.lineId +
+          '" data-line-id="' +
+          line.lineId +
+          '" data-month="year" data-field="amount">' +
+          '<span class="pl-amt-cell__text">—</span></td>' +
+          '<td class="pl-ratio-cell pl-ratio-cell--expense-detail pl-ratio-cell--year-total" data-row="' +
+          line.lineId +
+          '" data-line-id="' +
+          line.lineId +
+          '" data-month="year" data-field="ratio">' +
+          '<span class="pl-ratio-cell__text">—</span></td>';
         return (
           '<tr class="pl-data-row pl-data-row--expense-detail' +
           rowClass(line) +
@@ -735,8 +1005,11 @@ def expense_detail_client_js(
         var lines = loadLines();
         var line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }});
         if (!line) return;
-        line.inputStyle = inputStyle;
-        line.resolvedInputStyle = inputStyle === 'daily' ? 'daily' : 'monthly';
+        var prevStyle = line.resolvedInputStyle || line.inputStyle || 'monthly';
+        var nextStyle = inputStyle === 'daily' ? 'daily' : 'monthly';
+        line.inputStyle = nextStyle;
+        line.resolvedInputStyle = nextStyle;
+        cleanupAbandonedInputDataOnStyleChange(lineId, prevStyle, nextStyle);
         saveLines(lines);
         renderExpenseDetail();
       }}
@@ -806,6 +1079,59 @@ def expense_detail_client_js(
         }} catch (_e) {{}}
       }}
 
+      function clearDailyExpensesForLine(lineId) {{
+        var gw = window.__KPI_DATA_GATEWAY;
+        if (!gw || typeof gw.getJson !== 'function' || typeof gw.setJson !== 'function') {{
+          return false;
+        }}
+        var store = null;
+        try {{
+          store = gw.getJson('kpiNavigator.kpiYearStore');
+        }} catch (_e) {{
+          return false;
+        }}
+        if (!store || typeof store !== 'object' || !store.years) return false;
+        var changed = false;
+        Object.keys(store.years).forEach(function (yk) {{
+          var rec = store.years[yk];
+          if (!rec || typeof rec !== 'object') return;
+          if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') return;
+          if (!Object.prototype.hasOwnProperty.call(rec.dailyExpenses, lineId)) return;
+          delete rec.dailyExpenses[lineId];
+          rec.mepUpdatedAt = Date.now();
+          changed = true;
+        }});
+        if (!changed) return false;
+        var saved = false;
+        try {{
+          saved = !!gw.setJson('kpiNavigator.kpiYearStore', store);
+        }} catch (_e2) {{
+          return false;
+        }}
+        if (saved) {{
+          try {{
+            document.dispatchEvent(
+              new CustomEvent('kpi:mepDataChanged', {{
+                detail: {{ source: 'pl-input-style-cleanup', lineId: lineId }},
+              }})
+            );
+          }} catch (_e3) {{}}
+        }}
+        return saved;
+      }}
+
+      function cleanupAbandonedInputDataOnStyleChange(lineId, prevStyle, nextStyle) {{
+        if (!lineId || !prevStyle || !nextStyle || prevStyle === nextStyle) return;
+        if (prevStyle === 'monthly' && nextStyle === 'daily') {{
+          clearStoredAmountsForLine(lineId);
+        }} else if (prevStyle === 'daily' && nextStyle === 'monthly') {{
+          clearDailyExpensesForLine(lineId);
+          if (typeof window.__plClearExpenseAdjustmentsForLine === 'function') {{
+            window.__plClearExpenseAdjustmentsForLine(lineId);
+          }}
+        }}
+      }}
+
       function hideLine(lineId) {{
         var lines = loadLines();
         var line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }});
@@ -829,6 +1155,10 @@ def expense_detail_client_js(
       }}
 
       function restoreLine(lineId) {{
+        if (isOccupancyLineId(lineId)) {{
+          setOccupancy(lineId === OCC_OWNED_LINE ? 'owned' : 'rent');
+          return;
+        }}
         var lines = loadLines();
         var line = lines.find(function (l) {{ return l.lineId === lineId; }});
         if (!line || line.active) return;
@@ -936,24 +1266,8 @@ def expense_detail_client_js(
           mode: 'add',
         }}).then(function (attrId) {{
           if (!attrId) return;
-          openInputSourceModal({{ mode: 'add', bucket: bucket, skipPrefs: true }}).then(function (
-            style
-          ) {{
-            if (!style) return;
-            addLine(bucket, style, attrId);
-          }});
-        }});
-      }}
-
-      function promptRelabelInputSource(lineId, currentStyle) {{
-        openInputSourceModal({{
-          mode: 'relabel',
-          lineId: lineId,
-          initialStyle: currentStyle || 'monthly',
-          skipPrefs: false,
-        }}).then(function (style) {{
-          if (!style) return;
-          setLineInputStyle(lineId, style);
+          /* 入力元は続く統合モーダル（ラベル編集）で選ぶ */
+          addLine(bucket, 'monthly', attrId);
         }});
       }}
 
@@ -1151,17 +1465,69 @@ def expense_detail_client_js(
         }});
       }}
 
-      window.addEventListener('pl-expense-label-changed', function (e) {{
-        var detail = e.detail || {{}};
-        if (!detail.lineId || !detail.labelChanged) return;
-        if (detail.previousLabel === newRowLabel) return;
-        var lines = loadLines();
-        var line = lines.find(function (l) {{ return l.lineId === detail.lineId && l.active; }});
-        if (!line) return;
-        if (line.bucket !== 'fixed') {{
-          promptRelabelInputSource(detail.lineId, line.inputStyle);
-        }}
+      if (labelEditModal) {{
+        labelEditModal.addEventListener('click', function (e) {{
+          var btn =
+            e.target && e.target.closest
+              ? e.target.closest('[data-pl-label-edit-action]')
+              : null;
+          if (!btn) return;
+          var action = btn.getAttribute('data-pl-label-edit-action');
+          if (action === 'cancel') {{
+            e.preventDefault();
+            finishLabelEditModal(false);
+            return;
+          }}
+          if (action === 'confirm') {{
+            e.preventDefault();
+            finishLabelEditModal(true);
+          }}
+        }});
+        labelEditModal.addEventListener('keydown', function (e) {{
+          if (labelEditModal.hidden) return;
+          if (e.key === 'Escape') {{
+            e.preventDefault();
+            finishLabelEditModal(false);
+            return;
+          }}
+          if (e.key === 'Enter') {{
+            e.preventDefault();
+            finishLabelEditModal(true);
+          }}
+        }});
+      }}
+
+      window.addEventListener('pl-expense-label-edit-request', function (e) {{
+        var lineId = e.detail && e.detail.lineId;
+        if (!lineId) return;
+        openLabelEditModal(lineId);
       }});
+
+      window.__plSetLineInputStyle = setLineInputStyle;
+      window.__plSetOccupancy = setOccupancy;
+      window.__plGetOccupancy = loadOccupancy;
+
+      if (block) {{
+        block.addEventListener('change', function (e) {{
+          var sel = e.target && e.target.closest
+            ? e.target.closest('[data-pl-occupancy-select]')
+            : null;
+          if (!sel || !block.contains(sel)) return;
+          setOccupancy(sel.value);
+        }});
+        block.addEventListener('mousedown', function (e) {{
+          var sel = e.target && e.target.closest
+            ? e.target.closest('[data-pl-occupancy-select]')
+            : null;
+          if (sel) e.stopPropagation();
+        }});
+        block.addEventListener('click', function (e) {{
+          var sel = e.target && e.target.closest
+            ? e.target.closest('[data-pl-occupancy-select]')
+            : null;
+          if (sel) e.stopPropagation();
+        }});
+      }}
 
       initAttrEditToggle();
       renderExpenseDetail();

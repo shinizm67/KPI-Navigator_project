@@ -86,9 +86,14 @@
       font-family: 'Orbitron', sans-serif;
       letter-spacing: 0.02em;
     }
+    /* 日付連打時に ▶︎ が左右へ動かないよう、矢印・日付ラベルを固定幅にする。
+       日付幅: EN Orbitron 16px 実測最大「10 / 20 wed」≈109.5px + 5px → 115px（JA BIZ 18px 最大≈95px も収まる） */
     .annual-date-arrow {
       position: relative;
       width: 10px;
+      min-width: 10px;
+      max-width: 10px;
+      flex-shrink: 0;
       height: 8px;
       border: 0;
       background: transparent;
@@ -98,6 +103,7 @@
       color: transparent;
       line-height: 0;
       cursor: pointer;
+      box-sizing: border-box;
     }
     .annual-date-arrow::before {
       content: "";
@@ -138,8 +144,14 @@
       font-family: 'Orbitron', sans-serif;
       letter-spacing: 0.02em;
       cursor: pointer;
-      min-width: 0;
+      width: 115px;
+      min-width: 115px;
+      max-width: 115px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      text-align: center;
       white-space: nowrap;
+      overflow: hidden;
     }
     .annual-date-btn:hover,
     .annual-date-btn:focus-visible {
@@ -4440,16 +4452,45 @@
       align-items: center;
       gap: 10px;
     }
-    .insight-overlay__date-nav,
-    .insight-overlay__date-btn {
+    /* Insight FW: 日付連打時に ▶︎ が動かないよう固定幅。
+       日付: Orbitron 20px「2026/12/31 wed」実測≈189.3px + 5px → 195px */
+    .insight-overlay__date-nav {
       border: 0;
+      margin: 0;
+      padding: 0;
       background: transparent;
       color: #58e1f3;
       font-size: 20px;
       line-height: 1;
       font-family: 'Orbitron', sans-serif;
       cursor: pointer;
+      width: 20px;
+      min-width: 20px;
+      max-width: 20px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .insight-overlay__date-btn {
+      border: 0;
+      margin: 0;
       padding: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 20px;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      width: 195px;
+      min-width: 195px;
+      max-width: 195px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .insight-overlay__today {
       min-height: 24px;
@@ -4661,11 +4702,44 @@
         var(--insight-monthly-analyze-top) + var(--insight-graph-monthly-content-h) +
           var(--insight-graph-monthly-analyze-link-tail-h)
       );
-      --insight-graph-annual-content-h: 0px;
-      --insight-band-annual-graph: calc(
-        var(--insight-annual-analyze-top) + var(--insight-graph-annual-content-h) +
-          var(--insight-annual-analyze-strategy-tail-h) + var(--insight-section-bottom-pad)
+      --insight-graph-analyze-link-line-h: calc(13px * 1.2);
+      --insight-graph-daily-section-label-stack-h: calc(47px + 40px + 30px);
+      --insight-graph-annual-row1-top: var(--insight-graph-daily-row1-top);
+      --insight-graph-annual-trend-gap-after-bar: 98px;
+      --insight-graph-annual-trend-heading-gap: 39px;
+      --insight-graph-annual-trend-frame-w: 965px;
+      --insight-graph-annual-trend-frame-h: 618px;
+      --insight-graph-annual-trend-block-h: calc(
+        var(--insight-graph-annual-trend-heading-gap) + 16px * 1.2 +
+          var(--insight-graph-annual-trend-frame-h)
       );
+      --insight-graph-annual-trend-top: calc(
+        var(--insight-graph-annual-row1-top) + var(--insight-graph-daily-chart-h) +
+          var(--insight-graph-annual-trend-gap-after-bar)
+      );
+      --insight-graph-annual-trend-gap-between-graphs: 48px;
+      --insight-graph-annual-trend2-top: calc(
+        var(--insight-graph-annual-trend-top) + var(--insight-graph-annual-trend-block-h) +
+          var(--insight-graph-annual-trend-gap-between-graphs)
+      );
+      --insight-graph-annual-body-h: calc(
+        var(--insight-graph-annual-row1-top) + var(--insight-graph-daily-chart-h) +
+          var(--insight-graph-annual-trend-gap-after-bar) + var(--insight-graph-annual-trend-block-h) * 2 +
+          var(--insight-graph-annual-trend-gap-between-graphs)
+      );
+      --insight-graph-annual-section-bottom-pad: 46px;
+      --insight-graph-annual-gap-graph2-to-section-bottom: 168px;
+      --insight-graph-annual-gap-after-graph2: calc(
+        var(--insight-graph-annual-gap-graph2-to-section-bottom) -
+          var(--insight-graph-annual-section-bottom-pad) - var(--insight-graph-analyze-link-line-h)
+      );
+      --insight-graph-annual-analyze-link-tail-h: var(--insight-graph-annual-gap-graph2-to-section-bottom);
+      --insight-graph-annual-content-h: var(--insight-graph-annual-body-h);
+      --insight-band-annual-graph: calc(
+        var(--insight-graph-daily-section-label-stack-h) + var(--insight-graph-annual-body-h) +
+          var(--insight-graph-annual-analyze-link-tail-h)
+      );
+
       --insight-band-daily: max(
         var(--insight-band-daily-summary),
         var(--insight-band-daily-analyze),
@@ -4853,6 +4927,15 @@
     }
     .insight-overlay__section--annual {
       min-height: var(--insight-band-annual);
+    }
+    /* Graph タブ: 親 .insight-overlay__content / .insight-pane の Analyze 用 min-height を無効化 */
+    .insight-overlay__content:has(> #insight-pane-graph:not([hidden])) {
+      min-height: auto;
+      height: auto;
+    }
+    #insight-pane-graph.insight-pane {
+      min-height: auto;
+      height: auto;
     }
     .insight-overlay__section-label {
       position: -webkit-sticky;
@@ -7420,6 +7503,479 @@
       background: #d2d2d2;
     }
 
+    .insight-pane--graph .insight-graph-annual__row-title {
+      margin: 0;
+      padding: 0 0 0 78px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      justify-self: start;
+      transform: translateY(-50px);
+    }
+    .insight-pane--graph .insight-graph-annual__row-title-line {
+      display: block;
+      text-align: center;
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__row.insight-graph-annual__row--cumulative {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: 345px 653px auto;
+      align-items: center;
+      column-gap: 0;
+      box-sizing: border-box;
+      top: var(--insight-graph-annual-row1-top);
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__compare {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0;
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__compare.insight-kpi-graph-wrap {
+      --marker-color: #e6ff00;
+      --marker-triangle-w: 21px;
+      --marker-triangle-h: 21.2px;
+      --insight-graph-daily-cap-h: calc(
+        var(--insight-graph-daily-marker-line-h) + var(--insight-graph-daily-marker-line-h)
+      );
+      --insight-graph-daily-bar-top: calc(var(--insight-graph-daily-cap-h) + 4px + var(--marker-triangle-h));
+      --insight-graph-daily-bar-center-y: calc(var(--insight-graph-daily-bar-top) + 11.5px);
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__graph-wrap {
+      position: relative;
+      width: 653px;
+      flex: 0 0 653px;
+      min-height: calc(
+        var(--insight-graph-daily-bar-top) + 23px + 6px + var(--insight-graph-daily-cap-h)
+      );
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__graph-wrap .insight-daily-alloc-graph {
+      position: absolute;
+      left: 0;
+      top: var(--insight-graph-daily-bar-top);
+      width: 653px;
+      height: 23px;
+      border: none;
+      box-sizing: border-box;
+      background: rgba(15, 148, 3, 0.33);
+      overflow: visible;
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap {
+      position: absolute;
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: var(--insight-graph-daily-marker-line-h);
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      transform: translateX(-50%);
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap-line,
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap-value {
+      display: block;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap--kgi {
+      top: 0;
+      left: var(--kgi-x);
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap--kpi {
+      top: calc(var(--insight-graph-daily-bar-top) + 23px + 6px);
+      left: var(--kpi-x);
+    }
+    .insight-pane--graph .insight-graph-annual .insight-graph-daily__pct {
+      position: absolute;
+      left: calc(653px + 12px);
+      top: var(--insight-graph-daily-bar-center-y);
+      transform: translateY(-50%);
+      margin: 0;
+      padding: 0;
+      min-width: 48px;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      text-align: left;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual__row-title,
+    .office-mode .insight-pane--graph .insight-graph-annual .insight-graph-daily__marker-cap,
+    .office-mode .insight-pane--graph .insight-graph-annual .insight-graph-daily__pct {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual .insight-graph-daily__graph-wrap .insight-daily-alloc-graph {
+      border: none;
+      background: #6e6e6e;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual .insight-graph-daily__graph-wrap .insight-daily-alloc-graph::before {
+      background: #d2d2d2;
+    }
+
+    /* Graph tab — Annual: Cumulative Trend 折れ線（docs/insight-graph-cumulative-trend-line-chart.md） */
+    .insight-pane--graph .insight-graph-annual-trend {
+      position: absolute;
+      left: 50%;
+      width: var(--insight-graph-annual-trend-frame-w);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-annual-trend--graph1 {
+      top: var(--insight-graph-annual-trend-top);
+    }
+    .insight-pane--graph .insight-graph-annual-trend--graph2 {
+      top: var(--insight-graph-annual-trend2-top);
+    }
+    .insight-pane--graph .insight-graph-annual-trend__heading {
+      margin: 0 0 var(--insight-graph-annual-trend-heading-gap);
+      padding: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__frame {
+      position: relative;
+      width: var(--insight-graph-annual-trend-frame-w);
+      height: var(--insight-graph-annual-trend-frame-h);
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      background: #1e1e1e;
+      pointer-events: auto;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__period {
+      position: absolute;
+      left: 432px;
+      top: 27px;
+      margin: 0;
+      color: #58e1f3;
+      font-size: 23px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__chart {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__axis-label {
+      fill: #58e1f3;
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .insight-pane--graph .insight-graph-annual-trend__line--kgi {
+      fill: none;
+      stroke: #58e1f3;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__line--kpi {
+      fill: none;
+      stroke: #f00;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__line--current {
+      fill: none;
+      stroke: #58e1f3;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__line--last-year {
+      fill: none;
+      stroke: #3ddc84;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__line--best {
+      fill: none;
+      stroke: #5b7cff;
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hover-band {
+      fill: transparent;
+      stroke: none;
+      cursor: crosshair;
+      pointer-events: all;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label {
+      position: absolute;
+      margin: 0;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+    }
+
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label--kgi {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label--kpi {
+      color: #f00;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label--current {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label--last-year {
+      color: #3ddc84;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__endpoint-label--best {
+      color: #5b7cff;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item + .insight-graph-annual-trend__legend-item {
+      margin-top: 8px;
+    }
+
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--kgi {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--kpi {
+      color: #f00;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--kgi .insight-graph-annual-trend__legend-swatch {
+      margin-left: 133px;
+      background: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--kpi .insight-graph-annual-trend__legend-swatch {
+      margin-left: 133px;
+      background: #f00;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--current {
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--last-year {
+      color: #3ddc84;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--best {
+      color: #5b7cff;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-swatch {
+      flex: 0 0 40px;
+      width: 40px;
+      height: 1px;
+      margin-right: 12px;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--current .insight-graph-annual-trend__legend-swatch {
+      margin-left: 133px;
+      background: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--last-year .insight-graph-annual-trend__legend-swatch {
+      margin-left: 133px;
+      background: #3ddc84;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__legend-item--best .insight-graph-annual-trend__legend-swatch {
+      margin-left: 133px;
+      background: #5b7cff;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__achievement {
+      position: absolute;
+      right: 18px;
+      bottom: 33px;
+      width: 400px;
+      height: 45px;
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      display: grid;
+      grid-template-columns: 280px 115px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__achievement-label,
+    .insight-pane--graph .insight-graph-annual-trend__achievement-value {
+      margin: 0;
+      padding: 0 8px;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__achievement-label {
+      border-right: 1px solid #0f9403;
+      text-align: left;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__achievement-value {
+      text-align: center;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip {
+      position: absolute;
+      z-index: 6;
+      width: 400px;
+      height: 240px;
+      box-sizing: border-box;
+      border: 1px solid #0f9403;
+      background: #1e1e1e;
+      color: #58e1f3;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.2;
+      font-family: 'Orbitron', sans-serif;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip.is-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-date {
+      margin: 0;
+      padding: 24px 22px 0;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      color: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-body {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      top: 64px;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-row + .insight-graph-annual-trend__tooltip-row {
+      margin-top: 20px;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-label {
+      flex: 1 1 auto;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__tooltip-value {
+      flex: 0 0 auto;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__guide-v {
+      stroke: #58e1f3;
+      stroke-width: 1;
+      stroke-dasharray: 4 3;
+      opacity: 0.65;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot {
+      fill: #1e1e1e;
+      stroke-width: 2;
+      opacity: 0;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot.is-visible {
+      opacity: 1;
+    }
+
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot--kgi {
+      stroke: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot--kpi {
+      stroke: #f00;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot--current {
+      stroke: #58e1f3;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot--last-year {
+      stroke: #3ddc84;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__hit-dot--best {
+      stroke: #5b7cff;
+    }
+    .insight-pane--graph .insight-graph-annual-trend__guide-v.is-visible {
+      opacity: 0.65;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__heading,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__period,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__axis-label,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__endpoint-label,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__achievement-label,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__achievement-value,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__tooltip-date,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__tooltip-label,
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__tooltip-value {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__frame {
+      border-color: #2a2a2a;
+      background: #e8e8e8;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__achievement {
+      border-color: #2a2a2a;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__achievement-label {
+      border-right-color: #2a2a2a;
+    }
+    .office-mode .insight-pane--graph .insight-graph-annual-trend__tooltip {
+      background: #fff;
+      border-color: #2a2a2a;
+    }
+    .insight-pane--graph .insight-graph-annual {
+      min-height: var(--insight-graph-annual-body-h);
+      padding-bottom: var(--insight-graph-annual-analyze-link-tail-h);
+      box-sizing: content-box;
+    }
+    .insight-pane--graph .insight-graph-annual-trend--graph1 {
+      top: var(--insight-graph-annual-trend-top);
+    }
+    .insight-pane--graph .insight-graph-annual-trend--graph2 {
+      top: var(--insight-graph-annual-trend2-top);
+    }
+
     /* Graph tab — Monthly: Cumulative Trend 折れ線（docs/insight-graph-cumulative-trend-line-chart.md） */
     .insight-pane--graph .insight-graph-monthly-trend {
       position: absolute;
@@ -7813,26 +8369,23 @@
     }
     .insight-pane--graph #insight-jump-graph-monthly > .insight-graph-analyze-link {
       top: calc(
-        var(--insight-monthly-analyze-top) + var(--insight-graph-monthly-content-h) +
-          var(--insight-kpi-graph-gap-box-to-bar)
+        var(--insight-graph-monthly-body-h) + var(--insight-graph-monthly-gap-after-graph2)
       );
     }
-    .insight-pane--graph #insight-jump-graph-annual > .insight-graph-analyze-link {
+    .insight-pane--graph #insight-graph-annual-analyze-link {
       top: calc(
-        var(--insight-annual-analyze-top) + var(--insight-graph-annual-content-h) +
-          var(--insight-kpi-graph-gap-box-to-bar)
+        var(--insight-graph-annual-body-h) + var(--insight-graph-annual-gap-after-graph2)
       );
+      bottom: auto;
+      display: block;
+      margin-top: 0;
     }
     .office-mode .insight-graph-analyze-link {
       color: #111;
       font-family: 'BIZ UDPGothic', sans-serif;
     }
 
-    /* Graph タブ: 0.5px 横線（Daily|Monthly|Annual 境界）・各帯 2000px 仮確保 */
-    #insight-pane-graph.insight-pane,
-    #insight-pane-graph .insight-overlay__content {
-      min-height: max(var(--insight-content-scroll-min-graph), 100%);
-    }
+    /* Graph タブ: 0.5px 横線（Daily|Monthly|Annual 境界）・各帯 実寸（min-height は各 section / :has で制御） */
     #insight-pane-graph .insight-overlay__hline--monthly {
       top: var(--insight-graph-daily-section-h);
     }
@@ -7857,42 +8410,58 @@
     /* KPI-DIFF-STEP3-INSIGHT-SEVERITY */
     .insight-daily-kpi__value.tw-diff--win,
     .insight-monthly-sales-summary__value.tw-diff--win,
-    .insight-annual-sales-summary__value.tw-diff--win {
+    .insight-annual-sales-summary__value.tw-diff--win,
+    .insight-monthly-comparison__value.tw-diff--win,
+    .insight-annual-comparison__value.tw-diff--win {
       color: #58e1f3;
     }
     .insight-daily-kpi__value.tw-diff--neutral,
     .insight-monthly-sales-summary__value.tw-diff--neutral,
-    .insight-annual-sales-summary__value.tw-diff--neutral {
+    .insight-annual-sales-summary__value.tw-diff--neutral,
+    .insight-monthly-comparison__value.tw-diff--neutral,
+    .insight-annual-comparison__value.tw-diff--neutral {
       color: #58e1f3;
     }
     .insight-daily-kpi__value.tw-diff--sev-90,
     .insight-monthly-sales-summary__value.tw-diff--sev-90,
-    .insight-annual-sales-summary__value.tw-diff--sev-90 {
+    .insight-annual-sales-summary__value.tw-diff--sev-90,
+    .insight-monthly-comparison__value.tw-diff--sev-90,
+    .insight-annual-comparison__value.tw-diff--sev-90 {
       color: #f9a825;
     }
     .insight-daily-kpi__value.tw-diff--sev-80,
     .insight-monthly-sales-summary__value.tw-diff--sev-80,
-    .insight-annual-sales-summary__value.tw-diff--sev-80 {
+    .insight-annual-sales-summary__value.tw-diff--sev-80,
+    .insight-monthly-comparison__value.tw-diff--sev-80,
+    .insight-annual-comparison__value.tw-diff--sev-80 {
       color: #ef6c00;
     }
     .insight-daily-kpi__value.tw-diff--sev-70,
     .insight-monthly-sales-summary__value.tw-diff--sev-70,
-    .insight-annual-sales-summary__value.tw-diff--sev-70 {
+    .insight-annual-sales-summary__value.tw-diff--sev-70,
+    .insight-monthly-comparison__value.tw-diff--sev-70,
+    .insight-annual-comparison__value.tw-diff--sev-70 {
       color: #e65100;
     }
     .insight-daily-kpi__value.tw-diff--sev-60,
     .insight-monthly-sales-summary__value.tw-diff--sev-60,
-    .insight-annual-sales-summary__value.tw-diff--sev-60 {
+    .insight-annual-sales-summary__value.tw-diff--sev-60,
+    .insight-monthly-comparison__value.tw-diff--sev-60,
+    .insight-annual-comparison__value.tw-diff--sev-60 {
       color: #e53935;
     }
     .insight-daily-kpi__value.tw-diff--sev-50,
     .insight-monthly-sales-summary__value.tw-diff--sev-50,
-    .insight-annual-sales-summary__value.tw-diff--sev-50 {
+    .insight-annual-sales-summary__value.tw-diff--sev-50,
+    .insight-monthly-comparison__value.tw-diff--sev-50,
+    .insight-annual-comparison__value.tw-diff--sev-50 {
       color: #c62828;
     }
     .insight-daily-kpi__value.tw-diff--sev-below,
     .insight-monthly-sales-summary__value.tw-diff--sev-below,
-    .insight-annual-sales-summary__value.tw-diff--sev-below {
+    .insight-annual-sales-summary__value.tw-diff--sev-below,
+    .insight-monthly-comparison__value.tw-diff--sev-below,
+    .insight-annual-comparison__value.tw-diff--sev-below {
       color: #b71c1c;
     }
     .insight-graph-monthly-trend__tooltip-value[data-field="diff"].tw-diff--win,
@@ -7929,42 +8498,58 @@
     }
     .office-mode .insight-daily-kpi__value.tw-diff--win,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--win,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--win {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--win,
+    .office-mode .insight-monthly-comparison__value.tw-diff--win,
+    .office-mode .insight-annual-comparison__value.tw-diff--win {
       color: #111;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--neutral,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--neutral,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--neutral {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--neutral,
+    .office-mode .insight-monthly-comparison__value.tw-diff--neutral,
+    .office-mode .insight-annual-comparison__value.tw-diff--neutral {
       color: #111;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-90,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-90,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-90 {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-90,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-90,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-90 {
       color: #e65100;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-80,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-80,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-80 {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-80,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-80,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-80 {
       color: #d84315;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-70,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-70,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-70 {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-70,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-70,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-70 {
       color: #c62828;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-60,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-60,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-60 {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-60,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-60,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-60 {
       color: #b71c1c;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-50,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-50,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-50 {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-50,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-50,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-50 {
       color: #9a0007;
     }
     .office-mode .insight-daily-kpi__value.tw-diff--sev-below,
     .office-mode .insight-monthly-sales-summary__value.tw-diff--sev-below,
-    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-below {
+    .office-mode .insight-annual-sales-summary__value.tw-diff--sev-below,
+    .office-mode .insight-monthly-comparison__value.tw-diff--sev-below,
+    .office-mode .insight-annual-comparison__value.tw-diff--sev-below {
       color: #7f0000;
     }
     .office-mode .insight-graph-monthly-trend__tooltip-value[data-field="diff"].tw-diff--win,
@@ -8673,9 +9258,11 @@
       align-items: center;
       gap: 10px;
     }
+    /* Daily FW: 日付連打時に ▶︎ が動かないよう固定幅。
+       日付: EN Orbitron「2026/10/28 Wed」実測≈160.3px + 5px → 166px */
     .daily-overlay__date-nav {
       border: 0;
-      padding: 0 2px;
+      padding: 0;
       margin: 0;
       background: transparent;
       color: #58e1f3;
@@ -8683,6 +9270,14 @@
       line-height: 1;
       cursor: pointer;
       font-family: 'Orbitron', sans-serif;
+      width: 20px;
+      min-width: 20px;
+      max-width: 20px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .daily-overlay__date-btn {
       border: 0;
@@ -8694,6 +9289,17 @@
       line-height: 1;
       cursor: pointer;
       font-family: 'Orbitron', sans-serif;
+      width: 166px;
+      min-width: 166px;
+      max-width: 166px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .daily-overlay__today {
       min-height: 24px;
@@ -16542,7 +17148,7 @@
                   <div class="insight-graph-daily__compare insight-kpi-graph-wrap">
                     <div class="insight-graph-daily__graph-wrap">
                       <p class="insight-graph-daily__marker-cap insight-graph-daily__marker-cap--kgi">
-                        <span class="insight-graph-daily__marker-cap-line">本日（売上）</span>
+                        <span class="insight-graph-daily__marker-cap-line">累計実績</span>
                         <span class="insight-graph-daily__marker-cap-value">¥123,456,789</span>
                       </p>
                       <div class="insight-daily-alloc-graph" id="insight-graph-monthly-cumulative-target-actual">
@@ -16550,7 +17156,7 @@
                         <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
                       </div>
                       <p class="insight-graph-daily__marker-cap insight-graph-daily__marker-cap--kpi">
-                        <span class="insight-graph-daily__marker-cap-line">本日の目標売上</span>
+                        <span class="insight-graph-daily__marker-cap-line">累計目標</span>
                         <span class="insight-graph-daily__marker-cap-value">¥100,456,789</span>
                       </p>
                     </div>
@@ -16616,12 +17222,135 @@
             </section>
             <section class="insight-overlay__section insight-overlay__section--annual insight-pane--graph__annual" id="insight-jump-graph-annual" aria-label="Annual（Graph）">
               <h3 class="insight-overlay__section-label">Annual</h3>
-                            <div class="insight-graph-annual" aria-label="Annual グラフ（準備中）"></div>
+              <div class="insight-graph-annual" aria-label="Annual グラフ比較">
+                <div class="insight-graph-daily__row insight-graph-annual__row--cumulative">
+                  <h4 class="insight-graph-annual__row-title">
+                    <span class="insight-graph-annual__row-title-line">累計目標</span>
+                    <span class="insight-graph-annual__row-title-line">vs</span>
+                    <span class="insight-graph-annual__row-title-line">累計実績</span>
+                  </h4>
+                  <div class="insight-graph-daily__compare insight-kpi-graph-wrap">
+                    <div class="insight-graph-daily__graph-wrap">
+                      <p class="insight-graph-daily__marker-cap insight-graph-daily__marker-cap--kgi">
+                        <span class="insight-graph-daily__marker-cap-line">累計実績</span>
+                        <span class="insight-graph-daily__marker-cap-value">¥123,456,789</span>
+                      </p>
+                      <div class="insight-daily-alloc-graph" id="insight-graph-annual-cumulative-target-actual">
+                        <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
+                        <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
+                      </div>
+                      <p class="insight-graph-daily__marker-cap insight-graph-daily__marker-cap--kpi">
+                        <span class="insight-graph-daily__marker-cap-line">累計目標</span>
+                        <span class="insight-graph-daily__marker-cap-value">¥100,456,789</span>
+                      </p>
+                    </div>
+                    <p class="insight-graph-daily__pct" id="insight-graph-annual-cumulative-target-actual-pct">123%</p>
+                  </div>
+                </div>
+                <div class="insight-graph-annual-trend insight-graph-annual-trend--graph1" id="insight-graph-annual-graph1" aria-label="累計目標と累計実績の推移">
+                  <h4 class="insight-graph-annual-trend__heading">累計目標推移 vs 累計実績推移</h4>
+                  <div class="insight-graph-annual-trend__frame">
+                    <p class="insight-graph-annual-trend__period" id="insight-graph-annual-graph1-period">2026</p>
+                    <svg class="insight-graph-annual-trend__chart" id="insight-graph-annual-graph1-chart" viewBox="0 0 965 618" width="965" height="618" aria-hidden="true" focusable="false">
+                      <g class="insight-graph-annual-trend__axes" aria-hidden="true"></g>
+                      <g class="insight-graph-annual-trend__series" aria-hidden="true"></g>
+                      <g class="insight-graph-annual-trend__hover-ui" aria-hidden="true"></g>
+                      <rect class="insight-graph-annual-trend__hover-band" id="insight-graph-annual-graph1-hover" x="110" y="100" width="817" height="400"></rect>
+                    </svg>
+                    <p class="insight-graph-annual-trend__endpoint-label insight-graph-annual-trend__endpoint-label--kgi" id="insight-graph-annual-graph1-end-kgi"></p>
+                    <p class="insight-graph-annual-trend__endpoint-label insight-graph-annual-trend__endpoint-label--kpi" id="insight-graph-annual-graph1-end-kpi"></p>
+                    <ul class="insight-graph-annual-trend__legend">
+                      <li class="insight-graph-annual-trend__legend-item insight-graph-annual-trend__legend-item--kgi">
+                        <span class="insight-graph-annual-trend__legend-swatch" aria-hidden="true"></span>
+                        <span>累計実績推移 (KGI)</span>
+                      </li>
+                      <li class="insight-graph-annual-trend__legend-item insight-graph-annual-trend__legend-item--kpi">
+                        <span class="insight-graph-annual-trend__legend-swatch" aria-hidden="true"></span>
+                        <span>累計目標推移 (KPI)</span>
+                      </li>
+                    </ul>
+                    <div class="insight-graph-annual-trend__achievement">
+                      <p class="insight-graph-annual-trend__achievement-label">本日累計の達成率</p>
+                      <p class="insight-graph-annual-trend__achievement-value" id="insight-graph-annual-graph1-achievement">108.3%</p>
+                    </div>
+                    <div class="insight-graph-annual-trend__tooltip" id="insight-graph-annual-graph1-tooltip" role="tooltip" hidden>
+                      <p class="insight-graph-annual-trend__tooltip-date" data-field="date">2026.5.22 fri</p>
+                      <div class="insight-graph-annual-trend__tooltip-body">
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">本日の売上 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="sales">¥123,456</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">本日の目標売上 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="target">¥122,345</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">差額 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="diff">¥1,111</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">達成率 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="achievement">110%</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="insight-graph-annual-trend insight-graph-annual-trend--graph2" id="insight-graph-annual-graph2" aria-label="年次累計推移比較">
+                  <h4 class="insight-graph-annual-trend__heading">年次累計推移比較</h4>
+                  <div class="insight-graph-annual-trend__frame">
+                    <svg class="insight-graph-annual-trend__chart" id="insight-graph-annual-graph2-chart" viewBox="0 0 965 618" width="965" height="618" aria-hidden="true" focusable="false">
+                      <g class="insight-graph-annual-trend__axes" aria-hidden="true"></g>
+                      <g class="insight-graph-annual-trend__series" aria-hidden="true"></g>
+                      <g class="insight-graph-annual-trend__hover-ui" aria-hidden="true"></g>
+                      <rect class="insight-graph-annual-trend__hover-band" id="insight-graph-annual-graph2-hover" x="110" y="100" width="817" height="400"></rect>
+                    </svg>
+                    <p class="insight-graph-annual-trend__endpoint-label insight-graph-annual-trend__endpoint-label--current" id="insight-graph-annual-graph2-end-current"></p>
+                    <p class="insight-graph-annual-trend__endpoint-label insight-graph-annual-trend__endpoint-label--last-year" id="insight-graph-annual-graph2-end-last-year"></p>
+                    <p class="insight-graph-annual-trend__endpoint-label insight-graph-annual-trend__endpoint-label--best" id="insight-graph-annual-graph2-end-best"></p>
+                    <ul class="insight-graph-annual-trend__legend">
+                      <li class="insight-graph-annual-trend__legend-item insight-graph-annual-trend__legend-item--current">
+                        <span class="insight-graph-annual-trend__legend-swatch" aria-hidden="true"></span>
+                        <span>当年累計（今年）</span>
+                      </li>
+                      <li class="insight-graph-annual-trend__legend-item insight-graph-annual-trend__legend-item--last-year">
+                        <span class="insight-graph-annual-trend__legend-swatch" aria-hidden="true"></span>
+                        <span>前年累計</span>
+                      </li>
+                      <li class="insight-graph-annual-trend__legend-item insight-graph-annual-trend__legend-item--best">
+                        <span class="insight-graph-annual-trend__legend-swatch" aria-hidden="true"></span>
+                        <span>過去最高年累計</span>
+                      </li>
+                    </ul>
+                    <div class="insight-graph-annual-trend__tooltip" id="insight-graph-annual-graph2-tooltip" role="tooltip" hidden>
+                      <p class="insight-graph-annual-trend__tooltip-date" data-field="date">2026.5.22 fri</p>
+                      <div class="insight-graph-annual-trend__tooltip-body">
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">当年累計 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="sales">¥123,456</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">前年累計 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="target">¥122,345</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">過去最高年累計 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="diff">¥1,111</span>
+                        </p>
+                        <p class="insight-graph-annual-trend__tooltip-row">
+                          <span class="insight-graph-annual-trend__tooltip-label">前年比 :</span>
+                          <span class="insight-graph-annual-trend__tooltip-value" data-field="achievement">110%</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               <a
                 class="insight-graph-analyze-link"
                 id="insight-graph-annual-analyze-link"
                 href="#insight-jump-analyze-annual"
                 >▶ 分析</a>
+              </div>
               <div class="insight-pane--graph__foot">
                 <button type="button" class="insight-annual-back-to-top insight-overlay-back-to-top" id="insight-graph-back-to-top" aria-label="ページ先頭へ">^ ページ先頭へ</button>
               </div>
@@ -16772,7 +17501,126 @@ Target Sales</p>
 
   <script>
     (function () {
-                /* KPI-INSIGHT-TW-DIFF */
+        /* KPI-INSIGHT-EXPENSE-READ */
+    (function () {
+      var MEP_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
+      var MEP_FALLBACK_FIXED = [
+        'exp_rent',
+        'exp_fixed_labor',
+        'exp_non_life_insurance',
+      ];
+      var MEP_FALLBACK_VARIABLE = [
+        'exp_food_cost',
+        'exp_drink_cost',
+        'exp_supplies',
+        'exp_misc',
+        'exp_electric',
+        'exp_gas',
+        'exp_water',
+        'exp_communication',
+        'exp_advertising',
+        'exp_outsource',
+        'exp_repair',
+        'exp_travel',
+        'exp_entertainment',
+        'exp_fee',
+        'exp_tax',
+        'exp_other',
+      ];
+
+      function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+      }
+
+      function plCatalogLines() {
+        try {
+          var raw =
+            window.__KPI_DATA_GATEWAY && window.__KPI_DATA_GATEWAY.getJson(MEP_CATALOG_KEY);
+          if (raw && Array.isArray(raw.lines)) return raw.lines;
+        } catch (_e) {}
+        return null;
+      }
+
+      function lineIdsForBucket(bucket) {
+        var lines = plCatalogLines();
+        var out = [];
+        if (lines && lines.length) {
+          lines.forEach(function (line) {
+            if (!line || line.active === false) return;
+            if (line.bucket === bucket && line.lineId) out.push(String(line.lineId));
+          });
+        }
+        if (!out.length) {
+          out = (bucket === 'fixed' ? MEP_FALLBACK_FIXED : MEP_FALLBACK_VARIABLE).slice();
+        }
+        return out;
+      }
+
+      function sumBucketThroughMonth(dailyExpenses, rowIds, year, month, throughDay) {
+        var y = Number(year);
+        var m = Number(month);
+        var dayMax = Number(throughDay);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+          return { sum: 0, hasData: false };
+        }
+        var dim = new Date(y, m, 0).getDate();
+        if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
+        if (dayMax > dim) dayMax = dim;
+        var map = dailyExpenses && typeof dailyExpenses === 'object' ? dailyExpenses : {};
+        var sum = 0;
+        var hasData = false;
+        for (var d = 1; d <= dayMax; d++) {
+          var iso = y + '-' + pad2(m) + '-' + pad2(d);
+          (rowIds || []).forEach(function (rowId) {
+            var byRow = map[rowId];
+            if (!byRow || !Object.prototype.hasOwnProperty.call(byRow, iso)) return;
+            hasData = true;
+            var n = Number(byRow[iso]);
+            if (Number.isFinite(n)) sum += n;
+          });
+        }
+        return { sum: Math.round(sum), hasData: hasData };
+      }
+
+      /**
+       * Read-only: MEP `years.{Y}.dailyExpenses` month totals (fixed / variable).
+       * Does NOT merge PL monthly amounts. throughDay optional (1–31); omit = full month.
+       * @returns { fixed, variable, total, hasData, source }
+       */
+      window.__insightReadMonthExpense = function (year, month, throughDay) {
+        var empty = {
+          fixed: 0,
+          variable: 0,
+          total: 0,
+          hasData: false,
+          source: 'mep-daily',
+        };
+        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {
+          return empty;
+        }
+        var payload = KpiYearStore.loadMepYearPayload(year);
+        var dailyExpenses = (payload && payload.dailyExpenses) || {};
+        var fixedIds = lineIdsForBucket('fixed');
+        var variableIds = lineIdsForBucket('variable');
+        var fixed = sumBucketThroughMonth(dailyExpenses, fixedIds, year, month, throughDay);
+        var variable = sumBucketThroughMonth(
+          dailyExpenses,
+          variableIds,
+          year,
+          month,
+          throughDay
+        );
+        return {
+          fixed: fixed.sum,
+          variable: variable.sum,
+          total: fixed.sum + variable.sum,
+          hasData: fixed.hasData || variable.hasData,
+          source: 'mep-daily',
+        };
+      };
+    })();
+    /* END KPI-INSIGHT-EXPENSE-READ */
+        /* KPI-INSIGHT-TW-DIFF */
     (function () {
       var DASH = '—';
 
@@ -16871,6 +17719,810 @@ Target Sales</p>
         );
       }
 
+      function patchAnnualSalesSummaryProgressRows(block, m) {
+        var rows = block.querySelectorAll('.insight-annual-sales-summary__row');
+        var bdEl = rows[4] && rows[4].querySelector('.insight-annual-sales-summary__value');
+        var dailyEl = rows[5] && rows[5].querySelector('.insight-annual-sales-summary__value');
+        if (!m) {
+          if (bdEl) bdEl.textContent = DASH;
+          if (dailyEl) dailyEl.textContent = DASH;
+          return;
+        }
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
+        if (dailyEl) {
+          dailyEl.textContent =
+            m.hasPlan && m.annualDailyNeed != null
+              ? fmtInsightMoney(m.annualDailyNeed)
+              : DASH;
+        }
+      }
+
+      function fmtInsightGapPct(actual, target) {
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return DASH;
+        return Math.round(((actual - target) / target) * 100) + '%';
+      }
+
+      function patchAnnualCurrentProgressBlock(block, m) {
+        var rows = block.querySelectorAll('.insight-annual-current-progress__row');
+        var ytdTEl = rows[0] && rows[0].querySelector('.insight-annual-current-progress__value');
+        var gapEl = rows[1] && rows[1].querySelector('.insight-annual-current-progress__value');
+        var achEl = rows[2] && rows[2].querySelector('.insight-annual-current-progress__value');
+        var gapPctEl = rows[3] && rows[3].querySelector('.insight-annual-current-progress__value');
+        if (!m) {
+          if (ytdTEl) ytdTEl.textContent = DASH;
+          if (gapEl) {
+            gapEl.textContent = DASH;
+            window.applyInsightTwDiffEl(gapEl, NaN, NaN);
+          }
+          if (achEl) achEl.textContent = DASH;
+          if (gapPctEl) gapPctEl.textContent = DASH;
+          return;
+        }
+        if (ytdTEl) ytdTEl.textContent = m.hasPlan ? fmtInsightMoney(m.ytdT) : DASH;
+        if (gapEl) {
+          gapEl.textContent =
+            m.hasPlan && typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(m.ytdA, m.ytdT)
+              : DASH;
+          if (m.hasPlan) window.applyInsightTwDiffEl(gapEl, m.ytdA, m.ytdT);
+          else window.applyInsightTwDiffEl(gapEl, NaN, NaN);
+        }
+        if (achEl) achEl.textContent = m.hasPlan ? fmtInsightAchPct(m.ytdA, m.ytdT) : DASH;
+        if (gapPctEl) {
+          gapPctEl.textContent = m.hasPlan ? fmtInsightGapPct(m.ytdA, m.ytdT) : DASH;
+        }
+      }
+
+      function patchAnalyzeAnnualBlocks(root, m) {
+        var section = root.querySelector('#insight-jump-analyze-annual');
+        if (!section) return;
+        var salesSummary = section.querySelector('.insight-annual-sales-summary');
+        var currentProgress = section.querySelector('.insight-annual-current-progress');
+        if (salesSummary) patchAnnualSalesSummaryProgressRows(salesSummary, m);
+        if (currentProgress) patchAnnualCurrentProgressBlock(currentProgress, m);
+      }
+
+      function patchMonthlyHistoricalCompareBlock(block, m, iso) {
+        var rows = block.querySelectorAll('.insight-monthly-historical-compare__row');
+        function setRow(i, text, actual, baseline) {
+          var el = rows[i] && rows[i].querySelector('.insight-monthly-historical-compare__value');
+          if (!el) return;
+          el.textContent = text;
+          if (arguments.length >= 4 && typeof window.applyInsightTwDiffEl === 'function') {
+            window.applyInsightTwDiffEl(el, actual, baseline);
+          }
+        }
+        function clearAll() {
+          for (var i = 0; i < 6; i++) setRow(i, DASH, NaN, NaN);
+        }
+        if (!m || !iso) {
+          clearAll();
+          return;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          clearAll();
+          return;
+        }
+        var sumFn =
+          typeof window.__sumMonthSalesThroughDay === 'function'
+            ? window.__sumMonthSalesThroughDay
+            : null;
+        if (!sumFn) {
+          clearAll();
+          return;
+        }
+        var current = Number(m.mtdA);
+        function prior(yearsBack) {
+          return sumFn(y - yearsBack, month, day);
+        }
+        var p1 = prior(1);
+        var p2 = prior(2);
+        var p3 = prior(3);
+        setRow(0, p1 && p1.hasData ? fmtInsightMoney(p1.sum) : DASH);
+        if (p1 && p1.hasData && Number.isFinite(current)) {
+          setRow(
+            1,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p1.sum)
+              : DASH,
+            current,
+            p1.sum
+          );
+        } else {
+          setRow(1, DASH, NaN, NaN);
+        }
+        setRow(2, p2 && p2.hasData ? fmtInsightMoney(p2.sum) : DASH);
+        if (p2 && p2.hasData && Number.isFinite(current)) {
+          setRow(
+            3,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p2.sum)
+              : DASH,
+            current,
+            p2.sum
+          );
+        } else {
+          setRow(3, DASH, NaN, NaN);
+        }
+        setRow(4, p3 && p3.hasData ? fmtInsightMoney(p3.sum) : DASH);
+        if (p3 && p3.hasData && Number.isFinite(current)) {
+          setRow(
+            5,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p3.sum)
+              : DASH,
+            current,
+            p3.sum
+          );
+        } else {
+          setRow(5, DASH, NaN, NaN);
+        }
+      }
+
+      function patchAnalyzeMonthlyHistoricalCompare(root, m, iso) {
+        root.querySelectorAll('.insight-monthly-historical-compare').forEach(function (block) {
+          patchMonthlyHistoricalCompareBlock(block, m, iso);
+        });
+      }
+
+      function patchAnnualHistoricalCompareBlock(block, m, iso) {
+        var rows = block.querySelectorAll('.insight-annual-historical-compare__row');
+        function setRow(i, text, actual, baseline) {
+          var el = rows[i] && rows[i].querySelector('.insight-annual-historical-compare__value');
+          if (!el) return;
+          el.textContent = text;
+          if (arguments.length >= 4 && typeof window.applyInsightTwDiffEl === 'function') {
+            window.applyInsightTwDiffEl(el, actual, baseline);
+          }
+        }
+        function clearAll() {
+          for (var i = 0; i < 7; i++) setRow(i, DASH, NaN, NaN);
+        }
+        if (!m || !iso) {
+          clearAll();
+          return;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          clearAll();
+          return;
+        }
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+        if (!sumFn) {
+          clearAll();
+          return;
+        }
+        var current = Number(m.ytdA);
+        function prior(yearsBack) {
+          return sumFn(y - yearsBack, month, day);
+        }
+        var p1 = prior(1);
+        var p2 = prior(2);
+        var p3 = prior(3);
+        setRow(0, p1 && p1.hasData ? fmtInsightMoney(p1.sum) : DASH);
+        if (p1 && p1.hasData && Number.isFinite(current)) {
+          setRow(
+            1,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p1.sum)
+              : DASH,
+            current,
+            p1.sum
+          );
+          setRow(2, fmtInsightAchPct(current, p1.sum));
+        } else {
+          setRow(1, DASH, NaN, NaN);
+          setRow(2, DASH);
+        }
+        setRow(3, p2 && p2.hasData ? fmtInsightMoney(p2.sum) : DASH);
+        if (p2 && p2.hasData && Number.isFinite(current)) {
+          setRow(
+            4,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p2.sum)
+              : DASH,
+            current,
+            p2.sum
+          );
+        } else {
+          setRow(4, DASH, NaN, NaN);
+        }
+        setRow(5, p3 && p3.hasData ? fmtInsightMoney(p3.sum) : DASH);
+        if (p3 && p3.hasData && Number.isFinite(current)) {
+          setRow(
+            6,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, p3.sum)
+              : DASH,
+            current,
+            p3.sum
+          );
+        } else {
+          setRow(6, DASH, NaN, NaN);
+        }
+      }
+
+      function patchAnalyzeAnnualHistoricalCompare(root, m, iso) {
+        root.querySelectorAll('.insight-annual-historical-compare').forEach(function (block) {
+          patchAnnualHistoricalCompareBlock(block, m, iso);
+        });
+      }
+
+      /* Summary Comparison (sales only; margin reserved until expense lands) */
+      function avgPriorPeriodSales(sumFn, y, month, day) {
+        if (!sumFn) return null;
+        var sum = 0;
+        var n = 0;
+        for (var back = 1; back <= 3; back++) {
+          var prior = sumFn(y - back, month, day);
+          if (prior && prior.hasData && Number.isFinite(prior.sum)) {
+            sum += prior.sum;
+            n += 1;
+          }
+        }
+        if (n <= 0) return null;
+        return sum / n;
+      }
+
+      /** Same-weekday sales avg for prior 1–3 years (business days only). */
+      function avgPriorSameWeekdaySales(iso) {
+        var sameFn =
+          typeof window.__sameWeekdayIso === 'function' ? window.__sameWeekdayIso : null;
+        var bizFn =
+          typeof window.__isTwBusinessDay === 'function' ? window.__isTwBusinessDay : null;
+        var salesFn =
+          typeof window.__readTwDaySales === 'function' ? window.__readTwDaySales : null;
+        if (!sameFn || !bizFn || !salesFn || !iso) return null;
+        var sum = 0;
+        var n = 0;
+        for (var back = 1; back <= 3; back++) {
+          var priorIso = sameFn(iso, back);
+          if (!priorIso || !bizFn(priorIso)) continue;
+          var amt = Number(salesFn(priorIso));
+          if (!Number.isFinite(amt)) amt = 0;
+          sum += amt;
+          n += 1;
+        }
+        if (n <= 0) return null;
+        return sum / n;
+      }
+
+      function setSummaryComparisonAllocWidget(key, pct, disabled) {
+        var widgets = window.__insightSummaryComparisonWidgets;
+        var w = widgets && widgets[key];
+        if (!w) return;
+        if (disabled) {
+          if (typeof w.setDisabled === 'function') w.setDisabled();
+          return;
+        }
+        if (typeof w.setPercent === 'function') {
+          w.setPercent(Math.max(0.1, Number(pct)));
+        }
+      }
+
+      function patchMonthlyComparisonBlock(block, m, iso) {
+        var rows = block.querySelectorAll('.insight-monthly-comparison__row');
+        function setRow(i, text, actual, baseline) {
+          var el = rows[i] && rows[i].querySelector('.insight-monthly-comparison__value');
+          if (!el) return;
+          el.textContent = text;
+          if (arguments.length >= 4 && typeof window.applyInsightTwDiffEl === 'function') {
+            window.applyInsightTwDiffEl(el, actual, baseline);
+          }
+        }
+        function clearAll() {
+          for (var i = 0; i < 4; i++) setRow(i, DASH, NaN, NaN);
+          setSummaryComparisonAllocWidget('monthly', 0, true);
+        }
+        if (!m || !iso) {
+          clearAll();
+          return;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          clearAll();
+          return;
+        }
+        var sumFn =
+          typeof window.__sumMonthSalesThroughDay === 'function'
+            ? window.__sumMonthSalesThroughDay
+            : null;
+        if (!sumFn) {
+          clearAll();
+          return;
+        }
+        var current = Number(m.mtdA);
+        var last = sumFn(y - 1, month, day);
+        setRow(0, Number.isFinite(current) ? fmtInsightMoney(current) : DASH);
+        setRow(1, last && last.hasData ? fmtInsightMoney(last.sum) : DASH);
+        if (last && last.hasData && Number.isFinite(current)) {
+          setRow(
+            2,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, last.sum)
+              : DASH,
+            current,
+            last.sum
+          );
+        } else {
+          setRow(2, DASH, NaN, NaN);
+        }
+        /* Margin Change — Expense 未接続 */
+        setRow(3, DASH, NaN, NaN);
+
+        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
+        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {
+          setSummaryComparisonAllocWidget('monthly', (current / histAvg) * 100, false);
+        } else {
+          setSummaryComparisonAllocWidget('monthly', 0, true);
+        }
+      }
+
+      function patchAnnualComparisonBlock(block, m, iso) {
+        var rows = block.querySelectorAll('.insight-annual-comparison__row');
+        function setRow(i, text, actual, baseline) {
+          var el = rows[i] && rows[i].querySelector('.insight-annual-comparison__value');
+          if (!el) return;
+          el.textContent = text;
+          if (arguments.length >= 4 && typeof window.applyInsightTwDiffEl === 'function') {
+            window.applyInsightTwDiffEl(el, actual, baseline);
+          }
+        }
+        function clearAll() {
+          for (var i = 0; i < 4; i++) setRow(i, DASH, NaN, NaN);
+          setSummaryComparisonAllocWidget('annual', 0, true);
+        }
+        if (!m || !iso) {
+          clearAll();
+          return;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          clearAll();
+          return;
+        }
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+        if (!sumFn) {
+          clearAll();
+          return;
+        }
+        var current = Number(m.ytdA);
+        var last = sumFn(y - 1, month, day);
+        setRow(0, Number.isFinite(current) ? fmtInsightMoney(current) : DASH);
+        setRow(1, last && last.hasData ? fmtInsightMoney(last.sum) : DASH);
+        if (last && last.hasData && Number.isFinite(current)) {
+          setRow(
+            2,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, last.sum)
+              : DASH,
+            current,
+            last.sum
+          );
+        } else {
+          setRow(2, DASH, NaN, NaN);
+        }
+        /* Margin Change — Expense 未接続 */
+        setRow(3, DASH, NaN, NaN);
+
+        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
+        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {
+          setSummaryComparisonAllocWidget('annual', (current / histAvg) * 100, false);
+        } else {
+          setSummaryComparisonAllocWidget('annual', 0, true);
+        }
+      }
+
+      function patchSummaryComparisonBlocks(root, m, iso) {
+        root.querySelectorAll('.insight-monthly-comparison').forEach(function (block) {
+          patchMonthlyComparisonBlock(block, m, iso);
+        });
+        root.querySelectorAll('.insight-annual-comparison').forEach(function (block) {
+          patchAnnualComparisonBlock(block, m, iso);
+        });
+      }
+
+      function patchSummaryDailyComparisonBar(m, iso) {
+        if (!m || !iso || !m.isBusinessToday) {
+          setSummaryComparisonAllocWidget('daily', 0, true);
+          return;
+        }
+        var histAvg = avgPriorSameWeekdaySales(iso);
+        var current = Number(m.dailySales);
+        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {
+          setSummaryComparisonAllocWidget('daily', (current / histAvg) * 100, false);
+        } else {
+          setSummaryComparisonAllocWidget('daily', 0, true);
+        }
+      }
+
+      function fmtInsightCount(n) {
+        if (!Number.isFinite(Number(n))) return DASH;
+        return String(Math.round(Number(n)));
+      }
+
+      function patchSummaryMonthlyKpiBlock(block, mtdA) {
+        var rows = block.querySelectorAll('.insight-monthly-kpi__row');
+        var salesEl = rows[0] && rows[0].querySelector('.insight-monthly-kpi__value');
+        if (salesEl) salesEl.textContent = fmtInsightMoney(mtdA);
+      }
+
+      function patchSummaryMonthlyProgressBlock(block, m) {
+        var rows = block.querySelectorAll('.insight-monthly-progress__row');
+        var bdEl = rows[0] && rows[0].querySelector('.insight-monthly-progress__value');
+        var needEl = rows[1] && rows[1].querySelector('.insight-monthly-progress__value');
+        var dailyEl = rows[2] && rows[2].querySelector('.insight-monthly-progress__value');
+        if (!m) {
+          if (bdEl) bdEl.textContent = DASH;
+          if (needEl) needEl.textContent = DASH;
+          if (dailyEl) dailyEl.textContent = DASH;
+          return;
+        }
+        var monthlyNeed =
+          m.hasPlan && Number.isFinite(m.monthlyFullTarget)
+            ? m.monthlyFullTarget - m.mtdA
+            : null;
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.monthRemainingBD);
+        if (needEl) {
+          needEl.textContent =
+            monthlyNeed != null && Number.isFinite(monthlyNeed)
+              ? fmtInsightMoney(monthlyNeed)
+              : DASH;
+        }
+        if (dailyEl) {
+          dailyEl.textContent =
+            m.hasPlan && m.monthlyDailyNeed != null
+              ? fmtInsightMoney(m.monthlyDailyNeed)
+              : DASH;
+        }
+      }
+
+      function patchSummaryMonthlyBlocks(root, m) {
+        var section = root.querySelector('#insight-jump-summary-monthly');
+        if (!section) return;
+        var kpi = section.querySelector('.insight-monthly-kpi');
+        var progress = section.querySelector('.insight-monthly-progress');
+        if (!m) {
+          if (kpi) patchSummaryMonthlyKpiBlock(kpi, NaN);
+          if (progress) patchSummaryMonthlyProgressBlock(progress, null);
+          return;
+        }
+        if (kpi) patchSummaryMonthlyKpiBlock(kpi, m.mtdA);
+        if (progress) patchSummaryMonthlyProgressBlock(progress, m);
+      }
+
+      function fmtInsightAchPct(actual, target) {
+        if (typeof window.__twFmtAchPct === 'function') return window.__twFmtAchPct(actual, target);
+        if (!Number.isFinite(actual) || !Number.isFinite(target) || target <= 0) return DASH;
+        return Math.round((actual / target) * 100) + '%';
+      }
+
+      function setInsightRevisionValue(el, text) {
+        if (el) el.textContent = text;
+      }
+
+      function revisionValue(groups, groupIdx, rowIdx) {
+        var g = groups[groupIdx];
+        if (!g) return null;
+        var rows = g.querySelectorAll('.insight-annual-target-revision__row');
+        var row = rows[rowIdx];
+        return row && row.querySelector('.insight-annual-target-revision__value');
+      }
+
+      function patchSummaryAnnualKpiBlock(block, ytdA) {
+        var rows = block.querySelectorAll('.insight-annual-kpi__row');
+        var salesEl = rows[0] && rows[0].querySelector('.insight-annual-kpi__value');
+        if (salesEl) salesEl.textContent = fmtInsightMoney(ytdA);
+      }
+
+      function patchSummaryAnnualProgressBlock(block, m) {
+        var rows = block.querySelectorAll('.insight-annual-progress__row');
+        var bdEl = rows[0] && rows[0].querySelector('.insight-annual-progress__value');
+        var needEl = rows[1] && rows[1].querySelector('.insight-annual-progress__value');
+        var dailyEl = rows[2] && rows[2].querySelector('.insight-annual-progress__value');
+        if (!m) {
+          if (bdEl) bdEl.textContent = DASH;
+          if (needEl) needEl.textContent = DASH;
+          if (dailyEl) dailyEl.textContent = DASH;
+          return;
+        }
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
+        if (needEl) {
+          needEl.textContent =
+            m.hasPlan && m.annualRemaining != null
+              ? fmtInsightMoney(m.annualRemaining)
+              : DASH;
+        }
+        if (dailyEl) {
+          dailyEl.textContent =
+            m.hasPlan && m.annualDailyNeed != null
+              ? fmtInsightMoney(m.annualDailyNeed)
+              : DASH;
+        }
+      }
+
+      function patchSummaryAnnualTargetRevisionBlock(block, m) {
+        var groups = block.querySelectorAll('.insight-annual-target-revision__group');
+        if (!m) {
+          for (var gi = 0; gi < groups.length; gi++) {
+            var gRows = groups[gi].querySelectorAll('.insight-annual-target-revision__row');
+            for (var ri = 0; ri < gRows.length; ri++) {
+              var el = gRows[ri].querySelector('.insight-annual-target-revision__value');
+              if (el) el.textContent = DASH;
+            }
+          }
+          return;
+        }
+        setInsightRevisionValue(
+          revisionValue(groups, 0, 0),
+          m.annualTarget != null ? fmtInsightMoney(m.annualTarget) : DASH
+        );
+        setInsightRevisionValue(revisionValue(groups, 0, 1), fmtInsightMoney(m.ytdA));
+        setInsightRevisionValue(
+          revisionValue(groups, 0, 2),
+          m.hasPlan && m.annualRemaining != null ? fmtInsightMoney(m.annualRemaining) : DASH
+        );
+        setInsightRevisionValue(revisionValue(groups, 1, 0), fmtInsightCount(m.yearRemainingBD));
+        setInsightRevisionValue(
+          revisionValue(groups, 1, 1),
+          m.hasPlan && m.annualDailyNeed != null ? fmtInsightMoney(m.annualDailyNeed) : DASH
+        );
+        setInsightRevisionValue(
+          revisionValue(groups, 2, 0),
+          m.hasPlan ? fmtInsightMoney(m.ytdT) : DASH
+        );
+        setInsightRevisionValue(
+          revisionValue(groups, 2, 1),
+          m.hasPlan && typeof window.__twFmtDiff === 'function'
+            ? window.__twFmtDiff(m.ytdA, m.ytdT)
+            : DASH
+        );
+        setInsightRevisionValue(
+          revisionValue(groups, 2, 2),
+          m.hasPlan ? fmtInsightAchPct(m.ytdA, m.ytdT) : DASH
+        );
+      }
+
+      function patchSummaryAnnualBlocks(root, m) {
+        var section = root.querySelector('#insight-jump-summary-annual');
+        if (!section) return;
+        var kpi = section.querySelector('.insight-annual-kpi');
+        var progress = section.querySelector('.insight-annual-progress');
+        var revision = section.querySelector('.insight-annual-target-revision');
+        if (!m) {
+          if (kpi) patchSummaryAnnualKpiBlock(kpi, NaN);
+          if (progress) patchSummaryAnnualProgressBlock(progress, null);
+          if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
+          return;
+        }
+        if (kpi) patchSummaryAnnualKpiBlock(kpi, m.ytdA);
+        if (progress) patchSummaryAnnualProgressBlock(progress, m);
+        if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
+      }
+
+      /* Insight → Graph → Daily */
+      function setGraphDailyAllocWidget(key, pct, disabled) {
+        var widgets = window.__insightGraphDailyWidgets;
+        var w = widgets && widgets[key];
+        if (!w) return;
+        if (disabled) {
+          if (typeof w.setDisabled === 'function') w.setDisabled();
+          return;
+        }
+        if (typeof w.setPercent === 'function') {
+          w.setPercent(Math.max(0.1, Number(pct)));
+        }
+      }
+
+      function setGraphDailyRowCaps(row, kgiText, kpiText) {
+        if (!row) return;
+        var caps = row.querySelectorAll('.insight-graph-daily__marker-cap-value');
+        if (caps[0]) caps[0].textContent = kgiText;
+        if (caps[1]) caps[1].textContent = kpiText;
+      }
+
+      function layoutGraphDailyHistoricalBars(root) {
+        if (!root) return;
+        var trackW = 588;
+        var items = Array.prototype.slice.call(
+          root.querySelectorAll('.insight-graph-daily-historical__item')
+        );
+        var max = 0;
+        items.forEach(function (item) {
+          if (item.classList.contains('insight-graph-daily-historical__item--off')) return;
+          var amt = Number(item.getAttribute('data-amount'));
+          if (Number.isFinite(amt) && amt > max) max = amt;
+        });
+        items.forEach(function (item) {
+          if (item.classList.contains('insight-graph-daily-historical__item--off')) return;
+          var fill = item.querySelector('.insight-graph-daily-historical__bar-fill');
+          var amt = Number(item.getAttribute('data-amount'));
+          if (!fill) return;
+          if (!Number.isFinite(amt) || max <= 0) {
+            fill.style.width = '0';
+            return;
+          }
+          fill.style.width = Math.round(trackW * (amt / max)) + 'px';
+        });
+      }
+
+      function patchGraphDailyHistorical(block, iso) {
+        if (!block || !iso) return;
+        var sameFn =
+          typeof window.__sameWeekdayIso === 'function' ? window.__sameWeekdayIso : null;
+        var bizFn =
+          typeof window.__isTwBusinessDay === 'function' ? window.__isTwBusinessDay : null;
+        var salesFn =
+          typeof window.__readTwDaySales === 'function' ? window.__readTwDaySales : null;
+        var items = block.querySelectorAll('.insight-graph-daily-historical__item');
+        if (!sameFn || !bizFn || !salesFn || !items.length) return;
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+          var yearIso = sameFn(iso, i);
+          if (!yearIso) continue;
+          var y = Number(String(yearIso).split('-')[0]);
+          item.setAttribute('data-year', String(y));
+          var yearEl = item.querySelector('.insight-graph-daily-historical__year');
+          if (yearEl && Number.isFinite(y)) yearEl.textContent = String(y);
+          var valueEl = item.querySelector('.insight-graph-daily-historical__value');
+          var track = item.querySelector('.insight-graph-daily-historical__bar-track');
+          var isBiz = bizFn(yearIso);
+          if (!isBiz) {
+            item.classList.add('insight-graph-daily-historical__item--off');
+            item.removeAttribute('data-amount');
+            if (track) track.innerHTML = '';
+            if (valueEl) valueEl.textContent = 'OFF';
+            continue;
+          }
+          item.classList.remove('insight-graph-daily-historical__item--off');
+          var amt = Number(salesFn(yearIso));
+          if (!Number.isFinite(amt)) amt = 0;
+          item.setAttribute('data-amount', String(amt));
+          if (track && !track.querySelector('.insight-graph-daily-historical__bar-fill')) {
+            track.innerHTML = '<div class="insight-graph-daily-historical__bar-fill"></div>';
+          }
+          if (valueEl) valueEl.textContent = fmtInsightMoney(amt);
+        }
+        layoutGraphDailyHistoricalBars(block);
+      }
+
+      function patchGraphDailyBlocks(root, m, iso) {
+        var section = root.querySelector('#insight-jump-graph-daily');
+        if (!section) return;
+        var row1 = section.querySelector('.insight-graph-daily__row--target-actual');
+        var row2 = section.querySelector('.insight-graph-daily__row--last-year-weekday');
+        var hist = section.querySelector('#insight-graph-daily-historical');
+
+        function clearRow1() {
+          setGraphDailyRowCaps(row1, DASH, DASH);
+          setGraphDailyAllocWidget('targetActual', 0, true);
+        }
+        function clearRow2() {
+          setGraphDailyRowCaps(row2, DASH, DASH);
+          setGraphDailyAllocWidget('lastYearWeekday', 0, true);
+        }
+
+        if (!m || !iso) {
+          clearRow1();
+          clearRow2();
+          return;
+        }
+
+        var hasDailyPlan = m.isBusinessToday && m.dailyTarget != null;
+        if (hasDailyPlan) {
+          setGraphDailyRowCaps(
+            row1,
+            fmtInsightMoney(m.dailySales),
+            fmtInsightMoney(m.dailyTarget)
+          );
+          var pct1 =
+            Number(m.dailyTarget) > 0
+              ? (Number(m.dailySales) / Number(m.dailyTarget)) * 100
+              : NaN;
+          if (Number.isFinite(pct1)) setGraphDailyAllocWidget('targetActual', pct1, false);
+          else clearRow1();
+        } else {
+          clearRow1();
+        }
+
+        var sameFn =
+          typeof window.__sameWeekdayIso === 'function' ? window.__sameWeekdayIso : null;
+        var bizFn =
+          typeof window.__isTwBusinessDay === 'function' ? window.__isTwBusinessDay : null;
+        var salesFn =
+          typeof window.__readTwDaySales === 'function' ? window.__readTwDaySales : null;
+        if (!m.isBusinessToday || !sameFn || !bizFn || !salesFn) {
+          clearRow2();
+        } else {
+          var lyIso = sameFn(iso, 1);
+          var lyBiz = lyIso && bizFn(lyIso);
+          var lySales = lyIso && lyBiz ? Number(salesFn(lyIso)) : NaN;
+          if (lyBiz && Number.isFinite(lySales) && lySales > 0) {
+            setGraphDailyRowCaps(
+              row2,
+              fmtInsightMoney(m.dailySales),
+              fmtInsightMoney(lySales)
+            );
+            var pct2 = (Number(m.dailySales) / lySales) * 100;
+            setGraphDailyAllocWidget('lastYearWeekday', pct2, false);
+          } else if (lyBiz && Number.isFinite(lySales)) {
+            setGraphDailyRowCaps(
+              row2,
+              fmtInsightMoney(m.dailySales),
+              fmtInsightMoney(lySales)
+            );
+            setGraphDailyAllocWidget('lastYearWeekday', 0, true);
+          } else {
+            setGraphDailyRowCaps(row2, fmtInsightMoney(m.dailySales), DASH);
+            setGraphDailyAllocWidget('lastYearWeekday', 0, true);
+          }
+        }
+
+        if (hist) patchGraphDailyHistorical(hist, iso);
+      }
+
+      /* Insight → Graph → Monthly / Annual 累計横棒 */
+      function setGraphCumAllocWidget(key, pct, disabled) {
+        var widgets = window.__insightGraphCumWidgets;
+        var w = widgets && widgets[key];
+        if (!w) return;
+        if (disabled) {
+          if (typeof w.setDisabled === 'function') w.setDisabled();
+          return;
+        }
+        if (typeof w.setPercent === 'function') {
+          w.setPercent(Math.max(0.1, Number(pct)));
+        }
+      }
+
+      function patchGraphCumRow(row, widgetKey, actual, target, hasPlan) {
+        if (!hasPlan || !Number.isFinite(Number(actual)) || !Number.isFinite(Number(target))) {
+          setGraphDailyRowCaps(row, DASH, DASH);
+          setGraphCumAllocWidget(widgetKey, 0, true);
+          return;
+        }
+        var a = Number(actual);
+        var t = Number(target);
+        setGraphDailyRowCaps(row, fmtInsightMoney(a), fmtInsightMoney(t));
+        if (t > 0) setGraphCumAllocWidget(widgetKey, (a / t) * 100, false);
+        else setGraphCumAllocWidget(widgetKey, 0, true);
+      }
+
+      function patchGraphMonthlyAnnualCumBars(root, m) {
+        var monthlyRow = root.querySelector(
+          '#insight-jump-graph-monthly .insight-graph-monthly__row--cumulative'
+        );
+        var annualRow = root.querySelector(
+          '#insight-jump-graph-annual .insight-graph-annual__row--cumulative'
+        );
+        if (!m) {
+          patchGraphCumRow(monthlyRow, 'monthly', NaN, NaN, false);
+          patchGraphCumRow(annualRow, 'annual', NaN, NaN, false);
+          return;
+        }
+        patchGraphCumRow(monthlyRow, 'monthly', m.mtdA, m.mtdT, m.hasPlan);
+        patchGraphCumRow(annualRow, 'annual', m.ytdA, m.ytdT, m.hasPlan);
+      }
+
       window.renderInsightTwDiffs = function (iso) {
         var root = document.getElementById('insight-overlay');
         if (!root) return;
@@ -16909,15 +18561,70 @@ Target Sales</p>
           }
           patchAnnualSummaryBlock(block, m.ytdA, m.ytdT, m.hasPlan);
         });
+
+        patchSummaryMonthlyBlocks(root, m);
+        patchSummaryAnnualBlocks(root, m);
+        patchSummaryComparisonBlocks(root, m, iso);
+        patchSummaryDailyComparisonBar(m, iso);
+        patchAnalyzeAnnualBlocks(root, m);
+        patchAnalyzeMonthlyHistoricalCompare(root, m, iso);
+        patchAnalyzeAnnualHistoricalCompare(root, m, iso);
+        patchGraphDailyBlocks(root, m, iso);
+        patchGraphMonthlyAnnualCumBars(root, m);
+        patchAnalyzeMonthlyExpenseCurrent(m, iso);
       };
+
+      function setExpensePlChartPct(chartEl, fixedPct, variablePct) {
+        if (!chartEl) return;
+        var f = Math.round(Number(fixedPct));
+        var v = Math.round(Number(variablePct));
+        if (!Number.isFinite(f) || f < 0) f = 0;
+        if (!Number.isFinite(v) || v < 0) v = 0;
+        chartEl.style.setProperty('--fixed-pct', String(f));
+        chartEl.style.setProperty('--variable-pct', String(v));
+        var fixedEl = chartEl.querySelector('[data-role="fixed-pct"]');
+        var variableEl = chartEl.querySelector('[data-role="variable-pct"]');
+        if (fixedEl) fixedEl.textContent = f + '%';
+        if (variableEl) variableEl.textContent = v + '%';
+      }
+
+      /* Phase2: Analyze → Monthly Expense 当月1本のみ（MEP daily ÷ mtdA） */
+      function patchAnalyzeMonthlyExpenseCurrent(m, iso) {
+        var chart = document.getElementById('insight-analyze-expense-pl-current');
+        if (!chart) return;
+        if (!m || !iso || typeof window.__insightReadMonthExpense !== 'function') {
+          setExpensePlChartPct(chart, 0, 0);
+          return;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          setExpensePlChartPct(chart, 0, 0);
+          return;
+        }
+        var exp = window.__insightReadMonthExpense(y, month, day);
+        var sales = Number(m.mtdA);
+        if (!exp || !exp.hasData || !Number.isFinite(sales) || sales <= 0) {
+          setExpensePlChartPct(chart, 0, 0);
+          return;
+        }
+        setExpensePlChartPct(
+          chart,
+          (Number(exp.fixed) / sales) * 100,
+          (Number(exp.variable) / sales) * 100
+        );
+      }
 
       function refreshInsightTwDiffsFromStore() {
         var root = document.getElementById('insight-overlay');
         if (!root || root.hidden) return;
         var iso =
-          window.__ANNUAL_DATA &&
-          window.__ANNUAL_DATA.daily &&
-          window.__ANNUAL_DATA.daily.selectedDate;
+          window.__INSIGHT_SELECTED_ISO ||
+          (window.__ANNUAL_DATA &&
+            window.__ANNUAL_DATA.daily &&
+            window.__ANNUAL_DATA.daily.selectedDate);
         if (iso && typeof window.renderInsightTwDiffs === 'function') {
           window.renderInsightTwDiffs(iso);
         }
@@ -16926,6 +18633,7 @@ Target Sales</p>
       document.addEventListener('annual:dailyDateChanged', refreshInsightTwDiffsFromStore);
       document.addEventListener('kpi:dailyTargetModeChanged', refreshInsightTwDiffsFromStore);
       document.addEventListener('kpi:weekdayBaselineChanged', refreshInsightTwDiffsFromStore);
+      document.addEventListener('kpi:mepDataChanged', refreshInsightTwDiffsFromStore);
     })();
     /* END KPI-INSIGHT-TW-DIFF */
       var root = document.getElementById('insight-overlay');
@@ -16988,11 +18696,15 @@ Target Sales</p>
         if (dateBtnEl) dateBtnEl.textContent = fmtDate(iso);
         if (todayBtnEl) todayBtnEl.hidden = iso === getTodayIso();
         if (dateInputEl) dateInputEl.value = iso;
+        window.__INSIGHT_SELECTED_ISO = iso;
         try {
           if (typeof window.renderInsightTwDiffs === 'function') {
             window.renderInsightTwDiffs(iso);
           }
         } catch (_insightDiffErr) {}
+        try {
+          document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso: iso } }));
+        } catch (_insightDateErr) {}
       }
       var insightTabTitles = { summary: 'Summary', analyze: 'Analyze', graph: 'Graph' };
       function updateInsightJumpHrefs() {
@@ -17075,14 +18787,41 @@ Target Sales</p>
         if (!el || !root.contains(el)) return;
         if (insightScroll) insightScroll.scrollTo({ top: 0, behavior: 'smooth' });
       });
-      if (prevDayBtn) prevDayBtn.addEventListener('click', function () {
-        selectedIso = shiftIso(selectedIso || resolveIso(), -1);
-        fill(selectedIso);
-      });
-      if (nextDayBtn) nextDayBtn.addEventListener('click', function () {
-        selectedIso = shiftIso(selectedIso || resolveIso(), 1);
-        fill(selectedIso);
-      });
+      function bindInsightDateHoldRepeat(btn, delta) {
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) { clearTimeout(delayId); delayId = null; }
+          if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+        }
+        function stepOnce() {
+          selectedIso = shiftIso(selectedIso || resolveIso(), delta);
+          fill(selectedIso);
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() { clearHold(); }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
+        });
+      }
+      bindInsightDateHoldRepeat(prevDayBtn, -1);
+      bindInsightDateHoldRepeat(nextDayBtn, 1);
       if (dateBtnEl && dateInputEl) {
         dateBtnEl.addEventListener('click', function () {
           if (typeof dateInputEl.showPicker === 'function') dateInputEl.showPicker();
@@ -17415,18 +19154,41 @@ Target Sales</p>
         ev.preventDefault();
         open();
       });
-      if (prevDayBtn) {
-        prevDayBtn.addEventListener('click', function () {
-          selectedIso = shiftIso(selectedIso || resolveIso(), -1);
+      function bindDailyOverlayDateHoldRepeat(btn, delta) {
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) { clearTimeout(delayId); delayId = null; }
+          if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+        }
+        function stepOnce() {
+          selectedIso = shiftIso(selectedIso || resolveIso(), delta);
           fill(selectedIso);
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() { clearHold(); }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
         });
       }
-      if (nextDayBtn) {
-        nextDayBtn.addEventListener('click', function () {
-          selectedIso = shiftIso(selectedIso || resolveIso(), 1);
-          fill(selectedIso);
-        });
-      }
+      bindDailyOverlayDateHoldRepeat(prevDayBtn, -1);
+      bindDailyOverlayDateHoldRepeat(nextDayBtn, 1);
       if (todayBtnEl) {
         todayBtnEl.addEventListener('click', function () {
           selectedIso = getTodayIso();
@@ -18134,7 +19896,8 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 85
       });
-      initAllocationWidget({
+      window.__insightGraphDailyWidgets = window.__insightGraphDailyWidgets || {};
+      window.__insightGraphDailyWidgets.targetActual = initAllocationWidget({
         graphId: 'insight-graph-daily-target-actual',
         percentId: 'insight-graph-daily-target-actual-pct',
         dataKey: 'achievementPercent',
@@ -18143,7 +19906,8 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 89
       });
-      initAllocationWidget({
+      window.__insightGraphCumWidgets = window.__insightGraphCumWidgets || {};
+      window.__insightGraphCumWidgets.monthly = initAllocationWidget({
         graphId: 'insight-graph-monthly-cumulative-target-actual',
         percentId: 'insight-graph-monthly-cumulative-target-actual-pct',
         dataKey: 'achievementPercent',
@@ -18152,7 +19916,19 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 123
       });
-      initAllocationWidget({
+      window.__insightGraphCumWidgets = window.__insightGraphCumWidgets || {};
+      window.__insightGraphCumWidgets.annual = initAllocationWidget({
+        graphId: 'insight-graph-annual-cumulative-target-actual',
+        percentId: 'insight-graph-annual-cumulative-target-actual-pct',
+        dataKey: 'achievementPercent',
+        graphWidth: 653,
+        editable: false,
+        achievementAlertColors: true,
+        fallbackPercent: 123
+      });
+
+      window.__insightGraphDailyWidgets = window.__insightGraphDailyWidgets || {};
+      window.__insightGraphDailyWidgets.lastYearWeekday = initAllocationWidget({
         graphId: 'insight-graph-daily-last-year-weekday',
         percentId: 'insight-graph-daily-last-year-weekday-pct',
         dataKey: 'insightDailySalesVsHistoricalPercent',
@@ -18196,9 +19972,14 @@ Target Sales</p>
         var weekdayEn = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         var weekdayJa = ['\u65e5', '\u6708', '\u706b', '\u6c34', '\u6728', '\u91d1', '\u571f'];
 
-        function getFocusYearMonth() {
+        function resolveInsightTrendIso() {
+          if (window.__INSIGHT_SELECTED_ISO) return window.__INSIGHT_SELECTED_ISO;
           var data = window.__ANNUAL_DATA || {};
-          var iso = data.daily && data.daily.selectedDate;
+          return data.daily && data.daily.selectedDate;
+        }
+
+        function getFocusYearMonth() {
+          var iso = resolveInsightTrendIso();
           if (iso) {
             var parts = String(iso).split('-');
             var y = Number(parts[0]);
@@ -18295,6 +20076,23 @@ Target Sales</p>
             dailyActual: dailyActual,
             todayDay: todayDay
           };
+        }
+
+        function buildStorePayload(ym, dim) {
+          var cutoffIso = resolveInsightTrendIso();
+          if (typeof window.__buildMonthlyCumulativeTrendPayload === 'function') {
+            var built = window.__buildMonthlyCumulativeTrendPayload(ym.year, ym.month, cutoffIso);
+            if (
+              built &&
+              built.target &&
+              built.actual &&
+              built.target.length === dim &&
+              built.actual.length === dim
+            ) {
+              return built;
+            }
+          }
+          return buildDemoPayload(dim);
         }
 
         function pathFromPoints(pts) {
@@ -18443,7 +20241,7 @@ Target Sales</p>
           var dim = daysInMonth(ym.year, ym.month);
           if (periodEl) periodEl.textContent = ym.year + '.' + ym.month;
 
-          var payload = buildDemoPayload(dim);
+          var payload = buildStorePayload(ym, dim);
           var yMax = niceYMax(
             Math.max.apply(null, payload.target.concat(payload.actual)),
             CFG.yTicks
@@ -18555,10 +20353,921 @@ Target Sales</p>
         }
 
         render();
-        document.addEventListener('annual:calendarDateChanged', render);
+        [
+          'annual:calendarDateChanged',
+          'annual:dailyDateChanged',
+          'kpi:dailyTargetModeChanged',
+          'kpi:weekdayBaselineChanged',
+          'kpi:annualPlanChanged',
+          'insight:dateChanged',
+        ].forEach(function (evName) {
+          document.addEventListener(evName, render);
+        });
       }
       initGraphMonthlyCumulativeTrend();
-      initGraphMonthlyCumulativeTrend();
+      function initGraphAnnualCumulativeTrendGraph1() {
+        var root = document.getElementById('insight-graph-annual-graph1');
+        var frame = root && root.querySelector('.insight-graph-annual-trend__frame');
+        var svg = document.getElementById('insight-graph-annual-graph1-chart');
+        if (!frame || !svg) return;
+
+        var axesG = svg.querySelector('.insight-graph-annual-trend__axes');
+        var seriesG = svg.querySelector('.insight-graph-annual-trend__series');
+        var hoverRect = document.getElementById('insight-graph-annual-graph1-hover');
+        var periodEl = document.getElementById('insight-graph-annual-graph1-period');
+        var achievementEl = document.getElementById('insight-graph-annual-graph1-achievement');
+        var tooltipEl = document.getElementById('insight-graph-annual-graph1-tooltip');
+        var endKgiEl = document.getElementById('insight-graph-annual-graph1-end-kgi');
+        var endKpiEl = document.getElementById('insight-graph-annual-graph1-end-kpi');
+
+        var CFG = {
+          axisLeft: 110,
+          axisTop: 100,
+          plotW: 817,
+          plotH: 400,
+          yTicks: 5,
+          xTickSlots: 7,
+          hitRadius: 14,
+          tooltipW: 400,
+          tooltipH: 240,
+          tooltipOffset: 16
+        };
+        CFG.plotRight = CFG.axisLeft + CFG.plotW;
+        CFG.plotBottom = CFG.axisTop + CFG.plotH;
+
+        var isEn = /\/en\//.test(String(location.pathname || ''));
+        var weekdayEn = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        var weekdayJa = ['\u65e5', '\u6708', '\u706b', '\u6c34', '\u6728', '\u91d1', '\u571f'];
+
+
+        function resolveInsightTrendIso() {
+          if (window.__INSIGHT_SELECTED_ISO) return window.__INSIGHT_SELECTED_ISO;
+          var data = window.__ANNUAL_DATA || {};
+          return data.daily && data.daily.selectedDate;
+        }
+
+        function getFocusYearContext() {
+          var data = window.__ANNUAL_DATA || {};
+          var iso = resolveInsightTrendIso();
+          var year;
+          var month;
+          var day;
+          if (iso) {
+            var parts = String(iso).split('-');
+            year = Number(parts[0]);
+            month = Number(parts[1]);
+            day = Number(parts[2]);
+          } else {
+            var now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+          }
+          if (!Number.isFinite(year)) year = new Date().getFullYear();
+          if (!Number.isFinite(month)) month = 1;
+          if (!Number.isFinite(day)) day = 1;
+          var dim = daysInYear(year);
+          var start = new Date(year, 0, 1);
+          var dt = new Date(year, month - 1, day);
+          var dayOfYear = Math.floor((dt - start) / 86400000) + 1;
+          if (!Number.isFinite(dayOfYear) || dayOfYear < 1) dayOfYear = 1;
+          if (dayOfYear > dim) dayOfYear = dim;
+          return { year: year, month: month, day: day, dayOfYear: dayOfYear, dim: dim };
+        }
+
+        function daysInYear(year) {
+          return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
+        }
+
+        function calendarFromDayOfYear(year, dayOfYear) {
+          var dt = new Date(year, 0, dayOfYear);
+          return { year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate() };
+        }
+
+        function formatTooltipDateFromDayOfYear(year, dayOfYear) {
+          var cal = calendarFromDayOfYear(year, dayOfYear);
+          var dt = new Date(cal.year, cal.month - 1, cal.day);
+          var wd = isEn ? weekdayEn[dt.getDay()] : weekdayJa[dt.getDay()];
+          if (isEn) return cal.year + '.' + cal.month + '.' + cal.day + ' ' + wd;
+          return cal.year + '.' + cal.month + '.' + cal.day + ' (' + wd + ')';
+        }
+
+        function buildXTickMonths(year, dim) {
+          var ticks = [];
+          for (var m = 1; m <= 12; m++) {
+            var start = new Date(year, m - 1, 1);
+            var dayOfYear = Math.floor((start - new Date(year, 0, 1)) / 86400000) + 1;
+            if (dayOfYear < 1) dayOfYear = 1;
+            if (dayOfYear > dim) dayOfYear = dim;
+            ticks.push({ day: dayOfYear, label: String(m) });
+          }
+          return ticks;
+        }
+
+        function formatAxisMoney(v) {
+          var n = Math.round(v);
+          if (isEn) return '$' + n.toLocaleString('en-US');
+          return '\u00a5' + n.toLocaleString('ja-JP');
+        }
+
+        function formatDetailMoney(v) {
+          var n = Number(v);
+          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+        }
+
+        function niceYMax(rawMax, tickCount) {
+          var maxVal = Math.max(rawMax, 1);
+          var step0 = maxVal / (tickCount - 1);
+          var mag = Math.pow(10, Math.floor(Math.log10(step0)));
+          if (!Number.isFinite(mag) || mag <= 0) mag = 1;
+          var norm = step0 / mag;
+          var niceStep = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+          niceStep *= mag;
+          var niceMax = Math.ceil(maxVal / niceStep) * niceStep;
+          if (niceMax < maxVal) niceMax += niceStep;
+          return niceMax;
+        }
+
+        function xForDay(day, dim) {
+          if (dim <= 1) return CFG.axisLeft;
+          return CFG.axisLeft + ((day - 1) / (dim - 1)) * CFG.plotW;
+        }
+
+        function yForValue(val, yMax) {
+          var ratio = yMax > 0 ? val / yMax : 0;
+          return CFG.plotBottom - ratio * CFG.plotH;
+        }
+
+        function buildDemoPayload(dim, todayDay) {
+          var baseDaily = isEn ? 12000 : 1200000;
+          var targetDaily = baseDaily * 0.92;
+          var target = [];
+          var actual = [];
+          var dailyTarget = [];
+          var dailyActual = [];
+          var tSum = 0;
+          var aSum = 0;
+          for (var d = 1; d <= dim; d++) {
+            var dt = targetDaily * (0.98 + 0.04 * (d / dim));
+            var da = dt * (d < 8 ? 0.72 : d < 12 ? 0.9 : 1.02 + 0.08 * Math.sin(d / 2));
+            dailyTarget.push(dt);
+            dailyActual.push(da);
+            tSum += dt;
+            aSum += da;
+            target.push(tSum);
+            actual.push(aSum);
+          }
+          var endDay = Math.min(dim, todayDay || Math.min(dim, 132));
+          return {
+            target: target,
+            actual: actual,
+            dailyTarget: dailyTarget,
+            dailyActual: dailyActual,
+            todayDay: endDay
+          };
+        }
+
+        function buildStorePayload(ctx, dim) {
+          var cutoffIso = resolveInsightTrendIso();
+          if (typeof window.__buildAnnualCumulativeTrendPayload === 'function') {
+            var built = window.__buildAnnualCumulativeTrendPayload(ctx.year, cutoffIso);
+            if (
+              built &&
+              built.target &&
+              built.actual &&
+              built.target.length === dim &&
+              built.actual.length === dim
+            ) {
+              return built;
+            }
+          }
+          return buildDemoPayload(dim, ctx.dayOfYear);
+        }
+
+        function pathFromPoints(pts) {
+          if (!pts.length) return '';
+          var d = 'M' + pts[0][0] + ' ' + pts[0][1];
+          for (var i = 1; i < pts.length; i++) d += ' L' + pts[i][0] + ' ' + pts[i][1];
+          return d;
+        }
+
+        function clientToSvg(ev) {
+          var svgRect = svg.getBoundingClientRect();
+          var scaleX = 965 / svgRect.width;
+          var scaleY = 618 / svgRect.height;
+          return {
+            x: (ev.clientX - svgRect.left) * scaleX,
+            y: (ev.clientY - svgRect.top) * scaleY
+          };
+        }
+
+        function snapDay(svgX, dim) {
+          var day = Math.round(1 + ((svgX - CFG.axisLeft) / CFG.plotW) * (dim - 1));
+          return Math.max(1, Math.min(dim, day));
+        }
+
+        function seriesPoint(series, day, state) {
+          var idx = day - 1;
+          if (series === 'kpi') {
+            return [xForDay(day, state.dim), yForValue(state.payload.target[idx], state.yMax)];
+          }
+          if (series === 'kgi' && day <= state.payload.todayDay) {
+            return [xForDay(day, state.dim), yForValue(state.payload.actual[idx], state.yMax)];
+          }
+          return null;
+        }
+
+        function hitTest(svgX, svgY, state) {
+          if (
+            svgX < CFG.axisLeft ||
+            svgX > CFG.plotRight ||
+            svgY < CFG.axisTop ||
+            svgY > CFG.plotBottom
+          ) {
+            return null;
+          }
+          var day = snapDay(svgX, state.dim);
+          var best = null;
+          ['kgi', 'kpi'].forEach(function (series) {
+            var pt = seriesPoint(series, day, state);
+            if (!pt) return;
+            var dist = Math.hypot(svgX - pt[0], svgY - pt[1]);
+            if (dist <= CFG.hitRadius && (!best || dist < best.dist)) {
+              best = { series: series, day: day, x: pt[0], y: pt[1], dist: dist };
+            }
+          });
+          return best;
+        }
+
+        function hideHoverUi() {
+          if (frame.__trendHoverEls) {
+            frame.__trendHoverEls.guideV.classList.remove('is-visible');
+            frame.__trendHoverEls.hitDot.classList.remove(
+              'is-visible',
+              'insight-graph-annual-trend__hit-dot--kgi',
+              'insight-graph-annual-trend__hit-dot--kpi'
+            );
+          }
+          if (tooltipEl) {
+            tooltipEl.classList.remove('is-visible');
+            tooltipEl.setAttribute('hidden', '');
+          }
+        }
+
+        function showHoverUi(hit, state) {
+          if (!frame.__trendHoverEls || !tooltipEl) return;
+          var els = frame.__trendHoverEls;
+          var idx = hit.day - 1;
+          var sales = state.payload.dailyActual[idx];
+          var tgt = state.payload.dailyTarget[idx];
+          var diff = sales - tgt;
+          var pct = tgt > 0 ? (sales / tgt) * 100 : 0;
+
+          els.guideV.setAttribute('x1', hit.x);
+          els.guideV.setAttribute('x2', hit.x);
+          els.guideV.setAttribute('y1', CFG.axisTop);
+          els.guideV.setAttribute('y2', CFG.plotBottom);
+          els.guideV.classList.add('is-visible');
+
+          els.hitDot.setAttribute('cx', hit.x);
+          els.hitDot.setAttribute('cy', hit.y);
+          els.hitDot.setAttribute('r', '6');
+          els.hitDot.classList.remove('insight-graph-annual-trend__hit-dot--kgi', 'insight-graph-annual-trend__hit-dot--kpi');
+          els.hitDot.classList.add(
+            'is-visible',
+            hit.series === 'kgi'
+              ? 'insight-graph-annual-trend__hit-dot--kgi'
+              : 'insight-graph-annual-trend__hit-dot--kpi'
+          );
+
+          var dateEl = tooltipEl.querySelector('[data-field="date"]');
+          if (dateEl) dateEl.textContent = formatTooltipDateFromDayOfYear(state.ctx.year, hit.day);
+          var salesEl = tooltipEl.querySelector('[data-field="sales"]');
+          if (salesEl) salesEl.textContent = formatDetailMoney(sales);
+          var targetEl = tooltipEl.querySelector('[data-field="target"]');
+          if (targetEl) targetEl.textContent = formatDetailMoney(tgt);
+          var diffEl = tooltipEl.querySelector('[data-field="diff"]');
+          if (diffEl) {
+            if (typeof window.applyInsightTwDiffEl === 'function') {
+              diffEl.textContent =
+                typeof window.__twFmtDiff === 'function'
+                  ? window.__twFmtDiff(sales, tgt)
+                  : formatDetailMoney(diff);
+              window.applyInsightTwDiffEl(diffEl, sales, tgt);
+            } else {
+              diffEl.textContent = formatDetailMoney(diff);
+            }
+          }
+          var achEl = tooltipEl.querySelector('[data-field="achievement"]');
+          if (achEl) achEl.textContent = pct.toFixed(1) + '%';
+
+          var left = hit.x + CFG.tooltipOffset;
+          var top = hit.y - CFG.tooltipH - CFG.tooltipOffset;
+          if (left + CFG.tooltipW > 965) left = hit.x - CFG.tooltipW - CFG.tooltipOffset;
+          if (left < 0) left = CFG.tooltipOffset;
+          if (top < 0) top = hit.y + CFG.tooltipOffset;
+          if (top + CFG.tooltipH > 618) top = Math.max(0, 618 - CFG.tooltipH - CFG.tooltipOffset);
+
+          tooltipEl.style.left = left + 'px';
+          tooltipEl.style.top = top + 'px';
+          tooltipEl.classList.add('is-visible');
+          tooltipEl.removeAttribute('hidden');
+        }
+
+        function onHoverMove(ev) {
+          var state = frame.__trendChartState;
+          if (!state) {
+            hideHoverUi();
+            return;
+          }
+          var pt = clientToSvg(ev);
+          var hit = hitTest(pt.x, pt.y, state);
+          if (!hit) {
+            hideHoverUi();
+            return;
+          }
+          showHoverUi(hit, state);
+        }
+
+        function render() {
+          var ctx = getFocusYearContext();
+          var dim = ctx.dim;
+          if (periodEl) periodEl.textContent = String(ctx.year);
+
+          var payload = buildStorePayload(ctx, dim);
+          var yMax = niceYMax(
+            Math.max.apply(null, payload.target.concat(payload.actual)),
+            CFG.yTicks
+          );
+
+          frame.__trendChartState = { dim: dim, ctx: ctx, payload: payload, yMax: yMax };
+
+          axesG.innerHTML = '';
+          seriesG.innerHTML = '';
+
+          var ns = 'http://www.w3.org/2000/svg';
+          function svgLine(x1, y1, x2, y2) {
+            var el = document.createElementNS(ns, 'line');
+            el.setAttribute('x1', x1);
+            el.setAttribute('y1', y1);
+            el.setAttribute('x2', x2);
+            el.setAttribute('y2', y2);
+            el.setAttribute('stroke', '#0f9403');
+            el.setAttribute('stroke-width', '1');
+            return el;
+          }
+          function svgText(x, y, anchor, content) {
+            var el = document.createElementNS(ns, 'text');
+            el.setAttribute('x', x);
+            el.setAttribute('y', y);
+            el.setAttribute('fill', '#58e1f3');
+            el.setAttribute('font-size', '13');
+            el.setAttribute('font-family', 'Orbitron, sans-serif');
+            el.setAttribute('class', 'insight-graph-annual-trend__axis-label');
+            if (anchor) el.setAttribute('text-anchor', anchor);
+            el.textContent = content;
+            return el;
+          }
+
+          axesG.appendChild(svgLine(CFG.axisLeft, CFG.axisTop, CFG.axisLeft, CFG.plotBottom));
+          axesG.appendChild(svgLine(CFG.axisLeft, CFG.plotBottom, CFG.plotRight, CFG.plotBottom));
+
+          for (var ti = 0; ti < CFG.yTicks; ti++) {
+            var val = (yMax * ti) / (CFG.yTicks - 1);
+            var yy = yForValue(val, yMax);
+            axesG.appendChild(svgText(CFG.axisLeft - 8, yy + 4, 'end', formatAxisMoney(val)));
+          }
+
+          buildXTickMonths(ctx.year, dim).forEach(function (tick) {
+            var xx = xForDay(tick.day, dim);
+            axesG.appendChild(svgText(xx, CFG.plotBottom + 18, 'middle', tick.label));
+          });
+
+          var kpiPts = [];
+          for (var d2 = 1; d2 <= dim; d2++) {
+            kpiPts.push([xForDay(d2, dim), yForValue(payload.target[d2 - 1], yMax)]);
+          }
+          var kgiPts = [];
+          for (var d3 = 1; d3 <= payload.todayDay; d3++) {
+            kgiPts.push([xForDay(d3, dim), yForValue(payload.actual[d3 - 1], yMax)]);
+          }
+
+          var kpiPath = document.createElementNS(ns, 'path');
+          kpiPath.setAttribute('class', 'insight-graph-annual-trend__line--kpi');
+          kpiPath.setAttribute('d', pathFromPoints(kpiPts));
+          var kgiPath = document.createElementNS(ns, 'path');
+          kgiPath.setAttribute('class', 'insight-graph-annual-trend__line--kgi');
+          kgiPath.setAttribute('d', pathFromPoints(kgiPts));
+          seriesG.appendChild(kpiPath);
+          seriesG.appendChild(kgiPath);
+
+          if (endKpiEl && kpiPts.length) {
+            var kp = kpiPts[kpiPts.length - 1];
+            endKpiEl.textContent = formatDetailMoney(payload.target[dim - 1]);
+            endKpiEl.style.left = kp[0] + 'px';
+            endKpiEl.style.top = kp[1] - 6 + 'px';
+          }
+          if (endKgiEl && kgiPts.length) {
+            var kg = kgiPts[kgiPts.length - 1];
+            endKgiEl.textContent = formatDetailMoney(payload.actual[payload.todayDay - 1]);
+            endKgiEl.style.left = kg[0] + 'px';
+            endKgiEl.style.top = kg[1] - 6 + 'px';
+          }
+
+          var ach =
+            payload.target[payload.todayDay - 1] > 0
+              ? (payload.actual[payload.todayDay - 1] / payload.target[payload.todayDay - 1]) * 100
+              : 0;
+          if (achievementEl) achievementEl.textContent = ach.toFixed(1) + '%';
+
+          var hoverUiG = svg.querySelector('.insight-graph-annual-trend__hover-ui');
+          if (!hoverUiG) {
+            hoverUiG = document.createElementNS(ns, 'g');
+            hoverUiG.setAttribute('class', 'insight-graph-annual-trend__hover-ui');
+            hoverUiG.setAttribute('aria-hidden', 'true');
+            svg.appendChild(hoverUiG);
+          }
+          hoverUiG.innerHTML = '';
+          var guideV = document.createElementNS(ns, 'line');
+          guideV.setAttribute('class', 'insight-graph-annual-trend__guide-v');
+          var hitDot = document.createElementNS(ns, 'circle');
+          hitDot.setAttribute('class', 'insight-graph-annual-trend__hit-dot');
+          hoverUiG.appendChild(guideV);
+          hoverUiG.appendChild(hitDot);
+          frame.__trendHoverEls = { guideV: guideV, hitDot: hitDot, hoverUiG: hoverUiG };
+
+          hideHoverUi();
+        }
+
+        if (hoverRect && !hoverRect.__trendBound) {
+          hoverRect.__trendBound = true;
+          hoverRect.addEventListener('mousemove', onHoverMove);
+          hoverRect.addEventListener('mouseleave', hideHoverUi);
+        }
+
+        render();
+        [
+          'annual:calendarDateChanged',
+          'annual:dailyDateChanged',
+          'kpi:dailyTargetModeChanged',
+          'kpi:weekdayBaselineChanged',
+          'kpi:annualPlanChanged',
+          'insight:dateChanged',
+        ].forEach(function (evName) {
+          document.addEventListener(evName, render);
+        });
+      }
+
+
+      function initGraphAnnualCumulativeTrendGraph2() {
+        var root = document.getElementById('insight-graph-annual-graph2');
+        var frame = root && root.querySelector('.insight-graph-annual-trend__frame');
+        var svg = document.getElementById('insight-graph-annual-graph2-chart');
+        if (!frame || !svg) return;
+
+        var axesG = svg.querySelector('.insight-graph-annual-trend__axes');
+        var seriesG = svg.querySelector('.insight-graph-annual-trend__series');
+        var hoverRect = document.getElementById('insight-graph-annual-graph2-hover');
+        var tooltipEl = document.getElementById('insight-graph-annual-graph2-tooltip');
+        var endCurrentEl = document.getElementById('insight-graph-annual-graph2-end-current');
+        var endLastYearEl = document.getElementById('insight-graph-annual-graph2-end-last-year');
+        var endBestEl = document.getElementById('insight-graph-annual-graph2-end-best');
+
+        var CFG = {
+          axisLeft: 110,
+          axisTop: 100,
+          plotW: 817,
+          plotH: 400,
+          yTicks: 6,
+          xTickSlots: 7,
+          hitRadius: 14,
+          tooltipW: 400,
+          tooltipH: 240,
+          tooltipOffset: 16
+        };
+        CFG.plotRight = CFG.axisLeft + CFG.plotW;
+        CFG.plotBottom = CFG.axisTop + CFG.plotH;
+
+        var isEn = /\/en\//.test(String(location.pathname || ''));
+        var weekdayEn = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        var weekdayJa = ['\u65e5', '\u6708', '\u706b', '\u6c34', '\u6728', '\u91d1', '\u571f'];
+
+        var SERIES_ORDER = [
+          { key: 'best', lineClass: 'insight-graph-annual-trend__line--best', dotClass: 'insight-graph-annual-trend__hit-dot--best', fullMonth: true },
+          { key: 'lastYear', lineClass: 'insight-graph-annual-trend__line--last-year', dotClass: 'insight-graph-annual-trend__hit-dot--last-year', fullMonth: true },
+          { key: 'current', lineClass: 'insight-graph-annual-trend__line--current', dotClass: 'insight-graph-annual-trend__hit-dot--current', fullMonth: false }
+        ];
+
+
+        function resolveInsightTrendIso() {
+          if (window.__INSIGHT_SELECTED_ISO) return window.__INSIGHT_SELECTED_ISO;
+          var data = window.__ANNUAL_DATA || {};
+          return data.daily && data.daily.selectedDate;
+        }
+
+        function getFocusYearContext() {
+          var data = window.__ANNUAL_DATA || {};
+          var iso = resolveInsightTrendIso();
+          var year;
+          var month;
+          var day;
+          if (iso) {
+            var parts = String(iso).split('-');
+            year = Number(parts[0]);
+            month = Number(parts[1]);
+            day = Number(parts[2]);
+          } else {
+            var now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+          }
+          if (!Number.isFinite(year)) year = new Date().getFullYear();
+          if (!Number.isFinite(month)) month = 1;
+          if (!Number.isFinite(day)) day = 1;
+          var dim = daysInYear(year);
+          var start = new Date(year, 0, 1);
+          var dt = new Date(year, month - 1, day);
+          var dayOfYear = Math.floor((dt - start) / 86400000) + 1;
+          if (!Number.isFinite(dayOfYear) || dayOfYear < 1) dayOfYear = 1;
+          if (dayOfYear > dim) dayOfYear = dim;
+          return { year: year, month: month, day: day, dayOfYear: dayOfYear, dim: dim };
+        }
+
+        function daysInYear(year) {
+          return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
+        }
+
+        function calendarFromDayOfYear(year, dayOfYear) {
+          var dt = new Date(year, 0, dayOfYear);
+          return { year: dt.getFullYear(), month: dt.getMonth() + 1, day: dt.getDate() };
+        }
+
+        function formatTooltipDateFromDayOfYear(year, dayOfYear) {
+          var cal = calendarFromDayOfYear(year, dayOfYear);
+          var dt = new Date(cal.year, cal.month - 1, cal.day);
+          var wd = isEn ? weekdayEn[dt.getDay()] : weekdayJa[dt.getDay()];
+          if (isEn) return cal.year + '.' + cal.month + '.' + cal.day + ' ' + wd;
+          return cal.year + '.' + cal.month + '.' + cal.day + ' (' + wd + ')';
+        }
+
+        function buildXTickMonths(year, dim) {
+          var ticks = [];
+          for (var m = 1; m <= 12; m++) {
+            var start = new Date(year, m - 1, 1);
+            var dayOfYear = Math.floor((start - new Date(year, 0, 1)) / 86400000) + 1;
+            if (dayOfYear < 1) dayOfYear = 1;
+            if (dayOfYear > dim) dayOfYear = dim;
+            ticks.push({ day: dayOfYear, label: String(m) });
+          }
+          return ticks;
+        }
+
+        function formatAxisMoney(v) {
+          var n = Math.round(v);
+          if (isEn) return '$' + n.toLocaleString('en-US');
+          return '\u00a5' + n.toLocaleString('ja-JP');
+        }
+
+        function formatDetailMoney(v) {
+          var n = Number(v);
+          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+        }
+
+        function niceYMax(rawMax, tickCount) {
+          var maxVal = Math.max(rawMax, 1);
+          var step0 = maxVal / (tickCount - 1);
+          var mag = Math.pow(10, Math.floor(Math.log10(step0)));
+          if (!Number.isFinite(mag) || mag <= 0) mag = 1;
+          var norm = step0 / mag;
+          var niceStep = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+          niceStep *= mag;
+          var niceMax = Math.ceil(maxVal / niceStep) * niceStep;
+          if (niceMax < maxVal) niceMax += niceStep;
+          return niceMax;
+        }
+
+        function xForDay(day, dim) {
+          if (dim <= 1) return CFG.axisLeft;
+          return CFG.axisLeft + ((day - 1) / (dim - 1)) * CFG.plotW;
+        }
+
+        function yForValue(val, yMax) {
+          var ratio = yMax > 0 ? val / yMax : 0;
+          return CFG.plotBottom - ratio * CFG.plotH;
+        }
+
+        function buildXTickDays(dim) {
+          if (dim <= 1) return [1];
+          var slots = CFG.xTickSlots;
+          var days = [];
+          for (var i = 0; i < slots; i++) {
+            var d = Math.round(1 + ((dim - 1) * i) / (slots - 1));
+            if (days.indexOf(d) === -1) days.push(d);
+          }
+          if (days[days.length - 1] !== dim) days[days.length - 1] = dim;
+          return days;
+        }
+
+        function buildComparePayload(dim, todayDay) {
+          var baseDaily = isEn ? 12000 : 1200000;
+          function dailyAmount(day, mult, phase) {
+            return baseDaily * mult * (0.92 + 0.12 * (day / dim) + 0.06 * Math.sin(day * 0.45 + phase));
+          }
+          function toCumulative(untilDay, mult, phase) {
+            var arr = [];
+            var sum = 0;
+            for (var d = 1; d <= untilDay; d++) {
+              sum += dailyAmount(d, mult, phase);
+              arr.push(sum);
+            }
+            return arr;
+          }
+          var endDay = Math.min(dim, todayDay || Math.min(dim, 132));
+          return {
+            current: toCumulative(endDay, 1, 0),
+            lastYear: toCumulative(dim, 0.9, 1.3),
+            best: toCumulative(dim, 1.08, 2.4),
+            todayDay: endDay
+          };
+        }
+
+        function buildStoreComparePayload(ctx, dim) {
+          var cutoffIso = resolveInsightTrendIso();
+          if (typeof window.__buildAnnualCompareTrendPayload === 'function') {
+            var built = window.__buildAnnualCompareTrendPayload(ctx.year, cutoffIso);
+            if (
+              built &&
+              Array.isArray(built.current) &&
+              Array.isArray(built.lastYear) &&
+              Array.isArray(built.best) &&
+              built.lastYear.length === dim &&
+              built.best.length === dim
+            ) {
+              return built;
+            }
+          }
+          return buildComparePayload(dim, ctx.dayOfYear);
+        }
+
+        function pathFromPoints(pts) {
+          if (!pts.length) return '';
+          var d = 'M' + pts[0][0] + ' ' + pts[0][1];
+          for (var i = 1; i < pts.length; i++) d += ' L' + pts[i][0] + ' ' + pts[i][1];
+          return d;
+        }
+
+        function clientToSvg(ev) {
+          var svgRect = svg.getBoundingClientRect();
+          var scaleX = 965 / svgRect.width;
+          var scaleY = 618 / svgRect.height;
+          return {
+            x: (ev.clientX - svgRect.left) * scaleX,
+            y: (ev.clientY - svgRect.top) * scaleY
+          };
+        }
+
+        function snapDay(svgX, dim) {
+          var day = Math.round(1 + ((svgX - CFG.axisLeft) / CFG.plotW) * (dim - 1));
+          return Math.max(1, Math.min(dim, day));
+        }
+
+        function seriesEndDay(meta, dim, todayDay) {
+          return meta.fullMonth ? dim : Math.min(todayDay, dim);
+        }
+
+        function seriesPoint(meta, day, state) {
+          var endDay = seriesEndDay(meta, state.dim, state.payload.todayDay);
+          if (day > endDay) return null;
+          var idx = day - 1;
+          var val = state.payload[meta.key][idx];
+          if (!Number.isFinite(val)) return null;
+          return [xForDay(day, state.dim), yForValue(val, state.yMax)];
+        }
+
+        function hitTest(svgX, svgY, state) {
+          if (
+            svgX < CFG.axisLeft ||
+            svgX > CFG.plotRight ||
+            svgY < CFG.axisTop ||
+            svgY > CFG.plotBottom
+          ) {
+            return null;
+          }
+          var day = snapDay(svgX, state.dim);
+          var best = null;
+          SERIES_ORDER.forEach(function (meta) {
+            var pt = seriesPoint(meta, day, state);
+            if (!pt) return;
+            var dist = Math.hypot(svgX - pt[0], svgY - pt[1]);
+            if (dist <= CFG.hitRadius && (!best || dist < best.dist)) {
+              best = { meta: meta, day: day, x: pt[0], y: pt[1], dist: dist };
+            }
+          });
+          return best;
+        }
+
+        function hideHoverUi() {
+          if (frame.__trendHoverEls) {
+            frame.__trendHoverEls.guideV.classList.remove('is-visible');
+            frame.__trendHoverEls.hitDot.classList.remove(
+              'is-visible',
+              'insight-graph-annual-trend__hit-dot--current',
+              'insight-graph-annual-trend__hit-dot--last-year',
+              'insight-graph-annual-trend__hit-dot--best'
+            );
+          }
+          if (tooltipEl) {
+            tooltipEl.classList.remove('is-visible');
+            tooltipEl.setAttribute('hidden', '');
+          }
+        }
+
+        function showHoverUi(hit, state) {
+          if (!frame.__trendHoverEls || !tooltipEl) return;
+          var els = frame.__trendHoverEls;
+          var idx = hit.day - 1;
+          var cur = state.payload.current[idx];
+          var ly = state.payload.lastYear[idx];
+          var bestVal = state.payload.best[idx];
+
+          els.guideV.setAttribute('x1', hit.x);
+          els.guideV.setAttribute('x2', hit.x);
+          els.guideV.setAttribute('y1', CFG.axisTop);
+          els.guideV.setAttribute('y2', CFG.plotBottom);
+          els.guideV.classList.add('is-visible');
+
+          els.hitDot.setAttribute('cx', hit.x);
+          els.hitDot.setAttribute('cy', hit.y);
+          els.hitDot.setAttribute('r', '6');
+          els.hitDot.classList.remove(
+            'insight-graph-annual-trend__hit-dot--current',
+            'insight-graph-annual-trend__hit-dot--last-year',
+            'insight-graph-annual-trend__hit-dot--best'
+          );
+          els.hitDot.classList.add('is-visible', hit.meta.dotClass);
+
+          var dateEl = tooltipEl.querySelector('[data-field="date"]');
+          if (dateEl) dateEl.textContent = formatTooltipDateFromDayOfYear(state.ctx.year, hit.day);
+          var salesEl = tooltipEl.querySelector('[data-field="sales"]');
+          if (salesEl) salesEl.textContent = formatDetailMoney(cur);
+          var targetEl = tooltipEl.querySelector('[data-field="target"]');
+          if (targetEl) targetEl.textContent = formatDetailMoney(ly);
+          var diffEl = tooltipEl.querySelector('[data-field="diff"]');
+          if (diffEl) diffEl.textContent = formatDetailMoney(bestVal);
+          var achEl = tooltipEl.querySelector('[data-field="achievement"]');
+          if (achEl) {
+            var pct = ly > 0 && hit.day <= state.payload.todayDay ? (cur / ly) * 100 : 0;
+            achEl.textContent = pct.toFixed(1) + '%';
+          }
+
+          var left = hit.x + CFG.tooltipOffset;
+          var top = hit.y - CFG.tooltipH - CFG.tooltipOffset;
+          if (left + CFG.tooltipW > 965) left = hit.x - CFG.tooltipW - CFG.tooltipOffset;
+          if (left < 0) left = CFG.tooltipOffset;
+          if (top < 0) top = hit.y + CFG.tooltipOffset;
+          if (top + CFG.tooltipH > 618) top = Math.max(0, 618 - CFG.tooltipH - CFG.tooltipOffset);
+
+          tooltipEl.style.left = left + 'px';
+          tooltipEl.style.top = top + 'px';
+          tooltipEl.classList.add('is-visible');
+          tooltipEl.removeAttribute('hidden');
+        }
+
+        function onHoverMove(ev) {
+          var state = frame.__trendChartState;
+          if (!state) {
+            hideHoverUi();
+            return;
+          }
+          var pt = clientToSvg(ev);
+          var hit = hitTest(pt.x, pt.y, state);
+          if (!hit) {
+            hideHoverUi();
+            return;
+          }
+          showHoverUi(hit, state);
+        }
+
+        function placeEndpoint(el, pts, value) {
+          if (!el || !pts.length) return;
+          var p = pts[pts.length - 1];
+          el.textContent = formatDetailMoney(value);
+          el.style.left = p[0] + 'px';
+          el.style.top = p[1] - 6 + 'px';
+        }
+
+        function render() {
+          var ctx = getFocusYearContext();
+          var dim = ctx.dim;
+          var payload = buildStoreComparePayload(ctx, dim);
+          var allVals = payload.best.concat(payload.lastYear).concat(payload.current);
+          var yMax = niceYMax(Math.max.apply(null, allVals), CFG.yTicks);
+
+          frame.__trendChartState = { dim: dim, ctx: ctx, payload: payload, yMax: yMax };
+
+          axesG.innerHTML = '';
+          seriesG.innerHTML = '';
+
+          var ns = 'http://www.w3.org/2000/svg';
+          function svgLine(x1, y1, x2, y2) {
+            var el = document.createElementNS(ns, 'line');
+            el.setAttribute('x1', x1);
+            el.setAttribute('y1', y1);
+            el.setAttribute('x2', x2);
+            el.setAttribute('y2', y2);
+            el.setAttribute('stroke', '#0f9403');
+            el.setAttribute('stroke-width', '1');
+            return el;
+          }
+          function svgText(x, y, anchor, content) {
+            var el = document.createElementNS(ns, 'text');
+            el.setAttribute('x', x);
+            el.setAttribute('y', y);
+            el.setAttribute('fill', '#58e1f3');
+            el.setAttribute('font-size', '13');
+            el.setAttribute('font-family', 'Orbitron, sans-serif');
+            el.setAttribute('class', 'insight-graph-annual-trend__axis-label');
+            if (anchor) el.setAttribute('text-anchor', anchor);
+            el.textContent = content;
+            return el;
+          }
+
+          axesG.appendChild(svgLine(CFG.axisLeft, CFG.axisTop, CFG.axisLeft, CFG.plotBottom));
+          axesG.appendChild(svgLine(CFG.axisLeft, CFG.plotBottom, CFG.plotRight, CFG.plotBottom));
+
+          for (var ti = 0; ti < CFG.yTicks; ti++) {
+            var val = (yMax * ti) / (CFG.yTicks - 1);
+            var yy = yForValue(val, yMax);
+            axesG.appendChild(svgText(CFG.axisLeft - 8, yy + 4, 'end', formatAxisMoney(val)));
+          }
+
+          buildXTickMonths(ctx.year, dim).forEach(function (tick) {
+            var xx = xForDay(tick.day, dim);
+            axesG.appendChild(svgText(xx, CFG.plotBottom + 18, 'middle', tick.label));
+          });
+
+          SERIES_ORDER.forEach(function (meta) {
+            var endDay = seriesEndDay(meta, dim, payload.todayDay);
+            var pts = [];
+            for (var d = 1; d <= endDay; d++) {
+              pts.push([xForDay(d, dim), yForValue(payload[meta.key][d - 1], yMax)]);
+            }
+            var path = document.createElementNS(ns, 'path');
+            path.setAttribute('class', meta.lineClass);
+            path.setAttribute('d', pathFromPoints(pts));
+            seriesG.appendChild(path);
+
+            if (meta.key === 'current') {
+              placeEndpoint(endCurrentEl, pts, payload.current[payload.todayDay - 1]);
+            } else if (meta.key === 'lastYear') {
+              placeEndpoint(endLastYearEl, pts, payload.lastYear[dim - 1]);
+            } else if (meta.key === 'best') {
+              placeEndpoint(endBestEl, pts, payload.best[dim - 1]);
+            }
+          });
+
+          var hoverUiG = svg.querySelector('.insight-graph-annual-trend__hover-ui');
+          if (!hoverUiG) {
+            hoverUiG = document.createElementNS(ns, 'g');
+            hoverUiG.setAttribute('class', 'insight-graph-annual-trend__hover-ui');
+            hoverUiG.setAttribute('aria-hidden', 'true');
+            svg.appendChild(hoverUiG);
+          }
+          hoverUiG.innerHTML = '';
+          var guideV = document.createElementNS(ns, 'line');
+          guideV.setAttribute('class', 'insight-graph-annual-trend__guide-v');
+          var hitDot = document.createElementNS(ns, 'circle');
+          hitDot.setAttribute('class', 'insight-graph-annual-trend__hit-dot');
+          hoverUiG.appendChild(guideV);
+          hoverUiG.appendChild(hitDot);
+          frame.__trendHoverEls = { guideV: guideV, hitDot: hitDot, hoverUiG: hoverUiG };
+
+          hideHoverUi();
+        }
+
+        if (hoverRect && !hoverRect.__trendBound) {
+          hoverRect.__trendBound = true;
+          hoverRect.addEventListener('mousemove', onHoverMove);
+          hoverRect.addEventListener('mouseleave', hideHoverUi);
+        }
+
+        render();
+        [
+          'annual:calendarDateChanged',
+          'annual:dailyDateChanged',
+          'kpi:dailyTargetModeChanged',
+          'kpi:weekdayBaselineChanged',
+          'kpi:annualPlanChanged',
+          'insight:dateChanged',
+        ].forEach(function (evName) {
+          document.addEventListener(evName, render);
+        });
+      }
       function initGraphDailyHistoricalWeekday() {
         var root = document.getElementById('insight-graph-daily-historical');
         if (!root) return;
@@ -18584,9 +21293,12 @@ Target Sales</p>
           fill.style.width = Math.round(trackW * (amt / max)) + 'px';
         });
       }
+      initGraphAnnualCumulativeTrendGraph1();
+      initGraphAnnualCumulativeTrendGraph2();
       initGraphDailyHistoricalWeekday();
 
-      initAllocationWidget({
+      window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+      window.__insightSummaryComparisonWidgets.daily = initAllocationWidget({
         graphId: 'insight-daily-historical-alloc-graph',
         dataKey: 'insightDailySalesVsHistoricalPercent',
         graphWidth: 654,
@@ -18659,7 +21371,18 @@ Target Sales</p>
         fallbackPercent: 85
       });
 
-      initAllocationWidget({
+      window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+            window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+      window.__insightSummaryComparisonWidgets.monthly = initAllocationWidget({
+        graphId: 'insight-monthly-comparison-alloc-graph',
+        dataKey: 'insightMonthlyComparisonPercent',
+        graphWidth: 654,
+        editable: false,
+        achievementAlertColors: true,
+        fallbackPercent: 85
+      });
+
+      window.__insightSummaryComparisonWidgets.annual = initAllocationWidget({
         graphId: 'insight-annual-comparison-alloc-graph',
         dataKey: 'insightAnnualComparisonPercent',
         graphWidth: 654,
@@ -18782,7 +21505,7 @@ Target Sales</p>
         }
       };
 
-                                                /* KPI-YEAR-STORE */
+                                                            /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -18993,6 +21716,7 @@ Target Sales</p>
         function ensureYearMepData(year) {
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
+          if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {};
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {
             rec.dailyMeta = { memos: {}, flags: {}, weather: {} };
           }
@@ -19845,6 +22569,42 @@ Target Sales</p>
           return !!store.timeline.businessDays[iso];
         }
 
+        /* dailyIncome: 収入ストリーム別の日次額（store_sales は timeline.dailySales が正、
+           A/B 等の追加ストリームは years.{Y}.dailyIncome[streamId][iso] に保持）。
+           timeline.dailySales（＝総売上）には一切書き込まない副次データ。*/
+        function writeDailyIncome(streamId, iso, amount, meta) {
+          if (!streamId || !validIso(iso)) return false;
+          if (!canEditIso(iso)) return false;
+          var y = isoYear(iso);
+          var rec = ensureYearMepData(y);
+          if (!rec.dailyIncome[streamId] || typeof rec.dailyIncome[streamId] !== 'object') {
+            rec.dailyIncome[streamId] = {};
+          }
+          var n = Number(amount);
+          if (!Number.isFinite(n) || n === 0) {
+            delete rec.dailyIncome[streamId][iso];
+          } else {
+            rec.dailyIncome[streamId][iso] = Math.round(n);
+          }
+          rec.mepUpdatedAt = Date.now();
+          persistStore();
+          document.dispatchEvent(
+            new CustomEvent('kpi:mepDataChanged', {
+              detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
+            })
+          );
+          return true;
+        }
+
+        function readDailyIncome(streamId, iso) {
+          if (!streamId || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyIncome || !rec.dailyIncome[streamId]) return null;
+          if (!Object.prototype.hasOwnProperty.call(rec.dailyIncome[streamId], iso)) return null;
+          var n = Number(rec.dailyIncome[streamId][iso]);
+          return Number.isFinite(n) ? n : null;
+        }
+
         function readRange(startIso, endIso) {
           if (!validIso(startIso) || !validIso(endIso)) return [];
           if (startIso > endIso) {
@@ -20110,26 +22870,7 @@ Target Sales</p>
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          /* KPI-ARP-PHASE5B: focus-sync は永続化を debounce（スクロール中の同期 I/O 回避） */
-          var navSrc = source || 'kpi-year-store';
-          var deferPersist =
-            navSrc === 'focus-sync' ||
-            navSrc === 'arrow' ||
-            navSrc === 'today' ||
-            navSrc === 'annual-ui' ||
-            navSrc === 'picker' ||
-            navSrc === 'selection';
-          if (!deferPersist) {
-            persistStore();
-          } else {
-            if (window.__kpiSelectedDatePersistTimer != null) {
-              window.clearTimeout(window.__kpiSelectedDatePersistTimer);
-            }
-            window.__kpiSelectedDatePersistTimer = window.setTimeout(function () {
-              window.__kpiSelectedDatePersistTimer = null;
-              persistStore();
-            }, 500);
-          }
+          persistStore();
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -20242,6 +22983,7 @@ Target Sales</p>
           var rec = ensureYearMepData(y);
           return {
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {})),
+            dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || { memos: {}, flags: {}, weather: {} })
             ),
@@ -20277,6 +23019,24 @@ Target Sales</p>
                 if (!canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 rec.dailyExpenses[lineId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
+              });
+            });
+          }
+          var srcInc = payload && payload.dailyIncome;
+          if (srcInc && typeof srcInc === 'object') {
+            Object.keys(srcInc).forEach(function (streamId) {
+              if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {};
+              var byIso = srcInc[streamId];
+              if (!byIso || typeof byIso !== 'object') return;
+              Object.keys(byIso).forEach(function (iso) {
+                if (!validIso(iso) || isoYear(iso) !== y) return;
+                if (!canEditIso(iso)) return;
+                var n = Number(byIso[iso]);
+                if (!Number.isFinite(n) || n === 0) {
+                  delete rec.dailyIncome[streamId][iso];
+                } else {
+                  rec.dailyIncome[streamId][iso] = Math.round(n);
+                }
               });
             });
           }
@@ -20381,8 +23141,6 @@ Target Sales</p>
         }
 
 
-        
-        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
 
@@ -21002,7 +23760,7 @@ Target Sales</p>
           };
         }
 
-                window.KpiYearStore = {
+        window.KpiYearStore = {
           init: init,
           reload: function () {
             loadStore();
@@ -21024,6 +23782,8 @@ Target Sales</p>
           },
           writeDailySales: writeDailySales,
           writeBusinessDay: writeBusinessDay,
+          writeDailyIncome: writeDailyIncome,
+          readDailyIncome: readDailyIncome,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,
@@ -23344,16 +26104,40 @@ Target Sales</p>
           window.__ANNUAL_UI.setCalendarYear(d.getFullYear());
         }
       }
-      if (datePrevBtn) {
-        datePrevBtn.addEventListener('click', function () {
-          shiftDateByDays(-1);
+      function bindCockpitDateHoldRepeat(btn, delta) {
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) { clearTimeout(delayId); delayId = null; }
+          if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+        }
+        function stepOnce() {
+          shiftDateByDays(delta);
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() { clearHold(); }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
         });
       }
-      if (dateNextBtn) {
-        dateNextBtn.addEventListener('click', function () {
-          shiftDateByDays(1);
-        });
-      }
+      bindCockpitDateHoldRepeat(datePrevBtn, -1);
+      bindCockpitDateHoldRepeat(dateNextBtn, 1);
       /* KPI-ANNUAL-LOAD-PERF */
       var __placeTargetSalesRaf = null;
       function schedulePlaceTargetSalesGroup() {
@@ -24925,37 +27709,8 @@ Target Sales</p>
           rowsRoot.appendChild(row);
         }
 
-        var bootIsoForScroll = null;
         if (prevScroll != null && scrollEl) {
           scrollEl.scrollTop = prevScroll;
-        } else if (scrollEl && !opts.skipBootstrapScroll) {
-          if (opts.bootstrapIso && /^\d{4}-\d{2}-\d{2}$/.test(String(opts.bootstrapIso))) {
-            bootIsoForScroll = String(opts.bootstrapIso);
-          } else {
-            try {
-              if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
-                bootIsoForScroll = KpiYearStore.getSelectedDate();
-              }
-            } catch (_bootE) {}
-            if (!bootIsoForScroll && daily && daily.selectedDate) bootIsoForScroll = daily.selectedDate;
-          }
-          if (bootIsoForScroll && /^\d{4}-\d{2}-\d{2}$/.test(String(bootIsoForScroll))) {
-            window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
-            window.__ANNUAL_DATA.daily.selectedDate = String(bootIsoForScroll);
-          }
-        }
-        if (
-          bootIsoForScroll &&
-          window.__ANNUAL_UI &&
-          typeof window.__ANNUAL_UI.scrollTableToIso === 'function'
-        ) {
-          window.__ANNUAL_UI.scrollTableToIso(String(bootIsoForScroll), { lockMs: 1800 });
-        } else if (bootIsoForScroll) {
-          document.dispatchEvent(
-            new CustomEvent('annual:dailyDateChanged', {
-              detail: { isoDate: String(bootIsoForScroll), source: 'timeline-bootstrap' },
-            })
-          );
         }
         if (document.body.classList.contains('monthly-page')) {
           if (opts.boundsHint === 'anchor-year-only') {
@@ -24967,6 +27722,232 @@ Target Sales</p>
         }
         document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
       }
+      function buildMonthlyCumulativeTrendPayload(year, month, cutoffIso) {
+        var y = Number(year);
+        var m = Number(month);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dim = new Date(y, m, 0).getDate();
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var parts = String(cutoffIso).split('-');
+          var cy = Number(parts[0]);
+          var cm = Number(parts[1]);
+          var cd = Number(parts[2]);
+          if (cy === y && cm === m && Number.isFinite(cd)) {
+            cutoffDay = Math.max(1, Math.min(dim, cd));
+          }
+        }
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var day = 1; day <= dim; day++) {
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(day);
+          var dt = new Date(y, m - 1, day);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          var isBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dtVal = 0;
+          var daVal = 0;
+          if (isBiz) {
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }
+            if (day <= cutoffDay) daVal = readTwSalesAmt(dayIso, smap);
+          }
+          tSum += dtVal;
+          if (day <= cutoffDay) aSum += daVal;
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          target.push(tSum);
+          actual.push(aSum);
+        }
+        return {
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        };
+      }
+      window.__buildMonthlyCumulativeTrendPayload = buildMonthlyCumulativeTrendPayload;
+      function buildAnnualCumulativeTrendPayload(year, cutoffIso) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dim = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }
+          } else if (String(cutoffIso) < y + '-01-01') {
+            cutoffDay = 0;
+          }
+        }
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var doy = 1; doy <= dim; doy++) {
+          var dtObj = new Date(y, 0, doy);
+          var month = dtObj.getMonth() + 1;
+          var day = dtObj.getDate();
+          var dayIso = y + '-' + pad2(month) + '-' + pad2(day);
+          var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+          var dtVal = 0;
+          var daVal = 0;
+          if (isTimelineBusinessDay(dayIso, bmap, isWk)) {
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }
+            if (cutoffDay > 0 && doy <= cutoffDay) {
+              daVal = readTwSalesAmt(dayIso, smap);
+            }
+          }
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          tSum += dtVal;
+          if (cutoffDay > 0 && doy <= cutoffDay) aSum += daVal;
+          target.push(tSum);
+          actual.push(aSum);
+        }
+        return {
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        };
+      }
+      window.__buildAnnualCumulativeTrendPayload = buildAnnualCumulativeTrendPayload;
+      function buildAnnualCompareTrendPayload(year, cutoffIso) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        function dimOf(yy) {
+          return (yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0 ? 366 : 365;
+        }
+        var dim = dimOf(y);
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }
+          } else if (String(cutoffIso) < y + '-01-01') {
+            cutoffDay = 0;
+          }
+        }
+        function seriesForYear(yy, untilDoy) {
+          var dimY = dimOf(yy);
+          var maxD = untilDoy == null ? dimY : Math.max(0, Math.min(dimY, untilDoy));
+          var arr = [];
+          var sum = 0;
+          for (var doy = 1; doy <= maxD; doy++) {
+            var dtObj = new Date(yy, 0, doy);
+            var dayIso = yy + '-' + pad2(dtObj.getMonth() + 1) + '-' + pad2(dtObj.getDate());
+            var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+            var daVal = 0;
+            if (isTimelineBusinessDay(dayIso, bmap, isWk)) {
+              daVal = readTwSalesAmt(dayIso, smap);
+            }
+            sum += daVal;
+            arr.push(sum);
+          }
+          return arr;
+        }
+        function alignToDim(src, alignDim) {
+          var out = [];
+          var last = 0;
+          for (var i = 0; i < alignDim; i++) {
+            if (i < src.length) {
+              last = src[i];
+              out.push(src[i]);
+            } else {
+              out.push(last);
+            }
+          }
+          return out;
+        }
+        var current = cutoffDay > 0 ? seriesForYear(y, cutoffDay) : [];
+        var lastYear = alignToDim(seriesForYear(y - 1, null), dim);
+        var bestYearNum = null;
+        var bestTotal = -1;
+        var scanYears = [];
+        if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+          try {
+            var st = KpiYearStore.getStore();
+            if (st && st.years) {
+              Object.keys(st.years).forEach(function (k) {
+                var yn = Number(k);
+                if (Number.isFinite(yn) && yn < y) scanYears.push(yn);
+              });
+            }
+          } catch (_e) {}
+        }
+        if (!scanYears.length) {
+          for (var back = 1; back <= 15; back++) scanYears.push(y - back);
+        }
+        scanYears.sort(function (a, b) { return b - a; });
+        for (var si = 0; si < scanYears.length; si++) {
+          var yy = scanYears[si];
+          var full = seriesForYear(yy, null);
+          var total = full.length ? full[full.length - 1] : 0;
+          if (!(total > 0)) continue;
+          if (total > bestTotal) {
+            bestTotal = total;
+            bestYearNum = yy;
+          }
+        }
+        var best = bestYearNum != null
+          ? alignToDim(seriesForYear(bestYearNum, null), dim)
+          : alignToDim([], dim);
+        return {
+          current: current,
+          lastYear: lastYear,
+          best: best,
+          todayDay: cutoffDay,
+          bestYear: bestYearNum,
+        };
+      }
+      window.__buildAnnualCompareTrendPayload = buildAnnualCompareTrendPayload;
       function computeTwMetricsForIso(iso) {
         if (!iso) return null;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
@@ -25060,12 +28041,99 @@ Target Sales</p>
           annualDailyNeed: annualDailyNeed,
         };
       }
+      function sumMonthSalesThroughDay(year, month, day) {
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dim = new Date(y, m, 0).getDate();
+        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        var sum = 0;
+        var hasData = false;
+        for (var d = 1; d <= until; d++) {
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(d);
+          var dt = new Date(y, m - 1, d);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+          if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+          sum += readTwSalesAmt(dayIso, smap);
+        }
+        return { sum: sum, hasData: hasData };
+      }
+      window.__sumMonthSalesThroughDay = sumMonthSalesThroughDay;
+      function sumYearSalesThroughDay(year, month, day) {
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dimMonth = new Date(y, m, 0).getDate();
+        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        var sum = 0;
+        var hasData = false;
+        for (var mm = 1; mm <= m; mm++) {
+          var dim = new Date(y, mm, 0).getDate();
+          var last = mm === m ? untilDay : dim;
+          for (var d = 1; d <= last; d++) {
+            var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+            var dt = new Date(y, mm - 1, d);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+            sum += readTwSalesAmt(dayIso, smap);
+          }
+        }
+        return { sum: sum, hasData: hasData };
+      }
+      window.__sumYearSalesThroughDay = sumYearSalesThroughDay;
       window.__computeTwMetricsForIso = computeTwMetricsForIso;
       window.__twFmtMoney = fmtMoney;
       window.__twFmtDiff = fmtTwDiff;
       window.__twFmtAchPct = fmtTwAchPct;
       window.__twDiffSeverityClass = twDiffSeverityClass;
       window.__twDiffLevels = TW_DIFF_LEVELS;
+      /** Same weekday N years back (364 * yearsBack days). yearsBack=0 → iso itself. */
+      window.__sameWeekdayIso = function (iso, yearsBack) {
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        var n = Number(yearsBack);
+        if (!Number.isFinite(n) || n < 0) n = 1;
+        if (n > 0) d.setDate(d.getDate() - 364 * n);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      };
+      window.__readTwDaySales = function (iso) {
+        if (!iso) return 0;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        return readTwSalesAmt(iso, daily.targetSalesByDate || {});
+      };
+      window.__isTwBusinessDay = function (iso) {
+        if (!iso) return false;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var bmap = daily.businessDayByDate || {};
+        var d = new Date(String(iso).trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return false;
+        var isWk = d.getDay() === 0 || d.getDay() === 6;
+        return isTimelineBusinessDay(iso, bmap, isWk);
+      };
       var __twTimelineRefreshTimer = null;
       function scheduleRenderAnnualDailyTimeline(anchorYear, opts) {
         opts = opts || { preserveScroll: true };
@@ -25082,6 +28150,26 @@ Target Sales</p>
       }
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
       /* END KPI-FOCUS-TW-METRICS */
+      function refreshAnnualReadSurfaces(opts) {
+        opts = opts || {};
+        if (window.KpiYearStore) {
+          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
+            KpiYearStore.reconcileTimelineFromLegacy();
+          }
+          if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
+            KpiYearStore.syncToAnnualDaily();
+          }
+        }
+        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(cy)) cy = new Date().getFullYear();
+        if (typeof renderAnnualDailyTimeline === 'function') {
+          renderAnnualDailyTimeline(cy, { preserveScroll: !!opts.preserveScroll });
+        }
+      }
+      document.addEventListener('kpi:readSurfacesRefresh', function () {
+        refreshAnnualReadSurfaces({ preserveScroll: true });
+      });
+      /* KPI-READ-SURFACE-SYNC */
     /* KPI-COCKPIT-REFRESH */
     (function () {
       function ensureTwDiffExports() {

@@ -1,0 +1,192 @@
+    /* Analyze / Graph: Annual Status（Annual 先頭ブロック） */
+    .insight-pane--analyze .insight-overlay__section--annual .insight-annual-status,
+    .insight-pane--graph .insight-overlay__section--annual .insight-annual-status {
+      position: absolute;
+      left: 185px;
+      top: var(--insight-annual-analyze-top);
+      z-index: 4;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .insight-pane--analyze .insight-annual-status__title,
+    .insight-pane--graph .insight-annual-status__title {
+      margin: 0 0 40px 0;
+      padding: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      text-align: left;
+    }
+    .insight-pane--analyze .insight-annual-status__row,
+    .insight-pane--graph .insight-annual-status__row {
+      display: grid;
+      grid-template-columns: 200px 500px;
+      column-gap: 113px;
+      align-items: center;
+    }
+    .insight-pane--analyze .insight-annual-status__row + .insight-annual-status__row,
+    .insight-pane--graph .insight-annual-status__row + .insight-annual-status__row {
+      margin-top: 15px;
+    }
+    .insight-pane--analyze .insight-annual-status__label,
+    .insight-pane--graph .insight-annual-status__label {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      justify-self: center;
+      text-align: center;
+    }
+    .insight-pane--analyze .insight-annual-status__value-box,
+    .insight-pane--graph .insight-annual-status__value-box {
+      width: 500px;
+      height: 40px;
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      background: rgba(88, 225, 243, 0.44);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .insight-pane--analyze .insight-annual-status__value,
+    .insight-pane--graph .insight-annual-status__value {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+    }
+    .office-mode .insight-pane--analyze .insight-annual-status__title,
+    .office-mode .insight-pane--graph .insight-annual-status__title,
+    .office-mode .insight-pane--analyze .insight-annual-status__label,
+    .office-mode .insight-pane--graph .insight-annual-status__label,
+    .office-mode .insight-pane--analyze .insight-annual-status__value,
+    .office-mode .insight-pane--graph .insight-annual-status__value {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-pane--analyze .insight-annual-status__value-box,
+    .office-mode .insight-pane--graph .insight-annual-status__value-box {
+      border-color: #2a2a2a;
+      background: #e8e8e8;
+    }
+    /* Analyze / Graph: Annual Sales Summary（Annual Status 直下） */
+    .insight-pane--analyze .insight-overlay__section--annual .insight-annual-sales-summary,
+    .insight-pane--graph .insight-overlay__section--annual .insight-annual-sales-summary {
+      position: absolute;
+      left: 185px;
+      top: calc(var(--insight-annual-analyze-top) + var(--insight-annual-status-block-h) + 48px);
+      z-index: 4;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__title,
+    .insight-pane--graph .insight-annual-sales-summary__title {
+      margin: 0 0 40px 0;
+      padding: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #58e1f3;
+      font-family: 'Orbitron', sans-serif;
+      text-align: left;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__row,
+    .insight-pane--graph .insight-annual-sales-summary__row {
+      display: grid;
+      grid-template-columns: 200px 500px;
+      column-gap: 113px;
+      align-items: center;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__row + .insight-annual-sales-summary__row,
+    .insight-pane--graph .insight-annual-sales-summary__row + .insight-annual-sales-summary__row {
+      margin-top: 15px;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__row:first-child + .insight-annual-sales-summary__row,
+    .insight-pane--graph .insight-annual-sales-summary__row:first-child + .insight-annual-sales-summary__row {
+      margin-top: 31px;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__label,
+    .insight-pane--graph .insight-annual-sales-summary__label {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      justify-self: center;
+      text-align: center;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__label--primary,
+    .insight-pane--graph .insight-annual-sales-summary__label--primary {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__value-box,
+    .insight-pane--graph .insight-annual-sales-summary__value-box {
+      box-sizing: border-box;
+      border: 1px solid #58e1f3;
+      background: rgba(88, 225, 243, 0.44);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__value-box--lg,
+    .insight-pane--graph .insight-annual-sales-summary__value-box--lg {
+      width: 500px;
+      height: 60px;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__value-box--sm,
+    .insight-pane--graph .insight-annual-sales-summary__value-box--sm {
+      width: 450px;
+      height: 40px;
+      justify-self: end;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__value,
+    .insight-pane--graph .insight-annual-sales-summary__value {
+      margin: 0;
+      color: #58e1f3;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      width: 100%;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__value--lg,
+    .insight-pane--graph .insight-annual-sales-summary__value--lg {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .insight-pane--analyze .insight-annual-sales-summary__graph-visual,
+    .insight-pane--graph .insight-annual-sales-summary__graph-visual {
+      position: relative;
+      width: 654px;
+      margin-top: 43px;
+      margin-left: 80.5px;
+      min-height: 96px;
+      --marker-color: #e6ff00;
+      --kpi-x: 436px;
+      --kgi-x: 436px;
+      --fill-w: 436px;
+    }
+    .office-mode .insight-pane--analyze .insight-annual-sales-summary__title,
+    .office-mode .insight-pane--graph .insight-annual-sales-summary__title,
+    .office-mode .insight-pane--analyze .insight-annual-sales-summary__label,
+    .office-mode .insight-pane--graph .insight-annual-sales-summary__label,
+    .office-mode .insight-pane--analyze .insight-annual-sales-summary__value,
+    .office-mode .insight-pane--graph .insight-annual-sales-summary__value {
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-pane--analyze .insight-annual-sales-summary__value-box,
+    .office-mode .insight-pane--graph .insight-annual-sales-summary__value-box {
+      border-color: #2a2a2a;
+      background: #e8e8e8;
+    }

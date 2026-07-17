@@ -188,10 +188,10 @@ ANNUAL_TW_YEAR_CSS = """
     body.annual-focus-bar-expanded.office-mode .annual-daily-focus-tw-year::after {
       content: "";
       position: absolute;
-      left: calc(100% + 1px);
+      left: 100%;
       top: 0;
       bottom: 0;
-      width: max(0px, calc(var(--annual-daily-focus-table-pad-left) - 14px - 100% - 1px));
+      width: max(0px, calc(var(--annual-daily-focus-table-pad-left) - 14px - 100%));
       background: #e8e8e8;
       pointer-events: none;
     }
@@ -231,6 +231,58 @@ ANNUAL_OFFICE_MASK_AFTER = """    .office-mode.annual-focus-bar-expanded .annual
       background: #e8e8e8;
       width: calc(var(--annual-date-left-mask-w) + 1px);
       border-top-left-radius: 13px;
+    }"""
+
+ANNUAL_OFFICE_HDR_DATE_BEFORE = """    body.office-mode.annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
+      background: #e8e8e8;
+      min-width: 0;
+      max-width: none;
+      width: 100%;
+      justify-self: stretch;
+    }"""
+
+ANNUAL_OFFICE_HDR_DATE_AFTER = """    body.office-mode.annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date {
+      background: #e8e8e8;
+      min-width: 0;
+      max-width: none;
+      width: 100%;
+      justify-self: stretch;
+      /* KPI-TW-OFFICE-DATE-OVERHANG: Sci-Fi と同幅で左へ延ばし、横スクロールのチラ見えを防ぐ */
+      margin-left: calc(-1 * var(--annual-global-menu-date-overhang));
+    }"""
+
+ANNUAL_OFFICE_ROW_DATE_BEFORE = """    body.annual-focus-bar-expanded.office-mode .annual-daily-row__group--base .annual-daily-row__cell--date {
+      background: #d2d2d2;
+    }"""
+
+ANNUAL_OFFICE_ROW_DATE_AFTER = """    body.annual-focus-bar-expanded.office-mode .annual-daily-row__group--base .annual-daily-row__cell--date {
+      background: #d2d2d2;
+      margin-left: calc(-1 * var(--annual-global-menu-date-overhang));
+      min-width: calc(120px + var(--annual-global-menu-date-overhang));
+      max-width: calc(120px + var(--annual-global-menu-date-overhang));
+      padding-left: calc(8px + var(--annual-global-menu-date-overhang));
+    }
+    body.annual-focus-bar-expanded.office-mode .annual-daily-row__group--base .annual-daily-row__cell--date::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -1px;
+      width: calc(var(--annual-global-menu-date-overhang) + 1px);
+      background: #e8e8e8;
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+      pointer-events: none;
+    }
+    body.office-mode.annual-focus-bar-expanded .annual-daily-focus-menu-group--base .annual-daily-hdr__cell--date::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 100%;
+      width: calc(var(--annual-global-menu-date-overhang) + 1px);
+      background: #e8e8e8;
+      pointer-events: none;
     }"""
 
 ANNUAL_HTML_INSERT_BEFORE = """            <button type="button" class="annual-daily-focus-edit-btn" id="annual-daily-focus-edit-btn\""""
@@ -288,6 +340,17 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     if old not in text:
         raise ValueError(f"{label}: anchor not found")
     return text.replace(old, new, 1)
+
+
+def apply_annual_office_date_overhang(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    if "KPI-TW-OFFICE-DATE-OVERHANG" in text:
+        print(f"skip office date overhang (already applied): {path}")
+        return
+    text = replace_once(text, ANNUAL_OFFICE_HDR_DATE_BEFORE, ANNUAL_OFFICE_HDR_DATE_AFTER, str(path))
+    text = replace_once(text, ANNUAL_OFFICE_ROW_DATE_BEFORE, ANNUAL_OFFICE_ROW_DATE_AFTER, str(path))
+    path.write_text(text, encoding="utf-8")
+    print(f"applied office date overhang: {path}")
 
 
 def apply_annual(path: Path, lang: str) -> None:
@@ -357,6 +420,11 @@ def apply_monthly(path: Path, lang: str) -> None:
 
 
 def main() -> int:
+    for p, lang in (
+        (ROOT / "app/annual/index.html", "ja"),
+        (ROOT / "en/app/annual/index.html", "en"),
+    ):
+        apply_annual_office_date_overhang(p)
     apply_annual(ROOT / "app/annual/index.html", "ja")
     apply_annual(ROOT / "en/app/annual/index.html", "en")
     apply_monthly(ROOT / "app/monthly/index.html", "ja")

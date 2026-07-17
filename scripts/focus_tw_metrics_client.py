@@ -480,6 +480,232 @@ def focus_tw_metrics_js() -> str:
         }}
         document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
       }}
+      function buildMonthlyCumulativeTrendPayload(year, month, cutoffIso) {{
+        var y = Number(year);
+        var m = Number(month);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var dim = new Date(y, m, 0).getDate();
+        var cutoffDay = dim;
+        if (cutoffIso) {{
+          var parts = String(cutoffIso).split('-');
+          var cy = Number(parts[0]);
+          var cm = Number(parts[1]);
+          var cd = Number(parts[2]);
+          if (cy === y && cm === m && Number.isFinite(cd)) {{
+            cutoffDay = Math.max(1, Math.min(dim, cd));
+          }}
+        }}
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var day = 1; day <= dim; day++) {{
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(day);
+          var dt = new Date(y, m - 1, day);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          var isBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dtVal = 0;
+          var daVal = 0;
+          if (isBiz) {{
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {{
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }}
+            if (day <= cutoffDay) daVal = readTwSalesAmt(dayIso, smap);
+          }}
+          tSum += dtVal;
+          if (day <= cutoffDay) aSum += daVal;
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          target.push(tSum);
+          actual.push(aSum);
+        }}
+        return {{
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        }};
+      }}
+      window.__buildMonthlyCumulativeTrendPayload = buildMonthlyCumulativeTrendPayload;
+      function buildAnnualCumulativeTrendPayload(year, cutoffIso) {{
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var dim = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
+        var cutoffDay = dim;
+        if (cutoffIso) {{
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {{
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {{
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }}
+          }} else if (String(cutoffIso) < y + '-01-01') {{
+            cutoffDay = 0;
+          }}
+        }}
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var doy = 1; doy <= dim; doy++) {{
+          var dtObj = new Date(y, 0, doy);
+          var month = dtObj.getMonth() + 1;
+          var day = dtObj.getDate();
+          var dayIso = y + '-' + pad2(month) + '-' + pad2(day);
+          var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+          var dtVal = 0;
+          var daVal = 0;
+          if (isTimelineBusinessDay(dayIso, bmap, isWk)) {{
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {{
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }}
+            if (cutoffDay > 0 && doy <= cutoffDay) {{
+              daVal = readTwSalesAmt(dayIso, smap);
+            }}
+          }}
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          tSum += dtVal;
+          if (cutoffDay > 0 && doy <= cutoffDay) aSum += daVal;
+          target.push(tSum);
+          actual.push(aSum);
+        }}
+        return {{
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        }};
+      }}
+      window.__buildAnnualCumulativeTrendPayload = buildAnnualCumulativeTrendPayload;
+      function buildAnnualCompareTrendPayload(year, cutoffIso) {{
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        function dimOf(yy) {{
+          return (yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0 ? 366 : 365;
+        }}
+        var dim = dimOf(y);
+        var cutoffDay = dim;
+        if (cutoffIso) {{
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {{
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {{
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }}
+          }} else if (String(cutoffIso) < y + '-01-01') {{
+            cutoffDay = 0;
+          }}
+        }}
+        function seriesForYear(yy, untilDoy) {{
+          var dimY = dimOf(yy);
+          var maxD = untilDoy == null ? dimY : Math.max(0, Math.min(dimY, untilDoy));
+          var arr = [];
+          var sum = 0;
+          for (var doy = 1; doy <= maxD; doy++) {{
+            var dtObj = new Date(yy, 0, doy);
+            var dayIso = yy + '-' + pad2(dtObj.getMonth() + 1) + '-' + pad2(dtObj.getDate());
+            var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+            var daVal = 0;
+            if (isTimelineBusinessDay(dayIso, bmap, isWk)) {{
+              daVal = readTwSalesAmt(dayIso, smap);
+            }}
+            sum += daVal;
+            arr.push(sum);
+          }}
+          return arr;
+        }}
+        function alignToDim(src, alignDim) {{
+          var out = [];
+          var last = 0;
+          for (var i = 0; i < alignDim; i++) {{
+            if (i < src.length) {{
+              last = src[i];
+              out.push(src[i]);
+            }} else {{
+              out.push(last);
+            }}
+          }}
+          return out;
+        }}
+        var current = cutoffDay > 0 ? seriesForYear(y, cutoffDay) : [];
+        var lastYear = alignToDim(seriesForYear(y - 1, null), dim);
+        var bestYearNum = null;
+        var bestTotal = -1;
+        var scanYears = [];
+        if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {{
+          try {{
+            var st = KpiYearStore.getStore();
+            if (st && st.years) {{
+              Object.keys(st.years).forEach(function (k) {{
+                var yn = Number(k);
+                if (Number.isFinite(yn) && yn < y) scanYears.push(yn);
+              }});
+            }}
+          }} catch (_e) {{}}
+        }}
+        if (!scanYears.length) {{
+          for (var back = 1; back <= 15; back++) scanYears.push(y - back);
+        }}
+        scanYears.sort(function (a, b) {{ return b - a; }});
+        for (var si = 0; si < scanYears.length; si++) {{
+          var yy = scanYears[si];
+          var full = seriesForYear(yy, null);
+          var total = full.length ? full[full.length - 1] : 0;
+          if (!(total > 0)) continue;
+          if (total > bestTotal) {{
+            bestTotal = total;
+            bestYearNum = yy;
+          }}
+        }}
+        var best = bestYearNum != null
+          ? alignToDim(seriesForYear(bestYearNum, null), dim)
+          : alignToDim([], dim);
+        return {{
+          current: current,
+          lastYear: lastYear,
+          best: best,
+          todayDay: cutoffDay,
+          bestYear: bestYearNum,
+        }};
+      }}
+      window.__buildAnnualCompareTrendPayload = buildAnnualCompareTrendPayload;
       function computeTwMetricsForIso(iso) {{
         if (!iso) return null;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
@@ -573,12 +799,99 @@ def focus_tw_metrics_js() -> str:
           annualDailyNeed: annualDailyNeed,
         }};
       }}
+      function sumMonthSalesThroughDay(year, month, day) {{
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var dim = new Date(y, m, 0).getDate();
+        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        var sum = 0;
+        var hasData = false;
+        for (var d = 1; d <= until; d++) {{
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(d);
+          var dt = new Date(y, m - 1, d);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+          if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+          sum += readTwSalesAmt(dayIso, smap);
+        }}
+        return {{ sum: sum, hasData: hasData }};
+      }}
+      window.__sumMonthSalesThroughDay = sumMonthSalesThroughDay;
+      function sumYearSalesThroughDay(year, month, day) {{
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var dimMonth = new Date(y, m, 0).getDate();
+        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        var sum = 0;
+        var hasData = false;
+        for (var mm = 1; mm <= m; mm++) {{
+          var dim = new Date(y, mm, 0).getDate();
+          var last = mm === m ? untilDay : dim;
+          for (var d = 1; d <= last; d++) {{
+            var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+            var dt = new Date(y, mm - 1, d);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+            sum += readTwSalesAmt(dayIso, smap);
+          }}
+        }}
+        return {{ sum: sum, hasData: hasData }};
+      }}
+      window.__sumYearSalesThroughDay = sumYearSalesThroughDay;
       window.__computeTwMetricsForIso = computeTwMetricsForIso;
       window.__twFmtMoney = fmtMoney;
       window.__twFmtDiff = fmtTwDiff;
       window.__twFmtAchPct = fmtTwAchPct;
       window.__twDiffSeverityClass = twDiffSeverityClass;
       window.__twDiffLevels = TW_DIFF_LEVELS;
+      /** Same weekday N years back (364 * yearsBack days). yearsBack=0 → iso itself. */
+      window.__sameWeekdayIso = function (iso, yearsBack) {{
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        var n = Number(yearsBack);
+        if (!Number.isFinite(n) || n < 0) n = 1;
+        if (n > 0) d.setDate(d.getDate() - 364 * n);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }};
+      window.__readTwDaySales = function (iso) {{
+        if (!iso) return 0;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        return readTwSalesAmt(iso, daily.targetSalesByDate || {{}});
+      }};
+      window.__isTwBusinessDay = function (iso) {{
+        if (!iso) return false;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var d = new Date(String(iso).trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return false;
+        var isWk = d.getDay() === 0 || d.getDay() === 6;
+        return isTimelineBusinessDay(iso, bmap, isWk);
+      }};
       var __twTimelineRefreshTimer = null;
       function scheduleRenderAnnualDailyTimeline(anchorYear, opts) {{
         opts = opts || {{ preserveScroll: true }};

@@ -79,8 +79,8 @@ pl-table-window
 
 ### 既知の課題（WIP）
 
-- 縦スクロール固定の体感確認には **スクロール領域を超える行数** が必要（現状 7 行程度ではバーが出ないことが多い）
-- ラベル帯とデータ帯の **横線ズレ** は行高同期 JS で緩和中。完全解消は未確認
+- ~~縦スクロール固定の体感確認にはスクロール領域を超える行数が必要~~ → 明細＋Graph で十分に溢れる。検証 `verify_pl_scroll_freeze.py`
+- ラベル帯とデータ帯の **横線ズレ** は行高同期 JS で緩和（明細再描画・ResizeObserver）。残差は 2px 超で検証失敗
 - 境界縦線は `pl-split-seam` オーバーレイで固定（セル border に依存しない）
 
 ---
@@ -117,7 +117,7 @@ pl-table-window
 | ラベル | 「Business Days」/「営業日」— 300px 全幅（`colspan="2"`） |
 | データ | 月ごと `colspan="2"`、営業日数 |
 
-**データ同期**: `kpiNavigator.annualDailyShared` から `syncPlBusinessDays()`。`storage` イベント + `annual:businessDayMapChanged` を監視。
+**データ同期**: `kpiNavigator.kpiYearStore.timeline`（真実源）から `syncPlBusinessDays()`。判定は Annual/MEP/Insight と同一（`businessDays[iso]` 明示 → `dailySales[iso]===0` は休 → 土日既定休）。`storage`（`kpiYearStore`/`annualDailyShared`）+ `annual:businessDayMapChanged` / `kpi:businessDayChanged` / `kpi:dailySalesChanged` / `kpi:readSurfacesRefresh` を監視。
 
 ---
 
@@ -131,11 +131,11 @@ pl-table-window
 | 3 | Sales B | 売上B | 13px + ✎ 編集ボタン |
 | 4 | Total Sales | 売上合計 | **15px bold** |
 
-**月次データ（Income のみ特殊）**
+**月次データ（Income）**
 
-- **260px × 1 セル / 月**（`pl-month-cell`、`colspan="2"`）
-- Amount / Ratio の **2 分割なし**（パーセンテージ不要）
-- ダミー: `$123,456` / `¥123,456`
+- 月ごと **Amount 160px + Ratio 100px**（合計 260px）— 支出明細と同レイアウト
+- Ratio(%) = 金額 ÷ 売上合計（`sales_total`）。合計行はデータ有時 **100.00%**
+- 金額は MEP 日次の月累積（読取専用）。ダミー初期表示は `—`
 
 ---
 
@@ -279,21 +279,34 @@ PL 表ツールバー **PL Insight** から開く読み取り専用オーバー�
 - [x] Profit 行
 - [x] **ラベル編集（ダブルクリック / F2）**
 - [x] **月次 Graph 帯**（ダミー数値・黒字/赤字切替）
-- [ ] 年計列
-- [ ] 家賃・物件選択（固定費行ラベル内ドロップダウン）
-- [ ] 行の並べ替え（▲▼ ボタン案を優先検討）
-- [ ] 縦スクロール固定の仕上げ・行追加後の QA
+- [x] **年計列（2026-07-17）** — 12ヶ月の右に Amount160+Ratio100（`data-month="year"`）。JA「年計」/ EN「Annual」。金額＝12ヶ月合計、Ratio＝年計額÷年計売上合計。営業日も年計合算。読取専用。実装 `pl_year_total_client.py` + `build_pl_table_page.py` / `pl_expense_detail_client.py`、検証 `verify_pl_year_totals.py`。
+- [x] **家賃・物件選択（2026-07-17）** — 固定費の物件行ラベル内ドロップダウン（JA: 賃貸/自持、EN: Rented/Owned）。`kpiNavigator.plOccupancy`=`rent|owned`。賃貸=`exp_rent`／自持=`exp_depreciable_asset_tax` を排他表示（金額は保持）。実装 `pl_expense_detail_client.py`、検証 `verify_pl_occupancy.py`。
+- [x] **行の並べ替え（▲▼・実装済確認 2026-07-17）** — 同バケット内で `sortOrder` 入替 → 両表再描画。検証 `verify_pl_row_reorder.py`。
+- [x] **縦スクロール固定の仕上げ（2026-07-17）** — Business Days まで固定 / Income 以降 `pl-table-scroll-y`。縦バー幅を固定ヘッダ側 `padding-right` で相殺、横 `scrollLeft` を全データペイン同期、明細再描画後に行高同期。検証 `verify_pl_scroll_freeze.py`。
 
 ### フェーズ B（データ・入力 UX）
 
 - [x] **ユーザー追加科目の入力元確認**（＋押下 → モーダル → `inputStyle` 保存。PL選択=緑行 `--input-pl`）
 - [x] ラベル名変更時の入力元再確認（プレースホルダ「新規科目」からの初回編集は除く）
-- [ ] 科目ごと `Input Method`（Daily Aggregate / Monthly Manual / + Adjustment）— テンプレ `default` の確定
-- [ ] 入力元バッジ（`DAILY` / `MONTHLY`）
-- [ ] Monthly Edit 側の緑行表示・カタログ同期
-- [ ] Monthly ↔ PL の二重入力ガード（編集不可セル）
-- [ ] 日次合算の自動反映 + 調整額
-- [ ] 参考予算（定規）— `pl-table-label-layout-memo.md` § 参考予算
+- [x] **収入ブロック 読取化（2026-07-15 / 2026-07-16 改訂）** — 収入は **すべて PL では読取専用**（日次で MEP 入力 → 月次累積を PL 表示）。**合計＝`kpiNavigator.kpiYearStore.timeline.dailySales` の月合計（＝総売上・実績・プレースホルダ`1234`除外）が正**。売上A/B＝`years.{Y}.dailyIncome[streamId]` の月合計。**店舗売上＝合計−(A+B)**（`dailySales` に内訳が含まれるため差し引き・0でクランプ／`timeline.dailySales` は不変＝二重計上回避）。`kpi:dailySalesChanged`/`kpi:mepDataChanged` で自動更新。支出系（`data-pl-editable`/`kpi-pl-expenses-v1`）とは完全分離。実装 `scripts/pl_income_client.py`、検証 `scripts/verify_pl_income_store_sales.py`。
+- **MEP 複数収入ストリーム（Sales A/B）** — 3分割完了（波及ゼロ設計）。
+  - [x] **Phase 1（2026-07-16 完了・完全無害）** — `kpiYearStore` に `dailyIncome` の read/write を純追加。`ensureYearMepData` で `dailyIncome:{}` 初期化 / `loadMepYearPayload` が `dailyIncome` を返す / `bulkPersistMepYear` が `payload.dailyIncome[streamId][iso]` を保存（0/空は削除）＋`kpi:mepDataChanged` / `writeDailyIncome`・`readDailyIncome` を export。**書き込む側がまだ無いので既存挙動は不変**（`timeline.dailySales`＝総売上・`dailyExpenses`・summary/insight 全て回帰 OK）。実装 `scripts/kpi_year_store_client.py`、検証 `scripts/verify_kpi_daily_income_store.py`。
+  - [x] **Phase 2（2026-07-16 完了・波及ゼロ）** — 危険な二重注入掃除を**回避する安全設計にピボット**。MEP-STORE ブロック（`buildMepPersistPayload` 等）には一切触れず、**独立フック**を新設: 全保存経路が発火する `kpi:mepDataChanged`(source=`monthly-edit-float`) を1か所で拾い、Phase 1 の `KpiYearStore.bulkPersistMepYear(year,{dailyIncome},…)` で A/B(`sales_a`/`sales_b`)を `years.{Y}.dailyIncome[streamId]` へマージ保存（再帰は排他フラグで防止／`rowValueById` は lineId キー）。PL は `店舗売上＝dailySales−(A+B)`／`合計＝dailySales` に修正済み。実装 `scripts/mep_income_streams_client.py`＋`scripts/apply_mep_income_streams.py`（BEGIN/END マーカーで冪等）／`scripts/pl_income_client.py`、検証 `scripts/verify_mep_income_streams.py`。**フック有効/無効で `timeline.dailySales` は完全同一＝副作用ゼロを実証**（PL/store/summary/insight 全回帰 OK）。
+    - 注1（既知の別課題・要別タスク）: MEP-STORE ブロックの**二重注入は未掃除**。実際に動くのは後発コピー（`refreshMepSalesFromStore` 等あり・メモ安全マージ無）、マーカー付き先発コピーは影に隠れて未実行。生成元 `mep_store_client.py` と実行コードが不一致で、`build_monthly_edit_pages.py` は必要パッチ（`apply_read_surface_sync`/`apply_mep_strategy_user_note`）を呼ばないため**単純再ビルドは機能欠落**。Phase 2 では触らず温存。
+    - 注2（~~既知不具合~~ **2026-07-17 修正**）: 入力パス=`mep` で Confirm のたびに `timeline.dailySales` が増える問題。原因は自己発火の `kpi:dailySalesChanged` → `refreshMepSalesFromStore` が総売上を `store_sales` に戻し A/B と再合算していたこと。修正: 自己 source（`monthly-edit-float`/`mep`）は再 hydrate スキップ + `syncMonthlySalesFromAnnualStoreForMonth` を `店舗=総額−(A+B)` に変更。検証 `verify_mep_income_streams.py`（2回 Confirm で額不変）。
+  - [x] **Phase 3（2026-07-16 完了）** — MEP で Sales A/B の ✎ を再有効化し、編集ラベルを `kpiNavigator.plLineCatalog`（収入行）へ保存。空カタログ時は埋め込み `PL_LINE_CATALOG` からシードして書き込む（`upsertPlIncomeLabelsFromState`）。PL は `applyLabelOverrides` で income スコープをカタログ優先表示。注入の冪等修正（古い `upsert` 重複残骸を除去）込み。実装 `scripts/apply_mep_pl_catalog.py` / `scripts/build_pl_table_page.py`、検証 `scripts/verify_mep_income_label_sync.py`。
+- [x] **営業日数の実データ化（2026-07-16）** — PL 営業日数を `kpiYearStore.timeline`（真実源）から算出。判定は Annual/MEP/Insight と同一（`businessDays[iso]` 明示 → `dailySales[iso]===0` は休 → 土日は既定休）。従来は休業日マップが空だと**全暦日**を数えていたが、土日既定休を適用して整合。`kpi:businessDayChanged`/`kpi:dailySalesChanged`/`kpi:readSurfacesRefresh` で自動更新。支出配賦用の `isBizDayIso`/`countBizDaysInMonth`（`annualDailyShared`）は温存（表示専用の変更）。実装 `scripts/build_pl_table_page.py`、検証 `scripts/verify_pl_business_days.py`。
+- [x] **Ratio(%) セル（2026-07-16・支出明細＋収入）** — 各行の右セルに `金額 ÷ 売上合計` を表示（`xx.xx%` / データ無は —）。売上合計は収入ブロックの Total Sales。収入行も Amount/Ratio 分割済み（店舗/A/B/合計）。実装 `scripts/pl_ratio_client.py` + `income_data_rows_v1`、検証 `scripts/verify_pl_ratios.py`。
+- [x] **科目ごと Input Method（2026-07-17・テンプレ確定）** — デフォルト方針: **FL 近傍（食材・ドリンク・アルバイト）= daily**（月次切替可）／**固定費＋それ以外の変動費（光熱・通信・備品・雑費など）= monthly**。カタログ schema v7。旧デフォルトのままの行は schema 移行で更新（ユーザーが明示切替した値は保持）。実装 `pl_line_catalog.py` / `pl_expense_detail_client.py`、検証 `verify_pl_catalog_input_defaults.py`。
+- [x] **入力元 UX（2026-07-16）** — 各行トグル不採用。ラベル **ダブルクリック / F2** で **統合モーダル**（科目名＋入力元、Don't ask again なし）。固定費は科目名のみ。実装 `pl-expense-label-edit-modal` / `pl_expense_detail_client.py`、検証 `verify_pl_input_source_label_ux.py`。→ [pl-expense-input-source-design.md § 入力元の選び方](./pl-expense-input-source-design.md#入力元の選び方採用-ux--統合モーダル)
+- [x] **入力元バッジ（廃止・2026-07-17）** — 行ラベル横の `DAILY` / `MONTHLY` 常時表示は外した。入力可否の主信号は **緑（編集可）／黒（閲覧）**。入力先の明示は科目編集モーダル内のみ。
+- [x] **Monthly Edit 側の緑行表示・カタログ同期（実装済み）** — daily 行は MEP で入力可（緑）、monthly 行は MEP 非活性（`mef-row--pl-readonly`）＋ PL カタログ同期。実装 `scripts/apply_mep_pl_catalog.py`。
+- [x] **Monthly ↔ PL の二重入力ガード（実装済み）** — monthly は PL のみ編集可、daily は PL 読取専用（MEP 合計表示）。実装 `pl_expense_detail_client.py` / `pl_monthly_allocate_client.py`。
+- [x] **日次合算 + 調整額（2026-07-16・最小版）** — daily 行の PL 表示 = MEP 月次合計 + 調整額。調整はダブルクリック / F2 のモーダルで編集（日次は消さない）。ストア `kpi-pl-expense-adjustments-v1:{year}`。実装 `scripts/pl_monthly_allocate_client.py`、検証 `scripts/verify_pl_expense_adjustment.py`。3 行分割 UI は将来。
+- [x] **入力元切替時の旧データ整理（2026-07-16）** — daily↔monthly 切替で使わなくなる側を掃除（daily→monthly: `dailyExpenses[lineId]` 削除 / monthly→daily: `kpi-pl-expenses-v1` の当該キー削除）。同スタイル再設定は保持。実装 `scripts/pl_expense_detail_client.py`、検証 `scripts/verify_pl_input_style_cleanup.py`。
+- [x] **参考予算 L1（2026-07-17・最小版）** — 総支出サマリー直下に「変動費の参考枠」行。`売上 × max(0, 目標総費率65% − 固定費率)`。固定費は `kpi-pl-expenses-v1` の fixed 行合計。目標総費率は `kpiNavigator.plTargetCostRate`（未設定時 0.65）。実装 `scripts/pl_reference_budget_client.py`、検証 `scripts/verify_pl_reference_budget.py`。
+- [x] **参考予算 L2（2026-07-17・最小版）** — 明細セルに過去同月中央値比率×売上の「目安」。方式 A（L1 と独立）。実績 > 目安×1.05 で強調。検証 `verify_pl_reference_budget_l2.py`。同曜日・枠内按分は未着手。
+- [x] **参考予算 L2 トグル化（2026-07-17）** — コーナー（損益表/Profit & Loss）セルに +/- ボタン。既定 OFF で目安は非表示、ON で全 Amount セルに目安を出し明細行高を +12px 拡張（`body.pl-guide-on`）。**変動費だけでなく固定費行も対象**。over 強調はトグル ON 時のみ。状態は `kpiNavigator.plGuideOn` に保存。実装 `scripts/pl_reference_budget_client.py`＋`scripts/build_pl_table_page.py`、検証 `scripts/verify_pl_l2_toggle.py`。
 
 ---
 

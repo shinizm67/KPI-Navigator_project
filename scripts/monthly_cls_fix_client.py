@@ -109,15 +109,15 @@ DASH_ROW6_OLD = """      var OFF_CELL_DASH = '-';
       }"""
 
 DASH_ROW6_NEW = """      var OFF_CELL_DASH = '-';
-      var TW_SKELETON_MONEY = '\\u00a50,000,000';
       var TW_SKELETON_PCT = '000%';
       function dashRow6() {
+        var skelMoney = fmtTwMoney(0);
         return [
-          TW_SKELETON_MONEY,
-          TW_SKELETON_MONEY,
-          TW_SKELETON_MONEY,
-          TW_SKELETON_MONEY,
-          TW_SKELETON_MONEY,
+          skelMoney,
+          skelMoney,
+          skelMoney,
+          skelMoney,
+          skelMoney,
           TW_SKELETON_PCT,
         ];
       }"""

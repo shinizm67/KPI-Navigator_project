@@ -8,6 +8,19 @@ CSV_UPLOAD_TOOLTIP_MARKER = "/* KPI-CSV-UPLOAD-TOOLTIP */"
 CSV_UPLOAD_TOOLTIP_END = "/* END KPI-CSV-UPLOAD-TOOLTIP */"
 
 
+def _office_tooltip_after(*selectors: str, border: str, background: str) -> str:
+    hover = ",\n".join(s + ":hover::after" for s in selectors)
+    focus = ",\n".join(s + ":focus-visible::after" for s in selectors)
+    return f"""    {hover},
+    {focus} {{
+      background: {background};
+      border-color: {border};
+      color: #111;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}"""
+
+
 def _tooltip_after(*selectors: str, line_var: str, color_var: str) -> str:
     joined = ",\n".join(selectors)
     hover = ",\n".join(s + ":hover::after" for s in selectors)
@@ -56,11 +69,31 @@ def annual_csv_upload_tooltip_css() -> str:
         line_var="--aem-line",
         color_var="--aem-cyan",
     )
+    office = (
+        _office_tooltip_after(
+            "body.office-mode .past-sales-modal__csv[data-tooltip]",
+            border="#2b6cb0",
+            background="#edf4fb",
+        )
+        + "\n"
+        + _office_tooltip_after(
+            "body.office-mode .sales-data-modal__csv[data-tooltip]",
+            border="#666",
+            background="#ffffff",
+        )
+        + "\n"
+        + _office_tooltip_after(
+            "body.office-mode .annual-edit-modal__csv[data-tooltip]",
+            border="#666",
+            background="#ffffff",
+        )
+    )
     return (
         f"    {CSV_UPLOAD_TOOLTIP_MARKER}\n"
         f"{psm}\n"
         f"{sdm}\n"
         f"{aem}\n"
+        f"{office}\n"
         f"    {CSV_UPLOAD_TOOLTIP_END}\n"
     )
 
@@ -71,9 +104,15 @@ def monthly_csv_upload_tooltip_css() -> str:
         line_var="--mef-line",
         color_var="--mef-cyan",
     )
+    office = _office_tooltip_after(
+        "body.office-mode .monthly-edit-float__csv-upload[data-tooltip]",
+        border="#666",
+        background="#ffffff",
+    )
     return (
         f"    {CSV_UPLOAD_TOOLTIP_MARKER}\n"
         f"{block}\n"
+        f"{office}\n"
         f"    {CSV_UPLOAD_TOOLTIP_END}\n"
     )
 

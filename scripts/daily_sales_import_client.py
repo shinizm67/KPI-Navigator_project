@@ -397,8 +397,8 @@ def daily_sales_import_js() -> str:
             'CSVで日次売上を取り込めます。Excel（.xlsx）も利用できます。',
             'Import daily sales from CSV. You can upload Excel (.xlsx) files as well.'
           );
-          btn.setAttribute('title', tip);
           btn.setAttribute('data-tooltip', tip);
+          btn.removeAttribute('title');
 
           btn.addEventListener('click', function () {{
             var input = ensureFileInput();

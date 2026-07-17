@@ -33,6 +33,32 @@ EN_TEXT = {
 }
 
 
+SD_OFFICE_CSS = """
+    body.office-mode .sales-data-modal__tab {
+      background: #ececec;
+      color: #111;
+    }
+    body.office-mode .sales-data-modal__tab.is-active {
+      background: #d0d0d0;
+      color: #111;
+    }
+    body.office-mode .sales-data-modal__panel {
+      border-color: #000;
+      color: #111;
+      --sdm-cyan: #111;
+      --sdm-line: #333;
+      --sdm-bg-inactive: #f5f5f5;
+      --sdm-bg-active-55: #e8e8e8;
+      --sdm-bg-active-70: #dcdcdc;
+      --sdm-bg-reference: rgba(0, 0, 0, 0.046);
+      --sdm-bg-reference-focus: rgba(0, 0, 0, 0.070);
+      --sdm-row-off-fill: rgba(0, 0, 0, 0.04);
+      --sdm-panel-bg: #ffffff;
+      --sdm-frame: #000;
+    }
+"""
+
+
 def transform_css(block: str) -> str:
     block = block.replace("Past Sales モーダル", "Sales Data モーダル（当年）")
     block = block.replace("Past Sales modal", "Sales Data modal (current year)")
@@ -64,6 +90,15 @@ def transform_css(block: str) -> str:
             "body.office-mode .sales-data-modal__season-marker {",
             office + "\n    body.office-mode .sales-data-modal__season-marker {",
         )
+    block = re.sub(
+        r"body\.office-mode \.sales-data-modal__tab \{[^}]+\}\s*"
+        r"body\.office-mode \.sales-data-modal__tab\.is-active \{[^}]+\}\s*"
+        r"body\.office-mode \.sales-data-modal__panel \{[^}]+\}",
+        SD_OFFICE_CSS.strip(),
+        block,
+        count=1,
+        flags=re.DOTALL,
+    )
     return block
 
 

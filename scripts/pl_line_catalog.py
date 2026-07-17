@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-# Bump when default line list / isDefault / expenseAttribute / active defaults change.
-CATALOG_SCHEMA_VERSION = 6
+# Bump when default line list / isDefault / expenseAttribute / active / inputStyle defaults change.
+CATALOG_SCHEMA_VERSION = 7
 
 # (attrId, labelJa, labelEn) — fixed expense attributes for FL / KPI grouping
 FIXED_EXPENSE_ATTRIBUTES: list[tuple[str, str, str]] = [
@@ -63,15 +63,17 @@ EXPENSE_DETAIL_LINES_V1: list[tuple[str, str, str, str, str, bool, str | None]] 
     ("exp_depreciation", "減価償却費", "Depreciation expenses", "fixed", "monthly", False, "depreciation"),
     ("exp_non_life_insurance", "損害保険", "Non-life insurance", "fixed", "monthly", True, "insurance"),
     ("exp_social_insurance", "社会保険", "social insurance", "fixed", "monthly", False, "insurance"),
-    # --- 変動費（PDF ver4: isDefault=True のみ新規ユーザーに初期表示） ---
+    # --- 変動費 ---
+    # FL 近傍（日次が本命・月次切替可）: 食材 / ドリンク / アルバイト
+    # それ以外の変動費・固定費は月次請求が自然 → monthly
     ("exp_food_cost", "食材仕入れ費", "Food cost", "variable", "daily", True, "food_cost"),
     ("exp_drink_cost", "ドリンク仕入れ費", "Drink Cost", "variable", "daily", True, "drink_cost"),
-    ("exp_supplies", "備品・消耗品仕入費", "Supplies & Consumables", "variable", "daily", True, "supplies"),
-    ("exp_misc", "雑費・小口精算費", "Miscellaneous Expense", "variable", "daily", True, "miscellaneous"),
+    ("exp_supplies", "備品・消耗品仕入費", "Supplies & Consumables", "variable", "monthly", True, "supplies"),
+    ("exp_misc", "雑費・小口精算費", "Miscellaneous Expense", "variable", "monthly", True, "miscellaneous"),
     ("exp_electric", "電気代", "Electricity Cost", "variable", "monthly", True, "utilities"),
     ("exp_gas", "ガス代", "Gas Cost", "variable", "monthly", True, "utilities"),
     ("exp_water", "水道代", "Water Cost", "variable", "monthly", True, "utilities"),
-    ("exp_variable_labor", "アルバイト人件費", "Variable Labor", "variable", "monthly", True, "variable_labor"),
+    ("exp_variable_labor", "アルバイト人件費", "Variable Labor", "variable", "daily", True, "variable_labor"),
     ("exp_telecom", "通信費", "Communication", "variable", "monthly", True, "communication"),
     ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising"),
     ("exp_uniforms", "被服費", "Uniforms & Workwear", "variable", "monthly", False, "uniforms"),

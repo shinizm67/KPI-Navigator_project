@@ -218,6 +218,15 @@ def css_new() -> str:
     body.office-mode .sales-data-modal__analyze-alloc-total--warn {{
       color: #c62828;
     }}
+    /* KPI-SDM-ANALYZE-HL-OFFICE */
+    body.office-mode .sales-data-modal__analyze-table {{
+      --sdm-analyze-hl-bg: #d0d0d0;
+    }}
+    body.office-mode .sales-data-modal__analyze-table th.sales-data-modal__analyze-hl-head,
+    body.office-mode .sales-data-modal__analyze-table td.sales-data-modal__analyze-hl-cell,
+    body.office-mode .sales-data-modal__analyze-table tfoot td {{
+      color: #111;
+    }}
     .sales-data-modal__analyze-hl-head-tip {{
       position: relative;
       cursor: help;

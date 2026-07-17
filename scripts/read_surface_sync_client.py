@@ -191,8 +191,11 @@ STORE_INIT_NEW = """          ensureOperatingYearPlanDefaults();
 
         window.KpiYearStore = {{"""
 
-MEP_REFRESH_BLOCK = """      function refreshMepSalesFromStore() {
+MEP_REFRESH_BLOCK = """      function refreshMepSalesFromStore(ev) {
         if (root.hidden) return;
+        var src = ev && ev.detail && ev.detail.source;
+        /* Confirm 自己発火の再hydrateは二重計上の原因なのでスキップ */
+        if (src === 'monthly-edit-float' || src === 'mep') return;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }

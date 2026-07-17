@@ -128,6 +128,15 @@ CSS_NEW = f"""    .sales-data-modal__analyze-table {{
       text-align: left;
       padding-left: 12px;
     }}
+    /* KPI-SDM-ANALYZE-HL-OFFICE */
+    body.office-mode .sales-data-modal__analyze-table {{
+      --sdm-analyze-hl-bg: #d0d0d0;
+    }}
+    body.office-mode .sales-data-modal__analyze-table th.sales-data-modal__analyze-hl-head,
+    body.office-mode .sales-data-modal__analyze-table td.sales-data-modal__analyze-hl-cell,
+    body.office-mode .sales-data-modal__analyze-table tfoot td {{
+      color: #111;
+    }}
     .sales-data-modal__analyze-hl-btn {{
       display: block;
       width: 100%;

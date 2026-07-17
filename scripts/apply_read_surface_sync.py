@@ -84,7 +84,15 @@ def patch_monthly(path: Path) -> None:
 def patch_mep(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     text = inject_store(text)
-    if "refreshMepSalesFromStore" not in text:
+    if "function refreshMepSalesFromStore" in text:
+        text = re.sub(
+            r"      function refreshMepSalesFromStore\([^)]*\) \{[\s\S]*?"
+            r"document\.addEventListener\('annual:salesDataSaved', refreshMepSalesFromStore\);\n",
+            MEP_REFRESH_BLOCK.rstrip() + "\n",
+            text,
+            count=1,
+        )
+    else:
         anchor = "      document.addEventListener('kpi:mepDataChanged', function (ev) {"
         if anchor not in text:
             raise SystemExit(f"mep anchor missing: {path}")
