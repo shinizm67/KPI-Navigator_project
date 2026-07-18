@@ -87,12 +87,14 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 
 頭から順に進める想定。**Monthly Edit ↔ PL 表連携**（科目カタログ・日次合算）が実データの前提。
 
-### 1. ラベル・文言
+### 1. ラベル・文言（2026-07-19 確定）
 
-- [ ] Area タイトル・FL キャプション・折れ線/縦棒タイトル（JA/EN）の確定  
-  → `compare_labels` / `build_pl_table_page.py` 内 `L[...]`
-- [ ] Insight 既存用語との統一（Food & Labor / Income / Expected 等）
-- [ ] `graph_overlay_title`（比較/Compare）キーの整理 or 削除検討
+- [x] Area タイトル・FL キャプション・折れ線/縦棒タイトル（JA/EN）の確定  
+  → `compare_labels` / `build_pl_table_page.py` 内 `L[...]`。**JA が英語のままだったのを日本語化**（例: Area1「当日の FL スナップショット」、折れ線「前年同曜日との累積ペース比較」、縦棒「日次/月次パフォーマンス」）。
+- [x] Insight 既存用語との統一（Food & Labor / Income / Expected 等）  
+  → JA は PL カタログ正準語に統一：収入 / 支出 / 固定費 / **変動費（＝Expected）** / 利益。系列は 今年 / 前年 / ベスト年。**Food & Labor / Food / Labor は業界慣用のため両言語とも英語のまま維持**。
+- [x] `graph_overlay_title`（比較/Compare）キーの整理 or 削除検討  
+  → **未使用のため削除**（オーバーレイ見出しは `toolbar_graph`＝「PL Insight」を使用）。併せて未使用の `compare_section1_title` / `compare_expected_fixed` / `compare_open_monthly_edit` / `compare_open_current_month` / `compare_chart_open_aria` も削除。
 
 ### 2. 実数値の取り込み
 
