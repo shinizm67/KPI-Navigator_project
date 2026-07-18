@@ -2229,8 +2229,8 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
                 barW.toFixed(2) +
                 '" height="' +
                 bh.toFixed(2) +
-                '" fill="' +
-                s.color +
+                '" class="pl-compare-bar pl-compare-bar--' +
+                s.key +
                 '"/>';
             }}
             offset += 1;
@@ -2290,9 +2290,30 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
 
       function formatScale(v) {{
         var n = Math.abs(Math.round(v || 0));
-        if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-        if (n >= 1000) return (n / 1000).toFixed(0) + 'k';
+        var trim = function (x) {{ return String(Math.round(x * 10) / 10); }};
+        if (n >= 1000000) return trim(n / 1000000) + 'M';
+        if (n >= 1000) return trim(n / 1000) + 'k';
         return String(n);
+      }}
+
+      /* きれいな軸目盛: 目盛が 1/2/2.5/5 ×10^n の丸め値になる最大値と目盛列を返す。
+         旧実装は等分(0/.25/.5/.75/1)＋最小10k刻みで、8k/23k のような半端目盛や
+         小さい値でも軸が10kになる問題があった。 */
+      function compareNiceAxis(raw) {{
+        if (!(raw > 0)) return {{ max: 4, ticks: [0, 1, 2, 3, 4] }};
+        var rough = raw / 4;
+        var pow = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
+        var mults = [1, 2, 2.5, 5, 10];
+        var step = 10 * pow;
+        for (var i = 0; i < mults.length; i++) {{
+          var s = mults[i] * pow;
+          if (s >= rough) {{ step = s; break; }}
+        }}
+        var count = Math.ceil(raw / step);
+        if (count < 1) count = 1;
+        var ticks = [];
+        for (var t = 0; t <= count; t++) ticks.push(step * t);
+        return {{ max: step * count, ticks: ticks }};
       }}
 
 
@@ -2347,8 +2368,8 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           var end = arr[arr.length - 1];
           if (end > yMax) yMax = end;
         }});
-        if (!yMax) yMax = 1;
-        yMax = Math.ceil(yMax / 10000) * 10000;
+        var niceAxis = compareNiceAxis(yMax);
+        yMax = niceAxis.max;
         var pad = area1ChartPad();
         var w = pad.w;
         var h = pad.h;
@@ -2378,10 +2399,10 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           padT,
           plotH
         );
-        var yTicks = [0, 0.25, 0.5, 0.75, 1]
-          .map(function (r) {{
-            var y = padT + (1 - r) * plotH;
-            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(yMax * r) + '</span>';
+        var yTicks = niceAxis.ticks
+          .map(function (tv) {{
+            var y = padT + (1 - tv / yMax) * plotH;
+            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(tv) + '</span>';
           }})
           .join('');
         var active = function (k) {{
@@ -2436,7 +2457,7 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           padL +
           '" y2="' +
           (padT + plotH) +
-          '" stroke="#58e1f3" stroke-width="1"/>' +
+          '" class="pl-compare-axis-line" stroke-width="1"/>' +
           '<line x1="' +
           padL +
           '" y1="' +
@@ -2445,19 +2466,19 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           (padL + plotW) +
           '" y2="' +
           (padT + plotH) +
-          '" stroke="#58e1f3" stroke-width="1"/>' +
+          '" class="pl-compare-axis-line" stroke-width="1"/>' +
           '<polyline points="' +
           thisPts +
-          '" fill="none" stroke="#66e7ff" stroke-width="2" vector-effect="non-scaling-stroke"/>' +
+          '" fill="none" class="pl-compare-series pl-compare-series--thisYear" stroke-width="2" vector-effect="non-scaling-stroke"/>' +
           (state.showLast
             ? '<polyline points="' +
               lastPts +
-              '" fill="none" stroke="#e8e54b" stroke-width="2" vector-effect="non-scaling-stroke"/>'
+              '" fill="none" class="pl-compare-series pl-compare-series--lastYear" stroke-width="2" vector-effect="non-scaling-stroke"/>'
             : '') +
           (showBest
             ? '<polyline points="' +
               bestPts +
-              '" fill="none" stroke="#16d33a" stroke-width="2" vector-effect="non-scaling-stroke"/>'
+              '" fill="none" class="pl-compare-series pl-compare-series--bestYear" stroke-width="2" vector-effect="non-scaling-stroke"/>'
             : '') +
           xTickSvg +
           '</svg>' +
@@ -2470,6 +2491,7 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           '</section>';
 
         mount.querySelectorAll('[data-pl-line-metric]').forEach(function (btn) {{
+          btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
           btn.addEventListener('click', function () {{
             compareLineState[areaId].metric = btn.getAttribute('data-pl-line-metric') || 'income';
             renderCompareLine(areaId, iso);
@@ -2534,8 +2556,8 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
             if (v > yMax) yMax = v;
           }});
         }});
-        if (!yMax) yMax = 1;
-        yMax = Math.ceil(yMax / 1000) * 1000;
+        var niceAxis = compareNiceAxis(yMax);
+        yMax = niceAxis.max;
         var pad = area1ChartPad();
         var w = pad.w;
         var h = pad.h;
@@ -2567,10 +2589,10 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           padT,
           plotH
         );
-        var yTicks = [0, 0.25, 0.5, 0.75, 1]
-          .map(function (r) {{
-            var y = padT + (1 - r) * plotH;
-            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(yMax * r) + '</span>';
+        var yTicks = niceAxis.ticks
+          .map(function (tv) {{
+            var y = padT + (1 - tv / yMax) * plotH;
+            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(tv) + '</span>';
           }})
           .join('');
         var active = function (k) {{
@@ -2625,7 +2647,7 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           padL +
           '" y2="' +
           (padT + plotH) +
-          '" stroke="#58e1f3" stroke-width="1"/>' +
+          '" class="pl-compare-axis-line" stroke-width="1"/>' +
           '<line x1="' +
           padL +
           '" y1="' +
@@ -2634,7 +2656,7 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           (padL + plotW) +
           '" y2="' +
           (padT + plotH) +
-          '" stroke="#58e1f3" stroke-width="1"/>' +
+          '" class="pl-compare-axis-line" stroke-width="1"/>' +
           bars +
           xTickSvg +
           '</svg>' +
@@ -2647,6 +2669,7 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           '</section>';
 
         mount.querySelectorAll('[data-pl-daily-metric]').forEach(function (btn) {{
+          btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
           btn.addEventListener('click', function () {{
             compareDailyState[areaId].metric = btn.getAttribute('data-pl-daily-metric') || 'income';
             renderCompareDaily(areaId, iso);
@@ -2890,7 +2913,7 @@ def pl_graph_overlay_html(L: dict) -> str:
             <input type="date" class="pl-compare-date-input" id="pl-compare-date-input"
               aria-hidden="true" tabindex="-1">
           </div>
-          <div class="pl-compare-area-nav" role="tablist" aria-label="Compare areas">
+          <div class="pl-compare-area-nav" role="group" aria-label="Compare areas">
             <button type="button" class="pl-compare-area-tab" data-pl-compare-jump="pl-compare-area-1">Area 1</button>
             <button type="button" class="pl-compare-area-tab" data-pl-compare-jump="pl-compare-area-2">Area 2</button>
             <button type="button" class="pl-compare-area-tab" data-pl-compare-jump="pl-compare-area-3">Area 3</button>
@@ -4473,6 +4496,15 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-compare-line__hit-dot--bestYear {{
       stroke: #16d33a;
     }}
+    .pl-compare-axis-line {{
+      stroke: #58e1f3;
+    }}
+    .pl-compare-series--thisYear {{ stroke: #66e7ff; }}
+    .pl-compare-series--lastYear {{ stroke: #e8e54b; }}
+    .pl-compare-series--bestYear {{ stroke: #16d33a; }}
+    .pl-compare-bar--thisYear {{ fill: #66e7ff; }}
+    .pl-compare-bar--lastYear {{ fill: #e8e54b; }}
+    .pl-compare-bar--bestYear {{ fill: #16d33a; }}
     .pl-compare-chart-tooltip {{
       position: absolute;
       z-index: 5;
@@ -4542,6 +4574,24 @@ def render_page(lang: str, lang_switch: str) -> str:
     body.office-mode .pl-compare-chart-tooltip__value {{
       color: #111;
     }}
+    body.office-mode .pl-compare-chart-tooltip__metric {{
+      color: #555;
+    }}
+    body.office-mode .pl-compare-axis-line {{ stroke: #888; }}
+    body.office-mode .pl-compare-line__guide-v-svg {{ stroke: #888; }}
+    body.office-mode .pl-compare-line__guide-v {{ background: rgba(0, 0, 0, 0.32); }}
+    body.office-mode .pl-compare-series--thisYear {{ stroke: #0a63c2; }}
+    body.office-mode .pl-compare-series--lastYear {{ stroke: #b8860b; }}
+    body.office-mode .pl-compare-series--bestYear {{ stroke: #0f9403; }}
+    body.office-mode .pl-compare-bar--thisYear {{ fill: #0a63c2; }}
+    body.office-mode .pl-compare-bar--lastYear {{ fill: #b8860b; }}
+    body.office-mode .pl-compare-bar--bestYear {{ fill: #0f9403; }}
+    body.office-mode .pl-compare-line__hit-dot--thisYear {{ stroke: #0a63c2; }}
+    body.office-mode .pl-compare-line__hit-dot--lastYear {{ stroke: #b8860b; }}
+    body.office-mode .pl-compare-line__hit-dot--bestYear {{ stroke: #0f9403; }}
+    body.office-mode .pl-compare-line__swatch--this {{ background: #0a63c2; }}
+    body.office-mode .pl-compare-line__swatch--last {{ background: #b8860b; }}
+    body.office-mode .pl-compare-line__swatch--best {{ background: #0f9403; }}
     .pl-compare-line__svg {{
       display: block;
       width: 100%;
