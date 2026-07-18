@@ -586,6 +586,11 @@
       margin-top: 30px;
       box-sizing: border-box;
     }
+    /* データ無しでもブロックを消さず、高さを一定に保つ（下段が跳ね上がるのを防ぐ） */
+    .pl-compare-hsnap {
+      min-height: 142px;
+      box-sizing: border-box;
+    }
     .pl-compare-hsnap + .pl-compare-hsnap {
       margin-top: 127px;
     }
@@ -696,6 +701,10 @@
     }
     .pl-compare-hsnap__empty--solo {
       padding-top: 48px;
+    }
+    /* データ無しブロック: ラベルは通常色で残し、値「—」だけ淡色で無データを示す */
+    .pl-compare-hsnap--empty .pl-compare-hsnap-row__meta {
+      color: rgba(88, 225, 243, 0.45);
     }
     html[lang='ja'] .pl-compare-hsnap__empty {
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -6855,67 +6864,60 @@
       }
 
       function renderHsnapBlock(caption, metrics, maxIncome, blockIndex, allowNoData) {
-        if (!metrics) {
-          if (!allowNoData) return '';
-          return (
-            '<section class="pl-compare-hsnap">' +
-            '<h4 class="pl-compare-hsnap__date">' +
-            caption +
-            '</h4>' +
-            '<p class="pl-compare-hsnap__empty">' +
-            L.compare_no_data +
-            '</p></section>'
-          );
-        }
-        if (!maxIncome) maxIncome = metrics.income || 1;
-        var incomeW = Math.max(0, Math.min(100, (metrics.income / maxIncome) * 100));
-        var expensePct = metrics.income ? (metrics.expenses / metrics.income) * 100 : 0;
-        var expenseW = expenseVisualWidth(incomeW, expensePct, blockIndex || 0);
-        var variablePct = metrics.income ? (metrics.variable / metrics.income) * 100 : 0;
-        var fixedPct = metrics.income ? (metrics.fixed / metrics.income) * 100 : 0;
-        var splitOrangeW = metrics.expenses ? (metrics.variable / metrics.expenses) * 100 : 0;
-        var splitYellowW = metrics.expenses ? (metrics.fixed / metrics.expenses) * 100 : 0;
-        var splitBar =
-          '<span class="pl-compare-hbar-stack" style="width:' +
-          expenseW.toFixed(4) +
-          '%">' +
-          '<span class="pl-compare-hbar pl-compare-hbar--orange" style="width:' +
-          splitOrangeW.toFixed(4) +
-          '%"></span>' +
-          '<span class="pl-compare-hbar pl-compare-hbar--yellow" style="width:' +
-          splitYellowW.toFixed(4) +
-          '%"></span></span>';
+        var noData = !metrics;
+        /* データ無しでもラベル 3 行（Income / Food & Labor / Food / Labor）は残し、
+           空バー＋「—」で描画する。ブロックを消すと下段が跳ね上がり目がバグるため。 */
+        if (noData && !allowNoData) return '';
+        if (!maxIncome) maxIncome = (metrics && metrics.income) || 1;
+        var dash = '—';
+        var incomeW = noData ? 0 : Math.max(0, Math.min(100, (metrics.income / maxIncome) * 100));
+        var expensePct = (!noData && metrics.income) ? (metrics.expenses / metrics.income) * 100 : 0;
+        var expenseW = noData ? 0 : expenseVisualWidth(incomeW, expensePct, blockIndex || 0);
+        var variablePct = (!noData && metrics.income) ? (metrics.variable / metrics.income) * 100 : 0;
+        var fixedPct = (!noData && metrics.income) ? (metrics.fixed / metrics.income) * 100 : 0;
+        var splitOrangeW = (!noData && metrics.expenses) ? (metrics.variable / metrics.expenses) * 100 : 0;
+        var splitYellowW = (!noData && metrics.expenses) ? (metrics.fixed / metrics.expenses) * 100 : 0;
+        var incomeBar = noData
+          ? ''
+          : '<span class="pl-compare-hbar pl-compare-hbar--green" style="width:' +
+            incomeW.toFixed(4) +
+            '%"></span>';
+        var expenseBar = noData
+          ? ''
+          : '<span class="pl-compare-hbar pl-compare-hbar--red" style="width:' +
+            expenseW.toFixed(4) +
+            '%"></span>';
+        var splitBar = noData
+          ? ''
+          : '<span class="pl-compare-hbar-stack" style="width:' +
+            expenseW.toFixed(4) +
+            '%">' +
+            '<span class="pl-compare-hbar pl-compare-hbar--orange" style="width:' +
+            splitOrangeW.toFixed(4) +
+            '%"></span>' +
+            '<span class="pl-compare-hbar pl-compare-hbar--yellow" style="width:' +
+            splitYellowW.toFixed(4) +
+            '%"></span></span>';
+        var incomeMeta = noData ? dash : money(metrics.income);
+        var expenseMeta = noData ? dash : money(metrics.expenses) + ' : ' + pct1(expensePct);
+        var splitMeta = noData
+          ? dash
+          : money(metrics.variable) +
+            ' : ' +
+            pct1(variablePct) +
+            ' : ' +
+            money(metrics.fixed) +
+            ' : ' +
+            pct1(fixedPct);
         return (
-          '<section class="pl-compare-hsnap">' +
+          '<section class="pl-compare-hsnap' + (noData ? ' pl-compare-hsnap--empty' : '') + '">' +
           '<h4 class="pl-compare-hsnap__date">' +
           caption +
           '</h4>' +
           '<div class="pl-compare-hsnap__rows">' +
-          renderHsnapRow(
-            L.compare_income,
-            '<span class="pl-compare-hbar pl-compare-hbar--green" style="width:' +
-              incomeW.toFixed(4) +
-              '%"></span>',
-            money(metrics.income)
-          ) +
-          renderHsnapRow(
-            L.compare_food_labor,
-            '<span class="pl-compare-hbar pl-compare-hbar--red" style="width:' +
-              expenseW.toFixed(4) +
-              '%"></span>',
-            money(metrics.expenses) + ' : ' + pct1(expensePct)
-          ) +
-          renderHsnapRow(
-            L.compare_food_slash_labor,
-            splitBar,
-            money(metrics.variable) +
-              ' : ' +
-              pct1(variablePct) +
-              ' : ' +
-              money(metrics.fixed) +
-              ' : ' +
-              pct1(fixedPct)
-          ) +
+          renderHsnapRow(L.compare_income, incomeBar, incomeMeta) +
+          renderHsnapRow(L.compare_food_labor, expenseBar, expenseMeta) +
+          renderHsnapRow(L.compare_food_slash_labor, splitBar, splitMeta) +
           '</div></section>'
         );
       }
@@ -8192,7 +8194,7 @@
         if (previous && previous.income > maxIncome) maxIncome = previous.income;
         if (!maxIncome) maxIncome = 1;
         mount.innerHTML =
-          renderHsnapBlock(primaryLabel, current, maxIncome, 0, false) +
+          renderHsnapBlock(primaryLabel, current, maxIncome, 0, true) +
           renderHsnapBlock(secondaryLabel, previous, maxIncome, 1, true);
       }
 

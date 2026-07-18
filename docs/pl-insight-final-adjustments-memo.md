@@ -150,6 +150,22 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 | `scripts/pl_insight_data_client.py` | **正本**: `window.__plInsight`（実データ集計・Area builder・FL・Best Year） |
 | `scripts/build_pl_table_page.py` | 注入（`insight_data_js`）＋ compare 側の委譲・ライブ更新配線 |
 
+## No Data 表現の統一方針（2026-07-18 確定・全 UI 共通ルール）
+
+> **データのない日/期間を表現するときは、要素を消してレイアウトを詰めない。骨格（ラベル・行・軸）を残し、値だけを「—」にする。**
+
+背景: データのない日に横棒ブロックごと消していたため、下のコンテンツが上へ「ドカン」と跳ね上がり、視線の基準が失われて非常にストレスだった（ユーザー指摘）。
+
+統一ルール（No Data 時）:
+
+1. **枠・ラベルは残す** — 見出し（日付キャプション）と各行ラベル（例: Income / Food & Labor / Food / Labor）は常時表示。
+2. **高さを一定に保つ** — ブロックを削除・折り畳みしない。データ有無で行数・高さが変わらないようにする（必要なら `min-height` で担保）。
+3. **値は「—」** — 数値/比率は `—`（em dash）で表示。ゼロ実績（`$0`）と「未入力・データ無し」を混同させない。
+4. **無データの淡色ヒント** — 「—」は淡色（例: `rgba(88,225,243,0.45)`）にして無データと分かるようにするが、ラベルは通常色のまま。
+5. **バーやプロットは描かない** — 横棒は幅 0（＝非表示）、折れ線/縦棒は 0 で横ばい（前値据置）にして「爆発的な再レイアウト」を起こさない。
+
+実装リファレンス: PL Insight の横棒 = `renderHsnapBlock`（`scripts/build_pl_table_page.py`、`allowNoData` 時も 3 行骨格＋「—」を描画・`.pl-compare-hsnap--empty` で meta を淡色・`.pl-compare-hsnap { min-height }`）。**今後、他画面で No Data を表現する場合もこの方法に統一すること。**
+
 ## 関連ドキュメント
 
 | Doc | 関係 |
