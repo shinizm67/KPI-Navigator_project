@@ -618,6 +618,7 @@ LABELS_EN = {
 
 from pl_expense_detail_client import expense_detail_client_js  # noqa: E402
 from pl_expense_import_client import pl_expense_import_client_js  # noqa: E402
+from pl_insight_data_client import pl_insight_data_client_js  # noqa: E402
 from pl_monthly_allocate_client import pl_monthly_allocate_client_js  # noqa: E402
 from pl_income_client import pl_income_client_js  # noqa: E402
 from pl_ratio_client import pl_ratio_client_js  # noqa: E402
@@ -1481,12 +1482,20 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       }}
 
       function area1CanShowBestYear(iso) {{
+        var p = isoParts(iso);
+        if (p && window.__plInsight && typeof window.__plInsight.canShowBestYear === 'function') {{
+          return window.__plInsight.canShowBestYear(p.year);
+        }}
         return area1YearsWithData(iso) >= 3;
       }}
 
       function area1BestYearNumber(iso) {{
         var d = new Date(String(iso || '').trim() + 'T00:00:00');
         if (!isFinite(d.getTime())) return AREA1_SERVICE_START_YEAR;
+        var p = {{ year: d.getFullYear() }};
+        if (window.__plInsight && typeof window.__plInsight.bestYearNumber === 'function') {{
+          return window.__plInsight.bestYearNumber(p.year);
+        }}
         return d.getFullYear() - 2;
       }}
 
@@ -1786,14 +1795,10 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       }}
 
       function buildArea1ChartData(iso) {{
-        var d = new Date(String(iso || '').trim() + 'T00:00:00');
-        if (!isFinite(d.getTime())) return null;
-        var dim = d.getDate();
-        var year = d.getFullYear();
-        var month = d.getMonth() + 1;
-        var periodCount = new Date(year, month, 0).getDate();
-        var daySeed = (year * 37 + month * 97 + dim * 13) % 1000;
-        return buildCompareDayChartData(dim, periodCount, daySeed);
+        if (window.__plInsight && typeof window.__plInsight.buildArea1 === 'function') {{
+          return window.__plInsight.buildArea1(iso);
+        }}
+        return null;
       }}
 
       function compareArea2FirstSunday(year) {{
@@ -1881,6 +1886,9 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       }}
 
       function buildArea2ChartData(iso) {{
+        if (window.__plInsight && typeof window.__plInsight.buildArea2 === 'function') {{
+          return window.__plInsight.buildArea2(iso);
+        }}
         var d = new Date(String(iso || '').trim() + 'T00:00:00');
         if (!isFinite(d.getTime())) return null;
         var selYear = d.getFullYear();
@@ -1956,6 +1964,9 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       }}
 
       function buildArea3ChartData(iso) {{
+        if (window.__plInsight && typeof window.__plInsight.buildArea3 === 'function') {{
+          return window.__plInsight.buildArea3(iso);
+        }}
         var d = new Date(String(iso || '').trim() + 'T00:00:00');
         if (!isFinite(d.getTime())) return null;
         var dim = d.getMonth() + 1;
@@ -2692,23 +2703,31 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         var previous;
         var primaryLabel;
         var secondaryLabel;
+        var ins = window.__plInsight;
+        var flDay = (ins && typeof ins.flDay === 'function')
+          ? ins.flDay
+          : function () {{ return null; }};
+        var flYtd = (ins && typeof ins.flYtd === 'function')
+          ? ins.flYtd
+          : function () {{ return null; }};
         if (areaId === 1) {{
           var refIso = sameWeekdayLastYearIso(iso);
-          current = fetchCurrentFlSnapshot(iso);
-          previous = fetchPreviousFlSnapshot(refIso);
+          var refParts = isoParts(refIso);
+          current = flDay(parts.year, parts.month - 1, parts.day);
+          previous = refParts ? flDay(refParts.year, refParts.month - 1, refParts.day) : null;
           primaryLabel = fmtDate(iso);
           secondaryLabel = L.compare_same_weekday_of + fmtDate(refIso);
         }} else if (areaId === 2) {{
           var lyIso = parts.year - 1 + '-' + pad2(parts.month) + '-' + pad2(parts.day);
           var tyIso = parts.year - 2 + '-' + pad2(parts.month) + '-' + pad2(parts.day);
-          current = fetchCurrentFlSnapshot(lyIso);
-          previous = fetchPreviousFlSnapshot(tyIso);
+          current = flDay(parts.year - 1, parts.month - 1, parts.day);
+          previous = flDay(parts.year - 2, parts.month - 1, parts.day);
           primaryLabel = L.compare_area2_hsnap_primary + fmtDate(lyIso);
           secondaryLabel = L.compare_area2_hsnap_secondary + fmtDate(tyIso);
         }} else {{
           var lyYtdIso = parts.year - 1 + '-' + pad2(parts.month) + '-' + pad2(parts.day);
-          current = fetchCurrentFlSnapshot(iso);
-          previous = fetchPreviousFlSnapshot(lyYtdIso);
+          current = flYtd(parts.year, parts.month - 1, parts.day);
+          previous = flYtd(parts.year - 1, parts.month - 1, parts.day);
           primaryLabel = L.compare_area3_hsnap_primary + fmtDate(iso);
           secondaryLabel = L.compare_area3_hsnap_secondary + fmtDate(lyYtdIso);
         }}
@@ -2722,6 +2741,9 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
 
       function renderAllCompareAreas(iso) {{
         iso = iso || selectedIso || resolveIso();
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {{
+          window.__plInsight.resetCache();
+        }}
         [1, 2, 3].forEach(function (areaId) {{
           renderCompareFl(areaId, iso);
           renderCompareLine(areaId, iso);
@@ -2766,6 +2788,25 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           closeOverlay();
         }});
       }}
+
+      /* Live refresh: if the overlay is open when PL/MEP data changes, re-render. */
+      function compareLiveRefresh() {{
+        if (root && !root.hidden) renderAllCompareAreas(selectedIso || resolveIso());
+      }}
+      document.addEventListener('kpi:mepDataChanged', compareLiveRefresh);
+      document.addEventListener('kpi:dailySalesChanged', compareLiveRefresh);
+      document.addEventListener('kpi:readSurfacesRefresh', compareLiveRefresh);
+      window.addEventListener('storage', function (e) {{
+        if (!root || root.hidden || !e || !e.key) return;
+        if (
+          e.key === 'kpiNavigator.kpiYearStore' ||
+          e.key === 'kpiNavigator.plLineCatalog' ||
+          e.key.indexOf('kpi-pl-expenses-v1:') === 0 ||
+          e.key.indexOf('kpi-pl-expense-adjustments-v1:') === 0
+        ) {{
+          compareLiveRefresh();
+        }}
+      }});
       if (prevBtn) {{
         prevBtn.addEventListener('click', function () {{
           fillDate(shiftIso(selectedIso || resolveIso(), -1));
@@ -3605,6 +3646,7 @@ def render_page(lang: str, lang_switch: str) -> str:
         "compare_area3_daily_title": L["compare_area3_daily_title"],
     }
     compare_js = pl_compare_client_js(monthly_edit=p["monthly_edit"], labels=compare_labels)
+    insight_data_js = pl_insight_data_client_js()
     html_lang = "en" if lang == "en" else "ja"
     # Canonical Global Menu (single source: scripts/site_chrome.py). PL keeps its
     # page-specific wiring via overrides: pl-* classes for the PL CSS, a
@@ -4092,6 +4134,17 @@ def render_page(lang: str, lang_switch: str) -> str:
     html[lang='ja'] .pl-compare-date-nav,
     html[lang='ja'] .pl-compare-date-btn {{
       font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    /* 日付＋曜日の文字数で幅が変わり ▶/Today が動くのを防ぐ: 固定幅＋中央寄せ */
+    .pl-compare-date-btn {{
+      width: 168px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+    html[lang='ja'] .pl-compare-date-btn {{
+      width: 172px;
     }}
     .pl-compare-today {{
       min-height: 24px;
@@ -7611,6 +7664,7 @@ def render_page(lang: str, lang_switch: str) -> str:
     {label_edit_js}
     {expense_detail_js}
     {graph_js}
+    {insight_data_js}
     {compare_js}
     (function () {{
       var analyzeToggle = document.getElementById('pl-analyze-toggle');

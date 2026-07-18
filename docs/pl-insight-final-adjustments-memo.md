@@ -1,7 +1,7 @@
 # PL Insight — 最終調整メモ
 
-更新日: 2026-06-19  
-ステータス: **大まかな描画完了**（モックデータ）→ 以降は本メモの順で微修正・実データ化
+更新日: 2026-07-18  
+ステータス: **実データ接続 完了（スライス1）**（Area1/2/3 の折れ線・縦棒・FL スナップショットを実ストアへ接続）→ 残は §4 UX 微調整・Best Year の実データ再確認・本番店休カレンダー
 
 ---
 
@@ -96,17 +96,17 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 
 ### 2. 実数値の取り込み
 
-- [ ] Monthly Edit 日次 → PL 月次集計パイプライン（`docs/pl-expense-input-source-design.md`）
-- [ ] PL 表・FL スナップショット用 KPI ストア（Income / Food / Labor / 支出内訳）
-- [ ] Area 1/2/3 各系列の **年・月・日** マッピングを実データ定義に合わせる
-- [ ] データなし日・店休日 → **No Data**（何も返さない）。モック店休ルールは本番店休カレンダーに置換
+- [x] Monthly Edit 日次 → PL 月次集計パイプライン（`docs/pl-expense-input-source-design.md`）— **PL 表と同一ストアから読む**（後述 §実装状況）
+- [x] PL 表・FL スナップショット用 KPI ストア（Income / Food / Labor / 支出内訳）
+- [x] Area 1/2/3 各系列の **年・月・日** マッピングを実データ定義に合わせる
+- [x] データなし日・店休日 → **No Data**（何も返さない）。FL スナップショットは全 0 の期間で `null`（No Data カード）。※モック店休ルールは撤去済（実データが 0 の日は棒なし・累積横ばい）。**本番店休カレンダー連携は営業日判定を kpiYearStore.timeline に統一済**
 
 ### 3. グラフの実データ化
 
-- [ ] 横棒 FL（`renderHsnapBlock`）をストア値に差し替え
-- [ ] 累積折れ線・縦棒の `buildArea*ChartData` を実集計に接続
-- [ ] Best Year 表示条件（サービス開始年・3 年分以上）を実データで再確認
-- [ ] Area 2 店休日の累積横ばいロジックを本番データでも維持
+- [x] 横棒 FL（`renderHsnapBlock`）をストア値に差し替え
+- [x] 累積折れ線・縦棒の `buildArea*ChartData` を実集計に接続
+- [x] Best Year 表示条件を実データで再確認 — **過去年（<選択年）で年間売上が最大の年**。データ年が 3 年未満なら非表示（`plInsight.bestYear`）
+- [~] Area 2 店休日の累積横ばい — 実データでは「その日の値が 0 → 棒なし・累積は前日据置」で自動達成（明示的店休マップは不要）
 
 ### 4. UX 微調整（必要に応じて）
 
@@ -116,6 +116,39 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 - [ ] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）
 
 ---
+
+## 実装状況（2026-07-18 スライス1：実データ接続）
+
+新モジュール **`scripts/pl_insight_data_client.py`**（`window.__plInsight`）を追加。PL 表と**同一ストア**を読むため、Insight の数値は PL 表の表示と一致する（source of truth 一致）。compare オーバーレイ（`pl_compare_client_js`）側はモック `buildArea1/2/3ChartData`・`area1CanShowBestYear/area1BestYearNumber`・`renderCompareFl` の FL 取得を **`window.__plInsight` への薄い委譲**に置き換え（モック関数は残置・未使用）。
+
+### 指標の定義（根拠を説明できる形）
+
+| 指標 | 定義 | 出典ストア |
+|------|------|-----------|
+| Income | 日次売上（プレースホルダ `1234` 除外） | `kpiYearStore.timeline.dailySales` |
+| Expenses | Fixed + Variable | 下記 |
+| Fixed | `bucket==='fixed'` 費目の合計 | 月次: `kpi-pl-expenses-v1:{year}[lineId:month0]` |
+| Variable(=Expected) | `bucket==='variable'` 費目の合計 | 日次: `years.{Y}.dailyExpenses[lineId][iso]`（+ 調整 `kpi-pl-expense-adjustments-v1`） |
+| Profit | Income − Expenses | 導出 |
+
+- **月次セル一致**：日次入力費目の月額は「MEP 日次合計 + 調整額」で PL 表の表示と一致させる。
+- **日次配賦**：月次入力費目を日別に落とす際は共通エンジン `window.__plPreviewMonthlyExpenseAllocation` の `byDate` を使用（**日別合計＝月額**を保証。ヘッドレスで検証済）。
+- **営業日/店休**：`kpiYearStore.timeline.businessDays` 明示 → `dailySales===0` は休 → 土日既定休（PL 営業日数行と同じ system B）。
+- **FL スナップショット**：Food = `expenseAttribute` が `food_cost`/`drink_cost`（既定 `exp_food_cost`/`exp_drink_cost` にフォールバック）、Labor = `salaries_wages`/`variable_labor`/`labor_related`（既定 `exp_fixed_labor`/`exp_variable_labor`）。`renderHsnapBlock` の `variable`=Food・`fixed`=Labor に対応。全 0 期間は `null`（No Data）。
+- **Best Year**：過去年（<選択年）で年間 Income 最大の年。全データ年が 3 年未満なら非表示。
+- **前払い/按分の月跨ぎ自動化はしない**（会計方針依存・手動運用）。
+
+### ライブ更新
+オーバーレイが開いている間に PL/MEP データが変わったら再描画：`kpi:mepDataChanged` / `kpi:dailySalesChanged` / `kpi:readSurfacesRefresh` と `storage`（`kpiYearStore`・`plLineCatalog`・`kpi-pl-expenses-v1:*`・`kpi-pl-expense-adjustments-v1:*`）を購読。描画毎に `plInsight.resetCache()`。
+
+### 検証
+JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーション全 PASS：月次/日次メトリクス、日次配賦の月末一致（Area1 累積 fixed 終端＝月額）、Area3 月次 YTD、Best Year（過去年で年間売上最大＝該当年）、FL（Food/Labor 分解・No Data→null・YTD 合算）。生成 PL 日英ページのインライン JS 構文チェックも OK。
+
+### 実装ファイル
+| パス | 役割 |
+|------|------|
+| `scripts/pl_insight_data_client.py` | **正本**: `window.__plInsight`（実データ集計・Area builder・FL・Best Year） |
+| `scripts/build_pl_table_page.py` | 注入（`insight_data_js`）＋ compare 側の委譲・ライブ更新配線 |
 
 ## 関連ドキュメント
 
