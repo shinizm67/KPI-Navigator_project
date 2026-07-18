@@ -2796,6 +2796,89 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
       }}
 
+      function plTableYear() {{
+        var params = new URLSearchParams(window.location.search);
+        var y = Number(params.get('year'));
+        return Number.isFinite(y) && y > 0 ? y : new Date().getFullYear();
+      }}
+
+      /* 月グラフセル→Insight の代表日:
+         当月なら今日 / 過去月はデータのある最終日（無ければ月末） / 未来月は月初。 */
+      function monthRepIso(year, mi) {{
+        var today = new Date();
+        if (today.getFullYear() === year && today.getMonth() === mi) {{
+          return getTodayIso();
+        }}
+        var isFuture =
+          year > today.getFullYear() ||
+          (year === today.getFullYear() && mi > today.getMonth());
+        var dim = new Date(year, mi + 1, 0).getDate();
+        if (
+          !isFuture &&
+          window.__plInsight &&
+          typeof window.__plInsight.dayMetrics === 'function'
+        ) {{
+          for (var d = dim; d >= 1; d--) {{
+            var m = null;
+            try {{
+              m = window.__plInsight.dayMetrics(year, mi, d);
+            }} catch (err) {{
+              m = null;
+            }}
+            if (m && ((m.income || 0) > 0 || (m.expenses || 0) > 0)) {{
+              return year + '-' + pad2(mi + 1) + '-' + pad2(d);
+            }}
+          }}
+        }}
+        return year + '-' + pad2(mi + 1) + '-' + pad2(isFuture ? 1 : dim);
+      }}
+
+      /* 公開 API: 指定 iso でオーバーレイを開き、該当 Area へスクロール。 */
+      window.__plOpenInsight = function (iso, areaId) {{
+        if (!root) return;
+        if (iso) selectedIso = iso;
+        openOverlay();
+        var aid = Number(areaId) || 1;
+        if (aid < 1 || aid > 3) aid = 1;
+        var target = document.getElementById('pl-compare-area-' + aid);
+        if (!target) return;
+        if (window.requestAnimationFrame) {{
+          window.requestAnimationFrame(function () {{
+            window.requestAnimationFrame(function () {{
+              scrollToCompareArea(target);
+            }});
+          }});
+        }} else {{
+          setTimeout(function () {{
+            scrollToCompareArea(target);
+          }}, 30);
+        }}
+      }};
+
+      function plGraphMonthFromEvent(e) {{
+        var cell =
+          e.target && e.target.closest
+            ? e.target.closest('[data-pl-graph-month]')
+            : null;
+        if (!cell) return null;
+        var mi = Number(cell.getAttribute('data-month'));
+        if (!Number.isFinite(mi) || mi < 0 || mi > 11) return null;
+        return mi;
+      }}
+
+      document.addEventListener('click', function (e) {{
+        var mi = plGraphMonthFromEvent(e);
+        if (mi === null) return;
+        window.__plOpenInsight(monthRepIso(plTableYear(), mi), 3);
+      }});
+      document.addEventListener('keydown', function (e) {{
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+        var mi = plGraphMonthFromEvent(e);
+        if (mi === null) return;
+        e.preventDefault();
+        window.__plOpenInsight(monthRepIso(plTableYear(), mi), 3);
+      }});
+
       if (btnOpen) btnOpen.addEventListener('click', openOverlay);
       if (btnClose) {{
         btnClose.addEventListener('click', function (e) {{
@@ -3145,6 +3228,7 @@ def pl_graph_client_js(
     expenses_l: str,
     fixed_l: str,
     expected_l: str,
+    year_total_l: str,
     is_ja: bool,
 ) -> str:
     money_sym = "¥" if is_ja else "$"
@@ -3160,6 +3244,7 @@ def pl_graph_client_js(
         expenses: {json.dumps(expenses_l, ensure_ascii=False)},
         fixed: {json.dumps(fixed_l, ensure_ascii=False)},
         expected: {json.dumps(expected_l, ensure_ascii=False)},
+        yearTotal: {json.dumps(year_total_l, ensure_ascii=False)},
       }};
       var body = document.getElementById('pl-graph-data-body');
       if (!body) return;
@@ -3192,21 +3277,13 @@ def pl_graph_client_js(
         var expensePct = (expenses / sales) * 100;
         var fixedPct = (fixed / sales) * 100;
         var expectedPct = (expected / sales) * 100;
-        var redH;
-        var greenH;
-        var fixedH;
-        var expectedH;
-        if (!deficit) {{
-          redH = Math.round((expenses / sales) * BAR_H);
-          greenH = BAR_H - redH;
-          fixedH = Math.round((fixed / expenses) * redH);
-          expectedH = Math.max(0, redH - fixedH);
-        }} else {{
-          redH = BAR_H;
-          greenH = Math.round((sales / expenses) * BAR_H);
-          fixedH = Math.round((fixed / expenses) * BAR_H);
-          expectedH = Math.max(0, redH - fixedH);
-        }}
+        /* 3 本バー: 収入と支出の大きい方を 100%（BAR_H）として全バーを底揃えでスケール。 */
+        var ref = Math.max(sales, expenses);
+        if (ref <= 0) ref = 1;
+        var incomeH = Math.round((sales / ref) * BAR_H);
+        var expenseH = Math.round((expenses / ref) * BAR_H);
+        var fixedH = Math.round((fixed / ref) * BAR_H);
+        var expectedH = Math.max(0, expenseH - fixedH);
         return {{
           deficit: deficit,
           sales: sales,
@@ -3216,8 +3293,8 @@ def pl_graph_client_js(
           expensePct: expensePct,
           fixedPct: fixedPct,
           expectedPct: expectedPct,
-          redH: redH,
-          greenH: greenH,
+          incomeH: incomeH,
+          expenseH: expenseH,
           fixedH: fixedH,
           expectedH: expectedH,
         }};
@@ -3240,39 +3317,20 @@ def pl_graph_client_js(
       }}
 
       function renderBars(m) {{
-        if (!m.deficit) {{
-          return (
-            '<div class="pl-graph-unified pl-graph-unified--surplus" style="height:' +
-            BAR_H +
-            'px">' +
-            '<div class="pl-graph-unified__income pl-graph-bar pl-graph-bar--green" style="height:' +
-            m.greenH +
-            'px"></div>' +
-            '<div class="pl-graph-unified__split-row" style="height:' +
-            m.redH +
-            'px">' +
-            '<div class="pl-graph-unified__half pl-graph-unified__half--expense">' +
-            '<div class="pl-graph-bar pl-graph-bar--red"></div></div>' +
-            '<div class="pl-graph-unified__half pl-graph-unified__stack">' +
-            '<div class="pl-graph-bar pl-graph-bar--yellow" style="height:' +
-            m.fixedH +
-            'px"></div>' +
-            '<div class="pl-graph-bar pl-graph-bar--orange" style="height:' +
-            m.expectedH +
-            'px"></div>' +
-            '</div></div></div>'
-          );
-        }}
+        /* 3 本バー（底揃え）: 左=収入(緑) / 中=総支出(赤) / 右=固定(黄・上)+変動(橙・下) */
         return (
-          '<div class="pl-graph-unified pl-graph-unified--deficit" style="height:' +
+          '<div class="pl-graph-tri" style="height:' +
           BAR_H +
           'px">' +
-          '<div class="pl-graph-unified__half pl-graph-unified__expense-host">' +
-          '<div class="pl-graph-bar pl-graph-bar--red pl-graph-unified__expense-fill"></div>' +
-          '<div class="pl-graph-unified__income-inner pl-graph-bar pl-graph-bar--green" style="height:' +
-          m.greenH +
+          '<div class="pl-graph-col">' +
+          '<div class="pl-graph-bar pl-graph-bar--green" style="height:' +
+          m.incomeH +
           'px"></div></div>' +
-          '<div class="pl-graph-unified__half pl-graph-unified__stack">' +
+          '<div class="pl-graph-col">' +
+          '<div class="pl-graph-bar pl-graph-bar--red" style="height:' +
+          m.expenseH +
+          'px"></div></div>' +
+          '<div class="pl-graph-col pl-graph-col--stack">' +
           '<div class="pl-graph-bar pl-graph-bar--yellow" style="height:' +
           m.fixedH +
           'px"></div>' +
@@ -3283,25 +3341,19 @@ def pl_graph_client_js(
         );
       }}
 
-      function renderMonthCell(mi, raw) {{
-        var m = calcMetrics(raw);
-        var monthName = MONTHS[mi] || String(mi + 1);
-        var expTop = m.deficit ? 0 : m.greenH;
-        var expHeight = m.deficit ? BAR_H : m.redH;
-        var fixedTop = m.deficit ? 0 : m.greenH;
-        var expLegendStyle = 'top:' + expTop + 'px;height:' + expHeight + 'px';
+      function graphCellInner(m, titleName) {{
+        /* バーは底揃え。各ラベルを対応セグメントの高さに合わせて縦位置決め。 */
+        var expLegendStyle =
+          'top:' + (BAR_H - m.expenseH) + 'px;height:' + m.expenseH + 'px';
         var fixedLegendStyle =
-          'top:' + fixedTop + 'px;height:' + m.fixedH + 'px';
+          'top:' + (BAR_H - m.expenseH) + 'px;height:' + m.fixedH + 'px';
         var expectedLegendStyle =
-          'top:' + (fixedTop + m.fixedH) + 'px;height:' + m.expectedH + 'px';
+          'top:' + (BAR_H - m.expectedH) + 'px;height:' + m.expectedH + 'px';
         return (
-          '<td class="pl-graph-cell" colspan="2" data-month="' +
-          mi +
-          '" data-pl-graph-month="1">' +
           '<div class="pl-graph-month">' +
           '<div class="pl-graph-month__head">' +
           '<span class="pl-graph-month__name">' +
-          monthName +
+          titleName +
           '</span>' +
           '<span class="pl-graph-month__sales">' +
           '<span class="pl-graph-month__sales-label">' +
@@ -3338,7 +3390,49 @@ def pl_graph_client_js(
             m.expectedPct,
             expectedLegendStyle
           ) +
-          '</div></div></div></td>'
+          '</div></div></div>'
+        );
+      }}
+
+      function renderMonthCell(mi, raw) {{
+        var m = calcMetrics(raw);
+        var monthName = MONTHS[mi] || String(mi + 1);
+        var openLabel = isJa
+          ? monthName + 'の Insight を開く'
+          : 'Open Insight for ' + monthName;
+        return (
+          '<td class="pl-graph-cell pl-graph-cell--clickable" colspan="2" data-month="' +
+          mi +
+          '" data-pl-graph-month="1" role="button" tabindex="0" aria-label="' +
+          openLabel +
+          '" title="' +
+          openLabel +
+          '">' +
+          graphCellInner(m, monthName) +
+          '</td>'
+        );
+      }}
+
+      function renderYearCell(data) {{
+        var sSales = 0, sExp = 0, sFixed = 0, sExpected = 0;
+        for (var i = 0; i < 12; i++) {{
+          var raw = data[i] || DUMMY_MONTHS[i] || {{}};
+          var mm = calcMetrics(raw);
+          sSales += mm.sales;
+          sExp += mm.expenses;
+          sFixed += mm.fixed;
+          sExpected += mm.expected;
+        }}
+        var m = calcMetrics({{
+          sales: sSales,
+          expenses: sExp,
+          fixed: sFixed,
+          expected: sExpected,
+        }});
+        return (
+          '<td class="pl-graph-cell pl-graph-cell--year" colspan="2" data-month="year">' +
+          graphCellInner(m, LABELS.yearTotal) +
+          '</td>'
         );
       }}
 
@@ -3348,8 +3442,7 @@ def pl_graph_client_js(
         for (var mi = 0; mi < 12; mi++) {{
           html += renderMonthCell(mi, data[mi] || DUMMY_MONTHS[mi] || {{}});
         }}
-        html +=
-          '<td class="pl-graph-cell pl-graph-cell--year" colspan="2" data-month="year"></td>';
+        html += renderYearCell(data);
         html += '</tr>';
         body.innerHTML = html;
         window.dispatchEvent(new Event('pl-graph-rendered'));
@@ -3614,6 +3707,7 @@ def render_page(lang: str, lang_switch: str) -> str:
         expenses_l=L["graph_expenses"],
         fixed_l=L["fixed"],
         expected_l=EXPENSES_ROWS_V1[1][2] if lang == "en" else EXPENSES_ROWS_V1[1][1],
+        year_total_l=L["year_total_head"],
         is_ja=lang == "ja",
     )
     graph_band = L["graph_band"]
@@ -4729,6 +4823,9 @@ def render_page(lang: str, lang_switch: str) -> str:
       --pl-graph-bar-h: 533px;
       --pl-graph-bar-w: 30px;
       --pl-graph-half-w: 15px;
+      --pl-graph-col-w: 15px;
+      --pl-graph-col-gap: 0px;
+      --pl-graph-tri-w: calc(var(--pl-graph-col-w) * 3 + var(--pl-graph-col-gap) * 2);
       --pl-graph-legend-gap: 20px;
       --pl-graph-legend-inset: calc(var(--pl-graph-legend-gap) + 4px);
       --pl-month-head-h: 30px;
@@ -5950,6 +6047,25 @@ def render_page(lang: str, lang_switch: str) -> str:
       border-left: none;
       background: #1f1e1e;
     }}
+    .pl-graph-cell--clickable {{
+      cursor: pointer;
+      transition: background 0.12s ease, box-shadow 0.12s ease;
+    }}
+    .pl-graph-cell--clickable:hover {{
+      background: #262525;
+      box-shadow: inset 0 0 0 1px rgba(88, 225, 243, 0.55);
+    }}
+    .pl-graph-cell--clickable:focus-visible {{
+      outline: none;
+      box-shadow: inset 0 0 0 2px #58e1f3;
+    }}
+    body.office-mode .pl-graph-cell--clickable:hover {{
+      background: #eef6ff;
+      box-shadow: inset 0 0 0 1px rgba(15, 148, 3, 0.6);
+    }}
+    body.office-mode .pl-graph-cell--clickable:focus-visible {{
+      box-shadow: inset 0 0 0 2px #0f9403;
+    }}
     .pl-graph-month {{
       display: flex;
       flex-direction: column;
@@ -6007,9 +6123,31 @@ def render_page(lang: str, lang_switch: str) -> str:
       height: var(--pl-graph-bar-h);
     }}
     .pl-graph-month__bars-wrap {{
-      flex: 0 0 var(--pl-graph-bar-w);
-      width: var(--pl-graph-bar-w);
+      flex: 0 0 var(--pl-graph-tri-w);
+      width: var(--pl-graph-tri-w);
       height: var(--pl-graph-bar-h);
+    }}
+    .pl-graph-tri {{
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: center;
+      gap: var(--pl-graph-col-gap);
+      width: var(--pl-graph-tri-w);
+      height: var(--pl-graph-bar-h);
+    }}
+    .pl-graph-col {{
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      width: var(--pl-graph-col-w);
+      min-width: var(--pl-graph-col-w);
+      max-width: var(--pl-graph-col-w);
+      height: 100%;
+      flex-shrink: 0;
+    }}
+    .pl-graph-col .pl-graph-bar {{
+      width: 100%;
     }}
     .pl-graph-unified {{
       display: flex;

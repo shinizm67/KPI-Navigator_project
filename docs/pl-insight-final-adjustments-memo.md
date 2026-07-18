@@ -113,7 +113,7 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 - [x] ホバー・ツールチップ・Y 軸スケール — ツールチップは実装済（This/Last/Best 値表示）。**Y 軸を「きれいな目盛」に刷新（2026-07-18）**：`compareNiceAxis` で 1/2/2.5/5 ×10^n の丸め目盛にし、`formatScale` を 1 桁小数対応（`7.5k` 等）。旧実装の 8k/23k のような半端目盛・小さい値でも 10k 刻みになる問題を解消。折れ線・縦棒の両方に適用。
 - [x] Office モード色（2026-07-18）— グラフ系列色（折れ線 stroke・縦棒 fill・軸線・ガイド線・ホバー点・凡例スウォッチ）を**CSS クラス化**し、Office モード（白背景）で濃色に上書き。This=`#0a63c2`／Last=`#b8860b`／Best=`#0f9403`、軸線/ガイド=`#888`、ツールチップ metric=`#555`。淡いシアン・黄が白地で見えづらい問題を解消。
 - [x] Area ジャンプ・アクセシビリティ（2026-07-18）— Area ナビの `role="tablist"`（tab 不在で意味破綻）を `role="group"` に修正。メトリクスタブに `aria-pressed` を付与（折れ線・縦棒とも）。オーバーレイは既に `role="dialog" aria-modal="true" aria-labelledby` 済を確認。
-- [ ] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）
+- [~] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）— **PL 表 月グラフセル → その月の Insight（Area 3）を実装（2026-07-18・1 方向）**。逆方向・費目内訳・Monthly Edit 連携・URL ハッシュは後続。詳細は本ファイル該当節。
 
 ---
 
@@ -165,6 +165,44 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 5. **バーやプロットは描かない** — 横棒は幅 0（＝非表示）、折れ線/縦棒は 0 で横ばい（前値据置）にして「爆発的な再レイアウト」を起こさない。
 
 実装リファレンス: PL Insight の横棒 = `renderHsnapBlock`（`scripts/build_pl_table_page.py`、`allowNoData` 時も 3 行骨格＋「—」を描画・`.pl-compare-hsnap--empty` で meta を淡色・`.pl-compare-hsnap { min-height }`）。**今後、他画面で No Data を表現する場合もこの方法に統一すること。**
+
+## PL 表 → PL Insight ドリルダウン（2026-07-18・§4／**実装済み・1 方向**）
+
+**ゴール（今回のスコープ・1 方向のみ）**：PL 表の**月次セルをクリック → その月の PL Insight を該当 Area で開く**。逆方向（Insight→表）・費目内訳・Monthly Edit 連携は後続に回す。
+
+**実装結果（2026-07-18・合意 3 点で確定）**：
+
+- **起点＝月グラフセル** `[data-pl-graph-month]`（`role="button" tabindex="0" aria-label`＝「〇月の Insight を開く」／`title` 同文）。`.pl-graph-cell--clickable` で hover ハイライト・focus-visible アウトライン・`cursor:pointer`（Office モード配色も対応）。
+- **飛び先＝Area 3**（当月の日次縦棒）固定。
+- **代表日ロジック**：当月＝今日／過去月＝`__plInsight.dayMetrics` で「データのある最終日」を後方走査（無ければ月末）／未来月＝月初。
+- **公開 API**：`window.__plOpenInsight(iso, areaId)`（`selectedIso` セット→`openOverlay()`→`requestAnimationFrame` 2 段後に該当 Area へ `scrollToCompareArea`）。
+- **イベント**：`document` への委譲（click＋keydown Enter/Space）。年は `plTableYear()`（URL `?year=` → 既定は今年）。
+- 実装箇所：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（API・代表日・委譲）と `renderMonthCell`（セル属性）＋ CSS。
+
+**後続（未実装）**：逆方向（Insight→PL 表セル）・費目内訳ドリル・Monthly Edit 連携・URL ハッシュでの状態保持。
+
+### 現状把握（実装の足場）
+
+- Insight オーバーレイは **選択日 `selectedIso` 起点**。`renderAllCompareAreas(iso)` が Area1/2/3 を描画（Area1=当日 FL、Area2=MTD 累積、Area3=当月の日次縦棒）。
+- 開閉は `openOverlay()` / `closeOverlay()`。開くトリガは 1 個（`#pl-graph-open`）。
+- Area 移動は `data-pl-compare-jump="pl-compare-area-N"` → `scrollToCompareArea()`。
+- PL 表には**月ごとの「月グラフセル」** `pl-graph-cell`（`data-pl-graph-month="1"` / `data-month="{mi}"`, mi=0–11）が既にある（面積が大きく、編集セルと非競合）。
+
+### 決定事項（推奨）
+
+1. **起点＝月グラフセル** `[data-pl-graph-month]`（案 A）。理由：面積が大きく直感的／編集可能セル（`data-field="amount"` 等）と競合しない／「グラフ＝分析導線」で意味が一致。
+2. **飛び先 Area＝Area 3（当月の日次縦棒）**。月グラフセルは「月全体」を表すため、月の日次ビューが最も対応が近い。
+3. **代表日 `iso` の決定ロジック**：
+   - 対象月に「今日」が含まれる → 今日
+   - 含まれない → その月の**データのある最終日**（無ければ月末日）
+   - 未来月（データなし）→ 月初（Area3 は空でも No Data 表現で崩れない）
+4. **URL ハッシュでの状態保持は今回は入れない**（オーバーレイ内 state で十分・後回し）。
+
+### 実装方式（最小）
+
+- 公開 API `window.__plOpenInsight(iso, areaId)` を追加：`selectedIso` セット → `openOverlay()` → `scrollToCompareArea('pl-compare-area-' + areaId)`。
+- PL 表の月グラフセルに click ハンドラ（`[data-pl-graph-month]`）。`data-month` → mi → 代表 iso 算出 → `__plOpenInsight(iso, 3)`。
+- **アクセシビリティ／見た目**：セルに `role="button"` `tabindex="0"` `aria-label`（例「7月の Insight を開く」）、`cursor:pointer`、hover で淡いハイライト、Enter/Space キー対応。
 
 ## 関連ドキュメント
 
