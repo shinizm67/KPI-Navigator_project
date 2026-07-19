@@ -49,8 +49,8 @@ Basic / Pro の機能出し分けと、そのチート対策の考え方をま�
 対象: `app/monthly/index.html` / `en/app/monthly/index.html`。
 
 - **Basic**：`LOCKED`（→ `change_plan.html`）のみ表示。**EDIT ボタンは非表示**（`display:none`）で素通りを塞ぐ。
-- **Pro**：`UNLOCKED`（→ `plan_details.html`）＋ **EDIT ボタン解放**（→ 編集ページ）。
-- ステータスボタンは常に表示され Locked ↔ Unlocked が切り替わる。UNLOCKED の遷移先は「プラン変更」ではなく「プラン詳細」にして Pro が誤って変更画面へ行かないようにした。
+- **Pro**：`UNLOCKED` は**ステータス表示のみ（リンク無し・クリック不可）**＋ **EDIT ボタン解放**（→ 編集ページ）。
+- ステータスボタンは常に表示され Locked ↔ Unlocked が切り替わる。**UNLOCKED からはあえて遷移先を持たせない**（プラン詳細/変更へのリンクも張らない）＝ ダウングレード動線を作らず、解約/降格を安易にさせない方針（`href` を外し `aria-disabled=true`・`cursor:default`）。
 
 ### 編集ページの入場ガード（Phase 2）
 

@@ -17007,10 +17007,9 @@ Target Sales</p>
     (function () {
       /* プラン判定は subscriptionTier に一本化（旧 userPlan は廃止）。
          Basic: LOCKED（→プラン変更）のみ表示、EDIT は非表示で素通りを塞ぐ。
-         Pro : UNLOCKED（→プラン詳細）＋ EDIT を解放。 */
+         Pro : UNLOCKED はステータス表示のみ（リンク無し＝ダウングレード動線を作らない）＋ EDIT を解放。 */
       var TIER_KEY = 'kpiNavigator.subscriptionTier';
       var CHANGE_PLAN_HREF = '../../setting/change_plan.html';
-      var PLAN_DETAILS_HREF = '../../setting/plan_details.html';
       var FRAME_EDIT = '../../images/monthly_decoration_frame_edit.svg';
       var FRAME_LOCKED = '../../images/monthly_decoration_frame_locked.svg';
       var lockLink = document.getElementById('monthly-plan-lock-link');
@@ -17036,9 +17035,12 @@ Target Sales</p>
       function applyPlanUi(tier) {
         var isPro = tier === 'pro';
         if (isPro) {
+          // UNLOCKED はステータス表示のみ: href を外してクリック不可にする
           lockLink.classList.remove('monthly-access-btn--locked');
-          lockLink.setAttribute('href', PLAN_DETAILS_HREF);
-          lockLink.setAttribute('aria-label', 'Plan details');
+          lockLink.removeAttribute('href');
+          lockLink.setAttribute('aria-label', 'Plan status: Unlocked');
+          lockLink.setAttribute('aria-disabled', 'true');
+          lockLink.style.cursor = 'default';
           lockLabel.textContent = 'UNLOCKED';
           lockFrame.setAttribute('src', FRAME_EDIT);
           topEditBtn.style.display = '';
@@ -17046,6 +17048,8 @@ Target Sales</p>
           lockLink.classList.add('monthly-access-btn--locked');
           lockLink.setAttribute('href', CHANGE_PLAN_HREF);
           lockLink.setAttribute('aria-label', 'Change Plan');
+          lockLink.removeAttribute('aria-disabled');
+          lockLink.style.cursor = '';
           lockLabel.textContent = 'LOCKED';
           lockFrame.setAttribute('src', FRAME_LOCKED);
           topEditBtn.style.display = 'none';

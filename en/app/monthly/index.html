@@ -17098,10 +17098,9 @@ Cumulative Target Annual Sales</p>
     (function () {
       /* Plan detection unified on subscriptionTier (legacy userPlan retired).
          Basic: show LOCKED (→ change plan) only, hide EDIT to block passthrough.
-         Pro : show UNLOCKED (→ plan details) + enable EDIT. */
+         Pro : UNLOCKED is a status badge only (no link = no downgrade path) + enable EDIT. */
       var TIER_KEY = 'kpiNavigator.subscriptionTier';
       var CHANGE_PLAN_HREF = '../../setting/change_plan.html';
-      var PLAN_DETAILS_HREF = '../../setting/plan_details.html';
       var FRAME_EDIT = '../../../images/monthly_decoration_frame_edit.svg';
       var FRAME_LOCKED = '../../../images/monthly_decoration_frame_locked.svg';
       var lockLink = document.getElementById('monthly-plan-lock-link');
@@ -17127,9 +17126,12 @@ Cumulative Target Annual Sales</p>
       function applyPlanUi(tier) {
         var isPro = tier === 'pro';
         if (isPro) {
+          // UNLOCKED is a status badge only: remove href so it is not clickable
           lockLink.classList.remove('monthly-access-btn--locked');
-          lockLink.setAttribute('href', PLAN_DETAILS_HREF);
-          lockLink.setAttribute('aria-label', 'Plan details');
+          lockLink.removeAttribute('href');
+          lockLink.setAttribute('aria-label', 'Plan status: Unlocked');
+          lockLink.setAttribute('aria-disabled', 'true');
+          lockLink.style.cursor = 'default';
           lockLabel.textContent = 'UNLOCKED';
           lockFrame.setAttribute('src', FRAME_EDIT);
           topEditBtn.style.display = '';
@@ -17137,6 +17139,8 @@ Cumulative Target Annual Sales</p>
           lockLink.classList.add('monthly-access-btn--locked');
           lockLink.setAttribute('href', CHANGE_PLAN_HREF);
           lockLink.setAttribute('aria-label', 'Change Plan');
+          lockLink.removeAttribute('aria-disabled');
+          lockLink.style.cursor = '';
           lockLabel.textContent = 'LOCKED';
           lockFrame.setAttribute('src', FRAME_LOCKED);
           topEditBtn.style.display = 'none';
