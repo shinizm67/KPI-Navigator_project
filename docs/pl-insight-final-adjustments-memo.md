@@ -181,7 +181,20 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 - **イベント**：`document` への委譲（click＋keydown Enter/Space）。年は `plTableYear()`（URL `?year=` → 既定は今年）。
 - 実装箇所：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（API・代表日・委譲）と `renderMonthCell`（セル属性）＋ CSS。
 
-**後続（未実装）**：費目内訳ドリル・Monthly Edit 連携・URL ハッシュでの状態保持。
+**後続**：費目内訳ドリル・Monthly Edit 連携（**URL ハッシュでの状態保持は 2026-07-19 実装済み**＝本ファイル「② URL ハッシュ」節）。
+
+### ② URL ハッシュで状態保持 ＋ 前回位置の記憶（2026-07-19・**実装済み**）
+
+**ゴール**：PL 分析(Insight)の状態（open/close・Area(1/2/3)・対象日 `selectedIso`）を **URL ハッシュに載せ**、リロード復元・ブラウザ「戻る」で閉じる・deep-link 共有を可能にする。併せて **前回位置を localStorage に記憶**し、ハッシュ無しで開き直しても前回の Area/日付から再開する。※PL 分析には Summary/Analyze/Graph タブは無く、`Area 1/2/3` が該当（「タブ相当＝Area」）。
+
+- **ハッシュ形式**：`…/pl/index.html#insight=area3&date=2026-01-31`（`insight=areaN` 必須、`date` は任意）。
+- **履歴**：開いたら `pushState`（→「戻る」で閉じる）、Area 移動・日付変更は `replaceState`（履歴を汚さない）、閉じたら `replaceState` でハッシュ除去。`popstate` で `#insight` 有無に応じて開閉/復元。
+- **読込時**：`#insight` があれば deep-link/リロードとして復元して開く（`initInsightFromHash`）。
+- **前回位置の記憶**：`kpiNavigator.plInsightLast`（`{area,date}`）。`PL分析` ボタンからの通常オープン時に復元。ドリルダウン（`__plOpenInsight`）は明示の iso/area を優先。
+- **閉じる導線**：Esc・×ボタン・**オーバーレイ外（背景）クリック**は既存実装（背景 `.pl-graph-overlay__backdrop` に `data-pl-graph-overlay-action="close"`）＋今回の「戻る」で閉じるを追加。
+- **実装箇所**：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（`parseInsightHash`/`buildInsightHash`/`syncHash`/`clearHashState`/`saveLastState`/`loadLastState`/`scrollToArea`、`openOverlay`/`closeOverlay`/`fillDate`/`__plOpenInsight`/area ナビ/btnOpen/`popstate`/`initInsightFromHash`）。
+- **利益ハブ deep-link 解禁**：`docs/index-profit-hub.md` が待っていた「特定 Area を開く deep-link」がこれで可能に（`pl/index.html#insight=areaN&date=…`）。
+- **後続（未実装）**：費目内訳ドリル・Monthly Edit 連携。
 
 ### 逆方向ドリル ①（2026-07-19・**実装済み・戻り導線のみ**）
 

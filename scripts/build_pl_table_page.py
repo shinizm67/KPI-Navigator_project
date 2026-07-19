@@ -2760,6 +2760,108 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         }});
       }}
 
+      /* --- ② URLハッシュ状態保持 ＋ 前回位置の記憶 ---
+         状態 = open/close ＋ Area(1/2/3) ＋ 対象日(selectedIso)。
+         ハッシュ形式: #insight=area3&date=2026-01-31 */
+      var LAST_STATE_KEY = 'kpiNavigator.plInsightLast';
+      var currentArea = 1;
+      var restoringFromHistory = false;
+      var suspendSync = false;
+
+      function isoOk(s) {{
+        return (
+          typeof s === 'string' &&
+          s.length === 10 &&
+          s.charAt(4) === '-' &&
+          s.charAt(7) === '-'
+        );
+      }}
+      function areaFromToken(tok) {{
+        var n = Number(String(tok || '').replace(/[^0-9]/g, ''));
+        return n >= 1 && n <= 3 ? n : 1;
+      }}
+      function parseInsightHash() {{
+        var h = String(window.location.hash || '');
+        if (h.charAt(0) === '#') h = h.slice(1);
+        if (!h) return null;
+        var parts = h.split('&');
+        var area = null;
+        var date = null;
+        for (var i = 0; i < parts.length; i++) {{
+          var p = parts[i].split('=');
+          var k = decodeURIComponent(p[0] || '');
+          var v = decodeURIComponent(p[1] || '');
+          if (k === 'insight') area = areaFromToken(v);
+          else if (k === 'date' && isoOk(v)) date = v;
+        }}
+        if (area === null) return null;
+        return {{ area: area, date: date }};
+      }}
+      function buildInsightHash() {{
+        var d = isoOk(selectedIso) ? selectedIso : '';
+        return '#insight=area' + currentArea + (d ? '&date=' + d : '');
+      }}
+      function syncHash(replace) {{
+        if (restoringFromHistory) return;
+        var url =
+          window.location.pathname + window.location.search + buildInsightHash();
+        try {{
+          if (replace) history.replaceState(history.state, '', url);
+          else history.pushState({{ plInsight: true }}, '', url);
+        }} catch (_e) {{
+          try {{
+            window.location.hash = buildInsightHash();
+          }} catch (_e2) {{}}
+        }}
+      }}
+      function clearHashState() {{
+        try {{
+          history.replaceState(
+            history.state,
+            '',
+            window.location.pathname + window.location.search
+          );
+        }} catch (_e) {{}}
+      }}
+      function saveLastState() {{
+        try {{
+          localStorage.setItem(
+            LAST_STATE_KEY,
+            JSON.stringify({{
+              area: currentArea,
+              date: isoOk(selectedIso) ? selectedIso : null
+            }})
+          );
+        }} catch (_e) {{}}
+      }}
+      function loadLastState() {{
+        try {{
+          var o = JSON.parse(localStorage.getItem(LAST_STATE_KEY) || 'null');
+          if (o && typeof o === 'object') {{
+            return {{
+              area: o.area >= 1 && o.area <= 3 ? o.area : 1,
+              date: isoOk(o.date) ? o.date : null
+            }};
+          }}
+        }} catch (_e) {{}}
+        return null;
+      }}
+      function scrollToArea(n) {{
+        var target = document.getElementById('pl-compare-area-' + (n || 1));
+        if (!target) return;
+        if (window.requestAnimationFrame) {{
+          window.requestAnimationFrame(function () {{
+            window.requestAnimationFrame(function () {{
+              scrollToCompareArea(target);
+            }});
+          }});
+        }} else {{
+          setTimeout(function () {{
+            scrollToCompareArea(target);
+          }}, 30);
+        }}
+      }}
+
       function fillDate(iso) {{
         iso = iso || resolveIso();
         selectedIso = iso;
@@ -2767,25 +2869,37 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         if (todayBtn) todayBtn.hidden = iso === getTodayIso();
         if (dateInput) dateInput.value = iso;
         renderAllCompareAreas(iso);
+        if (!suspendSync && !restoringFromHistory && root && !root.hidden) {{
+          syncHash(true);
+          saveLastState();
+        }}
       }}
 
       function openOverlay() {{
         if (!root) return;
+        var wasHidden = root.hidden;
         lastFocused = document.activeElement;
+        suspendSync = true;
         try {{
           fillDate(selectedIso || resolveIso());
         }} catch (err) {{
           console.error('Compare overlay fillDate failed', err);
         }}
+        suspendSync = false;
         root.hidden = false;
         document.body.classList.add('pl-graph-overlay-open');
         if (btnClose) btnClose.focus();
+        if (wasHidden && !restoringFromHistory) {{
+          syncHash(false);
+          saveLastState();
+        }}
       }}
 
       function closeOverlay() {{
         if (!root) return;
         root.hidden = true;
         document.body.classList.remove('pl-graph-overlay-open');
+        if (!restoringFromHistory) clearHashState();
         if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
       }}
 
@@ -2829,23 +2943,12 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       /* 公開 API: 指定 iso でオーバーレイを開き、該当 Area へスクロール。 */
       window.__plOpenInsight = function (iso, areaId) {{
         if (!root) return;
-        if (iso) selectedIso = iso;
-        openOverlay();
         var aid = Number(areaId) || 1;
         if (aid < 1 || aid > 3) aid = 1;
-        var target = document.getElementById('pl-compare-area-' + aid);
-        if (!target) return;
-        if (window.requestAnimationFrame) {{
-          window.requestAnimationFrame(function () {{
-            window.requestAnimationFrame(function () {{
-              scrollToCompareArea(target);
-            }});
-          }});
-        }} else {{
-          setTimeout(function () {{
-            scrollToCompareArea(target);
-          }}, 30);
-        }}
+        currentArea = aid;
+        if (iso) selectedIso = iso;
+        openOverlay();
+        scrollToArea(aid);
       }};
 
       function plGraphMonthFromEvent(e) {{
@@ -2872,7 +2975,17 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         window.__plOpenInsight(monthRepIso(plTableYear(), mi), 3);
       }});
 
-      if (btnOpen) btnOpen.addEventListener('click', openOverlay);
+      if (btnOpen) {{
+        btnOpen.addEventListener('click', function () {{
+          var last = loadLastState();
+          if (last) {{
+            currentArea = last.area;
+            if (last.date) selectedIso = last.date;
+          }}
+          openOverlay();
+          scrollToArea(currentArea);
+        }});
+      }}
       if (btnClose) {{
         btnClose.addEventListener('click', function (e) {{
           e.preventDefault();
@@ -2979,7 +3092,12 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           if (!targetId) return;
           var target = document.getElementById(targetId);
           if (!target) return;
+          currentArea = areaFromToken(targetId);
           scrollToCompareArea(target);
+          if (!restoringFromHistory) {{
+            syncHash(true);
+            saveLastState();
+          }}
         }});
       }});
       if (root) {{
@@ -2999,6 +3117,46 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           closeOverlay();
         }}
       }});
+
+      /* 戻る/進む（履歴）に追従: #insight があれば開いて復元、無ければ閉じる。 */
+      window.addEventListener('popstate', function () {{
+        var h = parseInsightHash();
+        restoringFromHistory = true;
+        try {{
+          if (h) {{
+            currentArea = h.area || currentArea;
+            if (h.date && h.date !== selectedIso) selectedIso = h.date;
+            if (root && root.hidden) openOverlay();
+            else fillDate(selectedIso || resolveIso());
+            scrollToArea(currentArea);
+          }} else if (root && !root.hidden) {{
+            closeOverlay();
+          }}
+        }} finally {{
+          restoringFromHistory = false;
+        }}
+      }});
+
+      /* 読込時: URL に #insight があれば deep-link/リロードとして復元して開く。
+         データ層(__plInsight)・他初期化の完了後に走らせるため load まで遅延。 */
+      function initInsightFromHash() {{
+        var h = parseInsightHash();
+        if (!h || !root) return;
+        restoringFromHistory = true;
+        try {{
+          currentArea = h.area || 1;
+          if (h.date) selectedIso = h.date;
+          openOverlay();
+          scrollToArea(currentArea);
+        }} finally {{
+          restoringFromHistory = false;
+        }}
+      }}
+      if (document.readyState === 'complete') {{
+        initInsightFromHash();
+      }} else {{
+        window.addEventListener('load', initInsightFromHash);
+      }}
     }})();
 """
 
