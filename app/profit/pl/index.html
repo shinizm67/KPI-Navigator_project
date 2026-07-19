@@ -496,6 +496,42 @@
     .pl-compare-today[hidden] {
       display: none !important;
     }
+    .pl-compare-goto-table {
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      z-index: 10;
+      min-height: 24px;
+      padding: 0 12px;
+      border: 1px solid #58e1f3;
+      border-radius: 999px;
+      background: rgba(88, 225, 243, 0.12);
+      color: #58e1f3;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+    }
+    html[lang='ja'] .pl-compare-goto-table {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .pl-compare-goto-table:hover {
+      background: rgba(88, 225, 243, 0.28);
+    }
+    .pl-compare-goto-table:focus-visible {
+      outline: 2px solid #58e1f3;
+      outline-offset: 2px;
+    }
+    body.office-mode .pl-compare-goto-table {
+      border-color: #0f9403;
+      color: #0f6b03;
+      background: rgba(15, 148, 3, 0.1);
+    }
+    body.office-mode .pl-compare-goto-table:hover {
+      background: rgba(15, 148, 3, 0.2);
+    }
     .pl-compare-date-input {
       position: absolute;
       width: 1px;
@@ -1040,8 +1076,13 @@
       --pl-h-label-detail-w: 350px;
       --pl-corner-h: 60px;
       --pl-month-head-w: 260px;
-      --pl-graph-cell-h: 700px;
-      --pl-graph-bar-h: 533px;
+      /* グラフ高は画面高に追従（100% で全体が収まるように）。
+         バー高＝可変（clamp の中央値）、セル高＝バー高＋ヘッダー等の予約（月ラベル＋収入ラベルの逃げ）。
+         微調整するときは基本ここだけ触ればよい（min / vh 係数 / max / reserve）。
+         reserve を小さくすると月ラベルとグラフの距離が縮む（収入100%時の収入ラベルの逃げ分は残す）。 */
+      --pl-graph-reserve: 72px;
+      --pl-graph-bar-h: clamp(240px, calc(100vh - 330px), 533px);
+      --pl-graph-cell-h: calc(var(--pl-graph-bar-h) + var(--pl-graph-reserve));
       --pl-graph-bar-w: 30px;
       --pl-graph-half-w: 15px;
       --pl-graph-col-w: 15px;
@@ -2286,6 +2327,39 @@
     }
     body.office-mode .pl-graph-cell--clickable:focus-visible {
       box-shadow: inset 0 0 0 2px #0f9403;
+    }
+    .pl-graph-cell--flash {
+      animation: plGraphCellFlash 1.6s ease-out;
+    }
+    @keyframes plGraphCellFlash {
+      0% {
+        box-shadow: inset 0 0 0 2px #58e1f3, 0 0 12px rgba(88, 225, 243, 0.7);
+        background: rgba(88, 225, 243, 0.22);
+      }
+      100% {
+        box-shadow: inset 0 0 0 0 rgba(88, 225, 243, 0);
+        background: transparent;
+      }
+    }
+    body.office-mode .pl-graph-cell--flash {
+      animation: plGraphCellFlashOffice 1.6s ease-out;
+    }
+    @keyframes plGraphCellFlashOffice {
+      0% {
+        box-shadow: inset 0 0 0 2px #0f9403, 0 0 12px rgba(15, 148, 3, 0.5);
+        background: rgba(15, 148, 3, 0.16);
+      }
+      100% {
+        box-shadow: inset 0 0 0 0 rgba(15, 148, 3, 0);
+        background: transparent;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pl-graph-cell--flash,
+      body.office-mode .pl-graph-cell--flash {
+        animation: none;
+        box-shadow: inset 0 0 0 2px #58e1f3;
+      }
     }
     .pl-graph-month {
       display: flex;
@@ -3652,7 +3726,7 @@
             </div>
             <div class="pl-toolbar__center">
               <button type="button" class="pl-toolbar__btn pl-toolbar__btn--graph" id="pl-graph-open"
-                aria-label="PL Insight を開く">PL Insight</button>
+                aria-label="PL分析 を開く">PL分析</button>
             </div>
             <div class="pl-toolbar__actions-col">
               <div class="pl-toolbar__actions">
@@ -3990,8 +4064,10 @@
       aria-labelledby="pl-graph-overlay-title">
       <button type="button" class="pl-graph-overlay__close" id="pl-graph-overlay-close"
         data-pl-graph-overlay-action="close" aria-label="閉じる">×</button>
+      <button type="button" class="pl-compare-goto-table" id="pl-compare-goto-table"
+        aria-label="この月を PL 表で表示">▶ 表のこの月へ</button>
       <header class="pl-compare-header">
-        <h2 class="pl-graph-overlay__title" id="pl-graph-overlay-title">PL Insight</h2>
+        <h2 class="pl-graph-overlay__title" id="pl-graph-overlay-title">PL分析</h2>
         <div class="pl-compare-toolbar">
           <div class="pl-compare-date-row">
             <button type="button" class="pl-compare-date-nav" id="pl-compare-prev-day"
@@ -6242,6 +6318,7 @@
       var LABELS = {
         band: "グラフ",
         monthlySales: "月次売上",
+        income: "収入",
         expenses: "支出",
         fixed: "固定費",
         expected: "変動費",
@@ -6278,12 +6355,13 @@
         var expensePct = (expenses / sales) * 100;
         var fixedPct = (fixed / sales) * 100;
         var expectedPct = (expected / sales) * 100;
-        /* 3 本バー: 収入と支出の大きい方を 100%（BAR_H）として全バーを底揃えでスケール。 */
+        /* 3 本バー: 収入と支出の大きい方を 100% として全バーを底揃えでスケール。
+           高さは % で保持し、CSS 変数 --pl-graph-bar-h（画面高追従）に対して伸縮させる。 */
         var ref = Math.max(sales, expenses);
         if (ref <= 0) ref = 1;
-        var incomeH = Math.round((sales / ref) * BAR_H);
-        var expenseH = Math.round((expenses / ref) * BAR_H);
-        var fixedH = Math.round((fixed / ref) * BAR_H);
+        var incomeH = (sales / ref) * 100;
+        var expenseH = (expenses / ref) * 100;
+        var fixedH = (fixed / ref) * 100;
         var expectedH = Math.max(0, expenseH - fixedH);
         return {
           deficit: deficit,
@@ -6302,6 +6380,10 @@
       }
 
       function legendBlock(cls, label, amount, percent, style) {
+        var pctHtml =
+          percent === null || percent === undefined
+            ? ''
+            : '<span class="pl-graph-legend__pct">' + pct(percent) + '</span>';
         return (
           '<div class="pl-graph-legend ' +
           cls +
@@ -6311,66 +6393,64 @@
           label +
           '</span><span class="pl-graph-legend__amt">' +
           formatMoney(amount) +
-          '</span><span class="pl-graph-legend__pct">' +
-          pct(percent) +
-          '</span></div>'
+          '</span>' +
+          pctHtml +
+          '</div>'
         );
       }
 
       function renderBars(m) {
-        /* 3 本バー（底揃え）: 左=収入(緑) / 中=総支出(赤) / 右=固定(黄・上)+変動(橙・下) */
+        /* 3 本バー（底揃え）: 左=収入(緑) / 中=総支出(赤) / 右=固定(黄・上)+変動(橙・下)。
+           高さは % 指定で、コンテナ高（--pl-graph-bar-h）に追従して伸縮する。 */
         return (
-          '<div class="pl-graph-tri" style="height:' +
-          BAR_H +
-          'px">' +
+          '<div class="pl-graph-tri">' +
           '<div class="pl-graph-col">' +
           '<div class="pl-graph-bar pl-graph-bar--green" style="height:' +
           m.incomeH +
-          'px"></div></div>' +
+          '%"></div></div>' +
           '<div class="pl-graph-col">' +
           '<div class="pl-graph-bar pl-graph-bar--red" style="height:' +
           m.expenseH +
-          'px"></div></div>' +
+          '%"></div></div>' +
           '<div class="pl-graph-col pl-graph-col--stack">' +
           '<div class="pl-graph-bar pl-graph-bar--yellow" style="height:' +
           m.fixedH +
-          'px"></div>' +
+          '%"></div>' +
           '<div class="pl-graph-bar pl-graph-bar--orange" style="height:' +
           m.expectedH +
-          'px"></div>' +
+          '%"></div>' +
           '</div></div>'
         );
       }
 
       function graphCellInner(m, titleName) {
-        /* バーは底揃え。各ラベルを対応セグメントの高さに合わせて縦位置決め。 */
+        /* バーは底揃え。
+           収入(緑)ラベル: 緑バーのすぐ上（左アサイド、バー寄り）。
+           支出(赤合計)＋固定(黄)＋変動(橙)は右アサイドで縦三層:
+             固定費=上／支出合計=中／変動費=下（積み上げバーの縦位置に対応）。 */
+        var stackTotal = m.fixedH + m.expectedH;
+        var stackTop = 100 - stackTotal;
+        var third = stackTotal / 3;
+        var incomeLegendStyle = 'bottom:' + m.incomeH + '%;';
+        var fixedLegendStyle = 'top:' + stackTop + '%;height:' + third + '%';
         var expLegendStyle =
-          'top:' + (BAR_H - m.expenseH) + 'px;height:' + m.expenseH + 'px';
-        var fixedLegendStyle =
-          'top:' + (BAR_H - m.expenseH) + 'px;height:' + m.fixedH + 'px';
+          'top:' + (stackTop + third) + '%;height:' + third + '%';
         var expectedLegendStyle =
-          'top:' + (BAR_H - m.expectedH) + 'px;height:' + m.expectedH + 'px';
+          'top:' + (stackTop + 2 * third) + '%;height:' + third + '%';
         return (
           '<div class="pl-graph-month">' +
           '<div class="pl-graph-month__head">' +
           '<span class="pl-graph-month__name">' +
           titleName +
-          '</span>' +
-          '<span class="pl-graph-month__sales">' +
-          '<span class="pl-graph-month__sales-label">' +
-          LABELS.monthlySales +
-          '</span> ' +
-          '<span class="pl-graph-month__sales-amt">' +
-          formatMoney(m.sales) +
-          '</span></span></div>' +
+          '</span></div>' +
           '<div class="pl-graph-month__stage">' +
           '<div class="pl-graph-month__aside pl-graph-month__aside--left">' +
           legendBlock(
-            'pl-graph-legend--expenses',
-            LABELS.expenses,
-            m.expenses,
-            m.expensePct,
-            expLegendStyle
+            'pl-graph-legend--income',
+            LABELS.income,
+            m.sales,
+            null,
+            incomeLegendStyle
           ) +
           '</div>' +
           '<div class="pl-graph-month__bars-wrap">' +
@@ -6383,6 +6463,13 @@
             m.fixed,
             m.fixedPct,
             fixedLegendStyle
+          ) +
+          legendBlock(
+            'pl-graph-legend--expenses',
+            LABELS.expenses,
+            m.expenses,
+            m.expensePct,
+            expLegendStyle
           ) +
           legendBlock(
             'pl-graph-legend--expected',
@@ -6816,6 +6903,7 @@
       var dateInput = document.getElementById('pl-compare-date-input');
       var scrollEl = document.getElementById('pl-compare-scroll');
       var contentEl = document.getElementById('pl-compare-content');
+      var gotoTableBtn = document.getElementById('pl-compare-goto-table');
       var lastFocused = null;
       var selectedIso = null;
       var areaButtons = root ? root.querySelectorAll('[data-pl-compare-jump]') : [];
@@ -8431,6 +8519,42 @@
           e.preventDefault();
           e.stopPropagation();
           closeOverlay();
+        });
+      }
+
+      /* 逆方向ドリル: Insight → PL 表の該当月セルへ戻る（閉じてスクロール＆一瞬ハイライト）。
+         対象月は「今 Insight で見ている日付（selectedIso）」の月。 */
+      function gotoTableMonth(mi) {
+        if (!Number.isFinite(mi) || mi < 0 || mi > 11) return;
+        closeOverlay();
+        var cell = document.querySelector(
+          '[data-pl-graph-month][data-month="' + mi + '"]'
+        );
+        if (!cell) return;
+        try {
+          cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (err) {
+          cell.scrollIntoView();
+        }
+        cell.classList.remove('pl-graph-cell--flash');
+        void cell.offsetWidth;
+        cell.classList.add('pl-graph-cell--flash');
+        if (typeof cell.focus === 'function') {
+          try {
+            cell.focus({ preventScroll: true });
+          } catch (err) {
+            cell.focus();
+          }
+        }
+        window.setTimeout(function () {
+          cell.classList.remove('pl-graph-cell--flash');
+        }, 1600);
+      }
+      if (gotoTableBtn) {
+        gotoTableBtn.addEventListener('click', function () {
+          var iso = selectedIso || resolveIso();
+          var mi = iso ? Number(iso.slice(5, 7)) - 1 : NaN;
+          gotoTableMonth(mi);
         });
       }
 

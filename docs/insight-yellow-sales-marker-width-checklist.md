@@ -1,6 +1,6 @@
 # 黄色マーカー（縦棒・逆三角）サイズ — 修正チェックリスト
 
-更新日: 2026-05-16
+更新日: 2026-07-19（縦棒 4px / 逆三角 21×21.2 の統一を 4 `index.html` に反映済み）
 
 横棒グラフまわりの **黄色マーカー** を Figma どおり揃えるためのチェックリスト。  
 **縦棒（Sales / KPI 100%）** と **下向き黄色逆三角（KGI / Expenses 等）** の両方を扱う。
@@ -80,9 +80,9 @@ rg "marker-triangle|expenses-triangle|bar-tri-kgi" app/monthly en/app/monthly ap
 |------|----------|--------|-------|------|
 | [x] | `.insight-monthly-expense-pl__sales-line` | 4px | 4px | 済 |
 | [x] | `.annual-allocation-marker-line` | 4px | 4px | 済 |
-| [ ] | `.insight-daily-alloc-marker-line` | **9px** | 4px | **要修正** |
-| [ ] | `.annual-graph-popover__bar-target-line` | **6px** | 4px | **要確認** |
-| [ ] | `.monthly-edit-float__kpi-progress-target` | **2px** | 4px? | **要確認**（編集 UI 用・別仕様の可能性） |
+| [x] | `.insight-daily-alloc-marker-line` | 4px | 4px | 済（4 ファイルとも既に 4px を確認） |
+| [x] | `.annual-graph-popover__bar-target-line` | 6px→**4px** | 4px | 済（2026-07-19・4 ファイル） |
+| [ ] | `.monthly-edit-float__kpi-progress-target` | **2px** | 4px? | **保留**（編集フロートのミニ進捗バー・別仕様として据え置き） |
 
 ### 対象外
 
@@ -99,10 +99,10 @@ rg "marker-triangle|expenses-triangle|bar-tri-kgi" app/monthly en/app/monthly ap
 | 状態 | セレクタ | 現状 W × H | Figma | 画面・用途 | 修正 |
 |------|----------|------------|-------|------------|------|
 | [x] | `.insight-monthly-expense-pl__expenses-triangle` | **21 × 21.2** | 21 × 21.2 | Expense & Profit — Expenses マーカー | 済（`--expense-triangle-w/h`） |
-| [ ] | `.insight-daily-alloc-marker-triangle` | **36 × 30**（18+18 / 30） | 21 × 21.2 | Insight 配分横棒の KGI 逆三角（全タブ多数） | **要修正** |
-| [ ] | `.annual-allocation-marker-triangle` | **16 × 13**（8+8 / 13） | 21 × 21.2 | Area1 配分・達成率グラフ | **要修正** |
-| [ ] | `.annual-graph-popover__bar-tri-kgi` | **18 × 15**（9+9 / 15） | 21 × 21.2 | ▶Graph ポップオーバー内 KGI 逆三角 | **要修正** |
-| [ ] | `.monthly-edit-float__kpi-progress-marker` | **10 × 6**（5+5 / 6） | 21 × 21.2? | 月次編集フロート進捗バー | **要確認**（ミニ UI なら別サイズ可） |
+| [x] | `.insight-daily-alloc-marker-triangle` | 21 × 21.2 | 21 × 21.2 | Insight 配分横棒の KGI 逆三角（全タブ多数） | 済（`--marker-triangle-w/h` が既に 21/21.2） |
+| [ ] | `.annual-allocation-marker-triangle` | **16 × 13**（8+8 / 13） | 21 × 21.2 | Area1 配分・達成率グラフ（Cockpit） | **保留**（2026-07-19：21×21.2 だとバーからはみ出すため 16×13 に差し戻し。Cockpit の細バー用に別サイズ据え置き） |
+| [x] | `.annual-graph-popover__bar-tri-kgi` | 18 × 15 → **21 × 21.2** | 21 × 21.2 | ▶Graph ポップオーバー内 KGI 逆三角 | 済（2026-07-19・`bottom:16px` は先端位置不変のため据え置き） |
+| [ ] | `.monthly-edit-float__kpi-progress-marker` | **10 × 6**（5+5 / 6） | 21 × 21.2? | 月次編集フロート進捗バー | **保留**（ミニ UI・別サイズとして据え置き） |
 
 ### Expense & Profit 逆三角（済）の CSS 変数
 
@@ -198,3 +198,5 @@ rg "marker-triangle|expenses-triangle|bar-tri-kgi" app/monthly en/app/monthly ap
 |------|------|
 | 2026-05-16 | 初版。黄棒チェックリスト作成 |
 | 2026-05-16 | 逆三角 Figma **21×21.2** を追記。セレクタ別現状 W×H・画面別三角チェックを追加 |
+| 2026-07-19 | **黄マーカー統一を実装**。4 `index.html`（monthly/annual × JA/EN）に対し ①縦棒 `.annual-graph-popover__bar-target-line` 6px→**4px** ②逆三角 `.annual-graph-popover__bar-tri-kgi` 18×15→**21×21.2** ③逆三角 `.annual-allocation-marker-triangle` 16×13→**21×21.2**（`top` を `-13px`→`-21.2px` に再計算）。`.insight-daily-alloc-marker-*`（縦棒 4px / 逆三角 21×21.2）は全ファイル既に標準で変更不要を確認。`.monthly-edit-float__kpi-progress-*`（ミニ進捗バー）と `.daily-overlay__daily-graph`（14px 棒・三角 12px）は別仕様として据え置き。 |
+| 2026-07-19 | **Cockpit の逆三角を差し戻し**。上記③ `.annual-allocation-marker-triangle`（Area1 配分・達成率グラフ）は 21×21.2 だと細バーからはみ出す指摘を受け **16×13（`top:-13px`）に戻す**（4 ファイル）。Insight 内（`insight-daily-alloc-marker-triangle`）と ▶グラフ ポップオーバー（`bar-tri-kgi`）は 21×21.2 のまま維持。 |

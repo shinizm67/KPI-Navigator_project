@@ -115,7 +115,7 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 - [x] ホバー・ツールチップ・Y 軸スケール — ツールチップは実装済（This/Last/Best 値表示）。**Y 軸を「きれいな目盛」に刷新（2026-07-18）**：`compareNiceAxis` で 1/2/2.5/5 ×10^n の丸め目盛にし、`formatScale` を 1 桁小数対応（`7.5k` 等）。旧実装の 8k/23k のような半端目盛・小さい値でも 10k 刻みになる問題を解消。折れ線・縦棒の両方に適用。
 - [x] Office モード色（2026-07-18）— グラフ系列色（折れ線 stroke・縦棒 fill・軸線・ガイド線・ホバー点・凡例スウォッチ）を**CSS クラス化**し、Office モード（白背景）で濃色に上書き。This=`#0a63c2`／Last=`#b8860b`／Best=`#0f9403`、軸線/ガイド=`#888`、ツールチップ metric=`#555`。淡いシアン・黄が白地で見えづらい問題を解消。
 - [x] Area ジャンプ・アクセシビリティ（2026-07-18）— Area ナビの `role="tablist"`（tab 不在で意味破綻）を `role="group"` に修正。メトリクスタブに `aria-pressed` を付与（折れ線・縦棒とも）。オーバーレイは既に `role="dialog" aria-modal="true" aria-labelledby` 済を確認。
-- [~] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）— **PL 表 月グラフセル → その月の Insight（Area 3）を実装（2026-07-18・1 方向）**。逆方向・費目内訳・Monthly Edit 連携・URL ハッシュは後続。詳細は本ファイル該当節。
+- [~] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）— **PL 表 月グラフセル → その月の Insight（Area 3）を実装（2026-07-18・順方向）**。**逆方向の戻り導線（Insight→PL 表・`▶ 表のこの月へ`）も実装（2026-07-19・①のみ）**。費目内訳・Monthly Edit 連携・URL ハッシュは後続。詳細は本ファイル該当節。
 
 ---
 
@@ -181,7 +181,18 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 - **イベント**：`document` への委譲（click＋keydown Enter/Space）。年は `plTableYear()`（URL `?year=` → 既定は今年）。
 - 実装箇所：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（API・代表日・委譲）と `renderMonthCell`（セル属性）＋ CSS。
 
-**後続（未実装）**：逆方向（Insight→PL 表セル）・費目内訳ドリル・Monthly Edit 連携・URL ハッシュでの状態保持。
+**後続（未実装）**：費目内訳ドリル・Monthly Edit 連携・URL ハッシュでの状態保持。
+
+### 逆方向ドリル ①（2026-07-19・**実装済み・戻り導線のみ**）
+
+**ゴール**：PL Insight を見ている状態から、**今見ている月を PL 表の該当セルへ戻す**（Insight→**PL 表**）。※「Insight→Insight」ではない。費目内訳ドリル・URL ハッシュは今回スコープ外（ユーザー判断で後日再検討）。
+
+- **UI**：**パネル左上角**（`position:absolute; left:14px; top:12px`＝右上の×ボタンと左右対称）に **`▶ 表のこの月へ`**（EN: `▶ View month in table`）ボタン `#pl-compare-goto-table` を配置。※当初ツールバー（Area ナビ右）に置いたが、既存レイアウトが崩れるため左上角へ移動（2026-07-19）。
+- **対象月**：起点セルの月ではなく、**今 Insight で見ている日付 `selectedIso` の月**（Insight 内で日付を動かした後でも「今の月」に戻る）。
+- **挙動**：`gotoTableMonth(mi)` → `closeOverlay()` → `[data-pl-graph-month][data-month=mi]` を `scrollIntoView({block:'center'})` → `.pl-graph-cell--flash`（1.6s のハイライト、Office 配色・`prefers-reduced-motion` 対応）→ セルに `focus`。
+- **ラベル**：`compare_goto_table` / `compare_goto_table_aria`（JA/EN）。
+- 実装箇所：`scripts/build_pl_table_page.py` の `pl_graph_overlay_html`（ボタン）・`pl_compare_client_js`（`gotoTableMonth`・配線）＋ CSS（`.pl-compare-goto-table` / `.pl-graph-cell--flash`）。
+- **既知の制限**：PL 表は 1 年分のみ表示（`plTableYear`）。Insight で表示中の年が表の年と異なる場合でも月セルへ飛ぶが、セルの数値は表の年のもの（通常運用では同一年内のため実害小）。
 
 ### 現状把握（実装の足場）
 
