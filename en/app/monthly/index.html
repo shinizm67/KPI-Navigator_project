@@ -11245,6 +11245,77 @@
       border-color: #2a2a2a;
       background: #e8e8e8;
     }
+    /* --- Plan gating (Basic lock): blur Pro-only blocks and overlay a CTA. Display gate only (real enforcement is server-side) --- */
+    .insight-plan-locked {
+      position: relative;
+    }
+    .insight-plan-locked > *:not(.insight-plan-lock) {
+      filter: blur(4px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+    }
+    .insight-plan-lock {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 5;
+      border: 1px dashed rgba(88, 225, 243, 0.6);
+      border-radius: 4px;
+      background: rgba(10, 22, 28, 0.35);
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .insight-plan-lock:hover,
+    .insight-plan-lock:focus-visible {
+      background: rgba(10, 22, 28, 0.55);
+      outline: none;
+    }
+    .insight-plan-lock__icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+    .insight-plan-lock[data-tooltip]:hover::after,
+    .insight-plan-lock[data-tooltip]:focus-visible::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      padding: 8px 10px;
+      border: 1px solid rgba(88, 225, 243, 0.6);
+      border-radius: 3px;
+      background: #102932;
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      text-align: center;
+      white-space: normal;
+      width: max-content;
+      max-width: min(260px, 80vw);
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(16, 0, 82, 0.35);
+    }
+    .office-mode .insight-plan-lock {
+      border-color: rgba(40, 40, 40, 0.5);
+      background: rgba(240, 240, 240, 0.6);
+      color: #1a4a55;
+    }
+    .office-mode .insight-plan-lock[data-tooltip]:hover::after,
+    .office-mode .insight-plan-lock[data-tooltip]:focus-visible::after {
+      border-color: #2a2a2a;
+      background: #ffffff;
+      color: #1a4a55;
+    }
     /* Daily footer: below Profit — Today vs Historical Avg (100px box-to-bar) + Graph shortcut */
     .insight-daily-comparison-tail {
       position: relative;
@@ -17025,48 +17096,68 @@ Cumulative Target Annual Sales</p>
       });
     })();
     (function () {
-      var PLAN_KEY = 'kpiNavigator.userPlan';
+      /* Plan detection unified on subscriptionTier (legacy userPlan retired).
+         Basic: show LOCKED (→ change plan) only, hide EDIT to block passthrough.
+         Pro : show UNLOCKED (→ plan details) + enable EDIT. */
+      var TIER_KEY = 'kpiNavigator.subscriptionTier';
+      var CHANGE_PLAN_HREF = '../../setting/change_plan.html';
+      var PLAN_DETAILS_HREF = '../../setting/plan_details.html';
+      var FRAME_EDIT = '../../../images/monthly_decoration_frame_edit.svg';
+      var FRAME_LOCKED = '../../../images/monthly_decoration_frame_locked.svg';
       var lockLink = document.getElementById('monthly-plan-lock-link');
       var lockFrame = document.getElementById('monthly-plan-lock-frame');
       var lockLabel = document.getElementById('monthly-plan-lock-label');
       var topEditBtn = document.getElementById('monthly-top-edit-btn');
       if (!lockLink || !lockFrame || !lockLabel || !topEditBtn) return;
 
-      function normalizePlan(raw) {
-        var s = String(raw || '').trim().toLowerCase();
-        return s === 'pro' ? 'pro' : 'basic';
+      function normalizeTier(raw) {
+        return String(raw || '').trim().toLowerCase() === 'basic' ? 'basic' : 'pro';
       }
-      function resolvePlan() {
-        var g = window.__KPI_USER_PLAN;
-        if (typeof g === 'string' && g) return normalizePlan(g);
+      function resolveTier() {
         try {
-          return normalizePlan(localStorage.getItem(PLAN_KEY));
+          return normalizeTier(
+            sessionStorage.getItem(TIER_KEY) ||
+              localStorage.getItem(TIER_KEY) ||
+              'pro'
+          );
         } catch (_err) {
-          return 'basic';
+          return 'pro';
         }
       }
-      function applyPlanUi(plan) {
-        var isPro = plan === 'pro';
+      function applyPlanUi(tier) {
+        var isPro = tier === 'pro';
         if (isPro) {
           lockLink.classList.remove('monthly-access-btn--locked');
+          lockLink.setAttribute('href', PLAN_DETAILS_HREF);
+          lockLink.setAttribute('aria-label', 'Plan details');
           lockLabel.textContent = 'UNLOCKED';
-          lockFrame.setAttribute('src', '../../../images/monthly_decoration_frame_edit.svg');
+          lockFrame.setAttribute('src', FRAME_EDIT);
+          topEditBtn.style.display = '';
         } else {
           lockLink.classList.add('monthly-access-btn--locked');
+          lockLink.setAttribute('href', CHANGE_PLAN_HREF);
+          lockLink.setAttribute('aria-label', 'Change Plan');
           lockLabel.textContent = 'LOCKED';
-          lockFrame.setAttribute('src', '../../../images/monthly_decoration_frame_locked.svg');
+          lockFrame.setAttribute('src', FRAME_LOCKED);
+          topEditBtn.style.display = 'none';
         }
       }
 
-      applyPlanUi(resolvePlan());
+      applyPlanUi(resolveTier());
       window.__MONTHLY_UI = window.__MONTHLY_UI || {};
-      window.__MONTHLY_UI.setUserPlan = function (plan) {
-        var normalized = normalizePlan(plan);
+      window.__MONTHLY_UI.setUserPlan = function (tier) {
+        var normalized = normalizeTier(tier);
         try {
-          localStorage.setItem(PLAN_KEY, normalized);
+          localStorage.setItem(TIER_KEY, normalized);
         } catch (_err) {}
         applyPlanUi(normalized);
       };
+      /* For manual QA: __KPI_SET_TIER('basic'|'pro') from console */
+      window.__KPI_SET_TIER = window.__MONTHLY_UI.setUserPlan;
+
+      window.addEventListener('storage', function (e) {
+        if (e && e.key === TIER_KEY) applyPlanUi(resolveTier());
+      });
 
       topEditBtn.addEventListener('click', function () {
         if (window.__MONTHLY_EDIT_NAV__) window.__MONTHLY_EDIT_NAV__.go(null);
@@ -28827,6 +28918,68 @@ Cumulative Target Annual Sales</p>
       window.addEventListener('storage', function (ev) {
         if (ev.key === 'kpiNavigator.kpiYearStore') refresh();
       });
+    })();
+  </script>
+  <script>
+    /* Lock the expense/profit blocks for Basic plan + Pro upgrade CTA (display gate only; real enforcement is server-side).
+       Instantly unlocks on Pro (incl. other tabs). Targets: expense/profit across Insight — Daily Expenses(Optional) &
+       Profit, Monthly/Annual cost structure, and the Analyze/Graph Expense & Profit blocks. */
+    (function () {
+      var TIER_KEY = 'kpiNavigator.subscriptionTier';
+      var CHANGE_PLAN_HREF = '../../setting/change_plan.html';
+      var SELECTORS = [
+        '.insight-daily-expenses',
+        '.insight-daily-profit',
+        '.insight-monthly-cost',
+        '.insight-annual-cost',
+        '.insight-monthly-expense-pl',
+        '.insight-annual-expense-profit',
+        '.insight-annual-year-expense-pl'
+      ];
+      var CTA_TEXT = 'This section is Pro-only. Click to change your plan.';
+      function isBasic() {
+        try {
+          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
+          return String(t).trim().toLowerCase() === 'basic';
+        } catch (_e) {
+          return false;
+        }
+      }
+      function makeLock() {
+        var a = document.createElement('a');
+        a.className = 'insight-plan-lock';
+        a.href = CHANGE_PLAN_HREF;
+        a.setAttribute('data-tooltip', CTA_TEXT);
+        a.setAttribute('aria-label', CTA_TEXT);
+        a.innerHTML =
+          '<span class="insight-plan-lock__icon" aria-hidden="true">🔒</span>' +
+          '<span class="insight-plan-lock__text">Pro</span>';
+        return a;
+      }
+      function apply() {
+        var basic = isBasic();
+        document.body.classList.toggle('kpi-plan-basic', basic);
+        SELECTORS.forEach(function (sel) {
+          var nodes = document.querySelectorAll(sel);
+          for (var i = 0; i < nodes.length; i++) {
+            var box = nodes[i];
+            var lock = box.querySelector('.insight-plan-lock');
+            if (basic) {
+              box.classList.add('insight-plan-locked');
+              if (!lock) box.appendChild(makeLock());
+            } else {
+              box.classList.remove('insight-plan-locked');
+              if (lock && lock.parentNode) lock.parentNode.removeChild(lock);
+            }
+          }
+        });
+      }
+      apply();
+      window.addEventListener('storage', function (e) {
+        if (e && e.key === TIER_KEY) apply();
+      });
+      document.addEventListener('kpi:planChanged', apply);
+      window.__KPI_APPLY_PLAN_LOCKS = apply;
     })();
   </script>
 </body>

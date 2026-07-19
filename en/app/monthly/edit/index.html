@@ -5,6 +5,18 @@
   <meta http-equiv="content-language" content="en">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly Edit | KPI Navigator | FORGE LABORATORY</title>
+  <script>
+    /* Basic plan entry guard: block direct navigation to the edit page (pre-render check; UX/upsell only, real enforcement is server-side) */
+    (function () {
+      try {
+        var k = 'kpiNavigator.subscriptionTier';
+        var tier = sessionStorage.getItem(k) || localStorage.getItem(k) || 'pro';
+        if (String(tier).trim().toLowerCase() === 'basic') {
+          window.location.replace('../../../setting/change_plan.html');
+        }
+      } catch (_e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
