@@ -1349,7 +1349,137 @@ def insight_diff_js() -> str:
         patchGraphMonthlyAnnualCumBars(root, m);
         patchAnalyzeMonthlyExpenseCharts(m, iso);
         patchHistoricalInsightAccess(root, iso);
+        patchAnalyzeDualInsight(root, iso);
+        patchAnalyzeAnnualExpenseProfit(root, m, iso);
+        patchAnalyzeAnnualYearExpenseCharts(m, iso);
       }};
+
+      function insightIsJaLang() {{
+        return (
+          String(document.documentElement.getAttribute('lang') || '')
+            .toLowerCase()
+            .indexOf('ja') === 0
+        );
+      }}
+
+      function dualInsightNoneLabel() {{
+        return insightIsJaLang() ? 'なし' : 'None';
+      }}
+
+      function dualInsightWeatherLabel(code) {{
+        var presets = [
+          {{ code: '', ja: '—', en: '—' }},
+          {{ code: 'sunny', ja: '晴れ', en: 'Sunny' }},
+          {{ code: 'cloudy', ja: '曇り', en: 'Cloudy' }},
+          {{ code: 'rain', ja: '雨', en: 'Rain' }},
+          {{ code: 'snow', ja: '雪', en: 'Snow' }},
+          {{ code: 'thunder', ja: '雷', en: 'Thunder' }},
+          {{ code: 'storm', ja: '嵐', en: 'Storm' }},
+          {{ code: 'gale', ja: '暴風', en: 'Gale' }},
+        ];
+        var s = String(code == null ? '' : code);
+        var ja = insightIsJaLang();
+        for (var i = 0; i < presets.length; i++) {{
+          if (presets[i].code === s) return ja ? presets[i].ja : presets[i].en;
+        }}
+        return s ? s : DASH;
+      }}
+
+      function dualInsightLoadYearPayload(year) {{
+        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {{
+          return null;
+        }}
+        return KpiYearStore.loadMepYearPayload(year);
+      }}
+
+      function dualInsightMemoRowIds(year) {{
+        var payload = dualInsightLoadYearPayload(year);
+        if (!payload) return [];
+        if (payload.mepMemoRows && payload.mepMemoRows.length) {{
+          return payload.mepMemoRows.slice(0, 6).map(function (row) {{
+            return row.id;
+          }});
+        }}
+        var memos = (payload.dailyMeta && payload.dailyMeta.memos) || {{}};
+        return Object.keys(memos);
+      }}
+
+      function dualInsightReadMemo(year, rowId, iso) {{
+        var payload = dualInsightLoadYearPayload(year);
+        if (!payload || !payload.dailyMeta || !payload.dailyMeta.memos || !rowId) return '';
+        var byRow = payload.dailyMeta.memos[rowId];
+        if (!byRow) return '';
+        return String(byRow[iso] == null ? '' : byRow[iso]).trim();
+      }}
+
+      function dualInsightReadWeather(year, iso) {{
+        var payload = dualInsightLoadYearPayload(year);
+        if (!payload || !payload.dailyMeta || !payload.dailyMeta.weather) return '';
+        return String(payload.dailyMeta.weather[iso] == null ? '' : payload.dailyMeta.weather[iso]);
+      }}
+
+      function dualInsightIsOff(iso) {{
+        if (window.KpiYearStore && typeof KpiYearStore.readBusinessDay === 'function') {{
+          return KpiYearStore.readBusinessDay(iso) === false;
+        }}
+        if (typeof window.__isTwBusinessDay === 'function') {{
+          return !window.__isTwBusinessDay(iso);
+        }}
+        return false;
+      }}
+
+      function dualInsightDayFields(iso) {{
+        var empty = {{
+          weather: DASH,
+          memos: [DASH, DASH, DASH, DASH, DASH, DASH],
+        }};
+        if (!iso || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(iso))) return empty;
+        if (dualInsightIsOff(iso)) return empty;
+        var y = Number(String(iso).slice(0, 4));
+        if (!Number.isFinite(y)) return empty;
+        var rowIds = dualInsightMemoRowIds(y);
+        var memos = [];
+        for (var i = 0; i < 6; i++) {{
+          var raw = dualInsightReadMemo(y, rowIds[i], iso);
+          memos.push(raw ? raw : dualInsightNoneLabel());
+        }}
+        var wCode = dualInsightReadWeather(y, iso);
+        return {{
+          weather: dualInsightWeatherLabel(wCode),
+          memos: memos,
+        }};
+      }}
+
+      function fillDualInsightCol(col, fields) {{
+        if (!col || !fields) return;
+        var dds = col.querySelectorAll('.insight-analyze-dual-insight__row dd');
+        if (dds[0]) dds[0].textContent = fields.weather;
+        for (var i = 0; i < 6; i++) {{
+          if (dds[i + 1]) dds[i + 1].textContent = fields.memos[i];
+        }}
+      }}
+
+      function patchAnalyzeDualInsight(root, iso) {{
+        if (!root) return;
+        var blocks = root.querySelectorAll('.insight-analyze-dual-insight');
+        if (!blocks.length) return;
+        var todayFields = dualInsightDayFields(iso);
+        var lyIso =
+          iso && typeof window.__sameWeekdayIso === 'function'
+            ? window.__sameWeekdayIso(iso, 1)
+            : null;
+        var lyFields = dualInsightDayFields(lyIso);
+        blocks.forEach(function (block) {{
+          fillDualInsightCol(
+            block.querySelector('.insight-analyze-dual-insight__col--today'),
+            todayFields
+          );
+          fillDualInsightCol(
+            block.querySelector('.insight-analyze-dual-insight__col--last-year'),
+            lyFields
+          );
+        }});
+      }}
 
       function clearHistoricalInsightAccessGroup(group) {{
         if (!group) return;
@@ -1632,6 +1762,129 @@ def insight_diff_js() -> str:
       /* 互換: 旧名呼び出し */
       function patchAnalyzeMonthlyExpenseCurrent(m, iso) {{
         patchAnalyzeMonthlyExpenseCharts(m, iso);
+      }}
+
+      function insightReadYearExpenseThrough(year, month, day) {{
+        var empty = {{ fixed: 0, variable: 0, total: 0, hasData: false }};
+        if (typeof window.__insightReadMonthExpense !== 'function') return empty;
+        var y = Number(year);
+        var mo = Number(month);
+        var d = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return empty;
+        if (mo < 1 || mo > 12) return empty;
+        var fixed = 0;
+        var variable = 0;
+        var hasData = false;
+        for (var mm = 1; mm <= mo; mm++) {{
+          var td = mm === mo ? d : new Date(y, mm, 0).getDate();
+          var exp = window.__insightReadMonthExpense(y, mm, td);
+          if (!exp || !exp.hasData) continue;
+          hasData = true;
+          fixed += Number(exp.fixed) || 0;
+          variable += Number(exp.variable) || 0;
+        }}
+        return {{
+          fixed: Math.round(fixed),
+          variable: Math.round(variable),
+          total: Math.round(fixed + variable),
+          hasData: hasData,
+        }};
+      }}
+
+      function patchAnalyzeAnnualExpenseProfit(root, m, iso) {{
+        if (!root) return;
+        var blocks = root.querySelectorAll('.insight-annual-expense-profit');
+        if (!blocks.length) return;
+        function clearBlock(block) {{
+          var rows = block.querySelectorAll('.insight-annual-expense-profit__row');
+          for (var i = 0; i < rows.length; i++) {{
+            var el = rows[i].querySelector('.insight-annual-expense-profit__value');
+            if (el) el.textContent = DASH;
+          }}
+        }}
+        if (!m || !iso) {{
+          blocks.forEach(clearBlock);
+          return;
+        }}
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {{
+          blocks.forEach(clearBlock);
+          return;
+        }}
+        var exp = insightReadYearExpenseThrough(y, month, day);
+        var sales = Number(m.ytdA);
+        blocks.forEach(function (block) {{
+          var rows = block.querySelectorAll('.insight-annual-expense-profit__row');
+          function setRow(i, text) {{
+            var el = rows[i] && rows[i].querySelector('.insight-annual-expense-profit__value');
+            if (el) el.textContent = text;
+          }}
+          if (!exp.hasData || !Number.isFinite(sales)) {{
+            clearBlock(block);
+            return;
+          }}
+          var profit = sales - Number(exp.total);
+          setRow(0, fmtInsightMoney(exp.total));
+          setRow(1, fmtInsightMoney(exp.fixed));
+          setRow(2, fmtInsightMoney(exp.variable));
+          setRow(3, fmtInsightMoney(profit));
+          setRow(4, fmtInsightProfitMarginPct(sales, profit));
+        }});
+      }}
+
+      /**
+       * Analyze → Year Expense & Profit（4本）
+       * 当年/前年/2y/3y とも 年初〜選択日の YTD 支出 ÷ YTD 売上
+       */
+      function patchAnalyzeAnnualYearExpenseCharts(m, iso) {{
+        var ids = [
+          'insight-analyze-annual-year-expense-pl-current',
+          'insight-analyze-annual-year-expense-pl-last-year',
+          'insight-analyze-annual-year-expense-pl-2y',
+          'insight-analyze-annual-year-expense-pl-3y',
+        ];
+        function clearAll() {{
+          ids.forEach(function (id) {{
+            setExpensePlChartPct(document.getElementById(id), 0, 0);
+          }});
+        }}
+        if (!iso) {{
+          clearAll();
+          return;
+        }}
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {{
+          clearAll();
+          return;
+        }}
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+
+        function fillYear(chartId, year, salesOverride) {{
+          var chart = document.getElementById(chartId);
+          if (!chart) return;
+          var exp = insightReadYearExpenseThrough(year, month, day);
+          var sales = salesOverride;
+          if (!Number.isFinite(sales)) {{
+            var scope = sumFn ? sumFn(year, month, day) : null;
+            sales = scope && scope.hasData ? Number(scope.sum) : NaN;
+          }}
+          var pct = expensePlPctFrom(exp, sales);
+          setExpensePlChartPct(chart, pct.fixed, pct.variable);
+        }}
+
+        fillYear(ids[0], y, m ? Number(m.ytdA) : NaN);
+        fillYear(ids[1], y - 1, NaN);
+        fillYear(ids[2], y - 2, NaN);
+        fillYear(ids[3], y - 3, NaN);
       }}
 
       function refreshInsightTwDiffsFromStore() {{
