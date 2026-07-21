@@ -15188,7 +15188,7 @@ Cumulative Target Annual Sales</p>
 
   <script>
     (function () {
-        /* KPI-INSIGHT-EXPENSE-READ */
+                /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var MEP_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
       var MEP_FALLBACK_FIXED = [
@@ -15241,6 +15241,54 @@ Cumulative Target Annual Sales</p>
           out = (bucket === 'fixed' ? MEP_FALLBACK_FIXED : MEP_FALLBACK_VARIABLE).slice();
         }
         return out;
+      }
+
+      function categoryLineIds() {
+        var lines = plCatalogLines() || [];
+        var out = {
+          food: ['exp_food_cost'],
+          drink: ['exp_drink_cost'],
+          labor: ['exp_fixed_labor', 'exp_variable_labor'],
+        };
+        if (!lines.length) return out;
+        function collect(testFn, fallback) {
+          var ids = [];
+          lines.forEach(function (line) {
+            if (!line || line.active === false || !line.lineId) return;
+            if (testFn(line)) ids.push(String(line.lineId));
+          });
+          return ids.length ? ids : fallback.slice();
+        }
+        out.food = collect(
+          function (line) { return String(line.lineId) === 'exp_food_cost'; },
+          out.food
+        );
+        out.drink = collect(
+          function (line) { return String(line.lineId) === 'exp_drink_cost'; },
+          out.drink
+        );
+        out.labor = collect(
+          function (line) {
+            var id = String(line.lineId);
+            return id === 'exp_fixed_labor' || id === 'exp_variable_labor';
+          },
+          out.labor
+        );
+        return out;
+      }
+
+      function sumBucketAtIso(dailyExpenses, rowIds, iso) {
+        var map = dailyExpenses && typeof dailyExpenses === 'object' ? dailyExpenses : {};
+        var sum = 0;
+        var hasData = false;
+        (rowIds || []).forEach(function (rowId) {
+          var byRow = map[rowId];
+          if (!byRow || !Object.prototype.hasOwnProperty.call(byRow, iso)) return;
+          hasData = true;
+          var n = Number(byRow[iso]);
+          if (Number.isFinite(n)) sum += n;
+        });
+        return { sum: Math.round(sum), hasData: hasData };
       }
 
       function sumBucketThroughMonth(dailyExpenses, rowIds, year, month, throughDay) {
@@ -15304,6 +15352,105 @@ Cumulative Target Annual Sales</p>
           hasData: fixed.hasData || variable.hasData,
           source: 'mep-daily',
         };
+      };
+
+      window.__insightReadExpenseSnapshot = function (iso) {
+        var empty = {
+          hasData: false,
+          day: { fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 },
+          month: { fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 },
+          year: { fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 },
+          source: 'mep-daily',
+        };
+        if (!iso || !/^\d4-\d2-\d2$/.test(String(iso))) return empty;
+        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {
+          return empty;
+        }
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) return empty;
+
+        var payload = KpiYearStore.loadMepYearPayload(y);
+        var dailyExpenses = (payload && payload.dailyExpenses) || {};
+        var fixedIds = lineIdsForBucket('fixed');
+        var variableIds = lineIdsForBucket('variable');
+        var cat = categoryLineIds();
+
+        var dayFixed = sumBucketAtIso(dailyExpenses, fixedIds, iso);
+        var dayVariable = sumBucketAtIso(dailyExpenses, variableIds, iso);
+        var dayFood = sumBucketAtIso(dailyExpenses, cat.food, iso);
+        var dayDrink = sumBucketAtIso(dailyExpenses, cat.drink, iso);
+        var dayLabor = sumBucketAtIso(dailyExpenses, cat.labor, iso);
+
+        var monthFixed = sumBucketThroughMonth(dailyExpenses, fixedIds, y, month, day);
+        var monthVariable = sumBucketThroughMonth(dailyExpenses, variableIds, y, month, day);
+        var monthFood = sumBucketThroughMonth(dailyExpenses, cat.food, y, month, day);
+        var monthDrink = sumBucketThroughMonth(dailyExpenses, cat.drink, y, month, day);
+        var monthLabor = sumBucketThroughMonth(dailyExpenses, cat.labor, y, month, day);
+
+        var yearFixed = 0;
+        var yearVariable = 0;
+        var yearFood = 0;
+        var yearDrink = 0;
+        var yearLabor = 0;
+        var yearHasData = false;
+        for (var m = 1; m <= month; m++) {
+          var td = m === month ? day : 31;
+          var yf = sumBucketThroughMonth(dailyExpenses, fixedIds, y, m, td);
+          var yv = sumBucketThroughMonth(dailyExpenses, variableIds, y, m, td);
+          var yfood = sumBucketThroughMonth(dailyExpenses, cat.food, y, m, td);
+          var ydrink = sumBucketThroughMonth(dailyExpenses, cat.drink, y, m, td);
+          var ylabor = sumBucketThroughMonth(dailyExpenses, cat.labor, y, m, td);
+          yearFixed += yf.sum;
+          yearVariable += yv.sum;
+          yearFood += yfood.sum;
+          yearDrink += ydrink.sum;
+          yearLabor += ylabor.sum;
+          yearHasData = yearHasData || yf.hasData || yv.hasData || yfood.hasData || ydrink.hasData || ylabor.hasData;
+        }
+
+        var dayTotal = dayFixed.sum + dayVariable.sum;
+        var monthTotal = monthFixed.sum + monthVariable.sum;
+        var yearTotal = Math.round(yearFixed + yearVariable);
+        var out = {
+          hasData:
+            dayFixed.hasData ||
+            dayVariable.hasData ||
+            monthFixed.hasData ||
+            monthVariable.hasData ||
+            yearHasData,
+          day: {
+            fixed: dayFixed.sum,
+            variable: dayVariable.sum,
+            total: dayTotal,
+            food: dayFood.sum,
+            drink: dayDrink.sum,
+            misc: Math.max(0, dayVariable.sum - dayFood.sum - dayDrink.sum),
+            labor: dayLabor.sum,
+          },
+          month: {
+            fixed: monthFixed.sum,
+            variable: monthVariable.sum,
+            total: monthTotal,
+            food: monthFood.sum,
+            drink: monthDrink.sum,
+            misc: Math.max(0, monthVariable.sum - monthFood.sum - monthDrink.sum),
+            labor: monthLabor.sum,
+          },
+          year: {
+            fixed: Math.round(yearFixed),
+            variable: Math.round(yearVariable),
+            total: yearTotal,
+            food: Math.round(yearFood),
+            drink: Math.round(yearDrink),
+            misc: Math.max(0, Math.round(yearVariable - yearFood - yearDrink)),
+            labor: Math.round(yearLabor),
+          },
+          source: 'mep-daily',
+        };
+        return out;
       };
     })();
     /* END KPI-INSIGHT-EXPENSE-READ */
@@ -15847,6 +15994,20 @@ Cumulative Target Annual Sales</p>
         return String(Math.round(Number(n)));
       }
 
+      function fmtInsightPctFrom(base, part) {
+        var b = Number(base);
+        var p = Number(part);
+        if (!Number.isFinite(b) || b <= 0 || !Number.isFinite(p)) return DASH;
+        return Math.round((p / b) * 100) + '%';
+      }
+
+      function fmtInsightProfitMarginPct(sales, profit) {
+        var s = Number(sales);
+        var p = Number(profit);
+        if (!Number.isFinite(s) || s <= 0 || !Number.isFinite(p)) return DASH;
+        return Math.round((p / s) * 100) + '%';
+      }
+
       function patchSummaryMonthlyKpiBlock(block, mtdA) {
         var rows = block.querySelectorAll('.insight-monthly-kpi__row');
         var salesEl = rows[0] && rows[0].querySelector('.insight-monthly-kpi__value');
@@ -15887,13 +16048,47 @@ Cumulative Target Annual Sales</p>
         var section = root.querySelector('#insight-jump-summary-monthly');
         if (!section) return;
         var kpi = section.querySelector('.insight-monthly-kpi');
+        var cost = section.querySelector('.insight-monthly-cost');
         var progress = section.querySelector('.insight-monthly-progress');
+        var expenseSnap = null;
+        if (window.__INSIGHT_SELECTED_ISO && typeof window.__insightReadExpenseSnapshot === 'function') {
+          expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
+        }
+
+        function patchMonthlyCostBlock(block, sales, scope) {
+          var rows = block.querySelectorAll('.insight-monthly-cost__row');
+          function setRowValue(rowIdx, valueText, splitPctText) {
+            var row = rows[rowIdx];
+            if (!row) return;
+            var vals = row.querySelectorAll('.insight-monthly-cost__value');
+            if (!vals || !vals.length) return;
+            vals[0].textContent = valueText;
+            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+          }
+          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {
+            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+            return;
+          }
+          var s = Number(sales);
+          setRowValue(0, fmtInsightMoney(scope.total));
+          setRowValue(1, fmtInsightMoney(scope.fixed));
+          setRowValue(2, fmtInsightMoney(scope.variable));
+          setRowValue(3, fmtInsightPctFrom(s, scope.total));
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
+        }
+
         if (!m) {
           if (kpi) patchSummaryMonthlyKpiBlock(kpi, NaN);
+          if (cost) patchMonthlyCostBlock(cost, NaN, null);
           if (progress) patchSummaryMonthlyProgressBlock(progress, null);
           return;
         }
         if (kpi) patchSummaryMonthlyKpiBlock(kpi, m.mtdA);
+        if (cost) patchMonthlyCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null);
         if (progress) patchSummaryMonthlyProgressBlock(progress, m);
       }
 
@@ -15993,15 +16188,49 @@ Cumulative Target Annual Sales</p>
         var section = root.querySelector('#insight-jump-summary-annual');
         if (!section) return;
         var kpi = section.querySelector('.insight-annual-kpi');
+        var cost = section.querySelector('.insight-annual-cost');
         var progress = section.querySelector('.insight-annual-progress');
         var revision = section.querySelector('.insight-annual-target-revision');
+        var expenseSnap = null;
+        if (window.__INSIGHT_SELECTED_ISO && typeof window.__insightReadExpenseSnapshot === 'function') {
+          expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
+        }
+
+        function patchAnnualCostBlock(block, sales, scope) {
+          var rows = block.querySelectorAll('.insight-annual-cost__row');
+          function setRowValue(rowIdx, valueText, splitPctText) {
+            var row = rows[rowIdx];
+            if (!row) return;
+            var vals = row.querySelectorAll('.insight-annual-cost__value');
+            if (!vals || !vals.length) return;
+            vals[0].textContent = valueText;
+            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+          }
+          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {
+            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+            return;
+          }
+          var s = Number(sales);
+          setRowValue(0, fmtInsightMoney(scope.total));
+          setRowValue(1, fmtInsightMoney(scope.fixed));
+          setRowValue(2, fmtInsightMoney(scope.variable));
+          setRowValue(3, fmtInsightPctFrom(s, scope.total));
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
+        }
+
         if (!m) {
           if (kpi) patchSummaryAnnualKpiBlock(kpi, NaN);
+          if (cost) patchAnnualCostBlock(cost, NaN, null);
           if (progress) patchSummaryAnnualProgressBlock(progress, null);
           if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
           return;
         }
         if (kpi) patchSummaryAnnualKpiBlock(kpi, m.ytdA);
+        if (cost) patchAnnualCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null);
         if (progress) patchSummaryAnnualProgressBlock(progress, m);
         if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
       }
@@ -16247,6 +16476,40 @@ Cumulative Target Annual Sales</p>
             return;
           }
           patchAnnualSummaryBlock(block, m.ytdA, m.ytdT, m.hasPlan);
+        });
+
+        var expenseSnap = null;
+        if (iso && typeof window.__insightReadExpenseSnapshot === 'function') {
+          expenseSnap = window.__insightReadExpenseSnapshot(iso);
+        }
+        root.querySelectorAll('.insight-daily-expenses').forEach(function (block) {
+          var rows = block.querySelectorAll('.insight-daily-expenses__row');
+          var vEl = rows[0] && rows[0].querySelector('.insight-daily-expenses__value');
+          var fEl = rows[1] && rows[1].querySelector('.insight-daily-expenses__value');
+          var tEl = rows[2] && rows[2].querySelector('.insight-daily-expenses__value');
+          if (!expenseSnap || !expenseSnap.hasData) {
+            if (vEl) vEl.textContent = DASH;
+            if (fEl) fEl.textContent = DASH;
+            if (tEl) tEl.textContent = DASH;
+            return;
+          }
+          if (vEl) vEl.textContent = fmtInsightMoney(expenseSnap.day.variable);
+          if (fEl) fEl.textContent = fmtInsightMoney(expenseSnap.day.fixed);
+          if (tEl) tEl.textContent = fmtInsightMoney(expenseSnap.day.total);
+        });
+        root.querySelectorAll('.insight-daily-profit').forEach(function (block) {
+          var rows = block.querySelectorAll('.insight-daily-profit__row');
+          var pEl = rows[0] && rows[0].querySelector('.insight-daily-profit__value');
+          var mEl = rows[1] && rows[1].querySelector('.insight-daily-profit__value');
+          if (!m || !expenseSnap || !expenseSnap.hasData) {
+            if (pEl) pEl.textContent = DASH;
+            if (mEl) mEl.textContent = DASH;
+            return;
+          }
+          var sales = Number(m.dailySales);
+          var profit = Number(sales) - Number(expenseSnap.day.total);
+          if (pEl) pEl.textContent = fmtInsightMoney(profit);
+          if (mEl) mEl.textContent = fmtInsightProfitMarginPct(sales, profit);
         });
 
         patchSummaryMonthlyBlocks(root, m);

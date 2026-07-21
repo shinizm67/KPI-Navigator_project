@@ -622,6 +622,219 @@
       margin-top: 30px;
       box-sizing: border-box;
     }
+    /* ① 費目内訳ドリル（デフォルト閉じのアコーディオン） */
+    .pl-compare-area-breakdown {
+      margin-top: 16px;
+      box-sizing: border-box;
+    }
+    .pl-compare-bd {
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      border-radius: 4px;
+    }
+    .pl-compare-bd__toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #58e1f3;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+    }
+    .pl-compare-bd__toggle:hover,
+    .pl-compare-bd__toggle:focus-visible {
+      background: rgba(88, 225, 243, 0.08);
+      outline: none;
+    }
+    .pl-compare-bd__chevron {
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid currentColor;
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }
+    .pl-compare-bd--open .pl-compare-bd__chevron {
+      transform: rotate(90deg);
+    }
+    .pl-compare-bd__toggle-label {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+    .pl-compare-bd__toggle-sub {
+      margin-left: auto;
+      font-size: 12px;
+      opacity: 0.75;
+      font-variant-numeric: tabular-nums;
+    }
+    .pl-compare-bd__body {
+      padding: 2px 14px 12px;
+    }
+    .pl-compare-bd__group + .pl-compare-bd__group {
+      margin-top: 10px;
+    }
+    .pl-compare-bd__group-title {
+      margin: 6px 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #8be7f5;
+      letter-spacing: 0.06em;
+    }
+    .pl-compare-bd__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .pl-compare-bd__item,
+    .pl-compare-bd__total {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: baseline;
+      padding: 4px 0;
+      font-size: 13px;
+      color: #d8f6fb;
+    }
+    .pl-compare-bd__item--jump {
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 0 -6px;
+      padding-left: 6px;
+      padding-right: 6px;
+      outline: none;
+    }
+    .pl-compare-bd__item--jump:hover,
+    .pl-compare-bd__item--jump:focus-visible {
+      background: rgba(88, 225, 243, 0.12);
+    }
+    .pl-compare-bd__amt {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      min-width: 96px;
+    }
+    .pl-compare-bd__share {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      min-width: 52px;
+      opacity: 0.8;
+    }
+    .pl-compare-bd__total {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(88, 225, 243, 0.3);
+      font-weight: 700;
+      color: #58e1f3;
+    }
+    .pl-compare-bd__none {
+      margin: 2px 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+    .office-mode .pl-compare-bd {
+      border-color: #c8ccd0;
+    }
+    .office-mode .pl-compare-bd__toggle {
+      color: #1a4a55;
+    }
+    .office-mode .pl-compare-bd__toggle:hover,
+    .office-mode .pl-compare-bd__toggle:focus-visible {
+      background: rgba(26, 74, 85, 0.08);
+    }
+    .office-mode .pl-compare-bd__group-title {
+      color: #2a6b78;
+    }
+    .office-mode .pl-compare-bd__item,
+    .office-mode .pl-compare-bd__total {
+      color: #222;
+    }
+    .office-mode .pl-compare-bd__item--jump:hover,
+    .office-mode .pl-compare-bd__item--jump:focus-visible {
+      background: rgba(26, 74, 85, 0.08);
+    }
+    .office-mode .pl-compare-bd__total {
+      border-top-color: #c8ccd0;
+      color: #1a4a55;
+    }
+    /* Basic プラン: 支出/利益ブロックをぼかし + Pro CTA（Monthly Insight と同型） */
+    .pl-compare-plan-locked {
+      position: relative;
+    }
+    .pl-compare-plan-locked > *:not(.pl-compare-plan-lock) {
+      filter: blur(4px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+    }
+    .pl-compare-plan-lock {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 5;
+      border: 1px dashed rgba(88, 225, 243, 0.6);
+      border-radius: 4px;
+      background: rgba(10, 22, 28, 0.35);
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .pl-compare-plan-lock:hover,
+    .pl-compare-plan-lock:focus-visible {
+      background: rgba(10, 22, 28, 0.55);
+      outline: none;
+    }
+    .pl-compare-plan-lock__icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+    .pl-compare-plan-lock[data-tooltip]:hover::after,
+    .pl-compare-plan-lock[data-tooltip]:focus-visible::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      padding: 8px 10px;
+      border: 1px solid rgba(88, 225, 243, 0.6);
+      border-radius: 3px;
+      background: #102932;
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      text-align: center;
+      white-space: normal;
+      width: max-content;
+      max-width: min(260px, 80vw);
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(16, 0, 82, 0.35);
+    }
+    body.office-mode .pl-compare-plan-lock {
+      border-color: rgba(40, 40, 40, 0.5);
+      background: rgba(240, 240, 240, 0.6);
+      color: #1a4a55;
+    }
+    body.office-mode .pl-compare-plan-lock[data-tooltip]:hover::after,
+    body.office-mode .pl-compare-plan-lock[data-tooltip]:focus-visible::after {
+      border-color: #2a2a2a;
+      background: #ffffff;
+      color: #1a4a55;
+    }
+    /* 費目内訳アコーディオンは高さが可変 — ロック時も CTA が載る最小高さ */
+    .pl-compare-area-breakdown.pl-compare-plan-locked {
+      min-height: 72px;
+    }
     /* データ無しでもブロックを消さず、高さを一定に保つ（下段が跳ね上がるのを防ぐ） */
     .pl-compare-hsnap {
       min-height: 142px;
@@ -2361,6 +2574,19 @@
         box-shadow: inset 0 0 0 2px #58e1f3;
       }
     }
+    .pl-line-jump--flash {
+      animation: plGraphCellFlash 1.6s ease-out;
+    }
+    body.office-mode .pl-line-jump--flash {
+      animation: plGraphCellFlashOffice 1.6s ease-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pl-line-jump--flash,
+      body.office-mode .pl-line-jump--flash {
+        animation: none;
+        box-shadow: inset 0 0 0 2px #58e1f3;
+      }
+    }
     .pl-graph-month {
       display: flex;
       flex-direction: column;
@@ -2799,6 +3025,12 @@
       font-size: 15px;
       font-weight: 700;
     }
+    /* Profit label: same ~3% bump as amounts (secondary to number emphasis) */
+    .pl-table--v1 th.pl-h-label--profit .pl-h-label__text,
+    .pl-table--v1 .pl-h-label--profit .pl-h-label__text {
+      font-size: calc(15px * 1.03) !important;
+      font-weight: 700 !important;
+    }
     .pl-table--v1 .pl-h-label__text--editable {
       cursor: text;
       border-bottom: 1px dashed transparent;
@@ -3096,6 +3328,56 @@
     .pl-table--v1 .pl-data-row--total .pl-amt-cell__text {
       font-size: 15px;
       font-weight: 700;
+    }
+    /* Profit amounts: ~3% larger than Total Sales (15px), bold — primary emphasis */
+    .pl-table--v1 tr.pl-data-row--profit td.pl-month-cell--profit .pl-month-cell__text,
+    .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text {
+      font-size: calc(15px * 1.03) !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.01em;
+    }
+    /* Profit negative severity (loss vs sales). Sci-Fi: amber→red. Office: orange ramp. */
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--ok {
+      color: #58e1f3 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-90 {
+      color: #f9a825 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-80 {
+      color: #ef6c00 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-70 {
+      color: #e65100 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-60 {
+      color: #e53935 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-50 {
+      color: #c62828 !important;
+    }
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-below {
+      color: #ff1744 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--ok {
+      color: #111 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-90 {
+      color: #fb8c00 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-80 {
+      color: #f57c00 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-70 {
+      color: #ef6c00 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-60 {
+      color: #e65100 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-50 {
+      color: #d84315 !important;
+    }
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-below {
+      color: #bf360c !important;
     }
     .pl-table--v1 .pl-amt-cell--income-store .pl-amt-cell__text,
     .pl-table--v1 .pl-amt-cell--income-stream .pl-amt-cell__text,
@@ -3502,6 +3784,96 @@
     body.office-mode .pl-back { color: #0a5; }
     body.office-mode .pl-negative { color: #c00 !important; }
 
+    /* PL-SALES-INPUT-PATH-INDICATOR-CSS */
+    .kpi-daily-input-path--pl-readonly {
+      box-sizing: border-box;
+      color: #0db13a;
+      font-family: 'Orbitron', sans-serif;
+      user-select: none;
+      min-width: 172px;
+      margin-left: 14px;
+      flex-shrink: 0;
+    }
+    .kpi-daily-input-path--pl-readonly[hidden] {
+      display: none !important;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__title {
+      margin: 0 0 5px;
+      text-align: center;
+      color: #0db13a;
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__row {
+      display: grid;
+      grid-template-columns: auto 52px auto;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__side {
+      font-size: 10px;
+      line-height: 1.1;
+      color: #0db13a;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__side.is-active {
+      opacity: 1;
+      font-weight: 600;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__side.is-inactive {
+      opacity: 0.34;
+      font-weight: 500;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__switch--readonly {
+      position: relative;
+      display: block;
+      width: 52px;
+      height: 17px;
+      border: 1.5px solid #0db13a;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.2);
+      pointer-events: none;
+      cursor: default;
+    }
+    .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      background: #0db13a;
+      box-shadow: 0 0 8px rgba(13, 177, 58, 0.35);
+      transition: transform 0.2s ease;
+    }
+    .kpi-daily-input-path--pl-readonly.is-mep .kpi-daily-input-path__knob {
+      transform: translateX(31px);
+    }
+    body.office-mode .kpi-daily-input-path--pl-readonly {
+      color: #4a4a4a;
+    }
+    body.office-mode .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__title,
+    body.office-mode .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__side.is-active {
+      color: #4a4a4a;
+    }
+    body.office-mode .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__side.is-inactive {
+      color: #7a7a7a;
+      opacity: 0.55;
+    }
+    body.office-mode .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__switch--readonly {
+      border-color: #4a4a4a;
+      background: #f2f2f2;
+    }
+    body.office-mode .kpi-daily-input-path--pl-readonly .kpi-daily-input-path__knob {
+      background: #5a5a5a;
+      box-shadow: none;
+    }
+    /* /PL-SALES-INPUT-PATH-INDICATOR-CSS */
+
     :root {
       --sdm-panel-bg: #000000;
       --sdm-cyan: #58e1f3;
@@ -3720,6 +4092,24 @@
             <div class="pl-toolbar__left">
               <label class="pl-year-label" for="pl-year-select">年度</label>
               <select id="pl-year-select" class="pl-year-select" aria-label="表示する会計年度を選択"></select>
+              <div
+                class="kpi-daily-input-path kpi-daily-input-path--pl-readonly"
+                id="pl-sales-input-path"
+                data-kpi-sales-input-path-readonly
+                hidden
+                aria-label="日次売上の入力経路（表示のみ）"
+                data-tooltip="日次売上の入力経路（表示のみ）。切替は MEP または Sales Data で行います。"
+                title="日次売上の入力経路（表示のみ）。切替は MEP または Sales Data で行います。"
+              >
+                <p class="kpi-daily-input-path__title">編集</p>
+                <div class="kpi-daily-input-path__row">
+                  <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
+                  <span class="kpi-daily-input-path__switch kpi-daily-input-path__switch--readonly" aria-hidden="true">
+                    <span class="kpi-daily-input-path__knob"></span>
+                  </span>
+                  <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>
+                </div>
+              </div>
               <a class="pl-toolbar__back" id="pl-back-edit" href="../../monthly/edit/index.html" hidden data-pl-nav="1" aria-label="月次編集ページへ戻る">← 月次編集へ</a>
               <button type="button" class="pl-toolbar__btn" id="pl-line-manage-open"
                 aria-label="非表示の支出科目">科目管理</button>
@@ -3805,6 +4195,7 @@
                     <tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="store_sales"><td class="pl-v-major" rowspan="4" data-pl-section="income"><span class="pl-v-major__text">収入</span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="store_sales" data-label-scope="income" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">店舗売上</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_a"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_a" data-label-scope="income" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">売上A</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_b"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_b" data-label-scope="income" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">売上B</span></span></th></tr><tr class="pl-data-row pl-data-row--income pl-data-row--total" data-pl-section="income" data-row="sales_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">売上合計</span></th></tr>
                     <tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_fixed"><td class="pl-v-major pl-v-major--expenses" rowspan="3" data-pl-section="expenses"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">総</span><span class="pl-v-major__line">支出</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_fixed" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">固定費</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_expected"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_expected" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">変動費</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-pl-section="expenses" data-row="expenses_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">総支出</span></th></tr>
                     <tr class="pl-data-row pl-data-row--ref-budget" data-pl-section="ref-budget" data-row="var_ref_budget"><th scope="row" class="pl-h-label pl-h-label--ref-budget" colspan="2" title="目標総費率から固定費率を引いた、変動費の目安（断定の適正値ではありません）"><span class="pl-h-label__text">変動費の参考枠</span></th></tr>
+                    <tr class="pl-data-row pl-data-row--profit" data-pl-section="profit"><th class="pl-h-label pl-h-label--total pl-h-label--profit" scope="row" colspan="2" id="pl-row-profit"><span class="pl-h-label__text">利益</span></th></tr>
                   </tbody>
                 </table>
               </div>
@@ -3813,8 +4204,9 @@
                   <colgroup><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"></colgroup>
                   <tbody id="pl-table-body">
                     <tr class="pl-data-row pl-data-row--income" data-row="store_sales" data-pl-section="income"><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="0" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="1" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="2" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="3" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="4" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="5" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="6" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="7" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="8" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="9" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="10" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store" data-row="store_sales" data-month="11" data-field="amount" data-pl-income-role="store"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store" data-row="store_sales" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-store pl-amt-cell--year-total" data-row="store_sales" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-store pl-ratio-cell--year-total" data-row="store_sales" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--income" data-row="sales_a" data-pl-section="income"><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="0" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="1" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="2" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="3" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="4" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="5" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="6" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="7" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="8" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="9" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="10" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_a" data-month="11" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_a" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream pl-amt-cell--year-total" data-row="sales_a" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream pl-ratio-cell--year-total" data-row="sales_a" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--income" data-row="sales_b" data-pl-section="income"><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="0" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="1" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="2" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="3" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="4" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="5" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="6" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="7" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="8" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="9" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="10" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream" data-row="sales_b" data-month="11" data-field="amount" data-pl-income-role="stream"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream" data-row="sales_b" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-stream pl-amt-cell--year-total" data-row="sales_b" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-stream pl-ratio-cell--year-total" data-row="sales_b" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--income pl-data-row--total" data-row="sales_total" data-pl-section="income"><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="0" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="1" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="2" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="3" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="4" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="5" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="6" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="7" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="8" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="9" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="10" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total" data-row="sales_total" data-month="11" data-field="amount" data-pl-income-role="total"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total" data-row="sales_total" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--income-total pl-amt-cell--year-total" data-row="sales_total" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--income-total pl-ratio-cell--year-total" data-row="sales_total" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr>
-                    <tr class="pl-data-row pl-data-row--expenses" data-row="expense_fixed" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expense_fixed" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expense_fixed" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expense_fixed" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--expenses" data-row="expense_expected" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expense_expected" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expense_expected" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expense_expected" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-row="expenses_total" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expenses_total" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥123,456</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expenses_total" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expenses_total" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr>
+                    <tr class="pl-data-row pl-data-row--expenses" data-row="expense_fixed" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expense_fixed" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_fixed" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_fixed" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expense_fixed" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expense_fixed" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--expenses" data-row="expense_expected" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expense_expected" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expense_expected" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expense_expected" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expense_expected" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expense_expected" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-row="expenses_total" data-pl-section="expenses"><td class="pl-amt-cell" data-row="expenses_total" data-month="0" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="1" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="2" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="3" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="4" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="5" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="6" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="7" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="8" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="9" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="10" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell" data-row="expenses_total" data-month="11" data-field="amount"><span class="pl-amt-cell__text">¥0</span></td><td class="pl-ratio-cell" data-row="expenses_total" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--year-total" data-row="expenses_total" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--year-total" data-row="expenses_total" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr>
                     <tr class="pl-data-row pl-data-row--ref-budget" data-row="var_ref_budget" data-pl-section="ref-budget"><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="0" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="1" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="2" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="3" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="4" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="5" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="6" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="7" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="8" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="9" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="10" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget" data-row="var_ref_budget" data-month="11" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget" data-row="var_ref_budget" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td><td class="pl-amt-cell pl-amt-cell--ref-budget pl-amt-cell--year-total" data-row="var_ref_budget" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--ref-budget pl-ratio-cell--year-total" data-row="var_ref_budget" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text">—</span></td></tr>
+                    <tr class="pl-data-row pl-data-row--profit" data-row="profit" data-pl-section="profit"><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="0"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="1"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="2"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="3"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="4"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="5"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="6"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="7"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="8"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="9"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="10"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="11"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit pl-month-cell--year-total" colspan="2" data-row="profit" data-month="year"><span class="pl-month-cell__text">—</span></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -3834,9 +4226,6 @@
                     <tbody id="pl-analyze-label-collapsible" class="pl-analyze-collapsible">
                       <tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="food_cost_ratio" data-row="analyze_food_sales"><td class="pl-v-major pl-v-major--analyze pl-v-major--r4" rowspan="4" data-pl-section="analyze" data-pl-group="food_cost_ratio"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">食材</span><span class="pl-v-major__line">原価率</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_food_sales" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">フード売上</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="food_cost_ratio" data-row="analyze_food_cost"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_food_cost" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">フード仕入れ額</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="food_cost_ratio" data-row="analyze_drink_sales"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_drink_sales" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">ドリンク売上</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="food_cost_ratio" data-row="analyze_drink_cost"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_drink_cost" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">ドリンク仕入れ額</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="labor_share" data-row="analyze_labor_employee"><td class="pl-v-major pl-v-major--analyze pl-v-major--r3" rowspan="3" data-pl-section="analyze" data-pl-group="labor_share"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">労働</span><span class="pl-v-major__line">分配率</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_labor_employee" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">社員人件費</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="labor_share" data-row="analyze_labor_pt"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_labor_pt" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">アルバイト人件費</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone pl-data-row--total" data-pl-section="analyze" data-pl-group="labor_share" data-row="analyze_labor_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">合計</span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="fl_ratio" data-row="analyze_monthly_food"><td class="pl-v-major pl-v-major--analyze pl-v-major--r3" rowspan="3" data-pl-section="analyze" data-pl-group="fl_ratio"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">FL</span><span class="pl-v-major__line">率</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_monthly_food" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">月次食材費</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-pl-section="analyze" data-pl-group="fl_ratio" data-row="analyze_monthly_labor"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="analyze_monthly_labor" data-label-scope="analyze" tabindex="0" role="button" aria-label="ラベルを編集（ダブルクリックまたは F2）">月次人件費</span></span></th></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone pl-data-row--total" data-pl-section="analyze" data-pl-group="fl_ratio" data-row="analyze_fl_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">合計</span></th></tr>
                     </tbody>
-                    <tbody id="pl-table-label-profit-body">
-                      <tr class="pl-data-row pl-data-row--profit" data-pl-section="profit"><th class="pl-h-label pl-h-label--total pl-h-label--profit" scope="row" colspan="2" id="pl-row-profit"><span class="pl-h-label__text">利益</span></th></tr>
-                    </tbody>
                   </table>
                 </div>
                 <div class="pl-data-pane pl-data-pane--analyze" id="pl-data-pane-analyze">
@@ -3845,9 +4234,6 @@
                     <colgroup><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"><col class="pl-col-amt"><col class="pl-col-ratio"></colgroup>
                     <tbody id="pl-analyze-data-collapsible" class="pl-analyze-collapsible">
                       <tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_food_sales" data-pl-section="analyze" data-pl-group="food_cost_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_sales" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_sales" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_food_sales" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_food_sales" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_food_cost" data-pl-section="analyze" data-pl-group="food_cost_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_food_cost" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_food_cost" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_food_cost" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_food_cost" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_drink_sales" data-pl-section="analyze" data-pl-group="food_cost_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_sales" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_sales" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_drink_sales" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_drink_sales" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_drink_cost" data-pl-section="analyze" data-pl-group="food_cost_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_drink_cost" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_drink_cost" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_drink_cost" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_drink_cost" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_labor_employee" data-pl-section="analyze" data-pl-group="labor_share"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_employee" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_employee" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_labor_employee" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_labor_employee" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_labor_pt" data-pl-section="analyze" data-pl-group="labor_share"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_pt" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_pt" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_labor_pt" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_labor_pt" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone pl-data-row--total" data-row="analyze_labor_total" data-pl-section="analyze" data-pl-group="labor_share"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_labor_total" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_labor_total" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_labor_total" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_labor_total" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_monthly_food" data-pl-section="analyze" data-pl-group="fl_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_food" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_food" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_monthly_food" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_monthly_food" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone" data-row="analyze_monthly_labor" data-pl-section="analyze" data-pl-group="fl_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_monthly_labor" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_monthly_labor" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_monthly_labor" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_monthly_labor" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr><tr class="pl-data-row pl-data-row--analyze pl-analyze-zone pl-data-row--total" data-row="analyze_fl_total" data-pl-section="analyze" data-pl-group="fl_ratio"><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="0" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="0" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="1" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="1" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="2" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="2" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="3" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="3" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="4" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="4" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="5" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="5" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="6" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="6" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="7" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="7" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="8" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="8" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="9" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="9" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="10" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="10" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze" data-row="analyze_fl_total" data-month="11" data-field="amount"><span class="pl-amt-cell__text"></span></td><td class="pl-ratio-cell pl-ratio-cell--analyze" data-row="analyze_fl_total" data-month="11" data-field="ratio"><span class="pl-ratio-cell__text"></span></td><td class="pl-amt-cell pl-amt-cell--analyze pl-amt-cell--year-total" data-row="analyze_fl_total" data-month="year" data-field="amount"><span class="pl-amt-cell__text">—</span></td><td class="pl-ratio-cell pl-ratio-cell--analyze pl-ratio-cell--year-total" data-row="analyze_fl_total" data-month="year" data-field="ratio"><span class="pl-ratio-cell__text"></span></td></tr>
-                    </tbody>
-                    <tbody id="pl-table-profit-body">
-                      <tr class="pl-data-row pl-data-row--profit" data-row="profit" data-pl-section="profit"><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="0"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="1"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="2"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="3"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="4"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="5"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="6"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="7"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="8"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="9"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="10"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit" colspan="2" data-row="profit" data-month="11"><span class="pl-month-cell__text"></span></td><td class="pl-month-cell pl-month-cell--profit pl-month-cell--year-total" colspan="2" data-row="profit" data-month="year"><span class="pl-month-cell__text">—</span></td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -4093,18 +4479,21 @@
           <section class="pl-compare-area" id="pl-compare-area-1">
             <h3 class="pl-compare-area-title">Area 1. 当日の FL スナップショット</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-1-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-1-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-1-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-1-daily"></div>
           </section>
           <section class="pl-compare-area" id="pl-compare-area-2">
             <h3 class="pl-compare-area-title">Area 2. 前年同月の FL スナップショット</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-2-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-2-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-2-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-2-daily"></div>
           </section>
           <section class="pl-compare-area" id="pl-compare-area-3">
             <h3 class="pl-compare-area-title">Area 3. 年初来（YTD）の FL スナップショット</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-3-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-3-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-3-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-3-daily"></div>
           </section>
@@ -4357,6 +4746,7 @@
           seam.style.height = zoomRoot.offsetHeight + 'px';
         }
       }
+      window.__plSyncSplitLayout = syncPlSplitLayout;
       syncPlSplitLayout();
       window.addEventListener('resize', syncPlSplitLayout);
       if (document.fonts && document.fonts.ready) {
@@ -4828,7 +5218,7 @@
       var manageModal = document.getElementById('pl-line-manage-modal');
       var manageList = document.getElementById('pl-line-manage-list');
       var manageOpen = document.getElementById('pl-line-manage-open');
-      var CATALOG_SCHEMA_VERSION = 7;
+      var CATALOG_SCHEMA_VERSION = 8;
       var pendingInputSource = null;
       var pendingLabelEdit = null;
       var pendingHideLineId = null;
@@ -6313,7 +6703,7 @@
     (function () {
       var isJa = true;
       var MONTHS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-      var DUMMY_MONTHS = [{"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 23456, "expenseRatio": 1.33, "fixedRatio": 0.46, "expectedRatio": 0.87}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}, {"sales": 123456, "expenseRatio": 0.7, "fixedRatio": 0.25, "expectedRatio": 0.35}];
+      var DUMMY_MONTHS = [{"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}, {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0}];
       var BAR_H = 533;
       var LABELS = {
         band: "グラフ",
@@ -6337,7 +6727,7 @@
         return Math.round(Number(n) || 0) + '%';
       }
 
-      function calcMetrics(raw) {
+      function calcMetrics(raw, yearRef) {
         var sales = Number(raw.sales) || 0;
         var expenses =
           raw.expenses != null
@@ -6349,26 +6739,58 @@
           raw.expected != null
             ? Number(raw.expected)
             : sales * (Number(raw.expectedRatio) || 0);
-        if (sales <= 0) sales = 1;
-        if (expenses <= 0) expenses = 1;
-        var deficit = expenses > sales;
-        var expensePct = (expenses / sales) * 100;
-        var fixedPct = (fixed / sales) * 100;
-        var expectedPct = (expected / sales) * 100;
-        /* 3 本バー: 収入と支出の大きい方を 100% として全バーを底揃えでスケール。
-           高さは % で保持し、CSS 変数 --pl-graph-bar-h（画面高追従）に対して伸縮させる。 */
-        var ref = Math.max(sales, expenses);
+        /* Real-data empty month: keep bars at 0 (do not invent sales=1). */
+        if (sales <= 0 && expenses <= 0 && fixed <= 0 && expected <= 0) {
+          return {
+            deficit: false,
+            sales: 0,
+            expenses: 0,
+            fixed: 0,
+            expected: 0,
+            expensePct: 0,
+            fixedPct: 0,
+            expectedPct: 0,
+            incomeH: 0,
+            expenseH: 0,
+            fixedH: 0,
+            expectedH: 0,
+          };
+        }
+        var salesDisp = sales;
+        var expensesDisp = expenses;
+        var fixedDisp = fixed;
+        var expectedDisp = expected;
+        var deficit = expensesDisp > salesDisp;
+        var expensePct = salesDisp > 0 ? (expensesDisp / salesDisp) * 100 : 0;
+        var fixedPct = salesDisp > 0 ? (fixedDisp / salesDisp) * 100 : 0;
+        var expectedPct = salesDisp > 0 ? (expectedDisp / salesDisp) * 100 : 0;
+        /* Bar heights: year peak (best month max of sales/expenses) = 100%.
+           Fallback: this cell's own max when yearRef is missing. */
+        var localPeak = Math.max(salesDisp, expensesDisp, fixedDisp, expectedDisp);
+        var ref = Number(yearRef);
+        if (!Number.isFinite(ref) || ref <= 0) ref = localPeak;
         if (ref <= 0) ref = 1;
-        var incomeH = (sales / ref) * 100;
-        var expenseH = (expenses / ref) * 100;
-        var fixedH = (fixed / ref) * 100;
-        var expectedH = Math.max(0, expenseH - fixedH);
+        var incomeH = salesDisp > 0 ? (salesDisp / ref) * 100 : 0;
+        var expenseH = expensesDisp > 0 ? (expensesDisp / ref) * 100 : 0;
+        var fixedH = fixedDisp > 0 ? (fixedDisp / ref) * 100 : 0;
+        var expectedH = expectedDisp > 0 ? (expectedDisp / ref) * 100 : 0;
+        /* Stacked fixed+expected should match expense bar when both present. */
+        if (expensesDisp > 0 && fixedDisp + expectedDisp > 0) {
+          var stack = fixedH + expectedH;
+          if (stack > 0 && Math.abs(stack - expenseH) > 0.01) {
+            var k = expenseH / stack;
+            fixedH *= k;
+            expectedH *= k;
+          }
+        } else {
+          expectedH = Math.max(0, expenseH - fixedH);
+        }
         return {
           deficit: deficit,
-          sales: sales,
-          expenses: expenses,
-          fixed: fixed,
-          expected: expected,
+          sales: salesDisp,
+          expenses: expensesDisp,
+          fixed: fixedDisp,
+          expected: expectedDisp,
           expensePct: expensePct,
           fixedPct: fixedPct,
           expectedPct: expectedPct,
@@ -6377,6 +6799,36 @@
           fixedH: fixedH,
           expectedH: expectedH,
         };
+      }
+
+      function monthPeak(raw) {
+        var sales = Number(raw.sales) || 0;
+        var expenses =
+          raw.expenses != null
+            ? Number(raw.expenses)
+            : sales * (Number(raw.expenseRatio) || 0);
+        var fixed =
+          raw.fixed != null ? Number(raw.fixed) : sales * (Number(raw.fixedRatio) || 0);
+        var expected =
+          raw.expected != null
+            ? Number(raw.expected)
+            : sales * (Number(raw.expectedRatio) || 0);
+        return Math.max(
+          Number(sales) || 0,
+          Number(expenses) || 0,
+          Number(fixed) || 0,
+          Number(expected) || 0
+        );
+      }
+
+      function yearPeakFromData(data, useDummy) {
+        var peak = 0;
+        for (var i = 0; i < 12; i++) {
+          var raw = data[i] || (useDummy ? DUMMY_MONTHS[i] : {}) || {};
+          var p = monthPeak(raw);
+          if (p > peak) peak = p;
+        }
+        return peak;
       }
 
       function legendBlock(cls, label, amount, percent, style) {
@@ -6482,8 +6934,8 @@
         );
       }
 
-      function renderMonthCell(mi, raw) {
-        var m = calcMetrics(raw);
+      function renderMonthCell(mi, raw, yearRef) {
+        var m = calcMetrics(raw, yearRef);
         var monthName = MONTHS[mi] || String(mi + 1);
         var openLabel = isJa
           ? monthName + 'の Insight を開く'
@@ -6501,16 +6953,17 @@
         );
       }
 
-      function renderYearCell(data) {
+      function renderYearCell(data, useDummy) {
         var sSales = 0, sExp = 0, sFixed = 0, sExpected = 0;
         for (var i = 0; i < 12; i++) {
-          var raw = data[i] || DUMMY_MONTHS[i] || {};
-          var mm = calcMetrics(raw);
+          var raw = data[i] || (useDummy ? DUMMY_MONTHS[i] : {}) || {};
+          var mm = calcMetrics(raw, null);
           sSales += mm.sales;
           sExp += mm.expenses;
           sFixed += mm.fixed;
           sExpected += mm.expected;
         }
+        /* Year column stays self-scaled (annual totals >> monthly peak). */
         var m = calcMetrics({
           sales: sSales,
           expenses: sExp,
@@ -6525,12 +6978,18 @@
       }
 
       function renderPlGraphs(monthData) {
-        var data = monthData || DUMMY_MONTHS;
+        var useDummy = monthData == null;
+        var data = useDummy ? DUMMY_MONTHS : monthData;
+        var yearRef = yearPeakFromData(data, useDummy);
         var html = '<tr class="pl-graph-data-row" data-pl-section="graph">';
         for (var mi = 0; mi < 12; mi++) {
-          html += renderMonthCell(mi, data[mi] || DUMMY_MONTHS[mi] || {});
+          html += renderMonthCell(
+            mi,
+            data[mi] || (useDummy ? DUMMY_MONTHS[mi] : {}) || {},
+            yearRef
+          );
         }
-        html += renderYearCell(data);
+        html += renderYearCell(data, useDummy);
         html += '</tr>';
         body.innerHTML = html;
         window.dispatchEvent(new Event('pl-graph-rendered'));
@@ -6538,7 +6997,8 @@
 
       window.plGraphRender = renderPlGraphs;
       window.plGraphCalcMetrics = calcMetrics;
-      renderPlGraphs(DUMMY_MONTHS);
+      /* Initial paint: zeros until real-data client calls plGraphRender(months). */
+      renderPlGraphs(null);
     })();
 
     
@@ -6873,11 +7333,40 @@
         return { income: income, expenses: food + labor, variable: food, fixed: labor };
       }
 
+      /* ---- 費目内訳（選択月の月次合計を費目単位で。金額降順・固定/変動グループ） ---- */
+      function lineBreakdown(year, month0) {
+        var s = store();
+        var fixed = [], variable = [];
+        var fixedTotal = 0, variableTotal = 0;
+        catalog().forEach(function (line) {
+          var amt = lineMonthAmount(s, year, month0, line);
+          if (!amt) return;
+          var row = {
+            lineId: line.lineId,
+            labelJa: line.labelJa || line.lineId,
+            labelEn: line.labelEn || line.labelJa || line.lineId,
+            bucket: line.bucket,
+            inputStyle: lineStyle(line),
+            amount: amt
+          };
+          if (line.bucket === 'fixed') { fixed.push(row); fixedTotal += amt; }
+          else { variable.push(row); variableTotal += amt; }
+        });
+        var byDesc = function (a, b) { return b.amount - a.amount; };
+        fixed.sort(byDesc); variable.sort(byDesc);
+        return {
+          fixed: fixed, variable: variable,
+          fixedTotal: fixedTotal, variableTotal: variableTotal,
+          total: fixedTotal + variableTotal
+        };
+      }
+
       window.__plInsight = {
         resetCache: resetCache,
         store: store,
         monthMetrics: monthMetrics,
         dayMetrics: dayMetrics,
+        lineBreakdown: lineBreakdown,
         buildArea1: buildArea1,
         buildArea2: buildArea2,
         buildArea3: buildArea3,
@@ -6892,7 +7381,16 @@
     
     
     (function () {
-      var L = {"compare_prev_day_aria": "前日", "compare_next_day_aria": "翌日", "compare_date_pick_aria": "日付を選択", "compare_today": "本日", "compare_income": "収入", "compare_expenses": "支出", "compare_profit": "利益", "compare_area1_title": "Area 1. 当日の FL スナップショット", "compare_area2_title": "Area 2. 前年同月の FL スナップショット", "compare_area3_title": "Area 3. 年初来（YTD）の FL スナップショット", "compare_food_labor": "Food & Labor", "compare_food_slash_labor": "Food / Labor", "compare_same_weekday_of": "同曜日 ", "compare_area2_hsnap_primary": "前年同月 ", "compare_area2_hsnap_secondary": "前々年同月 ", "compare_area3_hsnap_primary": "年初来 ", "compare_area3_hsnap_secondary": "前年 年初来 ", "compare_no_data": "データなし", "compare_line_title": "前年同曜日との累積ペース比較", "compare_area2_line_title": "前年同月の累積ペース比較", "compare_area3_line_title": "年初来の累積ペース比較", "compare_this_year": "今年", "compare_last_year": "前年", "compare_best_year": "ベスト年", "compare_fixed": "固定費", "compare_expected": "変動費", "compare_daily_title": "日次パフォーマンス", "compare_area2_daily_title": "日次パフォーマンス", "compare_area3_daily_title": "月次パフォーマンス"};
+      var L = {"compare_prev_day_aria": "前日", "compare_next_day_aria": "翌日", "compare_date_pick_aria": "日付を選択", "compare_today": "本日", "compare_income": "収入", "compare_expenses": "支出", "compare_profit": "利益", "compare_area1_title": "Area 1. 当日の FL スナップショット", "compare_area2_title": "Area 2. 前年同月の FL スナップショット", "compare_area3_title": "Area 3. 年初来（YTD）の FL スナップショット", "compare_food_labor": "Food & Labor", "compare_food_slash_labor": "Food / Labor", "compare_same_weekday_of": "同曜日 ", "compare_area2_hsnap_primary": "前年同月 ", "compare_area2_hsnap_secondary": "前々年同月 ", "compare_area3_hsnap_primary": "年初来 ", "compare_area3_hsnap_secondary": "前年 年初来 ", "compare_no_data": "データなし", "compare_line_title": "前年同曜日との累積ペース比較", "compare_area2_line_title": "前年同月の累積ペース比較", "compare_area3_line_title": "年初来の累積ペース比較", "compare_this_year": "今年", "compare_last_year": "前年", "compare_best_year": "ベスト年", "compare_fixed": "固定費", "compare_expected": "変動費", "compare_daily_title": "日次パフォーマンス", "compare_area2_daily_title": "日次パフォーマンス", "compare_area3_daily_title": "月次パフォーマンス", "compare_breakdown_toggle": "費目内訳", "compare_breakdown_fixed": "固定費", "compare_breakdown_variable": "変動費", "compare_breakdown_total": "総支出", "compare_breakdown_none": "この月の費目データはありません", "compare_breakdown_jump_daily": "Monthly Edit でこの費目を開く", "compare_breakdown_jump_monthly": "PL 表でこの費目を開く", "compare_plan_lock_cta": "この項目は Pro プラン限定です。クリックしてプランを変更。"};
+      var MONTHLY_EDIT = "../../monthly/edit/index.html";
+      var CHANGE_PLAN_HREF = "../../../setting/change_plan.html";
+      var TIER_KEY = 'kpiNavigator.subscriptionTier';
+      var PL_COMPARE_LOCK_SELECTORS = [
+        '.pl-compare-area-fl',
+        '.pl-compare-area-breakdown',
+        '.pl-compare-area-line',
+        '.pl-compare-area-daily',
+      ];
       var root = document.getElementById('pl-graph-overlay');
       var btnOpen = document.getElementById('pl-graph-open');
       var btnClose = document.getElementById('pl-graph-overlay-close');
@@ -6968,44 +7466,21 @@
       }
 
       function fetchCurrentFlSnapshot(iso) {
-        /* 当月累積: PL 連携前のギミック。上段は常に描画 */
-        var d = new Date(String(iso || '').trim() + 'T00:00:00');
-        var bump = isFinite(d.getTime()) ? d.getDate() % 97 : 0;
-        var income = 123456 + bump;
-        var expenses = 3456 + Math.round(bump * 0.35);
-        var variable = 2456 + Math.round(bump * 0.22);
-        var fixed = Math.max(0, expenses - variable);
-        if (fixed < 900) {
-          fixed = 1234 + Math.round(bump * 0.08);
-          variable = Math.max(0, expenses - fixed);
-        }
+        /* 当月累積: 未連携時は 0（検証用プレースホルダを置かない） */
+        void iso;
         return {
-          income: income,
-          expenses: expenses,
-          variable: variable,
-          fixed: fixed,
+          income: 0,
+          expenses: 0,
+          variable: 0,
+          fixed: 0,
         };
       }
 
       function fetchPreviousFlSnapshot(iso) {
-        /* 前年同曜日累積: PL 未入力時は null（現状はギミックで常時返却） */
+        /* 前年同曜日累積: PL 未連携時は null（ギミック数値は置かない） */
         var d = new Date(String(iso || '').trim() + 'T00:00:00');
         if (!isFinite(d.getTime())) return null;
-        var bump = d.getDate() % 89;
-        var income = 123432 + bump;
-        var expenses = 3432 + Math.round(bump * 0.31);
-        var variable = 2421 + Math.round(bump * 0.19);
-        var fixed = Math.max(0, expenses - variable);
-        if (fixed < 900) {
-          fixed = 1456 + Math.round(bump * 0.07);
-          variable = Math.max(0, expenses - fixed);
-        }
-        return {
-          income: income,
-          expenses: expenses,
-          variable: variable,
-          fixed: fixed,
-        };
+        return null;
       }
 
       function expenseVisualWidth(incomeW, expensePct, blockIndex) {
@@ -8389,6 +8864,117 @@
           renderHsnapBlock(secondaryLabel, previous, maxIncome, 1, true);
       }
 
+      /* ① 費目内訳ドリル: 選択月の費目を固定/変動グループで金額降順表示。
+         デフォルト開き（導線を見逃さない）。開閉状態は再描画をまたいで保持。 */
+      var compareBreakdownOpen = { 1: true, 2: true, 3: true };
+      /* この IIFE には isJa が無いためローカルに言語フラグを持つ */
+      var bdIsJa = document.documentElement.lang === 'ja';
+
+      function fmtMonthLabel(year, month0) {
+        if (bdIsJa) return year + '年' + (month0 + 1) + '月';
+        var names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return names[month0] + ' ' + year;
+      }
+
+      function breakdownGroupHtml(title, rows, denom, refYear, month0) {
+        if (!rows || !rows.length) return '';
+        var items = rows.map(function (r) {
+          var label = bdIsJa ? r.labelJa : r.labelEn;
+          var share = denom > 0 ? pct1((r.amount / denom) * 100) : '—';
+          var style = r.inputStyle === 'daily' ? 'daily' : 'monthly';
+          var tip =
+            style === 'daily'
+              ? L.compare_breakdown_jump_daily
+              : L.compare_breakdown_jump_monthly;
+          return (
+            '<li class="pl-compare-bd__item pl-compare-bd__item--jump" role="button" tabindex="0" ' +
+            'data-pl-bd-line="' +
+            String(r.lineId || '') +
+            '" data-pl-bd-style="' +
+            style +
+            '" data-pl-bd-year="' +
+            refYear +
+            '" data-pl-bd-month0="' +
+            month0 +
+            '" title="' +
+            tip +
+            '" aria-label="' +
+            tip +
+            ': ' +
+            label +
+            '">' +
+            '<span class="pl-compare-bd__name">' +
+            label +
+            '</span>' +
+            '<span class="pl-compare-bd__amt">' +
+            money(r.amount) +
+            '</span>' +
+            '<span class="pl-compare-bd__share">' +
+            share +
+            '</span>' +
+            '</li>'
+          );
+        }).join('');
+        return (
+          '<div class="pl-compare-bd__group">' +
+          '<p class="pl-compare-bd__group-title">' + title + '</p>' +
+          '<ul class="pl-compare-bd__list">' + items + '</ul>' +
+          '</div>'
+        );
+      }
+
+      function renderCompareBreakdown(areaId, iso) {
+        var mount = document.getElementById('pl-compare-area-' + areaId + '-breakdown');
+        if (!mount) return;
+        iso = iso || selectedIso || resolveIso();
+        var parts = isoParts(iso);
+        if (!parts) { mount.innerHTML = ''; return; }
+        var refYear = areaId === 2 ? parts.year - 1 : parts.year;
+        var month0 = parts.month - 1;
+        var ins = window.__plInsight;
+        var bd = (ins && typeof ins.lineBreakdown === 'function')
+          ? ins.lineBreakdown(refYear, month0)
+          : null;
+        var open = !!compareBreakdownOpen[areaId];
+        var caption = fmtMonthLabel(refYear, month0);
+        var body;
+        if (!bd || !bd.total) {
+          body = '<p class="pl-compare-bd__none">' + L.compare_breakdown_none + '</p>';
+        } else {
+          body =
+            breakdownGroupHtml(
+              L.compare_breakdown_fixed,
+              bd.fixed,
+              bd.total,
+              refYear,
+              month0
+            ) +
+            breakdownGroupHtml(
+              L.compare_breakdown_variable,
+              bd.variable,
+              bd.total,
+              refYear,
+              month0
+            ) +
+            '<div class="pl-compare-bd__total">' +
+            '<span class="pl-compare-bd__name">' + L.compare_breakdown_total + '</span>' +
+            '<span class="pl-compare-bd__amt">' + money(bd.total) + '</span>' +
+            '<span class="pl-compare-bd__share">100.0%</span>' +
+            '</div>';
+        }
+        mount.innerHTML =
+          '<div class="pl-compare-bd' + (open ? ' pl-compare-bd--open' : '') + '">' +
+          '<button type="button" class="pl-compare-bd__toggle" data-pl-bd-toggle="' + areaId + '"' +
+          ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+          '<span class="pl-compare-bd__chevron" aria-hidden="true"></span>' +
+          '<span class="pl-compare-bd__toggle-label">' + L.compare_breakdown_toggle + '</span>' +
+          '<span class="pl-compare-bd__toggle-sub">' + caption + '</span>' +
+          '</button>' +
+          '<div class="pl-compare-bd__body"' + (open ? '' : ' hidden') + '>' + body + '</div>' +
+          '</div>';
+      }
+
       function renderAllCompareAreas(iso) {
         iso = iso || selectedIso || resolveIso();
         if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
@@ -8396,10 +8982,59 @@
         }
         [1, 2, 3].forEach(function (areaId) {
           renderCompareFl(areaId, iso);
+          renderCompareBreakdown(areaId, iso);
           renderCompareLine(areaId, iso);
           renderCompareDaily(areaId, iso);
         });
+        applyPlComparePlanLocks();
       }
+
+      function isBasicTier() {
+        try {
+          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
+          return String(t).trim().toLowerCase() === 'basic';
+        } catch (_e) {
+          return false;
+        }
+      }
+
+      function makePlComparePlanLock() {
+        var a = document.createElement('a');
+        a.className = 'pl-compare-plan-lock';
+        a.href = CHANGE_PLAN_HREF;
+        a.setAttribute('data-tooltip', L.compare_plan_lock_cta);
+        a.setAttribute('aria-label', L.compare_plan_lock_cta);
+        a.innerHTML =
+          '<span class="pl-compare-plan-lock__icon" aria-hidden="true">🔒</span>' +
+          '<span class="pl-compare-plan-lock__text">Pro</span>';
+        return a;
+      }
+
+      function applyPlComparePlanLocks() {
+        if (!root) return;
+        var basic = isBasicTier();
+        document.body.classList.toggle('kpi-plan-basic-pl-insight', basic);
+        PL_COMPARE_LOCK_SELECTORS.forEach(function (sel) {
+          root.querySelectorAll(sel).forEach(function (box) {
+            if (!box || !box.childElementCount) return;
+            var lock = box.querySelector('.pl-compare-plan-lock');
+            if (basic) {
+              box.classList.add('pl-compare-plan-locked');
+              if (!lock) box.appendChild(makePlComparePlanLock());
+            } else {
+              box.classList.remove('pl-compare-plan-locked');
+              if (lock) lock.remove();
+            }
+          });
+        });
+      }
+
+      window.__KPI_APPLY_PL_COMPARE_PLAN_LOCKS = applyPlComparePlanLocks;
+      applyPlComparePlanLocks();
+      window.addEventListener('storage', function (e) {
+        if (e && e.key === TIER_KEY) applyPlComparePlanLocks();
+      });
+      document.addEventListener('kpi:planChanged', applyPlComparePlanLocks);
 
       /* --- ② URLハッシュ状態保持 ＋ 前回位置の記憶 ---
          状態 = open/close ＋ Area(1/2/3) ＋ 対象日(selectedIso)。
@@ -8640,18 +9275,13 @@
       function gotoTableMonth(mi) {
         if (!Number.isFinite(mi) || mi < 0 || mi > 11) return;
         closeOverlay();
+        resetPlPageScrollToTop();
         var cell = document.querySelector(
           '[data-pl-graph-month][data-month="' + mi + '"]'
         );
         if (!cell) return;
-        try {
-          cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch (err) {
-          cell.scrollIntoView();
-        }
-        cell.classList.remove('pl-graph-cell--flash');
-        void cell.offsetWidth;
-        cell.classList.add('pl-graph-cell--flash');
+        scrollPlCellHorizontal(cell);
+        flashPlEl(cell, { skipScroll: true });
         if (typeof cell.focus === 'function') {
           try {
             cell.focus({ preventScroll: true });
@@ -8659,10 +9289,116 @@
             cell.focus();
           }
         }
+      }
+
+      function resetPlPageScrollToTop() {
+        try {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        } catch (_e) {
+          window.scrollTo(0, 0);
+        }
+        var scrollY = document.getElementById('pl-table-scroll-y');
+        if (scrollY) scrollY.scrollTop = 0;
+      }
+
+      function scrollPlCellHorizontal(cell) {
+        if (!cell) return;
+        var pane = cell.closest('.pl-data-pane');
+        if (!pane) return;
+        var left = Math.max(
+          0,
+          cell.offsetLeft - Math.max(0, (pane.clientWidth - cell.offsetWidth) / 2)
+        );
+        document
+          .querySelectorAll(
+            '#pl-data-pane-frozen, #pl-data-pane, #pl-data-pane-analyze, ' +
+              '#pl-data-pane-expense-detail, #pl-data-pane-graph'
+          )
+          .forEach(function (p) {
+            if (p) p.scrollLeft = left;
+          });
+      }
+
+      function flashPlEl(el, opts) {
+        if (!el) return;
+        opts = opts || {};
+        if (!opts.skipScroll) {
+          try {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          } catch (_e) {
+            el.scrollIntoView();
+          }
+        }
+        el.classList.remove('pl-line-jump--flash');
+        void el.offsetWidth;
+        el.classList.add('pl-line-jump--flash');
         window.setTimeout(function () {
-          cell.classList.remove('pl-graph-cell--flash');
+          el.classList.remove('pl-line-jump--flash');
         }, 1600);
       }
+
+      /* Insight 費目内訳 → 入力画面（daily=Monthly Edit / monthly=PL 明細）。 */
+      function gotoLineInput(lineId, inputStyle, year, month0) {
+        if (!lineId || isBasicTier()) return;
+        var y = Number(year);
+        var m0 = Number(month0);
+        if (!Number.isFinite(y) || !Number.isFinite(m0) || m0 < 0 || m0 > 11) return;
+        var style = inputStyle === 'daily' ? 'daily' : 'monthly';
+        if (style === 'daily') {
+          var href =
+            MONTHLY_EDIT +
+            '?year=' +
+            encodeURIComponent(String(y)) +
+            '&month=' +
+            encodeURIComponent(String(m0 + 1)) +
+            '&line=' +
+            encodeURIComponent(String(lineId));
+          var iso = selectedIso || resolveIso();
+          if (
+            iso &&
+            iso.length >= 10 &&
+            Number(iso.slice(0, 4)) === y &&
+            Number(iso.slice(5, 7)) - 1 === m0
+          ) {
+            href += '&iso=' + encodeURIComponent(iso);
+          }
+          var go = function () {
+            window.location.href = href;
+          };
+          if (typeof window.requestLeaveNavigation === 'function') {
+            window.requestLeaveNavigation().then(function (ok) {
+              if (ok) go();
+            });
+          } else {
+            go();
+          }
+          return;
+        }
+        closeOverlay();
+        resetPlPageScrollToTop();
+        var cell = document.querySelector(
+          '#pl-expense-detail-data-body [data-field="amount"][data-row="' +
+            lineId +
+            '"][data-month="' +
+            m0 +
+            '"]'
+        );
+        var row = document.querySelector(
+          '#pl-expense-detail-data-body tr[data-line-id="' + lineId + '"]'
+        );
+        var focusEl =
+          (cell && cell.querySelector('[data-pl-editable="1"]')) || cell || row;
+        scrollPlCellHorizontal(cell);
+        flashPlEl(cell || row, { skipScroll: true });
+        if (focusEl && typeof focusEl.focus === 'function') {
+          try {
+            focusEl.focus({ preventScroll: true });
+          } catch (_f) {
+            focusEl.focus();
+          }
+        }
+      }
+
       if (gotoTableBtn) {
         gotoTableBtn.addEventListener('click', function () {
           var iso = selectedIso || resolveIso();
@@ -8741,6 +9477,49 @@
           }
         });
       });
+
+      /* 費目内訳アコーディオンの開閉（開閉状態は再描画をまたいで保持） */
+      if (contentEl) {
+        contentEl.addEventListener('click', function (e) {
+          var lineEl =
+            e.target && e.target.closest
+              ? e.target.closest('[data-pl-bd-line]')
+              : null;
+          if (lineEl) {
+            e.preventDefault();
+            gotoLineInput(
+              lineEl.getAttribute('data-pl-bd-line'),
+              lineEl.getAttribute('data-pl-bd-style'),
+              lineEl.getAttribute('data-pl-bd-year'),
+              lineEl.getAttribute('data-pl-bd-month0')
+            );
+            return;
+          }
+          var t = e.target && e.target.closest
+            ? e.target.closest('[data-pl-bd-toggle]')
+            : null;
+          if (!t) return;
+          var aid = Number(t.getAttribute('data-pl-bd-toggle'));
+          if (!(aid >= 1 && aid <= 3)) return;
+          compareBreakdownOpen[aid] = !compareBreakdownOpen[aid];
+          renderCompareBreakdown(aid, selectedIso || resolveIso());
+        });
+        contentEl.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          var lineEl =
+            e.target && e.target.closest
+              ? e.target.closest('[data-pl-bd-line]')
+              : null;
+          if (!lineEl) return;
+          e.preventDefault();
+          gotoLineInput(
+            lineEl.getAttribute('data-pl-bd-line'),
+            lineEl.getAttribute('data-pl-bd-style'),
+            lineEl.getAttribute('data-pl-bd-year'),
+            lineEl.getAttribute('data-pl-bd-month0')
+          );
+        });
+      }
       if (root) {
         root.addEventListener('click', function (e) {
           var btn =
@@ -8988,6 +9767,40 @@
         }
       }
 
+      /* Persist monthly editable cells so Insight / reload match the DOM. */
+      function persistExpenseMapFromDom() {
+        var map = {};
+        try {
+          var raw = localStorage.getItem(storageKey());
+          if (raw) {
+            var prev = JSON.parse(raw);
+            if (prev && typeof prev === 'object') map = prev;
+          }
+        } catch (_e) {}
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
+          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
+          map[key] = parseMoney(cell.textContent);
+        });
+        try {
+          localStorage.setItem(storageKey(), JSON.stringify(map));
+        } catch (_e2) {}
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
+          window.__plInsight.resetCache();
+        }
+      }
+
+      var plExpenseLiveRefreshTimer = null;
+      function schedulePlExpenseLiveRefresh() {
+        if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
+        plExpenseLiveRefreshTimer = setTimeout(function () {
+          plExpenseLiveRefreshTimer = null;
+          if (typeof refreshPlRatios === 'function') refreshPlRatios();
+          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        }, 120);
+      }
+
       function bindPlEditableCells() {
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           if (cell.getAttribute('data-pl-bound') === '1') return;
@@ -8998,14 +9811,18 @@
           });
           cell.addEventListener('input', function () {
             markTouched();
+            schedulePlExpenseLiveRefresh();
           });
           cell.addEventListener('blur', function () {
             var n = parseMoney(cell.textContent);
             cell.textContent = formatMoney(n);
             maybePropagateFixedMonthly(cell, n);
+            persistExpenseMapFromDom();
+            if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
             if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+            if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
             if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+            if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
           });
         });
       }
@@ -9019,15 +9836,24 @@
           plSaved = true;
         }
         syncUndoButton();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }
 
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
 
       function plSave(showAlert) {
         var map = {};
+        try {
+          var rawSave = localStorage.getItem(storageKey());
+          if (rawSave) {
+            var prevSave = JSON.parse(rawSave);
+            if (prevSave && typeof prevSave === 'object') map = prevSave;
+          }
+        } catch (_prevErr) {}
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
           map[key] = parseMoney(cell.textContent);
@@ -9035,6 +9861,9 @@
         try {
           localStorage.setItem(storageKey(), JSON.stringify(map));
         } catch (_e) {}
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
+          window.__plInsight.resetCache();
+        }
         confirmedSnapshot = buildSnapshot();
         plSaved = true;
         undoStack = [];
@@ -9050,6 +9879,11 @@
             );
           }
         } catch (_mepErr) {}
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
         if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
       }
 
@@ -9202,9 +10036,11 @@
         if (typeof fillDailyExpenseRowsFromMep === 'function') {
           fillDailyExpenseRowsFromMep();
         }
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       });
       document.addEventListener('kpi:mepDataChanged', function (ev) {
         var evYear = ev && ev.detail && Number(ev.detail.year);
@@ -9215,18 +10051,22 @@
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
         }
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       });
       document.addEventListener('kpi:dailySalesChanged', function () {
         syncPlBusinessDays();
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
         }
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       });
 
       if (btnUndo) {
@@ -9299,7 +10139,6 @@
         appendPlExportPairs(rows, 'pl-table-label-frozen-body', 'pl-table-frozen-body');
         appendPlExportPairs(rows, 'pl-table-label-body', 'pl-table-body');
         appendPlExportPairs(rows, 'pl-analyze-label-collapsible', 'pl-analyze-data-collapsible');
-        appendPlExportPairs(rows, 'pl-table-label-profit-body', 'pl-table-profit-body');
         appendPlExportPairs(rows, 'pl-expense-detail-header-label', 'pl-expense-detail-header-data');
         appendPlExportPairs(rows, 'pl-expense-detail-label-body', 'pl-expense-detail-data-body');
         return rows
@@ -11061,6 +11900,513 @@
       window.__plRefreshIncomeBlock = refreshIncomeBlock;
 
 
+      var PL_ANALYZE_SALES_MAP = {
+        analyze_food_sales: 'food_sales',
+        analyze_drink_sales: 'drink_sales'
+      };
+      var PL_ANALYZE_COST_MAP = {
+        analyze_food_cost: 'exp_food_cost',
+        analyze_drink_cost: 'exp_drink_cost'
+      };
+      var PL_ANALYZE_LABOR_MAP = {
+        analyze_labor_employee: 'exp_fixed_labor',
+        analyze_labor_pt: 'exp_variable_labor'
+      };
+
+      function plAnalyzeEmptyMonthAgg() {
+        return {
+          totals: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          has: [
+            false, false, false, false, false, false, false, false, false, false, false, false
+          ]
+        };
+      }
+
+      function plAnalyzeSumIsoMap(map, year) {
+        var agg = plAnalyzeEmptyMonthAgg();
+        if (!map || typeof map !== 'object') return agg;
+        var yStr = String(year);
+        Object.keys(map).forEach(function (iso) {
+          if (!iso || iso.length < 7) return;
+          if (iso.slice(0, 4) !== yStr) return;
+          var mo = parseInt(iso.slice(5, 7), 10);
+          if (!(mo >= 1 && mo <= 12)) return;
+          var v = Number(map[iso]);
+          if (!Number.isFinite(v)) return;
+          agg.totals[mo - 1] += v;
+          agg.has[mo - 1] = true;
+        });
+        return agg;
+      }
+
+      function plAnalyzeReadYearStore() {
+        var gw = window.__KPI_DATA_GATEWAY;
+        if (gw && typeof gw.getJson === 'function') {
+          try {
+            return gw.getJson('kpiNavigator.kpiYearStore');
+          } catch (_e) {
+            return null;
+          }
+        }
+        try {
+          var raw = localStorage.getItem('kpiNavigator.kpiYearStore');
+          return raw ? JSON.parse(raw) : null;
+        } catch (_e2) {
+          return null;
+        }
+      }
+
+      function plAnalyzeLoadStream(year, streamId) {
+        var store = plAnalyzeReadYearStore();
+        var rec = store && store.years && (store.years[year] || store.years[String(year)]);
+        var di = rec && rec.dailyIncome && rec.dailyIncome[streamId];
+        return plAnalyzeSumIsoMap(di, year);
+      }
+
+      function plAnalyzeSetAmount(rid, mi, sum, has) {
+        var cell = document.querySelector(
+          '[data-field="amount"][data-row="' + rid + '"][data-month="' + mi + '"] .pl-amt-cell__text'
+        );
+        if (!cell) return;
+        cell.textContent = has ? formatMoney(sum) : '\u2014';
+      }
+
+      function plAnalyzeParseExpenseMonth(lineId, mi) {
+        var cell = document.querySelector(
+          '[data-field="amount"][data-row="' +
+            lineId +
+            '"][data-month="' +
+            mi +
+            '"] .pl-amt-cell__text'
+        );
+        if (!cell) return { value: 0, has: false };
+        var raw = String(cell.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!raw || raw === '\u2014' || raw === '-') return { value: 0, has: false };
+        var n =
+          typeof parseMoney === 'function'
+            ? parseMoney(raw)
+            : Number(String(raw).replace(/[^\d.-]/g, ''));
+        if (!Number.isFinite(n)) return { value: 0, has: false };
+        return { value: n, has: true };
+      }
+
+      function plAnalyzeFillSales() {
+        var food = plAnalyzeLoadStream(plYear, 'food_sales');
+        var drink = plAnalyzeLoadStream(plYear, 'drink_sales');
+        var storeTotals = null;
+        var storeHas = null;
+        if (typeof plIncomeStoreTotals !== 'undefined' && plIncomeStoreTotals) {
+          storeTotals = plIncomeStoreTotals;
+          storeHas = plIncomeStoreHas;
+        }
+        for (var mi = 0; mi < 12; mi++) {
+          plAnalyzeSetAmount(
+            'analyze_food_sales',
+            mi,
+            food.totals[mi],
+            food.has[mi]
+          );
+          var dHas = !!drink.has[mi];
+          var dVal = Number(drink.totals[mi]) || 0;
+          if (!dHas && storeTotals && (food.has[mi] || (storeHas && storeHas[mi]))) {
+            var storeVal = Number(storeTotals[mi]) || 0;
+            var foodVal = Number(food.totals[mi]) || 0;
+            dVal = Math.round(storeVal - foodVal);
+            if (dVal < 0) dVal = 0;
+            dHas = !!(storeHas && storeHas[mi]) || !!food.has[mi];
+          }
+          plAnalyzeSetAmount('analyze_drink_sales', mi, dVal, dHas);
+        }
+      }
+
+      function plAnalyzeFillCosts() {
+        Object.keys(PL_ANALYZE_COST_MAP).forEach(function (analyzeId) {
+          var lineId = PL_ANALYZE_COST_MAP[analyzeId];
+          for (var mi = 0; mi < 12; mi++) {
+            var parsed = plAnalyzeParseExpenseMonth(lineId, mi);
+            plAnalyzeSetAmount(analyzeId, mi, parsed.value, parsed.has);
+          }
+        });
+      }
+
+      /* Labor Share: 社員=月次固定人件費 / アルバイト=日次変動人件費（明細の月額） */
+      function plAnalyzeFillLabor() {
+        var laborByMonth = [];
+        for (var mi = 0; mi < 12; mi++) {
+          var emp = plAnalyzeParseExpenseMonth(PL_ANALYZE_LABOR_MAP.analyze_labor_employee, mi);
+          var pt = plAnalyzeParseExpenseMonth(PL_ANALYZE_LABOR_MAP.analyze_labor_pt, mi);
+          plAnalyzeSetAmount('analyze_labor_employee', mi, emp.value, emp.has);
+          plAnalyzeSetAmount('analyze_labor_pt', mi, pt.value, pt.has);
+          var total = (emp.has ? emp.value : 0) + (pt.has ? pt.value : 0);
+          var has = emp.has || pt.has;
+          plAnalyzeSetAmount('analyze_labor_total', mi, total, has);
+          laborByMonth.push({ value: total, has: has });
+        }
+        return laborByMonth;
+      }
+
+      /* Food & Labor Ratio: 食材(フード+ドリンク仕入) + 人件費合計 */
+      function plAnalyzeFillFlRatio(laborByMonth) {
+        var labor =
+          laborByMonth ||
+          (function () {
+            var out = [];
+            for (var i = 0; i < 12; i++) {
+              var emp = plAnalyzeParseExpenseMonth(PL_ANALYZE_LABOR_MAP.analyze_labor_employee, i);
+              var pt = plAnalyzeParseExpenseMonth(PL_ANALYZE_LABOR_MAP.analyze_labor_pt, i);
+              out.push({
+                value: (emp.has ? emp.value : 0) + (pt.has ? pt.value : 0),
+                has: emp.has || pt.has
+              });
+            }
+            return out;
+          })();
+        for (var mi = 0; mi < 12; mi++) {
+          var food = plAnalyzeParseExpenseMonth(PL_ANALYZE_COST_MAP.analyze_food_cost, mi);
+          var drink = plAnalyzeParseExpenseMonth(PL_ANALYZE_COST_MAP.analyze_drink_cost, mi);
+          var foodTotal = (food.has ? food.value : 0) + (drink.has ? drink.value : 0);
+          var foodHas = food.has || drink.has;
+          var lab = labor[mi] || { value: 0, has: false };
+          plAnalyzeSetAmount('analyze_monthly_food', mi, foodTotal, foodHas);
+          plAnalyzeSetAmount('analyze_monthly_labor', mi, lab.value, lab.has);
+          plAnalyzeSetAmount(
+            'analyze_fl_total',
+            mi,
+            foodTotal + lab.value,
+            foodHas || lab.has
+          );
+        }
+      }
+
+      function refreshAnalyzeBlock() {
+        plAnalyzeFillSales();
+        plAnalyzeFillCosts();
+        var laborByMonth = plAnalyzeFillLabor();
+        plAnalyzeFillFlRatio(laborByMonth);
+      }
+
+      window.__plRefreshAnalyzeBlock = refreshAnalyzeBlock;
+
+      /* PL-SALES-INPUT-PATH-INDICATOR */
+      (function () {
+        var STORE_KEY = 'kpiNavigator.kpiYearStore';
+        var TIER_KEY = 'kpiNavigator.subscriptionTier';
+        var wrap = document.getElementById('pl-sales-input-path');
+        if (!wrap) return;
+
+        function isJa() {
+          return (
+            String(document.documentElement.getAttribute('lang') || '')
+              .toLowerCase()
+              .indexOf('ja') === 0
+          );
+        }
+        function t(ja, en) {
+          return isJa() ? ja : en;
+        }
+        function readStore() {
+          if (window.KpiYearStore && typeof KpiYearStore.getDailySalesInputPath === 'function') {
+            return { path: KpiYearStore.getDailySalesInputPath(), pro: KpiYearStore.isProSubscription() };
+          }
+          var store = null;
+          if (window.__KPI_DATA_GATEWAY && typeof __KPI_DATA_GATEWAY.getJson === 'function') {
+            store = __KPI_DATA_GATEWAY.getJson(STORE_KEY);
+          } else {
+            try {
+              var raw = localStorage.getItem(STORE_KEY);
+              store = raw ? JSON.parse(raw) : null;
+            } catch (_e) {
+              store = null;
+            }
+          }
+          var pathRaw = store && store.meta && store.meta.dailySalesInputPath;
+          var path = pathRaw === 'mep' ? 'mep' : 'annual';
+          var tier = 'pro';
+          try {
+            tier =
+              sessionStorage.getItem(TIER_KEY) ||
+              localStorage.getItem(TIER_KEY) ||
+              'pro';
+          } catch (_e2) {}
+          return { path: path, pro: tier !== 'basic' };
+        }
+        function applyPath(path) {
+          var isMep = path === 'mep';
+          wrap.classList.toggle('is-mep', isMep);
+          wrap.querySelectorAll('[data-kpi-path-side]').forEach(function (el) {
+            var side = el.getAttribute('data-kpi-path-side');
+            var active = side === 'mep' ? isMep : !isMep;
+            el.classList.toggle('is-active', active);
+            el.classList.toggle('is-inactive', !active);
+          });
+          wrap.setAttribute(
+            'aria-label',
+            t(
+              '日次売上の入力経路: ' + (isMep ? 'Monthly（MEP）' : 'Annual / Sales Data') + '（表示のみ）',
+              'Daily sales input path: ' + (isMep ? 'Monthly (MEP)' : 'Annual / Sales Data') + ' (read-only)'
+            )
+          );
+        }
+        function syncIndicator() {
+          var st = readStore();
+          wrap.hidden = !st.pro;
+          if (!st.pro) return;
+          applyPath(st.path);
+        }
+        syncIndicator();
+        document.addEventListener('kpi:dailySalesInputPathChanged', syncIndicator);
+        window.addEventListener('storage', function (ev) {
+          if (!ev || (ev.key !== STORE_KEY && ev.key !== TIER_KEY)) return;
+          syncIndicator();
+        });
+        window.__plSyncSalesInputPathIndicator = syncIndicator;
+      })();
+
+      /* PL-BOTTOM-GRAPH-DATA */
+      function plGraphParseMoney(raw) {
+        var s = String(raw == null ? '' : raw).replace(/\s+/g, ' ').trim();
+        if (!s || s === '\u2014' || s === '-') return { value: 0, has: false };
+        var n =
+          typeof parseMoney === 'function'
+            ? parseMoney(s)
+            : Number(String(s).replace(/[^\d.-]/g, ''));
+        if (!Number.isFinite(n)) return { value: 0, has: false };
+        return { value: n, has: true };
+      }
+
+      function plGraphReadAmountCell(rowId, mi) {
+        var cell = document.querySelector(
+          '[data-field="amount"][data-row="' +
+            rowId +
+            '"][data-month="' +
+            mi +
+            '"] .pl-amt-cell__text'
+        );
+        if (!cell) return { value: 0, has: false };
+        return plGraphParseMoney(cell.textContent);
+      }
+
+      function plGraphSetAmountCell(rowId, mi, value, has) {
+        var cell = document.querySelector(
+          '[data-field="amount"][data-row="' +
+            rowId +
+            '"][data-month="' +
+            mi +
+            '"] .pl-amt-cell__text'
+        );
+        if (!cell) return;
+        if (!has) {
+          cell.textContent =
+            typeof formatMoney === 'function' ? formatMoney(0) : String(0);
+          return;
+        }
+        cell.textContent =
+          typeof formatMoney === 'function' ? formatMoney(value) : String(Math.round(value));
+      }
+
+      function plProfitSevLevels() {
+        return [
+          'pl-profit--ok',
+          'pl-profit--sev-90',
+          'pl-profit--sev-80',
+          'pl-profit--sev-70',
+          'pl-profit--sev-60',
+          'pl-profit--sev-50',
+          'pl-profit--sev-below'
+        ];
+      }
+
+      /* Loss vs sales (break-even achievement): deeper red/orange as loss grows. */
+      function plProfitSeverityClass(profit, sales) {
+        if (!Number.isFinite(profit) || profit >= 0) return 'pl-profit--ok';
+        var base = Number(sales);
+        if (!Number.isFinite(base) || base <= 0) return 'pl-profit--sev-below';
+        var ach = ((base + profit) / base) * 100;
+        if (ach >= 90) return 'pl-profit--sev-90';
+        if (ach >= 80) return 'pl-profit--sev-80';
+        if (ach >= 70) return 'pl-profit--sev-70';
+        if (ach >= 60) return 'pl-profit--sev-60';
+        if (ach >= 50) return 'pl-profit--sev-50';
+        return 'pl-profit--sev-below';
+      }
+
+      function plApplyProfitSeverityEl(el, profit, sales) {
+        if (!el) return;
+        var levels = plProfitSevLevels();
+        for (var i = 0; i < levels.length; i++) el.classList.remove(levels[i]);
+        if (profit == null || !Number.isFinite(Number(profit))) return;
+        el.classList.add(plProfitSeverityClass(Number(profit), sales));
+      }
+
+      function plGraphSetProfitCell(mi, value, has, sales) {
+        var cell = document.querySelector(
+          '[data-row="profit"][data-month="' + mi + '"] .pl-month-cell__text'
+        );
+        if (!cell) return;
+        if (!has) {
+          cell.textContent = '\u2014';
+          plApplyProfitSeverityEl(cell, null, 0);
+          return;
+        }
+        cell.textContent =
+          typeof formatMoney === 'function' ? formatMoney(value) : String(Math.round(value));
+        plApplyProfitSeverityEl(cell, value, sales);
+      }
+
+      function plGraphMonthsFromInsight() {
+        if (!window.__plInsight || typeof window.__plInsight.monthMetrics !== 'function') {
+          return null;
+        }
+        var y =
+          typeof plYear === 'number' && Number.isFinite(plYear)
+            ? plYear
+            : new Date().getFullYear();
+        var out = [];
+        for (var mi = 0; mi < 12; mi++) {
+          var m = window.__plInsight.monthMetrics(y, mi) || {};
+          var sales = Math.round(Number(m.income) || 0);
+          var fixed = Math.round(Number(m.fixed) || 0);
+          var expected = Math.round(Number(m.expected != null ? m.expected : m.variable) || 0);
+          var expenses = Math.round(
+            Number(m.expenses != null ? m.expenses : fixed + expected) || 0
+          );
+          out.push({
+            sales: sales,
+            expenses: expenses,
+            fixed: fixed,
+            expected: expected
+          });
+        }
+        return out;
+      }
+
+      /* Fixed = sum(bucket=fixed), Expected = sum(bucket=variable) from detail pane. */
+      function plGraphMonthsFromDetailDom() {
+        var body = document.getElementById('pl-expense-detail-data-body');
+        if (!body) return null;
+        var rows = body.querySelectorAll('tr[data-line-id][data-bucket]');
+        if (!rows.length) return null;
+        var insight = plGraphMonthsFromInsight();
+        var out = [];
+        for (var mi = 0; mi < 12; mi++) {
+          var fixed = 0;
+          var expected = 0;
+          for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var bucket = tr.getAttribute('data-bucket') || 'variable';
+            var lineId = tr.getAttribute('data-line-id') || '';
+            var textEl = tr.querySelector(
+              '.pl-amt-cell[data-field="amount"][data-month="' +
+                mi +
+                '"] .pl-amt-cell__text'
+            );
+            if (!textEl && lineId) {
+              textEl = body.querySelector(
+                '.pl-amt-cell[data-field="amount"][data-row="' +
+                  lineId +
+                  '"][data-month="' +
+                  mi +
+                  '"] .pl-amt-cell__text'
+              );
+            }
+            var parsed = plGraphParseMoney(textEl && textEl.textContent);
+            if (!parsed.has) continue;
+            if (bucket === 'fixed') fixed += parsed.value;
+            else expected += parsed.value;
+          }
+          fixed = Math.round(fixed);
+          expected = Math.round(expected);
+          var salesCell = plGraphReadAmountCell('sales_total', mi);
+          var sales = salesCell.has
+            ? Math.round(salesCell.value)
+            : insight && insight[mi]
+              ? Math.round(Number(insight[mi].sales) || 0)
+              : 0;
+          out.push({
+            sales: sales,
+            expenses: fixed + expected,
+            fixed: fixed,
+            expected: expected
+          });
+        }
+        return out;
+      }
+
+      function plGraphMonthsFromSummaryDom() {
+        var out = [];
+        for (var mi = 0; mi < 12; mi++) {
+          var salesCell = plGraphReadAmountCell('sales_total', mi);
+          var fixedCell = plGraphReadAmountCell('expense_fixed', mi);
+          var expectedCell = plGraphReadAmountCell('expense_expected', mi);
+          var totalCell = plGraphReadAmountCell('expenses_total', mi);
+          var sales = salesCell.has ? Math.round(salesCell.value) : 0;
+          var fixed = fixedCell.has ? Math.round(fixedCell.value) : 0;
+          var expected = expectedCell.has ? Math.round(expectedCell.value) : 0;
+          var expenses = totalCell.has
+            ? Math.round(totalCell.value)
+            : fixed + expected;
+          out.push({
+            sales: sales,
+            expenses: expenses,
+            fixed: fixed,
+            expected: expected
+          });
+        }
+        return out;
+      }
+
+      function plGraphCollectMonths() {
+        var fromDetail = plGraphMonthsFromDetailDom();
+        if (fromDetail) return fromDetail;
+        var fromInsight = plGraphMonthsFromInsight();
+        if (fromInsight) return fromInsight;
+        return plGraphMonthsFromSummaryDom();
+      }
+
+      function plGraphApplyExpensesSummary(months) {
+        if (!months) {
+          for (var z = 0; z < 12; z++) {
+            plGraphSetAmountCell('expense_fixed', z, 0, true);
+            plGraphSetAmountCell('expense_expected', z, 0, true);
+            plGraphSetAmountCell('expenses_total', z, 0, true);
+            plGraphSetProfitCell(z, 0, false);
+          }
+          return;
+        }
+        for (var mi = 0; mi < 12; mi++) {
+          var m = months[mi] || {};
+          var fixed = Math.round(Number(m.fixed) || 0);
+          var expected = Math.round(Number(m.expected) || 0);
+          var expenses = Math.round(
+            Number(m.expenses != null ? m.expenses : fixed + expected) || 0
+          );
+          var sales = Math.round(Number(m.sales) || 0);
+          var has = !!(fixed || expected || expenses || sales);
+          plGraphSetAmountCell('expense_fixed', mi, fixed, true);
+          plGraphSetAmountCell('expense_expected', mi, expected, true);
+          plGraphSetAmountCell('expenses_total', mi, expenses, true);
+          plGraphSetProfitCell(mi, sales - expenses, has, sales);
+        }
+      }
+
+      function refreshExpensesSummaryBlock() {
+        plGraphApplyExpensesSummary(plGraphCollectMonths());
+      }
+
+      function refreshPlBottomGraph() {
+        var months = plGraphCollectMonths();
+        plGraphApplyExpensesSummary(months);
+        if (typeof window.plGraphRender !== 'function') return;
+        if (!months) return;
+        window.plGraphRender(months);
+      }
+
+      window.__plRefreshBottomGraph = refreshPlBottomGraph;
+      window.__plRefreshExpensesSummary = refreshExpensesSummaryBlock;
+      window.__plApplyProfitSeverityEl = plApplyProfitSeverityEl;
+      window.__plProfitSeverityClass = plProfitSeverityClass;
+
+
       function formatPlRatioPct(n) {
         if (!Number.isFinite(n)) return '\u2014';
         var rounded = Math.round(n * 100) / 100;
@@ -11754,6 +13100,13 @@
               ? formatMoney(agg.sum)
               : String(agg.sum)
             : '\u2014';
+          if (rowId === 'profit' && typeof window.__plApplyProfitSeverityEl === 'function') {
+            window.__plApplyProfitSeverityEl(
+              span,
+              agg.has ? agg.sum : null,
+              sales.has ? sales.sum : 0
+            );
+          }
         });
       }
 
@@ -11773,6 +13126,9 @@
       });
       document.addEventListener('kpi:readSurfacesRefresh', function () {
         syncPlBusinessDays();
+        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       });
 
       populateYearSelect();
@@ -11787,6 +13143,9 @@
       if (typeof refreshIncomeBlock === 'function') {
         refreshIncomeBlock();
       }
+      if (typeof refreshAnalyzeBlock === 'function') {
+        refreshAnalyzeBlock();
+      }
       if (typeof refreshPlRatios === 'function') {
         refreshPlRatios();
       }
@@ -11795,6 +13154,9 @@
       }
       if (typeof refreshPlReferenceBudget === 'function') {
         refreshPlReferenceBudget();
+      }
+      if (typeof refreshPlBottomGraph === 'function') {
+        refreshPlBottomGraph();
       }
       applyColumnFocus();
       var insightBtnInit = document.getElementById('global-nav-index-btn');

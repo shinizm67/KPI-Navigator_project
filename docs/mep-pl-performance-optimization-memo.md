@@ -80,7 +80,7 @@ MEP（Monthly Edit Page）・PL（損益表）は KPI Navigator の**サブス�
   +/- トグルのクリック処理が **約88ms→約13ms**（過去3年データのシード計測）。実データが大きいほど効果大。
   実装 `scripts/pl_reference_budget_client.py`。§2.2 メモ化の実例。
 - **行高同期 `syncPlSplitLayout`**: 全ペア再測定。描画イベント連発時にまとめられる可能性。
-- **MEP 二重注入の掃除**（高リスク）: 既知の重複注入。安全に外せるかは要検証、単独 PR 推奨。
+- **MEP 二重注入の掃除**（~~高リスク・未着手~~ **2026-07-20 完了**）: `apply_mep_store_dedupe.py` で `mepStoreReady` 2→1。正規ソースは `mep_store_client.py`（メモ安全マージ有効化）。再発防止は `inject_mep_store_block` の領域置換。
 
 ---
 

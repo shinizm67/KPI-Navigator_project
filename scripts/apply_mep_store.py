@@ -129,12 +129,40 @@ BUILD_GRID_NEW = """      function buildGrid() {
 
 
 def inject_mep_store_block(text: str) -> str:
+    """Replace or insert the canonical MEP-STORE block.
+
+    Region = from KPI-MEP-STORE marker through just before `var useJa` /
+    strategy-note modal. Any `refreshMepSalesFromStore` inside that region is
+    preserved and re-appended after the canonical store block (so re-apply is
+    idempotent and does not duplicate store functions).
+    """
+    block = mep_store_client_js().rstrip() + "\n"
+    refresh_pat = re.compile(
+        r"      function refreshMepSalesFromStore\([^)]*\) \{[\s\S]*?"
+        r"document\.addEventListener\('annual:salesDataSaved', refreshMepSalesFromStore\);\n"
+    )
+
     if KPI_MEP_STORE_MARKER in text:
-        pattern = re.compile(
-            r"      /\* KPI-MEP-STORE \*/.*?(?=\n      function |\n      var |\n      if \()",
-            re.DOTALL,
-        )
-        return pattern.sub(lambda _m: mep_store_client_js().rstrip() + "\n", text, count=1)
+        start = text.find(KPI_MEP_STORE_MARKER)
+        line_start = text.rfind("\n", 0, start) + 1
+        end_candidates = []
+        for needle in (
+            "\n      var useJa = ",
+            "\n            /* MEP-STRATEGY-NOTE-MODAL */",
+            "\n      /* MEP-STRATEGY-NOTE-MODAL */",
+            "\n      /* MEP-STRATEGY-USER-NOTE */",
+        ):
+            i = text.find(needle, start)
+            if i >= 0:
+                end_candidates.append(i)
+        if not end_candidates:
+            raise ValueError("end anchor after KPI-MEP-STORE not found")
+        region_end = min(end_candidates)
+        region = text[line_start:region_end]
+        refresh_m = refresh_pat.search(region)
+        refresh = refresh_m.group(0) if refresh_m else ""
+        return text[:line_start] + block + refresh + text[region_end:]
+
     anchor = "      /* KPI-EDIT-GUARDS */"
     if anchor not in text:
         raise ValueError("KPI-EDIT-GUARDS anchor not found")
@@ -143,7 +171,7 @@ def inject_mep_store_block(text: str) -> str:
     if guards_close < 0:
         raise ValueError("KPI-EDIT-GUARDS IIFE end not found")
     insert_at = guards_close + len("      })();\n")
-    return text[:insert_at] + mep_store_client_js() + text[insert_at:]
+    return text[:insert_at] + block + text[insert_at:]
 
 
 def apply_replacements(text: str) -> str:

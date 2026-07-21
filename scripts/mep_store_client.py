@@ -1,4 +1,8 @@
-"""MEP Phase 4 — hydrate / flush dailyExpenses + dailyMeta via KpiYearStore."""
+"""MEP Phase 4 — hydrate / flush dailyExpenses + dailyMeta via KpiYearStore.
+
+Canonical single block (memo-safe merge + strategy notes + income hydrate).
+Do not inject a second copy; apply_mep_store.replace covers the whole marker..listener span.
+"""
 
 from __future__ import annotations
 
@@ -73,6 +77,9 @@ def mep_store_client_js() -> str:
           restoreMemoRowsFromSnapshot(payload.mepMemoRows);
         }}
         syncWeeklyMemoItems();
+        if (typeof mergeStrategyNotesFromPayload === 'function') {{
+          mergeStrategyNotesFromPayload(payload);
+        }}
       }}
       function loadMepFromYearStore(year) {{
         if (!mepStoreReady()) return;
@@ -126,15 +133,20 @@ def mep_store_client_js() -> str:
             else flags[iso] = false;
           }});
         }});
-        return {{
+        var payload = {{
           dailyExpenses: dailyExpenses,
           dailyMeta: {{ memos: memos, weather: weather, flags: flags }},
           mepMemoRows: rowSnapshot(state.memoItems),
         }};
+        if (typeof strategyNotesForPersist === 'function') {{
+          payload.monthlyStrategyUserNotes = strategyNotesForPersist();
+        }}
+        return payload;
       }}
       function persistMepToYearStore(year) {{
         if (!mepStoreReady()) return false;
         flushPendingMemoEditsFromDom();
+        if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
         if (!KpiYearStore.canWriteMepYear(year)) return false;
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {{
           source: 'monthly-edit-float',
@@ -143,6 +155,9 @@ def mep_store_client_js() -> str:
       function onMepYearContextChanged(year) {{
         createInitialRowsIfNeeded();
         loadMepFromYearStore(year);
+        if (typeof hydrateMepIncomeStreamsFromStore === 'function') {{
+          hydrateMepIncomeStreamsFromStore(year);
+        }}
         if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {{
           syncMonthlySalesFromAnnualStoreForMonth();
         }}

@@ -623,6 +623,20 @@ def insight_diff_js() -> str:
         return String(Math.round(Number(n)));
       }}
 
+      function fmtInsightPctFrom(base, part) {{
+        var b = Number(base);
+        var p = Number(part);
+        if (!Number.isFinite(b) || b <= 0 || !Number.isFinite(p)) return DASH;
+        return Math.round((p / b) * 100) + '%';
+      }}
+
+      function fmtInsightProfitMarginPct(sales, profit) {{
+        var s = Number(sales);
+        var p = Number(profit);
+        if (!Number.isFinite(s) || s <= 0 || !Number.isFinite(p)) return DASH;
+        return Math.round((p / s) * 100) + '%';
+      }}
+
       function patchSummaryMonthlyKpiBlock(block, mtdA) {{
         var rows = block.querySelectorAll('.insight-monthly-kpi__row');
         var salesEl = rows[0] && rows[0].querySelector('.insight-monthly-kpi__value');
@@ -663,13 +677,47 @@ def insight_diff_js() -> str:
         var section = root.querySelector('#insight-jump-summary-monthly');
         if (!section) return;
         var kpi = section.querySelector('.insight-monthly-kpi');
+        var cost = section.querySelector('.insight-monthly-cost');
         var progress = section.querySelector('.insight-monthly-progress');
+        var expenseSnap = null;
+        if (window.__INSIGHT_SELECTED_ISO && typeof window.__insightReadExpenseSnapshot === 'function') {{
+          expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
+        }}
+
+        function patchMonthlyCostBlock(block, sales, scope) {{
+          var rows = block.querySelectorAll('.insight-monthly-cost__row');
+          function setRowValue(rowIdx, valueText, splitPctText) {{
+            var row = rows[rowIdx];
+            if (!row) return;
+            var vals = row.querySelectorAll('.insight-monthly-cost__value');
+            if (!vals || !vals.length) return;
+            vals[0].textContent = valueText;
+            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+          }}
+          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
+            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+            return;
+          }}
+          var s = Number(sales);
+          setRowValue(0, fmtInsightMoney(scope.total));
+          setRowValue(1, fmtInsightMoney(scope.fixed));
+          setRowValue(2, fmtInsightMoney(scope.variable));
+          setRowValue(3, fmtInsightPctFrom(s, scope.total));
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
+        }}
+
         if (!m) {{
           if (kpi) patchSummaryMonthlyKpiBlock(kpi, NaN);
+          if (cost) patchMonthlyCostBlock(cost, NaN, null);
           if (progress) patchSummaryMonthlyProgressBlock(progress, null);
           return;
         }}
         if (kpi) patchSummaryMonthlyKpiBlock(kpi, m.mtdA);
+        if (cost) patchMonthlyCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null);
         if (progress) patchSummaryMonthlyProgressBlock(progress, m);
       }}
 
@@ -769,15 +817,49 @@ def insight_diff_js() -> str:
         var section = root.querySelector('#insight-jump-summary-annual');
         if (!section) return;
         var kpi = section.querySelector('.insight-annual-kpi');
+        var cost = section.querySelector('.insight-annual-cost');
         var progress = section.querySelector('.insight-annual-progress');
         var revision = section.querySelector('.insight-annual-target-revision');
+        var expenseSnap = null;
+        if (window.__INSIGHT_SELECTED_ISO && typeof window.__insightReadExpenseSnapshot === 'function') {{
+          expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
+        }}
+
+        function patchAnnualCostBlock(block, sales, scope) {{
+          var rows = block.querySelectorAll('.insight-annual-cost__row');
+          function setRowValue(rowIdx, valueText, splitPctText) {{
+            var row = rows[rowIdx];
+            if (!row) return;
+            var vals = row.querySelectorAll('.insight-annual-cost__value');
+            if (!vals || !vals.length) return;
+            vals[0].textContent = valueText;
+            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+          }}
+          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
+            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+            return;
+          }}
+          var s = Number(sales);
+          setRowValue(0, fmtInsightMoney(scope.total));
+          setRowValue(1, fmtInsightMoney(scope.fixed));
+          setRowValue(2, fmtInsightMoney(scope.variable));
+          setRowValue(3, fmtInsightPctFrom(s, scope.total));
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
+        }}
+
         if (!m) {{
           if (kpi) patchSummaryAnnualKpiBlock(kpi, NaN);
+          if (cost) patchAnnualCostBlock(cost, NaN, null);
           if (progress) patchSummaryAnnualProgressBlock(progress, null);
           if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
           return;
         }}
         if (kpi) patchSummaryAnnualKpiBlock(kpi, m.ytdA);
+        if (cost) patchAnnualCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null);
         if (progress) patchSummaryAnnualProgressBlock(progress, m);
         if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
       }}
@@ -1023,6 +1105,40 @@ def insight_diff_js() -> str:
             return;
           }}
           patchAnnualSummaryBlock(block, m.ytdA, m.ytdT, m.hasPlan);
+        }});
+
+        var expenseSnap = null;
+        if (iso && typeof window.__insightReadExpenseSnapshot === 'function') {{
+          expenseSnap = window.__insightReadExpenseSnapshot(iso);
+        }}
+        root.querySelectorAll('.insight-daily-expenses').forEach(function (block) {{
+          var rows = block.querySelectorAll('.insight-daily-expenses__row');
+          var vEl = rows[0] && rows[0].querySelector('.insight-daily-expenses__value');
+          var fEl = rows[1] && rows[1].querySelector('.insight-daily-expenses__value');
+          var tEl = rows[2] && rows[2].querySelector('.insight-daily-expenses__value');
+          if (!expenseSnap || !expenseSnap.hasData) {{
+            if (vEl) vEl.textContent = DASH;
+            if (fEl) fEl.textContent = DASH;
+            if (tEl) tEl.textContent = DASH;
+            return;
+          }}
+          if (vEl) vEl.textContent = fmtInsightMoney(expenseSnap.day.variable);
+          if (fEl) fEl.textContent = fmtInsightMoney(expenseSnap.day.fixed);
+          if (tEl) tEl.textContent = fmtInsightMoney(expenseSnap.day.total);
+        }});
+        root.querySelectorAll('.insight-daily-profit').forEach(function (block) {{
+          var rows = block.querySelectorAll('.insight-daily-profit__row');
+          var pEl = rows[0] && rows[0].querySelector('.insight-daily-profit__value');
+          var mEl = rows[1] && rows[1].querySelector('.insight-daily-profit__value');
+          if (!m || !expenseSnap || !expenseSnap.hasData) {{
+            if (pEl) pEl.textContent = DASH;
+            if (mEl) mEl.textContent = DASH;
+            return;
+          }}
+          var sales = Number(m.dailySales);
+          var profit = Number(sales) - Number(expenseSnap.day.total);
+          if (pEl) pEl.textContent = fmtInsightMoney(profit);
+          if (mEl) mEl.textContent = fmtInsightProfitMarginPct(sales, profit);
         }});
 
         patchSummaryMonthlyBlocks(root, m);

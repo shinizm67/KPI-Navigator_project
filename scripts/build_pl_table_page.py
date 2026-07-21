@@ -447,6 +447,14 @@ LABELS_JA = {
     "compare_daily_title": "日次パフォーマンス",
     "compare_area2_daily_title": "日次パフォーマンス",
     "compare_area3_daily_title": "月次パフォーマンス",
+    "compare_breakdown_toggle": "費目内訳",
+    "compare_breakdown_fixed": "固定費",
+    "compare_breakdown_variable": "変動費",
+    "compare_breakdown_total": "総支出",
+    "compare_breakdown_none": "この月の費目データはありません",
+    "compare_breakdown_jump_daily": "Monthly Edit でこの費目を開く",
+    "compare_breakdown_jump_monthly": "PL 表でこの費目を開く",
+    "compare_plan_lock_cta": "この項目は Pro プラン限定です。クリックしてプランを変更。",
     "graph_overlay_placeholder": "年次の収入・支出比較グラフは次フェーズで実装予定です。",
     "undo": "戻る",
     "save": "Save",
@@ -599,6 +607,14 @@ LABELS_EN = {
     "compare_daily_title": "Daily Performance",
     "compare_area2_daily_title": "Daily Performance",
     "compare_area3_daily_title": "Monthly Performance",
+    "compare_breakdown_toggle": "Expense breakdown",
+    "compare_breakdown_fixed": "Fixed",
+    "compare_breakdown_variable": "Variable",
+    "compare_breakdown_total": "Total Expenses",
+    "compare_breakdown_none": "No expense line data for this month",
+    "compare_breakdown_jump_daily": "Open this line in Monthly Edit",
+    "compare_breakdown_jump_monthly": "Open this line in the PL table",
+    "compare_plan_lock_cta": "Pro plan only. Click to change plan.",
     "graph_overlay_placeholder": "Year-over-year income and expense comparison charts are planned for a later phase.",
     "undo": "Undo",
     "save": "Save",
@@ -614,7 +630,14 @@ from pl_insight_data_client import pl_insight_data_client_js  # noqa: E402
 from pl_monthly_allocate_client import pl_monthly_allocate_client_js  # noqa: E402
 from pl_income_client import pl_income_client_js  # noqa: E402
 from pl_ratio_client import pl_ratio_client_js  # noqa: E402
+from pl_analyze_client import pl_analyze_client_js  # noqa: E402
+from pl_bottom_graph_data_client import pl_bottom_graph_data_client_js  # noqa: E402
 from pl_reference_budget_client import pl_reference_budget_client_js  # noqa: E402
+from pl_sales_input_path_indicator_client import (  # noqa: E402
+    pl_sales_input_path_indicator_js,
+    pl_sales_path_indicator_css,
+    pl_sales_path_indicator_html,
+)
 from pl_year_total_client import pl_year_total_client_js  # noqa: E402
 from pl_line_catalog import (  # noqa: E402
     CATALOG_SCHEMA_VERSION,
@@ -622,11 +645,12 @@ from pl_line_catalog import (  # noqa: E402
     EXPENSES_SUMMARY_ROWS_V1 as EXPENSES_ROWS_V1,
     FIXED_EXPENSE_ATTRIBUTES,
     INCOME_ROWS_V1,
+    PL_INCOME_TABLE_EXCLUDE,
     VARIABLE_EXPENSE_ATTRIBUTES,
     expense_detail_default_catalog,
 )
 
-# Analyze block — KPI / cost health (below Total Expenses)
+# Analyze block — KPI / cost health (below Profit; after Income / Total Expenses)
 ANALYZE_GROUPS_V1 = [
     (
         "food_cost_ratio",
@@ -635,7 +659,7 @@ ANALYZE_GROUPS_V1 = [
         [
             ("analyze_food_sales", "フード売上", "Food Sales", False),
             ("analyze_food_cost", "フード仕入れ額", "Food Procurement Costs", False),
-            ("analyze_drink_sales", "ドリンク売上", "Drink Purchase Amount", False),
+            ("analyze_drink_sales", "ドリンク売上", "Drink Sales", False),
             ("analyze_drink_cost", "ドリンク仕入れ額", "Drink Procurement Costs", False),
         ],
     ),
@@ -683,8 +707,14 @@ def pl_data_colgroup() -> str:
     return "".join(parts)
 
 
+def zero_money(lang: str) -> str:
+    """Unset / empty amount for verification (no placeholder fake totals)."""
+    return "¥0" if lang == "ja" else "$0"
+
+
 def dummy_money(lang: str) -> str:
-    return "¥123,456" if lang == "ja" else "$123,456"
+    """Deprecated alias — prefer zero_money for empty cells."""
+    return zero_money(lang)
 
 
 def editable_label_span(row_id: str, label: str, scope: str, edit_aria: str) -> str:
@@ -703,8 +733,9 @@ def income_label_rows_v1(lang: str) -> str:
     major = L["income_major"]
     edit_aria = L["edit_label_aria"]
     rows: list[str] = []
-    n = len(INCOME_ROWS_V1)
-    for i, (rid, ja, en, _editable, is_total) in enumerate(INCOME_ROWS_V1):
+    visible = [r for r in INCOME_ROWS_V1 if r[0] not in PL_INCOME_TABLE_EXCLUDE]
+    n = len(visible)
+    for i, (rid, ja, en, _editable, is_total) in enumerate(visible):
         label = en if lang == "en" else ja
         major_td = ""
         if i == 0:
@@ -742,7 +773,8 @@ def income_data_rows_v1(lang: str) -> str:
       - Ratio(%) = amount ÷ sales_total (same denominator as expense ratios)
     """
     rows: list[str] = []
-    for rid, _ja, _en, _editable, is_total in INCOME_ROWS_V1:
+    visible = [r for r in INCOME_ROWS_V1 if r[0] not in PL_INCOME_TABLE_EXCLUDE]
+    for rid, _ja, _en, _editable, is_total in visible:
         if is_total:
             role = "total"
         elif rid == "store_sales":
@@ -816,12 +848,17 @@ def expenses_label_rows_v1(lang: str) -> str:
 
 
 def expenses_data_rows_v1(lang: str) -> str:
-    """Total Expenses data pane rows (12 months × Amount/Ratio dummy)."""
+    """Total Expenses data pane rows (Fixed / Expected / Total).
+
+    Initial HTML is ¥0/$0. Filled at runtime by summing expense-detail DOM
+    (`bucket=fixed` / `bucket=variable`) via `refreshExpensesSummaryBlock`,
+    with Insight `monthMetrics` as fallback after persist.
+    """
     return _section_data_rows_v1(lang, EXPENSES_ROWS_V1, "expenses")
 
 
 def reference_budget_label_row_v1(lang: str) -> str:
-    """L1 variable-expense guideline label (read-only, after expenses summary)."""
+    """L1 variable-expense guideline label (read-only; above Profit)."""
     L = LABELS_EN if lang == "en" else LABELS_JA
     label = L["ref_budget_row"]
     tip = L["ref_budget_tip"]
@@ -979,13 +1016,13 @@ def _section_data_rows_v1(
     rows_def: list[tuple[str, str, str, bool, bool]],
     section_id: str,
 ) -> str:
-    dummy = dummy_money(lang)
+    empty = zero_money(lang)
     rows: list[str] = []
     for rid, _ja, _en, _editable, is_total in rows_def:
         data_cells: list[str] = []
         for mi in range(12):
             data_cells.append(
-                month_amt_ratio_pair_html(rid, mi, amt_text=dummy)
+                month_amt_ratio_pair_html(rid, mi, amt_text=empty)
             )
         data_cells.append(year_amt_ratio_pair_html(rid, amt_text="—"))
         row_cls = f"pl-data-row pl-data-row--{section_id}"
@@ -1247,11 +1284,22 @@ def pl_label_edit_client_js(*, edit_aria: str, expense_catalog_json: str) -> str
 """
 
 
-def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
+def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: dict) -> str:
     lj = json.dumps(labels, ensure_ascii=False)
+    me = json.dumps(monthly_edit)
+    cp = json.dumps(change_plan_href)
     return f"""
     (function () {{
       var L = {lj};
+      var MONTHLY_EDIT = {me};
+      var CHANGE_PLAN_HREF = {cp};
+      var TIER_KEY = 'kpiNavigator.subscriptionTier';
+      var PL_COMPARE_LOCK_SELECTORS = [
+        '.pl-compare-area-fl',
+        '.pl-compare-area-breakdown',
+        '.pl-compare-area-line',
+        '.pl-compare-area-daily',
+      ];
       var root = document.getElementById('pl-graph-overlay');
       var btnOpen = document.getElementById('pl-graph-open');
       var btnClose = document.getElementById('pl-graph-overlay-close');
@@ -1327,44 +1375,21 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       }}
 
       function fetchCurrentFlSnapshot(iso) {{
-        /* 当月累積: PL 連携前のギミック。上段は常に描画 */
-        var d = new Date(String(iso || '').trim() + 'T00:00:00');
-        var bump = isFinite(d.getTime()) ? d.getDate() % 97 : 0;
-        var income = 123456 + bump;
-        var expenses = 3456 + Math.round(bump * 0.35);
-        var variable = 2456 + Math.round(bump * 0.22);
-        var fixed = Math.max(0, expenses - variable);
-        if (fixed < 900) {{
-          fixed = 1234 + Math.round(bump * 0.08);
-          variable = Math.max(0, expenses - fixed);
-        }}
+        /* 当月累積: 未連携時は 0（検証用プレースホルダを置かない） */
+        void iso;
         return {{
-          income: income,
-          expenses: expenses,
-          variable: variable,
-          fixed: fixed,
+          income: 0,
+          expenses: 0,
+          variable: 0,
+          fixed: 0,
         }};
       }}
 
       function fetchPreviousFlSnapshot(iso) {{
-        /* 前年同曜日累積: PL 未入力時は null（現状はギミックで常時返却） */
+        /* 前年同曜日累積: PL 未連携時は null（ギミック数値は置かない） */
         var d = new Date(String(iso || '').trim() + 'T00:00:00');
         if (!isFinite(d.getTime())) return null;
-        var bump = d.getDate() % 89;
-        var income = 123432 + bump;
-        var expenses = 3432 + Math.round(bump * 0.31);
-        var variable = 2421 + Math.round(bump * 0.19);
-        var fixed = Math.max(0, expenses - variable);
-        if (fixed < 900) {{
-          fixed = 1456 + Math.round(bump * 0.07);
-          variable = Math.max(0, expenses - fixed);
-        }}
-        return {{
-          income: income,
-          expenses: expenses,
-          variable: variable,
-          fixed: fixed,
-        }};
+        return null;
       }}
 
       function expenseVisualWidth(incomeW, expensePct, blockIndex) {{
@@ -2748,6 +2773,117 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           renderHsnapBlock(secondaryLabel, previous, maxIncome, 1, true);
       }}
 
+      /* ① 費目内訳ドリル: 選択月の費目を固定/変動グループで金額降順表示。
+         デフォルト開き（導線を見逃さない）。開閉状態は再描画をまたいで保持。 */
+      var compareBreakdownOpen = {{ 1: true, 2: true, 3: true }};
+      /* この IIFE には isJa が無いためローカルに言語フラグを持つ */
+      var bdIsJa = document.documentElement.lang === 'ja';
+
+      function fmtMonthLabel(year, month0) {{
+        if (bdIsJa) return year + '年' + (month0 + 1) + '月';
+        var names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return names[month0] + ' ' + year;
+      }}
+
+      function breakdownGroupHtml(title, rows, denom, refYear, month0) {{
+        if (!rows || !rows.length) return '';
+        var items = rows.map(function (r) {{
+          var label = bdIsJa ? r.labelJa : r.labelEn;
+          var share = denom > 0 ? pct1((r.amount / denom) * 100) : '—';
+          var style = r.inputStyle === 'daily' ? 'daily' : 'monthly';
+          var tip =
+            style === 'daily'
+              ? L.compare_breakdown_jump_daily
+              : L.compare_breakdown_jump_monthly;
+          return (
+            '<li class="pl-compare-bd__item pl-compare-bd__item--jump" role="button" tabindex="0" ' +
+            'data-pl-bd-line="' +
+            String(r.lineId || '') +
+            '" data-pl-bd-style="' +
+            style +
+            '" data-pl-bd-year="' +
+            refYear +
+            '" data-pl-bd-month0="' +
+            month0 +
+            '" title="' +
+            tip +
+            '" aria-label="' +
+            tip +
+            ': ' +
+            label +
+            '">' +
+            '<span class="pl-compare-bd__name">' +
+            label +
+            '</span>' +
+            '<span class="pl-compare-bd__amt">' +
+            money(r.amount) +
+            '</span>' +
+            '<span class="pl-compare-bd__share">' +
+            share +
+            '</span>' +
+            '</li>'
+          );
+        }}).join('');
+        return (
+          '<div class="pl-compare-bd__group">' +
+          '<p class="pl-compare-bd__group-title">' + title + '</p>' +
+          '<ul class="pl-compare-bd__list">' + items + '</ul>' +
+          '</div>'
+        );
+      }}
+
+      function renderCompareBreakdown(areaId, iso) {{
+        var mount = document.getElementById('pl-compare-area-' + areaId + '-breakdown');
+        if (!mount) return;
+        iso = iso || selectedIso || resolveIso();
+        var parts = isoParts(iso);
+        if (!parts) {{ mount.innerHTML = ''; return; }}
+        var refYear = areaId === 2 ? parts.year - 1 : parts.year;
+        var month0 = parts.month - 1;
+        var ins = window.__plInsight;
+        var bd = (ins && typeof ins.lineBreakdown === 'function')
+          ? ins.lineBreakdown(refYear, month0)
+          : null;
+        var open = !!compareBreakdownOpen[areaId];
+        var caption = fmtMonthLabel(refYear, month0);
+        var body;
+        if (!bd || !bd.total) {{
+          body = '<p class="pl-compare-bd__none">' + L.compare_breakdown_none + '</p>';
+        }} else {{
+          body =
+            breakdownGroupHtml(
+              L.compare_breakdown_fixed,
+              bd.fixed,
+              bd.total,
+              refYear,
+              month0
+            ) +
+            breakdownGroupHtml(
+              L.compare_breakdown_variable,
+              bd.variable,
+              bd.total,
+              refYear,
+              month0
+            ) +
+            '<div class="pl-compare-bd__total">' +
+            '<span class="pl-compare-bd__name">' + L.compare_breakdown_total + '</span>' +
+            '<span class="pl-compare-bd__amt">' + money(bd.total) + '</span>' +
+            '<span class="pl-compare-bd__share">100.0%</span>' +
+            '</div>';
+        }}
+        mount.innerHTML =
+          '<div class="pl-compare-bd' + (open ? ' pl-compare-bd--open' : '') + '">' +
+          '<button type="button" class="pl-compare-bd__toggle" data-pl-bd-toggle="' + areaId + '"' +
+          ' aria-expanded="' + (open ? 'true' : 'false') + '">' +
+          '<span class="pl-compare-bd__chevron" aria-hidden="true"></span>' +
+          '<span class="pl-compare-bd__toggle-label">' + L.compare_breakdown_toggle + '</span>' +
+          '<span class="pl-compare-bd__toggle-sub">' + caption + '</span>' +
+          '</button>' +
+          '<div class="pl-compare-bd__body"' + (open ? '' : ' hidden') + '>' + body + '</div>' +
+          '</div>';
+      }}
+
       function renderAllCompareAreas(iso) {{
         iso = iso || selectedIso || resolveIso();
         if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {{
@@ -2755,10 +2891,59 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
         }}
         [1, 2, 3].forEach(function (areaId) {{
           renderCompareFl(areaId, iso);
+          renderCompareBreakdown(areaId, iso);
           renderCompareLine(areaId, iso);
           renderCompareDaily(areaId, iso);
         }});
+        applyPlComparePlanLocks();
       }}
+
+      function isBasicTier() {{
+        try {{
+          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
+          return String(t).trim().toLowerCase() === 'basic';
+        }} catch (_e) {{
+          return false;
+        }}
+      }}
+
+      function makePlComparePlanLock() {{
+        var a = document.createElement('a');
+        a.className = 'pl-compare-plan-lock';
+        a.href = CHANGE_PLAN_HREF;
+        a.setAttribute('data-tooltip', L.compare_plan_lock_cta);
+        a.setAttribute('aria-label', L.compare_plan_lock_cta);
+        a.innerHTML =
+          '<span class="pl-compare-plan-lock__icon" aria-hidden="true">🔒</span>' +
+          '<span class="pl-compare-plan-lock__text">Pro</span>';
+        return a;
+      }}
+
+      function applyPlComparePlanLocks() {{
+        if (!root) return;
+        var basic = isBasicTier();
+        document.body.classList.toggle('kpi-plan-basic-pl-insight', basic);
+        PL_COMPARE_LOCK_SELECTORS.forEach(function (sel) {{
+          root.querySelectorAll(sel).forEach(function (box) {{
+            if (!box || !box.childElementCount) return;
+            var lock = box.querySelector('.pl-compare-plan-lock');
+            if (basic) {{
+              box.classList.add('pl-compare-plan-locked');
+              if (!lock) box.appendChild(makePlComparePlanLock());
+            }} else {{
+              box.classList.remove('pl-compare-plan-locked');
+              if (lock) lock.remove();
+            }}
+          }});
+        }});
+      }}
+
+      window.__KPI_APPLY_PL_COMPARE_PLAN_LOCKS = applyPlComparePlanLocks;
+      applyPlComparePlanLocks();
+      window.addEventListener('storage', function (e) {{
+        if (e && e.key === TIER_KEY) applyPlComparePlanLocks();
+      }});
+      document.addEventListener('kpi:planChanged', applyPlComparePlanLocks);
 
       /* --- ② URLハッシュ状態保持 ＋ 前回位置の記憶 ---
          状態 = open/close ＋ Area(1/2/3) ＋ 対象日(selectedIso)。
@@ -2999,18 +3184,13 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
       function gotoTableMonth(mi) {{
         if (!Number.isFinite(mi) || mi < 0 || mi > 11) return;
         closeOverlay();
+        resetPlPageScrollToTop();
         var cell = document.querySelector(
           '[data-pl-graph-month][data-month="' + mi + '"]'
         );
         if (!cell) return;
-        try {{
-          cell.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-        }} catch (err) {{
-          cell.scrollIntoView();
-        }}
-        cell.classList.remove('pl-graph-cell--flash');
-        void cell.offsetWidth;
-        cell.classList.add('pl-graph-cell--flash');
+        scrollPlCellHorizontal(cell);
+        flashPlEl(cell, {{ skipScroll: true }});
         if (typeof cell.focus === 'function') {{
           try {{
             cell.focus({{ preventScroll: true }});
@@ -3018,10 +3198,116 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
             cell.focus();
           }}
         }}
+      }}
+
+      function resetPlPageScrollToTop() {{
+        try {{
+          window.scrollTo({{ top: 0, left: 0, behavior: 'auto' }});
+        }} catch (_e) {{
+          window.scrollTo(0, 0);
+        }}
+        var scrollY = document.getElementById('pl-table-scroll-y');
+        if (scrollY) scrollY.scrollTop = 0;
+      }}
+
+      function scrollPlCellHorizontal(cell) {{
+        if (!cell) return;
+        var pane = cell.closest('.pl-data-pane');
+        if (!pane) return;
+        var left = Math.max(
+          0,
+          cell.offsetLeft - Math.max(0, (pane.clientWidth - cell.offsetWidth) / 2)
+        );
+        document
+          .querySelectorAll(
+            '#pl-data-pane-frozen, #pl-data-pane, #pl-data-pane-analyze, ' +
+              '#pl-data-pane-expense-detail, #pl-data-pane-graph'
+          )
+          .forEach(function (p) {{
+            if (p) p.scrollLeft = left;
+          }});
+      }}
+
+      function flashPlEl(el, opts) {{
+        if (!el) return;
+        opts = opts || {{}};
+        if (!opts.skipScroll) {{
+          try {{
+            el.scrollIntoView({{ behavior: 'smooth', block: 'center', inline: 'center' }});
+          }} catch (_e) {{
+            el.scrollIntoView();
+          }}
+        }}
+        el.classList.remove('pl-line-jump--flash');
+        void el.offsetWidth;
+        el.classList.add('pl-line-jump--flash');
         window.setTimeout(function () {{
-          cell.classList.remove('pl-graph-cell--flash');
+          el.classList.remove('pl-line-jump--flash');
         }}, 1600);
       }}
+
+      /* Insight 費目内訳 → 入力画面（daily=Monthly Edit / monthly=PL 明細）。 */
+      function gotoLineInput(lineId, inputStyle, year, month0) {{
+        if (!lineId || isBasicTier()) return;
+        var y = Number(year);
+        var m0 = Number(month0);
+        if (!Number.isFinite(y) || !Number.isFinite(m0) || m0 < 0 || m0 > 11) return;
+        var style = inputStyle === 'daily' ? 'daily' : 'monthly';
+        if (style === 'daily') {{
+          var href =
+            MONTHLY_EDIT +
+            '?year=' +
+            encodeURIComponent(String(y)) +
+            '&month=' +
+            encodeURIComponent(String(m0 + 1)) +
+            '&line=' +
+            encodeURIComponent(String(lineId));
+          var iso = selectedIso || resolveIso();
+          if (
+            iso &&
+            iso.length >= 10 &&
+            Number(iso.slice(0, 4)) === y &&
+            Number(iso.slice(5, 7)) - 1 === m0
+          ) {{
+            href += '&iso=' + encodeURIComponent(iso);
+          }}
+          var go = function () {{
+            window.location.href = href;
+          }};
+          if (typeof window.requestLeaveNavigation === 'function') {{
+            window.requestLeaveNavigation().then(function (ok) {{
+              if (ok) go();
+            }});
+          }} else {{
+            go();
+          }}
+          return;
+        }}
+        closeOverlay();
+        resetPlPageScrollToTop();
+        var cell = document.querySelector(
+          '#pl-expense-detail-data-body [data-field="amount"][data-row="' +
+            lineId +
+            '"][data-month="' +
+            m0 +
+            '"]'
+        );
+        var row = document.querySelector(
+          '#pl-expense-detail-data-body tr[data-line-id="' + lineId + '"]'
+        );
+        var focusEl =
+          (cell && cell.querySelector('[data-pl-editable="1"]')) || cell || row;
+        scrollPlCellHorizontal(cell);
+        flashPlEl(cell || row, {{ skipScroll: true }});
+        if (focusEl && typeof focusEl.focus === 'function') {{
+          try {{
+            focusEl.focus({{ preventScroll: true }});
+          }} catch (_f) {{
+            focusEl.focus();
+          }}
+        }}
+      }}
+
       if (gotoTableBtn) {{
         gotoTableBtn.addEventListener('click', function () {{
           var iso = selectedIso || resolveIso();
@@ -3100,6 +3386,49 @@ def pl_compare_client_js(*, monthly_edit: str, labels: dict) -> str:
           }}
         }});
       }});
+
+      /* 費目内訳アコーディオンの開閉（開閉状態は再描画をまたいで保持） */
+      if (contentEl) {{
+        contentEl.addEventListener('click', function (e) {{
+          var lineEl =
+            e.target && e.target.closest
+              ? e.target.closest('[data-pl-bd-line]')
+              : null;
+          if (lineEl) {{
+            e.preventDefault();
+            gotoLineInput(
+              lineEl.getAttribute('data-pl-bd-line'),
+              lineEl.getAttribute('data-pl-bd-style'),
+              lineEl.getAttribute('data-pl-bd-year'),
+              lineEl.getAttribute('data-pl-bd-month0')
+            );
+            return;
+          }}
+          var t = e.target && e.target.closest
+            ? e.target.closest('[data-pl-bd-toggle]')
+            : null;
+          if (!t) return;
+          var aid = Number(t.getAttribute('data-pl-bd-toggle'));
+          if (!(aid >= 1 && aid <= 3)) return;
+          compareBreakdownOpen[aid] = !compareBreakdownOpen[aid];
+          renderCompareBreakdown(aid, selectedIso || resolveIso());
+        }});
+        contentEl.addEventListener('keydown', function (e) {{
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          var lineEl =
+            e.target && e.target.closest
+              ? e.target.closest('[data-pl-bd-line]')
+              : null;
+          if (!lineEl) return;
+          e.preventDefault();
+          gotoLineInput(
+            lineEl.getAttribute('data-pl-bd-line'),
+            lineEl.getAttribute('data-pl-bd-style'),
+            lineEl.getAttribute('data-pl-bd-year'),
+            lineEl.getAttribute('data-pl-bd-month0')
+          );
+        }});
+      }}
       if (root) {{
         root.addEventListener('click', function (e) {{
           var btn =
@@ -3198,18 +3527,21 @@ def pl_graph_overlay_html(L: dict) -> str:
           <section class="pl-compare-area" id="pl-compare-area-1">
             <h3 class="pl-compare-area-title">{L["compare_area1_title"]}</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-1-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-1-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-1-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-1-daily"></div>
           </section>
           <section class="pl-compare-area" id="pl-compare-area-2">
             <h3 class="pl-compare-area-title">{L["compare_area2_title"]}</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-2-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-2-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-2-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-2-daily"></div>
           </section>
           <section class="pl-compare-area" id="pl-compare-area-3">
             <h3 class="pl-compare-area-title">{L["compare_area3_title"]}</h3>
             <div class="pl-compare-area-fl" id="pl-compare-area-3-fl"></div>
+            <div class="pl-compare-area-breakdown" id="pl-compare-area-3-breakdown"></div>
             <div class="pl-compare-area-line" id="pl-compare-area-3-line"></div>
             <div class="pl-compare-area-daily" id="pl-compare-area-3-daily"></div>
           </section>
@@ -3389,23 +3721,10 @@ def pl_line_manage_modal_html(L: dict) -> str:
 
 
 def pl_graph_dummy_months() -> list[dict]:
-    """Dummy monthly graph inputs (phase A). Index 2 = deficit month (Figma March)."""
-    surplus = {
-        "sales": 123456,
-        "expenseRatio": 0.70,
-        "fixedRatio": 0.25,
-        "expectedRatio": 0.35,
-    }
-    deficit = {
-        "sales": 23456,
-        "expenseRatio": 1.33,
-        "fixedRatio": 0.46,
-        "expectedRatio": 0.87,
-    }
-    out: list[dict] = []
-    for i in range(12):
-        out.append(dict(deficit if i == 2 else surplus))
-    return out
+    """Fallback months before real-data client runs (all zeros for verification)."""
+    return [
+        {"sales": 0, "expenses": 0, "fixed": 0, "expected": 0} for _ in range(12)
+    ]
 
 
 def pl_graph_client_js(
@@ -3450,7 +3769,7 @@ def pl_graph_client_js(
         return Math.round(Number(n) || 0) + '%';
       }}
 
-      function calcMetrics(raw) {{
+      function calcMetrics(raw, yearRef) {{
         var sales = Number(raw.sales) || 0;
         var expenses =
           raw.expenses != null
@@ -3462,26 +3781,58 @@ def pl_graph_client_js(
           raw.expected != null
             ? Number(raw.expected)
             : sales * (Number(raw.expectedRatio) || 0);
-        if (sales <= 0) sales = 1;
-        if (expenses <= 0) expenses = 1;
-        var deficit = expenses > sales;
-        var expensePct = (expenses / sales) * 100;
-        var fixedPct = (fixed / sales) * 100;
-        var expectedPct = (expected / sales) * 100;
-        /* 3 本バー: 収入と支出の大きい方を 100% として全バーを底揃えでスケール。
-           高さは % で保持し、CSS 変数 --pl-graph-bar-h（画面高追従）に対して伸縮させる。 */
-        var ref = Math.max(sales, expenses);
+        /* Real-data empty month: keep bars at 0 (do not invent sales=1). */
+        if (sales <= 0 && expenses <= 0 && fixed <= 0 && expected <= 0) {{
+          return {{
+            deficit: false,
+            sales: 0,
+            expenses: 0,
+            fixed: 0,
+            expected: 0,
+            expensePct: 0,
+            fixedPct: 0,
+            expectedPct: 0,
+            incomeH: 0,
+            expenseH: 0,
+            fixedH: 0,
+            expectedH: 0,
+          }};
+        }}
+        var salesDisp = sales;
+        var expensesDisp = expenses;
+        var fixedDisp = fixed;
+        var expectedDisp = expected;
+        var deficit = expensesDisp > salesDisp;
+        var expensePct = salesDisp > 0 ? (expensesDisp / salesDisp) * 100 : 0;
+        var fixedPct = salesDisp > 0 ? (fixedDisp / salesDisp) * 100 : 0;
+        var expectedPct = salesDisp > 0 ? (expectedDisp / salesDisp) * 100 : 0;
+        /* Bar heights: year peak (best month max of sales/expenses) = 100%.
+           Fallback: this cell's own max when yearRef is missing. */
+        var localPeak = Math.max(salesDisp, expensesDisp, fixedDisp, expectedDisp);
+        var ref = Number(yearRef);
+        if (!Number.isFinite(ref) || ref <= 0) ref = localPeak;
         if (ref <= 0) ref = 1;
-        var incomeH = (sales / ref) * 100;
-        var expenseH = (expenses / ref) * 100;
-        var fixedH = (fixed / ref) * 100;
-        var expectedH = Math.max(0, expenseH - fixedH);
+        var incomeH = salesDisp > 0 ? (salesDisp / ref) * 100 : 0;
+        var expenseH = expensesDisp > 0 ? (expensesDisp / ref) * 100 : 0;
+        var fixedH = fixedDisp > 0 ? (fixedDisp / ref) * 100 : 0;
+        var expectedH = expectedDisp > 0 ? (expectedDisp / ref) * 100 : 0;
+        /* Stacked fixed+expected should match expense bar when both present. */
+        if (expensesDisp > 0 && fixedDisp + expectedDisp > 0) {{
+          var stack = fixedH + expectedH;
+          if (stack > 0 && Math.abs(stack - expenseH) > 0.01) {{
+            var k = expenseH / stack;
+            fixedH *= k;
+            expectedH *= k;
+          }}
+        }} else {{
+          expectedH = Math.max(0, expenseH - fixedH);
+        }}
         return {{
           deficit: deficit,
-          sales: sales,
-          expenses: expenses,
-          fixed: fixed,
-          expected: expected,
+          sales: salesDisp,
+          expenses: expensesDisp,
+          fixed: fixedDisp,
+          expected: expectedDisp,
           expensePct: expensePct,
           fixedPct: fixedPct,
           expectedPct: expectedPct,
@@ -3490,6 +3841,36 @@ def pl_graph_client_js(
           fixedH: fixedH,
           expectedH: expectedH,
         }};
+      }}
+
+      function monthPeak(raw) {{
+        var sales = Number(raw.sales) || 0;
+        var expenses =
+          raw.expenses != null
+            ? Number(raw.expenses)
+            : sales * (Number(raw.expenseRatio) || 0);
+        var fixed =
+          raw.fixed != null ? Number(raw.fixed) : sales * (Number(raw.fixedRatio) || 0);
+        var expected =
+          raw.expected != null
+            ? Number(raw.expected)
+            : sales * (Number(raw.expectedRatio) || 0);
+        return Math.max(
+          Number(sales) || 0,
+          Number(expenses) || 0,
+          Number(fixed) || 0,
+          Number(expected) || 0
+        );
+      }}
+
+      function yearPeakFromData(data, useDummy) {{
+        var peak = 0;
+        for (var i = 0; i < 12; i++) {{
+          var raw = data[i] || (useDummy ? DUMMY_MONTHS[i] : {{}}) || {{}};
+          var p = monthPeak(raw);
+          if (p > peak) peak = p;
+        }}
+        return peak;
       }}
 
       function legendBlock(cls, label, amount, percent, style) {{
@@ -3595,8 +3976,8 @@ def pl_graph_client_js(
         );
       }}
 
-      function renderMonthCell(mi, raw) {{
-        var m = calcMetrics(raw);
+      function renderMonthCell(mi, raw, yearRef) {{
+        var m = calcMetrics(raw, yearRef);
         var monthName = MONTHS[mi] || String(mi + 1);
         var openLabel = isJa
           ? monthName + 'の Insight を開く'
@@ -3614,16 +3995,17 @@ def pl_graph_client_js(
         );
       }}
 
-      function renderYearCell(data) {{
+      function renderYearCell(data, useDummy) {{
         var sSales = 0, sExp = 0, sFixed = 0, sExpected = 0;
         for (var i = 0; i < 12; i++) {{
-          var raw = data[i] || DUMMY_MONTHS[i] || {{}};
-          var mm = calcMetrics(raw);
+          var raw = data[i] || (useDummy ? DUMMY_MONTHS[i] : {{}}) || {{}};
+          var mm = calcMetrics(raw, null);
           sSales += mm.sales;
           sExp += mm.expenses;
           sFixed += mm.fixed;
           sExpected += mm.expected;
         }}
+        /* Year column stays self-scaled (annual totals >> monthly peak). */
         var m = calcMetrics({{
           sales: sSales,
           expenses: sExp,
@@ -3638,12 +4020,18 @@ def pl_graph_client_js(
       }}
 
       function renderPlGraphs(monthData) {{
-        var data = monthData || DUMMY_MONTHS;
+        var useDummy = monthData == null;
+        var data = useDummy ? DUMMY_MONTHS : monthData;
+        var yearRef = yearPeakFromData(data, useDummy);
         var html = '<tr class="pl-graph-data-row" data-pl-section="graph">';
         for (var mi = 0; mi < 12; mi++) {{
-          html += renderMonthCell(mi, data[mi] || DUMMY_MONTHS[mi] || {{}});
+          html += renderMonthCell(
+            mi,
+            data[mi] || (useDummy ? DUMMY_MONTHS[mi] : {{}}) || {{}},
+            yearRef
+          );
         }}
-        html += renderYearCell(data);
+        html += renderYearCell(data, useDummy);
         html += '</tr>';
         body.innerHTML = html;
         window.dispatchEvent(new Event('pl-graph-rendered'));
@@ -3651,7 +4039,8 @@ def pl_graph_client_js(
 
       window.plGraphRender = renderPlGraphs;
       window.plGraphCalcMetrics = calcMetrics;
-      renderPlGraphs(DUMMY_MONTHS);
+      /* Initial paint: zeros until real-data client calls plGraphRender(months). */
+      renderPlGraphs(null);
     }})();
 """
 
@@ -3951,8 +4340,20 @@ def render_page(lang: str, lang_switch: str) -> str:
         "compare_daily_title": L["compare_daily_title"],
         "compare_area2_daily_title": L["compare_area2_daily_title"],
         "compare_area3_daily_title": L["compare_area3_daily_title"],
+        "compare_breakdown_toggle": L["compare_breakdown_toggle"],
+        "compare_breakdown_fixed": L["compare_breakdown_fixed"],
+        "compare_breakdown_variable": L["compare_breakdown_variable"],
+        "compare_breakdown_total": L["compare_breakdown_total"],
+        "compare_breakdown_none": L["compare_breakdown_none"],
+        "compare_breakdown_jump_daily": L["compare_breakdown_jump_daily"],
+        "compare_breakdown_jump_monthly": L["compare_breakdown_jump_monthly"],
+        "compare_plan_lock_cta": L["compare_plan_lock_cta"],
     }
-    compare_js = pl_compare_client_js(monthly_edit=p["monthly_edit"], labels=compare_labels)
+    compare_js = pl_compare_client_js(
+        monthly_edit=p["monthly_edit"],
+        change_plan_href=p["insight_basic"],
+        labels=compare_labels,
+    )
     insight_data_js = pl_insight_data_client_js()
     html_lang = "en" if lang == "en" else "ja"
     # Canonical Global Menu (single source: scripts/site_chrome.py). PL keeps its
@@ -3974,6 +4375,8 @@ def render_page(lang: str, lang_switch: str) -> str:
     else:
         office_aria_off = "Switch to Office Mode"
         office_aria_on = "Switch to Sci-Fi Mode"
+    sales_path_indicator_html_block = pl_sales_path_indicator_html(lang)
+    sales_path_indicator_css_block = pl_sales_path_indicator_css()
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}">
 <head>
@@ -4597,6 +5000,219 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-compare-area-fl {{
       margin-top: 30px;
       box-sizing: border-box;
+    }}
+    /* ① 費目内訳ドリル（デフォルト閉じのアコーディオン） */
+    .pl-compare-area-breakdown {{
+      margin-top: 16px;
+      box-sizing: border-box;
+    }}
+    .pl-compare-bd {{
+      border: 1px solid rgba(88, 225, 243, 0.35);
+      border-radius: 4px;
+    }}
+    .pl-compare-bd__toggle {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      color: #58e1f3;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+    }}
+    .pl-compare-bd__toggle:hover,
+    .pl-compare-bd__toggle:focus-visible {{
+      background: rgba(88, 225, 243, 0.08);
+      outline: none;
+    }}
+    .pl-compare-bd__chevron {{
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid currentColor;
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }}
+    .pl-compare-bd--open .pl-compare-bd__chevron {{
+      transform: rotate(90deg);
+    }}
+    .pl-compare-bd__toggle-label {{
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }}
+    .pl-compare-bd__toggle-sub {{
+      margin-left: auto;
+      font-size: 12px;
+      opacity: 0.75;
+      font-variant-numeric: tabular-nums;
+    }}
+    .pl-compare-bd__body {{
+      padding: 2px 14px 12px;
+    }}
+    .pl-compare-bd__group + .pl-compare-bd__group {{
+      margin-top: 10px;
+    }}
+    .pl-compare-bd__group-title {{
+      margin: 6px 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #8be7f5;
+      letter-spacing: 0.06em;
+    }}
+    .pl-compare-bd__list {{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }}
+    .pl-compare-bd__item,
+    .pl-compare-bd__total {{
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: baseline;
+      padding: 4px 0;
+      font-size: 13px;
+      color: #d8f6fb;
+    }}
+    .pl-compare-bd__item--jump {{
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 0 -6px;
+      padding-left: 6px;
+      padding-right: 6px;
+      outline: none;
+    }}
+    .pl-compare-bd__item--jump:hover,
+    .pl-compare-bd__item--jump:focus-visible {{
+      background: rgba(88, 225, 243, 0.12);
+    }}
+    .pl-compare-bd__amt {{
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      min-width: 96px;
+    }}
+    .pl-compare-bd__share {{
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      min-width: 52px;
+      opacity: 0.8;
+    }}
+    .pl-compare-bd__total {{
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(88, 225, 243, 0.3);
+      font-weight: 700;
+      color: #58e1f3;
+    }}
+    .pl-compare-bd__none {{
+      margin: 2px 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }}
+    .office-mode .pl-compare-bd {{
+      border-color: #c8ccd0;
+    }}
+    .office-mode .pl-compare-bd__toggle {{
+      color: #1a4a55;
+    }}
+    .office-mode .pl-compare-bd__toggle:hover,
+    .office-mode .pl-compare-bd__toggle:focus-visible {{
+      background: rgba(26, 74, 85, 0.08);
+    }}
+    .office-mode .pl-compare-bd__group-title {{
+      color: #2a6b78;
+    }}
+    .office-mode .pl-compare-bd__item,
+    .office-mode .pl-compare-bd__total {{
+      color: #222;
+    }}
+    .office-mode .pl-compare-bd__item--jump:hover,
+    .office-mode .pl-compare-bd__item--jump:focus-visible {{
+      background: rgba(26, 74, 85, 0.08);
+    }}
+    .office-mode .pl-compare-bd__total {{
+      border-top-color: #c8ccd0;
+      color: #1a4a55;
+    }}
+    /* Basic プラン: 支出/利益ブロックをぼかし + Pro CTA（Monthly Insight と同型） */
+    .pl-compare-plan-locked {{
+      position: relative;
+    }}
+    .pl-compare-plan-locked > *:not(.pl-compare-plan-lock) {{
+      filter: blur(4px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+    }}
+    .pl-compare-plan-lock {{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 5;
+      border: 1px dashed rgba(88, 225, 243, 0.6);
+      border-radius: 4px;
+      background: rgba(10, 22, 28, 0.35);
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      cursor: pointer;
+    }}
+    .pl-compare-plan-lock:hover,
+    .pl-compare-plan-lock:focus-visible {{
+      background: rgba(10, 22, 28, 0.55);
+      outline: none;
+    }}
+    .pl-compare-plan-lock__icon {{
+      font-size: 13px;
+      line-height: 1;
+    }}
+    .pl-compare-plan-lock[data-tooltip]:hover::after,
+    .pl-compare-plan-lock[data-tooltip]:focus-visible::after {{
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      padding: 8px 10px;
+      border: 1px solid rgba(88, 225, 243, 0.6);
+      border-radius: 3px;
+      background: #102932;
+      color: #58e1f3;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      text-align: center;
+      white-space: normal;
+      width: max-content;
+      max-width: min(260px, 80vw);
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(16, 0, 82, 0.35);
+    }}
+    body.office-mode .pl-compare-plan-lock {{
+      border-color: rgba(40, 40, 40, 0.5);
+      background: rgba(240, 240, 240, 0.6);
+      color: #1a4a55;
+    }}
+    body.office-mode .pl-compare-plan-lock[data-tooltip]:hover::after,
+    body.office-mode .pl-compare-plan-lock[data-tooltip]:focus-visible::after {{
+      border-color: #2a2a2a;
+      background: #ffffff;
+      color: #1a4a55;
+    }}
+    /* 費目内訳アコーディオンは高さが可変 — ロック時も CTA が載る最小高さ */
+    .pl-compare-area-breakdown.pl-compare-plan-locked {{
+      min-height: 72px;
     }}
     /* データ無しでもブロックを消さず、高さを一定に保つ（下段が跳ね上がるのを防ぐ） */
     .pl-compare-hsnap {{
@@ -6337,6 +6953,19 @@ def render_page(lang: str, lang_switch: str) -> str:
         box-shadow: inset 0 0 0 2px #58e1f3;
       }}
     }}
+    .pl-line-jump--flash {{
+      animation: plGraphCellFlash 1.6s ease-out;
+    }}
+    body.office-mode .pl-line-jump--flash {{
+      animation: plGraphCellFlashOffice 1.6s ease-out;
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+      .pl-line-jump--flash,
+      body.office-mode .pl-line-jump--flash {{
+        animation: none;
+        box-shadow: inset 0 0 0 2px #58e1f3;
+      }}
+    }}
     .pl-graph-month {{
       display: flex;
       flex-direction: column;
@@ -6775,6 +7404,12 @@ def render_page(lang: str, lang_switch: str) -> str:
       font-size: 15px;
       font-weight: 700;
     }}
+    /* Profit label: same ~3% bump as amounts (secondary to number emphasis) */
+    .pl-table--v1 th.pl-h-label--profit .pl-h-label__text,
+    .pl-table--v1 .pl-h-label--profit .pl-h-label__text {{
+      font-size: calc(15px * 1.03) !important;
+      font-weight: 700 !important;
+    }}
     .pl-table--v1 .pl-h-label__text--editable {{
       cursor: text;
       border-bottom: 1px dashed transparent;
@@ -7072,6 +7707,56 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-table--v1 .pl-data-row--total .pl-amt-cell__text {{
       font-size: 15px;
       font-weight: 700;
+    }}
+    /* Profit amounts: ~3% larger than Total Sales (15px), bold — primary emphasis */
+    .pl-table--v1 tr.pl-data-row--profit td.pl-month-cell--profit .pl-month-cell__text,
+    .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text {{
+      font-size: calc(15px * 1.03) !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.01em;
+    }}
+    /* Profit negative severity (loss vs sales). Sci-Fi: amber→red. Office: orange ramp. */
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--ok {{
+      color: #58e1f3 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-90 {{
+      color: #f9a825 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-80 {{
+      color: #ef6c00 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-70 {{
+      color: #e65100 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-60 {{
+      color: #e53935 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-50 {{
+      color: #c62828 !important;
+    }}
+    body:not(.office-mode) .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-below {{
+      color: #ff1744 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--ok {{
+      color: #111 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-90 {{
+      color: #fb8c00 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-80 {{
+      color: #f57c00 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-70 {{
+      color: #ef6c00 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-60 {{
+      color: #e65100 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-50 {{
+      color: #d84315 !important;
+    }}
+    body.office-mode .pl-table--v1 .pl-month-cell--profit .pl-month-cell__text.pl-profit--sev-below {{
+      color: #bf360c !important;
     }}
     .pl-table--v1 .pl-amt-cell--income-store .pl-amt-cell__text,
     .pl-table--v1 .pl-amt-cell--income-stream .pl-amt-cell__text,
@@ -7477,6 +8162,7 @@ def render_page(lang: str, lang_switch: str) -> str:
     body.office-mode .pl-meta {{ color: #444; }}
     body.office-mode .pl-back {{ color: #0a5; }}
     body.office-mode .pl-negative {{ color: #c00 !important; }}
+{sales_path_indicator_css_block}
 {CLOSE_CHOOSER_CSS}
   </style>
 </head>
@@ -7490,6 +8176,7 @@ def render_page(lang: str, lang_switch: str) -> str:
             <div class="pl-toolbar__left">
               <label class="pl-year-label" for="pl-year-select">{L['year_label']}</label>
               <select id="pl-year-select" class="pl-year-select" aria-label="{L['year_aria']}"></select>
+{sales_path_indicator_html_block}
               <a class="pl-toolbar__back" id="pl-back-edit" href="{p['monthly_edit']}" hidden data-pl-nav="1" aria-label="{L['back_edit_aria']}">← {L['back_edit']}</a>
               <button type="button" class="pl-toolbar__btn" id="pl-line-manage-open"
                 aria-label="{L['line_manage_title']}">{L['line_manage_btn']}</button>
@@ -7575,6 +8262,7 @@ def render_page(lang: str, lang_switch: str) -> str:
                     {income_label_rows}
                     {expenses_label_rows}
                     {ref_budget_label_row}
+                    {profit_label_row}
                   </tbody>
                 </table>
               </div>
@@ -7585,6 +8273,7 @@ def render_page(lang: str, lang_switch: str) -> str:
                     {income_data_rows}
                     {expenses_data_rows}
                     {ref_budget_data_row}
+                    {profit_data_row}
                   </tbody>
                 </table>
               </div>
@@ -7604,9 +8293,6 @@ def render_page(lang: str, lang_switch: str) -> str:
                     <tbody id="pl-analyze-label-collapsible" class="pl-analyze-collapsible">
                       {analyze_only_label_rows}
                     </tbody>
-                    <tbody id="pl-table-label-profit-body">
-                      {profit_label_row}
-                    </tbody>
                   </table>
                 </div>
                 <div class="pl-data-pane pl-data-pane--analyze" id="pl-data-pane-analyze">
@@ -7615,9 +8301,6 @@ def render_page(lang: str, lang_switch: str) -> str:
                     {data_colgroup}
                     <tbody id="pl-analyze-data-collapsible" class="pl-analyze-collapsible">
                       {analyze_only_data_rows}
-                    </tbody>
-                    <tbody id="pl-table-profit-body">
-                      {profit_data_row}
                     </tbody>
                   </table>
                 </div>
@@ -7901,6 +8584,7 @@ def render_page(lang: str, lang_switch: str) -> str:
           seam.style.height = zoomRoot.offsetHeight + 'px';
         }}
       }}
+      window.__plSyncSplitLayout = syncPlSplitLayout;
       syncPlSplitLayout();
       window.addEventListener('resize', syncPlSplitLayout);
       if (document.fonts && document.fonts.ready) {{
@@ -8315,6 +8999,40 @@ def render_page(lang: str, lang_switch: str) -> str:
         }}
       }}
 
+      /* Persist monthly editable cells so Insight / reload match the DOM. */
+      function persistExpenseMapFromDom() {{
+        var map = {{}};
+        try {{
+          var raw = localStorage.getItem(storageKey());
+          if (raw) {{
+            var prev = JSON.parse(raw);
+            if (prev && typeof prev === 'object') map = prev;
+          }}
+        }} catch (_e) {{}}
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
+          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
+          map[key] = parseMoney(cell.textContent);
+        }});
+        try {{
+          localStorage.setItem(storageKey(), JSON.stringify(map));
+        }} catch (_e2) {{}}
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {{
+          window.__plInsight.resetCache();
+        }}
+      }}
+
+      var plExpenseLiveRefreshTimer = null;
+      function schedulePlExpenseLiveRefresh() {{
+        if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
+        plExpenseLiveRefreshTimer = setTimeout(function () {{
+          plExpenseLiveRefreshTimer = null;
+          if (typeof refreshPlRatios === 'function') refreshPlRatios();
+          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        }}, 120);
+      }}
+
       function bindPlEditableCells() {{
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
           if (cell.getAttribute('data-pl-bound') === '1') return;
@@ -8325,14 +9043,18 @@ def render_page(lang: str, lang_switch: str) -> str:
           }});
           cell.addEventListener('input', function () {{
             markTouched();
+            schedulePlExpenseLiveRefresh();
           }});
           cell.addEventListener('blur', function () {{
             var n = parseMoney(cell.textContent);
             cell.textContent = formatMoney(n);
             maybePropagateFixedMonthly(cell, n);
+            persistExpenseMapFromDom();
+            if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
             if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+            if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
             if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+            if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
           }});
         }});
       }}
@@ -8346,15 +9068,24 @@ def render_page(lang: str, lang_switch: str) -> str:
           plSaved = true;
         }}
         syncUndoButton();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }}
 
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
 
       function plSave(showAlert) {{
         var map = {{}};
+        try {{
+          var rawSave = localStorage.getItem(storageKey());
+          if (rawSave) {{
+            var prevSave = JSON.parse(rawSave);
+            if (prevSave && typeof prevSave === 'object') map = prevSave;
+          }}
+        }} catch (_prevErr) {{}}
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {{
           var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
           map[key] = parseMoney(cell.textContent);
@@ -8362,6 +9093,9 @@ def render_page(lang: str, lang_switch: str) -> str:
         try {{
           localStorage.setItem(storageKey(), JSON.stringify(map));
         }} catch (_e) {{}}
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {{
+          window.__plInsight.resetCache();
+        }}
         confirmedSnapshot = buildSnapshot();
         plSaved = true;
         undoStack = [];
@@ -8377,6 +9111,11 @@ def render_page(lang: str, lang_switch: str) -> str:
             );
           }}
         }} catch (_mepErr) {{}}
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
         if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
       }}
 
@@ -8459,9 +9198,11 @@ def render_page(lang: str, lang_switch: str) -> str:
         if (typeof fillDailyExpenseRowsFromMep === 'function') {{
           fillDailyExpenseRowsFromMep();
         }}
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }});
       document.addEventListener('kpi:mepDataChanged', function (ev) {{
         var evYear = ev && ev.detail && Number(ev.detail.year);
@@ -8472,18 +9213,22 @@ def render_page(lang: str, lang_switch: str) -> str:
         if (typeof refreshIncomeBlock === 'function') {{
           refreshIncomeBlock();
         }}
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }});
       document.addEventListener('kpi:dailySalesChanged', function () {{
         syncPlBusinessDays();
         if (typeof refreshIncomeBlock === 'function') {{
           refreshIncomeBlock();
         }}
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
         if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }});
 
       if (btnUndo) {{
@@ -8556,7 +9301,6 @@ def render_page(lang: str, lang_switch: str) -> str:
         appendPlExportPairs(rows, 'pl-table-label-frozen-body', 'pl-table-frozen-body');
         appendPlExportPairs(rows, 'pl-table-label-body', 'pl-table-body');
         appendPlExportPairs(rows, 'pl-analyze-label-collapsible', 'pl-analyze-data-collapsible');
-        appendPlExportPairs(rows, 'pl-table-label-profit-body', 'pl-table-profit-body');
         appendPlExportPairs(rows, 'pl-expense-detail-header-label', 'pl-expense-detail-header-data');
         appendPlExportPairs(rows, 'pl-expense-detail-label-body', 'pl-expense-detail-data-body');
         return rows
@@ -8725,6 +9469,9 @@ def render_page(lang: str, lang_switch: str) -> str:
 {pl_monthly_allocate_client_js()}
 {pl_expense_import_client_js()}
 {pl_income_client_js()}
+{pl_analyze_client_js()}
+{pl_sales_input_path_indicator_js()}
+{pl_bottom_graph_data_client_js()}
 {pl_ratio_client_js()}
 {pl_reference_budget_client_js()}
 {pl_year_total_client_js()}
@@ -8742,6 +9489,9 @@ def render_page(lang: str, lang_switch: str) -> str:
       }});
       document.addEventListener('kpi:readSurfacesRefresh', function () {{
         syncPlBusinessDays();
+        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }});
 
       populateYearSelect();
@@ -8756,6 +9506,9 @@ def render_page(lang: str, lang_switch: str) -> str:
       if (typeof refreshIncomeBlock === 'function') {{
         refreshIncomeBlock();
       }}
+      if (typeof refreshAnalyzeBlock === 'function') {{
+        refreshAnalyzeBlock();
+      }}
       if (typeof refreshPlRatios === 'function') {{
         refreshPlRatios();
       }}
@@ -8764,6 +9517,9 @@ def render_page(lang: str, lang_switch: str) -> str:
       }}
       if (typeof refreshPlReferenceBudget === 'function') {{
         refreshPlReferenceBudget();
+      }}
+      if (typeof refreshPlBottomGraph === 'function') {{
+        refreshPlBottomGraph();
       }}
       applyColumnFocus();
       var insightBtnInit = document.getElementById('global-nav-index-btn');

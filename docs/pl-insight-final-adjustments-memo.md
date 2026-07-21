@@ -115,7 +115,7 @@ PL 表（`app/profit/pl/`）から開く **読み取り専用フローティン�
 - [x] ホバー・ツールチップ・Y 軸スケール — ツールチップは実装済（This/Last/Best 値表示）。**Y 軸を「きれいな目盛」に刷新（2026-07-18）**：`compareNiceAxis` で 1/2/2.5/5 ×10^n の丸め目盛にし、`formatScale` を 1 桁小数対応（`7.5k` 等）。旧実装の 8k/23k のような半端目盛・小さい値でも 10k 刻みになる問題を解消。折れ線・縦棒の両方に適用。
 - [x] Office モード色（2026-07-18）— グラフ系列色（折れ線 stroke・縦棒 fill・軸線・ガイド線・ホバー点・凡例スウォッチ）を**CSS クラス化**し、Office モード（白背景）で濃色に上書き。This=`#0a63c2`／Last=`#b8860b`／Best=`#0f9403`、軸線/ガイド=`#888`、ツールチップ metric=`#555`。淡いシアン・黄が白地で見えづらい問題を解消。
 - [x] Area ジャンプ・アクセシビリティ（2026-07-18）— Area ナビの `role="tablist"`（tab 不在で意味破綻）を `role="group"` に修正。メトリクスタブに `aria-pressed` を付与（折れ線・縦棒とも）。オーバーレイは既に `role="dialog" aria-modal="true" aria-labelledby` 済を確認。
-- [~] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）— **PL 表 月グラフセル → その月の Insight（Area 3）を実装（2026-07-18・順方向）**。**逆方向の戻り導線（Insight→PL 表・`▶ 表のこの月へ`）も実装（2026-07-19・①のみ）**。費目内訳・Monthly Edit 連携・URL ハッシュは後続。詳細は本ファイル該当節。
+- [x] Monthly Edit / PL 表からのドリルダウン（`press-release-backlog` v2 構想）— **PL 表 月グラフセル → その月の Insight（Area 3）を実装（2026-07-18・順方向）**。**逆方向の戻り導線（Insight→PL 表・`▶ 表のこの月へ`）も実装（2026-07-19・①のみ）**。**費目内訳ドリル＋入力導線（daily→MEP / monthly→PL 明細）も実装（2026-07-20）**。URL ハッシュ実装済み。詳細は本ファイル該当節。
 
 ---
 
@@ -181,7 +181,7 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 - **イベント**：`document` への委譲（click＋keydown Enter/Space）。年は `plTableYear()`（URL `?year=` → 既定は今年）。
 - 実装箇所：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（API・代表日・委譲）と `renderMonthCell`（セル属性）＋ CSS。
 
-**後続**：費目内訳ドリル・Monthly Edit 連携（**URL ハッシュでの状態保持は 2026-07-19 実装済み**＝本ファイル「② URL ハッシュ」節）。
+**後続**：Monthly Edit 連携（**費目内訳ドリルは 2026-07-19 実装済み**＝本ファイル「① 費目内訳ドリル」節。**URL ハッシュでの状態保持も 2026-07-19 実装済み**＝「② URL ハッシュ」節）。
 
 ### ② URL ハッシュで状態保持 ＋ 前回位置の記憶（2026-07-19・**実装済み**）
 
@@ -194,7 +194,21 @@ JavaScriptCore ハーネス（`/tmp/pl_insight_harness.js`）で 32 アサーシ
 - **閉じる導線**：Esc・×ボタン・**オーバーレイ外（背景）クリック**は既存実装（背景 `.pl-graph-overlay__backdrop` に `data-pl-graph-overlay-action="close"`）＋今回の「戻る」で閉じるを追加。
 - **実装箇所**：`scripts/build_pl_table_page.py` の `pl_compare_client_js`（`parseInsightHash`/`buildInsightHash`/`syncHash`/`clearHashState`/`saveLastState`/`loadLastState`/`scrollToArea`、`openOverlay`/`closeOverlay`/`fillDate`/`__plOpenInsight`/area ナビ/btnOpen/`popstate`/`initInsightFromHash`）。
 - **利益ハブ deep-link 解禁**：`docs/index-profit-hub.md` が待っていた「特定 Area を開く deep-link」がこれで可能に（`pl/index.html#insight=areaN&date=…`）。
-- **後続（未実装）**：費目内訳ドリル・Monthly Edit 連携。
+- **後続（未実装）**：なし（費目内訳→入力導線は 2026-07-20 実装済み）。
+
+### ① 費目内訳ドリル（2026-07-19・**実装済み** → 2026-07-20 **入力導線追加**）
+
+**ゴール**：PL Insight 内で、選択月の**支出を費目単位（固定費／変動費）で内訳表示**する。集計ロジックは PL 表と共有（`window.__plInsight.lineBreakdown`）。
+
+- **UI**：各 Area の FL スナップショット直下にアコーディオン「費目内訳」。**2026-07-21 よりデフォルト開き**（導線を見逃さない）。開閉状態は日付変更・ライブ更新の再描画をまたいで保持（`compareBreakdownOpen[area]`）。
+- **対象期間**：選択月の**月次合計**で統一。参照年は Area1/3＝当年、Area2＝前年（各 Area の主系列に合わせる）。トグル右に「YYYY年M月／Mon YYYY」を表示。
+- **内容**：固定費グループ・変動費グループ（各費目を金額降順）＋末尾に総支出。各行は「費目名／金額／構成比（総支出比）」。データ無し月は「この月の費目データはありません」。
+- **データ**：`pl_insight_data_client.py` に `lineBreakdown(year, month0)` を追加（`lineMonthAmount` を費目単位で集計。`monthMetrics` と同じ固定/変動分類なので合計が一致）。`window.__plInsight.lineBreakdown` で公開。
+- **入力導線（2026-07-20）**：費目行クリック（Enter/Space 可）で入力画面へ。
+  - `inputStyle=daily` → Monthly Edit（`?year=&month=&line=&iso?`）。離脱は `requestLeaveNavigation`。MEP 側は `focusPreferredLine()` で該当行へスクロール／フォーカス／フラッシュ（`scripts/apply_mep_line_deeplink.py`）。
+  - `inputStyle=monthly` → Insight を閉じ、PL 費目明細の該当セルへフラッシュ／フォーカス（`.pl-line-jump--flash`）。**2026-07-21**: ページ／表の縦スクロールは先頭に戻し **PL Insight ボタンが見える状態を維持**（`resetPlPageScrollToTop`）。月列は横スクロールのみ同期。
+- **実装箇所**：`scripts/pl_insight_data_client.py`（`lineBreakdown`）、`scripts/build_pl_table_page.py`（`gotoLineInput` / `breakdownGroupHtml` クリック行、CSS、`compare_breakdown_jump_*`）、`scripts/apply_mep_line_deeplink.py`。
+- **後続**：（f）Basic プランのロック — **2026-07-21 実装済み**（FL スナップショット / 費目内訳 / 累積・日次チャート。`.pl-compare-plan-locked`＋Pro CTA。Monthly Insight と同型）。
 
 ### 逆方向ドリル ①（2026-07-19・**実装済み・戻り導線のみ**）
 

@@ -71,6 +71,15 @@ Basic / Pro の機能出し分けと、そのチート対策の考え方をま�
 - **Pro 化で即解除**：`storage` イベント＋`kpi:planChanged` 監視で再適用。`window.__KPI_APPLY_PLAN_LOCKS()` で手動再適用も可。
 - **レイアウト非破壊**：`.insight-plan-locked{position:relative}` は 1 クラス指定のため、Graph ペインの `position:absolute`（3 クラス指定）を上書きしない。絶対配置ブロックはそれ自体が overlay の基準になる。
 
+### PL Insight の支出/利益ブロックのロック（2026-07-21・実装済み）
+
+対象: `app/profit/pl/index.html` / `en/app/profit/pl/index.html`（`pl_compare_client_js` 内）。
+
+- **ロック表示**：`.pl-compare-plan-locked` ＋ `.pl-compare-plan-lock`（Monthly Insight の `.insight-plan-lock` と同型）。
+- **対象**：各 Area の `.pl-compare-area-fl`（FL スナップショット）／`.pl-compare-area-breakdown`（費目内訳）／`.pl-compare-area-line`（累積チャート）／`.pl-compare-area-daily`（日次チャート）。
+- **再描画後も維持**：`renderAllCompareAreas` 末尾で `applyPlComparePlanLocks()`。`storage` / `kpi:planChanged` でも再適用。
+- **導線クリック**：Basic では `gotoLineInput` も no-op（表示ゲートのみ・本防御はサーバー側）。
+
 ### 未対応・保留
 
 - **本防御（サーバー側）は別フェーズ**（上記「本番の要件」）。現状は表示ゲートのみ＝原理的に回避可能。
