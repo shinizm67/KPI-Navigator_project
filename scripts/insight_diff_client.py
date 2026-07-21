@@ -1348,7 +1348,199 @@ def insight_diff_js() -> str:
         patchGraphDailyBlocks(root, m, iso);
         patchGraphMonthlyAnnualCumBars(root, m);
         patchAnalyzeMonthlyExpenseCharts(m, iso);
+        patchHistoricalInsightAccess(root, iso);
       }};
+
+      function clearHistoricalInsightAccessGroup(group) {{
+        if (!group) return;
+        var rows = group.querySelectorAll('.insight-historical-insight-access__row');
+        for (var i = 0; i < rows.length; i++) {{
+          var el = rows[i].querySelector('.insight-historical-insight-access__value');
+          if (el) el.textContent = DASH;
+        }}
+        var title = group.querySelector('.insight-historical-insight-access__popover-title');
+        if (title) title.textContent = DASH;
+        var list = group.querySelector('.insight-historical-insight-access__popover-list');
+        if (list) {{
+          list.innerHTML =
+            '<li class="insight-historical-insight-access__popover-item">' + DASH + '</li>';
+        }}
+      }}
+
+      function fillHistoricalInsightAccessGroup(group, rec, kind) {{
+        if (!group) return;
+        if (!rec) {{
+          clearHistoricalInsightAccessGroup(group);
+          return;
+        }}
+        var rows = group.querySelectorAll('.insight-historical-insight-access__row');
+        var dateEl = rows[0] && rows[0].querySelector('.insight-historical-insight-access__value');
+        var salesEl = rows[1] && rows[1].querySelector('.insight-historical-insight-access__value');
+        var marginEl = rows[2] && rows[2].querySelector('.insight-historical-insight-access__value');
+        if (kind === 'month') {{
+          if (dateEl) dateEl.textContent = rec.year + '/' + pad2Insight(rec.month);
+        }} else {{
+          if (dateEl) dateEl.textContent = String(rec.year);
+        }}
+        if (salesEl) salesEl.textContent = fmtInsightMoney(rec.sales);
+        if (marginEl) {{
+          marginEl.textContent = rec.hasExpense
+            ? fmtInsightProfitMarginPct(rec.sales, rec.profit)
+            : DASH;
+        }}
+        var title = group.querySelector('.insight-historical-insight-access__popover-title');
+        if (title) {{
+          title.textContent =
+            kind === 'month'
+              ? rec.year + '/' + pad2Insight(rec.month)
+              : String(rec.year);
+        }}
+        var list = group.querySelector('.insight-historical-insight-access__popover-list');
+        if (list) {{
+          list.innerHTML =
+            '<li class="insight-historical-insight-access__popover-item">' +
+            'Memo not linked yet' +
+            '</li>';
+        }}
+      }}
+
+      function collectSameMonthHistory(y, month) {{
+        var sumFn =
+          typeof window.__sumMonthSalesThroughDay === 'function'
+            ? window.__sumMonthSalesThroughDay
+            : null;
+        if (!sumFn) return [];
+        var dim = new Date(y, month, 0).getDate();
+        var out = [];
+        for (var back = 1; back <= 20; back++) {{
+          var py = y - back;
+          var scope = sumFn(py, month, dim);
+          if (!scope || !scope.hasData) continue;
+          var sales = Number(scope.sum);
+          if (!Number.isFinite(sales)) continue;
+          var exp =
+            typeof window.__insightReadMonthExpense === 'function'
+              ? window.__insightReadMonthExpense(py, month)
+              : null;
+          var hasExpense = !!(exp && exp.hasData);
+          var profit = hasExpense ? sales - Number(exp.total) : NaN;
+          out.push({{
+            year: py,
+            month: month,
+            sales: sales,
+            profit: profit,
+            hasExpense: hasExpense,
+          }});
+        }}
+        return out;
+      }}
+
+      function collectSameYtdHistory(y, month, day) {{
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+        if (!sumFn) return [];
+        var out = [];
+        for (var back = 1; back <= 20; back++) {{
+          var py = y - back;
+          var scope = sumFn(py, month, day);
+          if (!scope || !scope.hasData) continue;
+          var sales = Number(scope.sum);
+          if (!Number.isFinite(sales)) continue;
+          var expTotal = 0;
+          var hasExpense = false;
+          if (typeof window.__insightReadMonthExpense === 'function') {{
+            for (var m = 1; m <= month; m++) {{
+              var td = m === month ? day : new Date(py, m, 0).getDate();
+              var exp = window.__insightReadMonthExpense(py, m, td);
+              if (exp && exp.hasData) {{
+                hasExpense = true;
+                expTotal += Number(exp.total) || 0;
+              }}
+            }}
+          }}
+          out.push({{
+            year: py,
+            month: month,
+            sales: sales,
+            profit: hasExpense ? sales - expTotal : NaN,
+            hasExpense: hasExpense,
+          }});
+        }}
+        return out;
+      }}
+
+      function pickBestWorstBySales(records) {{
+        if (!records || !records.length) return {{ best: null, worst: null }};
+        var best = records[0];
+        var worst = records[0];
+        for (var i = 1; i < records.length; i++) {{
+          var r = records[i];
+          if (r.sales > best.sales) best = r;
+          if (r.sales < worst.sales) worst = r;
+        }}
+        return {{ best: best, worst: worst }};
+      }}
+
+      function patchHistoricalInsightAccess(root, iso) {{
+        if (!root) return;
+        var monthBlocks = root.querySelectorAll(
+          '.insight-overlay__section--monthly .insight-historical-insight-access'
+        );
+        var annualBlocks = root.querySelectorAll(
+          '.insight-overlay__section--annual .insight-historical-insight-access'
+        );
+        if (!iso) {{
+          monthBlocks.forEach(function (block) {{
+            clearHistoricalInsightAccessGroup(block.querySelector('[data-insight-month-key="best"]'));
+            clearHistoricalInsightAccessGroup(block.querySelector('[data-insight-month-key="worst"]'));
+          }});
+          annualBlocks.forEach(function (block) {{
+            clearHistoricalInsightAccessGroup(block.querySelector('[data-insight-year-key="best"]'));
+            clearHistoricalInsightAccessGroup(
+              block.querySelector('[data-insight-year-key="weakest"]')
+            );
+          }});
+          return;
+        }}
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {{
+          patchHistoricalInsightAccess(root, null);
+          return;
+        }}
+
+        var monthPick = pickBestWorstBySales(collectSameMonthHistory(y, month));
+        monthBlocks.forEach(function (block) {{
+          fillHistoricalInsightAccessGroup(
+            block.querySelector('[data-insight-month-key="best"]'),
+            monthPick.best,
+            'month'
+          );
+          fillHistoricalInsightAccessGroup(
+            block.querySelector('[data-insight-month-key="worst"]'),
+            monthPick.worst,
+            'month'
+          );
+        }});
+
+        var yearPick = pickBestWorstBySales(collectSameYtdHistory(y, month, day));
+        annualBlocks.forEach(function (block) {{
+          fillHistoricalInsightAccessGroup(
+            block.querySelector('[data-insight-year-key="best"]'),
+            yearPick.best,
+            'year'
+          );
+          fillHistoricalInsightAccessGroup(
+            block.querySelector('[data-insight-year-key="weakest"]'),
+            yearPick.worst,
+            'year'
+          );
+        }});
+      }}
 
       function setExpensePlChartPct(chartEl, fixedPct, variablePct) {{
         if (!chartEl) return;
