@@ -392,7 +392,7 @@
     body:not(.office-mode) .monthly-edit-float__confirm {
       font-family: 'Orbitron', sans-serif;
     }
-                                        /* KPI-CSV-UPLOAD-TOOLTIP */
+                                            /* KPI-CSV-UPLOAD-TOOLTIP */
     .monthly-edit-float__csv-upload[data-tooltip] {
       z-index: 2;
     }
@@ -1069,7 +1069,7 @@
       justify-content: center;
       text-align: center;
     }
-                                                /* PL-MEP-DAILY-INPUT-STYLE */
+                                                    /* PL-MEP-DAILY-INPUT-STYLE */
     .monthly-edit-float__label-row--daily-input {
       background: rgba(20, 72, 52, 0.72);
       color: rgba(210, 245, 225, 0.96);
@@ -4708,7 +4708,7 @@
             }
           })();
 
-                        /* KPI-DAILY-SALES-IMPORT */
+                              /* KPI-DAILY-SALES-IMPORT */
       (function () {
         var XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
 
@@ -6670,7 +6670,7 @@
         memoItems: []
       };
 
-                                                                        /* PL-MEP-LINE-CATALOG */
+                                                                              /* PL-MEP-LINE-CATALOG */
       var PL_LINE_CATALOG = [
   {
     "lineId": "store_sales",
@@ -9171,6 +9171,16 @@
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
           main.appendChild(btnEdit);
         }
+        if (item.rowRef && item.rowRef.editableLabel) {
+          var btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'monthly-edit-float__label-edit';
+          btnEdit.textContent = '✎';
+          btnEdit.setAttribute('data-action', 'edit-label');
+          btnEdit.setAttribute('data-row-id', item.rowRef.id);
+          btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
+          main.appendChild(btnEdit);
+        }
         if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
         else if (item.plReadonly) rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
         rowEl.appendChild(main);
@@ -10084,7 +10094,7 @@
           editSessionCommitted = true;
         });
       }
-                                    /* KPI-MEP-INCOME-STREAMS */
+                                          /* KPI-MEP-INCOME-STREAMS */
       var MEP_INCOME_STREAM_IDS = ['sales_a', 'sales_b', 'food_sales', 'drink_sales'];
       var MEP_INCOME_INPUT_STREAM_IDS = ['sales_a', 'sales_b', 'food_sales'];
       var __mepIncomeStreamsBusy = false;
@@ -10681,7 +10691,7 @@
         true
       );
 
-                                                      /* PL-MEP-PL-CATALOG-SYNC */
+                                                            /* PL-MEP-PL-CATALOG-SYNC */
       function refreshExpenseCatalogFromPl() {
         createInitialRowsIfNeeded();
         syncSectionFromCatalog(state.fixedItems, catalogFixedDefs());

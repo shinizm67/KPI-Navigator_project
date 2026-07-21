@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 # Bump when default line list / isDefault / expenseAttribute / active / inputStyle defaults change.
-CATALOG_SCHEMA_VERSION = 7
+CATALOG_SCHEMA_VERSION = 8
 
 # (attrId, labelJa, labelEn) — fixed expense attributes for FL / KPI grouping
 FIXED_EXPENSE_ATTRIBUTES: list[tuple[str, str, str]] = [
@@ -40,8 +40,16 @@ INCOME_ROWS_V1: list[tuple[str, str, str, bool, bool]] = [
     ("store_sales", "店舗売上", "Store Sales", False, False),
     ("sales_a", "売上A", "Sales A", True, False),
     ("sales_b", "売上B", "Sales B", True, False),
+    ("food_sales", "フード売上", "Food Sales", False, False),
+    ("drink_sales", "ドリンク売上", "Drink Sales", False, False),
     ("sales_total", "売上合計", "Total Sales", False, True),
 ]
+
+# Food/Drink は MEP 日次入力＋PL Analyze 配線用。PL 収入ブロック（店舗/A/B/合計）には出さない。
+PL_INCOME_TABLE_EXCLUDE: frozenset[str] = frozenset({"food_sales", "drink_sales"})
+
+# MEP 上の drink_sales は Store − Food の AUTO CALC（緑行ではない）
+MEP_INCOME_AUTO_CALC_IDS: frozenset[str] = frozenset({"drink_sales"})
 
 EXPENSES_SUMMARY_ROWS_V1: list[tuple[str, str, str, bool, bool]] = [
     ("expense_fixed", "固定費", "Fixed", False, False),
@@ -125,6 +133,7 @@ def mep_catalog_entries() -> list[dict[str, Any]]:
     for lid, ja, en, editable, is_total in INCOME_ROWS_V1:
         if is_total:
             continue
+        auto_calc = lid in MEP_INCOME_AUTO_CALC_IDS
         rows.append(
             {
                 "lineId": lid,
@@ -135,7 +144,8 @@ def mep_catalog_entries() -> list[dict[str, Any]]:
                 "editableLabel": editable,
                 "inputStyle": "daily",
                 "resolvedInputStyle": "daily",
-                "mepEditable": True,
+                "mepEditable": not auto_calc,
+                "mepAutoCalc": auto_calc,
             }
         )
     for item in expense_detail_default_catalog():

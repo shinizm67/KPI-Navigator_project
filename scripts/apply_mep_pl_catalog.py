@@ -99,7 +99,8 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
                 editableLabel: base.editableLabel === true,
                 inputStyle: base.inputStyle || 'daily',
                 resolvedInputStyle: base.resolvedInputStyle || 'daily',
-                mepEditable: true,
+                mepEditable: base.mepEditable !== false,
+                mepAutoCalc: base.mepAutoCalc === true,
                 active: line.active !== false,
               }};
             }});
@@ -128,6 +129,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           deletable: false,
           sub: def.section === 'expense',
           mepEditable: !!def.mepEditable,
+          mepAutoCalc: def.mepAutoCalc === true,
           resolvedInputStyle: def.resolvedInputStyle || 'monthly',
           bucket: def.bucket || null
         }};
@@ -148,6 +150,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
             prev.labelJa = d.labelJa;
             prev.labelEn = d.labelEn;
             prev.mepEditable = !!d.mepEditable;
+            prev.mepAutoCalc = !!d.mepAutoCalc;
             prev.resolvedInputStyle = d.resolvedInputStyle || 'monthly';
             prev.bucket = d.bucket || null;
             prev.editableLabel = !!d.editableLabel;
@@ -404,6 +407,233 @@ def patch_build_grid(text: str) -> str:
     return text.replace(old2, new2, 1)
 
 
+def patch_total_sales_exclude_food_drink(text: str) -> str:
+    """Food/Drink は Store 内訳のため Total Sales 合算から除外。冪等。"""
+    if "function isTotalSalesIncomeRow(" in text:
+        return text
+    old = """      function aggregateValue(id, iso) {
+        if (id === 'totalSales') return sumRows(state.incomeItems, iso);
+        if (id === 'fixed') return sumRows(state.fixedItems, iso);
+        if (id === 'expected') return sumRows(state.variableItems, iso);
+        if (id === 'totalExpenses') return aggregateValue('fixed', iso) + aggregateValue('expected', iso);
+        if (id === 'profit') return aggregateValue('totalSales', iso) - aggregateValue('totalExpenses', iso);
+        return 0;
+      }"""
+    new = """      function isTotalSalesIncomeRow(row) {
+        if (!row) return false;
+        var lid = row.lineId || row.id;
+        return lid === 'store_sales' || lid === 'sales_a' || lid === 'sales_b';
+      }
+      function sumTotalSalesIncome(iso) {
+        var total = 0;
+        (state.incomeItems || []).forEach(function (r) {
+          if (!isTotalSalesIncomeRow(r)) return;
+          total += readValue(r.id, iso);
+        });
+        return total;
+      }
+      function aggregateValue(id, iso) {
+        /* Food/Drink は Store の内訳。総売上(Store+A+B)には含めない */
+        if (id === 'totalSales') return sumTotalSalesIncome(iso);
+        if (id === 'fixed') return sumRows(state.fixedItems, iso);
+        if (id === 'expected') return sumRows(state.variableItems, iso);
+        if (id === 'totalExpenses') return aggregateValue('fixed', iso) + aggregateValue('expected', iso);
+        if (id === 'profit') return aggregateValue('totalSales', iso) - aggregateValue('totalExpenses', iso);
+        return 0;
+      }"""
+    if old not in text:
+        raise ValueError("totalSales exclude food/drink patch miss")
+    return text.replace(old, new, 1)
+
+
+def patch_build_grid_food_drink_auto(text: str) -> str:
+    """Phase 2: drink_sales (mepAutoCalc) を AUTO CALC 表示にする。冪等。"""
+    if "r.row.mepAutoCalc" in text and "computeDrinkSalesValue" in text:
+        return text
+    old_label = """            if (r.type === 'moneyRow') {
+              labelInfo.label = rowLabel(r.row);
+              labelInfo.rowRef = r.row;
+              labelInfo.sub = r.section !== 'income';
+              labelInfo.dailyInput = !!r.row.mepEditable;
+              labelInfo.plReadonly = !r.row.mepEditable;
+              labelInfo.manualInput = !!r.row.mepEditable;
+              if (r.row.mepEditable) tr.classList.add('mef-row--daily-input');
+              else tr.classList.add('mef-row--pl-readonly');
+            } else {"""
+    new_label = """            if (r.type === 'moneyRow') {
+              labelInfo.label = rowLabel(r.row);
+              labelInfo.rowRef = r.row;
+              labelInfo.sub = r.section !== 'income';
+              if (r.row.mepAutoCalc) {
+                labelInfo.autoCalc = true;
+                labelInfo.autoCalcTitle = typeof drinkSalesAutoCalcHint === 'function'
+                  ? drinkSalesAutoCalcHint()
+                  : t('店舗売上 − フード売上（自動）', 'Store − Food (auto)');
+                labelInfo.dailyInput = false;
+                labelInfo.plReadonly = false;
+                labelInfo.manualInput = false;
+              } else {
+                labelInfo.dailyInput = !!r.row.mepEditable;
+                labelInfo.plReadonly = !r.row.mepEditable;
+                labelInfo.manualInput = !!r.row.mepEditable;
+                if (r.row.mepEditable) tr.classList.add('mef-row--daily-input');
+                else tr.classList.add('mef-row--pl-readonly');
+              }
+            } else {"""
+    if old_label not in text:
+        raise ValueError("food/drink auto label patch miss")
+    text = text.replace(old_label, new_label, 1)
+
+    # Current HTML may already have the mepEditable title branch from Phase1 catalog apply.
+    old_input_a = """              } else if (r.type === 'moneyRow') {
+                inp.value = fmtMoney(readValue(r.row.id, iso));
+                inp.setAttribute('data-action', 'money-input');
+                inp.setAttribute('data-row-id', r.row.id);
+                inp.setAttribute('data-iso', iso);
+                if (r.row.mepEditable) {
+                  var salesBlocked =
+                    window.KpiYearStore &&
+                    iso &&
+                    !KpiYearStore.canWriteDailySalesFrom('mep', iso);
+                  if (salesBlocked) {
+                    inp.disabled = true;
+                    inp.readOnly = true;
+                    inp.setAttribute(
+                      'title',
+                      t(
+                        '日次売上の入力経路は Annual / Sales Data です（設定で MEP に切替可）',
+                        'Daily sales input is via Annual / Sales Data (switch to MEP in settings)'
+                      )
+                    );
+                  } else {
+                    inp.setAttribute('title', manualInputHint());
+                  }
+                } else {
+                  inp.disabled = true;
+                  inp.readOnly = true;
+                  inp.setAttribute('title', t('PL表で月次入力', 'Enter monthly on PL table'));
+                }
+              } else if (r.autoCalc) {"""
+    old_input_b = """              } else if (r.type === 'moneyRow') {
+                inp.value = fmtMoney(readValue(r.row.id, iso));
+                inp.setAttribute('data-action', 'money-input');
+                inp.setAttribute('data-row-id', r.row.id);
+                inp.setAttribute('data-iso', iso);
+                if (r.row.mepEditable) {
+                  inp.setAttribute('title', manualInputHint());
+                } else {
+                  inp.disabled = true;
+                  inp.readOnly = true;
+                  inp.setAttribute('title', t('PL表で月次入力', 'Enter monthly on PL table'));
+                }
+              } else if (r.autoCalc) {"""
+    new_input = """              } else if (r.type === 'moneyRow') {
+                if (r.row.mepAutoCalc) {
+                  var drinkVal = typeof computeDrinkSalesValue === 'function'
+                    ? computeDrinkSalesValue(iso)
+                    : Math.max(
+                        0,
+                        Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0) -
+                          Math.round(Number(readValue('food_sales', iso)) || 0)
+                      );
+                  inp.value = fmtMoney(drinkVal);
+                  inp.disabled = true;
+                  inp.readOnly = true;
+                  inp.setAttribute(
+                    'title',
+                    typeof drinkSalesAutoCalcHint === 'function'
+                      ? drinkSalesAutoCalcHint()
+                      : t('店舗売上 − フード売上（自動）', 'Store − Food (auto)')
+                  );
+                } else {
+                  inp.value = fmtMoney(readValue(r.row.id, iso));
+                  inp.setAttribute('data-action', 'money-input');
+                  inp.setAttribute('data-row-id', r.row.id);
+                  inp.setAttribute('data-iso', iso);
+                  if (r.row.mepEditable) {
+                    var salesBlocked =
+                      window.KpiYearStore &&
+                      iso &&
+                      !KpiYearStore.canWriteDailySalesFrom('mep', iso);
+                    if (salesBlocked) {
+                      inp.disabled = true;
+                      inp.readOnly = true;
+                      inp.setAttribute(
+                        'title',
+                        t(
+                          '日次売上の入力経路は Annual / Sales Data です（設定で MEP に切替可）',
+                          'Daily sales input is via Annual / Sales Data (switch to MEP in settings)'
+                        )
+                      );
+                    } else {
+                      inp.setAttribute('title', manualInputHint());
+                    }
+                  } else {
+                    inp.disabled = true;
+                    inp.readOnly = true;
+                    inp.setAttribute('title', t('PL表で月次入力', 'Enter monthly on PL table'));
+                  }
+                }
+              } else if (r.autoCalc) {"""
+    if old_input_a in text:
+        text = text.replace(old_input_a, new_input, 1)
+    elif old_input_b in text:
+        text = text.replace(old_input_b, new_input, 1)
+    else:
+        raise ValueError("food/drink auto input patch miss")
+    return text
+
+
+def patch_hydrate_income_on_year_context(text: str) -> str:
+    """Year 切替時に dailyIncome (food 等) を rowValueById へ復帰。"""
+    needle = """      function onMepYearContextChanged(year) {
+        createInitialRowsIfNeeded();
+        loadMepFromYearStore(year);
+        if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
+          syncMonthlySalesFromAnnualStoreForMonth();
+        }
+        if (typeof syncBizDayFromAnnualStoreForMonth === 'function') {
+          syncBizDayFromAnnualStoreForMonth();
+        }
+      }"""
+    repl = """      function onMepYearContextChanged(year) {
+        createInitialRowsIfNeeded();
+        loadMepFromYearStore(year);
+        if (typeof hydrateMepIncomeStreamsFromStore === 'function') {
+          hydrateMepIncomeStreamsFromStore(year);
+        }
+        if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
+          syncMonthlySalesFromAnnualStoreForMonth();
+        }
+        if (typeof syncBizDayFromAnnualStoreForMonth === 'function') {
+          syncBizDayFromAnnualStoreForMonth();
+        }
+      }"""
+    if "hydrateMepIncomeStreamsFromStore(year)" in text:
+        return text
+    if needle not in text:
+        # Dual-injected blocks: replace all occurrences
+        if "function onMepYearContextChanged(year)" not in text:
+            raise ValueError("onMepYearContextChanged missing")
+        text2 = text.replace(
+            """        loadMepFromYearStore(year);
+        if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
+          syncMonthlySalesFromAnnualStoreForMonth();
+        }""",
+            """        loadMepFromYearStore(year);
+        if (typeof hydrateMepIncomeStreamsFromStore === 'function') {
+          hydrateMepIncomeStreamsFromStore(year);
+        }
+        if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
+          syncMonthlySalesFromAnnualStoreForMonth();
+        }""",
+        )
+        if text2 == text:
+            raise ValueError("hydrate year-context patch miss")
+        return text2
+    return text.replace(needle, repl)
+
+
 def inject_sync(text: str) -> str:
     if SYNC_MARKER in text:
         text = re.sub(
@@ -477,6 +707,9 @@ def patch_file(path: Path) -> None:
     if "labelInfo.dailyInput" not in text:
         text = patch_current_rows(text)
         text = patch_build_grid(text)
+    text = patch_build_grid_food_drink_auto(text)
+    text = patch_hydrate_income_on_year_context(text)
+    text = patch_total_sales_exclude_food_drink(text)
     text = patch_create_label_row(text)
     commit_with_upsert = (
         "              markDirty();\n"

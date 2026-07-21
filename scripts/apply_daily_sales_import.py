@@ -29,8 +29,8 @@ MEP_PAGES = [
 
 CSV_BTN_TOOLTIP_JA_OLD = 'title="CSVファイルを取り込んで表を更新（準備中）"'
 CSV_BTN_TOOLTIP_JA_NEW = (
-    'title="CSVで日次売上を取り込めます。Excel（.xlsx）も利用できます。"\n'
-    '        data-tooltip="CSVで日次売上を取り込めます。Excel（.xlsx）も利用できます。"'
+    'title="CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。"\n'
+    '        data-tooltip="CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。"'
 )
 
 CSV_BTN_TOOLTIP_JA_PLAIN_OLD = 'title="CSVファイルを取り込んで表を更新"'
@@ -38,8 +38,8 @@ CSV_BTN_TOOLTIP_JA_PLAIN_NEW = CSV_BTN_TOOLTIP_JA_NEW
 
 CSV_BTN_TOOLTIP_EN_OLD = 'title="Import a CSV file to update the table (coming soon)"'
 CSV_BTN_TOOLTIP_EN_NEW = (
-    'title="Import daily sales from CSV. You can upload Excel (.xlsx) files as well."\n'
-    '        data-tooltip="Import daily sales from CSV. You can upload Excel (.xlsx) files as well."'
+    'title="Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK)."\n'
+    '        data-tooltip="Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK)."'
 )
 
 CSV_BTN_TOOLTIP_EN_PLAIN_OLD = 'title="Import a CSV file to update the table"'
@@ -129,26 +129,70 @@ MEP_CSV_NEW = """      if (btnCsvUpload && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
           getYear: function () { return mefYear; },
           applyMaps: function (maps, year) {
-            pushUndoSnapshot();
-            var primary = state.incomeItems && state.incomeItems[0];
-            if (!primary) return;
-            var isoList = monthIsoList(mefYear, mefMonth0);
-            isoList.forEach(function (iso) {
-              if (!Object.prototype.hasOwnProperty.call(maps.salesByDate, iso)) return;
-              var biz = maps.businessDayByDate[iso] !== false;
-              var sales = Number(maps.salesByDate[iso]);
-              bizDayByIso[iso] = biz;
-              if (biz && Number.isFinite(sales) && sales > 0) {
-                writeValue(primary.id, iso, Math.round(sales));
-              } else {
-                writeValue(primary.id, iso, 0);
-              }
-            });
+            pushUndo();
+            var applied = applyDailyImportMapsToOpenYear(maps, year);
+            if (!applied) return;
+            syncMonthlySalesToAnnualStoreForYear(mefYear);
             markDirty();
             syncUndoButton();
             buildGrid();
           },
         });
+      }"""
+
+MEP_CSV_PUSH_UNDO_BUG = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var applied = applyDailyImportMapsToOpenYear(maps, year);"""
+
+MEP_CSV_PUSH_UNDO_FIX = """          applyMaps: function (maps, year) {
+            pushUndo();
+            var applied = applyDailyImportMapsToOpenYear(maps, year);"""
+
+MEP_APPLY_IMPORT_OLD = """      function applyDailyImportMapsToOpenYear(maps, year) {
+        var primary = state.incomeItems && state.incomeItems[0];
+        if (!primary || !maps) return 0;
+        var yf = Number(year);
+        var applied = 0;
+        Object.keys(maps.salesByDate || {}).forEach(function (iso) {
+          if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
+          if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso)) return;
+          var biz = maps.businessDayByDate[iso] !== false;
+          var sales = Number(maps.salesByDate[iso]);
+          bizDayByIso[iso] = biz;
+          if (biz && Number.isFinite(sales) && sales > 0) {
+            writeValue(primary.id, iso, Math.round(sales));
+          } else {
+            writeValue(primary.id, iso, 0);
+          }
+          applied++;
+        });
+        return applied;
+      }"""
+
+MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, year) {
+        var primary = state.incomeItems && state.incomeItems[0];
+        if (!primary || !maps) return 0;
+        var yf = Number(year);
+        var applied = 0;
+        var foodMap = maps.foodByDate || {};
+        Object.keys(maps.salesByDate || {}).forEach(function (iso) {
+          if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
+          if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso)) return;
+          var biz = maps.businessDayByDate[iso] !== false;
+          var sales = Number(maps.salesByDate[iso]);
+          bizDayByIso[iso] = biz;
+          if (biz && Number.isFinite(sales) && sales > 0) {
+            writeValue(primary.id, iso, Math.round(sales));
+          } else {
+            writeValue(primary.id, iso, 0);
+          }
+          if (Object.prototype.hasOwnProperty.call(foodMap, iso) && typeof writeValue === 'function') {
+            var food = Number(foodMap[iso]);
+            writeValue('food_sales', iso, Number.isFinite(food) ? Math.round(food) : 0);
+          }
+          applied++;
+        });
+        return applied;
       }"""
 
 
@@ -215,6 +259,12 @@ def patch_tooltips(text: str, is_ja: bool) -> str:
         )
         if old_ja_mid in text:
             text = text.replace(old_ja_mid, CSV_BTN_TOOLTIP_JA_NEW)
+        old_ja_xlsx = (
+            'title="CSVで日次売上を取り込めます。Excel（.xlsx）も利用できます。"\n'
+            '        data-tooltip="CSVで日次売上を取り込めます。Excel（.xlsx）も利用できます。"'
+        )
+        if old_ja_xlsx in text:
+            text = text.replace(old_ja_xlsx, CSV_BTN_TOOLTIP_JA_NEW)
     else:
         for old in (
             CSV_BTN_TOOLTIP_EN_OLD,
@@ -223,6 +273,8 @@ def patch_tooltips(text: str, is_ja: bool) -> str:
             MEP_CSV_TITLE_EN_OLD_AND,
             'title="Import daily sales from a CSV or Excel (.xlsx) file"\n'
             '        data-tooltip="Import daily sales from a CSV or Excel (.xlsx) file"',
+            'title="Import daily sales from CSV. You can upload Excel (.xlsx) files as well."\n'
+            '        data-tooltip="Import daily sales from CSV. You can upload Excel (.xlsx) files as well."',
         ):
             if old in text:
                 text = text.replace(old, CSV_BTN_TOOLTIP_EN_NEW)
@@ -255,11 +307,22 @@ def patch_annual_page(path: Path) -> None:
     print(f"wrote {path.relative_to(ROOT)}")
 
 
+def patch_mep_apply_food_drink(text: str) -> str:
+    if "var foodMap = maps.foodByDate || {};" in text and "writeValue('food_sales'" in text:
+        return text
+    if MEP_APPLY_IMPORT_OLD in text:
+        return text.replace(MEP_APPLY_IMPORT_OLD, MEP_APPLY_IMPORT_NEW, 1)
+    raise SystemExit("patch miss (mep applyDailyImportMaps food/drink)")
+
+
 def patch_mep_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     is_ja = "/en/" not in str(path)
     text = inject_import_js(text)
     text = patch_tooltips(text, is_ja)
+    text = patch_mep_apply_food_drink(text)
+    if MEP_CSV_PUSH_UNDO_BUG in text:
+        text = text.replace(MEP_CSV_PUSH_UNDO_BUG, MEP_CSV_PUSH_UNDO_FIX, 1)
     if is_ja:
         if MEP_CSV_TITLE_JA_OLD in text:
             text = text.replace(MEP_CSV_TITLE_JA_OLD, MEP_CSV_TITLE_JA_NEW, 1)
