@@ -17412,7 +17412,7 @@ Cumulative Target Annual Sales</p>
 
   <script>
     (function () {
-                                                            /* KPI-INSIGHT-EXPENSE-READ */
+                                                                    /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -19067,7 +19067,7 @@ Cumulative Target Annual Sales</p>
         patchAnalyzeAnnualHistoricalCompare(root, m, iso);
         patchGraphDailyBlocks(root, m, iso);
         patchGraphMonthlyAnnualCumBars(root, m);
-        patchAnalyzeMonthlyExpenseCurrent(m, iso);
+        patchAnalyzeMonthlyExpenseCharts(m, iso);
       };
 
       function setExpensePlChartPct(chartEl, fixedPct, variablePct) {
@@ -19084,12 +19084,36 @@ Cumulative Target Annual Sales</p>
         if (variableEl) variableEl.textContent = v + '%';
       }
 
-      /* Phase2: Analyze → Monthly Expense 当月1本のみ（MEP daily ÷ mtdA） */
-      function patchAnalyzeMonthlyExpenseCurrent(m, iso) {
-        var chart = document.getElementById('insight-analyze-expense-pl-current');
-        if (!chart) return;
-        if (!m || !iso || typeof window.__insightReadMonthExpense !== 'function') {
-          setExpensePlChartPct(chart, 0, 0);
+      function expensePlPctFrom(exp, sales) {
+        var s = Number(sales);
+        if (!exp || !exp.hasData || !Number.isFinite(s) || s <= 0) {
+          return { fixed: 0, variable: 0 };
+        }
+        return {
+          fixed: (Number(exp.fixed) / s) * 100,
+          variable: (Number(exp.variable) / s) * 100,
+        };
+      }
+
+      /**
+       * Analyze → Monthly Expense & Profit（4本）
+       * 当月: expense thru day ÷ mtdA
+       * 前年/2y/3y: 同月同日までの支出 ÷ 同月同日までの売上（Historical Compare と同スコープ）
+       */
+      function patchAnalyzeMonthlyExpenseCharts(m, iso) {
+        var ids = [
+          'insight-analyze-expense-pl-current',
+          'insight-analyze-expense-pl-last-year',
+          'insight-analyze-expense-pl-2y',
+          'insight-analyze-expense-pl-3y',
+        ];
+        function clearAll() {
+          ids.forEach(function (id) {
+            setExpensePlChartPct(document.getElementById(id), 0, 0);
+          });
+        }
+        if (!iso || typeof window.__insightReadMonthExpense !== 'function') {
+          clearAll();
           return;
         }
         var parts = String(iso).split('-');
@@ -19097,20 +19121,45 @@ Cumulative Target Annual Sales</p>
         var month = Number(parts[1]);
         var day = Number(parts[2]);
         if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
-          setExpensePlChartPct(chart, 0, 0);
+          clearAll();
           return;
         }
-        var exp = window.__insightReadMonthExpense(y, month, day);
-        var sales = Number(m.mtdA);
-        if (!exp || !exp.hasData || !Number.isFinite(sales) || sales <= 0) {
-          setExpensePlChartPct(chart, 0, 0);
-          return;
+
+        var sumFn =
+          typeof window.__sumMonthSalesThroughDay === 'function'
+            ? window.__sumMonthSalesThroughDay
+            : null;
+
+        function fillPrior(chartId, yearsBack) {
+          var chart = document.getElementById(chartId);
+          if (!chart) return;
+          var py = y - yearsBack;
+          var exp = window.__insightReadMonthExpense(py, month, day);
+          var salesScope = sumFn ? sumFn(py, month, day) : null;
+          var sales =
+            salesScope && salesScope.hasData ? Number(salesScope.sum) : NaN;
+          var pct = expensePlPctFrom(exp, sales);
+          setExpensePlChartPct(chart, pct.fixed, pct.variable);
         }
-        setExpensePlChartPct(
-          chart,
-          (Number(exp.fixed) / sales) * 100,
-          (Number(exp.variable) / sales) * 100
-        );
+
+        var currentChart = document.getElementById(ids[0]);
+        if (currentChart) {
+          if (!m) {
+            setExpensePlChartPct(currentChart, 0, 0);
+          } else {
+            var curExp = window.__insightReadMonthExpense(y, month, day);
+            var curPct = expensePlPctFrom(curExp, m.mtdA);
+            setExpensePlChartPct(currentChart, curPct.fixed, curPct.variable);
+          }
+        }
+        fillPrior(ids[1], 1);
+        fillPrior(ids[2], 2);
+        fillPrior(ids[3], 3);
+      }
+
+      /* 互換: 旧名呼び出し */
+      function patchAnalyzeMonthlyExpenseCurrent(m, iso) {
+        patchAnalyzeMonthlyExpenseCharts(m, iso);
       }
 
       function refreshInsightTwDiffsFromStore() {

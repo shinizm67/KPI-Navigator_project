@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Insight Phase2: Analyze Monthly Expense 当月チャートのみ実データ化."""
+"""Insight: Analyze Monthly Expense 横棒4本（当月＋前年/2y/3y）を実データ化."""
 
 from __future__ import annotations
 
@@ -26,7 +26,10 @@ PAGES = [
     ROOT / "en/app/annual/index.html",
 ]
 
-MARKER = "patchAnalyzeMonthlyExpenseCurrent"
+MARKERS = (
+    "patchAnalyzeMonthlyExpenseCharts",
+    "expensePlPctFrom",
+)
 
 
 def inject_insight_diff(text: str) -> str:
@@ -44,10 +47,11 @@ def inject_insight_diff(text: str) -> str:
 
 def patch_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    text = inject_expense_read(text)  # keep read API present / correctly placed
+    text = inject_expense_read(text)
     text = inject_insight_diff(text)
-    if MARKER not in text:
-        raise SystemExit(f"{MARKER} missing: {path}")
+    for marker in MARKERS:
+        if marker not in text:
+            raise SystemExit(f"{marker} missing: {path}")
     if "__insightReadMonthExpense" not in text:
         raise SystemExit(f"expense read missing: {path}")
     path.write_text(text, encoding="utf-8")
