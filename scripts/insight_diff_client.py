@@ -523,8 +523,29 @@ def insight_diff_js() -> str:
         }} else {{
           setRow(2, DASH, NaN, NaN);
         }}
-        /* Margin Change — Expense 未接続 */
-        setRow(3, DASH, NaN, NaN);
+        var marginNow = null;
+        var marginLast = null;
+        if (
+          typeof window.__insightReadExpenseSnapshot === 'function' &&
+          last &&
+          last.hasData &&
+          Number.isFinite(current) &&
+          current > 0
+        ) {{
+          var curSnap = window.__insightReadExpenseSnapshot(iso);
+          var priorIso =
+            String(y - 1) + '-' + pad2Insight(month) + '-' + pad2Insight(day);
+          var priorSnap = window.__insightReadExpenseSnapshot(priorIso);
+          if (curSnap && curSnap.hasData && priorSnap && priorSnap.hasData) {{
+            marginNow = insightProfitMarginPct(current, curSnap.month.total);
+            marginLast = insightProfitMarginPct(last.sum, priorSnap.month.total);
+          }}
+        }}
+        if (marginNow != null && marginLast != null) {{
+          setRow(3, fmtInsightMarginChangePct(marginNow, marginLast), marginNow, marginLast);
+        }} else {{
+          setRow(3, DASH, NaN, NaN);
+        }}
 
         var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
         if (Number.isFinite(current) && histAvg != null && histAvg > 0) {{
@@ -584,8 +605,29 @@ def insight_diff_js() -> str:
         }} else {{
           setRow(2, DASH, NaN, NaN);
         }}
-        /* Margin Change — Expense 未接続 */
-        setRow(3, DASH, NaN, NaN);
+        var marginNow = null;
+        var marginLast = null;
+        if (
+          typeof window.__insightReadExpenseSnapshot === 'function' &&
+          last &&
+          last.hasData &&
+          Number.isFinite(current) &&
+          current > 0
+        ) {{
+          var curSnap = window.__insightReadExpenseSnapshot(iso);
+          var priorIso =
+            String(y - 1) + '-' + pad2Insight(month) + '-' + pad2Insight(day);
+          var priorSnap = window.__insightReadExpenseSnapshot(priorIso);
+          if (curSnap && curSnap.hasData && priorSnap && priorSnap.hasData) {{
+            marginNow = insightProfitMarginPct(current, curSnap.year.total);
+            marginLast = insightProfitMarginPct(last.sum, priorSnap.year.total);
+          }}
+        }}
+        if (marginNow != null && marginLast != null) {{
+          setRow(3, fmtInsightMarginChangePct(marginNow, marginLast), marginNow, marginLast);
+        }} else {{
+          setRow(3, DASH, NaN, NaN);
+        }}
 
         var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
         if (Number.isFinite(current) && histAvg != null && histAvg > 0) {{
@@ -637,10 +679,137 @@ def insight_diff_js() -> str:
         return Math.round((p / s) * 100) + '%';
       }}
 
-      function patchSummaryMonthlyKpiBlock(block, mtdA) {{
+      function pad2Insight(n) {{
+        return (n < 10 ? '0' : '') + n;
+      }}
+
+      function isoDaysAgo(iso, days) {{
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        d.setDate(d.getDate() - Number(days));
+        return (
+          d.getFullYear() +
+          '-' +
+          pad2Insight(d.getMonth() + 1) +
+          '-' +
+          pad2Insight(d.getDate())
+        );
+      }}
+
+      function insightProfitMarginPct(sales, expenseTotal) {{
+        var s = Number(sales);
+        var e = Number(expenseTotal);
+        if (!Number.isFinite(s) || s <= 0) return null;
+        if (!Number.isFinite(e)) e = 0;
+        return ((s - e) / s) * 100;
+      }}
+
+      function fmtInsightMarginChangePct(currentPct, baselinePct) {{
+        if (!Number.isFinite(currentPct) || !Number.isFinite(baselinePct)) return DASH;
+        var delta = currentPct - baselinePct;
+        var sign = delta >= 0 ? '+' : '';
+        return sign + (Math.round(delta * 10) / 10) + '%';
+      }}
+
+      function patchSummarySalesKpiExpenseRows(rows, sales, scope) {{
+        var expEl = rows[1] && rows[1].querySelector('.insight-monthly-kpi__value, .insight-annual-kpi__value');
+        var profitEl = rows[2] && rows[2].querySelector('.insight-monthly-kpi__value, .insight-annual-kpi__value');
+        var marginEl = rows[3] && rows[3].querySelector('.insight-monthly-kpi__value, .insight-annual-kpi__value');
+        if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
+          if (expEl) expEl.textContent = DASH;
+          if (profitEl) profitEl.textContent = DASH;
+          if (marginEl) marginEl.textContent = DASH;
+          return;
+        }}
+        var s = Number(sales);
+        var total = Number(scope.total);
+        var profit = s - total;
+        if (expEl) expEl.textContent = fmtInsightMoney(total);
+        if (profitEl) profitEl.textContent = fmtInsightMoney(profit);
+        if (marginEl) marginEl.textContent = fmtInsightProfitMarginPct(s, profit);
+      }}
+
+      function patchSummaryDailyReferenceBlock(block, m, iso) {{
+        var rows = block.querySelectorAll('.insight-daily-reference__row');
+        function setVal(i, text, actual, baseline) {{
+          var el = rows[i] && rows[i].querySelector('.insight-daily-reference__value');
+          if (!el) return;
+          el.textContent = text;
+          if (arguments.length >= 4 && typeof window.applyInsightTwDiffEl === 'function') {{
+            window.applyInsightTwDiffEl(el, actual, baseline);
+          }}
+        }}
+        function clearAll() {{
+          for (var i = 0; i < 4; i++) setVal(i, DASH, NaN, NaN);
+        }}
+        if (!m || !iso || !m.isBusinessToday) {{
+          clearAll();
+          return;
+        }}
+        var sameFn =
+          typeof window.__sameWeekdayIso === 'function' ? window.__sameWeekdayIso : null;
+        var bizFn =
+          typeof window.__isTwBusinessDay === 'function' ? window.__isTwBusinessDay : null;
+        var salesFn =
+          typeof window.__readTwDaySales === 'function' ? window.__readTwDaySales : null;
+        if (!sameFn || !bizFn || !salesFn) {{
+          clearAll();
+          return;
+        }}
+        var current = Number(m.dailySales);
+        if (!Number.isFinite(current)) {{
+          clearAll();
+          return;
+        }}
+        var histAvg = avgPriorSameWeekdaySales(iso);
+        setVal(
+          0,
+          histAvg != null && histAvg > 0 ? fmtInsightMoney(histAvg) : DASH,
+          histAvg != null ? current : NaN,
+          histAvg != null ? histAvg : NaN
+        );
+        var lyIso = sameFn(iso, 1);
+        var lyBiz = lyIso && bizFn(lyIso);
+        var lySales = lyBiz ? Number(salesFn(lyIso)) : NaN;
+        setVal(1, lyBiz && Number.isFinite(lySales) ? fmtInsightMoney(lySales) : DASH);
+        if (histAvg != null && histAvg > 0) {{
+          setVal(
+            2,
+            typeof window.__twFmtDiff === 'function'
+              ? window.__twFmtDiff(current, histAvg)
+              : DASH,
+            current,
+            histAvg
+          );
+        }} else {{
+          setVal(2, DASH, NaN, NaN);
+        }}
+        var weekIso = isoDaysAgo(iso, 7);
+        var weekBiz = weekIso && bizFn(weekIso);
+        var weekSales = weekBiz ? Number(salesFn(weekIso)) : NaN;
+        setVal(3, weekBiz && Number.isFinite(weekSales) ? fmtInsightMoney(weekSales) : DASH);
+      }}
+
+      function patchSummaryDailyReferenceBlocks(root, m, iso) {{
+        root.querySelectorAll('.insight-daily-reference').forEach(function (block) {{
+          patchSummaryDailyReferenceBlock(block, m, iso);
+        }});
+      }}
+
+      function patchSummaryMonthlyKpiBlock(block, m, expenseSnap) {{
         var rows = block.querySelectorAll('.insight-monthly-kpi__row');
         var salesEl = rows[0] && rows[0].querySelector('.insight-monthly-kpi__value');
-        if (salesEl) salesEl.textContent = fmtInsightMoney(mtdA);
+        if (!m) {{
+          if (salesEl) salesEl.textContent = DASH;
+          patchSummarySalesKpiExpenseRows(rows, NaN, null);
+          return;
+        }}
+        if (salesEl) salesEl.textContent = fmtInsightMoney(m.mtdA);
+        patchSummarySalesKpiExpenseRows(
+          rows,
+          m.mtdA,
+          expenseSnap && expenseSnap.hasData ? expenseSnap.month : null
+        );
       }}
 
       function patchSummaryMonthlyProgressBlock(block, m) {{
@@ -711,12 +880,12 @@ def insight_diff_js() -> str:
         }}
 
         if (!m) {{
-          if (kpi) patchSummaryMonthlyKpiBlock(kpi, NaN);
+          if (kpi) patchSummaryMonthlyKpiBlock(kpi, null, null);
           if (cost) patchMonthlyCostBlock(cost, NaN, null);
           if (progress) patchSummaryMonthlyProgressBlock(progress, null);
           return;
         }}
-        if (kpi) patchSummaryMonthlyKpiBlock(kpi, m.mtdA);
+        if (kpi) patchSummaryMonthlyKpiBlock(kpi, m, expenseSnap);
         if (cost) patchMonthlyCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null);
         if (progress) patchSummaryMonthlyProgressBlock(progress, m);
       }}
@@ -739,10 +908,20 @@ def insight_diff_js() -> str:
         return row && row.querySelector('.insight-annual-target-revision__value');
       }}
 
-      function patchSummaryAnnualKpiBlock(block, ytdA) {{
+      function patchSummaryAnnualKpiBlock(block, m, expenseSnap) {{
         var rows = block.querySelectorAll('.insight-annual-kpi__row');
         var salesEl = rows[0] && rows[0].querySelector('.insight-annual-kpi__value');
-        if (salesEl) salesEl.textContent = fmtInsightMoney(ytdA);
+        if (!m) {{
+          if (salesEl) salesEl.textContent = DASH;
+          patchSummarySalesKpiExpenseRows(rows, NaN, null);
+          return;
+        }}
+        if (salesEl) salesEl.textContent = fmtInsightMoney(m.ytdA);
+        patchSummarySalesKpiExpenseRows(
+          rows,
+          m.ytdA,
+          expenseSnap && expenseSnap.hasData ? expenseSnap.year : null
+        );
       }}
 
       function patchSummaryAnnualProgressBlock(block, m) {{
@@ -852,13 +1031,13 @@ def insight_diff_js() -> str:
         }}
 
         if (!m) {{
-          if (kpi) patchSummaryAnnualKpiBlock(kpi, NaN);
+          if (kpi) patchSummaryAnnualKpiBlock(kpi, null, null);
           if (cost) patchAnnualCostBlock(cost, NaN, null);
           if (progress) patchSummaryAnnualProgressBlock(progress, null);
           if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
           return;
         }}
-        if (kpi) patchSummaryAnnualKpiBlock(kpi, m.ytdA);
+        if (kpi) patchSummaryAnnualKpiBlock(kpi, m, expenseSnap);
         if (cost) patchAnnualCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null);
         if (progress) patchSummaryAnnualProgressBlock(progress, m);
         if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
@@ -1076,10 +1255,17 @@ def insight_diff_js() -> str:
             ? window.__computeTwMetricsForIso
             : null;
         var m = compute ? compute(iso) : null;
+        var expenseSnap = null;
+        if (iso && typeof window.__insightReadExpenseSnapshot === 'function') {{
+          expenseSnap = window.__insightReadExpenseSnapshot(iso);
+        }}
 
         root.querySelectorAll('.insight-daily-kpi').forEach(function (block) {{
           if (!m) {{
             patchDailyKpiBlock(block, NaN, NaN, false);
+            var pmRows = block.querySelectorAll('.insight-daily-kpi__row');
+            var pmEl = pmRows[3] && pmRows[3].querySelector('.insight-daily-kpi__value');
+            if (pmEl) pmEl.textContent = DASH;
             return;
           }}
           var hasDailyPlan = m.isBusinessToday && m.dailyTarget != null;
@@ -1089,6 +1275,19 @@ def insight_diff_js() -> str:
             m.dailyTarget,
             hasDailyPlan
           );
+          var rows = block.querySelectorAll('.insight-daily-kpi__row');
+          var pmEl = rows[3] && rows[3].querySelector('.insight-daily-kpi__value');
+          if (pmEl) {{
+            if (!m.isBusinessToday) {{
+              pmEl.textContent = DASH;
+            }} else if (expenseSnap && expenseSnap.hasData) {{
+              var sales = Number(m.dailySales);
+              var profit = sales - Number(expenseSnap.day.total);
+              pmEl.textContent = fmtInsightProfitMarginPct(sales, profit);
+            }} else {{
+              pmEl.textContent = DASH;
+            }}
+          }}
         }});
 
         root.querySelectorAll('.insight-monthly-sales-summary').forEach(function (block) {{
@@ -1107,10 +1306,8 @@ def insight_diff_js() -> str:
           patchAnnualSummaryBlock(block, m.ytdA, m.ytdT, m.hasPlan);
         }});
 
-        var expenseSnap = null;
-        if (iso && typeof window.__insightReadExpenseSnapshot === 'function') {{
-          expenseSnap = window.__insightReadExpenseSnapshot(iso);
-        }}
+        patchSummaryDailyReferenceBlocks(root, m, iso);
+
         root.querySelectorAll('.insight-daily-expenses').forEach(function (block) {{
           var rows = block.querySelectorAll('.insight-daily-expenses__row');
           var vEl = rows[0] && rows[0].querySelector('.insight-daily-expenses__value');

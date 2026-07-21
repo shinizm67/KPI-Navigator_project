@@ -1,4 +1,4 @@
-"""Insight — MEP dailyExpenses の月次読取専用（書込・UI 非接触）."""
+"""Insight — PL 表 + MEP と同一ソースから支出を読取（Insight / PL Insight 整合）."""
 
 from __future__ import annotations
 
@@ -9,206 +9,344 @@ INSIGHT_EXPENSE_READ_END = "/* END KPI-INSIGHT-EXPENSE-READ */"
 def insight_expense_read_js() -> str:
     return f"""    {INSIGHT_EXPENSE_READ_MARKER}
     (function () {{
-      var MEP_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
-      var MEP_FALLBACK_FIXED = [
-        'exp_rent',
-        'exp_fixed_labor',
-        'exp_non_life_insurance',
-      ];
-      var MEP_FALLBACK_VARIABLE = [
-        'exp_food_cost',
-        'exp_drink_cost',
-        'exp_supplies',
-        'exp_misc',
-        'exp_electric',
-        'exp_gas',
-        'exp_water',
-        'exp_communication',
-        'exp_advertising',
-        'exp_outsource',
-        'exp_repair',
-        'exp_travel',
-        'exp_entertainment',
-        'exp_fee',
-        'exp_tax',
-        'exp_other',
-      ];
+      var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
+      var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
+      var EXP_PREFIX = 'kpi-pl-expenses-v1:';
+      var ADJ_PREFIX = 'kpi-pl-expense-adjustments-v1:';
+
+      var allocCache = {{}};
+      var catalogCache = null;
+      var monthlyMapCache = {{}};
+      var adjMapCache = {{}};
 
       function pad2(n) {{
         return (n < 10 ? '0' : '') + n;
       }}
 
-      function plCatalogLines() {{
+      function isoOf(year, month, day) {{
+        return year + '-' + pad2(month) + '-' + pad2(day);
+      }}
+
+      function getJson(key) {{
         try {{
-          var raw =
-            window.__KPI_DATA_GATEWAY && window.__KPI_DATA_GATEWAY.getJson(MEP_CATALOG_KEY);
-          if (raw && Array.isArray(raw.lines)) return raw.lines;
+          var g = window.__KPI_DATA_GATEWAY;
+          if (g && typeof g.getJson === 'function') return g.getJson(key);
         }} catch (_e) {{}}
-        return null;
+        try {{
+          var raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        }} catch (_e2) {{
+          return null;
+        }}
       }}
 
-      function lineIdsForBucket(bucket) {{
-        var lines = plCatalogLines();
-        var out = [];
-        if (lines && lines.length) {{
-          lines.forEach(function (line) {{
-            if (!line || line.active === false) return;
-            if (line.bucket === bucket && line.lineId) out.push(String(line.lineId));
-          }});
+      function store() {{
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          try {{ KpiYearStore.syncToAnnualDaily(); }} catch (_e) {{}}
         }}
-        if (!out.length) {{
-          out = (bucket === 'fixed' ? MEP_FALLBACK_FIXED : MEP_FALLBACK_VARIABLE).slice();
-        }}
-        return out;
+        var s = getJson(YEAR_STORE_KEY);
+        return s && typeof s === 'object' ? s : null;
       }}
 
-      function categoryLineIds() {{
-        var lines = plCatalogLines() || [];
-        var out = {{
-          food: ['exp_food_cost'],
-          drink: ['exp_drink_cost'],
-          labor: ['exp_fixed_labor', 'exp_variable_labor'],
-        }};
-        if (!lines.length) return out;
-        function collect(testFn, fallback) {{
-          var ids = [];
-          lines.forEach(function (line) {{
-            if (!line || line.active === false || !line.lineId) return;
-            if (testFn(line)) ids.push(String(line.lineId));
-          }});
-          return ids.length ? ids : fallback.slice();
-        }}
-        out.food = collect(
-          function (line) {{ return String(line.lineId) === 'exp_food_cost'; }},
-          out.food
-        );
-        out.drink = collect(
-          function (line) {{ return String(line.lineId) === 'exp_drink_cost'; }},
-          out.drink
-        );
-        out.labor = collect(
-          function (line) {{
-            var id = String(line.lineId);
-            return id === 'exp_fixed_labor' || id === 'exp_variable_labor';
-          }},
-          out.labor
-        );
-        return out;
+      function yearRec(s, year) {{
+        if (!s || !s.years) return null;
+        return s.years[year] || s.years[String(year)] || null;
       }}
 
-      function sumBucketAtIso(dailyExpenses, rowIds, iso) {{
-        var map = dailyExpenses && typeof dailyExpenses === 'object' ? dailyExpenses : {{}};
-        var sum = 0;
-        var hasData = false;
-        (rowIds || []).forEach(function (rowId) {{
-          var byRow = map[rowId];
-          if (!byRow || !Object.prototype.hasOwnProperty.call(byRow, iso)) return;
-          hasData = true;
-          var n = Number(byRow[iso]);
-          if (Number.isFinite(n)) sum += n;
+      function catalog() {{
+        if (catalogCache) return catalogCache;
+        var lines = [];
+        try {{
+          var raw = getJson(CATALOG_KEY);
+          if (raw && Array.isArray(raw.lines)) lines = raw.lines;
+        }} catch (_e) {{}}
+        catalogCache = (lines || []).filter(function (line) {{
+          return line && line.lineId && line.active !== false;
         }});
-        return {{ sum: Math.round(sum), hasData: hasData }};
+        return catalogCache;
       }}
 
-      function sumBucketThroughMonth(dailyExpenses, rowIds, year, month, throughDay) {{
+      function lineStyle(line) {{
+        return (line.resolvedInputStyle || line.inputStyle || 'monthly') === 'daily'
+          ? 'daily'
+          : 'monthly';
+      }}
+
+      function monthlyMap(year) {{
+        if (monthlyMapCache[year]) return monthlyMapCache[year];
+        var m = getJson(EXP_PREFIX + year);
+        monthlyMapCache[year] = m && typeof m === 'object' ? m : {{}};
+        return monthlyMapCache[year];
+      }}
+
+      function adjMap(year) {{
+        if (adjMapCache[year]) return adjMapCache[year];
+        var m = getJson(ADJ_PREFIX + year);
+        adjMapCache[year] = m && typeof m === 'object' ? m : {{}};
+        return adjMapCache[year];
+      }}
+
+      function annualDailyMaps() {{
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        return {{
+          businessDayByDate: daily.businessDayByDate || {{}},
+          targetSalesByDate: daily.targetSalesByDate || {{}},
+        }};
+      }}
+
+      function isBizDay(iso) {{
+        if (typeof window.__isTwBusinessDay === 'function') return !!window.__isTwBusinessDay(iso);
+        var maps = annualDailyMaps();
+        var bmap = maps.businessDayByDate;
+        var tmap = maps.targetSalesByDate;
+        if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        if (Object.prototype.hasOwnProperty.call(tmap, iso)) {{
+          var n = Number(tmap[iso]);
+          return Number.isFinite(n) ? n !== 0 : true;
+        }}
+        return true;
+      }}
+
+      function listBizDayIsos(year, month0) {{
+        var dim = new Date(year, month0 + 1, 0).getDate();
+        var out = [];
+        for (var d = 1; d <= dim; d++) {{
+          var iso = isoOf(year, month0 + 1, d);
+          if (isBizDay(iso)) out.push(iso);
+        }}
+        return out;
+      }}
+
+      function allocateAcrossBizDays(amount, bizIsos) {{
+        var amt = Math.round(Number(amount) || 0);
+        var byDate = {{}};
+        if (!bizIsos || !bizIsos.length || amt === 0) return byDate;
+        var n = bizIsos.length;
+        var base = Math.floor(amt / n);
+        var rem = amt - base * n;
+        for (var i = 0; i < n; i++) {{
+          byDate[bizIsos[i]] = base + (i === n - 1 ? rem : 0);
+        }}
+        return byDate;
+      }}
+
+      function allocForMonth(year, month0) {{
+        var key = year + '-' + month0;
+        if (allocCache[key]) return allocCache[key];
+        var out = {{}};
+        var bizIsos = listBizDayIsos(year, month0);
+        catalog().forEach(function (line) {{
+          if (lineStyle(line) !== 'monthly') return;
+          var mapKey = line.lineId + ':' + month0;
+          var monthlyAmount = Object.prototype.hasOwnProperty.call(monthlyMap(year), mapKey)
+            ? Math.round(Number(monthlyMap(year)[mapKey]) || 0)
+            : 0;
+          out[line.lineId] = allocateAcrossBizDays(monthlyAmount, bizIsos);
+        }});
+        allocCache[key] = out;
+        return out;
+      }}
+
+      function lineDayAmount(s, year, month0, isoStr, line, alloc) {{
+        if (lineStyle(line) === 'daily') {{
+          var rec = yearRec(s, year);
+          var de = rec && rec.dailyExpenses && rec.dailyExpenses[line.lineId];
+          if (!de || !Object.prototype.hasOwnProperty.call(de, isoStr)) return 0;
+          var v = Number(de[isoStr]);
+          return Number.isFinite(v) ? v : 0;
+        }}
+        var byDate = alloc[line.lineId];
+        if (!byDate) return 0;
+        var mv = Number(byDate[isoStr]);
+        return Number.isFinite(mv) ? mv : 0;
+      }}
+
+      function lineMonthAmount(s, year, month0, line) {{
+        if (lineStyle(line) === 'monthly') {{
+          var v = Number(monthlyMap(year)[line.lineId + ':' + month0]);
+          return Number.isFinite(v) ? v : 0;
+        }}
+        var rec = yearRec(s, year);
+        var de = rec && rec.dailyExpenses && rec.dailyExpenses[line.lineId];
+        var sum = 0;
+        var has = false;
+        if (de) {{
+          var dim = new Date(year, month0 + 1, 0).getDate();
+          for (var d = 1; d <= dim; d++) {{
+            var isoStr = isoOf(year, month0 + 1, d);
+            if (!Object.prototype.hasOwnProperty.call(de, isoStr)) continue;
+            has = true;
+            var val = Number(de[isoStr]);
+            if (Number.isFinite(val)) sum += val;
+          }}
+        }}
+        var adj = Number(adjMap(year)[line.lineId + ':' + month0]);
+        if (Number.isFinite(adj) && adj !== 0) {{
+          has = true;
+          sum += adj;
+        }}
+        return has ? Math.round(sum) : 0;
+      }}
+
+      function lineHasMonthData(s, year, month0, line) {{
+        return lineMonthAmount(s, year, month0, line) !== 0;
+      }}
+
+      function lineHasAnyData(s, year, line) {{
+        for (var m0 = 0; m0 < 12; m0++) {{
+          if (lineHasMonthData(s, year, m0, line)) return true;
+        }}
+        return false;
+      }}
+
+      function isFoodLine(line) {{
+        var a = line.expenseAttribute;
+        if (a === 'food_cost') return true;
+        return line.lineId === 'exp_food_cost';
+      }}
+
+      function isDrinkLine(line) {{
+        var a = line.expenseAttribute;
+        if (a === 'drink_cost') return true;
+        return line.lineId === 'exp_drink_cost';
+      }}
+
+      function isLaborLine(line) {{
+        var a = line.expenseAttribute;
+        if (a === 'salaries_wages' || a === 'variable_labor' || a === 'labor_related') return true;
+        return line.lineId === 'exp_fixed_labor' || line.lineId === 'exp_variable_labor';
+      }}
+
+      function sumDayMetrics(isoStr) {{
+        var parts = String(isoStr).split('-');
+        var year = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        var month0 = month - 1;
+        var s = store();
+        var emptyScope = {{
+          fixed: 0,
+          variable: 0,
+          total: 0,
+          food: 0,
+          drink: 0,
+          misc: 0,
+          labor: 0,
+          hasData: false,
+        }};
+        if (!s || !Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {{
+          return emptyScope;
+        }}
+        var alloc = allocForMonth(year, month0);
+        var fixed = 0;
+        var variable = 0;
+        var food = 0;
+        var drink = 0;
+        var labor = 0;
+        var hasData = false;
+        catalog().forEach(function (line) {{
+          if (lineHasMonthData(s, year, month0, line)) hasData = true;
+          var amt = lineDayAmount(s, year, month0, isoStr, line, alloc);
+          if (!amt) return;
+          if (line.bucket === 'fixed') fixed += amt;
+          else variable += amt;
+          if (isFoodLine(line)) food += amt;
+          if (isDrinkLine(line)) drink += amt;
+          if (isLaborLine(line)) labor += amt;
+        }});
+        return {{
+          fixed: Math.round(fixed),
+          variable: Math.round(variable),
+          total: Math.round(fixed + variable),
+          food: Math.round(food),
+          drink: Math.round(drink),
+          misc: Math.max(0, Math.round(variable - food - drink)),
+          labor: Math.round(labor),
+          hasData: hasData,
+        }};
+      }}
+
+      function sumThroughMonth(year, month, throughDay) {{
         var y = Number(year);
         var m = Number(month);
         var dayMax = Number(throughDay);
         if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {{
-          return {{ sum: 0, hasData: false }};
+          return {{ fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0, hasData: false }};
         }}
         var dim = new Date(y, m, 0).getDate();
         if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
         if (dayMax > dim) dayMax = dim;
-        var map = dailyExpenses && typeof dailyExpenses === 'object' ? dailyExpenses : {{}};
-        var sum = 0;
+        var fixed = 0;
+        var variable = 0;
+        var food = 0;
+        var drink = 0;
+        var labor = 0;
         var hasData = false;
+        var s = store();
+        catalog().forEach(function (line) {{
+          if (lineHasMonthData(s, y, m - 1, line)) hasData = true;
+        }});
         for (var d = 1; d <= dayMax; d++) {{
-          var iso = y + '-' + pad2(m) + '-' + pad2(d);
-          (rowIds || []).forEach(function (rowId) {{
-            var byRow = map[rowId];
-            if (!byRow || !Object.prototype.hasOwnProperty.call(byRow, iso)) return;
-            hasData = true;
-            var n = Number(byRow[iso]);
-            if (Number.isFinite(n)) sum += n;
-          }});
+          var snap = sumDayMetrics(isoOf(y, m, d));
+          fixed += snap.fixed;
+          variable += snap.variable;
+          food += snap.food;
+          drink += snap.drink;
+          labor += snap.labor;
         }}
-        return {{ sum: Math.round(sum), hasData: hasData }};
+        return {{
+          fixed: Math.round(fixed),
+          variable: Math.round(variable),
+          total: Math.round(fixed + variable),
+          food: Math.round(food),
+          drink: Math.round(drink),
+          misc: Math.max(0, Math.round(variable - food - drink)),
+          labor: Math.round(labor),
+          hasData: hasData,
+        }};
       }}
 
       /**
-       * Read-only: MEP `years.{{Y}}.dailyExpenses` month totals (fixed / variable).
-       * Does NOT merge PL monthly amounts. throughDay optional (1–31); omit = full month.
-       * @returns {{ fixed, variable, total, hasData, source }}
+       * Read-only: PL 表 + MEP と同一ロジックで月次支出（fixed / variable）を返す。
+       * monthly-style 行は kpi-pl-expenses-v1 を営業日割り、daily-style 行は dailyExpenses。
        */
       window.__insightReadMonthExpense = function (year, month, throughDay) {{
-        var empty = {{
-          fixed: 0,
-          variable: 0,
-          total: 0,
-          hasData: false,
-          source: 'mep-daily',
-        }};
-        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {{
-          return empty;
-        }}
-        var payload = KpiYearStore.loadMepYearPayload(year);
-        var dailyExpenses = (payload && payload.dailyExpenses) || {{}};
-        var fixedIds = lineIdsForBucket('fixed');
-        var variableIds = lineIdsForBucket('variable');
-        var fixed = sumBucketThroughMonth(dailyExpenses, fixedIds, year, month, throughDay);
-        var variable = sumBucketThroughMonth(
-          dailyExpenses,
-          variableIds,
-          year,
-          month,
-          throughDay
-        );
+        var scope = sumThroughMonth(year, month, throughDay);
         return {{
-          fixed: fixed.sum,
-          variable: variable.sum,
-          total: fixed.sum + variable.sum,
-          hasData: fixed.hasData || variable.hasData,
-          source: 'mep-daily',
+          fixed: scope.fixed,
+          variable: scope.variable,
+          total: scope.total,
+          hasData: scope.hasData,
+          source: 'pl-unified',
         }};
       }};
 
       window.__insightReadExpenseSnapshot = function (iso) {{
+        var emptyDay = {{
+          fixed: 0,
+          variable: 0,
+          total: 0,
+          food: 0,
+          drink: 0,
+          misc: 0,
+          labor: 0,
+        }};
         var empty = {{
           hasData: false,
-          day: {{ fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 }},
-          month: {{ fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 }},
-          year: {{ fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0 }},
-          source: 'mep-daily',
+          day: emptyDay,
+          month: emptyDay,
+          year: emptyDay,
+          source: 'pl-unified',
         }};
-        if (!iso || !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(iso))) return empty;
-        if (!window.KpiYearStore || typeof KpiYearStore.loadMepYearPayload !== 'function') {{
-          return empty;
-        }}
+        if (!iso || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(iso))) return empty;
         var parts = String(iso).split('-');
         var y = Number(parts[0]);
         var month = Number(parts[1]);
         var day = Number(parts[2]);
         if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) return empty;
 
-        var payload = KpiYearStore.loadMepYearPayload(y);
-        var dailyExpenses = (payload && payload.dailyExpenses) || {{}};
-        var fixedIds = lineIdsForBucket('fixed');
-        var variableIds = lineIdsForBucket('variable');
-        var cat = categoryLineIds();
-
-        var dayFixed = sumBucketAtIso(dailyExpenses, fixedIds, iso);
-        var dayVariable = sumBucketAtIso(dailyExpenses, variableIds, iso);
-        var dayFood = sumBucketAtIso(dailyExpenses, cat.food, iso);
-        var dayDrink = sumBucketAtIso(dailyExpenses, cat.drink, iso);
-        var dayLabor = sumBucketAtIso(dailyExpenses, cat.labor, iso);
-
-        var monthFixed = sumBucketThroughMonth(dailyExpenses, fixedIds, y, month, day);
-        var monthVariable = sumBucketThroughMonth(dailyExpenses, variableIds, y, month, day);
-        var monthFood = sumBucketThroughMonth(dailyExpenses, cat.food, y, month, day);
-        var monthDrink = sumBucketThroughMonth(dailyExpenses, cat.drink, y, month, day);
-        var monthLabor = sumBucketThroughMonth(dailyExpenses, cat.labor, y, month, day);
-
+        var dayScope = sumDayMetrics(iso);
+        var monthScope = sumThroughMonth(y, month, day);
         var yearFixed = 0;
         var yearVariable = 0;
         var yearFood = 0;
@@ -216,60 +354,47 @@ def insight_expense_read_js() -> str:
         var yearLabor = 0;
         var yearHasData = false;
         for (var m = 1; m <= month; m++) {{
-          var td = m === month ? day : 31;
-          var yf = sumBucketThroughMonth(dailyExpenses, fixedIds, y, m, td);
-          var yv = sumBucketThroughMonth(dailyExpenses, variableIds, y, m, td);
-          var yfood = sumBucketThroughMonth(dailyExpenses, cat.food, y, m, td);
-          var ydrink = sumBucketThroughMonth(dailyExpenses, cat.drink, y, m, td);
-          var ylabor = sumBucketThroughMonth(dailyExpenses, cat.labor, y, m, td);
-          yearFixed += yf.sum;
-          yearVariable += yv.sum;
-          yearFood += yfood.sum;
-          yearDrink += ydrink.sum;
-          yearLabor += ylabor.sum;
-          yearHasData = yearHasData || yf.hasData || yv.hasData || yfood.hasData || ydrink.hasData || ylabor.hasData;
+          var td = m === month ? day : new Date(y, m, 0).getDate();
+          var ms = sumThroughMonth(y, m, td);
+          yearFixed += ms.fixed;
+          yearVariable += ms.variable;
+          yearFood += ms.food;
+          yearDrink += ms.drink;
+          yearLabor += ms.labor;
+          if (ms.hasData) yearHasData = true;
         }}
 
-        var dayTotal = dayFixed.sum + dayVariable.sum;
-        var monthTotal = monthFixed.sum + monthVariable.sum;
-        var yearTotal = Math.round(yearFixed + yearVariable);
-        var out = {{
-          hasData:
-            dayFixed.hasData ||
-            dayVariable.hasData ||
-            monthFixed.hasData ||
-            monthVariable.hasData ||
-            yearHasData,
+        return {{
+          hasData: dayScope.hasData || monthScope.hasData || yearHasData,
           day: {{
-            fixed: dayFixed.sum,
-            variable: dayVariable.sum,
-            total: dayTotal,
-            food: dayFood.sum,
-            drink: dayDrink.sum,
-            misc: Math.max(0, dayVariable.sum - dayFood.sum - dayDrink.sum),
-            labor: dayLabor.sum,
+            fixed: dayScope.fixed,
+            variable: dayScope.variable,
+            total: dayScope.total,
+            food: dayScope.food,
+            drink: dayScope.drink,
+            misc: dayScope.misc,
+            labor: dayScope.labor,
           }},
           month: {{
-            fixed: monthFixed.sum,
-            variable: monthVariable.sum,
-            total: monthTotal,
-            food: monthFood.sum,
-            drink: monthDrink.sum,
-            misc: Math.max(0, monthVariable.sum - monthFood.sum - monthDrink.sum),
-            labor: monthLabor.sum,
+            fixed: monthScope.fixed,
+            variable: monthScope.variable,
+            total: monthScope.total,
+            food: monthScope.food,
+            drink: monthScope.drink,
+            misc: monthScope.misc,
+            labor: monthScope.labor,
           }},
           year: {{
             fixed: Math.round(yearFixed),
             variable: Math.round(yearVariable),
-            total: yearTotal,
+            total: Math.round(yearFixed + yearVariable),
             food: Math.round(yearFood),
             drink: Math.round(yearDrink),
             misc: Math.max(0, Math.round(yearVariable - yearFood - yearDrink)),
             labor: Math.round(yearLabor),
           }},
-          source: 'mep-daily',
+          source: 'pl-unified',
         }};
-        return out;
       }};
     }})();
     {INSIGHT_EXPENSE_READ_END}

@@ -57,9 +57,10 @@ def build_seed() -> dict:
 def catalog() -> dict:
     return {
         "lines": [
-            {"lineId": "exp_rent", "bucket": "fixed", "active": True},
-            {"lineId": "exp_food_cost", "bucket": "variable", "active": True},
-            {"lineId": "exp_drink_cost", "bucket": "variable", "active": True},
+            {"lineId": "exp_rent", "bucket": "fixed", "inputStyle": "daily", "active": True},
+            {"lineId": "exp_food_cost", "bucket": "variable", "inputStyle": "daily", "active": True},
+            {"lineId": "exp_drink_cost", "bucket": "variable", "inputStyle": "daily", "active": True},
+            {"lineId": "exp_electric", "bucket": "fixed", "inputStyle": "monthly", "active": True},
         ]
     }
 
@@ -72,8 +73,13 @@ def verify_page(page, url: str) -> list[str]:
         """
         window.localStorage.setItem('kpiNavigator.kpiYearStore', %s);
         window.localStorage.setItem('kpiNavigator.plLineCatalog', %s);
+        window.localStorage.setItem('kpi-pl-expenses-v1:2026', %s);
         """
-        % (json.dumps(json.dumps(seed)), json.dumps(json.dumps(cat)))
+        % (
+            json.dumps(json.dumps(seed)),
+            json.dumps(json.dumps(cat)),
+            json.dumps(json.dumps({"exp_electric:3": 775})),
+        )
     )
     page.goto(url, wait_until="load")
     page.wait_for_function(
@@ -86,6 +92,7 @@ def verify_page(page, url: str) -> list[str]:
           const full = window.__insightReadMonthExpense(2026, 7);
           const thru = window.__insightReadMonthExpense(2026, 7, 14);
           const empty = window.__insightReadMonthExpense(2026, 8);
+          const snap = window.__insightReadExpenseSnapshot('2026-04-08');
           // chart placeholders still hardcoded %
           const chart = document.getElementById('insight-analyze-expense-pl-current');
           const fixedPct = chart && chart.querySelector('[data-role="fixed-pct"]');
@@ -93,6 +100,7 @@ def verify_page(page, url: str) -> list[str]:
             full,
             thru,
             empty,
+            snap,
             chartFixedLabel: fixedPct && fixedPct.textContent.trim(),
           };
         }"""
@@ -116,12 +124,18 @@ def verify_page(page, url: str) -> list[str]:
         problems.append(f"{url}: thru.total={thru.get('total')}")
     if empty.get("hasData"):
         problems.append(f"{url}: August should have no data")
+    snap = result.get("snap") or {}
+    if not snap.get("hasData"):
+        problems.append(f"{url}: PL monthly snap.hasData false")
+    day = snap.get("day") or {}
+    if not day.get("fixed") or day.get("fixed") <= 0:
+        problems.append(f"{url}: PL monthly snap.day.fixed={day.get('fixed')}")
     # UI not wired yet — still mock 40%
     if result.get("chartFixedLabel") not in (None, "40%"):
         # If somehow wired already, don't fail hard; just note
         pass
     rel = url.split("/kpi-navigator/")[-1]
-    print(f"  {rel} full={full} thru={thru} empty.hasData={empty.get('hasData')} chart={result.get('chartFixedLabel')}")
+    print(f"  {rel} full={full} thru={thru} empty.hasData={empty.get('hasData')} snap.day.fixed={day.get('fixed')} chart={result.get('chartFixedLabel')}")
     return problems
 
 
