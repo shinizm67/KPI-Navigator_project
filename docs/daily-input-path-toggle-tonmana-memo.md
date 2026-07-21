@@ -13,9 +13,16 @@ Phase 5（`dailySalesInputPath` 排他）で追加した **Annual / Monthly 切�
 | 名称 | 役割 | 表示場所 | 主な CSS / HTML |
 |------|------|----------|-----------------|
 | **Sci-Fi / Office** | UI テーマ（`body.office-mode`） | グローバルヘッダー右（歯車の左） | `en/setting/style.css` — `.si-fi.profile-page .btn-mode` |
-| **Annual / Monthly** | 日次売上の編集経路（`KpiYearStore.dailySalesInputPath`） | Sales Data モーダル内・MEP 内のみ（Pro） | `scripts/kpi_phase5_client.py` — `PHASE5_TOGGLE_CSS` / `.kpi-daily-input-path` |
+| **Annual / Monthly** | 日次売上の編集経路（`KpiYearStore.dailySalesInputPath`） | Sales Data モーダル内・MEP 内・**PL 表ツールバー（表示のみ）**（Pro） | `scripts/kpi_phase5_client.py` — `PHASE5_TOGGLE_CSS` / `.kpi-daily-input-path` |
 
-月次・年次・MEP ページは `body` に `profile-page` があり `en/setting/style.css` を読み込むため、**ヘッダーには Sci-Fi / Office トグルが出る**。一方 Annual / Monthly トグルは **モーダル／MEP パネル内の別コンポーネント** で、ヘッダートグルとは無関係に動作する。
+月次・年次・MEP ページは `body` に `profile-page` があり `en/setting/style.css` を読み込むため、**ヘッダーには Sci-Fi / Office トグルが出る**。一方 Annual / Monthly トグルは **モーダル／MEP パネル内の別コンポーネント** で、ヘッダートグルとは無関係に動作する。**PL 表**（2026-07-20）は MEP と同じ見た目の **read-only インジケータ**（`.kpi-daily-input-path--pl-readonly`）を年度セレクタ横に表示。切替は MEP / Sales Data で行う。
+
+### PL 表（表示のみ・Option A）
+
+- 実装: `scripts/pl_sales_input_path_indicator_client.py` + `build_pl_table_page.py`
+- Pro のみ表示（Standard は他画面と同様非表示）
+- `kpi:dailySalesInputPathChanged` / `localStorage` 更新で同期
+- ツールチップ: 「切替は MEP または Sales Data で」
 
 ---
 

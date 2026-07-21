@@ -111,6 +111,13 @@ def pl_year_total_client_js() -> str:
               ? formatMoney(agg.sum)
               : String(agg.sum)
             : '\u2014';
+          if (rowId === 'profit' && typeof window.__plApplyProfitSeverityEl === 'function') {
+            window.__plApplyProfitSeverityEl(
+              span,
+              agg.has ? agg.sum : null,
+              sales.has ? sales.sum : 0
+            );
+          }
         });
       }
 

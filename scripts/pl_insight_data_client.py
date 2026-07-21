@@ -361,11 +361,40 @@ def pl_insight_data_client_js() -> str:
         return { income: income, expenses: food + labor, variable: food, fixed: labor };
       }
 
+      /* ---- 費目内訳（選択月の月次合計を費目単位で。金額降順・固定/変動グループ） ---- */
+      function lineBreakdown(year, month0) {
+        var s = store();
+        var fixed = [], variable = [];
+        var fixedTotal = 0, variableTotal = 0;
+        catalog().forEach(function (line) {
+          var amt = lineMonthAmount(s, year, month0, line);
+          if (!amt) return;
+          var row = {
+            lineId: line.lineId,
+            labelJa: line.labelJa || line.lineId,
+            labelEn: line.labelEn || line.labelJa || line.lineId,
+            bucket: line.bucket,
+            inputStyle: lineStyle(line),
+            amount: amt
+          };
+          if (line.bucket === 'fixed') { fixed.push(row); fixedTotal += amt; }
+          else { variable.push(row); variableTotal += amt; }
+        });
+        var byDesc = function (a, b) { return b.amount - a.amount; };
+        fixed.sort(byDesc); variable.sort(byDesc);
+        return {
+          fixed: fixed, variable: variable,
+          fixedTotal: fixedTotal, variableTotal: variableTotal,
+          total: fixedTotal + variableTotal
+        };
+      }
+
       window.__plInsight = {
         resetCache: resetCache,
         store: store,
         monthMetrics: monthMetrics,
         dayMetrics: dayMetrics,
+        lineBreakdown: lineBreakdown,
         buildArea1: buildArea1,
         buildArea2: buildArea2,
         buildArea3: buildArea3,
