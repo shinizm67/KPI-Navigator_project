@@ -6,7 +6,6 @@
 
 次のブロックは **同じグリッド** を使う。
 
-- Monthly Status（`insight-monthly-status__row`）
 - Monthly Sales Summary（`insight-monthly-sales-summary__row`）
 - Same Month Historical Compare（`insight-monthly-historical-compare__row`）
 
@@ -48,7 +47,7 @@
 - ブロック見出し: **Strategy Note**（18px、他 Monthly ブロックと同様 `margin-bottom: 40px`）。
 - **User Note** 行:
   - `grid-template-columns: 200px 496px`
-  - `column-gap: 113px`（ラベル列の規則は Status 等と同じ）
+  - `column-gap: 113px`（ラベル列の規則は Sales Summary 等と同じ）
   - テキストボックス: **496×196px**、枠線・背景は値ボックス系と同系色、**フォント 16px**、行送り `line-height: 1.4`。
   - 文字数: **120〜200 文字**（他フリー入力と同じ。`docs/memo-read-surfaces.md` 参照）。
 - **User Note**: 読み取り専用。入力は Monthly Edit Floating Window のみ。未入力時は空欄。

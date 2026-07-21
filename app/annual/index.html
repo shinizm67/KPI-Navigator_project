@@ -4746,7 +4746,6 @@
         var(--insight-band-daily-graph)
       );
       /* Analyze/Graph Monthly ブロック高（absolute 配置の top / 帯高と整合） */
-      --insight-monthly-status-block-h: 0px; /* Status removed */
       --insight-monthly-sales-summary-block-h: calc(
         40px + 18px * 1.2 + 40px + 60px + 31px + 40px + 15px + 40px + 15px + 40px + 43px + 96px
       );
@@ -4758,7 +4757,6 @@
       --insight-gap-after-expense-pl-charts: 98px;
       --insight-monthly-analyze-top: 117px;
       --insight-annual-analyze-top: 117px;
-      --insight-annual-status-block-h: 0px; /* Status removed */
       --insight-annual-sales-summary-block-h: calc(
         40px + 18px * 1.2 + 40px + 60px + 31px + (40px + 15px) * 5 + 43px + 96px
       );
@@ -5361,85 +5359,8 @@
     .insight-pane--graph .insight-analyze-weekly__row--today td:last-child {
       box-shadow: 1px 0 0 #0f9403;
     }
-    /* Analyze / Graph: Monthly Status（Monthly 先頭ブロック） */
-    .insight-pane--analyze .insight-overlay__section--monthly .insight-monthly-status,
-    .insight-pane--graph .insight-overlay__section--monthly .insight-monthly-status {
-      position: absolute;
-      left: 185px;
-      top: 117px;
-      z-index: 4;
-      box-sizing: border-box;
-      pointer-events: none;
-    }
-    .insight-pane--analyze .insight-monthly-status__title,
-    .insight-pane--graph .insight-monthly-status__title {
-      margin: 0 0 40px 0;
-      padding: 0;
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
-      color: #58e1f3;
-      font-family: 'Orbitron', sans-serif;
-      text-align: left;
-    }
-    .insight-pane--analyze .insight-monthly-status__row,
-    .insight-pane--graph .insight-monthly-status__row {
-      display: grid;
-      grid-template-columns: 200px 500px;
-      column-gap: 113px;
-      align-items: center;
-    }
-    .insight-pane--analyze .insight-monthly-status__row + .insight-monthly-status__row,
-    .insight-pane--graph .insight-monthly-status__row + .insight-monthly-status__row {
-      margin-top: 15px;
-    }
-    .insight-pane--analyze .insight-monthly-status__label,
-    .insight-pane--graph .insight-monthly-status__label {
-      margin: 0;
-      color: #58e1f3;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 1;
-      font-family: 'Orbitron', sans-serif;
-      justify-self: center;
-      text-align: center;
-    }
-    .insight-pane--analyze .insight-monthly-status__value-box,
-    .insight-pane--graph .insight-monthly-status__value-box {
-      width: 500px;
-      height: 40px;
-      box-sizing: border-box;
-      border: 1px solid #58e1f3;
-      background: rgba(88, 225, 243, 0.44);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .insight-pane--analyze .insight-monthly-status__value,
-    .insight-pane--graph .insight-monthly-status__value {
-      margin: 0;
-      color: #58e1f3;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 1;
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-    }
-    .office-mode .insight-pane--analyze .insight-monthly-status__title,
-    .office-mode .insight-pane--graph .insight-monthly-status__title,
-    .office-mode .insight-pane--analyze .insight-monthly-status__label,
-    .office-mode .insight-pane--graph .insight-monthly-status__label,
-    .office-mode .insight-pane--analyze .insight-monthly-status__value,
-    .office-mode .insight-pane--graph .insight-monthly-status__value {
-      color: #111;
-      font-family: 'BIZ UDPGothic', sans-serif;
-    }
-    .office-mode .insight-pane--analyze .insight-monthly-status__value-box,
-    .office-mode .insight-pane--graph .insight-monthly-status__value-box {
-      border-color: #2a2a2a;
-      background: #e8e8e8;
-    }
-    /* Analyze / Graph: Monthly Sales Summary（Monthly Status 直下） */
+
+    /* Analyze / Graph: Monthly Sales Summary（Monthly 先頭ブロック） */
     .insight-pane--analyze .insight-overlay__section--monthly .insight-monthly-sales-summary,
     .insight-pane--graph .insight-overlay__section--monthly .insight-monthly-sales-summary {
       position: absolute;
@@ -5554,85 +5475,8 @@
       border-color: #2a2a2a;
       background: #e8e8e8;
     }
-    /* Analyze / Graph: Annual Status（Annual 先頭ブロック） */
-    .insight-pane--analyze .insight-overlay__section--annual .insight-annual-status,
-    .insight-pane--graph .insight-overlay__section--annual .insight-annual-status {
-      position: absolute;
-      left: 185px;
-      top: 117px;
-      z-index: 4;
-      box-sizing: border-box;
-      pointer-events: none;
-    }
-    .insight-pane--analyze .insight-annual-status__title,
-    .insight-pane--graph .insight-annual-status__title {
-      margin: 0 0 40px 0;
-      padding: 0;
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
-      color: #58e1f3;
-      font-family: 'Orbitron', sans-serif;
-      text-align: left;
-    }
-    .insight-pane--analyze .insight-annual-status__row,
-    .insight-pane--graph .insight-annual-status__row {
-      display: grid;
-      grid-template-columns: 200px 500px;
-      column-gap: 113px;
-      align-items: center;
-    }
-    .insight-pane--analyze .insight-annual-status__row + .insight-annual-status__row,
-    .insight-pane--graph .insight-annual-status__row + .insight-annual-status__row {
-      margin-top: 15px;
-    }
-    .insight-pane--analyze .insight-annual-status__label,
-    .insight-pane--graph .insight-annual-status__label {
-      margin: 0;
-      color: #58e1f3;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 1;
-      font-family: 'Orbitron', sans-serif;
-      justify-self: center;
-      text-align: center;
-    }
-    .insight-pane--analyze .insight-annual-status__value-box,
-    .insight-pane--graph .insight-annual-status__value-box {
-      width: 500px;
-      height: 40px;
-      box-sizing: border-box;
-      border: 1px solid #58e1f3;
-      background: rgba(88, 225, 243, 0.44);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .insight-pane--analyze .insight-annual-status__value,
-    .insight-pane--graph .insight-annual-status__value {
-      margin: 0;
-      color: #58e1f3;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 1;
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-    }
-    .office-mode .insight-pane--analyze .insight-annual-status__title,
-    .office-mode .insight-pane--graph .insight-annual-status__title,
-    .office-mode .insight-pane--analyze .insight-annual-status__label,
-    .office-mode .insight-pane--graph .insight-annual-status__label,
-    .office-mode .insight-pane--analyze .insight-annual-status__value,
-    .office-mode .insight-pane--graph .insight-annual-status__value {
-      color: #111;
-      font-family: 'BIZ UDPGothic', sans-serif;
-    }
-    .office-mode .insight-pane--analyze .insight-annual-status__value-box,
-    .office-mode .insight-pane--graph .insight-annual-status__value-box {
-      border-color: #2a2a2a;
-      background: #e8e8e8;
-    }
-    /* Analyze / Graph: Annual Sales Summary（Annual Status 直下） */
+
+    /* Analyze / Graph: Annual Sales Summary（Annual 先頭ブロック） */
     .insight-pane--analyze .insight-overlay__section--annual .insight-annual-sales-summary,
     .insight-pane--graph .insight-overlay__section--annual .insight-annual-sales-summary {
       position: absolute;
