@@ -35,7 +35,7 @@
 | 14 | **Monthly Vertical Focus Bar 拡張**（行追加・スナップ） | Pro 寄り | 小〜中 | `docs/monthly-vertical-focus-bar-memo.md` |
 | 15 | **利益ハブ各セクション本実装**（日次／月次／年次利益） | Pro | 中 | `docs/index-profit-hub.md` |
 | 16 | **ツールチップ → YouTube チュートリアル** | 全般 | 小 | `docs/csv-upload-pos-import-memo.md` §ホバー |
-| 17 | **Strategy Note：Annual → Monthly Edit 導線** | Basic / Pro | 小 | `docs/memo-read-surfaces.md` § System Comment 末尾 |
+| 17 | ~~**Strategy Note：Annual → Monthly Edit 導線**~~ | Basic / Pro | 小 | **実装済み（2026-07-22）** — User Note クリック → Monthly Edit + Strategy Note。`docs/memo-read-surfaces.md` |
 | 18 | **Sales Data — 繁閑期%アシスト**（過去平均参照・100%正規化） | Basic / Pro | 中〜大 | **本ファイル § Sales Data 繁閑期%アシスト** · `docs/year-rollover-data-architecture.md` |
 
 ### ローンチ済み・索引から外すもの（参考）

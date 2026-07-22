@@ -102,3 +102,24 @@
         document.getElementById('strategy-note-close').addEventListener('click', closeStrategyNoteModal);
       document.getElementById('strategy-note-backdrop') &&
         document.getElementById('strategy-note-backdrop').addEventListener('click', closeStrategyNoteModal);
+
+      function maybeOpenStrategyNoteFromQuery() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var flag = String(params.get('openStrategyNote') || params.get('strategyNote') || '').toLowerCase();
+          if (flag !== '1' && flag !== 'true' && flag !== 'yes') return;
+          openStrategyNoteModal();
+          if (history.replaceState) {
+            params.delete('openStrategyNote');
+            params.delete('strategyNote');
+            var q = params.toString();
+            history.replaceState(
+              null,
+              '',
+              window.location.pathname + (q ? '?' + q : '') + window.location.hash
+            );
+          }
+        } catch (_e) {}
+      }
+      /* initEditPage() runs later in the same IIFE; defer so year/month + notes are ready. */
+      setTimeout(maybeOpenStrategyNoteFromQuery, 0);
