@@ -21,11 +21,10 @@ EDIT_PAGES = [
     ROOT / "en/app/monthly/edit/index.html",
 ]
 
-CSS_NEEDLE = ".insight-monthly-strategy-note__box--jump {"
+CSS_NEEDLE = ".insight-monthly-strategy-note__box--jump {\n      cursor: pointer;\n      pointer-events: auto;"
 JS_NEEDLES = [
     "openStrategyNote=1",
     "goToStrategyNoteEdit",
-    "insight-analyze-annual-strategy-user-note",
 ]
 EDIT_NEEDLES = [
     "maybeOpenStrategyNoteFromQuery",
@@ -46,6 +45,13 @@ def main() -> int:
             errors.append(f"{path}: missing CSS {CSS_NEEDLE!r}")
         if 'id="insight-strategy-user-note"' not in text:
             errors.append(f"{path}: missing #insight-strategy-user-note")
+        if "insight-analyze-annual-strategy-user-note" in text:
+            errors.append(f"{path}: Annual Strategy Note should be removed")
+        if (
+            ".insight-overlay__section--annual .insight-monthly-strategy-note" in text
+            and "Historical Insight Access 直下" in text
+        ):
+            errors.append(f"{path}: Annual Strategy Note CSS still present")
 
     for path in EDIT_PAGES:
         text = path.read_text(encoding="utf-8")

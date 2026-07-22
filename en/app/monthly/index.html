@@ -6814,7 +6814,7 @@
         40px + 18px * 1.2 + 4 * (12px + 16px + 96px) + 3 * 43px
       );
       --insight-annual-target-revision-kpi-block-h: calc(40px + 18px * 1.2 + 40px + 4 * 40px + 3 * 15px);
-      /* Strategy Note 下端 → ▶Graph → Back to Top までの Analyze 尾 */
+      /* Historical Insight Access 下端 → ▶Graph → Back to Top までの Analyze 尾 */
       --insight-annual-analyze-strategy-tail-h: calc(
         var(--insight-kpi-graph-gap-box-to-bar) + (13px * 1.2) + 48px
       );
@@ -6826,8 +6826,7 @@
           var(--insight-annual-expense-profit-block-h) + 48px +
           var(--insight-annual-year-expense-pl-block-h) + var(--insight-gap-after-expense-pl-charts) +
           var(--insight-annual-target-revision-kpi-block-h) + 48px +
-          var(--insight-historical-insight-access-block-h) + 48px +
-          var(--insight-monthly-strategy-note-block-h) + var(--insight-annual-analyze-strategy-tail-h) +
+          var(--insight-historical-insight-access-block-h) + var(--insight-annual-analyze-strategy-tail-h) +
           var(--insight-section-bottom-pad)
       );
       --insight-band-monthly-summary: calc(
@@ -8662,23 +8661,6 @@
       border-color: #333;
     }
 
-    /* Analyze / Graph Annual: Strategy Note（Historical Insight Access 直下） */
-    .insight-pane--analyze .insight-overlay__section--annual .insight-monthly-strategy-note,
-    .insight-pane--graph .insight-overlay__section--annual .insight-monthly-strategy-note {
-      position: absolute;
-      left: 185px;
-      top: calc(
-        117px +  var(--insight-annual-sales-summary-block-h) + 48px +
-          var(--insight-annual-current-progress-block-h) + 48px + var(--insight-annual-historical-compare-block-h) + 48px +
-          var(--insight-annual-expense-profit-block-h) + 48px + var(--insight-annual-year-expense-pl-block-h) +
-          var(--insight-gap-after-expense-pl-charts) + var(--insight-annual-target-revision-kpi-block-h) + 48px +
-          var(--insight-historical-insight-access-block-h) + 48px
-      );
-      z-index: 4;
-      width: 809px;
-      box-sizing: border-box;
-      pointer-events: none;
-    }
     /* Analyze / Graph Monthly: Strategy Note（Monthly 最終ゾーン） */
     .insight-pane--analyze .insight-overlay__section--monthly .insight-monthly-strategy-note,
     .insight-pane--graph .insight-overlay__section--monthly .insight-monthly-strategy-note {
@@ -8756,6 +8738,7 @@
 
     .insight-monthly-strategy-note__box--jump {
       cursor: pointer;
+      pointer-events: auto;
     }
     .insight-monthly-strategy-note__box--jump:hover {
       border-color: rgba(88, 225, 243, 0.85);
@@ -8776,7 +8759,7 @@
       background: #e8e8e8;
     }
 
-    /* Analyze / Graph Annual: ▶Graph — Strategy Note ボックス下端 +100px */
+    /* Analyze / Graph Annual: ▶Graph — Historical Insight Access 下端 +100px */
     .insight-pane--analyze .insight-overlay__section--annual > .insight-daily-summary-graph-link,
     .insight-pane--graph .insight-overlay__section--annual > .insight-daily-summary-graph-link {
       position: absolute;
@@ -8785,7 +8768,7 @@
           var(--insight-annual-current-progress-block-h) + 48px + var(--insight-annual-historical-compare-block-h) + 48px +
           var(--insight-annual-expense-profit-block-h) + 48px + var(--insight-annual-year-expense-pl-block-h) +
           var(--insight-gap-after-expense-pl-charts) + var(--insight-annual-target-revision-kpi-block-h) + 48px +
-          var(--insight-historical-insight-access-block-h) + 48px + var(--insight-monthly-strategy-note-block-h) +
+          var(--insight-historical-insight-access-block-h) +
           var(--insight-kpi-graph-gap-box-to-bar)
       );
       bottom: auto;
@@ -14520,15 +14503,6 @@
                         </ul>
                       </span>
                     </button>
-                  </div>
-                </div>
-              </div>
-              <div class="insight-monthly-strategy-note" aria-label="Strategy Note">
-                <h4 class="insight-monthly-strategy-note__title">Strategy Note</h4>
-                <div class="insight-monthly-strategy-note__row">
-                  <p class="insight-monthly-strategy-note__label">User Note</p>
-                  <div class="insight-monthly-strategy-note__box insight-monthly-strategy-note__box--user">
-                    <p class="insight-monthly-strategy-note__text insight-monthly-strategy-note__text--user" id="insight-analyze-annual-strategy-user-note" data-insight-readonly="user" data-insight-source="annual-edit-float"></p>
                   </div>
                 </div>
               </div>
@@ -30026,8 +30000,7 @@ Cumulative Target Annual Sales</p>
       function targets() {
         return Array.prototype.slice.call(
           document.querySelectorAll(
-            '#insight-strategy-user-note[data-insight-source="monthly-edit-float"],' +
-              '#insight-analyze-annual-strategy-user-note'
+            '#insight-strategy-user-note[data-insight-source="monthly-edit-float"]'
           )
         );
       }

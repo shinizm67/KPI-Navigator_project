@@ -43,7 +43,7 @@
   - 売上・利益率・経費・前年同月比などアプリ内 KPI と、**外部要因**（天候、エリアイベント、SNS、マーケ施策、予約状況など）を横断分析。
   - クロール／連携した集客因子データと突合し、**自然言語の System Comment** を自動生成（120〜200 文字、他フリー入力と同じ上限ルール）。
   - 出力は **読み取り専用**。ユーザーによる直接編集は想定しない。
-- **Annual / Monthly Insight からの編集導線（実装済み）**: Strategy Note 上に専用 Edit ボタンは置かない。代わりに **User Note ボックスをクリック**すると、選択中の年月の **Monthly Edit** を開き、**Strategy Note モーダル**を自動表示する（`?year=&month=&openStrategyNote=1`）。Annual Insight からも同じ導線。
+- **Monthly Insight からの編集導線（実装済み）**: Strategy Note 上に専用 Edit ボタンは置かない。代わりに **User Note ボックスをクリック**すると、選択中の年月の **Monthly Edit** を開き、**Strategy Note モーダル**を自動表示する（`?year=&month=&openStrategyNote=1`）。メモ自体が月次のため **Annual Analyze には Strategy Note を置かない**（Annual → Monthly ジャンプで当該位置へ）。
 
 
 ### Alert Message（Annual Target Revision・AI 分析メッセージ）
@@ -67,8 +67,8 @@
 ### User Note（ユーザー戦略メモ）
 
 - **入力**: **Monthly Edit Floating Window**（および将来の Annual 側編集があればそちら）のみ。
-- **表示**: Strategy Note の `User Note` ボックス（496×196px、16px、120〜200 文字）。**未保存・未入力時は空欄**。Monthly / Annual Analyze の両方（`#insight-strategy-user-note` / `#insight-analyze-annual-strategy-user-note`）に同一月メモを反映。
-- **クリック導線**: ボックスクリックで Monthly Edit + Strategy Note モーダル（上記）。
+- **表示**: Analyze / Graph › **Monthly** 最終ゾーン Strategy Note の `User Note` ボックス（496×196px、16px、120〜200 文字）。**未保存・未入力時は空欄**（`#insight-strategy-user-note`）。
+- **クリック導線**: ボックスクリックで Monthly Edit + Strategy Note モーダル（上記）。親ブロックの `pointer-events: none` に対し枠側で `pointer-events: auto`。
 - **データ連携**: MEP 下部 **Strategy Note › User Note** テキストエリア → Save で `KpiYearStore.monthlyStrategyUserNotes` に月別保存 → Insight に読み取り反映（`apply_insight_strategy_user_note.py`）。
 
 ## Historical Insight Access › View Reason

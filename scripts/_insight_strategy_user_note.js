@@ -36,8 +36,7 @@
       function targets() {
         return Array.prototype.slice.call(
           document.querySelectorAll(
-            '#insight-strategy-user-note[data-insight-source="monthly-edit-float"],' +
-              '#insight-analyze-annual-strategy-user-note'
+            '#insight-strategy-user-note[data-insight-source="monthly-edit-float"]'
           )
         );
       }
