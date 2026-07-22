@@ -253,6 +253,12 @@ def kpi_year_store_js() -> str:
           return !isYearLocked(y);
         }}
 
+        /** Locked past years: sales/expenses stay read-only, but memos/weather/strategy notes stay writable. */
+        function canWriteMepMetaYear(year) {{
+          var y = Number(year);
+          return Number.isFinite(y);
+        }}
+
         function pad2(n) {{
           return n < 10 ? '0' + n : String(n);
         }}
@@ -1515,10 +1521,16 @@ def kpi_year_store_js() -> str:
         function bulkPersistMepYear(year, payload, meta) {{
           var y = Number(year);
           if (!Number.isFinite(y)) return false;
-          if (!canWriteMepYear(y)) return false;
+          var allowFull = canWriteMepYear(y);
+          var allowMeta = canWriteMepMetaYear(y);
+          if (!allowFull && !allowMeta) return false;
           var rec = ensureYearMepData(y);
+          function allowMetaIso(iso) {{
+            if (!validIso(iso) || isoYear(iso) !== y) return false;
+            return allowFull ? canEditIso(iso) : true;
+          }}
           var srcExp = payload && payload.dailyExpenses;
-          if (srcExp && typeof srcExp === 'object') {{
+          if (allowFull && srcExp && typeof srcExp === 'object') {{
             Object.keys(srcExp).forEach(function (lineId) {{
               if (!rec.dailyExpenses[lineId]) rec.dailyExpenses[lineId] = {{}};
               var byIso = srcExp[lineId];
@@ -1532,7 +1544,7 @@ def kpi_year_store_js() -> str:
             }});
           }}
           var srcInc = payload && payload.dailyIncome;
-          if (srcInc && typeof srcInc === 'object') {{
+          if (allowFull && srcInc && typeof srcInc === 'object') {{
             Object.keys(srcInc).forEach(function (streamId) {{
               if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {{}};
               var byIso = srcInc[streamId];
@@ -1550,23 +1562,21 @@ def kpi_year_store_js() -> str:
             }});
           }}
           var srcMeta = payload && payload.dailyMeta;
-          if (srcMeta && typeof srcMeta === 'object') {{
+          if (allowMeta && srcMeta && typeof srcMeta === 'object') {{
             if (srcMeta.memos && typeof srcMeta.memos === 'object') {{
               Object.keys(srcMeta.memos).forEach(function (rowId) {{
                 if (!rec.dailyMeta.memos[rowId]) rec.dailyMeta.memos[rowId] = {{}};
                 var byIso = srcMeta.memos[rowId];
                 if (!byIso || typeof byIso !== 'object') return;
                 Object.keys(byIso).forEach(function (iso) {{
-                  if (!validIso(iso) || isoYear(iso) !== y) return;
-                  if (!canEditIso(iso)) return;
+                  if (!allowMetaIso(iso)) return;
                   rec.dailyMeta.memos[rowId][iso] = String(byIso[iso] == null ? '' : byIso[iso]);
                 }});
               }});
             }}
             if (srcMeta.weather && typeof srcMeta.weather === 'object') {{
               Object.keys(srcMeta.weather).forEach(function (iso) {{
-                if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!allowMetaIso(iso)) return;
                 rec.dailyMeta.weather[iso] = String(
                   srcMeta.weather[iso] == null ? '' : srcMeta.weather[iso]
                 );
@@ -1574,14 +1584,13 @@ def kpi_year_store_js() -> str:
             }}
             if (srcMeta.flags && typeof srcMeta.flags === 'object') {{
               Object.keys(srcMeta.flags).forEach(function (iso) {{
-                if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!allowMetaIso(iso)) return;
                 if (srcMeta.flags[iso]) rec.dailyMeta.flags[iso] = true;
                 else delete rec.dailyMeta.flags[iso];
               }});
             }}
           }}
-          if (payload && Array.isArray(payload.mepMemoRows)) {{
+          if (allowMeta && payload && Array.isArray(payload.mepMemoRows)) {{
             rec.mepMemoRows = payload.mepMemoRows.map(function (s) {{
               return {{
                 id: s.id,
@@ -1593,11 +1602,20 @@ def kpi_year_store_js() -> str:
               }};
             }});
           }}
-          if (payload && payload.monthlyStrategyUserNotes && typeof payload.monthlyStrategyUserNotes === 'object') {{
+          if (
+            allowMeta &&
+            payload &&
+            payload.monthlyStrategyUserNotes &&
+            typeof payload.monthlyStrategyUserNotes === 'object'
+          ) {{
             Object.keys(payload.monthlyStrategyUserNotes).forEach(function (mKey) {{
               var m0 = Number(mKey);
               if (!Number.isFinite(m0) || m0 < 0 || m0 > 11) return;
-              var text = String(payload.monthlyStrategyUserNotes[mKey] == null ? '' : payload.monthlyStrategyUserNotes[mKey]);
+              var text = String(
+                payload.monthlyStrategyUserNotes[mKey] == null
+                  ? ''
+                  : payload.monthlyStrategyUserNotes[mKey]
+              );
               if (text.trim()) rec.monthlyStrategyUserNotes[String(m0)] = text.slice(0, 200);
               else delete rec.monthlyStrategyUserNotes[String(m0)];
             }});
@@ -1741,6 +1759,7 @@ def kpi_year_store_js() -> str:
           readStrategyUserNote: readStrategyUserNote,
           bulkPersistMepYear: bulkPersistMepYear,
           canWriteMepYear: canWriteMepYear,
+          canWriteMepMetaYear: canWriteMepMetaYear,
           ensureYearMepData: ensureYearMepData,
           getSubscriptionTier: getSubscriptionTier,
           isProSubscription: isProSubscription,

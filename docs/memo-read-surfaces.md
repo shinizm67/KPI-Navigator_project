@@ -50,6 +50,12 @@
 
 - **配置（将来）**: Insight › Analyze / Graph › Annual › **Annual Target Revision** ゾーン内。`Alert Message` ラベル＋**大きなメッセージ表示ボックス**（読み取り専用）。
 - **現状 UI**: **ローンチ時点では表示しない**。Figma 上の Alert Message 枠は将来追加用のデザイン参照のみ。現行は **Current Term / Revision Status / Suggested Adjustment / Suggested Target** の 4 行 KPI のみ（`insight-annual-target-revision-kpi`）。
+- **4 行 KPI（v1・実データ）**: 選択日の `ytdA` / `ytdT` / `annualTarget` から算出（`patchAnalyzeAnnualTargetRevisionKpi`）。
+  - **Current Term**: 四半期 → `Term 1`〜`Term 4`（1–3月=1 …）。
+  - **Suggested Adjustment**: `round((ytdA/ytdT - 1)*100)`、±20% キャップ。
+  - **Revision Status**: `|adj|<3` → `On Track` / `3–10` → `Watch` / `>10` → `Revise`。
+  - **Suggested Target**: `round(annualTarget * (1 + adj/100))`（計画なしは `—`）。
+  - Alert Message は引き続き非表示（下記）。
 - **ローンチで Alert を出さない理由**:
   - システムだけの定型文 Alert では、時期・業態・店舗規模のバリエーションに対応しきれない。
   - 条件分岐と文案の組み合わせを人手で設計・保守するコストが大きく、品質も担保しにくい。
@@ -63,6 +69,14 @@
 - **入力**: **Monthly Edit Floating Window**（および将来の Annual 側編集があればそちら）のみ。
 - **表示**: Strategy Note の `User Note` ボックス（496×196px、16px、120〜200 文字）。**未保存・未入力時は空欄**。
 - **データ連携**: MEP 下部 **Strategy Note › User Note** テキストエリア → Save で `KpiYearStore.monthlyStrategyUserNotes` に月別保存 → Insight `#insight-strategy-user-note` に読み取り反映（`apply_insight_strategy_user_note.py`）。
+
+## Historical Insight Access › View Reason
+
+- **表示**: Best / Worst Same Month（および Annual の年ピア）の `View Reason` ホバー。
+- **内容（v1）**: 対象月（年ピアは **その年の通年 1/1〜12/31**）の **天気・日次6メモのユニーク集約**（各最大3件）＋ **Strategy User Note**（あれば先頭）。
+- **空のとき**: `この月のメモはありません` / `No memo for this month`（年ピアは period 文言）。
+- **注意**: 売上の Best/Worst 年ランキング自体は選択日の YTD 比較のまま。View Reason のメモ集約だけ通年。
+- **実装**: `buildHistoricalReasonListHtml`（`scripts/insight_diff_client.py`）。
 
 ## Analyze Weekly Insight（レイアウトメモ）
 

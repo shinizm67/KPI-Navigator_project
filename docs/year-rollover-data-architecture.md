@@ -299,7 +299,8 @@ KpiYearStore.listYearsWithData()                    // timeline + years から�
 **ルール:**
 
 - `iso` から `year` を抽出し `years.{year}` に書き込む。
-- `year < operatingYear` かつ `status === "locked"` の場合は**編集拒否**（管理者モード・監査付き修正は別途）。
+- `year < operatingYear` かつ `status === "locked"` の場合は**売上・支出などの編集拒否**（管理者モード・監査付き修正は別途）。
+- **例外（2026-07）**: ロック済み過去年でも **メモ／天気／戦略メモ（MEP meta）は保存可**（Historical Insight Access の View Reason 用）。`canWriteMepMetaYear` / `bulkPersistMepYear` の meta-only 経路。
 - 同一 `iso` は last-write-wins。`meta.source` は `annual-edit` | `sales-data` | `mep` | `csv` | `rollover` 等。
 
 ### 3.3 現行ストアからのマイグレーション

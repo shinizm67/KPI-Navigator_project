@@ -245,6 +245,61 @@ def insight_diff_js() -> str:
         if (currentProgress) patchAnnualCurrentProgressBlock(currentProgress, m);
       }}
 
+      /**
+       * Analyze Annual Target Revision 4行 KPI（v1）
+       * - Term: 選択日の四半期（Term 1–4）
+       * - Suggested Adjustment: round((ytdA/ytdT - 1)*100)、±20% キャップ
+       * - Status: |adj|<3 On Track / 3–10 Watch / >10 Revise
+       * - Suggested Target: annualTarget * (1 + adj/100)
+       */
+      function computeAnnualTargetRevisionKpi(m, iso) {{
+        var term = DASH;
+        if (iso) {{
+          var month = Number(String(iso).split('-')[1]);
+          if (Number.isFinite(month) && month >= 1 && month <= 12) {{
+            term = 'Term ' + (Math.floor((month - 1) / 3) + 1);
+          }}
+        }}
+        if (
+          !m ||
+          !m.hasPlan ||
+          !Number.isFinite(Number(m.ytdA)) ||
+          !Number.isFinite(Number(m.ytdT)) ||
+          Number(m.ytdT) <= 0
+        ) {{
+          return {{ term: term, status: DASH, adjText: DASH, targetText: DASH }};
+        }}
+        var adj = Math.round(((Number(m.ytdA) - Number(m.ytdT)) / Number(m.ytdT)) * 100);
+        if (adj > 20) adj = 20;
+        if (adj < -20) adj = -20;
+        var abs = Math.abs(adj);
+        var status = abs < 3 ? 'On Track' : abs <= 10 ? 'Watch' : 'Revise';
+        var adjText = (adj > 0 ? '+' : '') + adj + '%';
+        var targetText = DASH;
+        if (m.annualTarget != null && Number.isFinite(Number(m.annualTarget))) {{
+          targetText = fmtInsightMoney(Math.round(Number(m.annualTarget) * (1 + adj / 100)));
+        }}
+        return {{ term: term, status: status, adjText: adjText, targetText: targetText }};
+      }}
+
+      function patchAnalyzeAnnualTargetRevisionKpi(root, m, iso) {{
+        if (!root) return;
+        var blocks = root.querySelectorAll('.insight-annual-target-revision-kpi');
+        if (!blocks.length) return;
+        var kpi = computeAnnualTargetRevisionKpi(m, iso);
+        blocks.forEach(function (block) {{
+          var rows = block.querySelectorAll('.insight-annual-target-revision-kpi__row');
+          function setRow(i, text) {{
+            var el = rows[i] && rows[i].querySelector('.insight-annual-target-revision-kpi__value');
+            if (el) el.textContent = text;
+          }}
+          setRow(0, kpi.term);
+          setRow(1, kpi.status);
+          setRow(2, kpi.adjText);
+          setRow(3, kpi.targetText);
+        }});
+      }}
+
       function patchMonthlyHistoricalCompareBlock(block, m, iso) {{
         var rows = block.querySelectorAll('.insight-monthly-historical-compare__row');
         function setRow(i, text, actual, baseline) {{
@@ -1352,6 +1407,7 @@ def insight_diff_js() -> str:
         patchAnalyzeDualInsight(root, iso);
         patchAnalyzeAnnualExpenseProfit(root, m, iso);
         patchAnalyzeAnnualYearExpenseCharts(m, iso);
+        patchAnalyzeAnnualTargetRevisionKpi(root, m, iso);
       }};
 
       function insightIsJaLang() {{
@@ -1497,7 +1553,175 @@ def insight_diff_js() -> str:
         }}
       }}
 
-      function fillHistoricalInsightAccessGroup(group, rec, kind) {{
+      function escapeInsightHtml(s) {{
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }}
+
+      function historicalReasonEmptyLabel(kind) {{
+        if (insightIsJaLang()) {{
+          return kind === 'year' ? 'この期間のメモはありません' : 'この月のメモはありません';
+        }}
+        return kind === 'year' ? 'No memo for this period' : 'No memo for this month';
+      }}
+
+      function historicalReasonMemoLabels(year) {{
+        var ja = insightIsJaLang();
+        var defaults = ja
+          ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+          : [
+              'Store Event',
+              'Area Event',
+              'Social Media',
+              'Marketing',
+              'Promo Conversion',
+              'Reservation',
+            ];
+        var payload = dualInsightLoadYearPayload(year);
+        var labels = defaults.slice();
+        if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {{
+          for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {{
+            var row = payload.mepMemoRows[i];
+            var lab = ja
+              ? row.labelJa || row.labelEn || defaults[i]
+              : row.labelEn || row.labelJa || defaults[i];
+            if (lab) labels[i] = String(lab);
+          }}
+        }}
+        return labels;
+      }}
+
+      function historicalReasonReadStrategyNote(year, month1) {{
+        if (!window.KpiYearStore || typeof KpiYearStore.readStrategyUserNote !== 'function') {{
+          return '';
+        }}
+        return String(KpiYearStore.readStrategyUserNote(year, month1 - 1) || '')
+          .trim()
+          .slice(0, 200);
+      }}
+
+      function historicalReasonUniqueJoin(values) {{
+        var seen = {{}};
+        var out = [];
+        var truncated = false;
+        for (var i = 0; i < values.length; i++) {{
+          var v = String(values[i] == null ? '' : values[i]).trim();
+          if (!v || v === DASH || v === dualInsightNoneLabel()) continue;
+          if (seen[v]) continue;
+          seen[v] = true;
+          if (out.length >= 3) {{
+            truncated = true;
+            break;
+          }}
+          out.push(v);
+        }}
+        if (!out.length) return '';
+        var text = out.join(', ');
+        if (truncated) text += '…';
+        return text.slice(0, 200);
+      }}
+
+      /**
+       * View Reason: Best/Worst 月（または年ピア）の Weather＋6メモ＋User Note を集約。
+       * kind=month → その年月全日
+       * kind=year  → その年の 1/1〜12/31（売上ランキングは YTD でも、理由メモは通年）
+       */
+      function buildHistoricalReasonListHtml(rec, kind, day) {{
+        if (!rec) {{
+          return (
+            '<li class="insight-historical-insight-access__popover-item">' + DASH + '</li>'
+          );
+        }}
+        var y = Number(rec.year);
+        var month = Number(rec.month);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || month < 1 || month > 12) {{
+          return (
+            '<li class="insight-historical-insight-access__popover-item">' +
+            escapeInsightHtml(historicalReasonEmptyLabel(kind)) +
+            '</li>'
+          );
+        }}
+        var weatherVals = [];
+        var memoVals = [[], [], [], [], [], []];
+        var rowIds = dualInsightMemoRowIds(y);
+        var mStart = kind === 'month' ? month : 1;
+        var mEnd = kind === 'month' ? month : 12;
+        for (var m = mStart; m <= mEnd; m++) {{
+          var lastDay = new Date(y, m, 0).getDate();
+          for (var d = 1; d <= lastDay; d++) {{
+            var iso =
+              y +
+              '-' +
+              pad2Insight(m) +
+              '-' +
+              pad2Insight(d);
+            if (dualInsightIsOff(iso)) continue;
+            var wCode = dualInsightReadWeather(y, iso);
+            if (wCode) weatherVals.push(dualInsightWeatherLabel(wCode));
+            for (var ri = 0; ri < 6; ri++) {{
+              var raw = dualInsightReadMemo(y, rowIds[ri], iso);
+              if (raw) memoVals[ri].push(raw);
+            }}
+          }}
+        }}
+        var lines = [];
+        var weatherText = historicalReasonUniqueJoin(weatherVals);
+        if (weatherText) {{
+          lines.push({{
+            label: insightIsJaLang() ? '天気' : 'Weather',
+            value: weatherText,
+          }});
+        }}
+        var memoLabels = historicalReasonMemoLabels(y);
+        for (var mi = 0; mi < 6; mi++) {{
+          var joined = historicalReasonUniqueJoin(memoVals[mi]);
+          if (joined) lines.push({{ label: memoLabels[mi], value: joined }});
+        }}
+        if (kind === 'month') {{
+          var note = historicalReasonReadStrategyNote(y, month);
+          if (note) {{
+            lines.unshift({{
+              label: insightIsJaLang() ? '戦略メモ' : 'User Note',
+              value: note,
+            }});
+          }}
+        }} else {{
+          var noteBits = [];
+          for (var nm = 1; nm <= 12; nm++) {{
+            var n = historicalReasonReadStrategyNote(y, nm);
+            if (n) noteBits.push(pad2Insight(nm) + ': ' + n);
+          }}
+          var noteJoin = historicalReasonUniqueJoin(noteBits);
+          if (noteJoin) {{
+            lines.unshift({{
+              label: insightIsJaLang() ? '戦略メモ' : 'User Note',
+              value: noteJoin,
+            }});
+          }}
+        }}
+        if (!lines.length) {{
+          return (
+            '<li class="insight-historical-insight-access__popover-item">' +
+            escapeInsightHtml(historicalReasonEmptyLabel(kind)) +
+            '</li>'
+          );
+        }}
+        var html = '';
+        for (var li = 0; li < lines.length; li++) {{
+          html +=
+            '<li class="insight-historical-insight-access__popover-item"><strong>' +
+            escapeInsightHtml(lines[li].label) +
+            ':</strong> ' +
+            escapeInsightHtml(lines[li].value) +
+            '</li>';
+        }}
+        return html;
+      }}
+
+      function fillHistoricalInsightAccessGroup(group, rec, kind, day) {{
         if (!group) return;
         if (!rec) {{
           clearHistoricalInsightAccessGroup(group);
@@ -1526,12 +1750,7 @@ def insight_diff_js() -> str:
               : String(rec.year);
         }}
         var list = group.querySelector('.insight-historical-insight-access__popover-list');
-        if (list) {{
-          list.innerHTML =
-            '<li class="insight-historical-insight-access__popover-item">' +
-            'Memo not linked yet' +
-            '</li>';
-        }}
+        if (list) list.innerHTML = buildHistoricalReasonListHtml(rec, kind, day);
       }}
 
       function collectSameMonthHistory(y, month) {{
@@ -1648,12 +1867,14 @@ def insight_diff_js() -> str:
           fillHistoricalInsightAccessGroup(
             block.querySelector('[data-insight-month-key="best"]'),
             monthPick.best,
-            'month'
+            'month',
+            day
           );
           fillHistoricalInsightAccessGroup(
             block.querySelector('[data-insight-month-key="worst"]'),
             monthPick.worst,
-            'month'
+            'month',
+            day
           );
         }});
 
@@ -1662,12 +1883,14 @@ def insight_diff_js() -> str:
           fillHistoricalInsightAccessGroup(
             block.querySelector('[data-insight-year-key="best"]'),
             yearPick.best,
-            'year'
+            'year',
+            day
           );
           fillHistoricalInsightAccessGroup(
             block.querySelector('[data-insight-year-key="weakest"]'),
             yearPick.worst,
-            'year'
+            'year',
+            day
           );
         }});
       }}

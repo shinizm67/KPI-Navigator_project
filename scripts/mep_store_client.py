@@ -147,7 +147,6 @@ def mep_store_client_js() -> str:
         if (!mepStoreReady()) return false;
         flushPendingMemoEditsFromDom();
         if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
-        if (!KpiYearStore.canWriteMepYear(year)) return false;
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {{
           source: 'monthly-edit-float',
         }});

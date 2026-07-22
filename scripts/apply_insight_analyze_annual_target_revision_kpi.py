@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Insight: Historical Insight Access（Best/Worst Same Month・年）を実データ化."""
+"""Insight: Analyze Annual Target Revision 4行 KPI を実データ化（v1）."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ _SCRIPTS = ROOT / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-from apply_insight_expense_read import inject as inject_expense_read  # noqa: E402
 from insight_diff_client import (  # noqa: E402
     INSIGHT_DIFF_JS_END,
     INSIGHT_DIFF_JS_MARKER,
@@ -27,10 +26,8 @@ PAGES = [
 ]
 
 MARKERS = (
-    "patchHistoricalInsightAccess",
-    "collectSameMonthHistory",
-    "pickBestWorstBySales",
-    "buildHistoricalReasonListHtml",
+    "computeAnnualTargetRevisionKpi",
+    "patchAnalyzeAnnualTargetRevisionKpi",
 )
 
 
@@ -49,7 +46,6 @@ def inject_insight_diff(text: str) -> str:
 
 def patch_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    text = inject_expense_read(text)
     text = inject_insight_diff(text)
     for marker in MARKERS:
         if marker not in text:
