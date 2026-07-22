@@ -15676,7 +15676,7 @@
                 <a
                   class="insight-daily-summary-graph-link"
                   id="insight-daily-summary-graph-link"
-                  href="#annual-graph-popover-panel"
+                  href="#insight-jump-graph-daily"
                   >▶ グラフ</a>
               </div>
             </div>
@@ -15852,7 +15852,7 @@
                   <a
                     class="insight-daily-summary-graph-link"
                     id="insight-monthly-comparison-graph-link"
-                    href="#annual-graph-popover-panel"
+                    href="#insight-jump-graph-monthly"
                     >▶ グラフ</a>
                 </div>
               </div>
@@ -16029,7 +16029,7 @@
                   <a
                     class="insight-daily-summary-graph-link"
                     id="insight-annual-comparison-graph-link"
-                    href="#annual-graph-popover-panel"
+                    href="#insight-jump-graph-annual"
                     >▶ グラフ</a>
                 </div>
               </div>
@@ -16106,7 +16106,7 @@
                   <a
                     class="insight-daily-summary-graph-link"
                     id="insight-annual-target-revision-graph-link"
-                    href="#annual-graph-popover-panel"
+                    href="#insight-jump-graph-annual"
                     >▶ グラフ</a>
                   <div class="insight-annual-target-revision-foot">
                     <button type="button" class="insight-annual-back-to-top insight-overlay-back-to-top" id="insight-annual-back-to-top" aria-label="ページ先頭へ">
@@ -16296,7 +16296,7 @@
               <a
                 class="insight-daily-summary-graph-link"
                 id="insight-analyze-daily-graph-link"
-                href="#annual-graph-popover-panel"
+                href="#insight-jump-graph-daily"
                 >▶ グラフ</a>
             </section>
             <section class="insight-overlay__section insight-overlay__section--monthly" id="insight-jump-analyze-monthly" aria-label="Monthly（Analyze）">
@@ -16535,7 +16535,7 @@
               <a
                 class="insight-daily-summary-graph-link"
                 id="insight-analyze-monthly-graph-link"
-                href="#annual-graph-popover-panel"
+                href="#insight-jump-graph-monthly"
                 >▶ グラフ</a>
             </section>
             <section class="insight-overlay__section insight-overlay__section--annual insight-pane--analyze__annual" id="insight-jump-analyze-annual" aria-label="Annual（Analyze）">
@@ -16878,7 +16878,7 @@
               <a
                 class="insight-daily-summary-graph-link"
                 id="insight-analyze-annual-graph-link"
-                href="#annual-graph-popover-panel"
+                href="#insight-jump-graph-annual"
                 >▶ グラフ</a>
               <div class="insight-pane--analyze__foot">
                 <button type="button" class="insight-annual-back-to-top insight-overlay-back-to-top" id="insight-analyze-back-to-top" aria-label="ページ先頭へ">^ ページ先頭へ</button>
@@ -19919,6 +19919,37 @@ Target Sales</p>
       bindInsightJumpLink(jumpDaily);
       bindInsightJumpLink(jumpMonthly);
       bindInsightJumpLink(jumpAnnual);
+      /* INSIGHT-TAB-CROSS-LINKS */
+      function goInsightTabSection(tab, targetId) {
+        setInsightTab(tab);
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            var target = document.getElementById(targetId);
+            if (target) scrollInsightToTarget(target);
+          });
+        });
+      }
+      root.addEventListener('click', function (ev) {
+        var analyzeLink = ev.target && ev.target.closest ? ev.target.closest('.insight-graph-analyze-link') : null;
+        if (analyzeLink && root.contains(analyzeLink)) {
+          var analyzeHref = analyzeLink.getAttribute('href');
+          if (!analyzeHref || analyzeHref.charAt(0) !== '#') return;
+          var analyzeTargetId = analyzeHref.slice(1);
+          if (analyzeTargetId.indexOf('insight-jump-analyze-') !== 0) return;
+          ev.preventDefault();
+          goInsightTabSection('analyze', analyzeTargetId);
+          return;
+        }
+        var graphLink =
+          ev.target && ev.target.closest ? ev.target.closest('.insight-daily-summary-graph-link') : null;
+        if (!graphLink || !root.contains(graphLink)) return;
+        var graphHref = graphLink.getAttribute('href');
+        if (!graphHref || graphHref.charAt(0) !== '#') return;
+        var graphTargetId = graphHref.slice(1);
+        if (graphTargetId.indexOf('insight-jump-graph-') !== 0) return;
+        ev.preventDefault();
+        goInsightTabSection('graph', graphTargetId);
+      });
       root.addEventListener('click', function (ev) {
         var el = ev.target && ev.target.closest ? ev.target.closest('.insight-overlay-back-to-top') : null;
         if (!el || !root.contains(el)) return;
@@ -30379,20 +30410,6 @@ Target Sales</p>
         openPopover(anchorEl || graphBtn);
       };
 
-      var insightDailySummaryGraphLink = document.getElementById('insight-daily-summary-graph-link');
-      if (insightDailySummaryGraphLink) {
-        insightDailySummaryGraphLink.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-          if (!root.hidden && activeTriggerBtn === insightDailySummaryGraphLink) {
-            closePopover();
-            return;
-          }
-          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.openGraphPopoverForMode === 'function') {
-            window.__ANNUAL_UI.openGraphPopoverForMode('daily', insightDailySummaryGraphLink);
-          }
-        });
-      }
 
       btnClose.addEventListener('click', function (ev) {
         ev.stopPropagation();
