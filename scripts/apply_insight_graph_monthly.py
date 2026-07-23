@@ -59,7 +59,10 @@ def inject_insight_diff_js(text: str) -> str:
 
 
 def patch_insight_fill(text: str) -> str:
-    if "__INSIGHT_SELECTED_ISO" in text and "insight:dateChanged" in text:
+    # Coalesced fill (date-nav perf) or any fill that already dispatches insight:dateChanged
+    if "__INSIGHT_FILL_SCHED" in text or (
+        "__INSIGHT_SELECTED_ISO" in text and "insight:dateChanged" in text
+    ):
         return text
     if INSIGHT_FILL_OLD not in text and INSIGHT_FILL_NEW.split("window.__INSIGHT_SELECTED_ISO")[0] not in text:
         # already patched via INSIGHT_FILL_NEW from prior apply
@@ -106,7 +109,9 @@ def patch_monthly_trend(text: str) -> str:
         raise SystemExit("monthly trend render payload patch miss")
     if TREND_LISTENERS_OLD in text:
         text = text.replace(TREND_LISTENERS_OLD, TREND_LISTENERS_NEW, 1)
-    elif "insight:dateChanged" not in text:
+    elif "insightTrendDirty" in text or "insight:dateChanged" in text:
+        pass
+    else:
         raise SystemExit("monthly trend listeners patch miss")
     return text
 

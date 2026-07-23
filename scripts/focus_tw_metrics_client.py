@@ -706,11 +706,156 @@ def focus_tw_metrics_js() -> str:
         }};
       }}
       window.__buildAnnualCompareTrendPayload = buildAnnualCompareTrendPayload;
+      var twMetricsCache = {{}};
+      function shiftTwIsoByDays(iso, delta) {{
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        d.setDate(d.getDate() + (Number(delta) || 0));
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }}
+      function finalizeTwMetricsNeeds(m) {{
+        var monthlyNeed =
+          m.hasPlan && Number.isFinite(m.monthlyFullTarget) ? m.monthlyFullTarget - m.mtdA : null;
+        m.monthlyDailyNeed =
+          m.monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
+            ? monthlyNeed / m.monthRemainingBD
+            : null;
+        m.annualRemaining =
+          m.annualTarget != null && Number.isFinite(m.annualTarget) ? m.annualTarget - m.ytdA : null;
+        m.annualDailyNeed =
+          m.yearRemainingBD > 0 &&
+          m.annualRemaining != null &&
+          Number.isFinite(m.annualRemaining)
+            ? m.annualRemaining / m.yearRemainingBD
+            : null;
+        return m;
+      }}
+      function cloneTwMetrics(src) {{
+        return {{
+          iso: src.iso,
+          isBusinessToday: src.isBusinessToday,
+          hasPlan: src.hasPlan,
+          dailySales: src.dailySales,
+          dailyTarget: src.dailyTarget,
+          mtdA: src.mtdA,
+          mtdT: src.mtdT,
+          ytdA: src.ytdA,
+          ytdT: src.ytdT,
+          monthlyFullTarget: src.monthlyFullTarget,
+          monthRemainingBD: src.monthRemainingBD,
+          monthlyDailyNeed: src.monthlyDailyNeed,
+          annualTarget: src.annualTarget,
+          annualRemaining: src.annualRemaining,
+          yearRemainingBD: src.yearRemainingBD,
+          annualDailyNeed: src.annualDailyNeed,
+        }};
+      }}
+      function tryIncrementalTwMetrics(fromIso, toIso, fromMetrics, direction) {{
+        // direction: +1 = from -> to (to = from+1), -1 = from -> to (to = from-1)
+        if (!fromMetrics || !fromIso || !toIso) return null;
+        var fromD = new Date(String(fromIso).trim() + 'T00:00:00');
+        var toD = new Date(String(toIso).trim() + 'T00:00:00');
+        if (!isFinite(fromD.getTime()) || !isFinite(toD.getTime())) return null;
+        if (fromD.getFullYear() !== toD.getFullYear()) return null;
+        if (fromD.getMonth() !== toD.getMonth()) return null;
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
+        var smap = daily.targetSalesByDate || {{}};
+        var bmap = daily.businessDayByDate || {{}};
+        var y = toD.getFullYear();
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var m = cloneTwMetrics(fromMetrics);
+        m.iso = toIso;
+
+        function dayMeta(dayIso) {{
+          var dd = new Date(String(dayIso).trim() + 'T00:00:00');
+          var isWk = dd.getDay() === 0 || dd.getDay() === 6;
+          var biz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dayTarget = null;
+          if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {{
+            dayTarget = Number(tgtMap[dayIso]);
+            if (!Number.isFinite(dayTarget)) dayTarget = null;
+          }}
+          return {{
+            biz: biz,
+            sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
+            target: biz ? dayTarget : null,
+          }};
+        }}
+
+        if (direction > 0) {{
+          // leave fromIso, enter toIso
+          var left = dayMeta(fromIso);
+          if (left.biz) {{
+            m.yearRemainingBD = Math.max(0, Number(m.yearRemainingBD) - 1);
+            m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
+          }}
+          var entered = dayMeta(toIso);
+          if (entered.biz) {{
+            m.ytdA = Number(m.ytdA) + entered.sales;
+            m.mtdA = Number(m.mtdA) + entered.sales;
+            if (entered.target != null) {{
+              m.ytdT = Number(m.ytdT) + entered.target;
+              m.mtdT = Number(m.mtdT) + entered.target;
+              m.hasPlan = true;
+            }}
+            m.isBusinessToday = true;
+            m.dailySales = entered.sales;
+            m.dailyTarget = entered.target;
+          }} else {{
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }}
+        }} else {{
+          // leave fromIso (newer), enter toIso (older)
+          var dropped = dayMeta(fromIso);
+          if (dropped.biz) {{
+            m.ytdA = Number(m.ytdA) - dropped.sales;
+            m.mtdA = Number(m.mtdA) - dropped.sales;
+            if (dropped.target != null) {{
+              m.ytdT = Number(m.ytdT) - dropped.target;
+              m.mtdT = Number(m.mtdT) - dropped.target;
+            }}
+            m.yearRemainingBD = Number(m.yearRemainingBD) + 1;
+            m.monthRemainingBD = Number(m.monthRemainingBD) + 1;
+          }}
+          var back = dayMeta(toIso);
+          if (back.biz) {{
+            m.isBusinessToday = true;
+            m.dailySales = back.sales;
+            m.dailyTarget = back.target;
+          }} else {{
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }}
+        }}
+        return finalizeTwMetricsNeeds(m);
+      }}
       function computeTwMetricsForIso(iso) {{
         if (!iso) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
-          KpiYearStore.syncToAnnualDaily();
+        if (Object.prototype.hasOwnProperty.call(twMetricsCache, iso)) {{
+          return twMetricsCache[iso];
         }}
+        var prevIso = shiftTwIsoByDays(iso, -1);
+        if (prevIso && Object.prototype.hasOwnProperty.call(twMetricsCache, prevIso)) {{
+          var fwd = tryIncrementalTwMetrics(prevIso, iso, twMetricsCache[prevIso], 1);
+          if (fwd) {{
+            twMetricsCache[iso] = fwd;
+            return fwd;
+          }}
+        }}
+        var nextIso = shiftTwIsoByDays(iso, 1);
+        if (nextIso && Object.prototype.hasOwnProperty.call(twMetricsCache, nextIso)) {{
+          var back = tryIncrementalTwMetrics(nextIso, iso, twMetricsCache[nextIso], -1);
+          if (back) {{
+            twMetricsCache[iso] = back;
+            return back;
+          }}
+        }}
+
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
         var smap = daily.targetSalesByDate || {{}};
         var bmap = daily.businessDayByDate || {{}};
@@ -766,21 +911,7 @@ def focus_tw_metrics_js() -> str:
             }}
           }}
         }}
-        var monthlyNeed =
-          hasPlan && Number.isFinite(monthlyFullTarget) ? monthlyFullTarget - mtdA : null;
-        var monthlyDailyNeed =
-          monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
-            ? monthlyNeed / monthRemainingBD
-            : null;
-        var annualRemaining =
-          annualTarget != null && Number.isFinite(annualTarget) ? annualTarget - ytdA : null;
-        var annualDailyNeed =
-          yearRemainingBD > 0 &&
-          annualRemaining != null &&
-          Number.isFinite(annualRemaining)
-            ? annualRemaining / yearRemainingBD
-            : null;
-        return {{
+        var result = finalizeTwMetricsNeeds({{
           iso: iso,
           isBusinessToday: isBusinessToday,
           hasPlan: hasPlan,
@@ -792,12 +923,37 @@ def focus_tw_metrics_js() -> str:
           ytdT: ytdT,
           monthlyFullTarget: monthlyFullTarget,
           monthRemainingBD: monthRemainingBD,
-          monthlyDailyNeed: monthlyDailyNeed,
+          monthlyDailyNeed: null,
           annualTarget: annualTarget,
-          annualRemaining: annualRemaining,
+          annualRemaining: null,
           yearRemainingBD: yearRemainingBD,
-          annualDailyNeed: annualDailyNeed,
-        }};
+          annualDailyNeed: null,
+        }});
+        twMetricsCache[iso] = result;
+        return result;
+      }}
+      var salesThroughCache = {{}};
+      function invalidateTwSalesThroughCache() {{
+        salesThroughCache = {{}};
+        twMetricsCache = {{}};
+        window.__TW_ANNUAL_DAILY_SYNCED = false;
+      }}
+      window.__invalidateTwSalesThroughCache = invalidateTwSalesThroughCache;
+      function ensureTwAnnualDailySynced() {{
+        if (window.__TW_ANNUAL_DAILY_SYNCED) return;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
+          KpiYearStore.syncToAnnualDaily();
+        }}
+        window.__TW_ANNUAL_DAILY_SYNCED = true;
+      }}
+      function addOneSalesDay(acc, y, mm, d, smap, bmap) {{
+        var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+        var dt = new Date(y, mm - 1, d);
+        var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+        if (!isTimelineBusinessDay(dayIso, bmap, isWk)) return acc;
+        if (Object.prototype.hasOwnProperty.call(smap, dayIso)) acc.hasData = true;
+        acc.sum += readTwSalesAmt(dayIso, smap);
+        return acc;
       }}
       function sumMonthSalesThroughDay(year, month, day) {{
         var y = Number(year);
@@ -805,14 +961,41 @@ def focus_tw_metrics_js() -> str:
         var dayN = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
         if (m < 1 || m > 12) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
-          KpiYearStore.syncToAnnualDaily();
+        var dim = new Date(y, m, 0).getDate();
+        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        var cacheKey = 'm:' + y + '-' + m + '-' + until;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {{
+          return salesThroughCache[cacheKey];
         }}
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
         var smap = daily.targetSalesByDate || {{}};
         var bmap = daily.businessDayByDate || {{}};
-        var dim = new Date(y, m, 0).getDate();
-        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        if (until > 0) {{
+          var prevMKey = 'm:' + y + '-' + m + '-' + (until - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMKey)) {{
+            var prevM = salesThroughCache[prevMKey];
+            var fwdM = {{ sum: prevM.sum, hasData: prevM.hasData }};
+            addOneSalesDay(fwdM, y, m, until, smap, bmap);
+            salesThroughCache[cacheKey] = fwdM;
+            return fwdM;
+          }}
+        }}
+        if (until < dim) {{
+          var nextMKey = 'm:' + y + '-' + m + '-' + (until + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextMKey)) {{
+            var nextM = salesThroughCache[nextMKey];
+            var backM = {{ sum: nextM.sum, hasData: nextM.hasData }};
+            var remIso = y + '-' + pad2(m) + '-' + pad2(until + 1);
+            var remDt = new Date(y, m - 1, until + 1);
+            var remWk = remDt.getDay() === 0 || remDt.getDay() === 6;
+            if (isTimelineBusinessDay(remIso, bmap, remWk)) {{
+              backM.sum -= readTwSalesAmt(remIso, smap);
+            }}
+            salesThroughCache[cacheKey] = backM;
+            return backM;
+          }}
+        }}
         var sum = 0;
         var hasData = false;
         for (var d = 1; d <= until; d++) {{
@@ -823,7 +1006,9 @@ def focus_tw_metrics_js() -> str:
           if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
           sum += readTwSalesAmt(dayIso, smap);
         }}
-        return {{ sum: sum, hasData: hasData }};
+        var monthResult = {{ sum: sum, hasData: hasData }};
+        salesThroughCache[cacheKey] = monthResult;
+        return monthResult;
       }}
       window.__sumMonthSalesThroughDay = sumMonthSalesThroughDay;
       function sumYearSalesThroughDay(year, month, day) {{
@@ -832,14 +1017,51 @@ def focus_tw_metrics_js() -> str:
         var dayN = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
         if (m < 1 || m > 12) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
-          KpiYearStore.syncToAnnualDaily();
+        var dimMonth = new Date(y, m, 0).getDate();
+        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        var cacheKey = 'y:' + y + '-' + m + '-' + untilDay;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {{
+          return salesThroughCache[cacheKey];
         }}
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
         var smap = daily.targetSalesByDate || {{}};
         var bmap = daily.businessDayByDate || {{}};
-        var dimMonth = new Date(y, m, 0).getDate();
-        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        if (untilDay > 1) {{
+          var prevYKey = 'y:' + y + '-' + m + '-' + (untilDay - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevYKey)) {{
+            var prevY = salesThroughCache[prevYKey];
+            var fwdY = {{ sum: prevY.sum, hasData: prevY.hasData }};
+            addOneSalesDay(fwdY, y, m, untilDay, smap, bmap);
+            salesThroughCache[cacheKey] = fwdY;
+            return fwdY;
+          }}
+        }} else if (m > 1) {{
+          var prevDim = new Date(y, m - 1, 0).getDate();
+          var prevMonthEndKey = 'y:' + y + '-' + (m - 1) + '-' + prevDim;
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMonthEndKey)) {{
+            var prevEnd = salesThroughCache[prevMonthEndKey];
+            var fromPrev = {{ sum: prevEnd.sum, hasData: prevEnd.hasData }};
+            addOneSalesDay(fromPrev, y, m, 1, smap, bmap);
+            salesThroughCache[cacheKey] = fromPrev;
+            return fromPrev;
+          }}
+        }}
+        if (untilDay < dimMonth) {{
+          var nextYKey = 'y:' + y + '-' + m + '-' + (untilDay + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextYKey)) {{
+            var nextY = salesThroughCache[nextYKey];
+            var backY = {{ sum: nextY.sum, hasData: nextY.hasData }};
+            var remYIso = y + '-' + pad2(m) + '-' + pad2(untilDay + 1);
+            var remYDt = new Date(y, m - 1, untilDay + 1);
+            var remYWk = remYDt.getDay() === 0 || remYDt.getDay() === 6;
+            if (isTimelineBusinessDay(remYIso, bmap, remYWk)) {{
+              backY.sum -= readTwSalesAmt(remYIso, smap);
+            }}
+            salesThroughCache[cacheKey] = backY;
+            return backY;
+          }}
+        }}
         var sum = 0;
         var hasData = false;
         for (var mm = 1; mm <= m; mm++) {{
@@ -854,7 +1076,9 @@ def focus_tw_metrics_js() -> str:
             sum += readTwSalesAmt(dayIso, smap);
           }}
         }}
-        return {{ sum: sum, hasData: hasData }};
+        var yearResult = {{ sum: sum, hasData: hasData }};
+        salesThroughCache[cacheKey] = yearResult;
+        return yearResult;
       }}
       window.__sumYearSalesThroughDay = sumYearSalesThroughDay;
       window.__computeTwMetricsForIso = computeTwMetricsForIso;
@@ -874,17 +1098,13 @@ def focus_tw_metrics_js() -> str:
       }};
       window.__readTwDaySales = function (iso) {{
         if (!iso) return 0;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
-          KpiYearStore.syncToAnnualDaily();
-        }}
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
         return readTwSalesAmt(iso, daily.targetSalesByDate || {{}});
       }};
       window.__isTwBusinessDay = function (iso) {{
         if (!iso) return false;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
-          KpiYearStore.syncToAnnualDaily();
-        }}
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {{}};
         var bmap = daily.businessDayByDate || {{}};
         var d = new Date(String(iso).trim() + 'T00:00:00');
@@ -907,6 +1127,19 @@ def focus_tw_metrics_js() -> str:
         }}, 32);
       }}
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
+      [
+        'annual:salesMapChanged',
+        'kpi:dailySalesChanged',
+        'kpi:businessDayChanged',
+        'kpi:annualPlanChanged',
+        'kpi:dailyTargetModeChanged',
+        'kpi:weekdayBaselineChanged',
+        'annual:pastSalesSaved',
+      ].forEach(function (evName) {{
+        document.addEventListener(evName, function () {{
+          invalidateTwSalesThroughCache();
+        }});
+      }});
       {FOCUS_TW_END}"""
 
 

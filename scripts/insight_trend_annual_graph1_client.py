@@ -70,6 +70,22 @@ TREND_LISTENERS_OLD = """        render();
       function initGraphAnnualCumulativeTrendGraph2() {"""
 
 TREND_LISTENERS_NEW = """        render();
+        var insightTrendDirty = false;
+        function insightTrendVisible() {
+          var overlay = document.getElementById('insight-overlay');
+          var pane = document.getElementById('insight-pane-graph');
+          if (overlay && overlay.hidden) return false;
+          if (pane && pane.hidden) return false;
+          return true;
+        }
+        function insightTrendRender() {
+          if (!insightTrendVisible()) {
+            insightTrendDirty = true;
+            return;
+          }
+          insightTrendDirty = false;
+          render();
+        }
         [
           'annual:calendarDateChanged',
           'annual:dailyDateChanged',
@@ -78,7 +94,12 @@ TREND_LISTENERS_NEW = """        render();
           'kpi:annualPlanChanged',
           'insight:dateChanged',
         ].forEach(function (evName) {
-          document.addEventListener(evName, render);
+          document.addEventListener(evName, insightTrendRender);
+        });
+        document.addEventListener('insight:tabChanged', function (ev) {
+          if (ev && ev.detail && ev.detail.tab === 'graph' && insightTrendDirty) {
+            insightTrendRender();
+          }
         });
       }
 

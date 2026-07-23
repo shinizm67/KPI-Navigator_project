@@ -82,6 +82,13 @@ def verify_page(page, url: str) -> list[str]:
           const g1 = window.__buildAnnualCumulativeTrendPayload(2026, iso);
 
           document.getElementById('global-nav-index-btn').click();
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = true;
+          if (paneGraph) paneGraph.hidden = false;
+          document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: 'graph' } }));
           window.__INSIGHT_SELECTED_ISO = iso;
           document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso } }));
 

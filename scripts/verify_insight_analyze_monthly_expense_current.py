@@ -62,8 +62,13 @@ def build_seed() -> dict:
 def catalog() -> dict:
     return {
         "lines": [
-            {"lineId": "exp_rent", "bucket": "fixed", "active": True},
-            {"lineId": "exp_food_cost", "bucket": "variable", "active": True},
+            {"lineId": "exp_rent", "bucket": "fixed", "inputStyle": "daily", "active": True},
+            {
+                "lineId": "exp_food_cost",
+                "bucket": "variable",
+                "inputStyle": "daily",
+                "active": True,
+            },
         ]
     }
 
@@ -87,6 +92,12 @@ def verify_page(page, url: str) -> list[str]:
         """() => {
           const iso = '2026-07-14';
           const m = window.__computeTwMetricsForIso(iso);
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = false;
+          if (paneGraph) paneGraph.hidden = true;
           window.renderInsightTwDiffs(iso);
           const chart = document.getElementById('insight-analyze-expense-pl-current');
           const fixedEl = chart.querySelector('[data-role="fixed-pct"]');
@@ -119,11 +130,11 @@ def verify_page(page, url: str) -> list[str]:
         )
     if result.get("gotFixed") == "40%":
         problems.append(f"{url}: still mock 40%")
-    # other years still mock
-    if result.get("otherFixed") not in ("40%", "40"):
-        # last-year init is 40 — if changed something wrong
-        if result.get("otherFixed") == result.get("gotFixed"):
-            problems.append(f"{url}: last-year unexpectedly updated {result.get('otherFixed')}")
+    if not result.get("exp") or not result.get("exp", {}).get("hasData"):
+        problems.append(f"{url}: expense hasData false {result.get('exp')}")
+    # 前年データなし → 0%（全棒を実データ化する現行仕様）
+    if result.get("otherFixed") not in ("0%", "0"):
+        problems.append(f"{url}: last-year expected 0% got {result.get('otherFixed')}")
     rel = url.split("/kpi-navigator/")[-1]
     print(
         f"  {rel} mtdA={result.get('mtdA')} exp={result.get('exp')} "

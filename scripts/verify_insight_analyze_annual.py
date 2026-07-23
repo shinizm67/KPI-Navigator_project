@@ -74,6 +74,12 @@ def verify_page(page, url: str) -> list[str]:
         """() => {
           const iso = '2026-06-26';
           const m = window.__computeTwMetricsForIso(iso);
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = false;
+          if (paneGraph) paneGraph.hidden = true;
           window.renderInsightTwDiffs(iso);
           const section = document.getElementById('insight-jump-analyze-annual');
           if (!section) return { error: 'missing #insight-jump-analyze-annual' };

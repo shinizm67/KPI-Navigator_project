@@ -23,6 +23,9 @@
       var dash = '—';
       var sharedAnchorIso = null;
       var roots = [];
+      var weeklyRenderSched = false;
+      var weeklyRenderBusy = false;
+      var weeklyRenderRerun = false;
 
       function pad2(n) {
         return n < 10 ? '0' + n : String(n);
@@ -267,13 +270,87 @@
         roots.forEach(renderRoot);
       }
 
-      function setAnchor(iso) {
+      function scheduleWeeklyTableRender() {
+        if (weeklyRenderSched) return;
+        weeklyRenderSched = true;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            weeklyRenderSched = false;
+            if (weeklyRenderBusy) {
+              weeklyRenderRerun = true;
+              return;
+            }
+            weeklyRenderBusy = true;
+            try {
+              renderAll();
+            } catch (_weeklyRenderErr) {}
+            weeklyRenderBusy = false;
+            if (weeklyRenderRerun) {
+              weeklyRenderRerun = false;
+              scheduleWeeklyTableRender();
+            }
+          });
+        });
+      }
+
+      function setAnchor(iso, opts) {
         if (!parseIso(iso)) return;
+        opts = opts || {};
         sharedAnchorIso = iso;
         roots.forEach(function (root) {
           root.__weeklyAnchorIso = iso;
+          updateNav(root, iso);
         });
-        renderAll();
+        if (opts.immediate) {
+          renderAll();
+          return;
+        }
+        scheduleWeeklyTableRender();
+      }
+
+      function bindHoldRepeat(btn, stepFn) {
+        if (!btn || btn.__weeklyHoldBound) return;
+        btn.__weeklyHoldBound = true;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) {
+            clearTimeout(delayId);
+            delayId = null;
+          }
+          if (repeatId != null) {
+            clearInterval(repeatId);
+            repeatId = null;
+          }
+        }
+        function stepOnce() {
+          stepFn();
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          try {
+            btn.setPointerCapture(ev.pointerId);
+          } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() {
+          clearHold();
+        }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
+        });
       }
 
       function bindRoot(root) {
@@ -284,31 +361,47 @@
         var nav = root.querySelector('.insight-analyze-weekly__nav');
         var dateInput = root.querySelector('.insight-analyze-weekly__date-input');
         if (!nav) return;
+
+        function currentAnchor() {
+          return root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+        }
+
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="day-prev"]'), function () {
+          setAnchor(addDaysIso(currentAnchor(), -1));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="day-next"]'), function () {
+          setAnchor(addDaysIso(currentAnchor(), 1));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="year-prev"]'), function () {
+          var p = parseIso(currentAnchor());
+          if (!p) return;
+          setAnchor(isoFromParts(p.y - 1, p.m0, p.d));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="year-next"]'), function () {
+          var p = parseIso(currentAnchor());
+          if (!p) return;
+          setAnchor(isoFromParts(p.y + 1, p.m0, p.d));
+        });
+
         nav.addEventListener('click', function (ev) {
           var btn = ev.target.closest('[data-weekly-nav]');
           if (!btn || !root.contains(btn)) return;
           var action = btn.getAttribute('data-weekly-nav');
-          var anchor = root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+          // day/year arrows use hold-repeat (pointerdown); ignore click duplicate
+          if (
+            action === 'day-prev' ||
+            action === 'day-next' ||
+            action === 'year-prev' ||
+            action === 'year-next'
+          ) {
+            ev.preventDefault();
+            return;
+          }
+          var anchor = currentAnchor();
           var p = parseIso(anchor);
           if (!p) return;
-          if (action === 'year-prev') {
-            setAnchor(isoFromParts(p.y - 1, p.m0, p.d));
-            return;
-          }
-          if (action === 'year-next') {
-            setAnchor(isoFromParts(p.y + 1, p.m0, p.d));
-            return;
-          }
-          if (action === 'day-prev') {
-            setAnchor(addDaysIso(anchor, -1));
-            return;
-          }
-          if (action === 'day-next') {
-            setAnchor(addDaysIso(anchor, 1));
-            return;
-          }
           if (action === 'today') {
-            setAnchor(todayIso());
+            setAnchor(todayIso(), { immediate: true });
             return;
           }
           if (action === 'date-pick' && dateInput) {
@@ -319,7 +412,7 @@
         });
         if (dateInput) {
           dateInput.addEventListener('change', function () {
-            if (dateInput.value) setAnchor(dateInput.value);
+            if (dateInput.value) setAnchor(dateInput.value, { immediate: true });
           });
         }
       }
@@ -337,11 +430,11 @@
       });
       document.addEventListener('kpi:selectedDateChanged', function (ev) {
         var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
-        if (iso && parseIso(iso)) setAnchor(String(iso));
+        if (iso && parseIso(iso)) setAnchor(String(iso), { immediate: true });
       });
       document.addEventListener('annual:dailyDateChanged', function (ev) {
         var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
-        if (iso && parseIso(iso)) setAnchor(String(iso));
+        if (iso && parseIso(iso)) setAnchor(String(iso), { immediate: true });
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;

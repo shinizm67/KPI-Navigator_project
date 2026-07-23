@@ -19,6 +19,11 @@ PAGES = [
 ]
 
 YEAR = 2026
+EXE = Path.home() / (
+    "Library/Caches/ms-playwright/chromium-1228/"
+    "chrome-mac-arm64/Google Chrome for Testing.app/"
+    "Contents/MacOS/Google Chrome for Testing"
+)
 
 
 def build_seed() -> dict:
@@ -76,6 +81,15 @@ def verify_page(page, url: str) -> list[str]:
           window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
           window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {};
           window.__ANNUAL_DATA.daily.selectedDate = '2026-07-15';
+          const openBtn = document.getElementById('global-nav-index-btn');
+          if (openBtn) openBtn.click();
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = true;
+          if (paneGraph) paneGraph.hidden = false;
+          document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: 'graph' } }));
           window.__INSIGHT_SELECTED_ISO = '2026-06-30';
           document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso: '2026-06-30' } }));
 
@@ -114,9 +128,12 @@ def verify_page(page, url: str) -> list[str]:
 
 
 def main() -> int:
+    import os
+
+    os.environ.pop("PLAYWRIGHT_BROWSERS_PATH", None)
     all_problems: list[str] = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(executable_path=str(EXE), headless=True)
         for page_path in PAGES:
             context = browser.new_context()
             page = context.new_page()

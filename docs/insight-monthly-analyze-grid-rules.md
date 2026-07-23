@@ -40,6 +40,7 @@
 - トラック外枠のシアン `border` は付けない（`border: none`）。
 - **Sales**（下）: 黄色縦棒の中心 X で揃える。縦棒幅は **4px**（`#e6ff00`）。プロジェクト全体の黄棒チェックは `docs/insight-yellow-sales-marker-width-checklist.md`。
 - セグメント幅は売上 X 基準: `--fixed-w: calc(var(--sales-x) * var(--fixed-pct) / 100)`（変動費も同式）。
+- **0% セグメント**: Fixed / Variable が 0% のとき、棒は消えるがラベル中心配置だと左端や Expenses と重なるため、`setExpensePlChartPct` で当該 `seg-label` / `seg-pct` を `hidden` にする。
 
 ## Strategy Note（Monthly 最終ゾーン）
 

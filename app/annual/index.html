@@ -4826,9 +4826,16 @@
         var(--insight-kpi-graph-gap-box-to-bar) + (13px * 1.2) + var(--insight-kpi-graph-gap-box-to-bar)
       );
 
+      --insight-atr-summary-foot-margin-h: calc(
+        var(--insight-kpi-graph-gap-box-to-visual) + 50px + 25px + 50px + (13px * 1.2) + 12px
+      );
+      --insight-atr-summary-tail-h: calc(
+        var(--insight-kpi-graph-gap-box-to-visual) + 96px +
+          var(--insight-atr-summary-foot-margin-h) + 40px
+      );
       --insight-band-annual-summary: calc(
-        var(--insight-through-comparison-tail-end) + var(--insight-atr-zone-through-graph-h) +
-          var(--insight-atr-back-to-top-h) + var(--insight-section-bottom-pad)
+        var(--insight-through-comparison-tail-end) + 48px + var(--insight-annual-revision-rows-h) +
+          var(--insight-atr-summary-tail-h) + var(--insight-section-bottom-pad)
       );
       --insight-band-annual: max(
         var(--insight-band-annual-summary),
@@ -4929,6 +4936,50 @@
     #insight-pane-graph.insight-pane {
       min-height: auto;
       height: auto;
+    }
+    /* Summary タブ: 親 .insight-overlay__content / .insight-pane の Analyze 用 min-height を無効化 */
+    .insight-overlay__content:has(> #insight-pane-summary:not([hidden])) {
+      min-height: auto;
+      height: auto;
+    }
+    #insight-pane-summary.insight-pane {
+      min-height: auto;
+      height: auto;
+    }
+    /* Summary タブのみ: 帯高は Summary 実寸（Analyze の max 採用で下に空きが出ない） */
+    #insight-pane-summary .insight-overlay__section--daily {
+      min-height: var(--insight-band-daily-summary);
+    }
+    #insight-pane-summary .insight-overlay__hline--monthly {
+      top: var(--insight-band-daily-summary);
+    }
+    #insight-pane-summary .insight-overlay__hline--annual {
+      top: calc(var(--insight-band-daily-summary) + var(--insight-band-monthly-summary));
+    }
+    #insight-pane-summary .insight-overlay__section--monthly {
+      min-height: var(--insight-band-monthly-summary);
+    }
+    /* Summary Annual: Summary 帯高（下端余白は --insight-band-annual-summary に含む） */
+    #insight-pane-summary #insight-jump-summary-annual {
+      min-height: var(--insight-band-annual-summary);
+      height: auto;
+      padding-bottom: 0;
+      box-sizing: border-box;
+    }
+    #insight-pane-summary .insight-annual-target-revision-tail {
+      min-height: 0;
+    }
+    #insight-pane-summary .insight-annual-target-revision-tail .insight-annual-target-revision-foot {
+      position: relative;
+      top: auto;
+      right: auto;
+      margin-top: calc(
+        var(--insight-kpi-graph-gap-box-to-visual) + 50px + 25px + 50px + (13px * 1.2) + 12px
+      );
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
+      box-sizing: border-box;
     }
     .insight-overlay__section-label {
       position: -webkit-sticky;
@@ -5100,6 +5151,7 @@
     .insight-pane--graph .insight-analyze-weekly {
       --insight-weekly-date-w: 170px;
       --insight-weekly-scroll-w: 1030px;
+      --insight-weekly-table-w: 1200px; /* date+weather+6 memo cols (fixed; memo must not grow) */
       --insight-weekly-today-bg: color-mix(in srgb, #0f9403 15%, #1e1e1e);
       margin-top: 48px;
       margin-left: -185px;
@@ -5116,17 +5168,15 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px;
       margin: 0;
       pointer-events: auto;
     }
     .insight-pane--analyze .insight-analyze-weekly__nav-btn,
-    .insight-pane--graph .insight-analyze-weekly__nav-btn,
-    .insight-pane--analyze .insight-analyze-weekly__date-btn,
-    .insight-pane--graph .insight-analyze-weekly__date-btn {
+    .insight-pane--graph .insight-analyze-weekly__nav-btn {
       border: 0;
-      padding: 0 2px;
+      padding: 0;
       margin: 0;
       background: transparent;
       color: #58e1f3;
@@ -5134,6 +5184,35 @@
       line-height: 1;
       cursor: pointer;
       font-family: 'Orbitron', sans-serif;
+      width: 16px;
+      min-width: 16px;
+      max-width: 16px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 日付連打時に ▶︎ が動かないよう固定幅（Orbitron 16px「12/31 wed」想定） */
+    .insight-pane--analyze .insight-analyze-weekly__date-btn,
+    .insight-pane--graph .insight-analyze-weekly__date-btn {
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      color: #58e1f3;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      width: 110px;
+      min-width: 110px;
+      max-width: 110px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .insight-pane--analyze .insight-analyze-weekly__year,
     .insight-pane--graph .insight-analyze-weekly__year {
@@ -5206,8 +5285,9 @@
     }
     .insight-pane--analyze .insight-analyze-weekly__table,
     .insight-pane--graph .insight-analyze-weekly__table {
-      width: max-content;
-      min-width: 100%;
+      width: var(--insight-weekly-table-w);
+      min-width: var(--insight-weekly-table-w);
+      max-width: var(--insight-weekly-table-w);
       border-collapse: collapse;
       table-layout: fixed;
       font-size: 16px;
@@ -5225,6 +5305,7 @@
       text-align: center;
       vertical-align: middle;
       border-bottom: 0.5px solid rgba(88, 225, 243, 0.72);
+      overflow: hidden;
     }
     .insight-pane--analyze .insight-analyze-weekly__table tbody td,
     .insight-pane--graph .insight-analyze-weekly__table tbody td {
@@ -5234,6 +5315,7 @@
       text-align: center;
       vertical-align: middle;
       border-bottom: 0.5px solid rgba(88, 225, 243, 0.35);
+      overflow: hidden;
     }
     .insight-pane--analyze .insight-analyze-weekly__col--date,
     .insight-pane--graph .insight-analyze-weekly__col--date {
@@ -9061,9 +9143,14 @@
     }
     .daily-overlay__panel {
       position: relative;
+      display: flex;
+      flex-direction: column;
       width: 1100px;
       height: 1350px;
+      max-height: calc(100vh - 32px);
       overflow: hidden;
+      --daily-overlay-sticky-h: 74px;
+      --daily-overlay-daily-kpi-top: 32px;
       border: 3px solid rgba(13, 177, 58, 0.85);
       border-radius: 12px;
       background: rgba(9, 12, 17, 0.95);
@@ -9087,6 +9174,90 @@
       line-height: 1;
       cursor: pointer;
     }
+    /* KPI-DAILY-OVERLAY-STICKY-HEAD */
+    .daily-overlay__sticky-head {
+      position: relative;
+      flex: 0 0 var(--daily-overlay-sticky-h);
+      height: var(--daily-overlay-sticky-h);
+      z-index: 12;
+      background: rgba(9, 12, 17, 0.98);
+      box-sizing: border-box;
+    }
+    .daily-overlay__sticky-head .daily-overlay__head {
+      top: 8px;
+      min-height: 28px;
+      align-items: center;
+    }
+    .daily-overlay__sticky-head::after {
+      content: '';
+      position: absolute;
+      left: 79px;
+      right: 66px;
+      bottom: 0;
+      border-top: 0.5px solid rgba(88, 225, 243, 0.72);
+      pointer-events: none;
+    }
+    .daily-overlay__scroll {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .daily-overlay__scroll::after {
+      content: '';
+      display: block;
+      height: calc(1350px - var(--daily-overlay-sticky-h));
+      width: 1px;
+      pointer-events: none;
+    }
+    .daily-overlay__scroll .daily-overlay__vline {
+      top: 0;
+      bottom: auto;
+      height: calc(1350px - 34px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__hline--1 {
+      top: calc(383px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__hline--2 {
+      top: calc(792px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__segment--daily {
+      top: calc(104px - var(--daily-overlay-sticky-h));
+      height: 279px;
+    }
+    .daily-overlay__scroll .daily-overlay__segment--monthly {
+      top: calc(383px - var(--daily-overlay-sticky-h));
+      height: 409px;
+    }
+    .daily-overlay__scroll .daily-overlay__segment--annual {
+      top: calc(792px - var(--daily-overlay-sticky-h));
+      bottom: auto;
+      height: calc(1350px - 34px - 792px);
+    }
+    .daily-overlay__scroll .daily-overlay__daily-kpi {
+      top: var(--daily-overlay-daily-kpi-top);
+    }
+    .daily-overlay__scroll .daily-overlay__monthly-kpi {
+      top: calc(422px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__annual-kpi-wrap {
+      top: calc(848px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__daily-graph {
+      top: calc(314.5px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__monthly-graph {
+      top: calc(718.5px - var(--daily-overlay-sticky-h));
+    }
+    .daily-overlay__scroll .daily-overlay__annual-graph {
+      top: calc(1248.5px - var(--daily-overlay-sticky-h));
+    }
+    .office-mode .daily-overlay__sticky-head {
+      background: rgba(9, 12, 17, 0.98);
+    }
+    /* END KPI-DAILY-OVERLAY-STICKY-HEAD */
     .daily-overlay__head {
       position: absolute;
       left: 89px;
@@ -17201,6 +17372,7 @@
   <div class="daily-overlay" id="daily-overlay" hidden aria-hidden="true">
     <div class="daily-overlay__backdrop" id="daily-overlay-backdrop" aria-hidden="true"></div>
     <section class="daily-overlay__panel" role="dialog" aria-modal="true" aria-label="Daily">
+      <div class="daily-overlay__sticky-head" aria-label="日付操作">
       <button type="button" class="daily-overlay__close" id="daily-overlay-close" aria-label="閉じる">×</button>
       <div class="daily-overlay__head">
         <button type="button" class="daily-overlay__date-nav" id="daily-overlay-prev-day" aria-label="前日">◀︎</button>
@@ -17209,6 +17381,8 @@
         <button type="button" class="daily-overlay__today" id="daily-overlay-today">本日</button>
         <input type="date" class="daily-overlay__date-input" id="daily-overlay-date-input" aria-hidden="true" tabindex="-1">
       </div>
+      </div>
+      <div class="daily-overlay__scroll" tabindex="-1">
       <span class="daily-overlay__vline" aria-hidden="true"></span>
       <span class="daily-overlay__hline daily-overlay__hline--1" aria-hidden="true"></span>
       <span class="daily-overlay__hline daily-overlay__hline--2" aria-hidden="true"></span>
@@ -17333,12 +17507,13 @@ Target Sales</p>
         </div>
         <p class="daily-overlay__daily-graph-rate">120%</p>
       </div>
+      </div>
     </section>
   </div>
 
   <script>
     (function () {
-                                                                                                                /* KPI-INSIGHT-EXPENSE-READ */
+                                                                                                                                                                                                                    /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -17349,6 +17524,18 @@ Target Sales</p>
       var catalogCache = null;
       var monthlyMapCache = {};
       var adjMapCache = {};
+      var sumThroughMonthCache = {};
+      var expenseSnapshotCache = {};
+
+      function invalidateInsightExpenseCaches() {
+        allocCache = {};
+        catalogCache = null;
+        monthlyMapCache = {};
+        adjMapCache = {};
+        sumThroughMonthCache = {};
+        expenseSnapshotCache = {};
+        window.__INSIGHT_YEAR_EXPENSE_CACHE = {};
+      }
 
       function pad2(n) {
         return (n < 10 ? '0' : '') + n;
@@ -17597,6 +17784,19 @@ Target Sales</p>
         };
       }
 
+      function packSumThrough(fixed, variable, food, drink, labor, hasData) {
+        return {
+          fixed: Math.round(fixed),
+          variable: Math.round(variable),
+          total: Math.round(fixed + variable),
+          food: Math.round(food),
+          drink: Math.round(drink),
+          misc: Math.max(0, Math.round(variable - food - drink)),
+          labor: Math.round(labor),
+          hasData: !!hasData,
+        };
+      }
+
       function sumThroughMonth(year, month, throughDay) {
         var y = Number(year);
         var m = Number(month);
@@ -17607,6 +17807,47 @@ Target Sales</p>
         var dim = new Date(y, m, 0).getDate();
         if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
         if (dayMax > dim) dayMax = dim;
+        var cacheKey = y + '-' + m + '-' + dayMax;
+        if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, cacheKey)) {
+          return sumThroughMonthCache[cacheKey];
+        }
+
+        // 日付スクラブ向け: 前後1日のキャッシュから増分（Annual YTD のボトルネック緩和）
+        if (dayMax > 1) {
+          var prevKey = y + '-' + m + '-' + (dayMax - 1);
+          if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, prevKey)) {
+            var prev = sumThroughMonthCache[prevKey];
+            var addSnap = sumDayMetrics(isoOf(y, m, dayMax));
+            var fwd = packSumThrough(
+              prev.fixed + addSnap.fixed,
+              prev.variable + addSnap.variable,
+              prev.food + addSnap.food,
+              prev.drink + addSnap.drink,
+              prev.labor + addSnap.labor,
+              prev.hasData
+            );
+            sumThroughMonthCache[cacheKey] = fwd;
+            return fwd;
+          }
+        }
+        if (dayMax < dim) {
+          var nextKey = y + '-' + m + '-' + (dayMax + 1);
+          if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, nextKey)) {
+            var next = sumThroughMonthCache[nextKey];
+            var subSnap = sumDayMetrics(isoOf(y, m, dayMax + 1));
+            var back = packSumThrough(
+              next.fixed - subSnap.fixed,
+              next.variable - subSnap.variable,
+              next.food - subSnap.food,
+              next.drink - subSnap.drink,
+              next.labor - subSnap.labor,
+              next.hasData
+            );
+            sumThroughMonthCache[cacheKey] = back;
+            return back;
+          }
+        }
+
         var fixed = 0;
         var variable = 0;
         var food = 0;
@@ -17625,16 +17866,9 @@ Target Sales</p>
           drink += snap.drink;
           labor += snap.labor;
         }
-        return {
-          fixed: Math.round(fixed),
-          variable: Math.round(variable),
-          total: Math.round(fixed + variable),
-          food: Math.round(food),
-          drink: Math.round(drink),
-          misc: Math.max(0, Math.round(variable - food - drink)),
-          labor: Math.round(labor),
-          hasData: hasData,
-        };
+        var result = packSumThrough(fixed, variable, food, drink, labor, hasData);
+        sumThroughMonthCache[cacheKey] = result;
+        return result;
       }
 
       /**
@@ -17670,6 +17904,9 @@ Target Sales</p>
           source: 'pl-unified',
         };
         if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return empty;
+        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, iso)) {
+          return expenseSnapshotCache[iso];
+        }
         var parts = String(iso).split('-');
         var y = Number(parts[0]);
         var month = Number(parts[1]);
@@ -17695,7 +17932,7 @@ Target Sales</p>
           if (ms.hasData) yearHasData = true;
         }
 
-        return {
+        var result = {
           hasData: dayScope.hasData || monthScope.hasData || yearHasData,
           day: {
             fixed: dayScope.fixed,
@@ -17726,10 +17963,21 @@ Target Sales</p>
           },
           source: 'pl-unified',
         };
+        expenseSnapshotCache[iso] = result;
+        return result;
       };
+
+      [
+        'kpi:mepDataChanged',
+        'kpi:annualPlanChanged',
+        'kpi:dailyTargetModeChanged',
+        'kpi:weekdayBaselineChanged',
+      ].forEach(function (evName) {
+        document.addEventListener(evName, invalidateInsightExpenseCaches);
+      });
     })();
     /* END KPI-INSIGHT-EXPENSE-READ */
-        /* KPI-INSIGHT-TW-DIFF */
+                    /* KPI-INSIGHT-TW-DIFF */
     (function () {
       var DASH = '—';
 
@@ -18163,15 +18411,101 @@ Target Sales</p>
 
       function setSummaryComparisonAllocWidget(key, pct, disabled) {
         var widgets = window.__insightSummaryComparisonWidgets;
-        var w = widgets && widgets[key];
-        if (!w) return;
-        if (disabled) {
-          if (typeof w.setDisabled === 'function') w.setDisabled();
+        if (!widgets) return;
+        var list = [];
+        if (widgets[key]) list.push(widgets[key]);
+        // Annual 比較バーと同式の「年度目標改訂」最下段 Historical Avg
+        if (key === 'annual' && widgets.annualRevision) list.push(widgets.annualRevision);
+        // Analyze / Graph Current Progress 下段 Historical Avg
+        if (key === 'annual' && widgets.annualAnalyzeProgress) {
+          var ap = widgets.annualAnalyzeProgress;
+          if (Array.isArray(ap)) {
+            for (var ai = 0; ai < ap.length; ai++) list.push(ap[ai]);
+          } else {
+            list.push(ap);
+          }
+        }
+        for (var i = 0; i < list.length; i++) {
+          var w = list[i];
+          if (!w) continue;
+          if (disabled) {
+            if (typeof w.setDisabled === 'function') w.setDisabled();
+            continue;
+          }
+          if (typeof w.setPercent === 'function') {
+            w.setPercent(Math.max(0.1, Number(pct)));
+          }
+        }
+      }
+
+      /** Annual Historical Avg %（Summary 比較棒 / Analyze Current Progress 下段） */
+      function patchAnnualHistAvgAlloc(m, iso) {
+        if (!m || !iso) {
+          setSummaryComparisonAllocWidget('annual', 0, true);
           return;
         }
-        if (typeof w.setPercent === 'function') {
-          w.setPercent(Math.max(0.1, Number(pct)));
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {
+          setSummaryComparisonAllocWidget('annual', 0, true);
+          return;
         }
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+        if (!sumFn) {
+          setSummaryComparisonAllocWidget('annual', 0, true);
+          return;
+        }
+        var current = Number(m.ytdA);
+        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
+        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {
+          setSummaryComparisonAllocWidget('annual', (current / histAvg) * 100, false);
+        } else {
+          setSummaryComparisonAllocWidget('annual', 0, true);
+        }
+      }
+
+      function setSummarySalesAllocWidget(key, actual, target, hasPlan) {
+        var widgets = window.__insightSummarySalesWidgets;
+        var list = widgets && widgets[key];
+        if (!list) return;
+        if (!Array.isArray(list)) list = [list];
+        var a = Number(actual);
+        var t = Number(target);
+        var disabled =
+          !hasPlan || !Number.isFinite(a) || !Number.isFinite(t) || t <= 0;
+        for (var i = 0; i < list.length; i++) {
+          var w = list[i];
+          if (!w) continue;
+          if (disabled) {
+            if (typeof w.setDisabled === 'function') w.setDisabled();
+            continue;
+          }
+          if (typeof w.setPercent === 'function') {
+            w.setPercent(Math.max(0.1, (a / t) * 100));
+          }
+        }
+      }
+
+      function patchSummarySalesAllocBars(m) {
+        if (!m) {
+          setSummarySalesAllocWidget('daily', NaN, NaN, false);
+          setSummarySalesAllocWidget('monthly', NaN, NaN, false);
+          setSummarySalesAllocWidget('annual', NaN, NaN, false);
+          return;
+        }
+        setSummarySalesAllocWidget(
+          'daily',
+          m.dailySales,
+          m.dailyTarget,
+          m.isBusinessToday && m.dailyTarget != null
+        );
+        setSummarySalesAllocWidget('monthly', m.mtdA, m.mtdT, m.hasPlan);
+        setSummarySalesAllocWidget('annual', m.ytdA, m.ytdT, m.hasPlan);
       }
 
       function patchMonthlyComparisonBlock(block, m, iso) {
@@ -18330,12 +18664,7 @@ Target Sales</p>
           setRow(3, DASH, NaN, NaN);
         }
 
-        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
-        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {
-          setSummaryComparisonAllocWidget('annual', (current / histAvg) * 100, false);
-        } else {
-          setSummaryComparisonAllocWidget('annual', 0, true);
-        }
+        patchAnnualHistAvgAlloc(m, iso);
       }
 
       function patchSummaryComparisonBlocks(root, m, iso) {
@@ -18948,9 +19277,167 @@ Target Sales</p>
         patchGraphCumRow(annualRow, 'annual', m.ytdA, m.ytdT, m.hasPlan);
       }
 
-      window.renderInsightTwDiffs = function (iso) {
+      function runInsightAnalyzePatches(root, m, iso, asyncChunk) {
+        var jobs = [
+          function () {
+            patchAnalyzeAnnualBlocks(root, m);
+          },
+          function () {
+            patchAnalyzeMonthlyHistoricalCompare(root, m, iso);
+          },
+          function () {
+            patchAnalyzeAnnualHistoricalCompare(root, m, iso);
+          },
+          function () {
+            patchAnalyzeMonthlyExpenseCharts(m, iso);
+          },
+          function () {
+            patchAnalyzeDualInsight(root, iso);
+          },
+          function () {
+            patchAnalyzeAnnualExpenseProfit(root, m, iso);
+          },
+          function () {
+            patchAnalyzeAnnualYearExpenseCharts(m, iso);
+          },
+          function () {
+            patchAnalyzeAnnualTargetRevisionKpi(root, m, iso);
+          },
+          function () {
+            patchHistoricalInsightAccess(root, iso);
+          },
+        ];
+        function markDone() {
+          var cache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {});
+          cache.analyzeIso = iso;
+        }
+        if (!asyncChunk) {
+          window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1;
+          for (var si = 0; si < jobs.length; si++) {
+            try {
+              jobs[si]();
+            } catch (_analyzeSyncErr) {}
+          }
+          markDone();
+          return;
+        }
+        var gen = (window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1);
+        function step(i) {
+          if (gen !== window.__INSIGHT_ANALYZE_GEN) return;
+          if (i >= jobs.length) {
+            markDone();
+            return;
+          }
+          try {
+            jobs[i]();
+          } catch (_analyzeJobErr) {}
+          if (i + 1 < jobs.length) {
+            requestAnimationFrame(function () {
+              step(i + 1);
+            });
+          } else {
+            step(i + 1);
+          }
+        }
+        step(0);
+      }
+
+      window.__scheduleInsightAnalyzeSettle = function (iso) {
+        if (window.__INSIGHT_DATE_HOLDING) {
+          window.__INSIGHT_ANALYZE_SETTLE_ISO = iso;
+          return;
+        }
+        window.__INSIGHT_ANALYZE_SETTLE_ISO = iso;
+        if (window.__INSIGHT_ANALYZE_SETTLE_T) {
+          clearTimeout(window.__INSIGHT_ANALYZE_SETTLE_T);
+        }
+        window.__INSIGHT_ANALYZE_SETTLE_T = setTimeout(function () {
+          window.__INSIGHT_ANALYZE_SETTLE_T = null;
+          if (window.__INSIGHT_DATE_HOLDING) return;
+          var pending =
+            window.__INSIGHT_ANALYZE_SETTLE_ISO || window.__INSIGHT_SELECTED_ISO;
+          var pane = document.getElementById('insight-pane-analyze');
+          if (!pending || !pane || pane.hidden) return;
+          if (typeof window.renderInsightTwDiffs !== 'function') return;
+          try {
+            window.renderInsightTwDiffs(pending, { mode: 'analyze' });
+          } catch (_settleErr) {}
+        }, 200);
+      };
+
+      window.__insightDateHoldStart = function () {
+        window.__INSIGHT_DATE_HOLDING = true;
+        if (window.__INSIGHT_ANALYZE_SETTLE_T) {
+          clearTimeout(window.__INSIGHT_ANALYZE_SETTLE_T);
+          window.__INSIGHT_ANALYZE_SETTLE_T = null;
+        }
+      };
+
+      window.__insightDateHoldEnd = function () {
+        if (!window.__INSIGHT_DATE_HOLDING) return;
+        window.__INSIGHT_DATE_HOLDING = false;
+        var iso = window.__INSIGHT_SELECTED_ISO || window.__INSIGHT_ANALYZE_SETTLE_ISO;
+        try {
+          if (iso) {
+            document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso: iso } }));
+          }
+        } catch (_holdDateErr) {}
+        var pane = document.getElementById('insight-pane-analyze');
+        if (pane && !pane.hidden && typeof window.__scheduleInsightAnalyzeSettle === 'function') {
+          window.__scheduleInsightAnalyzeSettle(iso);
+        }
+      };
+
+      window.renderInsightTwDiffs = function (iso, opts) {
         var root = document.getElementById('insight-overlay');
         if (!root) return;
+        opts = opts || {};
+        var mode = opts.mode || 'auto';
+        var paneSummaryEl = document.getElementById('insight-pane-summary');
+        var paneAnalyzeEl = document.getElementById('insight-pane-analyze');
+        var paneGraphEl = document.getElementById('insight-pane-graph');
+        var wantAnalyze =
+          mode === 'analyze' ||
+          (mode === 'auto' && (!paneAnalyzeEl || !paneAnalyzeEl.hidden));
+        var wantGraph =
+          mode === 'graph' || (mode === 'auto' && (!paneGraphEl || !paneGraphEl.hidden));
+        var wantSummary =
+          mode === 'summary' ||
+          mode === 'full' ||
+          (mode === 'auto' && (!paneSummaryEl || !paneSummaryEl.hidden));
+        if (mode === 'analyze' || mode === 'graph') wantSummary = false;
+        if (opts.skipAnalyze) {
+          wantAnalyze = false;
+          // 進行中の Analyze chunk を中断（長押し中のメインスレッド確保）
+          window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1;
+          var skipCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {});
+          skipCache.analyzeIso = null;
+        }
+        // Analyze 長押し中: 重い DOM は後回し、可視グラフだけ即追従
+        if (opts.skipAnalyze && !wantSummary && !wantGraph) {
+          var lightCompute =
+            typeof window.__computeTwMetricsForIso === 'function'
+              ? window.__computeTwMetricsForIso
+              : null;
+          var lightM = lightCompute ? lightCompute(iso) : null;
+          patchSummarySalesAllocBars(lightM);
+          var holdingLight = !!window.__INSIGHT_DATE_HOLDING;
+          var lightScope = insightAnalyzeExpenseLightScope();
+          if (!holdingLight || lightScope.monthly) {
+            patchAnalyzeMonthlyExpenseCharts(lightM, iso);
+          }
+          if (!holdingLight || lightScope.annual) {
+            patchAnalyzeAnnualYearExpenseCharts(lightM, iso);
+          }
+          // 数値 KPI は settle に任せ、長押し中は棒だけ追従
+          if (!holdingLight) {
+            patchAnalyzeAnnualBlocks(root, lightM);
+          }
+          patchAnnualHistAvgAlloc(lightM, iso);
+          return;
+        }
+        if (!wantSummary && !wantAnalyze && !wantGraph) return;
+
         var compute =
           typeof window.__computeTwMetricsForIso === 'function'
             ? window.__computeTwMetricsForIso
@@ -18961,6 +19448,7 @@ Target Sales</p>
           expenseSnap = window.__insightReadExpenseSnapshot(iso);
         }
 
+        if (wantSummary) {
         root.querySelectorAll('.insight-daily-kpi').forEach(function (block) {
           if (!m) {
             patchDailyKpiBlock(block, NaN, NaN, false);
@@ -19043,17 +19531,26 @@ Target Sales</p>
         patchSummaryAnnualBlocks(root, m);
         patchSummaryComparisonBlocks(root, m, iso);
         patchSummaryDailyComparisonBar(m, iso);
-        patchAnalyzeAnnualBlocks(root, m);
-        patchAnalyzeMonthlyHistoricalCompare(root, m, iso);
-        patchAnalyzeAnnualHistoricalCompare(root, m, iso);
-        patchGraphDailyBlocks(root, m, iso);
-        patchGraphMonthlyAnnualCumBars(root, m);
-        patchAnalyzeMonthlyExpenseCharts(m, iso);
-        patchHistoricalInsightAccess(root, iso);
-        patchAnalyzeDualInsight(root, iso);
-        patchAnalyzeAnnualExpenseProfit(root, m, iso);
-        patchAnalyzeAnnualYearExpenseCharts(m, iso);
-        patchAnalyzeAnnualTargetRevisionKpi(root, m, iso);
+        patchSummarySalesAllocBars(m);
+        } else if (wantAnalyze || wantGraph) {
+          patchSummarySalesAllocBars(m);
+        }
+
+        if (wantAnalyze) {
+          // タブ切替 or 日付ナビ(analyzeAsync): 分割。verify は同期のまま。
+          runInsightAnalyzePatches(
+            root,
+            m,
+            iso,
+            mode === 'analyze' || !!opts.analyzeAsync
+          );
+        }
+        if (wantGraph) {
+          patchGraphDailyBlocks(root, m, iso);
+          patchGraphMonthlyAnnualCumBars(root, m);
+          var gCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {});
+          gCache.graphIso = iso;
+        }
       };
 
       function insightIsJaLang() {
@@ -19547,13 +20044,62 @@ Target Sales</p>
         var v = Math.round(Number(variablePct));
         if (!Number.isFinite(f) || f < 0) f = 0;
         if (!Number.isFinite(v) || v < 0) v = 0;
+        if (
+          chartEl.getAttribute('data-fixed-pct') === String(f) &&
+          chartEl.getAttribute('data-variable-pct') === String(v)
+        ) {
+          return;
+        }
+        chartEl.setAttribute('data-fixed-pct', String(f));
+        chartEl.setAttribute('data-variable-pct', String(v));
         chartEl.style.setProperty('--fixed-pct', String(f));
         chartEl.style.setProperty('--variable-pct', String(v));
         var fixedEl = chartEl.querySelector('[data-role="fixed-pct"]');
         var variableEl = chartEl.querySelector('[data-role="variable-pct"]');
         if (fixedEl) fixedEl.textContent = f + '%';
         if (variableEl) variableEl.textContent = v + '%';
+        /* 0% セグメントは棒が消えるのにラベルが左端／Expenses と重なるので隠す */
+        function setSegLabelVisible(kind, shown) {
+          var pctEl = chartEl.querySelector('[data-role="' + kind + '-pct"]');
+          if (pctEl) {
+            if (shown) pctEl.removeAttribute('hidden');
+            else pctEl.setAttribute('hidden', '');
+            pctEl.setAttribute('aria-hidden', shown ? 'false' : 'true');
+          }
+          var label = chartEl.querySelector(
+            '.insight-monthly-expense-pl__seg-label--' +
+              kind +
+              ', .insight-annual-year-expense-pl__seg-label--' +
+              kind
+          );
+          if (label) {
+            if (shown) label.removeAttribute('hidden');
+            else label.setAttribute('hidden', '');
+            label.setAttribute('aria-hidden', shown ? 'false' : 'true');
+          }
+        }
+        setSegLabelVisible('fixed', f > 0);
+        setSegLabelVisible('variable', v > 0);
       }
+
+      /** 長押し中は画面内の Monthly/Annual 支出棒だけ更新（両方見えていれば両方） */
+      function insightAnalyzeExpenseLightScope() {
+        var monthly = document.getElementById('insight-jump-analyze-monthly');
+        var annual = document.getElementById('insight-jump-analyze-annual');
+        var scroll = document.querySelector('#insight-overlay .insight-overlay__scroll');
+        if (!scroll) return { monthly: true, annual: true };
+        var sr = scroll.getBoundingClientRect();
+        function visibleEnough(el) {
+          if (!el) return false;
+          var r = el.getBoundingClientRect();
+          return r.bottom > sr.top + 24 && r.top < sr.bottom - 24;
+        }
+        var mVis = visibleEnough(monthly);
+        var aVis = visibleEnough(annual);
+        if (!mVis && !aVis) return { monthly: true, annual: true };
+        return { monthly: mVis, annual: aVis };
+      }
+      window.__setExpensePlChartPct = setExpensePlChartPct;
 
       function expensePlPctFrom(exp, sales) {
         var s = Number(sales);
@@ -19641,6 +20187,47 @@ Target Sales</p>
         var d = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return empty;
         if (mo < 1 || mo > 12) return empty;
+        var cache = window.__INSIGHT_YEAR_EXPENSE_CACHE || (window.__INSIGHT_YEAR_EXPENSE_CACHE = {});
+        var cacheKey = y + '-' + mo + '-' + d;
+        if (Object.prototype.hasOwnProperty.call(cache, cacheKey)) {
+          return cache[cacheKey];
+        }
+        // 増分: 同月前日 or 前月末
+        if (d > 1) {
+          var prevDayKey = y + '-' + mo + '-' + (d - 1);
+          if (Object.prototype.hasOwnProperty.call(cache, prevDayKey)) {
+            var prevDay = cache[prevDayKey];
+            var dayExp = window.__insightReadMonthExpense(y, mo, d);
+            var prevThru = window.__insightReadMonthExpense(y, mo, d - 1);
+            var addFixed = (Number(dayExp.fixed) || 0) - (Number(prevThru.fixed) || 0);
+            var addVar = (Number(dayExp.variable) || 0) - (Number(prevThru.variable) || 0);
+            var fwd = {
+              fixed: Math.round((Number(prevDay.fixed) || 0) + addFixed),
+              variable: Math.round((Number(prevDay.variable) || 0) + addVar),
+              total: 0,
+              hasData: !!(prevDay.hasData || (dayExp && dayExp.hasData)),
+            };
+            fwd.total = Math.round(fwd.fixed + fwd.variable);
+            cache[cacheKey] = fwd;
+            return fwd;
+          }
+        } else if (mo > 1) {
+          var prevDim = new Date(y, mo - 1, 0).getDate();
+          var prevMonthKey = y + '-' + (mo - 1) + '-' + prevDim;
+          if (Object.prototype.hasOwnProperty.call(cache, prevMonthKey)) {
+            var prevMo = cache[prevMonthKey];
+            var day1 = window.__insightReadMonthExpense(y, mo, 1);
+            var fromPrev = {
+              fixed: Math.round((Number(prevMo.fixed) || 0) + (Number(day1.fixed) || 0)),
+              variable: Math.round((Number(prevMo.variable) || 0) + (Number(day1.variable) || 0)),
+              total: 0,
+              hasData: !!(prevMo.hasData || (day1 && day1.hasData)),
+            };
+            fromPrev.total = Math.round(fromPrev.fixed + fromPrev.variable);
+            cache[cacheKey] = fromPrev;
+            return fromPrev;
+          }
+        }
         var fixed = 0;
         var variable = 0;
         var hasData = false;
@@ -19652,12 +20239,14 @@ Target Sales</p>
           fixed += Number(exp.fixed) || 0;
           variable += Number(exp.variable) || 0;
         }
-        return {
+        var result = {
           fixed: Math.round(fixed),
           variable: Math.round(variable),
           total: Math.round(fixed + variable),
           hasData: hasData,
         };
+        cache[cacheKey] = result;
+        return result;
       }
 
       function patchAnalyzeAnnualExpenseProfit(root, m, iso) {
@@ -19836,14 +20425,69 @@ Target Sales</p>
         if (todayBtnEl) todayBtnEl.hidden = iso === getTodayIso();
         if (dateInputEl) dateInputEl.value = iso;
         window.__INSIGHT_SELECTED_ISO = iso;
-        try {
-          if (typeof window.renderInsightTwDiffs === 'function') {
-            window.renderInsightTwDiffs(iso);
-          }
-        } catch (_insightDiffErr) {}
-        try {
-          document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso: iso } }));
-        } catch (_insightDateErr) {}
+        window.__INSIGHT_PENDING_ISO = iso;
+        if (window.__INSIGHT_FILL_SCHED) return;
+        window.__INSIGHT_FILL_SCHED = true;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            window.__INSIGHT_FILL_SCHED = false;
+            function runInsightFillHeavy() {
+              var pending = window.__INSIGHT_PENDING_ISO;
+              if (!pending) return;
+              if (window.__INSIGHT_FILL_BUSY) {
+                window.__INSIGHT_FILL_RERUN = true;
+                return;
+              }
+              window.__INSIGHT_FILL_BUSY = true;
+              window.__INSIGHT_PENDING_ISO = null;
+              var paneAnalyze = document.getElementById('insight-pane-analyze');
+              var onAnalyze = !!(paneAnalyze && !paneAnalyze.hidden);
+              var holding = !!window.__INSIGHT_DATE_HOLDING;
+              try {
+                if (typeof window.renderInsightTwDiffs === 'function') {
+                  window.renderInsightTwDiffs(pending, {
+                    analyzeAsync: true,
+                    skipAnalyze: onAnalyze,
+                  });
+                }
+              } catch (_insightDiffErr) {}
+              try {
+                // 長押し中は full settle を入れない（走って止まる主因）
+                if (
+                  onAnalyze &&
+                  !holding &&
+                  typeof window.__scheduleInsightAnalyzeSettle === 'function'
+                ) {
+                  window.__scheduleInsightAnalyzeSettle(pending);
+                }
+              } catch (_insightSettleErr) {}
+              try {
+                if (!holding) {
+                  document.dispatchEvent(
+                    new CustomEvent('insight:dateChanged', { detail: { iso: pending } })
+                  );
+                }
+              } catch (_insightDateErr) {}
+              window.__INSIGHT_FILL_BUSY = false;
+              if (window.__INSIGHT_FILL_RERUN || window.__INSIGHT_PENDING_ISO) {
+                window.__INSIGHT_FILL_RERUN = false;
+                if (!window.__INSIGHT_PENDING_ISO) {
+                  window.__INSIGHT_PENDING_ISO = window.__INSIGHT_SELECTED_ISO;
+                }
+                if (!window.__INSIGHT_FILL_SCHED) {
+                  window.__INSIGHT_FILL_SCHED = true;
+                  requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                      window.__INSIGHT_FILL_SCHED = false;
+                      runInsightFillHeavy();
+                    });
+                  });
+                }
+              }
+            }
+            runInsightFillHeavy();
+          });
+        });
       }
       var insightTabTitles = { summary: 'Summary', analyze: 'Analyze', graph: 'Graph' };
       function updateInsightJumpHrefs() {
@@ -19884,6 +20528,38 @@ Target Sales</p>
         if (titleEl) titleEl.textContent = insightTabTitles[which] || insightTabTitles.summary;
         if (insightScroll) insightScroll.scrollTop = 0;
         updateInsightJumpHrefs();
+        try {
+          document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: which } }));
+        } catch (_insightTabEvErr) {}
+        if (which === 'analyze' || which === 'graph') {
+          var tabIso = window.__INSIGHT_SELECTED_ISO;
+          var paneCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {});
+          var cacheKey = which === 'analyze' ? 'analyzeIso' : 'graphIso';
+          if (tabIso && paneCache[cacheKey] === tabIso) {
+            return;
+          }
+          window.__INSIGHT_TAB_PENDING = which;
+          if (window.__INSIGHT_TAB_SCHED) return;
+          window.__INSIGHT_TAB_SCHED = true;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              window.__INSIGHT_TAB_SCHED = false;
+              var pendingTab = window.__INSIGHT_TAB_PENDING;
+              window.__INSIGHT_TAB_PENDING = null;
+              if (!pendingTab) return;
+              try {
+                if (
+                  window.__INSIGHT_SELECTED_ISO &&
+                  typeof window.renderInsightTwDiffs === 'function'
+                ) {
+                  window.renderInsightTwDiffs(window.__INSIGHT_SELECTED_ISO, {
+                    mode: pendingTab,
+                  });
+                }
+              } catch (_insightTabErr) {}
+            });
+          });
+        }
       }
       function bindInsightMainTab(btn, which) {
         if (!btn) return;
@@ -19961,7 +20637,7 @@ Target Sales</p>
         if (!btn) return;
         var delayId = null;
         var repeatId = null;
-        function clearHold() {
+        function clearHoldTimers() {
           if (delayId != null) { clearTimeout(delayId); delayId = null; }
           if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
         }
@@ -19973,13 +20649,25 @@ Target Sales</p>
           if (ev.pointerType === 'mouse' && ev.button !== 0) return;
           ev.preventDefault();
           try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
-          clearHold();
+          clearHoldTimers();
+          if (typeof window.__insightDateHoldStart === 'function') {
+            window.__insightDateHoldStart();
+          } else {
+            window.__INSIGHT_DATE_HOLDING = true;
+          }
           stepOnce();
           delayId = setTimeout(function () {
             repeatId = setInterval(stepOnce, 75);
           }, 400);
         }
-        function onPointerUp() { clearHold(); }
+        function onPointerUp() {
+          clearHoldTimers();
+          if (typeof window.__insightDateHoldEnd === 'function') {
+            window.__insightDateHoldEnd();
+          } else {
+            window.__INSIGHT_DATE_HOLDING = false;
+          }
+        }
         btn.addEventListener('pointerdown', onPointerDown);
         btn.addEventListener('pointerup', onPointerUp);
         btn.addEventListener('pointercancel', onPointerUp);
@@ -20305,6 +20993,10 @@ Target Sales</p>
           }
         } catch (_dailyKpiErr) {}
       }
+      function resetDailyOverlayScroll() {
+        var scrollEl = root.querySelector('.daily-overlay__scroll');
+        if (scrollEl) scrollEl.scrollTop = 0;
+      }
       function open() {
         lastFocused = document.activeElement;
         selectedIso = resolveIso();
@@ -20312,6 +21004,7 @@ Target Sales</p>
         root.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         fill(selectedIso);
+        resetDailyOverlayScroll();
         btnClose.focus();
       }
       function close() {
@@ -21050,22 +21743,26 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 108
       });
-      initAllocationWidget({
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.daily = window.__insightSummarySalesWidgets.daily || [];
+      window.__insightSummarySalesWidgets.daily.push(initAllocationWidget({
         graphId: 'insight-daily-alloc-graph',
         dataKey: 'achievementPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.daily = window.__insightSummarySalesWidgets.daily || [];
+      window.__insightSummarySalesWidgets.daily.push(initAllocationWidget({
         graphId: 'insight-analyze-daily-alloc-graph',
         dataKey: 'achievementPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
+      }));
       window.__insightGraphDailyWidgets = window.__insightGraphDailyWidgets || {};
       window.__insightGraphDailyWidgets.targetActual = initAllocationWidget({
         graphId: 'insight-graph-daily-target-actual',
@@ -21523,6 +22220,22 @@ Target Sales</p>
         }
 
         render();
+        var insightTrendDirty = false;
+        function insightTrendVisible() {
+          var overlay = document.getElementById('insight-overlay');
+          var pane = document.getElementById('insight-pane-graph');
+          if (overlay && overlay.hidden) return false;
+          if (pane && pane.hidden) return false;
+          return true;
+        }
+        function insightTrendRender() {
+          if (!insightTrendVisible()) {
+            insightTrendDirty = true;
+            return;
+          }
+          insightTrendDirty = false;
+          render();
+        }
         [
           'annual:calendarDateChanged',
           'annual:dailyDateChanged',
@@ -21531,7 +22244,12 @@ Target Sales</p>
           'kpi:annualPlanChanged',
           'insight:dateChanged',
         ].forEach(function (evName) {
-          document.addEventListener(evName, render);
+          document.addEventListener(evName, insightTrendRender);
+        });
+        document.addEventListener('insight:tabChanged', function (ev) {
+          if (ev && ev.detail && ev.detail.tab === 'graph' && insightTrendDirty) {
+            insightTrendRender();
+          }
         });
       }
       initGraphMonthlyCumulativeTrend();
@@ -21978,6 +22696,22 @@ Target Sales</p>
         }
 
         render();
+        var insightTrendDirty = false;
+        function insightTrendVisible() {
+          var overlay = document.getElementById('insight-overlay');
+          var pane = document.getElementById('insight-pane-graph');
+          if (overlay && overlay.hidden) return false;
+          if (pane && pane.hidden) return false;
+          return true;
+        }
+        function insightTrendRender() {
+          if (!insightTrendVisible()) {
+            insightTrendDirty = true;
+            return;
+          }
+          insightTrendDirty = false;
+          render();
+        }
         [
           'annual:calendarDateChanged',
           'annual:dailyDateChanged',
@@ -21986,7 +22720,12 @@ Target Sales</p>
           'kpi:annualPlanChanged',
           'insight:dateChanged',
         ].forEach(function (evName) {
-          document.addEventListener(evName, render);
+          document.addEventListener(evName, insightTrendRender);
+        });
+        document.addEventListener('insight:tabChanged', function (ev) {
+          if (ev && ev.detail && ev.detail.tab === 'graph' && insightTrendDirty) {
+            insightTrendRender();
+          }
         });
       }
 
@@ -22427,6 +23166,22 @@ Target Sales</p>
         }
 
         render();
+        var insightTrendDirty = false;
+        function insightTrendVisible() {
+          var overlay = document.getElementById('insight-overlay');
+          var pane = document.getElementById('insight-pane-graph');
+          if (overlay && overlay.hidden) return false;
+          if (pane && pane.hidden) return false;
+          return true;
+        }
+        function insightTrendRender() {
+          if (!insightTrendVisible()) {
+            insightTrendDirty = true;
+            return;
+          }
+          insightTrendDirty = false;
+          render();
+        }
         [
           'annual:calendarDateChanged',
           'annual:dailyDateChanged',
@@ -22435,7 +23190,12 @@ Target Sales</p>
           'kpi:annualPlanChanged',
           'insight:dateChanged',
         ].forEach(function (evName) {
-          document.addEventListener(evName, render);
+          document.addEventListener(evName, insightTrendRender);
+        });
+        document.addEventListener('insight:tabChanged', function (ev) {
+          if (ev && ev.detail && ev.detail.tab === 'graph' && insightTrendDirty) {
+            insightTrendRender();
+          }
         });
       }
       function initGraphDailyHistoricalWeekday() {
@@ -22476,70 +23236,86 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 85
       });
-      initAllocationWidget({
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.monthly = window.__insightSummarySalesWidgets.monthly || [];
+      window.__insightSummarySalesWidgets.monthly.push(initAllocationWidget({
         graphId: 'insight-analyze-monthly-sales-alloc-graph',
         dataKey: 'insightMonthlySalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.monthly = window.__insightSummarySalesWidgets.monthly || [];
+      window.__insightSummarySalesWidgets.monthly.push(initAllocationWidget({
         graphId: 'insight-graph-monthly-sales-alloc-graph',
         dataKey: 'insightMonthlySalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.monthly = window.__insightSummarySalesWidgets.monthly || [];
+      window.__insightSummarySalesWidgets.monthly.push(initAllocationWidget({
         graphId: 'insight-monthly-alloc-graph',
         dataKey: 'insightMonthlySalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.annual = window.__insightSummarySalesWidgets.annual || [];
+      window.__insightSummarySalesWidgets.annual.push(initAllocationWidget({
         graphId: 'insight-annual-alloc-graph',
         dataKey: 'insightAnnualSalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.annual = window.__insightSummarySalesWidgets.annual || [];
+      window.__insightSummarySalesWidgets.annual.push(initAllocationWidget({
         graphId: 'insight-analyze-annual-sales-alloc-graph',
         dataKey: 'insightAnnualSalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummarySalesWidgets = window.__insightSummarySalesWidgets || {};
+      window.__insightSummarySalesWidgets.annual = window.__insightSummarySalesWidgets.annual || [];
+      window.__insightSummarySalesWidgets.annual.push(initAllocationWidget({
         graphId: 'insight-graph-annual-sales-alloc-graph',
         dataKey: 'insightAnnualSalesStatusPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+      __insightSummaryComparisonWidgets.annualAnalyzeProgress = __insightSummaryComparisonWidgets.annualAnalyzeProgress || [];
+      __insightSummaryComparisonWidgets.annualAnalyzeProgress.push(initAllocationWidget({
         graphId: 'insight-analyze-annual-current-progress-alloc-graph',
         dataKey: 'insightAnnualComparisonPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
-      initAllocationWidget({
+      }));
+      window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+      __insightSummaryComparisonWidgets.annualAnalyzeProgress = __insightSummaryComparisonWidgets.annualAnalyzeProgress || [];
+      __insightSummaryComparisonWidgets.annualAnalyzeProgress.push(initAllocationWidget({
         graphId: 'insight-graph-annual-current-progress-alloc-graph',
         dataKey: 'insightAnnualComparisonPercent',
         graphWidth: 654,
         editable: false,
         achievementAlertColors: true,
         fallbackPercent: 85
-      });
+      }));
 
       window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
             window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
@@ -22560,7 +23336,8 @@ Target Sales</p>
         achievementAlertColors: true,
         fallbackPercent: 85
       });
-      initAllocationWidget({
+      window.__insightSummaryComparisonWidgets = window.__insightSummaryComparisonWidgets || {};
+      window.__insightSummaryComparisonWidgets.annualRevision = initAllocationWidget({
         graphId: 'insight-annual-target-revision-alloc-graph',
         dataKey: 'insightAnnualTargetRevisionPercent',
         graphWidth: 654,
@@ -22571,6 +23348,10 @@ Target Sales</p>
 
       function initInsightMonthlyExpensePlChart(chartEl, fixedPct, variablePct) {
         if (!chartEl) return;
+        if (typeof window.__setExpensePlChartPct === 'function') {
+          window.__setExpensePlChartPct(chartEl, fixedPct, variablePct);
+          return;
+        }
         chartEl.style.setProperty('--fixed-pct', String(fixedPct));
         chartEl.style.setProperty('--variable-pct', String(variablePct));
         var fixedEl = chartEl.querySelector('[data-role="fixed-pct"]');
@@ -29306,11 +30087,156 @@ Target Sales</p>
         };
       }
       window.__buildAnnualCompareTrendPayload = buildAnnualCompareTrendPayload;
+      var twMetricsCache = {};
+      function shiftTwIsoByDays(iso, delta) {
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        d.setDate(d.getDate() + (Number(delta) || 0));
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      function finalizeTwMetricsNeeds(m) {
+        var monthlyNeed =
+          m.hasPlan && Number.isFinite(m.monthlyFullTarget) ? m.monthlyFullTarget - m.mtdA : null;
+        m.monthlyDailyNeed =
+          m.monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
+            ? monthlyNeed / m.monthRemainingBD
+            : null;
+        m.annualRemaining =
+          m.annualTarget != null && Number.isFinite(m.annualTarget) ? m.annualTarget - m.ytdA : null;
+        m.annualDailyNeed =
+          m.yearRemainingBD > 0 &&
+          m.annualRemaining != null &&
+          Number.isFinite(m.annualRemaining)
+            ? m.annualRemaining / m.yearRemainingBD
+            : null;
+        return m;
+      }
+      function cloneTwMetrics(src) {
+        return {
+          iso: src.iso,
+          isBusinessToday: src.isBusinessToday,
+          hasPlan: src.hasPlan,
+          dailySales: src.dailySales,
+          dailyTarget: src.dailyTarget,
+          mtdA: src.mtdA,
+          mtdT: src.mtdT,
+          ytdA: src.ytdA,
+          ytdT: src.ytdT,
+          monthlyFullTarget: src.monthlyFullTarget,
+          monthRemainingBD: src.monthRemainingBD,
+          monthlyDailyNeed: src.monthlyDailyNeed,
+          annualTarget: src.annualTarget,
+          annualRemaining: src.annualRemaining,
+          yearRemainingBD: src.yearRemainingBD,
+          annualDailyNeed: src.annualDailyNeed,
+        };
+      }
+      function tryIncrementalTwMetrics(fromIso, toIso, fromMetrics, direction) {
+        // direction: +1 = from -> to (to = from+1), -1 = from -> to (to = from-1)
+        if (!fromMetrics || !fromIso || !toIso) return null;
+        var fromD = new Date(String(fromIso).trim() + 'T00:00:00');
+        var toD = new Date(String(toIso).trim() + 'T00:00:00');
+        if (!isFinite(fromD.getTime()) || !isFinite(toD.getTime())) return null;
+        if (fromD.getFullYear() !== toD.getFullYear()) return null;
+        if (fromD.getMonth() !== toD.getMonth()) return null;
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var y = toD.getFullYear();
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var m = cloneTwMetrics(fromMetrics);
+        m.iso = toIso;
+
+        function dayMeta(dayIso) {
+          var dd = new Date(String(dayIso).trim() + 'T00:00:00');
+          var isWk = dd.getDay() === 0 || dd.getDay() === 6;
+          var biz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dayTarget = null;
+          if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+            dayTarget = Number(tgtMap[dayIso]);
+            if (!Number.isFinite(dayTarget)) dayTarget = null;
+          }
+          return {
+            biz: biz,
+            sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
+            target: biz ? dayTarget : null,
+          };
+        }
+
+        if (direction > 0) {
+          // leave fromIso, enter toIso
+          var left = dayMeta(fromIso);
+          if (left.biz) {
+            m.yearRemainingBD = Math.max(0, Number(m.yearRemainingBD) - 1);
+            m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
+          }
+          var entered = dayMeta(toIso);
+          if (entered.biz) {
+            m.ytdA = Number(m.ytdA) + entered.sales;
+            m.mtdA = Number(m.mtdA) + entered.sales;
+            if (entered.target != null) {
+              m.ytdT = Number(m.ytdT) + entered.target;
+              m.mtdT = Number(m.mtdT) + entered.target;
+              m.hasPlan = true;
+            }
+            m.isBusinessToday = true;
+            m.dailySales = entered.sales;
+            m.dailyTarget = entered.target;
+          } else {
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }
+        } else {
+          // leave fromIso (newer), enter toIso (older)
+          var dropped = dayMeta(fromIso);
+          if (dropped.biz) {
+            m.ytdA = Number(m.ytdA) - dropped.sales;
+            m.mtdA = Number(m.mtdA) - dropped.sales;
+            if (dropped.target != null) {
+              m.ytdT = Number(m.ytdT) - dropped.target;
+              m.mtdT = Number(m.mtdT) - dropped.target;
+            }
+            m.yearRemainingBD = Number(m.yearRemainingBD) + 1;
+            m.monthRemainingBD = Number(m.monthRemainingBD) + 1;
+          }
+          var back = dayMeta(toIso);
+          if (back.biz) {
+            m.isBusinessToday = true;
+            m.dailySales = back.sales;
+            m.dailyTarget = back.target;
+          } else {
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }
+        }
+        return finalizeTwMetricsNeeds(m);
+      }
       function computeTwMetricsForIso(iso) {
         if (!iso) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
+        if (Object.prototype.hasOwnProperty.call(twMetricsCache, iso)) {
+          return twMetricsCache[iso];
         }
+        var prevIso = shiftTwIsoByDays(iso, -1);
+        if (prevIso && Object.prototype.hasOwnProperty.call(twMetricsCache, prevIso)) {
+          var fwd = tryIncrementalTwMetrics(prevIso, iso, twMetricsCache[prevIso], 1);
+          if (fwd) {
+            twMetricsCache[iso] = fwd;
+            return fwd;
+          }
+        }
+        var nextIso = shiftTwIsoByDays(iso, 1);
+        if (nextIso && Object.prototype.hasOwnProperty.call(twMetricsCache, nextIso)) {
+          var back = tryIncrementalTwMetrics(nextIso, iso, twMetricsCache[nextIso], -1);
+          if (back) {
+            twMetricsCache[iso] = back;
+            return back;
+          }
+        }
+
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         var smap = daily.targetSalesByDate || {};
         var bmap = daily.businessDayByDate || {};
@@ -29366,21 +30292,7 @@ Target Sales</p>
             }
           }
         }
-        var monthlyNeed =
-          hasPlan && Number.isFinite(monthlyFullTarget) ? monthlyFullTarget - mtdA : null;
-        var monthlyDailyNeed =
-          monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
-            ? monthlyNeed / monthRemainingBD
-            : null;
-        var annualRemaining =
-          annualTarget != null && Number.isFinite(annualTarget) ? annualTarget - ytdA : null;
-        var annualDailyNeed =
-          yearRemainingBD > 0 &&
-          annualRemaining != null &&
-          Number.isFinite(annualRemaining)
-            ? annualRemaining / yearRemainingBD
-            : null;
-        return {
+        var result = finalizeTwMetricsNeeds({
           iso: iso,
           isBusinessToday: isBusinessToday,
           hasPlan: hasPlan,
@@ -29392,12 +30304,37 @@ Target Sales</p>
           ytdT: ytdT,
           monthlyFullTarget: monthlyFullTarget,
           monthRemainingBD: monthRemainingBD,
-          monthlyDailyNeed: monthlyDailyNeed,
+          monthlyDailyNeed: null,
           annualTarget: annualTarget,
-          annualRemaining: annualRemaining,
+          annualRemaining: null,
           yearRemainingBD: yearRemainingBD,
-          annualDailyNeed: annualDailyNeed,
-        };
+          annualDailyNeed: null,
+        });
+        twMetricsCache[iso] = result;
+        return result;
+      }
+      var salesThroughCache = {};
+      function invalidateTwSalesThroughCache() {
+        salesThroughCache = {};
+        twMetricsCache = {};
+        window.__TW_ANNUAL_DAILY_SYNCED = false;
+      }
+      window.__invalidateTwSalesThroughCache = invalidateTwSalesThroughCache;
+      function ensureTwAnnualDailySynced() {
+        if (window.__TW_ANNUAL_DAILY_SYNCED) return;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        window.__TW_ANNUAL_DAILY_SYNCED = true;
+      }
+      function addOneSalesDay(acc, y, mm, d, smap, bmap) {
+        var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+        var dt = new Date(y, mm - 1, d);
+        var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+        if (!isTimelineBusinessDay(dayIso, bmap, isWk)) return acc;
+        if (Object.prototype.hasOwnProperty.call(smap, dayIso)) acc.hasData = true;
+        acc.sum += readTwSalesAmt(dayIso, smap);
+        return acc;
       }
       function sumMonthSalesThroughDay(year, month, day) {
         var y = Number(year);
@@ -29405,14 +30342,41 @@ Target Sales</p>
         var dayN = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
         if (m < 1 || m > 12) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
+        var dim = new Date(y, m, 0).getDate();
+        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        var cacheKey = 'm:' + y + '-' + m + '-' + until;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {
+          return salesThroughCache[cacheKey];
         }
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         var smap = daily.targetSalesByDate || {};
         var bmap = daily.businessDayByDate || {};
-        var dim = new Date(y, m, 0).getDate();
-        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        if (until > 0) {
+          var prevMKey = 'm:' + y + '-' + m + '-' + (until - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMKey)) {
+            var prevM = salesThroughCache[prevMKey];
+            var fwdM = { sum: prevM.sum, hasData: prevM.hasData };
+            addOneSalesDay(fwdM, y, m, until, smap, bmap);
+            salesThroughCache[cacheKey] = fwdM;
+            return fwdM;
+          }
+        }
+        if (until < dim) {
+          var nextMKey = 'm:' + y + '-' + m + '-' + (until + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextMKey)) {
+            var nextM = salesThroughCache[nextMKey];
+            var backM = { sum: nextM.sum, hasData: nextM.hasData };
+            var remIso = y + '-' + pad2(m) + '-' + pad2(until + 1);
+            var remDt = new Date(y, m - 1, until + 1);
+            var remWk = remDt.getDay() === 0 || remDt.getDay() === 6;
+            if (isTimelineBusinessDay(remIso, bmap, remWk)) {
+              backM.sum -= readTwSalesAmt(remIso, smap);
+            }
+            salesThroughCache[cacheKey] = backM;
+            return backM;
+          }
+        }
         var sum = 0;
         var hasData = false;
         for (var d = 1; d <= until; d++) {
@@ -29423,7 +30387,9 @@ Target Sales</p>
           if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
           sum += readTwSalesAmt(dayIso, smap);
         }
-        return { sum: sum, hasData: hasData };
+        var monthResult = { sum: sum, hasData: hasData };
+        salesThroughCache[cacheKey] = monthResult;
+        return monthResult;
       }
       window.__sumMonthSalesThroughDay = sumMonthSalesThroughDay;
       function sumYearSalesThroughDay(year, month, day) {
@@ -29432,14 +30398,51 @@ Target Sales</p>
         var dayN = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
         if (m < 1 || m > 12) return null;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
+        var dimMonth = new Date(y, m, 0).getDate();
+        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        var cacheKey = 'y:' + y + '-' + m + '-' + untilDay;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {
+          return salesThroughCache[cacheKey];
         }
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         var smap = daily.targetSalesByDate || {};
         var bmap = daily.businessDayByDate || {};
-        var dimMonth = new Date(y, m, 0).getDate();
-        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        if (untilDay > 1) {
+          var prevYKey = 'y:' + y + '-' + m + '-' + (untilDay - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevYKey)) {
+            var prevY = salesThroughCache[prevYKey];
+            var fwdY = { sum: prevY.sum, hasData: prevY.hasData };
+            addOneSalesDay(fwdY, y, m, untilDay, smap, bmap);
+            salesThroughCache[cacheKey] = fwdY;
+            return fwdY;
+          }
+        } else if (m > 1) {
+          var prevDim = new Date(y, m - 1, 0).getDate();
+          var prevMonthEndKey = 'y:' + y + '-' + (m - 1) + '-' + prevDim;
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMonthEndKey)) {
+            var prevEnd = salesThroughCache[prevMonthEndKey];
+            var fromPrev = { sum: prevEnd.sum, hasData: prevEnd.hasData };
+            addOneSalesDay(fromPrev, y, m, 1, smap, bmap);
+            salesThroughCache[cacheKey] = fromPrev;
+            return fromPrev;
+          }
+        }
+        if (untilDay < dimMonth) {
+          var nextYKey = 'y:' + y + '-' + m + '-' + (untilDay + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextYKey)) {
+            var nextY = salesThroughCache[nextYKey];
+            var backY = { sum: nextY.sum, hasData: nextY.hasData };
+            var remYIso = y + '-' + pad2(m) + '-' + pad2(untilDay + 1);
+            var remYDt = new Date(y, m - 1, untilDay + 1);
+            var remYWk = remYDt.getDay() === 0 || remYDt.getDay() === 6;
+            if (isTimelineBusinessDay(remYIso, bmap, remYWk)) {
+              backY.sum -= readTwSalesAmt(remYIso, smap);
+            }
+            salesThroughCache[cacheKey] = backY;
+            return backY;
+          }
+        }
         var sum = 0;
         var hasData = false;
         for (var mm = 1; mm <= m; mm++) {
@@ -29454,7 +30457,9 @@ Target Sales</p>
             sum += readTwSalesAmt(dayIso, smap);
           }
         }
-        return { sum: sum, hasData: hasData };
+        var yearResult = { sum: sum, hasData: hasData };
+        salesThroughCache[cacheKey] = yearResult;
+        return yearResult;
       }
       window.__sumYearSalesThroughDay = sumYearSalesThroughDay;
       window.__computeTwMetricsForIso = computeTwMetricsForIso;
@@ -29474,17 +30479,13 @@ Target Sales</p>
       };
       window.__readTwDaySales = function (iso) {
         if (!iso) return 0;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
-        }
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         return readTwSalesAmt(iso, daily.targetSalesByDate || {});
       };
       window.__isTwBusinessDay = function (iso) {
         if (!iso) return false;
-        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
-          KpiYearStore.syncToAnnualDaily();
-        }
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         var bmap = daily.businessDayByDate || {};
         var d = new Date(String(iso).trim() + 'T00:00:00');
@@ -29507,6 +30508,19 @@ Target Sales</p>
         }, 32);
       }
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
+      [
+        'annual:salesMapChanged',
+        'kpi:dailySalesChanged',
+        'kpi:businessDayChanged',
+        'kpi:annualPlanChanged',
+        'kpi:dailyTargetModeChanged',
+        'kpi:weekdayBaselineChanged',
+        'annual:pastSalesSaved',
+      ].forEach(function (evName) {
+        document.addEventListener(evName, function () {
+          invalidateTwSalesThroughCache();
+        });
+      });
       /* END KPI-FOCUS-TW-METRICS */
       function refreshAnnualReadSurfaces(opts) {
         opts = opts || {};
@@ -35466,6 +36480,9 @@ Target Sales</p>
       var dash = '—';
       var sharedAnchorIso = null;
       var roots = [];
+      var weeklyRenderSched = false;
+      var weeklyRenderBusy = false;
+      var weeklyRenderRerun = false;
 
       function pad2(n) {
         return n < 10 ? '0' + n : String(n);
@@ -35710,13 +36727,87 @@ Target Sales</p>
         roots.forEach(renderRoot);
       }
 
-      function setAnchor(iso) {
+      function scheduleWeeklyTableRender() {
+        if (weeklyRenderSched) return;
+        weeklyRenderSched = true;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            weeklyRenderSched = false;
+            if (weeklyRenderBusy) {
+              weeklyRenderRerun = true;
+              return;
+            }
+            weeklyRenderBusy = true;
+            try {
+              renderAll();
+            } catch (_weeklyRenderErr) {}
+            weeklyRenderBusy = false;
+            if (weeklyRenderRerun) {
+              weeklyRenderRerun = false;
+              scheduleWeeklyTableRender();
+            }
+          });
+        });
+      }
+
+      function setAnchor(iso, opts) {
         if (!parseIso(iso)) return;
+        opts = opts || {};
         sharedAnchorIso = iso;
         roots.forEach(function (root) {
           root.__weeklyAnchorIso = iso;
+          updateNav(root, iso);
         });
-        renderAll();
+        if (opts.immediate) {
+          renderAll();
+          return;
+        }
+        scheduleWeeklyTableRender();
+      }
+
+      function bindHoldRepeat(btn, stepFn) {
+        if (!btn || btn.__weeklyHoldBound) return;
+        btn.__weeklyHoldBound = true;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) {
+            clearTimeout(delayId);
+            delayId = null;
+          }
+          if (repeatId != null) {
+            clearInterval(repeatId);
+            repeatId = null;
+          }
+        }
+        function stepOnce() {
+          stepFn();
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          try {
+            btn.setPointerCapture(ev.pointerId);
+          } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() {
+          clearHold();
+        }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
+        });
       }
 
       function bindRoot(root) {
@@ -35727,31 +36818,47 @@ Target Sales</p>
         var nav = root.querySelector('.insight-analyze-weekly__nav');
         var dateInput = root.querySelector('.insight-analyze-weekly__date-input');
         if (!nav) return;
+
+        function currentAnchor() {
+          return root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+        }
+
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="day-prev"]'), function () {
+          setAnchor(addDaysIso(currentAnchor(), -1));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="day-next"]'), function () {
+          setAnchor(addDaysIso(currentAnchor(), 1));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="year-prev"]'), function () {
+          var p = parseIso(currentAnchor());
+          if (!p) return;
+          setAnchor(isoFromParts(p.y - 1, p.m0, p.d));
+        });
+        bindHoldRepeat(nav.querySelector('[data-weekly-nav="year-next"]'), function () {
+          var p = parseIso(currentAnchor());
+          if (!p) return;
+          setAnchor(isoFromParts(p.y + 1, p.m0, p.d));
+        });
+
         nav.addEventListener('click', function (ev) {
           var btn = ev.target.closest('[data-weekly-nav]');
           if (!btn || !root.contains(btn)) return;
           var action = btn.getAttribute('data-weekly-nav');
-          var anchor = root.__weeklyAnchorIso || sharedAnchorIso || defaultAnchorIso();
+          // day/year arrows use hold-repeat (pointerdown); ignore click duplicate
+          if (
+            action === 'day-prev' ||
+            action === 'day-next' ||
+            action === 'year-prev' ||
+            action === 'year-next'
+          ) {
+            ev.preventDefault();
+            return;
+          }
+          var anchor = currentAnchor();
           var p = parseIso(anchor);
           if (!p) return;
-          if (action === 'year-prev') {
-            setAnchor(isoFromParts(p.y - 1, p.m0, p.d));
-            return;
-          }
-          if (action === 'year-next') {
-            setAnchor(isoFromParts(p.y + 1, p.m0, p.d));
-            return;
-          }
-          if (action === 'day-prev') {
-            setAnchor(addDaysIso(anchor, -1));
-            return;
-          }
-          if (action === 'day-next') {
-            setAnchor(addDaysIso(anchor, 1));
-            return;
-          }
           if (action === 'today') {
-            setAnchor(todayIso());
+            setAnchor(todayIso(), { immediate: true });
             return;
           }
           if (action === 'date-pick' && dateInput) {
@@ -35762,7 +36869,7 @@ Target Sales</p>
         });
         if (dateInput) {
           dateInput.addEventListener('change', function () {
-            if (dateInput.value) setAnchor(dateInput.value);
+            if (dateInput.value) setAnchor(dateInput.value, { immediate: true });
           });
         }
       }
@@ -35780,11 +36887,11 @@ Target Sales</p>
       });
       document.addEventListener('kpi:selectedDateChanged', function (ev) {
         var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
-        if (iso && parseIso(iso)) setAnchor(String(iso));
+        if (iso && parseIso(iso)) setAnchor(String(iso), { immediate: true });
       });
       document.addEventListener('annual:dailyDateChanged', function (ev) {
         var iso = ev && ev.detail && (ev.detail.iso || ev.detail.selectedIso);
-        if (iso && parseIso(iso)) setAnchor(String(iso));
+        if (iso && parseIso(iso)) setAnchor(String(iso), { immediate: true });
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;

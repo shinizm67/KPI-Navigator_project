@@ -44,12 +44,29 @@ def pl_insight_data_client_js() -> str:
       var catalogCache = null;
       var monthlyMapCache = {}; // year -> {lineId:month0 -> amt}
       var adjMapCache = {};     // year -> {lineId:month0 -> amt}
+      /* Date-nav hot path: reuse full-month series / Area2-3 charts / best-year. */
+      var monthSeriesCache = {}; // 'year-month0' -> { daily, cumulative, dim }
+      var monthMetricsCache = {}; // 'year-month0' -> metrics
+      var area2ChartCache = {}; // 'm0|yTY|yLY|yBY' -> chart (day-independent)
+      var area3ChartCache = {}; // 'year|month|by' -> chart (day-independent within month)
+      var bestYearCache = {}; // selYear -> year|null
+      var annualIncomeCache = {}; // year -> number
+      var flYtdCache = {}; // 'year|month0|day' -> snapshot
+      var flYtdPrefixCache = {}; // year -> { income, food, labor } cumulative through each month-day
 
       function resetCache() {
         allocCache = {};
         catalogCache = null;
         monthlyMapCache = {};
         adjMapCache = {};
+        monthSeriesCache = {};
+        monthMetricsCache = {};
+        area2ChartCache = {};
+        area3ChartCache = {};
+        bestYearCache = {};
+        annualIncomeCache = {};
+        flYtdCache = {};
+        flYtdPrefixCache = {};
       }
 
       function getJson(key) {
@@ -177,6 +194,8 @@ def pl_insight_data_client_js() -> str:
       }
 
       function monthMetrics(year, month0) {
+        var ck = year + '-' + month0;
+        if (monthMetricsCache[ck]) return monthMetricsCache[ck];
         var s = store();
         var income = 0;
         var dim = daysInMonth(year, month0);
@@ -188,8 +207,10 @@ def pl_insight_data_client_js() -> str:
           if (line.bucket === 'fixed') fixed += amt; else variable += amt;
         });
         var expenses = fixed + variable;
-        return { income: income, fixed: fixed, variable: variable, expenses: expenses,
+        var out = { income: income, fixed: fixed, variable: variable, expenses: expenses,
                  expected: variable, profit: income - expenses };
+        monthMetricsCache[ck] = out;
+        return out;
       }
 
       function dayMetrics(year, month0, day) {
@@ -214,16 +235,36 @@ def pl_insight_data_client_js() -> str:
         METRICS.forEach(function (k) { daily[k] = mk(); cumulative[k] = mk(); });
         return { daily: daily, cumulative: cumulative };
       }
-      function fillDaily(chart, seriesKey, year, month0, count) {
+      /* Full-month series for one calendar month (built once, sliced for Area1). */
+      function monthSeries(year, month0) {
+        var key = year + '-' + month0;
+        if (monthSeriesCache[key]) return monthSeriesCache[key];
+        var dim = daysInMonth(year, month0);
+        var daily = {};
+        var cumulative = {};
+        METRICS.forEach(function (k) {
+          daily[k] = [];
+          cumulative[k] = [];
+        });
         var cum = { income: 0, expenses: 0, fixed: 0, expected: 0, profit: 0 };
-        for (var d = 1; d <= count; d++) {
+        for (var d = 1; d <= dim; d++) {
           var m = dayMetrics(year, month0, d);
           METRICS.forEach(function (k) {
-            chart.daily[k][seriesKey].push(m[k]);
+            daily[k].push(m[k]);
             cum[k] += m[k];
-            chart.cumulative[k][seriesKey].push(cum[k]);
+            cumulative[k].push(cum[k]);
           });
         }
+        monthSeriesCache[key] = { daily: daily, cumulative: cumulative, dim: dim };
+        return monthSeriesCache[key];
+      }
+      function fillDaily(chart, seriesKey, year, month0, count) {
+        var full = monthSeries(year, month0);
+        var n = Math.max(0, Math.min(count, full.dim));
+        METRICS.forEach(function (k) {
+          chart.daily[k][seriesKey] = full.daily[k].slice(0, n);
+          chart.cumulative[k][seriesKey] = full.cumulative[k].slice(0, n);
+        });
       }
       function fillMonthly(chart, seriesKey, year, upToMonth) {
         var cum = { income: 0, expenses: 0, fixed: 0, expected: 0, profit: 0 };
@@ -252,23 +293,32 @@ def pl_insight_data_client_js() -> str:
           .sort(function (a, b) { return a - b; });
       }
       function annualIncome(s, year) {
+        if (annualIncomeCache[year] != null) return annualIncomeCache[year];
         var total = 0;
         for (var mo = 0; mo < 12; mo++) {
           var dim = daysInMonth(year, mo);
           for (var d = 1; d <= dim; d++) total += dailySales(s, iso(year, mo, d));
         }
+        annualIncomeCache[year] = total;
         return total;
       }
       function bestYear(selYear) {
+        if (Object.prototype.hasOwnProperty.call(bestYearCache, selYear)) {
+          return bestYearCache[selYear];
+        }
         var s = store();
         var yrs = yearsWithData(s);
         var past = yrs.filter(function (y) { return y < selYear; });
-        if (yrs.length < 3 || !past.length) return null;
+        if (yrs.length < 3 || !past.length) {
+          bestYearCache[selYear] = null;
+          return null;
+        }
         var best = null, bestVal = -Infinity;
         past.forEach(function (y) {
           var v = annualIncome(s, y);
           if (v > bestVal) { bestVal = v; best = y; }
         });
+        bestYearCache[selYear] = best;
         return best;
       }
       function bestYearNumber(selYear) {
@@ -298,6 +348,8 @@ def pl_insight_data_client_js() -> str:
         if (!p) return null;
         var month0 = p.month - 1;
         var yTY = p.year - 1, yLY = p.year - 2, yBY = bestYearNumber(p.year);
+        var cacheKey = month0 + '|' + yTY + '|' + yLY + '|' + yBY;
+        if (area2ChartCache[cacheKey]) return area2ChartCache[cacheKey];
         var periodCount = daysInMonth(yTY, month0);
         var chart = emptyChart();
         fillDaily(chart, 'thisYear', yTY, month0, periodCount);
@@ -307,12 +359,15 @@ def pl_insight_data_client_js() -> str:
         chart.periodCount = periodCount;
         chart.axisMode = 'day';
         chart.refYears = { thisYear: yTY, lastYear: yLY, bestYear: yBY };
+        area2ChartCache[cacheKey] = chart;
         return chart;
       }
       function buildArea3(isoStr) {
         var p = isoParts(isoStr);
         if (!p) return null;
         var byNum = bestYearNumber(p.year);
+        var cacheKey = p.year + '|' + p.month + '|' + byNum;
+        if (area3ChartCache[cacheKey]) return area3ChartCache[cacheKey];
         var chart = emptyChart();
         fillMonthly(chart, 'thisYear', p.year, p.month);
         fillMonthly(chart, 'lastYear', p.year - 1, p.month);
@@ -321,6 +376,7 @@ def pl_insight_data_client_js() -> str:
         chart.periodCount = 12;
         chart.axisMode = 'month';
         chart.refYears = { thisYear: p.year, lastYear: p.year - 1, bestYear: byNum };
+        area3ChartCache[cacheKey] = chart;
         return chart;
       }
 
@@ -339,26 +395,51 @@ def pl_insight_data_client_js() -> str:
         if (!income && !food && !labor) return null;
         return { income: income, expenses: food + labor, variable: food, fixed: labor };
       }
-      function flYtd(year, month0, day) {
+      function flYtdPrefix(year) {
+        if (flYtdPrefixCache[year]) return flYtdPrefixCache[year];
         var s = store();
-        var income = 0, food = 0, labor = 0;
         var lines = catalog();
-        for (var mo = 0; mo <= month0; mo++) {
-          var lastDay = (mo === month0) ? day : daysInMonth(year, mo);
+        var months = [];
+        var run = { income: 0, food: 0, labor: 0 };
+        for (var mo = 0; mo < 12; mo++) {
+          var dim = daysInMonth(year, mo);
+          var days = [null];
           var alloc = allocForMonth(year, mo);
-          for (var d = 1; d <= lastDay; d++) {
+          for (var d = 1; d <= dim; d++) {
             var isoStr = iso(year, mo, d);
-            income += dailySales(s, isoStr);
+            run.income += dailySales(s, isoStr);
             for (var i = 0; i < lines.length; i++) {
               var line = lines[i];
               var amt = lineDayAmount(s, year, mo, isoStr, line, alloc);
               if (!amt) continue;
-              if (isFood(line)) food += amt; else if (isLabor(line)) labor += amt;
+              if (isFood(line)) run.food += amt;
+              else if (isLabor(line)) run.labor += amt;
             }
+            days.push({ income: run.income, food: run.food, labor: run.labor });
           }
+          months.push(days);
         }
-        if (!income && !food && !labor) return null;
-        return { income: income, expenses: food + labor, variable: food, fixed: labor };
+        flYtdPrefixCache[year] = months;
+        return months;
+      }
+      function flYtd(year, month0, day) {
+        var ck = year + '|' + month0 + '|' + day;
+        if (Object.prototype.hasOwnProperty.call(flYtdCache, ck)) return flYtdCache[ck];
+        var months = flYtdPrefix(year);
+        var days = months[month0];
+        var snap = days && days[day] ? days[day] : null;
+        if (!snap || (!snap.income && !snap.food && !snap.labor)) {
+          flYtdCache[ck] = null;
+          return null;
+        }
+        var out = {
+          income: snap.income,
+          expenses: snap.food + snap.labor,
+          variable: snap.food,
+          fixed: snap.labor
+        };
+        flYtdCache[ck] = out;
+        return out;
       }
 
       /* ---- 費目内訳（選択月の月次合計を費目単位で。金額降順・固定/変動グループ） ---- */

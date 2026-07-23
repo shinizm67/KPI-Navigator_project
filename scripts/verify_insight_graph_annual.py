@@ -83,9 +83,16 @@ def verify_page(page, url: str) -> list[str]:
           const builtA = window.__buildAnnualCumulativeTrendPayload(2026, isoA);
           const builtB = window.__buildAnnualCumulativeTrendPayload(2026, isoB);
 
-          // open insight if needed
+          // open insight + Graph pane (SVG rebuild is skipped while Graph is hidden)
           const openBtn = document.getElementById('global-nav-index-btn');
           if (openBtn) openBtn.click();
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = true;
+          if (paneGraph) paneGraph.hidden = false;
+          document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: 'graph' } }));
 
           // force insight date + re-render graphs via event path
           window.__INSIGHT_SELECTED_ISO = isoA;

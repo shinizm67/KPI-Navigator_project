@@ -18,14 +18,127 @@ INSIGHT_FILL_NEW = """      function fill(iso) {
         if (todayBtnEl) todayBtnEl.hidden = iso === getTodayIso();
         if (dateInputEl) dateInputEl.value = iso;
         window.__INSIGHT_SELECTED_ISO = iso;
+        window.__INSIGHT_PENDING_ISO = iso;
+        if (window.__INSIGHT_FILL_SCHED) return;
+        window.__INSIGHT_FILL_SCHED = true;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            window.__INSIGHT_FILL_SCHED = false;
+            function runInsightFillHeavy() {
+              var pending = window.__INSIGHT_PENDING_ISO;
+              if (!pending) return;
+              if (window.__INSIGHT_FILL_BUSY) {
+                window.__INSIGHT_FILL_RERUN = true;
+                return;
+              }
+              window.__INSIGHT_FILL_BUSY = true;
+              window.__INSIGHT_PENDING_ISO = null;
+              var paneAnalyze = document.getElementById('insight-pane-analyze');
+              var onAnalyze = !!(paneAnalyze && !paneAnalyze.hidden);
+              var holding = !!window.__INSIGHT_DATE_HOLDING;
+              try {
+                if (typeof window.renderInsightTwDiffs === 'function') {
+                  window.renderInsightTwDiffs(pending, {
+                    analyzeAsync: true,
+                    skipAnalyze: onAnalyze,
+                  });
+                }
+              } catch (_insightDiffErr) {}
+              try {
+                // 長押し中は full settle を入れない（走って止まる主因）
+                if (
+                  onAnalyze &&
+                  !holding &&
+                  typeof window.__scheduleInsightAnalyzeSettle === 'function'
+                ) {
+                  window.__scheduleInsightAnalyzeSettle(pending);
+                }
+              } catch (_insightSettleErr) {}
+              try {
+                if (!holding) {
+                  document.dispatchEvent(
+                    new CustomEvent('insight:dateChanged', { detail: { iso: pending } })
+                  );
+                }
+              } catch (_insightDateErr) {}
+              window.__INSIGHT_FILL_BUSY = false;
+              if (window.__INSIGHT_FILL_RERUN || window.__INSIGHT_PENDING_ISO) {
+                window.__INSIGHT_FILL_RERUN = false;
+                if (!window.__INSIGHT_PENDING_ISO) {
+                  window.__INSIGHT_PENDING_ISO = window.__INSIGHT_SELECTED_ISO;
+                }
+                if (!window.__INSIGHT_FILL_SCHED) {
+                  window.__INSIGHT_FILL_SCHED = true;
+                  requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                      window.__INSIGHT_FILL_SCHED = false;
+                      runInsightFillHeavy();
+                    });
+                  });
+                }
+              }
+            }
+            runInsightFillHeavy();
+          });
+        });
+      }"""
+
+INSIGHT_SET_TAB_OLD = """      function setInsightTab(which) {
+        which = which || 'summary';
+        if (paneSummary) paneSummary.hidden = which !== 'summary';
+        if (paneAnalyze) paneAnalyze.hidden = which !== 'analyze';
+        if (paneGraph) paneGraph.hidden = which !== 'graph';
+        if (tabSummary) tabSummary.classList.toggle('is-active', which === 'summary');
+        if (tabAnalyze) tabAnalyze.classList.toggle('is-active', which === 'analyze');
+        if (tabGraph) tabGraph.classList.toggle('is-active', which === 'graph');
+        if (titleEl) titleEl.textContent = insightTabTitles[which] || insightTabTitles.summary;
+        if (insightScroll) insightScroll.scrollTop = 0;
+        updateInsightJumpHrefs();
+      }"""
+
+INSIGHT_SET_TAB_NEW = """      function setInsightTab(which) {
+        which = which || 'summary';
+        if (paneSummary) paneSummary.hidden = which !== 'summary';
+        if (paneAnalyze) paneAnalyze.hidden = which !== 'analyze';
+        if (paneGraph) paneGraph.hidden = which !== 'graph';
+        if (tabSummary) tabSummary.classList.toggle('is-active', which === 'summary');
+        if (tabAnalyze) tabAnalyze.classList.toggle('is-active', which === 'analyze');
+        if (tabGraph) tabGraph.classList.toggle('is-active', which === 'graph');
+        if (titleEl) titleEl.textContent = insightTabTitles[which] || insightTabTitles.summary;
+        if (insightScroll) insightScroll.scrollTop = 0;
+        updateInsightJumpHrefs();
         try {
-          if (typeof window.renderInsightTwDiffs === 'function') {
-            window.renderInsightTwDiffs(iso);
+          document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: which } }));
+        } catch (_insightTabEvErr) {}
+        if (which === 'analyze' || which === 'graph') {
+          var tabIso = window.__INSIGHT_SELECTED_ISO;
+          var paneCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {});
+          var cacheKey = which === 'analyze' ? 'analyzeIso' : 'graphIso';
+          if (tabIso && paneCache[cacheKey] === tabIso) {
+            return;
           }
-        } catch (_insightDiffErr) {}
-        try {
-          document.dispatchEvent(new CustomEvent('insight:dateChanged', { detail: { iso: iso } }));
-        } catch (_insightDateErr) {}
+          window.__INSIGHT_TAB_PENDING = which;
+          if (window.__INSIGHT_TAB_SCHED) return;
+          window.__INSIGHT_TAB_SCHED = true;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              window.__INSIGHT_TAB_SCHED = false;
+              var pendingTab = window.__INSIGHT_TAB_PENDING;
+              window.__INSIGHT_TAB_PENDING = null;
+              if (!pendingTab) return;
+              try {
+                if (
+                  window.__INSIGHT_SELECTED_ISO &&
+                  typeof window.renderInsightTwDiffs === 'function'
+                ) {
+                  window.renderInsightTwDiffs(window.__INSIGHT_SELECTED_ISO, {
+                    mode: pendingTab,
+                  });
+                }
+              } catch (_insightTabErr) {}
+            });
+          });
+        }
       }"""
 
 GRAPH1_DIFF_OLD = """          var diffEl = tooltipEl.querySelector('[data-field="diff"]');
@@ -517,15 +630,101 @@ def insight_diff_js() -> str:
 
       function setSummaryComparisonAllocWidget(key, pct, disabled) {{
         var widgets = window.__insightSummaryComparisonWidgets;
-        var w = widgets && widgets[key];
-        if (!w) return;
-        if (disabled) {{
-          if (typeof w.setDisabled === 'function') w.setDisabled();
+        if (!widgets) return;
+        var list = [];
+        if (widgets[key]) list.push(widgets[key]);
+        // Annual 比較バーと同式の「年度目標改訂」最下段 Historical Avg
+        if (key === 'annual' && widgets.annualRevision) list.push(widgets.annualRevision);
+        // Analyze / Graph Current Progress 下段 Historical Avg
+        if (key === 'annual' && widgets.annualAnalyzeProgress) {{
+          var ap = widgets.annualAnalyzeProgress;
+          if (Array.isArray(ap)) {{
+            for (var ai = 0; ai < ap.length; ai++) list.push(ap[ai]);
+          }} else {{
+            list.push(ap);
+          }}
+        }}
+        for (var i = 0; i < list.length; i++) {{
+          var w = list[i];
+          if (!w) continue;
+          if (disabled) {{
+            if (typeof w.setDisabled === 'function') w.setDisabled();
+            continue;
+          }}
+          if (typeof w.setPercent === 'function') {{
+            w.setPercent(Math.max(0.1, Number(pct)));
+          }}
+        }}
+      }}
+
+      /** Annual Historical Avg %（Summary 比較棒 / Analyze Current Progress 下段） */
+      function patchAnnualHistAvgAlloc(m, iso) {{
+        if (!m || !iso) {{
+          setSummaryComparisonAllocWidget('annual', 0, true);
           return;
         }}
-        if (typeof w.setPercent === 'function') {{
-          w.setPercent(Math.max(0.1, Number(pct)));
+        var parts = String(iso).split('-');
+        var y = Number(parts[0]);
+        var month = Number(parts[1]);
+        var day = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(month) || !Number.isFinite(day)) {{
+          setSummaryComparisonAllocWidget('annual', 0, true);
+          return;
         }}
+        var sumFn =
+          typeof window.__sumYearSalesThroughDay === 'function'
+            ? window.__sumYearSalesThroughDay
+            : null;
+        if (!sumFn) {{
+          setSummaryComparisonAllocWidget('annual', 0, true);
+          return;
+        }}
+        var current = Number(m.ytdA);
+        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
+        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {{
+          setSummaryComparisonAllocWidget('annual', (current / histAvg) * 100, false);
+        }} else {{
+          setSummaryComparisonAllocWidget('annual', 0, true);
+        }}
+      }}
+
+      function setSummarySalesAllocWidget(key, actual, target, hasPlan) {{
+        var widgets = window.__insightSummarySalesWidgets;
+        var list = widgets && widgets[key];
+        if (!list) return;
+        if (!Array.isArray(list)) list = [list];
+        var a = Number(actual);
+        var t = Number(target);
+        var disabled =
+          !hasPlan || !Number.isFinite(a) || !Number.isFinite(t) || t <= 0;
+        for (var i = 0; i < list.length; i++) {{
+          var w = list[i];
+          if (!w) continue;
+          if (disabled) {{
+            if (typeof w.setDisabled === 'function') w.setDisabled();
+            continue;
+          }}
+          if (typeof w.setPercent === 'function') {{
+            w.setPercent(Math.max(0.1, (a / t) * 100));
+          }}
+        }}
+      }}
+
+      function patchSummarySalesAllocBars(m) {{
+        if (!m) {{
+          setSummarySalesAllocWidget('daily', NaN, NaN, false);
+          setSummarySalesAllocWidget('monthly', NaN, NaN, false);
+          setSummarySalesAllocWidget('annual', NaN, NaN, false);
+          return;
+        }}
+        setSummarySalesAllocWidget(
+          'daily',
+          m.dailySales,
+          m.dailyTarget,
+          m.isBusinessToday && m.dailyTarget != null
+        );
+        setSummarySalesAllocWidget('monthly', m.mtdA, m.mtdT, m.hasPlan);
+        setSummarySalesAllocWidget('annual', m.ytdA, m.ytdT, m.hasPlan);
       }}
 
       function patchMonthlyComparisonBlock(block, m, iso) {{
@@ -684,12 +883,7 @@ def insight_diff_js() -> str:
           setRow(3, DASH, NaN, NaN);
         }}
 
-        var histAvg = avgPriorPeriodSales(sumFn, y, month, day);
-        if (Number.isFinite(current) && histAvg != null && histAvg > 0) {{
-          setSummaryComparisonAllocWidget('annual', (current / histAvg) * 100, false);
-        }} else {{
-          setSummaryComparisonAllocWidget('annual', 0, true);
-        }}
+        patchAnnualHistAvgAlloc(m, iso);
       }}
 
       function patchSummaryComparisonBlocks(root, m, iso) {{
@@ -1302,9 +1496,167 @@ def insight_diff_js() -> str:
         patchGraphCumRow(annualRow, 'annual', m.ytdA, m.ytdT, m.hasPlan);
       }}
 
-      window.renderInsightTwDiffs = function (iso) {{
+      function runInsightAnalyzePatches(root, m, iso, asyncChunk) {{
+        var jobs = [
+          function () {{
+            patchAnalyzeAnnualBlocks(root, m);
+          }},
+          function () {{
+            patchAnalyzeMonthlyHistoricalCompare(root, m, iso);
+          }},
+          function () {{
+            patchAnalyzeAnnualHistoricalCompare(root, m, iso);
+          }},
+          function () {{
+            patchAnalyzeMonthlyExpenseCharts(m, iso);
+          }},
+          function () {{
+            patchAnalyzeDualInsight(root, iso);
+          }},
+          function () {{
+            patchAnalyzeAnnualExpenseProfit(root, m, iso);
+          }},
+          function () {{
+            patchAnalyzeAnnualYearExpenseCharts(m, iso);
+          }},
+          function () {{
+            patchAnalyzeAnnualTargetRevisionKpi(root, m, iso);
+          }},
+          function () {{
+            patchHistoricalInsightAccess(root, iso);
+          }},
+        ];
+        function markDone() {{
+          var cache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {{}});
+          cache.analyzeIso = iso;
+        }}
+        if (!asyncChunk) {{
+          window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1;
+          for (var si = 0; si < jobs.length; si++) {{
+            try {{
+              jobs[si]();
+            }} catch (_analyzeSyncErr) {{}}
+          }}
+          markDone();
+          return;
+        }}
+        var gen = (window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1);
+        function step(i) {{
+          if (gen !== window.__INSIGHT_ANALYZE_GEN) return;
+          if (i >= jobs.length) {{
+            markDone();
+            return;
+          }}
+          try {{
+            jobs[i]();
+          }} catch (_analyzeJobErr) {{}}
+          if (i + 1 < jobs.length) {{
+            requestAnimationFrame(function () {{
+              step(i + 1);
+            }});
+          }} else {{
+            step(i + 1);
+          }}
+        }}
+        step(0);
+      }}
+
+      window.__scheduleInsightAnalyzeSettle = function (iso) {{
+        if (window.__INSIGHT_DATE_HOLDING) {{
+          window.__INSIGHT_ANALYZE_SETTLE_ISO = iso;
+          return;
+        }}
+        window.__INSIGHT_ANALYZE_SETTLE_ISO = iso;
+        if (window.__INSIGHT_ANALYZE_SETTLE_T) {{
+          clearTimeout(window.__INSIGHT_ANALYZE_SETTLE_T);
+        }}
+        window.__INSIGHT_ANALYZE_SETTLE_T = setTimeout(function () {{
+          window.__INSIGHT_ANALYZE_SETTLE_T = null;
+          if (window.__INSIGHT_DATE_HOLDING) return;
+          var pending =
+            window.__INSIGHT_ANALYZE_SETTLE_ISO || window.__INSIGHT_SELECTED_ISO;
+          var pane = document.getElementById('insight-pane-analyze');
+          if (!pending || !pane || pane.hidden) return;
+          if (typeof window.renderInsightTwDiffs !== 'function') return;
+          try {{
+            window.renderInsightTwDiffs(pending, {{ mode: 'analyze' }});
+          }} catch (_settleErr) {{}}
+        }}, 200);
+      }};
+
+      window.__insightDateHoldStart = function () {{
+        window.__INSIGHT_DATE_HOLDING = true;
+        if (window.__INSIGHT_ANALYZE_SETTLE_T) {{
+          clearTimeout(window.__INSIGHT_ANALYZE_SETTLE_T);
+          window.__INSIGHT_ANALYZE_SETTLE_T = null;
+        }}
+      }};
+
+      window.__insightDateHoldEnd = function () {{
+        if (!window.__INSIGHT_DATE_HOLDING) return;
+        window.__INSIGHT_DATE_HOLDING = false;
+        var iso = window.__INSIGHT_SELECTED_ISO || window.__INSIGHT_ANALYZE_SETTLE_ISO;
+        try {{
+          if (iso) {{
+            document.dispatchEvent(new CustomEvent('insight:dateChanged', {{ detail: {{ iso: iso }} }}));
+          }}
+        }} catch (_holdDateErr) {{}}
+        var pane = document.getElementById('insight-pane-analyze');
+        if (pane && !pane.hidden && typeof window.__scheduleInsightAnalyzeSettle === 'function') {{
+          window.__scheduleInsightAnalyzeSettle(iso);
+        }}
+      }};
+
+      window.renderInsightTwDiffs = function (iso, opts) {{
         var root = document.getElementById('insight-overlay');
         if (!root) return;
+        opts = opts || {{}};
+        var mode = opts.mode || 'auto';
+        var paneSummaryEl = document.getElementById('insight-pane-summary');
+        var paneAnalyzeEl = document.getElementById('insight-pane-analyze');
+        var paneGraphEl = document.getElementById('insight-pane-graph');
+        var wantAnalyze =
+          mode === 'analyze' ||
+          (mode === 'auto' && (!paneAnalyzeEl || !paneAnalyzeEl.hidden));
+        var wantGraph =
+          mode === 'graph' || (mode === 'auto' && (!paneGraphEl || !paneGraphEl.hidden));
+        var wantSummary =
+          mode === 'summary' ||
+          mode === 'full' ||
+          (mode === 'auto' && (!paneSummaryEl || !paneSummaryEl.hidden));
+        if (mode === 'analyze' || mode === 'graph') wantSummary = false;
+        if (opts.skipAnalyze) {{
+          wantAnalyze = false;
+          // 進行中の Analyze chunk を中断（長押し中のメインスレッド確保）
+          window.__INSIGHT_ANALYZE_GEN = (window.__INSIGHT_ANALYZE_GEN || 0) + 1;
+          var skipCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {{}});
+          skipCache.analyzeIso = null;
+        }}
+        // Analyze 長押し中: 重い DOM は後回し、可視グラフだけ即追従
+        if (opts.skipAnalyze && !wantSummary && !wantGraph) {{
+          var lightCompute =
+            typeof window.__computeTwMetricsForIso === 'function'
+              ? window.__computeTwMetricsForIso
+              : null;
+          var lightM = lightCompute ? lightCompute(iso) : null;
+          patchSummarySalesAllocBars(lightM);
+          var holdingLight = !!window.__INSIGHT_DATE_HOLDING;
+          var lightScope = insightAnalyzeExpenseLightScope();
+          if (!holdingLight || lightScope.monthly) {{
+            patchAnalyzeMonthlyExpenseCharts(lightM, iso);
+          }}
+          if (!holdingLight || lightScope.annual) {{
+            patchAnalyzeAnnualYearExpenseCharts(lightM, iso);
+          }}
+          // 数値 KPI は settle に任せ、長押し中は棒だけ追従
+          if (!holdingLight) {{
+            patchAnalyzeAnnualBlocks(root, lightM);
+          }}
+          patchAnnualHistAvgAlloc(lightM, iso);
+          return;
+        }}
+        if (!wantSummary && !wantAnalyze && !wantGraph) return;
+
         var compute =
           typeof window.__computeTwMetricsForIso === 'function'
             ? window.__computeTwMetricsForIso
@@ -1315,6 +1667,7 @@ def insight_diff_js() -> str:
           expenseSnap = window.__insightReadExpenseSnapshot(iso);
         }}
 
+        if (wantSummary) {{
         root.querySelectorAll('.insight-daily-kpi').forEach(function (block) {{
           if (!m) {{
             patchDailyKpiBlock(block, NaN, NaN, false);
@@ -1397,17 +1750,26 @@ def insight_diff_js() -> str:
         patchSummaryAnnualBlocks(root, m);
         patchSummaryComparisonBlocks(root, m, iso);
         patchSummaryDailyComparisonBar(m, iso);
-        patchAnalyzeAnnualBlocks(root, m);
-        patchAnalyzeMonthlyHistoricalCompare(root, m, iso);
-        patchAnalyzeAnnualHistoricalCompare(root, m, iso);
-        patchGraphDailyBlocks(root, m, iso);
-        patchGraphMonthlyAnnualCumBars(root, m);
-        patchAnalyzeMonthlyExpenseCharts(m, iso);
-        patchHistoricalInsightAccess(root, iso);
-        patchAnalyzeDualInsight(root, iso);
-        patchAnalyzeAnnualExpenseProfit(root, m, iso);
-        patchAnalyzeAnnualYearExpenseCharts(m, iso);
-        patchAnalyzeAnnualTargetRevisionKpi(root, m, iso);
+        patchSummarySalesAllocBars(m);
+        }} else if (wantAnalyze || wantGraph) {{
+          patchSummarySalesAllocBars(m);
+        }}
+
+        if (wantAnalyze) {{
+          // タブ切替 or 日付ナビ(analyzeAsync): 分割。verify は同期のまま。
+          runInsightAnalyzePatches(
+            root,
+            m,
+            iso,
+            mode === 'analyze' || !!opts.analyzeAsync
+          );
+        }}
+        if (wantGraph) {{
+          patchGraphDailyBlocks(root, m, iso);
+          patchGraphMonthlyAnnualCumBars(root, m);
+          var gCache = window.__INSIGHT_PANE_CACHE || (window.__INSIGHT_PANE_CACHE = {{}});
+          gCache.graphIso = iso;
+        }}
       }};
 
       function insightIsJaLang() {{
@@ -1901,13 +2263,62 @@ def insight_diff_js() -> str:
         var v = Math.round(Number(variablePct));
         if (!Number.isFinite(f) || f < 0) f = 0;
         if (!Number.isFinite(v) || v < 0) v = 0;
+        if (
+          chartEl.getAttribute('data-fixed-pct') === String(f) &&
+          chartEl.getAttribute('data-variable-pct') === String(v)
+        ) {{
+          return;
+        }}
+        chartEl.setAttribute('data-fixed-pct', String(f));
+        chartEl.setAttribute('data-variable-pct', String(v));
         chartEl.style.setProperty('--fixed-pct', String(f));
         chartEl.style.setProperty('--variable-pct', String(v));
         var fixedEl = chartEl.querySelector('[data-role="fixed-pct"]');
         var variableEl = chartEl.querySelector('[data-role="variable-pct"]');
         if (fixedEl) fixedEl.textContent = f + '%';
         if (variableEl) variableEl.textContent = v + '%';
+        /* 0% セグメントは棒が消えるのにラベルが左端／Expenses と重なるので隠す */
+        function setSegLabelVisible(kind, shown) {{
+          var pctEl = chartEl.querySelector('[data-role="' + kind + '-pct"]');
+          if (pctEl) {{
+            if (shown) pctEl.removeAttribute('hidden');
+            else pctEl.setAttribute('hidden', '');
+            pctEl.setAttribute('aria-hidden', shown ? 'false' : 'true');
+          }}
+          var label = chartEl.querySelector(
+            '.insight-monthly-expense-pl__seg-label--' +
+              kind +
+              ', .insight-annual-year-expense-pl__seg-label--' +
+              kind
+          );
+          if (label) {{
+            if (shown) label.removeAttribute('hidden');
+            else label.setAttribute('hidden', '');
+            label.setAttribute('aria-hidden', shown ? 'false' : 'true');
+          }}
+        }}
+        setSegLabelVisible('fixed', f > 0);
+        setSegLabelVisible('variable', v > 0);
       }}
+
+      /** 長押し中は画面内の Monthly/Annual 支出棒だけ更新（両方見えていれば両方） */
+      function insightAnalyzeExpenseLightScope() {{
+        var monthly = document.getElementById('insight-jump-analyze-monthly');
+        var annual = document.getElementById('insight-jump-analyze-annual');
+        var scroll = document.querySelector('#insight-overlay .insight-overlay__scroll');
+        if (!scroll) return {{ monthly: true, annual: true }};
+        var sr = scroll.getBoundingClientRect();
+        function visibleEnough(el) {{
+          if (!el) return false;
+          var r = el.getBoundingClientRect();
+          return r.bottom > sr.top + 24 && r.top < sr.bottom - 24;
+        }}
+        var mVis = visibleEnough(monthly);
+        var aVis = visibleEnough(annual);
+        if (!mVis && !aVis) return {{ monthly: true, annual: true }};
+        return {{ monthly: mVis, annual: aVis }};
+      }}
+      window.__setExpensePlChartPct = setExpensePlChartPct;
 
       function expensePlPctFrom(exp, sales) {{
         var s = Number(sales);
@@ -1995,6 +2406,47 @@ def insight_diff_js() -> str:
         var d = Number(day);
         if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return empty;
         if (mo < 1 || mo > 12) return empty;
+        var cache = window.__INSIGHT_YEAR_EXPENSE_CACHE || (window.__INSIGHT_YEAR_EXPENSE_CACHE = {{}});
+        var cacheKey = y + '-' + mo + '-' + d;
+        if (Object.prototype.hasOwnProperty.call(cache, cacheKey)) {{
+          return cache[cacheKey];
+        }}
+        // 増分: 同月前日 or 前月末
+        if (d > 1) {{
+          var prevDayKey = y + '-' + mo + '-' + (d - 1);
+          if (Object.prototype.hasOwnProperty.call(cache, prevDayKey)) {{
+            var prevDay = cache[prevDayKey];
+            var dayExp = window.__insightReadMonthExpense(y, mo, d);
+            var prevThru = window.__insightReadMonthExpense(y, mo, d - 1);
+            var addFixed = (Number(dayExp.fixed) || 0) - (Number(prevThru.fixed) || 0);
+            var addVar = (Number(dayExp.variable) || 0) - (Number(prevThru.variable) || 0);
+            var fwd = {{
+              fixed: Math.round((Number(prevDay.fixed) || 0) + addFixed),
+              variable: Math.round((Number(prevDay.variable) || 0) + addVar),
+              total: 0,
+              hasData: !!(prevDay.hasData || (dayExp && dayExp.hasData)),
+            }};
+            fwd.total = Math.round(fwd.fixed + fwd.variable);
+            cache[cacheKey] = fwd;
+            return fwd;
+          }}
+        }} else if (mo > 1) {{
+          var prevDim = new Date(y, mo - 1, 0).getDate();
+          var prevMonthKey = y + '-' + (mo - 1) + '-' + prevDim;
+          if (Object.prototype.hasOwnProperty.call(cache, prevMonthKey)) {{
+            var prevMo = cache[prevMonthKey];
+            var day1 = window.__insightReadMonthExpense(y, mo, 1);
+            var fromPrev = {{
+              fixed: Math.round((Number(prevMo.fixed) || 0) + (Number(day1.fixed) || 0)),
+              variable: Math.round((Number(prevMo.variable) || 0) + (Number(day1.variable) || 0)),
+              total: 0,
+              hasData: !!(prevMo.hasData || (day1 && day1.hasData)),
+            }};
+            fromPrev.total = Math.round(fromPrev.fixed + fromPrev.variable);
+            cache[cacheKey] = fromPrev;
+            return fromPrev;
+          }}
+        }}
         var fixed = 0;
         var variable = 0;
         var hasData = false;
@@ -2006,12 +2458,14 @@ def insight_diff_js() -> str:
           fixed += Number(exp.fixed) || 0;
           variable += Number(exp.variable) || 0;
         }}
-        return {{
+        var result = {{
           fixed: Math.round(fixed),
           variable: Math.round(variable),
           total: Math.round(fixed + variable),
           hasData: hasData,
         }};
+        cache[cacheKey] = result;
+        return result;
       }}
 
       function patchAnalyzeAnnualExpenseProfit(root, m, iso) {{

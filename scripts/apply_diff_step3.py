@@ -62,6 +62,8 @@ def inject_insight_diff_js(text: str) -> str:
 
 
 def patch_insight_fill(text: str) -> str:
+    if "__INSIGHT_FILL_SCHED" in text:
+        return text
     if "renderInsightTwDiffs" in text and INSIGHT_FILL_NEW.split("renderInsightTwDiffs")[0] in text:
         return text
     if INSIGHT_FILL_OLD not in text:

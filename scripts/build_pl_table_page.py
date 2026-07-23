@@ -1547,8 +1547,14 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         return Math.max(1, Math.min(dim, day));
       }}
 
-      function area1YForValue(v, yMax, padT, plotH) {{
-        return padT + (1 - Math.min(1, (v || 0) / yMax)) * plotH;
+      function area1YForValue(v, yMax, padT, plotH, yMin) {{
+        yMin = yMin == null ? 0 : yMin;
+        var span = yMax - yMin;
+        if (!(span > 0)) return padT + plotH;
+        var t = ((Number(v) || 0) - yMin) / span;
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
+        return padT + (1 - t) * plotH;
       }}
 
       function fmtComparePeriodDate(year, month, period, axisMode) {{
@@ -1621,7 +1627,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
             }})
             .join('');
         }}
-        var anchorY = area1YForValue(cfg.values.thisYear[idx] || 0, cfg.yMax, cfg.padT, cfg.plotH);
+        var anchorY = area1YForValue(cfg.values.thisYear[idx] || 0, cfg.yMax, cfg.padT, cfg.plotH, cfg.yMin);
         return {{
           x: comparePeriodCenterX(day, cfg.daysInMonth, cfg.padL, cfg.plotW),
           y: anchorY,
@@ -1682,7 +1688,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           if (!Number.isFinite(v)) return null;
           return {{
             x: comparePeriodCenterX(day, cfg.daysInMonth, cfg.padL, cfg.plotW),
-            y: area1YForValue(v, cfg.yMax, cfg.padT, cfg.plotH),
+            y: area1YForValue(v, cfg.yMax, cfg.padT, cfg.plotH, cfg.yMin),
             v: v,
           }};
         }}
@@ -1810,6 +1816,18 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           return window.__plInsight.buildArea1(iso);
         }}
         return null;
+      }}
+
+      /* Same-pass cache: line + daily each call buildCompareChartData for the same area. */
+      var __plCompareChartCacheIso = null;
+      var __plCompareChartCache = null;
+      function beginPlCompareChartPass(iso) {{
+        __plCompareChartCacheIso = iso || null;
+        __plCompareChartCache = {{}};
+      }}
+      function endPlCompareChartPass() {{
+        __plCompareChartCacheIso = null;
+        __plCompareChartCache = null;
       }}
 
       function compareArea2FirstSunday(year) {{
@@ -2151,7 +2169,8 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
       var AREA1_BAR_CENTER_INSET = 15;
 
       function area1ChartPad() {{
-        return {{ w: 860, h: 420, padL: 28, padR: 12, padT: 8, padB: 34 }};
+        /* padL: room for Y labels including negatives (-15k). */
+        return {{ w: 860, h: 420, padL: 52, padR: 12, padT: 8, padB: 34 }};
       }}
 
       function area1PlotSpan(plotW) {{
@@ -2215,12 +2234,13 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         return ticks;
       }}
 
-      function renderArea1DailyBars(dailyData, metric, showLast, showBest, canShowBest, yMax, padL, padT, plotW, plotH, daysInMonth, dim) {{
+      function renderArea1DailyBars(dailyData, metric, showLast, showBest, canShowBest, yMax, padL, padT, plotW, plotH, daysInMonth, dim, yMin) {{
+        yMin = yMin == null ? 0 : yMin;
         var clusterW = AREA1_DAILY_CLUSTER_W;
         var showBestEff = showBest && canShowBest;
         var n = 1 + (showLast ? 1 : 0) + (showBestEff ? 1 : 0);
         var barW = clusterW / n;
-        var baseY = padT + plotH;
+        var zeroY = area1YForValue(0, yMax, padT, plotH, yMin);
         var html = '';
         var series = [
           {{ key: 'thisYear', show: true, color: '#66e7ff' }},
@@ -2234,15 +2254,17 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           var offset = 0;
           series.forEach(function (s) {{
             if (!s.show) return;
-            var v = (dailyData[metric][s.key][idx] || 0);
-            var bh = v > 0 ? (v / yMax) * plotH : 0;
+            var v = dailyData[metric][s.key][idx] || 0;
+            var yVal = area1YForValue(v, yMax, padT, plotH, yMin);
+            var yTop = Math.min(zeroY, yVal);
+            var bh = Math.abs(zeroY - yVal);
             var x = clusterLeft + offset * barW;
-            if (bh > 0) {{
+            if (bh > 0.05) {{
               html +=
                 '<rect x="' +
                 x.toFixed(2) +
                 '" y="' +
-                (baseY - bh).toFixed(2) +
+                yTop.toFixed(2) +
                 '" width="' +
                 barW.toFixed(2) +
                 '" height="' +
@@ -2307,39 +2329,84 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
       }}
 
       function formatScale(v) {{
-        var n = Math.abs(Math.round(v || 0));
+        var signed = Number(v) || 0;
+        var neg = signed < 0;
+        var n = Math.abs(Math.round(signed));
         var trim = function (x) {{ return String(Math.round(x * 10) / 10); }};
-        if (n >= 1000000) return trim(n / 1000000) + 'M';
-        if (n >= 1000) return trim(n / 1000) + 'k';
-        return String(n);
+        var body;
+        if (n >= 1000000) body = trim(n / 1000000) + 'M';
+        else if (n >= 1000) body = trim(n / 1000) + 'k';
+        else body = String(n);
+        return neg ? '-' + body : body;
       }}
 
-      /* きれいな軸目盛: 目盛が 1/2/2.5/5 ×10^n の丸め値になる最大値と目盛列を返す。
-         旧実装は等分(0/.25/.5/.75/1)＋最小10k刻みで、8k/23k のような半端目盛や
-         小さい値でも軸が10kになる問題があった。 */
-      function compareNiceAxis(raw) {{
-        if (!(raw > 0)) return {{ max: 4, ticks: [0, 1, 2, 3, 4] }};
-        var rough = raw / 4;
+      /* きれいな軸目盛: 目盛が 1/2/2.5/5 ×10^n。マイナス域も含め 0 を必ず含む。 */
+      function compareNiceAxisRange(rawMin, rawMax) {{
+        rawMin = Number(rawMin);
+        rawMax = Number(rawMax);
+        if (!isFinite(rawMin)) rawMin = 0;
+        if (!isFinite(rawMax)) rawMax = 0;
+        if (rawMin > 0) rawMin = 0;
+        if (rawMax < 0) rawMax = 0;
+        if (rawMax < rawMin) {{
+          var swap = rawMax;
+          rawMax = rawMin;
+          rawMin = swap;
+        }}
+        if (!(rawMax > rawMin)) {{
+          return {{ min: 0, max: 4, ticks: [0, 1, 2, 3, 4] }};
+        }}
+        var span = rawMax - rawMin;
+        var rough = span / 4;
         var pow = Math.pow(10, Math.floor(Math.log(rough) / Math.LN10));
         var mults = [1, 2, 2.5, 5, 10];
         var step = 10 * pow;
         for (var i = 0; i < mults.length; i++) {{
           var s = mults[i] * pow;
-          if (s >= rough) {{ step = s; break; }}
+          if (s >= rough) {{
+            step = s;
+            break;
+          }}
         }}
-        var count = Math.ceil(raw / step);
-        if (count < 1) count = 1;
+        var niceMin = Math.floor(rawMin / step) * step;
+        var niceMax = Math.ceil(rawMax / step) * step;
+        if (niceMin > 0) niceMin = 0;
+        if (niceMax < 0) niceMax = 0;
+        if (niceMin === niceMax) niceMax = niceMin + step;
         var ticks = [];
-        for (var t = 0; t <= count; t++) ticks.push(step * t);
-        return {{ max: step * count, ticks: ticks }};
+        var guard = 0;
+        for (var t = niceMin; t <= niceMax + step * 1e-9 && guard < 40; t += step) {{
+          ticks.push(Math.round(t * 1e10) / 1e10);
+          guard += 1;
+        }}
+        if (ticks.indexOf(0) < 0 && niceMin < 0 && niceMax > 0) {{
+          ticks.push(0);
+          ticks.sort(function (a, b) {{ return a - b; }});
+        }}
+        return {{ min: niceMin, max: niceMax, ticks: ticks }};
+      }}
+      function compareNiceAxis(raw) {{
+        return compareNiceAxisRange(0, raw);
       }}
 
 
 
       function buildCompareChartData(areaId, iso) {{
-        if (areaId === 2) return buildArea2ChartData(iso);
-        if (areaId === 3) return buildArea3ChartData(iso);
-        return buildArea1ChartData(iso);
+        if (
+          __plCompareChartCache &&
+          __plCompareChartCacheIso === iso &&
+          Object.prototype.hasOwnProperty.call(__plCompareChartCache, areaId)
+        ) {{
+          return __plCompareChartCache[areaId];
+        }}
+        var data;
+        if (areaId === 2) data = buildArea2ChartData(iso);
+        else if (areaId === 3) data = buildArea3ChartData(iso);
+        else data = buildArea1ChartData(iso);
+        if (__plCompareChartCache && __plCompareChartCacheIso === iso) {{
+          __plCompareChartCache[areaId] = data;
+        }}
+        return data;
       }}
 
       function compareAreaText(areaId) {{
@@ -2378,16 +2445,20 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         var axisMode = chartData.axisMode || 'day';
         var labels = compareAreaText(areaId);
         var yMax = 0;
+        var yMin = 0;
         area1ChartMetrics().forEach(function (k) {{
           if (k === 'lastYear' && !state.showLast) return;
           if (k === 'bestYear' && !showBest) return;
           var arr = data[k];
           if (!arr || !arr.length) return;
-          var end = arr[arr.length - 1];
-          if (end > yMax) yMax = end;
+          arr.forEach(function (v) {{
+            if (v > yMax) yMax = v;
+            if (v < yMin) yMin = v;
+          }});
         }});
-        var niceAxis = compareNiceAxis(yMax);
+        var niceAxis = compareNiceAxisRange(yMin, yMax);
         yMax = niceAxis.max;
+        yMin = niceAxis.min;
         var pad = area1ChartPad();
         var w = pad.w;
         var h = pad.h;
@@ -2401,11 +2472,34 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           return arr
             .map(function (v, idx) {{
               var x = comparePeriodCenterX(idx + 1, periodCount, padL, plotW);
-              var y = padT + (1 - Math.min(1, v / yMax)) * plotH;
+              var y = area1YForValue(v, yMax, padT, plotH, yMin);
               return x.toFixed(1) + ',' + y.toFixed(1);
             }})
             .join(' ');
         }};
+        /* Hold/light: reuse SVG shell when scale+metric unchanged (date follow). */
+        if (window.__PL_COMPARE_LIGHT_RENDER) {{
+          var wrapFast = mount.querySelector('.pl-compare-line__chart-wrap');
+          var sectionFast = mount.querySelector('.pl-compare-line');
+          if (
+            wrapFast &&
+            sectionFast &&
+            Number(wrapFast.getAttribute('data-pl-ymax')) === yMax &&
+            Number(wrapFast.getAttribute('data-pl-ymin') || 0) === yMin &&
+            wrapFast.getAttribute('data-pl-metric') === metric
+          ) {{
+            var dateFast = mount.querySelector('.pl-compare-line__date');
+            if (dateFast) dateFast.textContent = fmtDate(iso);
+            var thisEl = mount.querySelector('.pl-compare-series--thisYear');
+            var lastEl = mount.querySelector('.pl-compare-series--lastYear');
+            var bestEl = mount.querySelector('.pl-compare-series--bestYear');
+            if (thisEl) thisEl.setAttribute('points', toPts(data.thisYear || []));
+            if (lastEl && state.showLast) lastEl.setAttribute('points', toPts(data.lastYear || []));
+            if (bestEl && showBest) bestEl.setAttribute('points', toPts(data.bestYear || []));
+            wrapFast.setAttribute('data-pl-dim', String(dim));
+            return;
+          }}
+        }}
         var thisPts = toPts(data.thisYear);
         var lastPts = toPts(data.lastYear);
         var bestPts = toPts(data.bestYear);
@@ -2419,10 +2513,33 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         );
         var yTicks = niceAxis.ticks
           .map(function (tv) {{
-            var y = padT + (1 - tv / yMax) * plotH;
-            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(tv) + '</span>';
+            var y = area1YForValue(tv, yMax, padT, plotH, yMin);
+            var zeroCls = tv === 0 && yMin < 0 ? 'pl-compare-line__y-tick--zero' : '';
+            return (
+              '<span class="' +
+              zeroCls +
+              '" style="top:' +
+              area1ChartPctY(y, h) +
+              '">' +
+              formatScale(tv) +
+              '</span>'
+            );
           }})
           .join('');
+        var zeroLineSvg = '';
+        if (yMin < 0 && yMax > 0) {{
+          var zeroY = area1YForValue(0, yMax, padT, plotH, yMin);
+          zeroLineSvg =
+            '<line x1="' +
+            padL +
+            '" y1="' +
+            zeroY.toFixed(1) +
+            '" x2="' +
+            (padL + plotW) +
+            '" y2="' +
+            zeroY.toFixed(1) +
+            '" class="pl-compare-zero-line" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+        }}
         var active = function (k) {{
           return metric === k ? ' is-active' : '';
         }};
@@ -2461,7 +2578,15 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           L.compare_profit +
           '</button>' +
           '</div>' +
-          '<div class="pl-compare-line__chart-wrap">' +
+          '<div class="pl-compare-line__chart-wrap" data-pl-ymax="' +
+          yMax +
+          '" data-pl-ymin="' +
+          yMin +
+          '" data-pl-dim="' +
+          dim +
+          '" data-pl-metric="' +
+          metric +
+          '">' +
           '<svg class="pl-compare-line__svg" viewBox="0 0 ' +
           w +
           ' ' +
@@ -2485,6 +2610,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           '" y2="' +
           (padT + plotH) +
           '" class="pl-compare-axis-line" stroke-width="1"/>' +
+          zeroLineSvg +
           '<polyline points="' +
           thisPts +
           '" fill="none" class="pl-compare-series pl-compare-series--thisYear" stroke-width="2" vector-effect="non-scaling-stroke"/>' +
@@ -2508,42 +2634,45 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           area1LegendHtml(state, canShowBest, 'data-pl-line-toggle') +
           '</section>';
 
-        mount.querySelectorAll('[data-pl-line-metric]').forEach(function (btn) {{
-          btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
-          btn.addEventListener('click', function () {{
-            compareLineState[areaId].metric = btn.getAttribute('data-pl-line-metric') || 'income';
-            renderCompareLine(areaId, iso);
+        if (!window.__PL_COMPARE_LIGHT_RENDER) {{
+          mount.querySelectorAll('[data-pl-line-metric]').forEach(function (btn) {{
+            btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+            btn.addEventListener('click', function () {{
+              compareLineState[areaId].metric = btn.getAttribute('data-pl-line-metric') || 'income';
+              renderCompareLine(areaId, iso);
+            }});
           }});
-        }});
-        mount.querySelectorAll('[data-pl-line-toggle]').forEach(function (box) {{
-          box.addEventListener('change', function () {{
-            var key = box.getAttribute('data-pl-line-toggle');
-            if (key === 'last') compareLineState[areaId].showLast = !!box.checked;
-            if (key === 'best') compareLineState[areaId].showBest = !!box.checked;
-            renderCompareLine(areaId, iso);
+          mount.querySelectorAll('[data-pl-line-toggle]').forEach(function (box) {{
+            box.addEventListener('change', function () {{
+              var key = box.getAttribute('data-pl-line-toggle');
+              if (key === 'last') compareLineState[areaId].showLast = !!box.checked;
+              if (key === 'best') compareLineState[areaId].showBest = !!box.checked;
+              renderCompareLine(areaId, iso);
+            }});
           }});
-        }});
-        var chartWrap = mount.querySelector('.pl-compare-line__chart-wrap');
-        bindArea1LineChartHover(chartWrap, {{
-          w: w,
-          h: h,
-          padL: padL,
-          padT: padT,
-          plotW: plotW,
-          plotH: plotH,
-          yMax: yMax,
-          daysInMonth: periodCount,
-          dim: dim,
-          axisMode: axisMode,
-          metric: metric,
-          isoParts: isoParts(iso),
-          refYears: chartData.refYears || null,
-          bestYear: chartData.refYears ? chartData.refYears.bestYear : area1BestYearNumber(iso),
-          showLast: state.showLast,
-          showBest: showBest,
-          canShowBest: canShowBest,
-          values: data,
-        }});
+          var chartWrap = mount.querySelector('.pl-compare-line__chart-wrap');
+          bindArea1LineChartHover(chartWrap, {{
+            w: w,
+            h: h,
+            padL: padL,
+            padT: padT,
+            plotW: plotW,
+            plotH: plotH,
+            yMax: yMax,
+            yMin: yMin,
+            daysInMonth: periodCount,
+            dim: dim,
+            axisMode: axisMode,
+            metric: metric,
+            isoParts: isoParts(iso),
+            refYears: chartData.refYears || null,
+            bestYear: chartData.refYears ? chartData.refYears.bestYear : area1BestYearNumber(iso),
+            showLast: state.showLast,
+            showBest: showBest,
+            canShowBest: canShowBest,
+            values: data,
+          }});
+        }}
       }}
 
       function renderCompareDaily(areaId, iso) {{
@@ -2565,6 +2694,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         var axisMode = chartData.axisMode || 'day';
         var labels = compareAreaText(areaId);
         var yMax = 0;
+        var yMin = 0;
         area1ChartMetrics().forEach(function (k) {{
           if (k === 'lastYear' && !state.showLast) return;
           if (k === 'bestYear' && !showBest) return;
@@ -2572,10 +2702,12 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           if (!arr || !arr.length) return;
           arr.forEach(function (v) {{
             if (v > yMax) yMax = v;
+            if (v < yMin) yMin = v;
           }});
         }});
-        var niceAxis = compareNiceAxis(yMax);
+        var niceAxis = compareNiceAxisRange(yMin, yMax);
         yMax = niceAxis.max;
+        yMin = niceAxis.min;
         var pad = area1ChartPad();
         var w = pad.w;
         var h = pad.h;
@@ -2597,7 +2729,8 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           plotW,
           plotH,
           periodCount,
-          dim
+          dim,
+          yMin
         );
         var xTickSvg = compareXTickSvgHtml(
           periodCount,
@@ -2609,10 +2742,33 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         );
         var yTicks = niceAxis.ticks
           .map(function (tv) {{
-            var y = padT + (1 - tv / yMax) * plotH;
-            return '<span style="top:' + area1ChartPctY(y, h) + '">' + formatScale(tv) + '</span>';
+            var y = area1YForValue(tv, yMax, padT, plotH, yMin);
+            var zeroCls = tv === 0 && yMin < 0 ? 'pl-compare-line__y-tick--zero' : '';
+            return (
+              '<span class="' +
+              zeroCls +
+              '" style="top:' +
+              area1ChartPctY(y, h) +
+              '">' +
+              formatScale(tv) +
+              '</span>'
+            );
           }})
           .join('');
+        var zeroLineSvg = '';
+        if (yMin < 0 && yMax > 0) {{
+          var zeroY = area1YForValue(0, yMax, padT, plotH, yMin);
+          zeroLineSvg =
+            '<line x1="' +
+            padL +
+            '" y1="' +
+            zeroY.toFixed(1) +
+            '" x2="' +
+            (padL + plotW) +
+            '" y2="' +
+            zeroY.toFixed(1) +
+            '" class="pl-compare-zero-line" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+        }}
         var active = function (k) {{
           return metric === k ? ' is-active' : '';
         }};
@@ -2651,7 +2807,15 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           L.compare_profit +
           '</button>' +
           '</div>' +
-          '<div class="pl-compare-line__chart-wrap">' +
+          '<div class="pl-compare-line__chart-wrap" data-pl-ymax="' +
+          yMax +
+          '" data-pl-ymin="' +
+          yMin +
+          '" data-pl-dim="' +
+          dim +
+          '" data-pl-metric="' +
+          metric +
+          '">' +
           '<svg class="pl-compare-line__svg" viewBox="0 0 ' +
           w +
           ' ' +
@@ -2675,6 +2839,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           '" y2="' +
           (padT + plotH) +
           '" class="pl-compare-axis-line" stroke-width="1"/>' +
+          zeroLineSvg +
           bars +
           xTickSvg +
           '</svg>' +
@@ -2686,42 +2851,45 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           area1LegendHtml(state, canShowBest, 'data-pl-daily-toggle') +
           '</section>';
 
-        mount.querySelectorAll('[data-pl-daily-metric]').forEach(function (btn) {{
-          btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
-          btn.addEventListener('click', function () {{
-            compareDailyState[areaId].metric = btn.getAttribute('data-pl-daily-metric') || 'income';
-            renderCompareDaily(areaId, iso);
+        if (!window.__PL_COMPARE_LIGHT_RENDER) {{
+          mount.querySelectorAll('[data-pl-daily-metric]').forEach(function (btn) {{
+            btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+            btn.addEventListener('click', function () {{
+              compareDailyState[areaId].metric = btn.getAttribute('data-pl-daily-metric') || 'income';
+              renderCompareDaily(areaId, iso);
+            }});
           }});
-        }});
-        mount.querySelectorAll('[data-pl-daily-toggle]').forEach(function (box) {{
-          box.addEventListener('change', function () {{
-            var key = box.getAttribute('data-pl-daily-toggle');
-            if (key === 'last') compareDailyState[areaId].showLast = !!box.checked;
-            if (key === 'best') compareDailyState[areaId].showBest = !!box.checked;
-            renderCompareDaily(areaId, iso);
+          mount.querySelectorAll('[data-pl-daily-toggle]').forEach(function (box) {{
+            box.addEventListener('change', function () {{
+              var key = box.getAttribute('data-pl-daily-toggle');
+              if (key === 'last') compareDailyState[areaId].showLast = !!box.checked;
+              if (key === 'best') compareDailyState[areaId].showBest = !!box.checked;
+              renderCompareDaily(areaId, iso);
+            }});
           }});
-        }});
-        var chartWrap = mount.querySelector('.pl-compare-line__chart-wrap');
-        bindArea1DailyChartHover(chartWrap, {{
-          w: w,
-          h: h,
-          padL: padL,
-          padT: padT,
-          plotW: plotW,
-          plotH: plotH,
-          yMax: yMax,
-          daysInMonth: periodCount,
-          dim: dim,
-          axisMode: axisMode,
-          metric: metric,
-          isoParts: isoParts(iso),
-          refYears: chartData.refYears || null,
-          bestYear: chartData.refYears ? chartData.refYears.bestYear : area1BestYearNumber(iso),
-          showLast: state.showLast,
-          showBest: showBest,
-          canShowBest: canShowBest,
-          values: data,
-        }});
+          var chartWrap = mount.querySelector('.pl-compare-line__chart-wrap');
+          bindArea1DailyChartHover(chartWrap, {{
+            w: w,
+            h: h,
+            padL: padL,
+            padT: padT,
+            plotW: plotW,
+            plotH: plotH,
+            yMax: yMax,
+            yMin: yMin,
+            daysInMonth: periodCount,
+            dim: dim,
+            axisMode: axisMode,
+            metric: metric,
+            isoParts: isoParts(iso),
+            refYears: chartData.refYears || null,
+            bestYear: chartData.refYears ? chartData.refYears.bestYear : area1BestYearNumber(iso),
+            showLast: state.showLast,
+            showBest: showBest,
+            canShowBest: canShowBest,
+            values: data,
+          }});
+        }}
       }}
 
       function renderCompareFl(areaId, iso) {{
@@ -2884,18 +3052,38 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           '</div>';
       }}
 
-      function renderAllCompareAreas(iso) {{
+      function renderAllCompareAreas(iso, opts) {{
         iso = iso || selectedIso || resolveIso();
-        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {{
+        opts = opts || {{}};
+        /* Date nav must NOT wipe alloc/catalog caches — only live data changes. */
+        if (
+          opts.resetCache &&
+          window.__plInsight &&
+          typeof window.__plInsight.resetCache === 'function'
+        ) {{
           window.__plInsight.resetCache();
         }}
-        [1, 2, 3].forEach(function (areaId) {{
-          renderCompareFl(areaId, iso);
-          renderCompareBreakdown(areaId, iso);
-          renderCompareLine(areaId, iso);
-          renderCompareDaily(areaId, iso);
-        }});
-        applyPlComparePlanLocks();
+        var areas = opts.areas || [1, 2, 3];
+        var panels = opts.panels || ['fl', 'breakdown', 'line', 'daily'];
+        var wantFl = panels.indexOf('fl') >= 0;
+        var wantBd = panels.indexOf('breakdown') >= 0;
+        var wantLine = panels.indexOf('line') >= 0;
+        var wantDaily = panels.indexOf('daily') >= 0;
+        var light = !!opts.light;
+        window.__PL_COMPARE_LIGHT_RENDER = light;
+        beginPlCompareChartPass(iso);
+        try {{
+          areas.forEach(function (areaId) {{
+            if (wantFl) renderCompareFl(areaId, iso);
+            if (wantBd) renderCompareBreakdown(areaId, iso);
+            if (wantLine) renderCompareLine(areaId, iso);
+            if (wantDaily) renderCompareDaily(areaId, iso);
+          }});
+        }} finally {{
+          endPlCompareChartPass();
+          window.__PL_COMPARE_LIGHT_RENDER = false;
+        }}
+        if (!light) applyPlComparePlanLocks();
       }}
 
       function isBasicTier() {{
@@ -3047,30 +3235,176 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         }}
       }}
 
-      function fillDate(iso) {{
+      function runPlCompareFillHeavy(opts) {{
+        opts = opts || {{}};
+        var pending = window.__PL_COMPARE_PENDING_ISO;
+        if (!pending) return;
+        if (window.__PL_COMPARE_FILL_BUSY) {{
+          window.__PL_COMPARE_FILL_RERUN = true;
+          return;
+        }}
+        window.__PL_COMPARE_FILL_BUSY = true;
+        window.__PL_COMPARE_PENDING_ISO = null;
+        var holding = !opts.forceFull && !!window.__PL_COMPARE_DATE_HOLDING;
+        try {{
+          var vis = currentArea >= 1 && currentArea <= 3 ? currentArea : 1;
+          var parts = isoParts(pending);
+          var monthKey = parts ? parts.year + '-' + parts.month : '';
+          var prevMonthKey = window.__PL_COMPARE_LAST_MONTH_KEY || '';
+          var monthChanged = !prevMonthKey || monthKey !== prevMonthKey;
+          if (holding) {{
+            /*
+              Hold follow: keep the visible chart moving.
+              Area1 line changes with day; Area2/3 line/daily are month-scoped
+              so only FL (and date labels) need a refresh within the same month.
+            */
+            if (vis === 1) {{
+              renderAllCompareAreas(pending, {{
+                areas: [1],
+                panels: ['line'],
+                resetCache: false,
+                light: true,
+              }});
+            }} else if (monthChanged) {{
+              renderAllCompareAreas(pending, {{
+                areas: [vis],
+                panels: ['fl', 'line'],
+                resetCache: false,
+                light: true,
+              }});
+            }} else {{
+              renderAllCompareAreas(pending, {{
+                areas: [vis],
+                panels: ['fl'],
+                resetCache: false,
+                light: true,
+              }});
+            }}
+          }} else {{
+            /* Settle / open: Area1 first, then Area2/3 on next frame. */
+            renderAllCompareAreas(pending, {{
+              areas: [1],
+              panels: ['fl', 'breakdown', 'line', 'daily'],
+              resetCache: false,
+            }});
+            var trailIso = pending;
+            var trailMonthKey = monthKey;
+            var trailMonthChanged = monthChanged;
+            requestAnimationFrame(function () {{
+              if (window.__PL_COMPARE_DATE_HOLDING) return;
+              if (selectedIso !== trailIso) return;
+              if (trailMonthChanged) {{
+                renderAllCompareAreas(trailIso, {{
+                  areas: [2, 3],
+                  panels: ['fl', 'breakdown', 'line', 'daily'],
+                  resetCache: false,
+                }});
+              }} else {{
+                renderAllCompareAreas(trailIso, {{
+                  areas: [2, 3],
+                  panels: ['fl'],
+                  resetCache: false,
+                }});
+              }}
+              window.__PL_COMPARE_LAST_MONTH_KEY = trailMonthKey;
+              window.__PL_COMPARE_RENDERED_ISO = trailIso;
+            }});
+            window.__PL_COMPARE_LAST_MONTH_KEY = monthKey;
+            window.__PL_COMPARE_RENDERED_ISO = pending;
+            if (!suspendSync && !restoringFromHistory && root && !root.hidden) {{
+              syncHash(true);
+              saveLastState();
+            }}
+          }}
+        }} catch (err) {{
+          console.error('PL Compare fillDate heavy failed', err);
+        }}
+        window.__PL_COMPARE_FILL_BUSY = false;
+        if (window.__PL_COMPARE_FILL_RERUN || window.__PL_COMPARE_PENDING_ISO) {{
+          window.__PL_COMPARE_FILL_RERUN = false;
+          if (!window.__PL_COMPARE_PENDING_ISO) {{
+            window.__PL_COMPARE_PENDING_ISO = selectedIso;
+          }}
+          if (!window.__PL_COMPARE_FILL_SCHED) {{
+            window.__PL_COMPARE_FILL_SCHED = true;
+            requestAnimationFrame(function () {{
+              requestAnimationFrame(function () {{
+                window.__PL_COMPARE_FILL_SCHED = false;
+                runPlCompareFillHeavy({{}});
+              }});
+            }});
+          }}
+        }}
+      }}
+
+      function schedulePlCompareFillHeavy(forceFull) {{
+        if (forceFull) {{
+          window.__PL_COMPARE_PENDING_ISO = selectedIso;
+          if (window.__PL_COMPARE_FILL_SCHED) return;
+          window.__PL_COMPARE_FILL_SCHED = true;
+          requestAnimationFrame(function () {{
+            requestAnimationFrame(function () {{
+              window.__PL_COMPARE_FILL_SCHED = false;
+              runPlCompareFillHeavy({{ forceFull: true }});
+            }});
+          }});
+          return;
+        }}
+        if (window.__PL_COMPARE_FILL_SCHED) return;
+        window.__PL_COMPARE_FILL_SCHED = true;
+        /* During hold, one rAF is enough so the line can track the date. */
+        var run = function () {{
+          window.__PL_COMPARE_FILL_SCHED = false;
+          runPlCompareFillHeavy({{}});
+        }};
+        if (window.__PL_COMPARE_DATE_HOLDING) {{
+          requestAnimationFrame(run);
+        }} else {{
+          requestAnimationFrame(function () {{
+            requestAnimationFrame(run);
+          }});
+        }}
+      }}
+
+      window.__plCompareDateHoldStart = function () {{
+        window.__PL_COMPARE_DATE_HOLDING = true;
+      }};
+      window.__plCompareDateHoldEnd = function () {{
+        if (!window.__PL_COMPARE_DATE_HOLDING) return;
+        window.__PL_COMPARE_DATE_HOLDING = false;
+        /* Defer settle past the interaction frame so INP can paint the date first. */
+        setTimeout(function () {{
+          schedulePlCompareFillHeavy(true);
+        }}, 32);
+      }};
+
+      function fillDate(iso, opts) {{
+        opts = opts || {{}};
         iso = iso || resolveIso();
         selectedIso = iso;
         if (dateBtn) dateBtn.textContent = fmtDate(iso);
         if (todayBtn) todayBtn.hidden = iso === getTodayIso();
         if (dateInput) dateInput.value = iso;
-        renderAllCompareAreas(iso);
-        if (!suspendSync && !restoringFromHistory && root && !root.hidden) {{
-          syncHash(true);
-          saveLastState();
+        window.__PL_COMPARE_PENDING_ISO = iso;
+        if (opts.immediate) {{
+          runPlCompareFillHeavy({{ forceFull: true }});
+          return;
         }}
+        schedulePlCompareFillHeavy(false);
       }}
 
       function openOverlay() {{
         if (!root) return;
         var wasHidden = root.hidden;
         lastFocused = document.activeElement;
-        suspendSync = true;
-        try {{
-          fillDate(selectedIso || resolveIso());
-        }} catch (err) {{
-          console.error('Compare overlay fillDate failed', err);
-        }}
-        suspendSync = false;
+        var iso = selectedIso || resolveIso();
+        selectedIso = iso;
+        /* Date chrome only — never block open on full chart rebuild. */
+        if (dateBtn) dateBtn.textContent = fmtDate(iso);
+        if (todayBtn) todayBtn.hidden = iso === getTodayIso();
+        if (dateInput) dateInput.value = iso;
+        window.__PL_COMPARE_PENDING_ISO = iso;
+
         root.hidden = false;
         document.body.classList.add('pl-graph-overlay-open');
         if (btnClose) btnClose.focus();
@@ -3078,6 +3412,19 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           syncHash(false);
           saveLastState();
         }}
+
+        var lineMount = document.getElementById('pl-compare-area-1-line');
+        var hasCharts = !!(lineMount && lineMount.querySelector('.pl-compare-line'));
+        var canReuse =
+          hasCharts && window.__PL_COMPARE_RENDERED_ISO === iso;
+        if (canReuse) return;
+
+        /* Paint the open shell first; charts fill on the next task. */
+        setTimeout(function () {{
+          if (!root || root.hidden) return;
+          if (selectedIso !== iso) return;
+          schedulePlCompareFillHeavy(true);
+        }}, 0);
       }}
 
       function closeOverlay() {{
@@ -3318,7 +3665,11 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
 
       /* Live refresh: if the overlay is open when PL/MEP data changes, re-render. */
       function compareLiveRefresh() {{
-        if (root && !root.hidden) renderAllCompareAreas(selectedIso || resolveIso());
+        window.__PL_COMPARE_RENDERED_ISO = null;
+        if (root && !root.hidden) {{
+          renderAllCompareAreas(selectedIso || resolveIso(), {{ resetCache: true }});
+          window.__PL_COMPARE_RENDERED_ISO = selectedIso || resolveIso();
+        }}
       }}
       document.addEventListener('kpi:mepDataChanged', compareLiveRefresh);
       document.addEventListener('kpi:dailySalesChanged', compareLiveRefresh);
@@ -3334,16 +3685,60 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           compareLiveRefresh();
         }}
       }});
-      if (prevBtn) {{
-        prevBtn.addEventListener('click', function () {{
-          fillDate(shiftIso(selectedIso || resolveIso(), -1));
+      function bindPlCompareDateHoldRepeat(btn, delta) {{
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHoldTimers() {{
+          if (delayId != null) {{
+            clearTimeout(delayId);
+            delayId = null;
+          }}
+          if (repeatId != null) {{
+            clearInterval(repeatId);
+            repeatId = null;
+          }}
+        }}
+        function stepOnce() {{
+          fillDate(shiftIso(selectedIso || resolveIso(), delta));
+        }}
+        function onPointerDown(ev) {{
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          try {{
+            btn.setPointerCapture(ev.pointerId);
+          }} catch (_capErr) {{}}
+          clearHoldTimers();
+          if (typeof window.__plCompareDateHoldStart === 'function') {{
+            window.__plCompareDateHoldStart();
+          }} else {{
+            window.__PL_COMPARE_DATE_HOLDING = true;
+          }}
+          stepOnce();
+          delayId = setTimeout(function () {{
+            repeatId = setInterval(stepOnce, 75);
+          }}, 400);
+        }}
+        function onPointerUp() {{
+          clearHoldTimers();
+          if (typeof window.__plCompareDateHoldEnd === 'function') {{
+            window.__plCompareDateHoldEnd();
+          }} else {{
+            window.__PL_COMPARE_DATE_HOLDING = false;
+          }}
+        }}
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {{
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
         }});
       }}
-      if (nextBtn) {{
-        nextBtn.addEventListener('click', function () {{
-          fillDate(shiftIso(selectedIso || resolveIso(), 1));
-        }});
-      }}
+      bindPlCompareDateHoldRepeat(prevBtn, -1);
+      bindPlCompareDateHoldRepeat(nextBtn, 1);
       if (todayBtn) {{
         todayBtn.addEventListener('click', function () {{
           fillDate(getTodayIso());
@@ -5395,6 +5790,14 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-compare-line__chart-wrap {{
       position: relative;
       height: 420px;
+      overflow: hidden;
+    }}
+    .pl-compare-zero-line {{
+      stroke: #ff4d6d;
+      opacity: 0.95;
+    }}
+    body.office-mode .pl-compare-zero-line {{
+      stroke: #c62828;
     }}
     .pl-compare-line__hover-layer {{
       position: absolute;
@@ -5562,11 +5965,24 @@ def render_page(lang: str, lang_switch: str) -> str:
     .pl-compare-line__y-ticks span {{
       position: absolute;
       left: 0;
-      transform: translate(-6px, -50%);
+      width: 46px;
+      box-sizing: border-box;
+      padding-right: 6px;
+      transform: translateY(-50%);
+      text-align: right;
       color: #58e1f3;
       font-size: 11px;
       font-family: 'Orbitron', sans-serif;
       opacity: 0.8;
+      white-space: nowrap;
+    }}
+    .pl-compare-line__y-ticks span.pl-compare-line__y-tick--zero {{
+      color: #ff4d6d;
+      opacity: 1;
+      font-weight: 700;
+    }}
+    body.office-mode .pl-compare-line__y-ticks span.pl-compare-line__y-tick--zero {{
+      color: #c62828;
     }}
     .pl-compare-line__legend {{
       display: flex;

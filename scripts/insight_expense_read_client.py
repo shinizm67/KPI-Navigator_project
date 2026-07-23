@@ -18,6 +18,18 @@ def insight_expense_read_js() -> str:
       var catalogCache = null;
       var monthlyMapCache = {{}};
       var adjMapCache = {{}};
+      var sumThroughMonthCache = {{}};
+      var expenseSnapshotCache = {{}};
+
+      function invalidateInsightExpenseCaches() {{
+        allocCache = {{}};
+        catalogCache = null;
+        monthlyMapCache = {{}};
+        adjMapCache = {{}};
+        sumThroughMonthCache = {{}};
+        expenseSnapshotCache = {{}};
+        window.__INSIGHT_YEAR_EXPENSE_CACHE = {{}};
+      }}
 
       function pad2(n) {{
         return (n < 10 ? '0' : '') + n;
@@ -266,6 +278,19 @@ def insight_expense_read_js() -> str:
         }};
       }}
 
+      function packSumThrough(fixed, variable, food, drink, labor, hasData) {{
+        return {{
+          fixed: Math.round(fixed),
+          variable: Math.round(variable),
+          total: Math.round(fixed + variable),
+          food: Math.round(food),
+          drink: Math.round(drink),
+          misc: Math.max(0, Math.round(variable - food - drink)),
+          labor: Math.round(labor),
+          hasData: !!hasData,
+        }};
+      }}
+
       function sumThroughMonth(year, month, throughDay) {{
         var y = Number(year);
         var m = Number(month);
@@ -276,6 +301,47 @@ def insight_expense_read_js() -> str:
         var dim = new Date(y, m, 0).getDate();
         if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
         if (dayMax > dim) dayMax = dim;
+        var cacheKey = y + '-' + m + '-' + dayMax;
+        if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, cacheKey)) {{
+          return sumThroughMonthCache[cacheKey];
+        }}
+
+        // 日付スクラブ向け: 前後1日のキャッシュから増分（Annual YTD のボトルネック緩和）
+        if (dayMax > 1) {{
+          var prevKey = y + '-' + m + '-' + (dayMax - 1);
+          if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, prevKey)) {{
+            var prev = sumThroughMonthCache[prevKey];
+            var addSnap = sumDayMetrics(isoOf(y, m, dayMax));
+            var fwd = packSumThrough(
+              prev.fixed + addSnap.fixed,
+              prev.variable + addSnap.variable,
+              prev.food + addSnap.food,
+              prev.drink + addSnap.drink,
+              prev.labor + addSnap.labor,
+              prev.hasData
+            );
+            sumThroughMonthCache[cacheKey] = fwd;
+            return fwd;
+          }}
+        }}
+        if (dayMax < dim) {{
+          var nextKey = y + '-' + m + '-' + (dayMax + 1);
+          if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, nextKey)) {{
+            var next = sumThroughMonthCache[nextKey];
+            var subSnap = sumDayMetrics(isoOf(y, m, dayMax + 1));
+            var back = packSumThrough(
+              next.fixed - subSnap.fixed,
+              next.variable - subSnap.variable,
+              next.food - subSnap.food,
+              next.drink - subSnap.drink,
+              next.labor - subSnap.labor,
+              next.hasData
+            );
+            sumThroughMonthCache[cacheKey] = back;
+            return back;
+          }}
+        }}
+
         var fixed = 0;
         var variable = 0;
         var food = 0;
@@ -294,16 +360,9 @@ def insight_expense_read_js() -> str:
           drink += snap.drink;
           labor += snap.labor;
         }}
-        return {{
-          fixed: Math.round(fixed),
-          variable: Math.round(variable),
-          total: Math.round(fixed + variable),
-          food: Math.round(food),
-          drink: Math.round(drink),
-          misc: Math.max(0, Math.round(variable - food - drink)),
-          labor: Math.round(labor),
-          hasData: hasData,
-        }};
+        var result = packSumThrough(fixed, variable, food, drink, labor, hasData);
+        sumThroughMonthCache[cacheKey] = result;
+        return result;
       }}
 
       /**
@@ -339,6 +398,9 @@ def insight_expense_read_js() -> str:
           source: 'pl-unified',
         }};
         if (!iso || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(iso))) return empty;
+        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, iso)) {{
+          return expenseSnapshotCache[iso];
+        }}
         var parts = String(iso).split('-');
         var y = Number(parts[0]);
         var month = Number(parts[1]);
@@ -364,7 +426,7 @@ def insight_expense_read_js() -> str:
           if (ms.hasData) yearHasData = true;
         }}
 
-        return {{
+        var result = {{
           hasData: dayScope.hasData || monthScope.hasData || yearHasData,
           day: {{
             fixed: dayScope.fixed,
@@ -395,7 +457,18 @@ def insight_expense_read_js() -> str:
           }},
           source: 'pl-unified',
         }};
+        expenseSnapshotCache[iso] = result;
+        return result;
       }};
+
+      [
+        'kpi:mepDataChanged',
+        'kpi:annualPlanChanged',
+        'kpi:dailyTargetModeChanged',
+        'kpi:weekdayBaselineChanged',
+      ].forEach(function (evName) {{
+        document.addEventListener(evName, invalidateInsightExpenseCaches);
+      }});
     }})();
     {INSIGHT_EXPENSE_READ_END}
 """

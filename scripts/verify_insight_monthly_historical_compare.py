@@ -80,6 +80,12 @@ def verify_page(page, url: str) -> list[str]:
         """() => {
           const iso = '2026-07-14';
           const m = window.__computeTwMetricsForIso(iso);
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = false;
+          if (paneGraph) paneGraph.hidden = true;
           window.renderInsightTwDiffs(iso);
           const block = document.querySelector('.insight-monthly-historical-compare');
           const vals = [...block.querySelectorAll('.insight-monthly-historical-compare__value')].map(

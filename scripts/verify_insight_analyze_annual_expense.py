@@ -104,6 +104,12 @@ def verify_page(page, url: str) -> list[str]:
     )
     result = page.evaluate(
         """() => {
+          const paneSummary = document.getElementById('insight-pane-summary');
+          const paneAnalyze = document.getElementById('insight-pane-analyze');
+          const paneGraph = document.getElementById('insight-pane-graph');
+          if (paneSummary) paneSummary.hidden = true;
+          if (paneAnalyze) paneAnalyze.hidden = false;
+          if (paneGraph) paneGraph.hidden = true;
           window.renderInsightTwDiffs('2026-07-14');
           function chart(id) {
             const el = document.getElementById(id);
