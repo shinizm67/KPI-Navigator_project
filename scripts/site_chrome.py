@@ -47,12 +47,13 @@ LABELS = {
         "menu_aria": "ナビゲーションメニューを開く",
         "gear_aria": "アカウント設定",
         "popup_aria": "アカウント設定",
-        "account_heading": "Account",
-        "profile": "Profile",
+        "account_heading": "アカウント",
+        "profile": "プロフィール",
+        "preferences": "設定",
         "change_email": "メールアドレスの変更",
         "change_password": "パスワードの変更",
         "session": "セッション管理",
-        "subscription_heading": "Subscription",
+        "subscription_heading": "サブスクリプション",
         "plan_details": "プラン詳細",
         "change_plan": "プラン変更",
         "delete_account": "アカウント削除",
@@ -91,6 +92,7 @@ LABELS = {
         "popup_aria": "Account Settings",
         "account_heading": "Account",
         "profile": "Profile",
+        "preferences": "Preferences",
         "change_email": "Change Email",
         "change_password": "Change Password",
         "session": "Session Management",
@@ -293,11 +295,12 @@ def build_header(
         </button>
       </div>
       <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="{L['popup_aria']}" hidden>
-        <h3 class="account-settings-popup-title">Account Settings</h3>
+        <h3 class="account-settings-popup-title">{L['popup_aria']}</h3>
         <section class="account-settings-section">
           <h4 class="account-settings-heading">{L['account_heading']}</h4>
           <nav class="account-settings-nav">
             {_account_link(f"{base}setting/profile.html", L['profile'], 'profile', account_current)}
+            {_account_link(f"{base}setting/preferences.html", L['preferences'], 'preferences', account_current)}
             {_account_link(f"{base}setting/change_email.html", L['change_email'], 'change_email', account_current)}
             {_account_link(f"{base}setting/change_password.html", L['change_password'], 'change_password', account_current)}
             {_account_link(f"{base}setting/session_management.html", L['session'], 'session', account_current)}

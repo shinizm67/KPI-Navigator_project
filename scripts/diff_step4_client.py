@@ -256,7 +256,7 @@ def diff_step4_tw_helpers_js() -> str:
           var n = actual - target;
           if (n === 0) {
             if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(0);
-            return isJa ? '¥0' : '$0';
+            return window.KpiCurrency ? KpiCurrency.zero() : ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥0' : '$0');
           }
           var r = Math.round(Math.abs(n));
           var body = isJa
@@ -304,8 +304,9 @@ def diff_step4_area1_js() -> str:
         if (!Number.isFinite(Number(n))) return DASH;
         var isJa = document.documentElement.getAttribute('lang') === 'ja';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }}
       function setDiffCell(el, actual, target, hasPlan) {{
         if (!el) return;

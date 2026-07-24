@@ -375,6 +375,7 @@ def daily_sales_import_js() -> str:
 
         function formatMoney(n) {{
           var v = Math.round(Number(n) || 0);
+          if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
           if (isJa()) return '¥' + v.toLocaleString('en-US');
           return '$' + v.toLocaleString('en-US');
         }}

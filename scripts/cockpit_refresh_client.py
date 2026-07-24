@@ -160,8 +160,9 @@ def cockpit_refresh_js() -> str:
         if (!Number.isFinite(Number(n))) return DASH;
         var isJa = document.documentElement.getAttribute('lang') === 'ja';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }}
       function setMoneyCell(el, value, enabled) {{
         if (!el) return;

@@ -99,15 +99,17 @@
 
         function formatAxisMoney(v) {
           var n = Math.round(v);
+          if (window.KpiCurrency) return KpiCurrency.format(n, { round: true });
           if (isEn) return '$' + n.toLocaleString('en-US');
-          return '\u00a5' + n.toLocaleString('ja-JP');
+          return '¥' + n.toLocaleString('ja-JP');
         }
 
         function formatDetailMoney(v) {
           var n = Number(v);
-          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (!Number.isFinite(n)) return isEn ? '$0' : '¥0';
+          if (window.KpiCurrency) return KpiCurrency.format(n, { maximumFractionDigits: 0 });
           if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+          return '¥' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
         }
 
         function niceYMax(rawMax, tickCount) {

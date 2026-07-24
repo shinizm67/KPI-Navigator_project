@@ -3408,6 +3408,33 @@
       padding-bottom: 20px;
       overflow: hidden;
     }
+    /* ===== OFFICE-COCKPIT-OPEN-GAP-FIX-START ===== */
+    /* Office Open: SVG 非表示後も area-top-svg の aspect-ratio が残り、
+       padding-top(357px) と二重になってテーブル上に謎スペースができるのを防ぐ */
+    .office-mode .annual-frame-open .annual-area-top-svg {
+      aspect-ratio: auto;
+      height: 0;
+      min-height: 0;
+      max-height: 0;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      line-height: 0;
+    }
+    .office-mode .annual-frame-close .annual-area-top-svg {
+      aspect-ratio: auto;
+      height: 0;
+      min-height: 0;
+      max-height: 0;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      line-height: 0;
+    }
+    /* ===== OFFICE-COCKPIT-OPEN-GAP-FIX-END ===== */
+
     .office-mode .annual-frame-open::before {
       content: "";
       position: absolute;
@@ -6590,13 +6617,157 @@
       height: 30px;
       font-size: 20px;
       background: rgba(88, 225, 243, 0.7);
+      box-shadow:
+        0 0 12px rgba(88, 225, 243, 0.75),
+        0 0 20px rgba(88, 225, 243, 0.3),
+        inset 0 0 8px rgba(88, 225, 243, 0.25);
     }
     .insight-overlay__tab--jump {
       width: 100px;
       height: 28px;
       font-size: 16px;
       background: rgba(88, 225, 243, 0.33);
+      transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease,
+        border-color 0.15s ease;
     }
+    .insight-overlay__tab--jump.is-active {
+      background: rgba(88, 225, 243, 0.72);
+      border-color: #9af0ff;
+      color: #d7fbff;
+      font-weight: 700;
+      box-shadow:
+        0 0 12px rgba(88, 225, 243, 0.85),
+        0 0 22px rgba(88, 225, 243, 0.35),
+        inset 0 0 10px rgba(88, 225, 243, 0.28);
+    }
+    .office-mode .insight-overlay__tab--jump {
+      background: #f0f0f0;
+      border-color: #999;
+      color: #111;
+      box-shadow: none;
+      font-weight: 400;
+    }
+    .office-mode .insight-overlay__tab--jump.is-active {
+      background: #e2e2e2;
+      border-color: #666;
+      color: #111;
+      box-shadow: none;
+      font-weight: 700;
+    }
+    .office-mode .insight-overlay__tab--main.is-active {
+      background: #e2e2e2;
+      border-color: #666;
+      color: #111;
+      box-shadow: none;
+    }
+    /* ===== INSIGHT-OFFICE-SHELL-START ===== */
+    .office-mode .insight-overlay__backdrop {
+      background: rgba(0, 0, 0, 0.28);
+    }
+    .office-mode .insight-overlay__panel {
+      border: 3px solid #555;
+      background: #f0f0f0;
+      color: #111;
+    }
+    .office-mode .insight-overlay__close {
+      border: 1px solid #111;
+      background: #d0d0d0;
+      color: #111;
+    }
+    .office-mode .insight-overlay__title,
+    .office-mode .insight-overlay__date-nav,
+    .office-mode .insight-overlay__date-btn {
+      color: #111;
+    }
+    .office-mode .insight-overlay__today {
+      background: #d0d0d0;
+      color: #111;
+      border: 1px solid #111;
+    }
+    .office-mode .insight-overlay__divider {
+      border-top-color: #111;
+    }
+    .office-mode .insight-overlay__scroll {
+      background: #f0f0f0;
+      color: #111;
+    }
+    .office-mode .insight-overlay__tab {
+      color: #111;
+      background: #e8e8e8;
+      border: 1px solid #111;
+      border-bottom: 0;
+      box-shadow: none;
+    }
+    .office-mode .insight-overlay__tab--main {
+      background: #e8e8e8;
+    }
+    .office-mode .insight-overlay__tab--main.is-active {
+      background: #d0d0d0;
+      border-color: #111;
+      color: #111;
+      box-shadow: none;
+    }
+    .office-mode .insight-overlay__tab--jump {
+      background: #e8e8e8;
+      border-color: #111;
+      color: #111;
+      box-shadow: none;
+      font-weight: 400;
+    }
+    .office-mode .insight-overlay__tab--jump.is-active {
+      background: #d0d0d0;
+      border-color: #111;
+      color: #111;
+      box-shadow: none;
+      font-weight: 700;
+    }
+    .office-mode .insight-overlay__section-label {
+      color: #111 !important;
+    }
+    .office-mode .insight-overlay__vline,
+    .office-mode .insight-overlay__vline-bridge,
+    .office-mode .insight-overlay__hline {
+      border-color: #111 !important;
+    }
+    /* Inside Insight FW: black text + black box/structure borders (charts keep series colors). */
+    .office-mode .insight-overlay__panel *:not(svg):not(svg *) {
+      color: #111 !important;
+    }
+    .office-mode .insight-overlay__panel *:not(svg):not(svg *):not([class*="triangle"]) {
+      border-color: #111 !important;
+    }
+    .office-mode .insight-overlay__panel {
+      border-color: #555 !important;
+      color: #111 !important;
+    }
+    .office-mode .insight-overlay__close {
+      border-color: #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+    }
+    .office-mode .insight-overlay__panel [class*="__value-box"],
+    .office-mode .insight-overlay__panel [class*="value-box"] {
+      background: #fff !important;
+      border: 1px solid #111 !important;
+    }
+    /* CSS triangles use border colors — keep marker yellow, sides transparent. */
+    .office-mode .insight-overlay__panel [class*="triangle"] {
+      border-left-color: transparent !important;
+      border-right-color: transparent !important;
+      border-bottom-color: transparent !important;
+      border-top-color: var(--marker-color, var(--ag-marker-color, #e6ff00)) !important;
+      color: transparent !important;
+    }
+    /* Keep TW / severity colors readable in Office Mode. */
+    .office-mode .insight-overlay__panel .tw-diff--win { color: #0f9403 !important; }
+    .office-mode .insight-overlay__panel .tw-diff--neutral { color: #333 !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-90 { color: #b71c1c !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-80 { color: #c62828 !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-70 { color: #d32f2f !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-60 { color: #e53935 !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-50 { color: #9a0007 !important; }
+    .office-mode .insight-overlay__panel .tw-diff--sev-below { color: #7f0000 !important; }
+    /* ===== INSIGHT-OFFICE-SHELL-END ===== */
     .insight-overlay__divider {
       position: absolute;
       left: 0;
@@ -12215,6 +12386,9 @@
   </style>
 </head>
 <body class="si-fi profile-page monthly-page" id="body-el">
+  <!-- KPI-CURRENCY-JS:START -->
+  <script src="../../../js/kpi-currency.js"></script>
+  <!-- KPI-CURRENCY-JS:END -->
   <script>/* KPI-MONTHLY-CLS-BOOT */(function(){try{if(localStorage.getItem('kpi-annual-focus-bar-expanded')!=='1')return;document.body.classList.add('annual-focus-bar-expanded');var prep=function(){var img=document.getElementById('annual-daily-focus-bar-img');if(!img)return;var office=document.body.classList.contains('office-mode');var src=img.getAttribute('src')||'';var dir=src.indexOf('/')>=0?src.slice(0,src.lastIndexOf('/')+1):'../../../images/';img.setAttribute('src',dir+(office?'focus_bar_office_mode_open.svg':'focus_bar_open.svg'));img.setAttribute('width','1132');};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prep,{once:true});else prep();}catch(e){}})();</script>
   <!-- KPI-SITE-HEADER:START (generated by scripts/site_chrome.py — edit there) -->
   <header class="site-header">
@@ -12295,6 +12469,7 @@
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
             <a href="../../setting/profile.html" class="account-settings-item" role="menuitem">Profile</a>
+            <a href="../../setting/preferences.html" class="account-settings-item" role="menuitem">Preferences</a>
             <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
@@ -15485,8 +15660,9 @@ Cumulative Target Annual Sales</p>
         if (n == null || !isFinite(Number(n))) return DASH;
         var isJa = document.documentElement.getAttribute('lang') === 'ja';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
 
       function twDiffLevels() {
@@ -17998,6 +18174,40 @@ Cumulative Target Annual Sales</p>
         if (jumpMonthly) jumpMonthly.setAttribute('href', '#' + p + 'monthly');
         if (jumpAnnual) jumpAnnual.setAttribute('href', '#' + p + 'annual');
       }
+      function syncInsightJumpActive(which) {
+        which = which || 'daily';
+        if (jumpDaily) {
+          jumpDaily.classList.toggle('is-active', which === 'daily');
+          if (which === 'daily') jumpDaily.setAttribute('aria-current', 'true');
+          else jumpDaily.removeAttribute('aria-current');
+        }
+        if (jumpMonthly) {
+          jumpMonthly.classList.toggle('is-active', which === 'monthly');
+          if (which === 'monthly') jumpMonthly.setAttribute('aria-current', 'true');
+          else jumpMonthly.removeAttribute('aria-current');
+        }
+        if (jumpAnnual) {
+          jumpAnnual.classList.toggle('is-active', which === 'annual');
+          if (which === 'annual') jumpAnnual.setAttribute('aria-current', 'true');
+          else jumpAnnual.removeAttribute('aria-current');
+        }
+      }
+      function updateInsightJumpFromScroll() {
+        if (!insightScroll) return;
+        var pane = 'summary';
+        if (paneAnalyze && !paneAnalyze.hidden) pane = 'analyze';
+        else if (paneGraph && !paneGraph.hidden) pane = 'graph';
+        var keys = ['daily', 'monthly', 'annual'];
+        var pick = 'daily';
+        for (var i = 0; i < keys.length; i++) {
+          var el = document.getElementById('insight-jump-' + pane + '-' + keys[i]);
+          if (!el) continue;
+          var top =
+            el.getBoundingClientRect().top - insightScroll.getBoundingClientRect().top;
+          if (top <= 40) pick = keys[i];
+        }
+        syncInsightJumpActive(pick);
+      }
       function scrollInsightToTarget(el) {
         if (!el || !insightScroll) return;
         var sr = insightScroll.getBoundingClientRect();
@@ -18013,6 +18223,10 @@ Cumulative Target Annual Sales</p>
           var target = document.getElementById(href.slice(1));
           if (!target || !root.contains(target)) return;
           ev.preventDefault();
+          var which = 'daily';
+          if (href.indexOf('monthly') >= 0) which = 'monthly';
+          else if (href.indexOf('annual') >= 0) which = 'annual';
+          syncInsightJumpActive(which);
           scrollInsightToTarget(target);
         });
       }
@@ -18027,6 +18241,7 @@ Cumulative Target Annual Sales</p>
         if (titleEl) titleEl.textContent = insightTabTitles[which] || insightTabTitles.summary;
         if (insightScroll) insightScroll.scrollTop = 0;
         updateInsightJumpHrefs();
+        syncInsightJumpActive('daily');
         try {
           document.dispatchEvent(new CustomEvent('insight:tabChanged', { detail: { tab: which } }));
         } catch (_insightTabEvErr) {}
@@ -18098,6 +18313,21 @@ Cumulative Target Annual Sales</p>
       bindInsightJumpLink(jumpDaily);
       bindInsightJumpLink(jumpMonthly);
       bindInsightJumpLink(jumpAnnual);
+      syncInsightJumpActive('daily');
+      if (insightScroll) {
+        var insightJumpScrollT = null;
+        insightScroll.addEventListener(
+          'scroll',
+          function () {
+            if (insightJumpScrollT) return;
+            insightJumpScrollT = requestAnimationFrame(function () {
+              insightJumpScrollT = null;
+              updateInsightJumpFromScroll();
+            });
+          },
+          { passive: true }
+        );
+      }
       /* INSIGHT-TAB-CROSS-LINKS */
       function goInsightTabSection(tab, targetId) {
         setInsightTab(tab);
@@ -18249,8 +18479,9 @@ Cumulative Target Annual Sales</p>
         if (n == null || !isFinite(Number(n))) return DASH;
         var isJa = document.documentElement.getAttribute('lang') === 'ja';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
 
       function fmtOverlayDiff(actual, target) {
@@ -21512,8 +21743,14 @@ Cumulative Target Annual Sales</p>
         function fmtMoney(n) {
           if (n == null || !Number.isFinite(Number(n))) return DASH;
           var v = Math.round(Number(n) * 100) / 100;
+          if (window.KpiCurrency) {
+            return KpiCurrency.format(v, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          }
           if (isJa()) {
-            return '\u00a5' + v.toLocaleString('ja-JP', {
+            return '¥' + v.toLocaleString('ja-JP', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
@@ -22359,7 +22596,9 @@ Cumulative Target Annual Sales</p>
         window.__ANNUAL_DATA.targetSales = raw;
       }
       if (typeof raw === 'number' && Number.isFinite(raw)) {
-        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        targetEl.textContent = window.KpiCurrency
+          ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : ('$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       } else {
         targetEl.textContent = String(raw);
       }
@@ -22637,15 +22876,17 @@ Cumulative Target Annual Sales</p>
 
         function formatAxisMoney(v) {
           var n = Math.round(v);
+          if (window.KpiCurrency) return KpiCurrency.format(n, { round: true });
           if (isEn) return '$' + n.toLocaleString('en-US');
-          return '\u00a5' + n.toLocaleString('ja-JP');
+          return '¥' + n.toLocaleString('ja-JP');
         }
 
         function formatDetailMoney(v) {
           var n = Number(v);
-          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (!Number.isFinite(n)) return isEn ? '$0' : '¥0';
+          if (window.KpiCurrency) return KpiCurrency.format(n, { maximumFractionDigits: 0 });
           if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+          return '¥' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
         }
 
         function formatTooltipDate(year, month, day) {
@@ -23128,15 +23369,17 @@ Cumulative Target Annual Sales</p>
 
         function formatAxisMoney(v) {
           var n = Math.round(v);
+          if (window.KpiCurrency) return KpiCurrency.format(n, { round: true });
           if (isEn) return '$' + n.toLocaleString('en-US');
-          return '\u00a5' + n.toLocaleString('ja-JP');
+          return '¥' + n.toLocaleString('ja-JP');
         }
 
         function formatDetailMoney(v) {
           var n = Number(v);
-          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (!Number.isFinite(n)) return isEn ? '$0' : '¥0';
+          if (window.KpiCurrency) return KpiCurrency.format(n, { maximumFractionDigits: 0 });
           if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+          return '¥' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
         }
 
         function niceYMax(rawMax, tickCount) {
@@ -23610,15 +23853,17 @@ Cumulative Target Annual Sales</p>
 
         function formatAxisMoney(v) {
           var n = Math.round(v);
+          if (window.KpiCurrency) return KpiCurrency.format(n, { round: true });
           if (isEn) return '$' + n.toLocaleString('en-US');
-          return '\u00a5' + n.toLocaleString('ja-JP');
+          return '¥' + n.toLocaleString('ja-JP');
         }
 
         function formatDetailMoney(v) {
           var n = Number(v);
-          if (!Number.isFinite(n)) return isEn ? '$0' : '\u00a50';
+          if (!Number.isFinite(n)) return isEn ? '$0' : '¥0';
+          if (window.KpiCurrency) return KpiCurrency.format(n, { maximumFractionDigits: 0 });
           if (isEn) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-          return '\u00a5' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
+          return '¥' + n.toLocaleString('ja-JP', { maximumFractionDigits: 0 });
         }
 
         function niceYMax(rawMax, tickCount) {
@@ -24369,8 +24614,9 @@ Cumulative Target Annual Sales</p>
         var n = Number(amount);
         if (!Number.isFinite(n)) n = 357971;
         var rounded = Math.round(n);
+        if (window.KpiCurrency) return KpiCurrency.format(rounded, { round: true });
         if (langJa) {
-          return '\u00a5' + rounded.toLocaleString('en-US');
+          return '¥' + rounded.toLocaleString('en-US');
         }
         return '$' + rounded.toLocaleString('en-US');
       }
@@ -25210,8 +25456,9 @@ Cumulative Target Annual Sales</p>
       function fmtMoney(n) {
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
 
 
@@ -25343,7 +25590,8 @@ Cumulative Target Annual Sales</p>
         if (!Number.isFinite(n)) return '—';
         if (n === 0) return fmtMoney(0);
         var r = Math.round(Math.abs(n));
-        var body = isJa ? '¥' + r.toLocaleString('ja-JP') : '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, { round: true, signed: true });
+        var body = ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$') + r.toLocaleString('en-US');
         return (n > 0 ? '+' : '−') + body;
       }
       function fmtTwDiff(actual, target) {
@@ -26459,7 +26707,7 @@ Cumulative Target Annual Sales</p>
           var n = actual - target;
           if (n === 0) {
             if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(0);
-            return isJa ? '¥0' : '$0';
+            return window.KpiCurrency ? KpiCurrency.zero() : ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥0' : '$0');
           }
           var r = Math.round(Math.abs(n));
           var body = isJa
@@ -26504,8 +26752,9 @@ Cumulative Target Annual Sales</p>
         if (!Number.isFinite(Number(n))) return DASH;
         var isJa = document.documentElement.getAttribute('lang') === 'ja';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
       function setMoneyCell(el, value, enabled) {
         if (!el) return;
@@ -27032,8 +27281,9 @@ Cumulative Target Annual Sales</p>
         if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(n);
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
 
       function formatSignedDiff(n) {
@@ -27043,8 +27293,9 @@ Cumulative Target Annual Sales</p>
         }
         if (!isFinite(n)) return '—';
         var r = Math.round(Math.abs(n));
-        if (isJa) return (n >= 0 ? '+' : '−') + '¥' + r.toLocaleString('ja-JP');
-        return (n >= 0 ? '+' : '−') + '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, { round: true, signed: true });
+        var _sym = (document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$';
+        return (n >= 0 ? '+' : '−') + _sym + r.toLocaleString('en-US');
       }
 
       function formatAchPercent(n) {
@@ -27630,8 +27881,9 @@ Cumulative Target Annual Sales</p>
       function fmtSalesInput(n) {
         if (n == null || !isFinite(Number(n))) n = 0;
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
 
       function rowApplyOffState(tr, cb, dateTd) {
@@ -28455,12 +28707,12 @@ Cumulative Target Annual Sales</p>
         );
       }
       var vfocusOk = ensureVFocusShell();
-      var demoMoney = useJa ? '\u00a5123,456' : '$123,456';
+      var demoMoney = window.KpiCurrency ? KpiCurrency.format(123456, { round: true }) : (useJa ? '\u00a5123,456' : '$123,456');
       function textOrDemo(t) {
         var s = String(t || '')
           .replace(/\s+/g, ' ')
           .trim();
-        if (!s) return useJa ? '\u00a50' : '$0';
+        if (!s) return window.KpiCurrency ? KpiCurrency.zero() : (useJa ? '\u00a50' : '$0');
         return s;
       }
       var vFocusRaf = null;
@@ -28934,9 +29186,10 @@ Cumulative Target Annual Sales</p>
         var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
         var tmap = daily && daily.targetSalesByDate;
         var n = tmap && Object.prototype.hasOwnProperty.call(tmap, iso) ? Number(tmap[iso]) : NaN;
-        if (!Number.isFinite(n) || n === 1234) return useJa ? '\u00a50' : '$0';
+        if (!Number.isFinite(n) || n === 1234) return window.KpiCurrency ? KpiCurrency.zero() : (useJa ? '\u00a50' : '$0');
         var rounded = Math.round(n);
-        if (useJa) return '\u00a5' + rounded.toLocaleString('ja-JP');
+        if (window.KpiCurrency) return KpiCurrency.format(rounded, { round: true });
+        if (useJa) return '¥' + rounded.toLocaleString('ja-JP');
         return '$' + rounded.toLocaleString('en-US');
       }
       function dateLabelText(d) {
@@ -29013,7 +29266,7 @@ Cumulative Target Annual Sales</p>
         ];
       }
                                           /* KPI-MONTHLY-TW-MEP-METRICS */
-      var zeroMoney = useJa ? '\u00a50' : '$0';
+      var zeroMoney = window.KpiCurrency ? KpiCurrency.zero() : (useJa ? '\u00a50' : '$0');
       var MEP_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
       var MEP_FALLBACK_FIXED = [
         'exp_rent',
@@ -29126,7 +29379,8 @@ Cumulative Target Annual Sales</p>
 
       function fmtTwMoney(n) {
         var v = Math.round(Number(n) || 0);
-        if (useJa) return '\u00a5' + v.toLocaleString('ja-JP');
+        if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+        if (useJa) return '¥' + v.toLocaleString('ja-JP');
         return '$' + v.toLocaleString('en-US');
       }
 

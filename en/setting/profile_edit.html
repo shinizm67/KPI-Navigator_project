@@ -90,6 +90,7 @@
           <h4 class="account-settings-heading">Account</h4>
           <nav class="account-settings-nav">
             <a href="../setting/profile.html" class="account-settings-item is-current" role="menuitem" aria-current="page">Profile</a>
+            <a href="../setting/preferences.html" class="account-settings-item" role="menuitem">Preferences</a>
             <a href="../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
@@ -229,10 +230,10 @@
           <label for="profile-currency">Currency :</label>
           <select id="profile-currency" name="currency" class="profile-select" aria-label="Select currency">
             <option value="">— Select —</option>
-            <option value="JPY">JPY</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
+            <option value="JPY">¥ - Yen</option>
+            <option value="USD">$ - US Dollar</option>
+            <option value="EUR">€ - Euro</option>
+            <option value="GBP">£ - Pound</option>
           </select>
         </div>
 
@@ -436,6 +437,9 @@
           localStorage.setItem('kpi-profile-last', JSON.stringify(data));
           // プロフィール編集済みフラグ（ナビゲーション用）
           localStorage.setItem('kpi-profile-edited', '1');
+          if (currencyEl && currencyEl.value) {
+            localStorage.setItem('kpi-currency', currencyEl.value);
+          }
         } catch (err) {
           return;
         }

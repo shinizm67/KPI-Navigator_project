@@ -51,6 +51,7 @@ PAGES_APP = [
 _SETTINGS_CURRENT = [
     ("profile.html", "profile"),
     ("profile_edit.html", "profile"),
+    ("preferences.html", "preferences"),
     ("change_email.html", "change_email"),
     ("change_email_edit.html", "change_email"),
     ("change_password.html", "change_password"),

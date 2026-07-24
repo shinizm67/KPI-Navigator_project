@@ -60,7 +60,8 @@ def focus_tw_metrics_js() -> str:
         if (!Number.isFinite(n)) return '—';
         if (n === 0) return fmtMoney(0);
         var r = Math.round(Math.abs(n));
-        var body = isJa ? '¥' + r.toLocaleString('ja-JP') : '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, {{ round: true, signed: true }});
+        var body = ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$') + r.toLocaleString('en-US');
         return (n > 0 ? '+' : '−') + body;
       }}
       function fmtTwDiff(actual, target) {{

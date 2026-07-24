@@ -14,8 +14,9 @@ MONTHLY_RESOLVE_DAILY_SALES_NEW = """      function resolveDailySalesText(iso) {
         var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
         var tmap = daily && daily.targetSalesByDate;
         var n = tmap && Object.prototype.hasOwnProperty.call(tmap, iso) ? Number(tmap[iso]) : NaN;
-        if (!Number.isFinite(n) || n === 1234) return useJa ? '\\u00a50' : '$0';
+        if (!Number.isFinite(n) || n === 1234) return window.KpiCurrency ? KpiCurrency.zero() : (useJa ? '\\u00a50' : '$0');
         var rounded = Math.round(n);
+        if (window.KpiCurrency) return KpiCurrency.format(rounded, { round: true });
         if (useJa) return '\\u00a5' + rounded.toLocaleString('ja-JP');
         return '$' + rounded.toLocaleString('en-US');
       }"""

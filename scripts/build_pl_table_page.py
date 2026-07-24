@@ -1366,6 +1366,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
 
       function money(n) {{
         var v = Math.round(Number(n) || 0);
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
         if (document.documentElement.lang === 'ja') return '¥' + v.toLocaleString('en-US');
         return '$' + v.toLocaleString('en-US');
       }}
@@ -1926,7 +1927,9 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         var yearLY = selYear - 2;
         var yearBY = area1BestYearNumber(iso);
         var periodCount = new Date(yearTY, month, 0).getDate();
-        var dim = periodCount;
+        var selDay = d.getDate();
+        var dim = Math.min(selDay, periodCount, new Date(selYear, month, 0).getDate());
+        if (dim < 1) dim = 1;
         var daySeed = ((selYear * 37 + month * 97) % 1000) + 571;
         var daily = {{
           income: {{ thisYear: [], lastYear: [], bestYear: [] }},
@@ -1948,7 +1951,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           bestYear: {{ income: 0, expenses: 0, fixed: 0, expected: 0, profit: 0 }},
         }};
         var seriesYears = {{ thisYear: yearTY, lastYear: yearLY, bestYear: yearBY }};
-        for (var i = 1; i <= periodCount; i++) {{
+        for (var i = 1; i <= dim; i++) {{
           var closedBySeries = {{
             thisYear: compareArea2StoreClosed(yearTY, month, i),
             lastYear: compareArea2StoreClosed(yearLY, month, i),
@@ -3255,12 +3258,11 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           if (holding) {{
             /*
               Hold follow: keep the visible chart moving.
-              Area1 line changes with day; Area2/3 line/daily are month-scoped
-              so only FL (and date labels) need a refresh within the same month.
+              Area1/2 line+daily track the selected day; Area3 charts are month-scoped.
             */
-            if (vis === 1) {{
+            if (vis === 1 || vis === 2) {{
               renderAllCompareAreas(pending, {{
-                areas: [1],
+                areas: [vis],
                 panels: ['line'],
                 resetCache: false,
                 light: true,
@@ -3281,7 +3283,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
               }});
             }}
           }} else {{
-            /* Settle / open: Area1 first, then Area2/3 on next frame. */
+            /* Settle / open: Area1 first, then Area2 (day-sensitive) + Area3. */
             renderAllCompareAreas(pending, {{
               areas: [1],
               panels: ['fl', 'breakdown', 'line', 'daily'],
@@ -3293,15 +3295,22 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
             requestAnimationFrame(function () {{
               if (window.__PL_COMPARE_DATE_HOLDING) return;
               if (selectedIso !== trailIso) return;
+              renderAllCompareAreas(trailIso, {{
+                areas: [2],
+                panels: trailMonthChanged
+                  ? ['fl', 'breakdown', 'line', 'daily']
+                  : ['fl', 'line', 'daily'],
+                resetCache: false,
+              }});
               if (trailMonthChanged) {{
                 renderAllCompareAreas(trailIso, {{
-                  areas: [2, 3],
+                  areas: [3],
                   panels: ['fl', 'breakdown', 'line', 'daily'],
                   resetCache: false,
                 }});
               }} else {{
                 renderAllCompareAreas(trailIso, {{
-                  areas: [2, 3],
+                  areas: [3],
                   panels: ['fl'],
                   resetCache: false,
                 }});
@@ -3417,6 +3426,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
         var hasCharts = !!(lineMount && lineMount.querySelector('.pl-compare-line'));
         var canReuse =
           hasCharts && window.__PL_COMPARE_RENDERED_ISO === iso;
+        syncPlCompareAreaTabs();
         if (canReuse) return;
 
         /* Paint the open shell first; charts fill on the next task. */
@@ -3754,6 +3764,36 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           fillDate(dateInput.value);
         }});
       }}
+      function syncPlCompareAreaTabs() {{
+        areaButtons.forEach(function (btn) {{
+          var n = areaFromToken(btn.getAttribute('data-pl-compare-jump'));
+          var on = n === currentArea;
+          btn.classList.toggle('is-active', on);
+          if (on) btn.setAttribute('aria-current', 'true');
+          else btn.removeAttribute('aria-current');
+        }});
+      }}
+
+      function updateCurrentAreaFromScroll() {{
+        if (!scrollEl) return;
+        var pick = currentArea >= 1 && currentArea <= 3 ? currentArea : 1;
+        [1, 2, 3].forEach(function (n) {{
+          var el = document.getElementById('pl-compare-area-' + n);
+          if (!el) return;
+          var top =
+            el.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top;
+          if (top <= 28) pick = n;
+        }});
+        if (pick !== currentArea) {{
+          currentArea = pick;
+          if (!restoringFromHistory && root && !root.hidden) {{
+            syncHash(true);
+            saveLastState();
+          }}
+        }}
+        syncPlCompareAreaTabs();
+      }}
+
       function scrollToCompareArea(target) {{
         if (!scrollEl || !target) return;
         var top =
@@ -3774,6 +3814,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           var target = document.getElementById(targetId);
           if (!target) return;
           currentArea = areaFromToken(targetId);
+          syncPlCompareAreaTabs();
           scrollToCompareArea(target);
           if (!restoringFromHistory) {{
             syncHash(true);
@@ -3781,6 +3822,21 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           }}
         }});
       }});
+      if (scrollEl) {{
+        var areaScrollT = null;
+        scrollEl.addEventListener(
+          'scroll',
+          function () {{
+            if (areaScrollT) return;
+            areaScrollT = requestAnimationFrame(function () {{
+              areaScrollT = null;
+              updateCurrentAreaFromScroll();
+            }});
+          }},
+          {{ passive: true }}
+        );
+      }}
+      syncPlCompareAreaTabs();
 
       /* 費目内訳アコーディオンの開閉（開閉状態は再描画をまたいで保持） */
       if (contentEl) {{
@@ -4156,8 +4212,9 @@ def pl_graph_client_js(
 
       function formatMoney(n) {{
         var v = Math.round(Number(n) || 0);
-        if (isJa) return '¥' + v.toLocaleString('en-US');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }}
 
       function pct(n) {{
@@ -5299,12 +5356,15 @@ def render_page(lang: str, lang_switch: str) -> str:
       outline-offset: 2px;
     }}
     body.office-mode .pl-compare-goto-table {{
-      border-color: #0f9403;
-      color: #0f6b03;
-      background: rgba(15, 148, 3, 0.1);
+      border-color: #111;
+      color: #111;
+      background: #d0d0d0;
     }}
     body.office-mode .pl-compare-goto-table:hover {{
-      background: rgba(15, 148, 3, 0.2);
+      background: #c4c4c4;
+    }}
+    body.office-mode .pl-compare-goto-table:focus-visible {{
+      outline-color: #111;
     }}
     .pl-compare-date-input {{
       position: absolute;
@@ -5342,6 +5402,18 @@ def render_page(lang: str, lang_switch: str) -> str:
       line-height: 1;
       cursor: pointer;
       font-family: 'Orbitron', sans-serif;
+      transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease,
+        border-color 0.15s ease;
+    }}
+    .pl-compare-area-tab.is-active {{
+      background: rgba(88, 225, 243, 0.42);
+      border-color: #9af0ff;
+      color: #d7fbff;
+      font-weight: 700;
+      box-shadow:
+        0 0 12px rgba(88, 225, 243, 0.85),
+        0 0 22px rgba(88, 225, 243, 0.35),
+        inset 0 0 10px rgba(88, 225, 243, 0.28);
     }}
     html[lang='ja'] .pl-compare-area-tab {{
       font-family: 'BIZ UDPGothic', sans-serif;
@@ -5510,29 +5582,30 @@ def render_page(lang: str, lang_switch: str) -> str:
       opacity: 0.7;
     }}
     .office-mode .pl-compare-bd {{
-      border-color: #c8ccd0;
+      border-color: #111;
+      background: #fff;
     }}
     .office-mode .pl-compare-bd__toggle {{
-      color: #1a4a55;
+      color: #111;
     }}
     .office-mode .pl-compare-bd__toggle:hover,
     .office-mode .pl-compare-bd__toggle:focus-visible {{
-      background: rgba(26, 74, 85, 0.08);
+      background: rgba(0, 0, 0, 0.06);
     }}
     .office-mode .pl-compare-bd__group-title {{
-      color: #2a6b78;
+      color: #111;
     }}
     .office-mode .pl-compare-bd__item,
     .office-mode .pl-compare-bd__total {{
-      color: #222;
+      color: #111;
     }}
     .office-mode .pl-compare-bd__item--jump:hover,
     .office-mode .pl-compare-bd__item--jump:focus-visible {{
-      background: rgba(26, 74, 85, 0.08);
+      background: rgba(0, 0, 0, 0.06);
     }}
     .office-mode .pl-compare-bd__total {{
-      border-top-color: #c8ccd0;
-      color: #1a4a55;
+      border-top-color: #111;
+      color: #111;
     }}
     /* Basic プラン: 支出/利益ブロックをぼかし + Pro CTA（Monthly Insight と同型） */
     .pl-compare-plan-locked {{
@@ -6019,8 +6092,31 @@ def render_page(lang: str, lang_switch: str) -> str:
     html[lang='ja'] .pl-compare-line__legend-item {{
       font-family: 'BIZ UDPGothic', sans-serif;
     }}
+    /* ===== PL-INSIGHT-OFFICE-SHELL: Insight Office Mode と同トンマナ ===== */
+    body.office-mode .pl-graph-overlay__backdrop {{
+      background: rgba(0, 0, 0, 0.28);
+    }}
+    body.office-mode .pl-graph-overlay__panel {{
+      background: #f0f0f0;
+      border: 3px solid #555;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    body.office-mode .pl-graph-overlay__close {{
+      border: 1px solid #111;
+      background: #d0d0d0;
+      color: #111;
+    }}
+    body.office-mode .pl-graph-overlay__title {{
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
     body.office-mode .pl-compare-header {{
-      background: #fff;
+      background: #f0f0f0;
+    }}
+    body.office-mode .pl-graph-overlay__scroll {{
+      background: #f0f0f0;
+      color: #111;
     }}
     body.office-mode .pl-compare-date-nav,
     body.office-mode .pl-compare-date-btn,
@@ -6036,29 +6132,69 @@ def render_page(lang: str, lang_switch: str) -> str:
     body.office-mode .pl-compare-line__y-ticks span {{
       color: #111;
     }}
-    body.office-mode .pl-compare-today {{
-      border-color: #999;
+    body.office-mode .pl-compare-area-tab {{
+      background: #e8e8e8;
+      border-color: #111;
       color: #111;
-      background: #f0f0f0;
+      box-shadow: none;
+      font-weight: 400;
     }}
-    body.office-mode .pl-compare-header__rule,
+    body.office-mode .pl-compare-area-tab.is-active {{
+      background: #d0d0d0;
+      border-color: #111;
+      color: #111;
+      box-shadow: none;
+      font-weight: 700;
+    }}
+    body.office-mode .pl-compare-today {{
+      border: 1px solid #111;
+      color: #111;
+      background: #d0d0d0;
+    }}
+    body.office-mode .pl-compare-header__rule {{
+      background: #111;
+    }}
     body.office-mode .pl-compare-area {{
-      border-color: #999;
+      border-color: #111;
+    }}
+    /* Inside PL Insight FW: black text + black structure borders (charts keep series colors). */
+    body.office-mode .pl-graph-overlay__panel *:not(svg):not(svg *) {{
+      color: #111 !important;
+    }}
+    body.office-mode .pl-graph-overlay__panel *:not(svg):not(svg *):not([class*="triangle"]):not(.pl-compare-bd__chevron) {{
+      border-color: #111 !important;
     }}
     body.office-mode .pl-graph-overlay__panel {{
-      background: #fff;
-      border-color: #0f9403;
-      color: #111;
-      font-family: 'BIZ UDP Gothic', sans-serif;
+      border-color: #555 !important;
+      color: #111 !important;
     }}
     body.office-mode .pl-graph-overlay__close {{
-      border-color: #999;
-      background: #f0f0f0;
-      color: #111;
+      border-color: #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
     }}
-    body.office-mode .pl-graph-overlay__title {{
-      color: #111;
-      font-family: 'BIZ UDP Gothic', sans-serif;
+    body.office-mode .pl-compare-goto-table {{
+      border-color: #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+    }}
+    body.office-mode .pl-compare-bd {{
+      background: #fff !important;
+      border: 1px solid #111 !important;
+    }}
+    body.office-mode .pl-compare-bd__chevron {{
+      border-top-color: transparent !important;
+      border-bottom-color: transparent !important;
+      border-left-color: #111 !important;
+      border-right-color: transparent !important;
+      color: transparent !important;
+    }}
+    body.office-mode .pl-graph-overlay__panel [class*="triangle"] {{
+      border-left-color: transparent !important;
+      border-right-color: transparent !important;
+      border-bottom-color: transparent !important;
+      border-top-color: var(--marker-color, var(--ag-marker-color, #e6ff00)) !important;
+      color: transparent !important;
     }}
     body.pl-graph-overlay-open {{
       overflow: hidden;
@@ -7625,7 +7761,8 @@ def render_page(lang: str, lang_switch: str) -> str:
       max-height: calc(var(--pl-row-label-h) * 4);
     }}
     body.office-mode .pl-analyze-band {{
-      background: rgba(88, 225, 243, 0.18);
+      /* Opaque wash: translucent cyan over dark panes looked charcoal + killed contrast. */
+      background: #dff5f8 !important;
       color: #111;
     }}
     body.office-mode .pl-analyze-band__text {{
@@ -7642,7 +7779,17 @@ def render_page(lang: str, lang_switch: str) -> str:
     body.office-mode .pl-month-cell--analyze,
     body.office-mode .pl-amt-cell--analyze,
     body.office-mode .pl-ratio-cell--analyze {{
-      background: rgba(88, 225, 243, 0.18);
+      background: #dff5f8 !important;
+      color: #111;
+    }}
+    body.office-mode .pl-amt-cell--analyze .pl-amt-cell__text,
+    body.office-mode .pl-ratio-cell--analyze .pl-ratio-cell__text,
+    body.office-mode .pl-analyze-zone .pl-amt-cell__text,
+    body.office-mode .pl-analyze-zone .pl-ratio-cell__text,
+    body.office-mode .pl-table--labels-analyze .pl-h-label__text,
+    body.office-mode .pl-table--labels-analyze .pl-v-major__text,
+    body.office-mode .pl-table--labels-analyze .pl-v-major__line {{
+      color: #111 !important;
     }}
     .pl-table.pl-table--v1 {{
       border-collapse: collapse;
@@ -8364,6 +8511,16 @@ def render_page(lang: str, lang_switch: str) -> str:
     body.office-mode .pl-label-pane {{
       background: #fff;
     }}
+    body.office-mode .pl-data-pane {{
+      background: #f5f5f5;
+      scrollbar-color: #999 #f5f5f5;
+    }}
+    body.office-mode .pl-data-pane::-webkit-scrollbar-track {{
+      background: #f5f5f5;
+    }}
+    body.office-mode .pl-data-pane::-webkit-scrollbar-thumb {{
+      background: #bbb;
+    }}
     body.office-mode .pl-table--v1 .pl-label-corner,
     body.office-mode .pl-table--v1 .pl-row-label,
     body.office-mode .pl-table--v1 .pl-v-major,
@@ -8583,6 +8740,9 @@ def render_page(lang: str, lang_switch: str) -> str:
   </style>
 </head>
 <body class="si-fi profile-page pl-page" id="body-el">
+  <!-- KPI-CURRENCY-JS:START -->
+  <script src="{"../../../js/kpi-currency.js" if lang == "ja" else "../../../../js/kpi-currency.js"}"></script>
+  <!-- KPI-CURRENCY-JS:END -->
 {header}
   <div class="page-wrap profile-wrap">
     <main class="profile-main">
@@ -9309,8 +9469,9 @@ def render_page(lang: str, lang_switch: str) -> str:
       }}
 
       function formatMoney(n) {{
-        if (isJa) return '¥' + n.toLocaleString('en-US');
-        return '$' + n.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(n)).toLocaleString('en-US');
       }}
 
       function buildSnapshot() {{

@@ -22,7 +22,7 @@ CSS_BLOCK = """
       border-top: 1px solid var(--sdm-cyan);
     }
     .past-sales-modal__summary-wrap.is-collapsed + .past-sales-modal__ym {
-      border-top: 1px solid #58e1f3;
+      border-top: 1px solid var(--psm-line);
     }
     .sales-data-modal__summary-toggle {
       flex: 0 0 32px;

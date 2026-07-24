@@ -89,6 +89,12 @@ def cockpit_year_sync_js() -> str:
         function fmtMoney(n) {{
           if (n == null || !Number.isFinite(Number(n))) return DASH;
           var v = Math.round(Number(n) * 100) / 100;
+          if (window.KpiCurrency) {{
+            return KpiCurrency.format(v, {{
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }});
+          }}
           if (isJa()) {{
             return '\\u00a5' + v.toLocaleString('ja-JP', {{
               minimumFractionDigits: 2,

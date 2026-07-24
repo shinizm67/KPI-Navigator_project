@@ -79,7 +79,9 @@ ANNUAL_TARGET_SEED_JA_OLD = """    (function () {
         raw = window.__ANNUAL_DATA.targetSales;
       }
       if (typeof raw === 'number' && Number.isFinite(raw)) {
-        targetEl.textContent = '¥' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        targetEl.textContent = window.KpiCurrency
+          ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : ('¥' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       } else {
         targetEl.textContent = String(raw);
       }
@@ -100,7 +102,9 @@ ANNUAL_TARGET_SEED_EN_OLD = """    (function () {
         raw = window.__ANNUAL_DATA.targetSales;
       }
       if (typeof raw === 'number' && Number.isFinite(raw)) {
-        targetEl.textContent = '$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        targetEl.textContent = window.KpiCurrency
+          ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : ('$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       } else {
         targetEl.textContent = String(raw);
       }

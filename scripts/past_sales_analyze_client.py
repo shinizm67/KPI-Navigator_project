@@ -400,6 +400,9 @@ RENDER_OLD = """      function renderPastSalesAnalyze() {
 RENDER_NEW = f"""      function formatAnalyzeMoney(n) {{
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n) * 100) / 100;
+        if (window.KpiCurrency) {{
+          return KpiCurrency.format(v, {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }});
+        }}
         if (isJa) {{
           return '¥' + v.toLocaleString('ja-JP', {{ minimumFractionDigits: 2, maximumFractionDigits: 2 }});
         }}

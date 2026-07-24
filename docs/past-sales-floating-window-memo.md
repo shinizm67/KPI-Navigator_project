@@ -59,8 +59,9 @@ Monthly ページ **Edit** と同寸（112×46）の `.monthly-access-controls` 
 
 ### Office モード（Past Sales ボタンのみ青例外）
 
+- Office Mode は **SVG 枠を非表示**し、Monthly の UNLOCKED/EDIT と同型の **CSS 四角ボタン**（`border: 1px solid`）
 - `.office-mode .monthly-access-btn--past-sales`: 背景 `#dcecff`、枠 `#2b6cb0`、文字 `#0a2a5c`
-- `.monthly-access-btn--current-sales` はモノトーン（Monthly Edit と同型）
+- `.office-mode .monthly-access-btn--current-sales`: 背景 `#f0f0f0`、枠 `#000`、文字 `#000`（Monthly Edit と同型・色だけグレー）
 
 ---
 
@@ -371,7 +372,7 @@ Import CSV / UNDO / Save は **上端 = 大外枠上から 22px**、**142×40px 
 | 閉じる | `#past-sales-modal-close` |
 | CSV | `#past-sales-modal-csv` |
 | 保存 | `#past-sales-modal-save` |
-| 戻る | `#past-sales-modal-undo` |
+| UNDO | `#past-sales-modal-undo` |
 | 表 | `#past-sales-modal-table`（`renderPastSalesTable()` で生成） |
 | スクロール | `#past-sales-pane-input` |
 | 起動（左） | `#annual-past-sales-btn` |

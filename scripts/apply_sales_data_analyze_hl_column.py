@@ -11,7 +11,7 @@ TARGETS = {
     ROOT / "app/annual/index.html": {
         "observed_th": "繁閑期%",
         "hl_th": "繁閑期%設定",
-        "tfoot_label": "Monthly Allocated Total",
+        "tfoot_label": "月次配分率合計",
         "aria": "月次繁閑分析",
     },
     ROOT / "en/app/annual/index.html": {
@@ -128,14 +128,24 @@ CSS_NEW = f"""    .sales-data-modal__analyze-table {{
       text-align: left;
       padding-left: 12px;
     }}
-    /* KPI-SDM-ANALYZE-HL-OFFICE */
+    /* KPI-SDM-ANALYZE-HL-OFFICE — PL Analysis と同系の薄シアン（黒文字が読める） */
     body.office-mode .sales-data-modal__analyze-table {{
-      --sdm-analyze-hl-bg: #d0d0d0;
+      --sdm-analyze-hl-bg: #dff5f8;
     }}
     body.office-mode .sales-data-modal__analyze-table th.sales-data-modal__analyze-hl-head,
     body.office-mode .sales-data-modal__analyze-table td.sales-data-modal__analyze-hl-cell,
     body.office-mode .sales-data-modal__analyze-table tfoot td {{
       color: #111;
+      background: #dff5f8 !important;
+    }}
+    body.office-mode .sales-data-modal__analyze-hl-step {{
+      border-color: #111;
+      background: #fff;
+      color: #111;
+    }}
+    body.office-mode .sales-data-modal__analyze-hl-step:hover:not(:disabled),
+    body.office-mode .sales-data-modal__analyze-hl-step:focus-visible:not(:disabled) {{
+      background: #e8e8e8;
     }}
     .sales-data-modal__analyze-hl-btn {{
       display: block;

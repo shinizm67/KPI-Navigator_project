@@ -348,14 +348,17 @@ def pl_insight_data_client_js() -> str:
         if (!p) return null;
         var month0 = p.month - 1;
         var yTY = p.year - 1, yLY = p.year - 2, yBY = bestYearNumber(p.year);
-        var cacheKey = month0 + '|' + yTY + '|' + yLY + '|' + yBY;
-        if (area2ChartCache[cacheKey]) return area2ChartCache[cacheKey];
         var periodCount = daysInMonth(yTY, month0);
+        var dayCap = Math.min(p.day, periodCount, daysInMonth(p.year, month0));
+        if (dayCap < 1) dayCap = 1;
+        /* Include day so ◀︎▶︎ pace charts track the selected date (not full month only). */
+        var cacheKey = month0 + '|' + yTY + '|' + yLY + '|' + yBY + '|' + dayCap;
+        if (area2ChartCache[cacheKey]) return area2ChartCache[cacheKey];
         var chart = emptyChart();
-        fillDaily(chart, 'thisYear', yTY, month0, periodCount);
-        fillDaily(chart, 'lastYear', yLY, month0, periodCount);
-        fillDaily(chart, 'bestYear', yBY, month0, periodCount);
-        chart.dim = periodCount;
+        fillDaily(chart, 'thisYear', yTY, month0, dayCap);
+        fillDaily(chart, 'lastYear', yLY, month0, dayCap);
+        fillDaily(chart, 'bestYear', yBY, month0, dayCap);
+        chart.dim = dayCap;
         chart.periodCount = periodCount;
         chart.axisMode = 'day';
         chart.refYears = { thisYear: yTY, lastYear: yLY, bestYear: yBY };

@@ -31,7 +31,7 @@ PAGES = {
         "col_season": "前年繁閑期%",
         "col_hl": "繁閑期%設定",
         "col_hl_tip": "▼左 ▲右 で5%刻み",
-        "tfoot_label": "Monthly Allocated Total",
+        "tfoot_label": "月次配分率合計",
         "tfoot_tip": "各月%の平均が100%に",
     },
     ROOT / "en/app/annual/index.html": {
@@ -218,14 +218,24 @@ def css_new() -> str:
     body.office-mode .sales-data-modal__analyze-alloc-total--warn {{
       color: #c62828;
     }}
-    /* KPI-SDM-ANALYZE-HL-OFFICE */
+    /* KPI-SDM-ANALYZE-HL-OFFICE — PL Analysis と同系の薄シアン（黒文字が読める） */
     body.office-mode .sales-data-modal__analyze-table {{
-      --sdm-analyze-hl-bg: #d0d0d0;
+      --sdm-analyze-hl-bg: #dff5f8;
     }}
     body.office-mode .sales-data-modal__analyze-table th.sales-data-modal__analyze-hl-head,
     body.office-mode .sales-data-modal__analyze-table td.sales-data-modal__analyze-hl-cell,
     body.office-mode .sales-data-modal__analyze-table tfoot td {{
       color: #111;
+      background: #dff5f8 !important;
+    }}
+    body.office-mode .sales-data-modal__analyze-hl-step {{
+      border-color: #111;
+      background: #fff;
+      color: #111;
+    }}
+    body.office-mode .sales-data-modal__analyze-hl-step:hover:not(:disabled),
+    body.office-mode .sales-data-modal__analyze-hl-step:focus-visible:not(:disabled) {{
+      background: #e8e8e8;
     }}
     .sales-data-modal__analyze-hl-head-tip {{
       position: relative;

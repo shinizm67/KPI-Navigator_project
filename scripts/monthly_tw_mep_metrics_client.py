@@ -340,6 +340,7 @@ def monthly_tw_mep_metrics_js() -> str:
 
       function fmtTwMoney(n) {{
         var v = Math.round(Number(n) || 0);
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
         if (useJa) return '\\u00a5' + v.toLocaleString('ja-JP');
         return '$' + v.toLocaleString('en-US');
       }}

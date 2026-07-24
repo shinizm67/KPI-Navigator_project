@@ -373,8 +373,8 @@ PSM_DETAIL_CSS = """
       line-height: 1.1;
       letter-spacing: 0.14em;
       writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
+      text-orientation: upright;
+      transform: none;
     }
     .past-sales-modal__date-td {
       width: var(--psm-col-date);

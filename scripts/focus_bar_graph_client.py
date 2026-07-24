@@ -81,8 +81,9 @@ GRAPH_FMT_OLD = """      var mode = 'daily';
       function fmtMoney(n) {
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }"""
 
 GRAPH_FMT_NEW = """      var mode = 'daily';
@@ -91,8 +92,9 @@ GRAPH_FMT_NEW = """      var mode = 'daily';
         if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(n);
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }"""
 
 TW_FMT_REVERT_OLD = f"""      {GRAPH_STORE_MARKER}
@@ -100,22 +102,25 @@ TW_FMT_REVERT_OLD = f"""      {GRAPH_STORE_MARKER}
         if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(n);
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }}"""
 
 TW_FMT_REVERT_NEW = """      function fmtMoney(n) {
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }"""
 
 FORMAT_DIFF_OLD = """      function formatSignedDiff(n) {
         if (!isFinite(n)) return '—';
         var r = Math.round(Math.abs(n));
-        if (isJa) return (n >= 0 ? '+' : '−') + '¥' + r.toLocaleString('ja-JP');
-        return (n >= 0 ? '+' : '−') + '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, { round: true, signed: true });
+        var _sym = (document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$';
+        return (n >= 0 ? '+' : '−') + _sym + r.toLocaleString('en-US');
       }"""
 
 FORMAT_DIFF_NEW = """      function formatSignedDiff(n) {
@@ -125,8 +130,9 @@ FORMAT_DIFF_NEW = """      function formatSignedDiff(n) {
         }
         if (!isFinite(n)) return '—';
         var r = Math.round(Math.abs(n));
-        if (isJa) return (n >= 0 ? '+' : '−') + '¥' + r.toLocaleString('ja-JP');
-        return (n >= 0 ? '+' : '−') + '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, { round: true, signed: true });
+        var _sym = (document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$';
+        return (n >= 0 ? '+' : '−') + _sym + r.toLocaleString('en-US');
       }"""
 
 PARSE_BLOCK_OLD = """      function parseMoneyText(s) {

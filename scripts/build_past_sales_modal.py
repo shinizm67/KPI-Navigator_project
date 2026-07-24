@@ -31,7 +31,7 @@ TEXT = {
         "modal_title": "過去売上データ",
         "close": "閉じる",
         "csv": "CSV取込",
-        "undo": "戻る",
+        "undo": "UNDO",
         "save": "保存",
         "tablist": "過去売上ビュー",
         "tab_input": "Input",
@@ -181,7 +181,7 @@ COCKPIT_CSS = """
       box-sizing: border-box;
     }
     .office-mode .monthly-access-btn__frame {
-      display: none;
+      display: none !important;
     }
     .office-mode .monthly-access-btn__label {
       color: inherit;
@@ -194,9 +194,9 @@ COCKPIT_CSS = """
       text-shadow: none;
     }
     .office-mode .monthly-access-btn--past-sales {
-      background: #dce8f8;
+      background: #dcecff;
       border-color: #2b6cb0;
-      color: #0d3a6e;
+      color: #0a2a5c;
     }
     .office-mode .monthly-access-btn--past-sales:hover,
     .office-mode .monthly-access-btn--past-sales:focus-visible {
@@ -446,7 +446,7 @@ PS_LAYOUT_CSS = """
     .past-sales-modal__summary {
       flex-shrink: 0;
       border: 1px solid var(--psm-line);
-      border-top: 1px solid #58e1f3;
+      border-top: 1px solid var(--psm-line);
       background: var(--psm-bg-inactive);
       box-sizing: border-box;
     }

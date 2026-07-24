@@ -17,8 +17,9 @@ def cockpit_tw_compute_js() -> str:
       function fmtMoney(n) {{
         if (n == null || !isFinite(Number(n))) return '—';
         var v = Math.round(Number(n));
-        if (isJa) return '¥' + v.toLocaleString('ja-JP');
-        return '$' + v.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(v, {{ round: true }});
+        var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
+        return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }}
       function isTimelineBusinessDay(iso, bmap, isWeekend) {{
         if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
@@ -147,7 +148,8 @@ def cockpit_tw_compute_js() -> str:
         if (!Number.isFinite(n)) return '—';
         if (n === 0) return fmtMoney(0);
         var r = Math.round(Math.abs(n));
-        var body = isJa ? '¥' + r.toLocaleString('ja-JP') : '$' + r.toLocaleString('en-US');
+        if (window.KpiCurrency) return KpiCurrency.format(n, {{ round: true, signed: true }});
+        var body = ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥' : '$') + r.toLocaleString('en-US');
         return (n > 0 ? '+' : '−') + body;
       }}
       function fmtTwDiff(actual, target) {{

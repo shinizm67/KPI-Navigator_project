@@ -266,7 +266,7 @@ JA_TABLE_PATCHES = {
         ' data-hl-tip="▼左 ▲右 で5%刻み">繁閑期%設定</th>'
     ),
     'class="sales-data-modal__analyze-hl-tip sales-data-modal__analyze-hl-tip--footer"\n'
-    '                      data-hl-tip="Monthly Allocated Total が 100% になるよう、各月の繁閑期%を調整してください"':
+    '                      data-hl-tip="月次配分率合計が 100% になるよう、各月の繁閑期%を調整してください"':
         'class="sales-data-modal__analyze-hl-tip--footer"\n'
         '                      data-hl-tip="各月%の平均が100%に"',
 }
@@ -372,7 +372,7 @@ def sdm_hl_stepper_js() -> str:
         sdmHlAllocWarnShown = true;
         window.alert(
           isJa
-            ? 'Monthly Allocated Total が ' +
+            ? '月次配分率合計が ' +
                 total.toFixed(2) +
                 '% です。\\n左の繁閑期%を参考に ▲▼ で各月を調整し、合計を 100% に近づけてください。'
             : 'Monthly Allocated Total is ' +

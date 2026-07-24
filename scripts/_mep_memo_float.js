@@ -190,7 +190,7 @@
           var n = actual - target;
           if (n === 0) {
             if (typeof window.__twFmtMoney === 'function') return window.__twFmtMoney(0);
-            return isJa ? '¥0' : '$0';
+            return window.KpiCurrency ? KpiCurrency.zero() : ((document.documentElement.lang || '').indexOf('ja') === 0 ? '¥0' : '$0');
           }
           var r = Math.round(Math.abs(n));
           var body = isJa
