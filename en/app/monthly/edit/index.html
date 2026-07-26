@@ -378,7 +378,7 @@
     }
     .monthly-edit-float__csv-upload:hover,
     .monthly-edit-float__csv-upload:focus-visible {
-      background: rgba(88, 225, 243, 0.32);
+      background: rgba(120, 200, 230, 0.28);
       outline: none;
     }
     .monthly-edit-float__undo:disabled {
@@ -679,7 +679,7 @@
       opacity: 0.34;
       font-weight: 500;
     }
-    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table tr.mef-row--daily-input td .monthly-edit-float__input,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table tr.mef-row--sales-path td .monthly-edit-float__input,
     .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__cb[data-action='bizday-toggle'] {
       opacity: 0.72;
     }
@@ -1069,33 +1069,54 @@
       justify-content: center;
       text-align: center;
     }
-                                                    /* PL-MEP-DAILY-INPUT-STYLE */
+                                                        /* PL-MEP-DAILY-INPUT-STYLE */
     .monthly-edit-float__label-row--daily-input {
       background: rgba(20, 72, 52, 0.72);
       color: rgba(210, 245, 225, 0.96);
     }
+    .monthly-edit-float__label-row--daily-input.monthly-edit-float__label-row--input-income {
+      background: rgba(18, 68, 96, 0.72);
+      color: rgba(200, 240, 255, 0.96);
+    }
     .monthly-edit-float__label-row--pl-readonly {
-      opacity: 0.62;
+      opacity: 0.82;
     }
     .monthly-edit-float__table tr.mef-row--daily-input td {
       background: rgba(20, 72, 52, 0.72) !important;
+    }
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td {
+      background: rgba(18, 68, 96, 0.72) !important;
     }
     .monthly-edit-float__table tr.mef-row--daily-input td.kpi-fill-empty {
       background: rgba(16, 58, 42, 0.82) !important;
       box-shadow: inset 0 0 0 1px rgba(120, 200, 150, 0.22);
     }
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td.kpi-fill-empty {
+      background: rgba(14, 52, 78, 0.82) !important;
+      box-shadow: inset 0 0 0 1px rgba(120, 200, 230, 0.28);
+    }
     .monthly-edit-float__table tr.mef-row--daily-input td .monthly-edit-float__input:not(:disabled) {
       color: rgba(210, 245, 225, 0.96);
     }
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td .monthly-edit-float__input:not(:disabled) {
+      color: rgba(200, 240, 255, 0.96);
+    }
     .monthly-edit-float__table tr.mef-row--pl-readonly td {
-      opacity: 0.55;
+      opacity: 0.75;
     }
     body.office-mode .monthly-edit-float__label-row--daily-input {
       background: rgba(180, 220, 200, 0.45);
       color: #113322;
     }
+    body.office-mode .monthly-edit-float__label-row--daily-input.monthly-edit-float__label-row--input-income {
+      background: rgba(170, 210, 230, 0.48);
+      color: #0a3040;
+    }
     body.office-mode .monthly-edit-float__table tr.mef-row--daily-input td {
       background: rgba(180, 220, 200, 0.45) !important;
+    }
+    body.office-mode .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td {
+      background: rgba(170, 210, 230, 0.48) !important;
     }
     .monthly-edit-float__label-row {
       padding: 0 12px;
@@ -1193,8 +1214,7 @@
       cursor: default;
     }
     .monthly-edit-float__label-row--sub {
-      font-weight: 500;
-      color: rgba(88, 225, 243, 0.72);
+      /* Weight/color match normal labels (hierarchy via indent only) */
       padding-left: 18px;
     }
     .monthly-edit-float__label-row--profit {
@@ -1643,9 +1663,6 @@
     body.office-mode .monthly-edit-float__label-row {
       color: #111;
       border-top-color: rgba(0, 0, 0, 0.08);
-    }
-    body.office-mode .monthly-edit-float__label-row--sub {
-      color: #444;
     }
     body.office-mode .monthly-edit-float__label-row--profit {
       border-bottom-color: #444;
@@ -2618,9 +2635,9 @@
           id="mep-sales-input-path"
           data-kpi-sales-input-path
           hidden
-          aria-label="Daily sales input path"
+          aria-label="Sales input path (Annual / Monthly)"
         >
-          <p class="kpi-daily-input-path__title">Edit</p>
+          <p class="kpi-daily-input-path__title">Sales Input</p>
           <div class="kpi-daily-input-path__row">
             <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
             <button
@@ -2629,7 +2646,7 @@
               data-kpi-path-switch
               role="switch"
               aria-checked="false"
-              aria-label="Switch daily sales between Annual and Monthly"
+              aria-label="Switch sales input between Annual and Monthly"
               data-kpi-guard-ignore
             >
               <span class="kpi-daily-input-path__knob" aria-hidden="true"></span>
@@ -8541,12 +8558,12 @@
       }
       /* MEP-WEEKLY-MEMO-ROWS */
       var WEEKLY_MEMO_ROW_DEFS = [
-        { labelJa: 'Store Event', labelEn: 'Store Event' },
-        { labelJa: 'Area Event', labelEn: 'Area Event' },
-        { labelJa: 'Social Media', labelEn: 'Social Media' },
-        { labelJa: 'Marketing', labelEn: 'Marketing' },
-        { labelJa: 'Promo Conversion', labelEn: 'Promo Conversion' },
-        { labelJa: 'Reservation', labelEn: 'Reservation' }
+        { labelJa: '店舗イベント', labelEn: 'Store Event' },
+        { labelJa: 'エリアイベント', labelEn: 'Area Event' },
+        { labelJa: 'SNS', labelEn: 'Social Media' },
+        { labelJa: 'マーケ', labelEn: 'Marketing' },
+        { labelJa: 'プロモ', labelEn: 'Promo Conversion' },
+        { labelJa: '予約', labelEn: 'Reservation' }
       ];
       var WEEKLY_MEMO_FIXED_COUNT = WEEKLY_MEMO_ROW_DEFS.length;
       function isAutoMemoLabelJa(label) {
@@ -8726,16 +8743,16 @@
           rows.push({
             type: 'moneyStatic',
             id: 'pc',
-            labelJa: 'Profit per Customer',
-            labelEn: 'Profit per Customer',
+            labelJa: '客単価',
+            labelEn: 'Avg Spend',
             section: 'income',
             autoCalc: true
           });
           rows.push({
             type: 'moneyStatic',
             id: 'pcLunch',
-            labelJa: 'Lunch Profit/Customer',
-            labelEn: 'Lunch Profit/Customer',
+            labelJa: 'ランチ客単価',
+            labelEn: 'Lunch Avg Spend',
             section: 'income',
             sub: true,
             autoCalc: true
@@ -8743,8 +8760,8 @@
           rows.push({
             type: 'moneyStatic',
             id: 'pcDinner',
-            labelJa: 'Dinner Profit/Customer',
-            labelEn: 'Dinner Profit/Customer',
+            labelJa: 'ディナー客単価',
+            labelEn: 'Dinner Avg Spend',
             section: 'income',
             sub: true,
             autoCalc: true,
@@ -9220,8 +9237,14 @@
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label'));
           main.appendChild(btnEdit);
         }
-        if (item.dailyInput) rowEl.classList.add('monthly-edit-float__label-row--daily-input');
-        else if (item.plReadonly) rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
+        if (item.dailyInput) {
+          rowEl.classList.add('monthly-edit-float__label-row--daily-input');
+          if (item.inputTone === 'income') {
+            rowEl.classList.add('monthly-edit-float__label-row--input-income');
+          }
+        } else if (item.plReadonly) {
+          rowEl.classList.add('monthly-edit-float__label-row--pl-readonly');
+        }
         rowEl.appendChild(main);
 
         if (item.controls) {
@@ -9532,15 +9555,31 @@
                 labelInfo.dailyInput = !!r.row.mepEditable;
                 labelInfo.plReadonly = !r.row.mepEditable;
                 labelInfo.manualInput = !!r.row.mepEditable;
-                if (r.row.mepEditable) tr.classList.add('mef-row--daily-input');
-                else tr.classList.add('mef-row--pl-readonly');
+                if (r.row.mepEditable) {
+                  var incomeTone = r.section === 'income';
+                  labelInfo.inputTone = incomeTone ? 'income' : 'expense';
+                  tr.classList.add('mef-row--daily-input');
+                  if (incomeTone) {
+                    tr.classList.add('mef-row--input-income');
+                    tr.classList.add('mef-row--sales-path');
+                  }
+                } else {
+                  tr.classList.add('mef-row--pl-readonly');
+                }
               }
             } else {
               labelInfo.label = useJa ? r.labelJa : r.labelEn;
               labelInfo.sub = !!r.sub;
               labelInfo.autoCalc = !!r.autoCalc;
               if (r.autoCalcTitle) labelInfo.autoCalcTitle = r.autoCalcTitle;
-              if (!r.autoCalc) labelInfo.manualInput = true;
+              if (!r.autoCalc) {
+                labelInfo.manualInput = true;
+                labelInfo.dailyInput = true;
+                labelInfo.inputTone = 'income';
+                labelInfo.plReadonly = false;
+                tr.classList.add('mef-row--daily-input');
+                tr.classList.add('mef-row--input-income');
+              }
             }
             isoList.forEach(function (iso) {
               var td = document.createElement('td');
@@ -9576,7 +9615,11 @@
                   inp.setAttribute('data-row-id', r.row.id);
                   inp.setAttribute('data-iso', iso);
                   if (r.row.mepEditable) {
+                    if (r.section === 'income') {
+                      inp.setAttribute('data-mep-sales-path', '1');
+                    }
                     var salesBlocked =
+                      r.section === 'income' &&
                       window.KpiYearStore &&
                       iso &&
                       !KpiYearStore.canWriteDailySalesFrom('mep', iso);
@@ -10593,7 +10636,17 @@
         } else if (action === 'money-input') {
           var rowId = target.getAttribute('data-row-id');
           var iso2 = target.getAttribute('data-iso');
-          if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso2)) {
+          var salesPathOnly =
+            target.getAttribute('data-mep-sales-path') === '1' ||
+            (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0 &&
+              state.incomeItems.some(function (it) {
+                return it && (it.id === rowId || it.lineId === rowId) && !!it.mepEditable && !it.mepAutoCalc;
+              }));
+          if (
+            salesPathOnly &&
+            window.KpiYearStore &&
+            !KpiYearStore.canWriteDailySalesFrom('mep', iso2)
+          ) {
             buildGrid();
             return;
           }

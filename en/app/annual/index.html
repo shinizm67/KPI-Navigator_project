@@ -4504,11 +4504,16 @@
     .office-mode .insight-overlay__date-nav,
     .office-mode .insight-overlay__date-btn {
       color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-overlay__date-btn {
+      font-size: 18px;
     }
     .office-mode .insight-overlay__today {
       background: #d0d0d0;
       color: #111;
       border: 1px solid #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .insight-overlay__divider {
       border-top-color: #111;
@@ -9280,7 +9285,7 @@
       top: calc(1248.5px - var(--daily-overlay-sticky-h));
     }
     .office-mode .daily-overlay__sticky-head {
-      background: rgba(9, 12, 17, 0.98);
+      background: #f0f0f0;
     }
     /* END KPI-DAILY-OVERLAY-STICKY-HEAD */
     .daily-overlay__head {
@@ -9405,8 +9410,8 @@
       font-size: 20px;
       line-height: 1;
       writing-mode: vertical-rl;
-      text-orientation: upright;
-      transform: none;
+      text-orientation: mixed;
+      transform: rotate(180deg);
       transform-origin: center;
       letter-spacing: 0;
       pointer-events: none;
@@ -9670,10 +9675,166 @@
       line-height: 1;
       flex: 0 0 auto;
     }
-    .office-mode .daily-overlay__panel {
-      border-color: rgba(88, 225, 243, 0.75);
-      box-shadow: 0 0 20px rgba(88, 225, 243, 0.18);
+    /* KPI-DAILY-OVERLAY-OFFICE */
+    body.office-mode .daily-overlay__backdrop {
+      background: rgba(0, 0, 0, 0.28);
     }
+    body.office-mode .daily-overlay__panel {
+      border: 3px solid #555;
+      background: #f0f0f0;
+      box-shadow: none;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.office-mode .daily-overlay__panel *:not(svg):not(svg *) {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel *:not(svg):not(svg *):not([class*="tri"]):not([class*="triangle"]) {
+      border-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel {
+      border-color: #555 !important;
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel *,
+    html[lang="en"] body.office-mode .daily-overlay__panel * {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.office-mode .daily-overlay__close {
+      border: 1px solid #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__close:hover,
+    body.office-mode .daily-overlay__close:focus-visible {
+      background: #c0c0c0 !important;
+      outline: none;
+    }
+    body.office-mode .daily-overlay__sticky-head {
+      background: #f0f0f0 !important;
+    }
+    body.office-mode .daily-overlay__scroll {
+      background: #f0f0f0;
+      color: #111;
+    }
+    body.office-mode .daily-overlay__date-nav,
+    body.office-mode .daily-overlay__date-btn {
+      color: #111 !important;
+      background: transparent;
+    }
+    body.office-mode .daily-overlay__today {
+      border: 1px solid #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__today:hover,
+    body.office-mode .daily-overlay__today:focus-visible {
+      background: #c0c0c0 !important;
+    }
+    body.office-mode .daily-overlay__sticky-head::after {
+      border-top-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__vline,
+    body.office-mode .daily-overlay__hline {
+      border-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__vlabel {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-title,
+    body.office-mode .daily-overlay__monthly-title,
+    body.office-mode .daily-overlay__annual-title {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box,
+    body.office-mode .daily-overlay__monthly-value-box,
+    body.office-mode .daily-overlay__annual-value-box {
+      border: 1px solid #111 !important;
+      background: #fff !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-title,
+    body.office-mode .daily-overlay__monthly-graph-title,
+    body.office-mode .daily-overlay__annual-graph-title,
+    body.office-mode .daily-overlay__daily-graph-rate,
+    body.office-mode .daily-overlay__monthly-graph-rate,
+    body.office-mode .daily-overlay__annual-graph-rate {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-graph-track,
+    body.office-mode .daily-overlay__monthly-graph-track,
+    body.office-mode .daily-overlay__annual-graph-track {
+      border-color: #111 !important;
+      background: #e0e0e0 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-fill,
+    body.office-mode .daily-overlay__monthly-graph-fill,
+    body.office-mode .daily-overlay__annual-graph-fill {
+      background: #bdbdbd !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-target-line,
+    body.office-mode .daily-overlay__monthly-graph-target-line,
+    body.office-mode .daily-overlay__annual-graph-target-line {
+      background: #e6ff00 !important;
+      box-shadow: none;
+    }
+    /* CSS triangles: keep marker yellow (same as Insight Office). */
+    body.office-mode .daily-overlay__panel [class*="tri"],
+    body.office-mode .daily-overlay__panel [class*="triangle"] {
+      border-left-color: transparent !important;
+      border-right-color: transparent !important;
+      border-bottom-color: transparent !important;
+      border-top-color: var(--marker-color, #e6ff00) !important;
+      color: transparent !important;
+      filter: none;
+    }
+    /* Keep TW / severity colors readable. */
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--win,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--win,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--win {
+      color: #0f9403 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--neutral,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--neutral,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--neutral {
+      color: #333 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-90,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-90,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-90 {
+      color: #b71c1c !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-80,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-80,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-80 {
+      color: #c62828 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-70,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-70,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-70 {
+      color: #d32f2f !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-60,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-60,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-60 {
+      color: #e53935 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-50,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-50,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-50 {
+      color: #9a0007 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-below,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-below,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-below {
+      color: #7f0000 !important;
+    }
+    /* /KPI-DAILY-OVERLAY-OFFICE */
 
 
 
@@ -17596,7 +17757,7 @@ Cumulative Target Annual Sales</p>
 
   <script>
     (function () {
-                                                                                                                                                                                                                    /* KPI-INSIGHT-EXPENSE-READ */
+                                                                                                                                                                                                                                        /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -18060,7 +18221,7 @@ Cumulative Target Annual Sales</p>
       });
     })();
     /* END KPI-INSIGHT-EXPENSE-READ */
-                    /* KPI-INSIGHT-TW-DIFF */
+        /* KPI-INSIGHT-TW-DIFF */
     (function () {
       var DASH = '—';
 
@@ -18231,11 +18392,18 @@ Cumulative Target Annual Sales</p>
        * - Suggested Target: annualTarget * (1 + adj/100)
        */
       function computeAnnualTargetRevisionKpi(m, iso) {
+        var ja =
+          typeof insightIsJaLang === 'function'
+            ? insightIsJaLang()
+            : String(document.documentElement.getAttribute('lang') || '')
+                .toLowerCase()
+                .indexOf('ja') === 0;
         var term = DASH;
         if (iso) {
           var month = Number(String(iso).split('-')[1]);
           if (Number.isFinite(month) && month >= 1 && month <= 12) {
-            term = 'Term ' + (Math.floor((month - 1) / 3) + 1);
+            var termNum = Math.floor((month - 1) / 3) + 1;
+            term = ja ? '第' + termNum + '四半期' : 'Term ' + termNum;
           }
         }
         if (
@@ -18251,7 +18419,11 @@ Cumulative Target Annual Sales</p>
         if (adj > 20) adj = 20;
         if (adj < -20) adj = -20;
         var abs = Math.abs(adj);
-        var status = abs < 3 ? 'On Track' : abs <= 10 ? 'Watch' : 'Revise';
+        var status = abs < 3
+          ? ja ? '順調' : 'On Track'
+          : abs <= 10
+            ? ja ? '要注意' : 'Watch'
+            : ja ? '要改訂' : 'Revise';
         var adjText = (adj > 0 ? '+' : '') + adj + '%';
         var targetText = DASH;
         if (m.annualTarget != null && Number.isFinite(Number(m.annualTarget))) {
@@ -19660,7 +19832,9 @@ Cumulative Target Annual Sales</p>
           { code: 'storm', ja: '嵐', en: 'Storm' },
           { code: 'gale', ja: '暴風', en: 'Gale' },
         ];
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        var low = s.toLowerCase();
+        if (low === 'fine') s = 'sunny';
         var ja = insightIsJaLang();
         for (var i = 0; i < presets.length; i++) {
           if (presets[i].code === s) return ja ? presets[i].ja : presets[i].en;
@@ -19742,6 +19916,29 @@ Cumulative Target Annual Sales</p>
         }
       }
 
+      function patchDualInsightLabels(block, year) {
+        if (!block) return;
+        var ja = insightIsJaLang();
+        var todayTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--today .insight-analyze-dual-insight__title'
+        );
+        var lyTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--last-year .insight-analyze-dual-insight__title'
+        );
+        if (todayTitle) todayTitle.textContent = ja ? '本日の考察' : "Today's Insight";
+        if (lyTitle) lyTitle.textContent = ja ? '前年同曜日の考察' : 'Last Year Day of Week Insight';
+        var weatherDt = ja ? '天気 :' : 'Weather :';
+        var memoLabels = historicalReasonMemoLabels(year);
+        var cols = block.querySelectorAll('.insight-analyze-dual-insight__col');
+        for (var c = 0; c < cols.length; c++) {
+          var dts = cols[c].querySelectorAll('.insight-analyze-dual-insight__row dt');
+          if (dts[0]) dts[0].textContent = weatherDt;
+          for (var i = 0; i < 6; i++) {
+            if (dts[i + 1] && memoLabels[i]) dts[i + 1].textContent = memoLabels[i] + ' :';
+          }
+        }
+      }
+
       function patchAnalyzeDualInsight(root, iso) {
         if (!root) return;
         var blocks = root.querySelectorAll('.insight-analyze-dual-insight');
@@ -19752,7 +19949,18 @@ Cumulative Target Annual Sales</p>
             ? window.__sameWeekdayIso(iso, 1)
             : null;
         var lyFields = dualInsightDayFields(lyIso);
+        var year = null;
+        if (iso && typeof iso === 'string' && iso.length >= 4) {
+          year = Number(iso.slice(0, 4));
+        }
+        if (!Number.isFinite(year)) {
+          year =
+            window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+              ? Number(KpiYearStore.getOperatingYear())
+              : new Date().getFullYear();
+        }
         blocks.forEach(function (block) {
+          patchDualInsightLabels(block, year);
           fillDualInsightCol(
             block.querySelector('.insight-analyze-dual-insight__col--today'),
             todayFields
@@ -29160,13 +29368,29 @@ Cumulative Target Annual Sales</p>
         }, SNAP_DELAY_MS);
       }
 
+      /* KPI-ARP-INP-STEP: 行送りは即時 scroll + rAF 集約（smooth の INP 悪化を回避） */
+      var __stepPendingDelta = 0;
+      var __stepRaf = 0;
       function stepTableByRows(step) {
+        step = Number(step);
+        if (!Number.isFinite(step) || step === 0) return;
+        __stepPendingDelta += step > 0 ? 1 : -1;
+        if (__stepRaf) return;
+        __stepRaf = requestAnimationFrame(function () {
+          __stepRaf = 0;
+          var pending = __stepPendingDelta;
+          __stepPendingDelta = 0;
+          if (!pending) return;
+          stepTableByRowsNow(pending);
+        });
+      }
+      function stepTableByRowsNow(step) {
         step = Number(step);
         if (!Number.isFinite(step) || step === 0) return;
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return;
         var range = anchorYearRowRange();
-        var idx = getNearestActiveFocusRowIndex() + (step > 0 ? 1 : -1);
+        var idx = getNearestActiveFocusRowIndex() + step;
         if (range.first >= 0 && range.last >= 0) {
           if (idx < range.first) idx = range.first;
           if (idx > range.last) idx = range.last;
@@ -29181,11 +29405,12 @@ Cumulative Target Annual Sales</p>
           return;
         }
         snapping = true;
-        tableScroll.scrollTo({ top: target, behavior: 'smooth' });
-        waitForVerticalScrollSettle(target, function () {
-          snapping = false;
-          syncDailyDateFromFocusedRowForIndex(idx);
-        });
+        tableScroll.scrollTop = target;
+        snapping = false;
+        syncDailyDateFromFocusedRowForIndex(idx);
+        if (typeof window.__refreshAnnualFocusBarLower === 'function') {
+          window.__refreshAnnualFocusBarLower();
+        }
       }
 
       var __focusDateLockIso = null;
@@ -36615,6 +36840,7 @@ Cumulative Target Annual Sales</p>
     (function () {
       var MEMO_COLS = ['store', 'area', 'social', 'marketing', 'promo', 'reservation'];
       var WD_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
       var WEATHER_PRESETS = [
         { code: '', ja: '—', en: '—' },
         { code: 'sunny', ja: '晴れ', en: 'Sunny' },
@@ -36633,6 +36859,19 @@ Cumulative Target Annual Sales</p>
       var noneLabel = useJa ? 'なし' : 'None';
       var offSuffix = useJa ? ' OFF' : ' OFF';
       var todayNavLabel = useJa ? '本日' : 'Today';
+      var weeklyTitleLabel = useJa ? '週間考察' : 'Weekly Insight';
+      var dateColLabel = useJa ? '日付' : 'Date';
+      var weatherColLabel = useJa ? '天気' : 'Weather';
+      var memoColDefaults = useJa
+        ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+        : [
+            'Store Event',
+            'Area Event',
+            'Social Media',
+            'Marketing',
+            'Promo Conversion',
+            'Reservation'
+          ];
       var dash = '—';
       var sharedAnchorIso = null;
       var roots = [];
@@ -36713,7 +36952,8 @@ Cumulative Target Annual Sales</p>
       }
 
       function weatherLabel(code) {
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        if (s.toLowerCase() === 'fine') s = 'sunny';
         for (var i = 0; i < WEATHER_PRESETS.length; i++) {
           if (WEATHER_PRESETS[i].code === s) {
             return useJa ? WEATHER_PRESETS[i].ja : WEATHER_PRESETS[i].en;
@@ -36746,6 +36986,40 @@ Cumulative Target Annual Sales</p>
         }
         var memos = (payload.dailyMeta && payload.dailyMeta.memos) || {};
         return Object.keys(memos);
+      }
+
+      function memoColLabelsForYear(year) {
+        var labels = memoColDefaults.slice();
+        var payload = loadYearPayload(year);
+        if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {
+          for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {
+            var row = payload.mepMemoRows[i];
+            var lab = useJa
+              ? row.labelJa || row.labelEn || labels[i]
+              : row.labelEn || row.labelJa || labels[i];
+            if (lab) labels[i] = String(lab);
+          }
+        }
+        return labels;
+      }
+
+      function weekdayLabel(dow) {
+        return useJa ? WD_JA[dow] : WD_EN[dow];
+      }
+
+      function updateWeeklyChrome(root, year) {
+        if (!root) return;
+        var title = root.querySelector('.insight-analyze-weekly__title');
+        if (title) title.textContent = weeklyTitleLabel;
+        var dateTh = root.querySelector('th.insight-analyze-weekly__col--date');
+        if (dateTh) dateTh.textContent = dateColLabel;
+        var weatherTh = root.querySelector('th.insight-analyze-weekly__col--weather');
+        if (weatherTh) weatherTh.textContent = weatherColLabel;
+        var labels = memoColLabelsForYear(year);
+        MEMO_COLS.forEach(function (colKey, idx) {
+          var th = root.querySelector('th.insight-analyze-weekly__col--' + colKey);
+          if (th && labels[idx]) th.textContent = labels[idx];
+        });
       }
 
       function readMemoText(year, rowId, iso) {
@@ -36803,14 +37077,14 @@ Cumulative Target Annual Sales</p>
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        return p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        return p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
       }
 
       function formatRowDate(iso, isOff) {
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        var base = p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        var base = p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
         return isOff ? base + offSuffix : base;
       }
 
@@ -36832,6 +37106,8 @@ Cumulative Target Annual Sales</p>
         sharedAnchorIso = anchorIso;
         var tbody = root.querySelector('.insight-analyze-weekly__table tbody');
         if (!tbody) return;
+        var anchorParts = parseIso(anchorIso);
+        updateWeeklyChrome(root, anchorParts ? anchorParts.y : operatingYear());
         updateNav(root, anchorIso);
         var isoList = weekIsoList(anchorIso);
         tbody.innerHTML = '';

@@ -2,6 +2,7 @@
     (function () {
       var MEMO_COLS = ['store', 'area', 'social', 'marketing', 'promo', 'reservation'];
       var WD_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
       var WEATHER_PRESETS = [
         { code: '', ja: '—', en: '—' },
         { code: 'sunny', ja: '晴れ', en: 'Sunny' },
@@ -20,6 +21,19 @@
       var noneLabel = useJa ? 'なし' : 'None';
       var offSuffix = useJa ? ' OFF' : ' OFF';
       var todayNavLabel = useJa ? '本日' : 'Today';
+      var weeklyTitleLabel = useJa ? '週間考察' : 'Weekly Insight';
+      var dateColLabel = useJa ? '日付' : 'Date';
+      var weatherColLabel = useJa ? '天気' : 'Weather';
+      var memoColDefaults = useJa
+        ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+        : [
+            'Store Event',
+            'Area Event',
+            'Social Media',
+            'Marketing',
+            'Promo Conversion',
+            'Reservation'
+          ];
       var dash = '—';
       var sharedAnchorIso = null;
       var roots = [];
@@ -100,7 +114,8 @@
       }
 
       function weatherLabel(code) {
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        if (s.toLowerCase() === 'fine') s = 'sunny';
         for (var i = 0; i < WEATHER_PRESETS.length; i++) {
           if (WEATHER_PRESETS[i].code === s) {
             return useJa ? WEATHER_PRESETS[i].ja : WEATHER_PRESETS[i].en;
@@ -133,6 +148,50 @@
         }
         var memos = (payload.dailyMeta && payload.dailyMeta.memos) || {};
         return Object.keys(memos);
+      }
+
+      function memoColLabelsForYear(year) {
+        var labels = memoColDefaults.slice();
+        var enFixed = [
+          'Store Event',
+          'Area Event',
+          'Social Media',
+          'Marketing',
+          'Promo Conversion',
+          'Reservation',
+        ];
+        var payload = loadYearPayload(year);
+        if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {
+          for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {
+            var row = payload.mepMemoRows[i];
+            var lab = useJa
+              ? row.labelJa || row.labelEn || labels[i]
+              : row.labelEn || row.labelJa || labels[i];
+            lab = String(lab || '');
+            if (useJa && enFixed.indexOf(lab) >= 0) lab = labels[i];
+            if (lab) labels[i] = lab;
+          }
+        }
+        return labels;
+      }
+
+      function weekdayLabel(dow) {
+        return useJa ? WD_JA[dow] : WD_EN[dow];
+      }
+
+      function updateWeeklyChrome(root, year) {
+        if (!root) return;
+        var title = root.querySelector('.insight-analyze-weekly__title');
+        if (title) title.textContent = weeklyTitleLabel;
+        var dateTh = root.querySelector('th.insight-analyze-weekly__col--date');
+        if (dateTh) dateTh.textContent = dateColLabel;
+        var weatherTh = root.querySelector('th.insight-analyze-weekly__col--weather');
+        if (weatherTh) weatherTh.textContent = weatherColLabel;
+        var labels = memoColLabelsForYear(year);
+        MEMO_COLS.forEach(function (colKey, idx) {
+          var th = root.querySelector('th.insight-analyze-weekly__col--' + colKey);
+          if (th && labels[idx]) th.textContent = labels[idx];
+        });
       }
 
       function readMemoText(year, rowId, iso) {
@@ -190,14 +249,14 @@
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        return p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        return p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
       }
 
       function formatRowDate(iso, isOff) {
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        var base = p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        var base = p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
         return isOff ? base + offSuffix : base;
       }
 
@@ -219,6 +278,8 @@
         sharedAnchorIso = anchorIso;
         var tbody = root.querySelector('.insight-analyze-weekly__table tbody');
         if (!tbody) return;
+        var anchorParts = parseIso(anchorIso);
+        updateWeeklyChrome(root, anchorParts ? anchorParts.y : operatingYear());
         updateNav(root, anchorIso);
         var isoList = weekIsoList(anchorIso);
         tbody.innerHTML = '';

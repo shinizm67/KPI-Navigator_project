@@ -214,28 +214,49 @@ CSS_BLOCK = f"""    {CSS_MARKER}
       background: rgba(20, 72, 52, 0.72);
       color: rgba(210, 245, 225, 0.96);
     }}
+    .monthly-edit-float__label-row--daily-input.monthly-edit-float__label-row--input-income {{
+      background: rgba(18, 68, 96, 0.72);
+      color: rgba(200, 240, 255, 0.96);
+    }}
     .monthly-edit-float__label-row--pl-readonly {{
-      opacity: 0.62;
+      opacity: 0.82;
     }}
     .monthly-edit-float__table tr.mef-row--daily-input td {{
       background: rgba(20, 72, 52, 0.72) !important;
+    }}
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td {{
+      background: rgba(18, 68, 96, 0.72) !important;
     }}
     .monthly-edit-float__table tr.mef-row--daily-input td.kpi-fill-empty {{
       background: rgba(16, 58, 42, 0.82) !important;
       box-shadow: inset 0 0 0 1px rgba(120, 200, 150, 0.22);
     }}
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td.kpi-fill-empty {{
+      background: rgba(14, 52, 78, 0.82) !important;
+      box-shadow: inset 0 0 0 1px rgba(120, 200, 230, 0.28);
+    }}
     .monthly-edit-float__table tr.mef-row--daily-input td .monthly-edit-float__input:not(:disabled) {{
       color: rgba(210, 245, 225, 0.96);
     }}
+    .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td .monthly-edit-float__input:not(:disabled) {{
+      color: rgba(200, 240, 255, 0.96);
+    }}
     .monthly-edit-float__table tr.mef-row--pl-readonly td {{
-      opacity: 0.55;
+      opacity: 0.75;
     }}
     body.office-mode .monthly-edit-float__label-row--daily-input {{
       background: rgba(180, 220, 200, 0.45);
       color: #113322;
     }}
+    body.office-mode .monthly-edit-float__label-row--daily-input.monthly-edit-float__label-row--input-income {{
+      background: rgba(170, 210, 230, 0.48);
+      color: #0a3040;
+    }}
     body.office-mode .monthly-edit-float__table tr.mef-row--daily-input td {{
       background: rgba(180, 220, 200, 0.45) !important;
+    }}
+    body.office-mode .monthly-edit-float__table tr.mef-row--daily-input.mef-row--input-income td {{
+      background: rgba(170, 210, 230, 0.48) !important;
     }}
 """
 

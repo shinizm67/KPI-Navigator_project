@@ -34,11 +34,16 @@ BLOCK = f"""{MARKER_START}
     .office-mode .insight-overlay__date-nav,
     .office-mode .insight-overlay__date-btn {{
       color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }}
+    .office-mode .insight-overlay__date-btn {{
+      font-size: 18px;
     }}
     .office-mode .insight-overlay__today {{
       background: #d0d0d0;
       color: #111;
       border: 1px solid #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
     }}
     .office-mode .insight-overlay__divider {{
       border-top-color: #111;

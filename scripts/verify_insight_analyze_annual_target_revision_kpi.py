@@ -82,13 +82,20 @@ def verify_page(page, url: str) -> list[str]:
                 block.querySelectorAll('.insight-annual-target-revision-kpi__value')
               ).map((el) => el.textContent.trim())
             : [];
+          const ja = String(document.documentElement.getAttribute('lang') || '')
+            .toLowerCase()
+            .indexOf('ja') === 0;
           let expected = null;
           if (m && m.hasPlan && Number(m.ytdT) > 0) {
             let adj = Math.round(((Number(m.ytdA) - Number(m.ytdT)) / Number(m.ytdT)) * 100);
             if (adj > 20) adj = 20;
             if (adj < -20) adj = -20;
             const abs = Math.abs(adj);
-            const status = abs < 3 ? 'On Track' : abs <= 10 ? 'Watch' : 'Revise';
+            const status = abs < 3
+              ? (ja ? '順調' : 'On Track')
+              : abs <= 10
+                ? (ja ? '要注意' : 'Watch')
+                : (ja ? '要改訂' : 'Revise');
             const adjText = (adj > 0 ? '+' : '') + adj + '%';
             let targetText = '—';
             if (m.annualTarget != null && Number.isFinite(Number(m.annualTarget))) {
@@ -99,7 +106,7 @@ def verify_page(page, url: str) -> list[str]:
                   : String(n);
             }
             expected = {
-              term: 'Term 3',
+              term: ja ? '第3四半期' : 'Term 3',
               status,
               adjText,
               targetText,
@@ -119,10 +126,14 @@ def verify_page(page, url: str) -> list[str]:
     if len(vals) < 4:
         problems.append(f"{url}: missing ATR KPI rows {vals}")
         return problems
-    if vals == ["Term 2", "Watch", "-5%", "$234,567"]:
+    if vals in (
+        ["Term 2", "Watch", "-5%", "$234,567"],
+        ["第2四半期", "要注意", "-5%", "$234,567"],
+    ):
         problems.append(f"{url}: still mock values")
-    if vals[0] != "Term 3":
-        problems.append(f"{url}: term want Term 3 got {vals[0]}")
+    want_term = (expected or {}).get("term") or "Term 3"
+    if vals[0] != want_term:
+        problems.append(f"{url}: term want {want_term} got {vals[0]}")
     if not expected:
         problems.append(f"{url}: could not compute expected (no plan/ytdT)")
         return problems

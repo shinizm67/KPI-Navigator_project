@@ -91,9 +91,11 @@ def main() -> int:
         all_errs.append("missing js/kpi-currency.js")
     else:
         js = helper.read_text(encoding="utf-8")
-        for key in ("JPY", "USD", "EUR", "GBP", "format", "symbol", "zero"):
+        for key in ("JPY", "USD", "EUR", "GBP", "TWD", "format", "symbol", "zero", "guessCode", "arrangeSelect"):
             if key not in js:
                 all_errs.append(f"kpi-currency.js missing {key}")
+        if "NT$" not in js:
+            all_errs.append("kpi-currency.js missing NT$ symbol")
 
     if all_errs:
         print("FAIL")

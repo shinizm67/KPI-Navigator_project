@@ -1989,6 +1989,16 @@
       color: #111;
       background: transparent;
     }
+    body.office-mode .pl-table--v1 .pl-row-hide {
+      border-color: #111;
+      background: #fff;
+    }
+    body.office-mode .pl-table--v1 .pl-row-hide .pl-row-hide__btn,
+    body.office-mode .pl-table--v1 .pl-row-hide .pl-v-mid__pm-btn {
+      border-bottom-color: transparent;
+      background: #fff;
+      color: #111;
+    }
     body.office-mode .pl-table--v1 .pl-row-order__btn {
       color: #111;
     }
@@ -3072,6 +3082,24 @@
     html[lang='ja'] .pl-table--v1 .pl-v-major__text {
       font-family: 'BIZ UDPGothic', sans-serif;
     }
+    /* PL-INCOME-EXPENSE-MAJOR-TONE */
+    body:not(.office-mode) .pl-table--labels .pl-v-major[data-pl-section="income"],
+    body:not(.office-mode) .pl-table--labels .pl-data-row--income > .pl-h-label {
+      background: rgba(18, 68, 96, 0.72);
+    }
+    body:not(.office-mode) .pl-table--labels .pl-v-major[data-pl-section="expenses"],
+    body:not(.office-mode) .pl-table--labels .pl-data-row--expenses > .pl-h-label {
+      background: rgba(20, 72, 52, 0.72);
+    }
+    body.office-mode .pl-table--labels .pl-v-major[data-pl-section="income"],
+    body.office-mode .pl-table--labels .pl-data-row--income > .pl-h-label {
+      background: rgba(170, 210, 230, 0.55);
+    }
+    body.office-mode .pl-table--labels .pl-v-major[data-pl-section="expenses"],
+    body.office-mode .pl-table--labels .pl-data-row--expenses > .pl-h-label {
+      background: rgba(180, 220, 200, 0.55);
+    }
+
     .pl-table--v1 .pl-v-major--expenses {
       position: relative;
       overflow: visible;
@@ -3217,14 +3245,19 @@
       color: #0c1b1f;
     }
     body.office-mode .pl-table--v1 .pl-guide-toggle {
-      border-color: rgba(37, 99, 235, 0.5);
-      background: rgba(37, 99, 235, 0.08);
-      color: #2563eb;
+      border-color: #111;
+      background: #fff;
+      color: #111;
+    }
+    body.office-mode .pl-table--v1 .pl-guide-toggle:hover {
+      background: #f5f5f5;
+      border-color: #111;
+      color: #111;
     }
     body.office-mode .pl-table--v1 .pl-guide-toggle[aria-pressed="true"] {
-      background: #2563eb;
-      border-color: #2563eb;
-      color: #ffffff;
+      background: #fff;
+      border-color: #111;
+      color: #111;
     }
     /* 目安トグルのツールチップは body 直下の固定要素で描画（セルの overflow:hidden 回避） */
     .pl-guide-tip-pop {
@@ -4318,7 +4351,7 @@
                   <colgroup><col class="pl-col-v-major"><col class="pl-col-h-label"></colgroup>
                   <tbody id="pl-table-label-body">
                     <tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="store_sales"><td class="pl-v-major" rowspan="4" data-pl-section="income"><span class="pl-v-major__text">Income</span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="store_sales" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Store Sales</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_a"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_a" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Sales A</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_b"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_b" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Sales B</span></span></th></tr><tr class="pl-data-row pl-data-row--income pl-data-row--total" data-pl-section="income" data-row="sales_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Sales</span></th></tr>
-                    <tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_fixed"><td class="pl-v-major pl-v-major--expenses" rowspan="3" data-pl-section="expenses"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">Total</span><span class="pl-v-major__line">Expenses</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_fixed" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Fixed</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_expected"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_expected" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Expected</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-pl-section="expenses" data-row="expenses_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Expenses</span></th></tr>
+                    <tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_fixed"><td class="pl-v-major pl-v-major--expenses" rowspan="3" data-pl-section="expenses"><span class="pl-v-major__text">Total Expenses</span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_fixed" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Fixed</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_expected"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_expected" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Expected</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-pl-section="expenses" data-row="expenses_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Expenses</span></th></tr>
                     <tr class="pl-data-row pl-data-row--ref-budget" data-pl-section="ref-budget" data-row="var_ref_budget"><th scope="row" class="pl-h-label pl-h-label--ref-budget" colspan="2" title="Guideline for variable spend = target cost rate minus fixed-cost rate (not a prescribed ideal)"><span class="pl-h-label__text">Variable expense guideline</span></th></tr>
                     <tr class="pl-data-row pl-data-row--profit" data-pl-section="profit"><th class="pl-h-label pl-h-label--total pl-h-label--profit" scope="row" colspan="2" id="pl-row-profit"><span class="pl-h-label__text">Profit</span></th></tr>
                   </tbody>

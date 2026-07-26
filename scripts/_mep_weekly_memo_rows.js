@@ -1,11 +1,11 @@
       /* MEP-WEEKLY-MEMO-ROWS */
       var WEEKLY_MEMO_ROW_DEFS = [
-        { labelJa: 'Store Event', labelEn: 'Store Event' },
-        { labelJa: 'Area Event', labelEn: 'Area Event' },
-        { labelJa: 'Social Media', labelEn: 'Social Media' },
-        { labelJa: 'Marketing', labelEn: 'Marketing' },
-        { labelJa: 'Promo Conversion', labelEn: 'Promo Conversion' },
-        { labelJa: 'Reservation', labelEn: 'Reservation' }
+        { labelJa: '店舗イベント', labelEn: 'Store Event' },
+        { labelJa: 'エリアイベント', labelEn: 'Area Event' },
+        { labelJa: 'SNS', labelEn: 'Social Media' },
+        { labelJa: 'マーケ', labelEn: 'Marketing' },
+        { labelJa: 'プロモ', labelEn: 'Promo Conversion' },
+        { labelJa: '予約', labelEn: 'Reservation' }
       ];
       var WEEKLY_MEMO_FIXED_COUNT = WEEKLY_MEMO_ROW_DEFS.length;
       function isAutoMemoLabelJa(label) {

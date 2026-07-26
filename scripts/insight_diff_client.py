@@ -367,11 +367,18 @@ def insight_diff_js() -> str:
        * - Suggested Target: annualTarget * (1 + adj/100)
        */
       function computeAnnualTargetRevisionKpi(m, iso) {{
+        var ja =
+          typeof insightIsJaLang === 'function'
+            ? insightIsJaLang()
+            : String(document.documentElement.getAttribute('lang') || '')
+                .toLowerCase()
+                .indexOf('ja') === 0;
         var term = DASH;
         if (iso) {{
           var month = Number(String(iso).split('-')[1]);
           if (Number.isFinite(month) && month >= 1 && month <= 12) {{
-            term = 'Term ' + (Math.floor((month - 1) / 3) + 1);
+            var termNum = Math.floor((month - 1) / 3) + 1;
+            term = ja ? '第' + termNum + '四半期' : 'Term ' + termNum;
           }}
         }}
         if (
@@ -387,7 +394,11 @@ def insight_diff_js() -> str:
         if (adj > 20) adj = 20;
         if (adj < -20) adj = -20;
         var abs = Math.abs(adj);
-        var status = abs < 3 ? 'On Track' : abs <= 10 ? 'Watch' : 'Revise';
+        var status = abs < 3
+          ? ja ? '順調' : 'On Track'
+          : abs <= 10
+            ? ja ? '要注意' : 'Watch'
+            : ja ? '要改訂' : 'Revise';
         var adjText = (adj > 0 ? '+' : '') + adj + '%';
         var targetText = DASH;
         if (m.annualTarget != null && Number.isFinite(Number(m.annualTarget))) {{
@@ -1796,7 +1807,9 @@ def insight_diff_js() -> str:
           {{ code: 'storm', ja: '嵐', en: 'Storm' }},
           {{ code: 'gale', ja: '暴風', en: 'Gale' }},
         ];
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        var low = s.toLowerCase();
+        if (low === 'fine') s = 'sunny';
         var ja = insightIsJaLang();
         for (var i = 0; i < presets.length; i++) {{
           if (presets[i].code === s) return ja ? presets[i].ja : presets[i].en;
@@ -1878,6 +1891,29 @@ def insight_diff_js() -> str:
         }}
       }}
 
+      function patchDualInsightLabels(block, year) {{
+        if (!block) return;
+        var ja = insightIsJaLang();
+        var todayTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--today .insight-analyze-dual-insight__title'
+        );
+        var lyTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--last-year .insight-analyze-dual-insight__title'
+        );
+        if (todayTitle) todayTitle.textContent = ja ? '本日の考察' : "Today's Insight";
+        if (lyTitle) lyTitle.textContent = ja ? '前年同曜日の考察' : 'Last Year Day of Week Insight';
+        var weatherDt = ja ? '天気 :' : 'Weather :';
+        var memoLabels = historicalReasonMemoLabels(year);
+        var cols = block.querySelectorAll('.insight-analyze-dual-insight__col');
+        for (var c = 0; c < cols.length; c++) {{
+          var dts = cols[c].querySelectorAll('.insight-analyze-dual-insight__row dt');
+          if (dts[0]) dts[0].textContent = weatherDt;
+          for (var i = 0; i < 6; i++) {{
+            if (dts[i + 1] && memoLabels[i]) dts[i + 1].textContent = memoLabels[i] + ' :';
+          }}
+        }}
+      }}
+
       function patchAnalyzeDualInsight(root, iso) {{
         if (!root) return;
         var blocks = root.querySelectorAll('.insight-analyze-dual-insight');
@@ -1888,7 +1924,18 @@ def insight_diff_js() -> str:
             ? window.__sameWeekdayIso(iso, 1)
             : null;
         var lyFields = dualInsightDayFields(lyIso);
+        var year = null;
+        if (iso && typeof iso === 'string' && iso.length >= 4) {{
+          year = Number(iso.slice(0, 4));
+        }}
+        if (!Number.isFinite(year)) {{
+          year =
+            window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+              ? Number(KpiYearStore.getOperatingYear())
+              : new Date().getFullYear();
+        }}
         blocks.forEach(function (block) {{
+          patchDualInsightLabels(block, year);
           fillDualInsightCol(
             block.querySelector('.insight-analyze-dual-insight__col--today'),
             todayFields
@@ -1931,6 +1978,35 @@ def insight_diff_js() -> str:
         return kind === 'year' ? 'No memo for this period' : 'No memo for this month';
       }}
 
+      function resolveInsightMemoLabel(row, idx, ja) {{
+        var defaults = ja
+          ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+          : [
+              'Store Event',
+              'Area Event',
+              'Social Media',
+              'Marketing',
+              'Promo Conversion',
+              'Reservation',
+            ];
+        var enFixed = [
+          'Store Event',
+          'Area Event',
+          'Social Media',
+          'Marketing',
+          'Promo Conversion',
+          'Reservation',
+        ];
+        var fallback = defaults[idx] || '';
+        if (!row) return fallback;
+        var lab = ja
+          ? row.labelJa || row.labelEn || fallback
+          : row.labelEn || row.labelJa || fallback;
+        lab = String(lab || '');
+        if (ja && enFixed.indexOf(lab) >= 0) return fallback;
+        return lab || fallback;
+      }}
+
       function historicalReasonMemoLabels(year) {{
         var ja = insightIsJaLang();
         var defaults = ja
@@ -1947,11 +2023,7 @@ def insight_diff_js() -> str:
         var labels = defaults.slice();
         if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {{
           for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {{
-            var row = payload.mepMemoRows[i];
-            var lab = ja
-              ? row.labelJa || row.labelEn || defaults[i]
-              : row.labelEn || row.labelJa || defaults[i];
-            if (lab) labels[i] = String(lab);
+            labels[i] = resolveInsightMemoLabel(payload.mepMemoRows[i], i, ja);
           }}
         }}
         return labels;

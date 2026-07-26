@@ -809,8 +809,8 @@ def income_data_rows_v1(lang: str) -> str:
 
 
 def expenses_major_label_html(lang: str) -> str:
-    """Vertical Total / Expenses label (line break after first word, same orientation as Income)."""
-    return _major_label_html(lang, ("Total", "Expenses"), ("総", "支出"))
+    """Vertical Total Expenses label (single line, same orientation as Income)."""
+    return _major_label_html(lang, ("Total Expenses",), ("総支出",))
 
 
 def expenses_label_rows_v1(lang: str) -> str:
@@ -6820,6 +6820,16 @@ def render_page(lang: str, lang_switch: str) -> str:
       color: #111;
       background: transparent;
     }}
+    body.office-mode .pl-table--v1 .pl-row-hide {{
+      border-color: #111;
+      background: #fff;
+    }}
+    body.office-mode .pl-table--v1 .pl-row-hide .pl-row-hide__btn,
+    body.office-mode .pl-table--v1 .pl-row-hide .pl-v-mid__pm-btn {{
+      border-bottom-color: transparent;
+      background: #fff;
+      color: #111;
+    }}
     body.office-mode .pl-table--v1 .pl-row-order__btn {{
       color: #111;
     }}
@@ -8048,14 +8058,19 @@ def render_page(lang: str, lang_switch: str) -> str:
       color: #0c1b1f;
     }}
     body.office-mode .pl-table--v1 .pl-guide-toggle {{
-      border-color: rgba(37, 99, 235, 0.5);
-      background: rgba(37, 99, 235, 0.08);
-      color: #2563eb;
+      border-color: #111;
+      background: #fff;
+      color: #111;
+    }}
+    body.office-mode .pl-table--v1 .pl-guide-toggle:hover {{
+      background: #f5f5f5;
+      border-color: #111;
+      color: #111;
     }}
     body.office-mode .pl-table--v1 .pl-guide-toggle[aria-pressed="true"] {{
-      background: #2563eb;
-      border-color: #2563eb;
-      color: #ffffff;
+      background: #fff;
+      border-color: #111;
+      color: #111;
     }}
     /* 目安トグルのツールチップは body 直下の固定要素で描画（セルの overflow:hidden 回避） */
     .pl-guide-tip-pop {{

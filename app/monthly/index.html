@@ -6586,11 +6586,16 @@
     .office-mode .insight-overlay__date-nav,
     .office-mode .insight-overlay__date-btn {
       color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    .office-mode .insight-overlay__date-btn {
+      font-size: 18px;
     }
     .office-mode .insight-overlay__today {
       background: #d0d0d0;
       color: #111;
       border: 1px solid #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .office-mode .insight-overlay__divider {
       border-top-color: #111;
@@ -9082,6 +9087,55 @@
       );
       transform: translateX(-50%) translateY(-50%) rotate(180deg);
     }
+    /* KPI-INSIGHT-JA-VLABEL-ORIENT */
+
+    /* Insight JA: header date nav uses BIZ (not Orbitron) */
+    html[lang="ja"] .insight-overlay__date-nav,
+    html[lang="ja"] .insight-overlay__date-btn,
+    html[lang="ja"] .insight-overlay__today {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    html[lang="ja"] .insight-overlay__date-btn {
+      font-size: 18px;
+    }
+
+    /* Insight JA: vertical labels upright (no 180° flip used for English) */
+    html[lang="ja"] .insight-overlay__section-label {
+      text-orientation: upright;
+      transform: translateX(-50%);
+      font-family: 'BIZ UDPGothic', sans-serif;
+      letter-spacing: 0.12em;
+    }
+    html[lang="ja"] .insight-pane--analyze .insight-overlay__section-label,
+    html[lang="ja"] .insight-pane--graph .insight-overlay__section-label {
+      text-orientation: mixed;
+      transform: none;
+      writing-mode: horizontal-tb;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    html[lang="ja"] .insight-overlay__sub-label {
+      text-orientation: upright;
+      transform: translateX(-50%);
+      font-family: 'BIZ UDPGothic', sans-serif;
+      letter-spacing: 0.08em;
+    }
+    html[lang="ja"] .insight-overlay__sub-label--sales-status,
+    html[lang="ja"] .insight-overlay__sub-label--monthly-sales-status,
+    html[lang="ja"] .insight-overlay__sub-label--monthly-cost-structure,
+    html[lang="ja"] .insight-overlay__sub-label--monthly-progress,
+    html[lang="ja"] .insight-overlay__sub-label--monthly-comparison,
+    html[lang="ja"] .insight-overlay__sub-label--annual-sales-status,
+    html[lang="ja"] .insight-overlay__sub-label--annual-cost-structure,
+    html[lang="ja"] .insight-overlay__sub-label--annual-progress,
+    html[lang="ja"] .insight-overlay__sub-label--annual-comparison,
+    html[lang="ja"] .insight-overlay__sub-label--annual-target-revision,
+    html[lang="ja"] .insight-overlay__sub-label--reference,
+    html[lang="ja"] .insight-overlay__sub-label--expenses,
+    html[lang="ja"] .insight-overlay__sub-label--profit {
+      transform: translateX(-50%) translateY(-50%);
+    }
+    /* /KPI-INSIGHT-JA-VLABEL-ORIENT */
+
     /* Insight: 横スクロールなし — 1100px パネル内に収める（Daily / Monthly / Annual Sales Status 共通） */
     .insight-daily-kpi,
     .insight-monthly-kpi,
@@ -11453,7 +11507,7 @@
       top: calc(1248.5px - var(--daily-overlay-sticky-h));
     }
     .office-mode .daily-overlay__sticky-head {
-      background: rgba(9, 12, 17, 0.98);
+      background: #f0f0f0;
     }
     /* END KPI-DAILY-OVERLAY-STICKY-HEAD */
     .daily-overlay__head {
@@ -11579,11 +11633,14 @@
       font-size: 20px;
       line-height: 1;
       writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
+      text-orientation: upright;
+      transform: none;
       transform-origin: center;
       letter-spacing: 0;
       pointer-events: none;
+    }
+    html[lang="ja"] .daily-overlay__vlabel {
+      font-family: 'BIZ UDPGothic', sans-serif;
     }
     .daily-overlay__daily-kpi,
     .daily-overlay__monthly-kpi,
@@ -11844,10 +11901,166 @@
       line-height: 1;
       flex: 0 0 auto;
     }
-    .office-mode .daily-overlay__panel {
-      border-color: rgba(88, 225, 243, 0.75);
-      box-shadow: 0 0 20px rgba(88, 225, 243, 0.18);
+    /* KPI-DAILY-OVERLAY-OFFICE */
+    body.office-mode .daily-overlay__backdrop {
+      background: rgba(0, 0, 0, 0.28);
     }
+    body.office-mode .daily-overlay__panel {
+      border: 3px solid #555;
+      background: #f0f0f0;
+      box-shadow: none;
+      color: #111;
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.office-mode .daily-overlay__panel *:not(svg):not(svg *) {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel *:not(svg):not(svg *):not([class*="tri"]):not([class*="triangle"]) {
+      border-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel {
+      border-color: #555 !important;
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__panel *,
+    html[lang="en"] body.office-mode .daily-overlay__panel * {
+      font-family: 'BIZ UDPGothic', sans-serif;
+    }
+    body.office-mode .daily-overlay__close {
+      border: 1px solid #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__close:hover,
+    body.office-mode .daily-overlay__close:focus-visible {
+      background: #c0c0c0 !important;
+      outline: none;
+    }
+    body.office-mode .daily-overlay__sticky-head {
+      background: #f0f0f0 !important;
+    }
+    body.office-mode .daily-overlay__scroll {
+      background: #f0f0f0;
+      color: #111;
+    }
+    body.office-mode .daily-overlay__date-nav,
+    body.office-mode .daily-overlay__date-btn {
+      color: #111 !important;
+      background: transparent;
+    }
+    body.office-mode .daily-overlay__today {
+      border: 1px solid #111 !important;
+      background: #d0d0d0 !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__today:hover,
+    body.office-mode .daily-overlay__today:focus-visible {
+      background: #c0c0c0 !important;
+    }
+    body.office-mode .daily-overlay__sticky-head::after {
+      border-top-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__vline,
+    body.office-mode .daily-overlay__hline {
+      border-color: #111 !important;
+    }
+    body.office-mode .daily-overlay__vlabel {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-title,
+    body.office-mode .daily-overlay__monthly-title,
+    body.office-mode .daily-overlay__annual-title {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box,
+    body.office-mode .daily-overlay__monthly-value-box,
+    body.office-mode .daily-overlay__annual-value-box {
+      border: 1px solid #111 !important;
+      background: #fff !important;
+      color: #111 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-title,
+    body.office-mode .daily-overlay__monthly-graph-title,
+    body.office-mode .daily-overlay__annual-graph-title,
+    body.office-mode .daily-overlay__daily-graph-rate,
+    body.office-mode .daily-overlay__monthly-graph-rate,
+    body.office-mode .daily-overlay__annual-graph-rate {
+      color: #111 !important;
+    }
+    body.office-mode .daily-overlay__daily-graph-track,
+    body.office-mode .daily-overlay__monthly-graph-track,
+    body.office-mode .daily-overlay__annual-graph-track {
+      border-color: #111 !important;
+      background: #e0e0e0 !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-fill,
+    body.office-mode .daily-overlay__monthly-graph-fill,
+    body.office-mode .daily-overlay__annual-graph-fill {
+      background: #bdbdbd !important;
+      box-shadow: none;
+    }
+    body.office-mode .daily-overlay__daily-graph-target-line,
+    body.office-mode .daily-overlay__monthly-graph-target-line,
+    body.office-mode .daily-overlay__annual-graph-target-line {
+      background: #e6ff00 !important;
+      box-shadow: none;
+    }
+    /* CSS triangles: keep marker yellow (same as Insight Office). */
+    body.office-mode .daily-overlay__panel [class*="tri"],
+    body.office-mode .daily-overlay__panel [class*="triangle"] {
+      border-left-color: transparent !important;
+      border-right-color: transparent !important;
+      border-bottom-color: transparent !important;
+      border-top-color: var(--marker-color, #e6ff00) !important;
+      color: transparent !important;
+      filter: none;
+    }
+    /* Keep TW / severity colors readable. */
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--win,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--win,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--win {
+      color: #0f9403 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--neutral,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--neutral,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--neutral {
+      color: #333 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-90,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-90,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-90 {
+      color: #b71c1c !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-80,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-80,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-80 {
+      color: #c62828 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-70,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-70,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-70 {
+      color: #d32f2f !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-60,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-60,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-60 {
+      color: #e53935 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-50,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-50,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-50 {
+      color: #9a0007 !important;
+    }
+    body.office-mode .daily-overlay__daily-value-box.tw-diff--sev-below,
+    body.office-mode .daily-overlay__monthly-value-box.tw-diff--sev-below,
+    body.office-mode .daily-overlay__annual-value-box.tw-diff--sev-below {
+      color: #7f0000 !important;
+    }
+    /* /KPI-DAILY-OVERLAY-OFFICE */
     .office-mode .monthly-access-btn {
       width: auto;
       min-width: 112px;
@@ -12466,7 +12679,7 @@
           type="button"
           class="monthly-access-btn monthly-access-btn--edit"
           id="monthly-top-edit-btn"
-          aria-label="Edit"
+          aria-label="編集"
         >
           <img
             src="../../images/monthly_decoration_frame_edit.svg"
@@ -12477,7 +12690,7 @@
             decoding="async"
             aria-hidden="true"
           >
-          <span class="monthly-access-btn__label">EDIT</span>
+          <span class="monthly-access-btn__label">編集</span>
         </button>
       </div>
       <section class="annual-monthly-data" id="annual-monthly-data">
@@ -12582,7 +12795,7 @@
         <div class="annual-kpi-group5-labels-row" aria-hidden="true">
           <div class="annual-kpi-group5-row-label-col" aria-hidden="true"></div>
           <div class="annual-kpi-strip-labels">
-            <p class="annual-kpi-strip-label annual-kpi-strip-label--sales">Sales</p>
+            <p class="annual-kpi-strip-label annual-kpi-strip-label--sales">売上</p>
             <p class="annual-kpi-strip-label annual-kpi-strip-label--cyan">目標売上</p>
             <p class="annual-kpi-strip-label annual-kpi-strip-label--cyan">差額</p>
             <p class="annual-kpi-strip-label annual-kpi-strip-label--cyan">達成率</p>
@@ -12598,7 +12811,7 @@
           </div>
         </div>
         <div class="annual-kpi-group5-values-row" aria-hidden="true">
-          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">Daily</span></div>
+          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">日次</span></div>
           <div class="annual-kpi-strip">
           <div class="annual-kpi-cell">
             <p class="annual-kpi-value" id="annual-group5-sales-value" data-field="daily.sales">¥101,754.41</p>
@@ -12621,7 +12834,7 @@
           </div>
         </div>
         <div class="annual-kpi-group5-values-row annual-kpi-group5-values-row--monthly" aria-hidden="true">
-          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">Monthly</span></div>
+          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">月次</span></div>
           <div class="annual-kpi-strip">
             <div class="annual-kpi-cell">
               <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-sales" data-field="monthly.cumulativeSales">¥701,754.41</p>
@@ -12644,7 +12857,7 @@
           </div>
         </div>
         <div class="annual-kpi-group5-values-row annual-kpi-group5-values-row--annual" aria-hidden="true">
-          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">Annual</span></div>
+          <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">年次</span></div>
           <div class="annual-kpi-strip">
             <div class="annual-kpi-cell">
               <p class="annual-kpi-value" id="annual-group5-annual-cumulative-sales" data-field="annual.cumulativeSales">¥701,754.41</p>
@@ -12781,7 +12994,7 @@
               aria-haspopup="dialog"
               aria-controls="annual-graph-popover-panel"
             >
-              <span class="annual-daily-focus-bar-graph-btn__inner">Graph</span>
+              <span class="annual-daily-focus-bar-graph-btn__inner">グラフ</span>
             </button>
             <div class="annual-daily-focus-bar-stack">
               <button type="button" class="annual-daily-focus-wing-hit annual-daily-focus-wing-hit--left" id="annual-daily-focus-wing-hit-left" aria-label="日次テーブルを展開">
@@ -12968,7 +13181,7 @@
                 aria-haspopup="dialog"
                 aria-controls="annual-graph-popover-panel"
               >
-                <span class="monthly-vfocus-graph-btn__inner">Graph</span>
+                <span class="monthly-vfocus-graph-btn__inner">グラフ</span>
               </button>
             </div>
             <div class="monthly-vfocus-fill">
@@ -13289,26 +13502,26 @@
   </section>
   <div class="insight-overlay" id="insight-overlay" hidden aria-hidden="true">
     <div class="insight-overlay__backdrop" id="insight-overlay-backdrop" aria-hidden="true"></div>
-    <section class="insight-overlay__panel" role="dialog" aria-modal="true" aria-label="Insight">
+    <section class="insight-overlay__panel" role="dialog" aria-modal="true" aria-label="考察">
       <button type="button" class="insight-overlay__close" id="insight-overlay-close" aria-label="閉じる">×</button>
-      <h2 class="insight-overlay__title" id="insight-overlay-title">Summary</h2>
+      <h2 class="insight-overlay__title" id="insight-overlay-title">サマリー</h2>
       <div class="insight-overlay__date-row">
         <button type="button" class="insight-overlay__date-nav" id="insight-overlay-prev-day" aria-label="前日">◀︎</button>
         <button type="button" class="insight-overlay__date-btn" id="insight-overlay-date-btn" aria-label="日付を選択">—</button>
         <button type="button" class="insight-overlay__date-nav" id="insight-overlay-next-day" aria-label="翌日">▶︎</button>
-        <button type="button" class="insight-overlay__today" id="insight-overlay-today">Today</button>
+        <button type="button" class="insight-overlay__today" id="insight-overlay-today">今日</button>
         <input type="date" class="insight-overlay__date-input" id="insight-overlay-date-input" aria-hidden="true" tabindex="-1">
       </div>
       <div class="insight-overlay__tabs">
         <div class="insight-overlay__tabs-left">
-          <button type="button" class="insight-overlay__tab insight-overlay__tab--main is-active" id="insight-tab-summary" data-insight-tab="summary">Summary</button>
-          <button type="button" class="insight-overlay__tab insight-overlay__tab--main" id="insight-tab-analyze" data-insight-tab="analyze">Analyze</button>
-          <button type="button" class="insight-overlay__tab insight-overlay__tab--main" id="insight-tab-graph" data-insight-tab="graph">Graph</button>
+          <button type="button" class="insight-overlay__tab insight-overlay__tab--main is-active" id="insight-tab-summary" data-insight-tab="summary">サマリー</button>
+          <button type="button" class="insight-overlay__tab insight-overlay__tab--main" id="insight-tab-analyze" data-insight-tab="analyze">分析</button>
+          <button type="button" class="insight-overlay__tab insight-overlay__tab--main" id="insight-tab-graph" data-insight-tab="graph">グラフ</button>
         </div>
         <div class="insight-overlay__tabs-right">
-          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-daily" href="#insight-jump-summary-daily">Daily</a>
-          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-monthly" href="#insight-jump-summary-monthly">Monthly</a>
-          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-annual" href="#insight-jump-summary-annual">Annual</a>
+          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-daily" href="#insight-jump-summary-daily">日次</a>
+          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-monthly" href="#insight-jump-summary-monthly">月次</a>
+          <a class="insight-overlay__tab insight-overlay__tab--jump" id="insight-jump-link-annual" href="#insight-jump-summary-annual">年次</a>
         </div>
       </div>
       <div class="insight-overlay__divider" aria-hidden="true"></div>
@@ -13321,96 +13534,96 @@
           <span class="insight-overlay__vline-bridge" aria-hidden="true"></span>
           <span class="insight-overlay__hline insight-overlay__hline--monthly" aria-hidden="true"></span>
           <span class="insight-overlay__hline insight-overlay__hline--annual" aria-hidden="true"></span>
-          <section class="insight-overlay__section insight-overlay__section--daily" id="insight-jump-summary-daily" aria-label="Daily section">
-            <h3 class="insight-overlay__section-label">Daily</h3>
+          <section class="insight-overlay__section insight-overlay__section--daily" id="insight-jump-summary-daily" aria-label="日次セクション">
+            <h3 class="insight-overlay__section-label">日次</h3>
             <div class="insight-daily-kpi">
               <div class="insight-daily-kpi__row">
-                <p class="insight-daily-kpi__label insight-daily-kpi__label--primary">Sales</p>
+                <p class="insight-daily-kpi__label insight-daily-kpi__label--primary">売上</p>
                 <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--lg">
                   <p class="insight-daily-kpi__value insight-daily-kpi__value--lg">$123,456</p>
                 </div>
               </div>
               <div class="insight-daily-kpi__row">
-                <p class="insight-daily-kpi__label">Target Sales</p>
+                <p class="insight-daily-kpi__label">目標売上</p>
                 <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                   <p class="insight-daily-kpi__value">$123,456</p>
                 </div>
               </div>
               <div class="insight-daily-kpi__row">
-                <p class="insight-daily-kpi__label">Difference</p>
+                <p class="insight-daily-kpi__label">差額</p>
                 <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                   <p class="insight-daily-kpi__value">$123,456</p>
                 </div>
               </div>
               <div class="insight-daily-kpi__row">
-                <p class="insight-daily-kpi__label">Profit Margin</p>
+                <p class="insight-daily-kpi__label">利益率</p>
                 <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                   <p class="insight-daily-kpi__value">80%</p>
                 </div>
               </div>
               <div class="insight-daily-kpi__graph-visual insight-kpi-graph-wrap">
-                <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">Today (Sales)</p>
+                <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">本日（売上）</p>
                 <div class="insight-daily-alloc-graph" id="insight-daily-alloc-graph">
                   <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
                   <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
                 </div>
-                <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">Today's Target Sales</p>
+                <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">本日の目標売上</p>
               </div>
-              <div class="insight-daily-reference" aria-label="Reference metrics">
+              <div class="insight-daily-reference" aria-label="参考指標">
                 <div class="insight-daily-reference__row">
-                  <p class="insight-daily-reference__label"><span class="insight-daily-reference__label-line">Historical Same Month &amp;</span><br><span class="insight-daily-reference__label-line">Day of Week Average</span></p>
+                  <p class="insight-daily-reference__label"><span class="insight-daily-reference__label-line">過去同月・同曜日</span><br><span class="insight-daily-reference__label-line">平均</span></p>
                   <div class="insight-daily-reference__value-box">
                     <p class="insight-daily-reference__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-reference__row">
-                  <p class="insight-daily-reference__label"><span class="insight-daily-reference__label-line">Same Weekday</span><br><span class="insight-daily-reference__label-line">(If available)</span></p>
+                  <p class="insight-daily-reference__label"><span class="insight-daily-reference__label-line">同曜日</span><br><span class="insight-daily-reference__label-line">（あれば）</span></p>
                   <div class="insight-daily-reference__value-box">
                     <p class="insight-daily-reference__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-reference__row">
-                  <p class="insight-daily-reference__label">Variance</p>
+                  <p class="insight-daily-reference__label">差額</p>
                   <div class="insight-daily-reference__value-box">
                     <p class="insight-daily-reference__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-reference__row">
-                  <p class="insight-daily-reference__label">Same Day of Week</p>
+                  <p class="insight-daily-reference__label">同曜日</p>
                   <div class="insight-daily-reference__value-box">
                     <p class="insight-daily-reference__value">$123,456</p>
                   </div>
                 </div>
               </div>
-              <div class="insight-daily-expenses" aria-label="Expenses metrics">
+              <div class="insight-daily-expenses" aria-label="支出指標">
                 <div class="insight-daily-expenses__row">
-                  <p class="insight-daily-expenses__label">Variable Cost</p>
+                  <p class="insight-daily-expenses__label">変動費</p>
                   <div class="insight-daily-expenses__value-box">
                     <p class="insight-daily-expenses__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-expenses__row">
-                  <p class="insight-daily-expenses__label"><span class="insight-daily-expenses__label-line">Fixed Cost</span><br><span class="insight-daily-expenses__label-line">(Daily Allocation)</span></p>
+                  <p class="insight-daily-expenses__label"><span class="insight-daily-expenses__label-line">固定費</span><br><span class="insight-daily-expenses__label-line">（日次配分）</span></p>
                   <div class="insight-daily-expenses__value-box">
                     <p class="insight-daily-expenses__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-expenses__row">
-                  <p class="insight-daily-expenses__label">Total Expenses</p>
+                  <p class="insight-daily-expenses__label">支出合計</p>
                   <div class="insight-daily-expenses__value-box">
                     <p class="insight-daily-expenses__value">$123,456</p>
                   </div>
                 </div>
               </div>
-              <div class="insight-daily-profit" aria-label="Profit metrics">
+              <div class="insight-daily-profit" aria-label="利益指標">
                 <div class="insight-daily-profit__row">
-                  <p class="insight-daily-profit__label">Estimated Profit</p>
+                  <p class="insight-daily-profit__label">見込利益</p>
                   <div class="insight-daily-profit__value-box">
                     <p class="insight-daily-profit__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-profit__row">
-                  <p class="insight-daily-profit__label">Profit Margin</p>
+                  <p class="insight-daily-profit__label">利益率</p>
                   <div class="insight-daily-profit__value-box">
                     <p class="insight-daily-profit__value">80%</p>
                   </div>
@@ -13436,13 +13649,13 @@
                   >▶ グラフ</a>
               </div>
             </div>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--sales-status">Sales Status</span>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--reference">Reference</span>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--expenses">Expenses(Optional)</span>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--profit">Profit</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--sales-status">売上状況</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--reference">参考</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--expenses">支出（任意）</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--profit">利益</span>
           </section>
           <section class="insight-overlay__section insight-overlay__section--monthly" id="insight-jump-summary-monthly" aria-label="Monthly section">
-            <h3 class="insight-overlay__section-label">Monthly</h3>
+            <h3 class="insight-overlay__section-label">月次</h3>
             <div class="insight-monthly-kpi" aria-label="Monthly sales status">
               <div class="insight-monthly-kpi__row">
                 <p class="insight-monthly-kpi__label insight-monthly-kpi__label--primary">累計売上</p>
@@ -13613,13 +13826,13 @@
                 </div>
               </div>
             </div>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--monthly-sales-status">Sales Status</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--monthly-sales-status">売上状況</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--monthly-cost-structure">コスト構造</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--monthly-progress">進捗</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--monthly-comparison">比較</span>
           </section>
           <section class="insight-overlay__section insight-overlay__section--annual" id="insight-jump-summary-annual" aria-label="Annual section">
-            <h3 class="insight-overlay__section-label">Annual</h3>
+            <h3 class="insight-overlay__section-label">年次</h3>
             <div class="insight-annual-kpi" aria-label="Annual sales status">
               <div class="insight-annual-kpi__row">
                 <p class="insight-annual-kpi__label insight-annual-kpi__label--primary">累計売上</p>
@@ -13872,7 +14085,7 @@
                 </div>
               </div>
             </div>
-            <span class="insight-overlay__sub-label insight-overlay__sub-label--annual-sales-status">Sales Status</span>
+            <span class="insight-overlay__sub-label insight-overlay__sub-label--annual-sales-status">売上状況</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--annual-cost-structure">コスト構造</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--annual-progress">進捗</span>
             <span class="insight-overlay__sub-label insight-overlay__sub-label--annual-comparison">比較</span>
@@ -13883,76 +14096,76 @@
             <span class="insight-overlay__hline insight-overlay__hline--monthly" aria-hidden="true"></span>
             <span class="insight-overlay__hline insight-overlay__hline--annual" aria-hidden="true"></span>
             <section class="insight-overlay__section insight-overlay__section--daily" id="insight-jump-analyze-daily" aria-label="Daily（Analyze）">
-              <h3 class="insight-overlay__section-label">Daily</h3>
+              <h3 class="insight-overlay__section-label">日次</h3>
               <div class="insight-daily-kpi" aria-label="Daily sales status">
                 <div class="insight-daily-kpi__row">
-                  <p class="insight-daily-kpi__label insight-daily-kpi__label--primary">Sales</p>
+                  <p class="insight-daily-kpi__label insight-daily-kpi__label--primary">売上</p>
                   <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--lg">
                     <p class="insight-daily-kpi__value insight-daily-kpi__value--lg">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-kpi__row">
-                  <p class="insight-daily-kpi__label">Target Sales</p>
+                  <p class="insight-daily-kpi__label">目標売上</p>
                   <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                     <p class="insight-daily-kpi__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-kpi__row">
-                  <p class="insight-daily-kpi__label">Difference</p>
+                  <p class="insight-daily-kpi__label">差額</p>
                   <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                     <p class="insight-daily-kpi__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-daily-kpi__row">
-                  <p class="insight-daily-kpi__label">Profit Margin</p>
+                  <p class="insight-daily-kpi__label">利益率</p>
                   <div class="insight-daily-kpi__value-box insight-daily-kpi__value-box--sm">
                     <p class="insight-daily-kpi__value">80%</p>
                   </div>
                 </div>
                 <div class="insight-daily-kpi__graph-visual insight-kpi-graph-wrap">
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">Today (Sales)</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">本日（売上）</p>
                   <div class="insight-daily-alloc-graph" id="insight-analyze-daily-alloc-graph">
                     <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
                     <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
                   </div>
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">Today's Target Sales</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">本日の目標売上</p>
                 </div>
-                <div class="insight-analyze-dual-insight" aria-label="Today vs same weekday last year insight">
+                <div class="insight-analyze-dual-insight" aria-label="本日と前年同曜日の考察">
                   <div class="insight-analyze-dual-insight__col insight-analyze-dual-insight__col--today">
-                    <h4 class="insight-analyze-dual-insight__title">Today's Insight</h4>
+                    <h4 class="insight-analyze-dual-insight__title">本日の考察</h4>
                     <dl class="insight-analyze-dual-insight__list">
-                      <div class="insight-analyze-dual-insight__row"><dt>Weather :</dt><dd>Fine</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Store Event :</dt><dd>None</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Area Event :</dt><dd>None</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Social Media :</dt><dd>TikTok video gain</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Marketing :</dt><dd>LINE, Instagram, TikTok</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Promo Conversion :</dt><dd>LINE &amp; Flyer</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Reservation :</dt><dd>10 Group / 67 customers</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>天気 :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>店舗イベント :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>エリアイベント :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>SNS :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>マーケ :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>プロモ :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>予約 :</dt><dd>なし</dd></div>
                     </dl>
                   </div>
                   <div class="insight-analyze-dual-insight__col insight-analyze-dual-insight__col--last-year">
-                    <h4 class="insight-analyze-dual-insight__title">Last Year Day of Week Insight</h4>
+                    <h4 class="insight-analyze-dual-insight__title">前年同曜日の考察</h4>
                     <dl class="insight-analyze-dual-insight__list">
-                      <div class="insight-analyze-dual-insight__row"><dt>Weather :</dt><dd>Cloudy</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Store Event :</dt><dd>None</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Area Event :</dt><dd>Street market</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Social Media :</dt><dd>Instagram Reels push</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Marketing :</dt><dd>LINE, X (Twitter)</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Promo Conversion :</dt><dd>LINE only</dd></div>
-                      <div class="insight-analyze-dual-insight__row"><dt>Reservation :</dt><dd>8 Group / 52 customers</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>天気 :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>店舗イベント :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>エリアイベント :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>SNS :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>マーケ :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>プロモ :</dt><dd>なし</dd></div>
+                      <div class="insight-analyze-dual-insight__row"><dt>予約 :</dt><dd>なし</dd></div>
                     </dl>
                   </div>
                 </div>
-                <div class="insight-analyze-weekly" aria-label="Weekly insight">
+                <div class="insight-analyze-weekly" aria-label="週間考察">
                   <div class="insight-analyze-weekly__window">
                     <div class="insight-analyze-weekly__head">
-                      <p class="insight-analyze-weekly__title">Weekly Insight</p>
+                      <p class="insight-analyze-weekly__title">週間考察</p>
                       <div class="insight-analyze-weekly__nav" role="group" aria-label="週の日付">
                         <button type="button" class="insight-analyze-weekly__nav-btn" data-weekly-nav="year-prev" aria-label="前年">◀︎</button>
                     <span class="insight-analyze-weekly__year">2026</span>
                     <button type="button" class="insight-analyze-weekly__nav-btn" data-weekly-nav="year-next" aria-label="翌年">▶︎</button>
                     <button type="button" class="insight-analyze-weekly__nav-btn" data-weekly-nav="day-prev" aria-label="前日">◀︎</button>
-                    <button type="button" class="insight-analyze-weekly__date-btn" data-weekly-nav="date-pick" aria-label="日付を選択">5/7 tue</button>
+                    <button type="button" class="insight-analyze-weekly__date-btn" data-weekly-nav="date-pick" aria-label="日付を選択">5/7 火</button>
                     <button type="button" class="insight-analyze-weekly__nav-btn" data-weekly-nav="day-next" aria-label="翌日">▶︎</button>
                     <button type="button" class="insight-analyze-weekly__today" data-weekly-nav="today">本日</button>
                         <input type="date" class="insight-analyze-weekly__date-input" aria-hidden="true" tabindex="-1">
@@ -13962,29 +14175,29 @@
                       <table class="insight-analyze-weekly__table">
                         <thead>
                           <tr>
-                            <th scope="col" class="insight-analyze-weekly__col--date">Date</th>
-                            <th scope="col" class="insight-analyze-weekly__col--weather">Weather</th>
-                            <th scope="col" class="insight-analyze-weekly__col--store">Store Event</th>
-                            <th scope="col" class="insight-analyze-weekly__col--area">Area Event</th>
-                            <th scope="col" class="insight-analyze-weekly__col--social">Social Media</th>
-                            <th scope="col" class="insight-analyze-weekly__col--marketing">Marketing</th>
-                            <th scope="col" class="insight-analyze-weekly__col--promo">Promo Conversion</th>
-                            <th scope="col" class="insight-analyze-weekly__col--reservation">Reservation</th>
+                            <th scope="col" class="insight-analyze-weekly__col--date">日付</th>
+                            <th scope="col" class="insight-analyze-weekly__col--weather">天気</th>
+                            <th scope="col" class="insight-analyze-weekly__col--store">店舗イベント</th>
+                            <th scope="col" class="insight-analyze-weekly__col--area">エリアイベント</th>
+                            <th scope="col" class="insight-analyze-weekly__col--social">SNS</th>
+                            <th scope="col" class="insight-analyze-weekly__col--marketing">マーケ</th>
+                            <th scope="col" class="insight-analyze-weekly__col--promo">プロモ</th>
+                            <th scope="col" class="insight-analyze-weekly__col--reservation">予約</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/4 sat</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/4 土</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
                             <td class="insight-analyze-weekly__col--reservation insight-analyze-weekly__memo" data-memo="10 Group / 67 customers"><span class="insight-analyze-weekly__cell-inner">10 Group / 67 customers</span></td>
                           </tr>
                           <tr class="insight-analyze-weekly__row--off">
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/5 sun OFF</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/5 日 OFF</span></td>
                             <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">—</span></td>
                             <td class="insight-analyze-weekly__col--store"><span class="insight-analyze-weekly__cell-inner">—</span></td>
                             <td class="insight-analyze-weekly__col--area"><span class="insight-analyze-weekly__cell-inner">—</span></td>
@@ -13994,50 +14207,50 @@
                             <td class="insight-analyze-weekly__col--reservation"><span class="insight-analyze-weekly__cell-inner">—</span></td>
                           </tr>
                           <tr>
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/6 mon</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/6 月</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
                             <td class="insight-analyze-weekly__col--reservation insight-analyze-weekly__memo" data-memo="8 Group / 52 customers"><span class="insight-analyze-weekly__cell-inner">8 Group / 52 customers</span></td>
                           </tr>
                           <tr class="insight-analyze-weekly__row--today">
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/7 tue</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/7 火</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
                             <td class="insight-analyze-weekly__col--reservation insight-analyze-weekly__memo" data-memo="10 Group / 67 customers"><span class="insight-analyze-weekly__cell-inner">10 Group / 67 customers</span></td>
                           </tr>
                           <tr>
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/8 wed</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/8 水</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
                             <td class="insight-analyze-weekly__col--reservation insight-analyze-weekly__memo" data-memo="10 Group / 67 customers"><span class="insight-analyze-weekly__cell-inner">10 Group / 67 customers</span></td>
                           </tr>
                           <tr>
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/9 thu</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/9 木</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
                             <td class="insight-analyze-weekly__col--reservation insight-analyze-weekly__memo" data-memo="10 Group / 67 customers"><span class="insight-analyze-weekly__cell-inner">10 Group / 67 customers</span></td>
                           </tr>
                           <tr>
-                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/10 fri</span></td>
-                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">Fine</span></td>
-                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
-                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="None"><span class="insight-analyze-weekly__cell-inner">None</span></td>
+                            <td class="insight-analyze-weekly__col--date"><span class="insight-analyze-weekly__cell-inner">5/10 金</span></td>
+                            <td class="insight-analyze-weekly__col--weather"><span class="insight-analyze-weekly__cell-inner">晴れ</span></td>
+                            <td class="insight-analyze-weekly__col--store insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
+                            <td class="insight-analyze-weekly__col--area insight-analyze-weekly__memo" data-memo="なし"><span class="insight-analyze-weekly__cell-inner">なし</span></td>
                             <td class="insight-analyze-weekly__col--social insight-analyze-weekly__memo" data-memo="TikTok video gain"><span class="insight-analyze-weekly__cell-inner">TikTok video gain</span></td>
                             <td class="insight-analyze-weekly__col--marketing insight-analyze-weekly__memo" data-memo="LINE, Instagram, TikTok"><span class="insight-analyze-weekly__cell-inner">LINE, Instagram, TikTok</span></td>
                             <td class="insight-analyze-weekly__col--promo insight-analyze-weekly__memo" data-memo="LINE &amp; Flyer"><span class="insight-analyze-weekly__cell-inner">LINE &amp; Flyer</span></td>
@@ -14056,92 +14269,92 @@
                 >▶ グラフ</a>
             </section>
             <section class="insight-overlay__section insight-overlay__section--monthly" id="insight-jump-analyze-monthly" aria-label="Monthly（Analyze）">
-              <h3 class="insight-overlay__section-label">Monthly</h3>
-              <div class="insight-monthly-sales-summary" aria-label="Monthly sales summary">
-                <h4 class="insight-monthly-sales-summary__title">Monthly Sales Summary</h4>
+              <h3 class="insight-overlay__section-label">月次</h3>
+              <div class="insight-monthly-sales-summary" aria-label="月次売上サマリー">
+                <h4 class="insight-monthly-sales-summary__title">月次売上サマリー</h4>
                 <div class="insight-monthly-sales-summary__row">
-                  <p class="insight-monthly-sales-summary__label insight-monthly-sales-summary__label--primary">Sales</p>
+                  <p class="insight-monthly-sales-summary__label insight-monthly-sales-summary__label--primary">売上</p>
                   <div class="insight-monthly-sales-summary__value-box insight-monthly-sales-summary__value-box--lg">
                     <p class="insight-monthly-sales-summary__value insight-monthly-sales-summary__value--lg">$1,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-sales-summary__row">
-                  <p class="insight-monthly-sales-summary__label">Target Sales</p>
+                  <p class="insight-monthly-sales-summary__label">目標売上</p>
                   <div class="insight-monthly-sales-summary__value-box insight-monthly-sales-summary__value-box--sm">
                     <p class="insight-monthly-sales-summary__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-sales-summary__row">
-                  <p class="insight-monthly-sales-summary__label">Difference</p>
+                  <p class="insight-monthly-sales-summary__label">差額</p>
                   <div class="insight-monthly-sales-summary__value-box insight-monthly-sales-summary__value-box--sm">
                     <p class="insight-monthly-sales-summary__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-sales-summary__row">
-                  <p class="insight-monthly-sales-summary__label">Profit Margin</p>
+                  <p class="insight-monthly-sales-summary__label">利益率</p>
                   <div class="insight-monthly-sales-summary__value-box insight-monthly-sales-summary__value-box--sm">
                     <p class="insight-monthly-sales-summary__value">80%</p>
                   </div>
                 </div>
                 <div class="insight-monthly-sales-summary__graph-visual insight-kpi-graph-wrap">
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">Today (Sales)</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">本日（売上）</p>
                   <div class="insight-daily-alloc-graph" id="insight-analyze-monthly-sales-alloc-graph">
                     <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
                     <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
                   </div>
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">Today's Target Sales</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">本日の目標売上</p>
                 </div>
               </div>
-                          <div class="insight-monthly-historical-compare" aria-label="Same month historical compare">
-                <h4 class="insight-monthly-historical-compare__title">Same Month Historical Compare</h4>
+                          <div class="insight-monthly-historical-compare" aria-label="過去同月比較">
+                <h4 class="insight-monthly-historical-compare__title">過去同月比較</h4>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">Last Year Same Month Sales</p>
+                  <p class="insight-monthly-historical-compare__label">前年同月売上</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">Difference vs Last Year</p>
+                  <p class="insight-monthly-historical-compare__label">前年同月差額</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">2 Years Ago Same Month</p>
+                  <p class="insight-monthly-historical-compare__label">2年前同月</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">Difference</p>
+                  <p class="insight-monthly-historical-compare__label">差額</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">3 Years Ago Same Month</p>
+                  <p class="insight-monthly-historical-compare__label">3年前同月</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-monthly-historical-compare__row">
-                  <p class="insight-monthly-historical-compare__label">Difference</p>
+                  <p class="insight-monthly-historical-compare__label">差額</p>
                   <div class="insight-monthly-historical-compare__value-box">
                     <p class="insight-monthly-historical-compare__value">$123,456</p>
                   </div>
                 </div>
               </div>
-              <div class="insight-monthly-expense-pl" aria-label="Monthly expense and profit">
-                <h4 class="insight-monthly-expense-pl__title">Monthly Expense &amp; Profit</h4>
+              <div class="insight-monthly-expense-pl" aria-label="月次支出・利益">
+                <h4 class="insight-monthly-expense-pl__title">月次支出・利益</h4>
                 <div class="insight-monthly-expense-pl__item">
-                  <p class="insight-monthly-expense-pl__item-title">Current Month Expenses</p>
+                  <p class="insight-monthly-expense-pl__item-title">当月支出</p>
                   <div class="insight-monthly-expense-pl__chart" id="insight-analyze-expense-pl-current" style="--fixed-pct: 40; --variable-pct: 33;">
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--variable" data-role="variable-pct">33%</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-monthly-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-monthly-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-monthly-expense-pl__track">
@@ -14151,14 +14364,14 @@
                   </div>
                 </div>
                 <div class="insight-monthly-expense-pl__item">
-                  <p class="insight-monthly-expense-pl__item-title">Last Year Same Month</p>
+                  <p class="insight-monthly-expense-pl__item-title">前年同月</p>
                   <div class="insight-monthly-expense-pl__chart" id="insight-analyze-expense-pl-last-year" style="--fixed-pct: 40; --variable-pct: 27;">
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--variable" data-role="variable-pct">27%</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-monthly-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-monthly-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-monthly-expense-pl__track">
@@ -14168,14 +14381,14 @@
                   </div>
                 </div>
                 <div class="insight-monthly-expense-pl__item">
-                  <p class="insight-monthly-expense-pl__item-title">2 Years Ago Same Month</p>
+                  <p class="insight-monthly-expense-pl__item-title">2年前同月</p>
                   <div class="insight-monthly-expense-pl__chart" id="insight-analyze-expense-pl-2y" style="--fixed-pct: 38; --variable-pct: 21;">
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--fixed" data-role="fixed-pct">38%</p>
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--variable" data-role="variable-pct">21%</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-monthly-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-monthly-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-monthly-expense-pl__track">
@@ -14185,14 +14398,14 @@
                   </div>
                 </div>
                 <div class="insight-monthly-expense-pl__item">
-                  <p class="insight-monthly-expense-pl__item-title">3 Years Ago Same Month</p>
+                  <p class="insight-monthly-expense-pl__item-title">3年前同月</p>
                   <div class="insight-monthly-expense-pl__chart" id="insight-analyze-expense-pl-3y" style="--fixed-pct: 40; --variable-pct: 21;">
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-monthly-expense-pl__seg-label insight-monthly-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-monthly-expense-pl__seg-pct insight-monthly-expense-pl__seg-pct--variable" data-role="variable-pct">21%</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-monthly-expense-pl__marker-label insight-monthly-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-monthly-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-monthly-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-monthly-expense-pl__track">
@@ -14202,40 +14415,38 @@
                   </div>
                 </div>
               </div>
-              <div class="insight-historical-insight-access" aria-label="Historical Insight Access">
-                <h4 class="insight-historical-insight-access__title">Historical Insight Access</h4>
+              <div class="insight-historical-insight-access" aria-label="過去同月インサイト参照">
+                <h4 class="insight-historical-insight-access__title">過去同月インサイト参照</h4>
                 <div class="insight-historical-insight-access__group" data-insight-month-key="best">
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Best Same Month</p>
+                    <p class="insight-historical-insight-access__label">最良の同月</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">2024/05</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Sales</p>
+                    <p class="insight-historical-insight-access__label">売上</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">$123,456</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Profit Margin</p>
+                    <p class="insight-historical-insight-access__label">利益率</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">20.5%</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__reason-row">
-                    <button type="button" class="insight-historical-insight-access__reason" aria-label="View reason for best same month">
-                      View Reason
-                      <span class="insight-historical-insight-access__popover" role="tooltip">
-                        <p class="insight-historical-insight-access__popover-title">May 2024 — context memo</p>
+                    <button type="button" class="insight-historical-insight-access__reason" aria-label="最良の同月の理由を見る">理由を見る<span class="insight-historical-insight-access__popover" role="tooltip">
+                        <p class="insight-historical-insight-access__popover-title">2024年5月 — コンテキストメモ</p>
                         <ul class="insight-historical-insight-access__popover-list">
-                          <li class="insight-historical-insight-access__popover-item"><strong>Weather:</strong> Fine (weekend-heavy)</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Store Event:</strong> Seasonal tasting menu</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Area Event:</strong> Street market (2 weekends)</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Social Media:</strong> TikTok campaign peak</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Marketing:</strong> LINE, Instagram, TikTok</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Promo Conversion:</strong> LINE &amp; Flyer</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Reservation:</strong> Avg 9 groups / 58 customers per day</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>天候:</strong> 概ね良好（週末集中）</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>店舗イベント:</strong> 季節限定メニュー</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>エリアイベント:</strong> ストリートマーケット（週末2回）</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>SNS:</strong> TikTokキャンペーン好調</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>マーケティング:</strong> LINE、Instagram、TikTok</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>プロモ転換:</strong> LINE・チラシ</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>予約:</strong> 平均 9組 / 58名（日）</li>
                         </ul>
                       </span>
                     </button>
@@ -14243,36 +14454,34 @@
                 </div>
                 <div class="insight-historical-insight-access__group" data-insight-month-key="worst">
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Worst Same Month</p>
+                    <p class="insight-historical-insight-access__label">最弱の同月</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">2022/05</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Sales</p>
+                    <p class="insight-historical-insight-access__label">売上</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">$98,120</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__row">
-                    <p class="insight-historical-insight-access__label">Profit Margin</p>
+                    <p class="insight-historical-insight-access__label">利益率</p>
                     <div class="insight-historical-insight-access__value-box">
                       <p class="insight-historical-insight-access__value">12.3%</p>
                     </div>
                   </div>
                   <div class="insight-historical-insight-access__reason-row">
-                    <button type="button" class="insight-historical-insight-access__reason" aria-label="View reason for worst same month">
-                      View Reason
-                      <span class="insight-historical-insight-access__popover" role="tooltip">
-                        <p class="insight-historical-insight-access__popover-title">May 2022 — context memo</p>
+                    <button type="button" class="insight-historical-insight-access__reason" aria-label="最弱の同月の理由を見る">理由を見る<span class="insight-historical-insight-access__popover" role="tooltip">
+                        <p class="insight-historical-insight-access__popover-title">2022年5月 — コンテキストメモ</p>
                         <ul class="insight-historical-insight-access__popover-list">
-                          <li class="insight-historical-insight-access__popover-item"><strong>Weather:</strong> Rainy (12 rainy days)</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Store Event:</strong> None</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Area Event:</strong> Road closure near store</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Social Media:</strong> Low posting frequency</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Marketing:</strong> LINE only</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Promo Conversion:</strong> None recorded</li>
-                          <li class="insight-historical-insight-access__popover-item"><strong>Reservation:</strong> Avg 5 groups / 32 customers per day</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>天候:</strong> 雨の日が多い（12日）</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>店舗イベント:</strong> なし</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>エリアイベント:</strong> 店舗前道路工事</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>SNS:</strong> 投稿頻度低</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>マーケティング:</strong> LINEのみ</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>プロモ転換:</strong> 記録なし</li>
+                          <li class="insight-historical-insight-access__popover-item"><strong>予約:</strong> 平均 5組 / 32名（日）</li>
                         </ul>
                       </span>
                     </button>
@@ -14295,56 +14504,56 @@
                 >▶ グラフ</a>
             </section>
             <section class="insight-overlay__section insight-overlay__section--annual insight-pane--analyze__annual" id="insight-jump-analyze-annual" aria-label="Annual（Analyze）">
-              <h3 class="insight-overlay__section-label">Annual</h3>
-              <div class="insight-annual-sales-summary" aria-label="Annual sales summary">
-                <h4 class="insight-annual-sales-summary__title">Annual Sales Summary</h4>
+              <h3 class="insight-overlay__section-label">年次</h3>
+              <div class="insight-annual-sales-summary" aria-label="年次売上サマリー">
+                <h4 class="insight-annual-sales-summary__title">年次売上サマリー</h4>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label insight-annual-sales-summary__label--primary">Sales</p>
+                  <p class="insight-annual-sales-summary__label insight-annual-sales-summary__label--primary">売上</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--lg">
                     <p class="insight-annual-sales-summary__value insight-annual-sales-summary__value--lg">$1,456</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label">Target Sales</p>
+                  <p class="insight-annual-sales-summary__label">目標売上</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
                     <p class="insight-annual-sales-summary__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label">Difference</p>
+                  <p class="insight-annual-sales-summary__label">差額</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
                     <p class="insight-annual-sales-summary__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label">Profit Margin</p>
+                  <p class="insight-annual-sales-summary__label">利益率</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
                     <p class="insight-annual-sales-summary__value">80%</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label">Remaining Business Days</p>
+                  <p class="insight-annual-sales-summary__label">残営業日数</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
                     <p class="insight-annual-sales-summary__value">137</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__row">
-                  <p class="insight-annual-sales-summary__label">Daily Required Sales</p>
+                  <p class="insight-annual-sales-summary__label">1日あたり必要売上</p>
                   <div class="insight-annual-sales-summary__value-box insight-annual-sales-summary__value-box--sm">
                     <p class="insight-annual-sales-summary__value">$123,456</p>
                   </div>
                 </div>
                 <div class="insight-annual-sales-summary__graph-visual insight-kpi-graph-wrap">
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">Today (Sales)</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--today-sales">本日（売上）</p>
                   <div class="insight-daily-alloc-graph" id="insight-analyze-annual-sales-alloc-graph">
                     <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
                     <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
                   </div>
-                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">Today's Target Sales</p>
+                  <p class="insight-daily-kpi__graph-label insight-daily-kpi__graph-label--target">本日の目標売上</p>
                 </div>
               </div>
               <div class="insight-annual-current-progress" aria-label="累積進捗">
-                <h4 class="insight-annual-current-progress__title">Current Progress</h4>
+                <h4 class="insight-annual-current-progress__title">現在の進捗</h4>
                 <div class="insight-annual-current-progress__row">
                   <p class="insight-annual-current-progress__label">累計目標売上</p>
                   <div class="insight-annual-current-progress__value-box">
@@ -14370,7 +14579,7 @@
                   </div>
                 </div>
                 <div class="insight-annual-current-progress__graph-visual insight-kpi-graph-wrap">
-                  <p class="insight-annual-kpi__graph-label insight-annual-kpi__graph-label--today-sales">Today (Sales)</p>
+                  <p class="insight-annual-kpi__graph-label insight-annual-kpi__graph-label--today-sales">本日（売上）</p>
                   <div class="insight-daily-alloc-graph" id="insight-analyze-annual-current-progress-alloc-graph">
                     <span class="insight-daily-alloc-marker-triangle" aria-hidden="true"></span>
                     <span class="insight-daily-alloc-marker-line" aria-hidden="true"></span>
@@ -14379,7 +14588,7 @@
                 </div>
               </div>
               <div class="insight-annual-historical-compare" aria-label="年度過去比較">
-                <h4 class="insight-annual-historical-compare__title">Historical Annual Compare</h4>
+                <h4 class="insight-annual-historical-compare__title">過去年次比較</h4>
                 <div class="insight-annual-historical-compare__row">
                   <p class="insight-annual-historical-compare__label">前年同期売上</p>
                   <div class="insight-annual-historical-compare__value-box">
@@ -14424,7 +14633,7 @@
                 </div>
               </div>
               <div class="insight-annual-expense-profit" aria-label="年間費用・利益">
-                <h4 class="insight-annual-expense-profit__title">Annual Expense &amp; Profit</h4>
+                <h4 class="insight-annual-expense-profit__title">年間支出・利益</h4>
                 <div class="insight-annual-expense-profit__row">
                   <p class="insight-annual-expense-profit__label">累計支出合計</p>
                   <div class="insight-annual-expense-profit__value-box">
@@ -14457,16 +14666,16 @@
                 </div>
               </div>
               <div class="insight-annual-year-expense-pl" aria-label="年間費用・利益（横棒）">
-                <h4 class="insight-annual-year-expense-pl__title">Year Expense &amp; Profit</h4>
+                <h4 class="insight-annual-year-expense-pl__title">年間支出・利益</h4>
                 <div class="insight-annual-year-expense-pl__item">
                   <p class="insight-annual-year-expense-pl__item-title">当年支出</p>
                   <div class="insight-annual-year-expense-pl__chart" id="insight-analyze-annual-year-expense-pl-current" style="--fixed-pct: 40; --variable-pct: 33;">
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--variable" data-role="variable-pct">33%</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-annual-year-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-annual-year-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-annual-year-expense-pl__track">
@@ -14478,12 +14687,12 @@
                 <div class="insight-annual-year-expense-pl__item">
                   <p class="insight-annual-year-expense-pl__item-title">前年同期</p>
                   <div class="insight-annual-year-expense-pl__chart" id="insight-analyze-annual-year-expense-pl-last-year" style="--fixed-pct: 40; --variable-pct: 27;">
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--variable" data-role="variable-pct">27%</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-annual-year-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-annual-year-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-annual-year-expense-pl__track">
@@ -14495,12 +14704,12 @@
                 <div class="insight-annual-year-expense-pl__item">
                   <p class="insight-annual-year-expense-pl__item-title">2年前同期</p>
                   <div class="insight-annual-year-expense-pl__chart" id="insight-analyze-annual-year-expense-pl-2y" style="--fixed-pct: 40; --variable-pct: 38;">
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--variable" data-role="variable-pct">38%</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-annual-year-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-annual-year-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-annual-year-expense-pl__track">
@@ -14512,12 +14721,12 @@
                 <div class="insight-annual-year-expense-pl__item">
                   <p class="insight-annual-year-expense-pl__item-title">3年前同期</p>
                   <div class="insight-annual-year-expense-pl__chart" id="insight-analyze-annual-year-expense-pl-3y" style="--fixed-pct: 40; --variable-pct: 21;">
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">Fixed</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--fixed">固定費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--fixed" data-role="fixed-pct">40%</p>
-                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">Variable</p>
+                    <p class="insight-annual-year-expense-pl__seg-label insight-annual-year-expense-pl__seg-label--variable">変動費</p>
                     <p class="insight-annual-year-expense-pl__seg-pct insight-annual-year-expense-pl__seg-pct--variable" data-role="variable-pct">21%</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">Expenses</p>
-                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">Sales</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--expenses">支出</p>
+                    <p class="insight-annual-year-expense-pl__marker-label insight-annual-year-expense-pl__marker-label--sales">売上</p>
                     <span class="insight-annual-year-expense-pl__expenses-triangle" aria-hidden="true"></span>
                     <span class="insight-annual-year-expense-pl__sales-line" aria-hidden="true"></span>
                     <div class="insight-annual-year-expense-pl__track">
@@ -14528,17 +14737,17 @@
                 </div>
               </div>
               <div class="insight-annual-target-revision-kpi" aria-label="年度目標改訂">
-                <h4 class="insight-annual-target-revision-kpi__title">Annual Target Revision</h4>
+                <h4 class="insight-annual-target-revision-kpi__title">年度目標改訂</h4>
                 <div class="insight-annual-target-revision-kpi__row">
                   <p class="insight-annual-target-revision-kpi__label">当期</p>
                   <div class="insight-annual-target-revision-kpi__value-box">
-                    <p class="insight-annual-target-revision-kpi__value">Term 2</p>
+                    <p class="insight-annual-target-revision-kpi__value">第2四半期</p>
                   </div>
                 </div>
                 <div class="insight-annual-target-revision-kpi__row">
                   <p class="insight-annual-target-revision-kpi__label">改訂ステータス</p>
                   <div class="insight-annual-target-revision-kpi__value-box">
-                    <p class="insight-annual-target-revision-kpi__value">Watch</p>
+                    <p class="insight-annual-target-revision-kpi__value">要注意</p>
                   </div>
                 </div>
                 <div class="insight-annual-target-revision-kpi__row">
@@ -14555,7 +14764,7 @@
                 </div>
               </div>
               <div class="insight-historical-insight-access" aria-label="過去年度インサイト参照">
-                <h4 class="insight-historical-insight-access__title">Historical Insight Access</h4>
+                <h4 class="insight-historical-insight-access__title">過去年度インサイト参照</h4>
                 <div class="insight-historical-insight-access__group" data-insight-year-key="best">
                   <div class="insight-historical-insight-access__row">
                     <p class="insight-historical-insight-access__label">最良の比較可能年</p>
@@ -14645,7 +14854,7 @@
             <span class="insight-overlay__hline insight-overlay__hline--monthly" aria-hidden="true"></span>
             <span class="insight-overlay__hline insight-overlay__hline--annual" aria-hidden="true"></span>
             <section class="insight-overlay__section insight-overlay__section--daily" id="insight-jump-graph-daily" aria-label="Daily（Graph）">
-              <h3 class="insight-overlay__section-label">Daily</h3>
+              <h3 class="insight-overlay__section-label">日次</h3>
                                           <div class="insight-graph-daily" aria-label="Daily グラフ比較">
                 <div class="insight-graph-daily__row insight-graph-daily__row--target-actual">
                   <h4 class="insight-graph-daily__row-title">目標対実績</h4>
@@ -14728,7 +14937,7 @@
 
             </section>
             <section class="insight-overlay__section insight-overlay__section--monthly" id="insight-jump-graph-monthly" aria-label="Monthly（Graph）">
-              <h3 class="insight-overlay__section-label">Monthly</h3>
+              <h3 class="insight-overlay__section-label">月次</h3>
               <div class="insight-graph-monthly" aria-label="Monthly グラフ比較">
                 <div class="insight-graph-daily__row insight-graph-monthly__row--cumulative">
                   <h4 class="insight-graph-monthly__row-title">
@@ -14812,7 +15021,7 @@
 
             </section>
             <section class="insight-overlay__section insight-overlay__section--annual insight-pane--graph__annual" id="insight-jump-graph-annual" aria-label="Annual（Graph）">
-              <h3 class="insight-overlay__section-label">Annual</h3>
+              <h3 class="insight-overlay__section-label">年次</h3>
               <div class="insight-graph-annual" aria-label="Annual グラフ比較">
                 <div class="insight-graph-daily__row insight-graph-annual__row--cumulative">
                   <h4 class="insight-graph-annual__row-title">
@@ -14954,7 +15163,7 @@
   </div>
   <div class="daily-overlay" id="daily-overlay" hidden aria-hidden="true">
     <div class="daily-overlay__backdrop" id="daily-overlay-backdrop" aria-hidden="true"></div>
-    <section class="daily-overlay__panel" role="dialog" aria-modal="true" aria-label="Daily">
+    <section class="daily-overlay__panel" role="dialog" aria-modal="true" aria-label="日次">
       <div class="daily-overlay__sticky-head" aria-label="日付操作">
       <button type="button" class="daily-overlay__close" id="daily-overlay-close" aria-label="閉じる">×</button>
       <div class="daily-overlay__head">
@@ -14970,35 +15179,35 @@
       <span class="daily-overlay__hline daily-overlay__hline--1" aria-hidden="true"></span>
       <span class="daily-overlay__hline daily-overlay__hline--2" aria-hidden="true"></span>
       <div class="daily-overlay__segment daily-overlay__segment--daily" aria-hidden="true">
-        <p class="daily-overlay__vlabel">Daily</p>
+        <p class="daily-overlay__vlabel">日次</p>
       </div>
       <div class="daily-overlay__segment daily-overlay__segment--monthly" aria-hidden="true">
-        <p class="daily-overlay__vlabel">Monthly</p>
+        <p class="daily-overlay__vlabel">月次</p>
       </div>
       <div class="daily-overlay__segment daily-overlay__segment--annual" aria-hidden="true">
-        <p class="daily-overlay__vlabel">Annual</p>
+        <p class="daily-overlay__vlabel">年次</p>
       </div>
       <div class="daily-overlay__daily-kpi" aria-hidden="true">
         <div class="daily-overlay__kpi-row">
-          <p class="daily-overlay__daily-title">Sales</p>
+          <p class="daily-overlay__daily-title">売上</p>
           <div class="daily-overlay__daily-value-box">$123,456</div>
         </div>
         <div class="daily-overlay__kpi-row">
-          <p class="daily-overlay__daily-title">Target Sales</p>
+          <p class="daily-overlay__daily-title">目標売上</p>
           <div class="daily-overlay__daily-value-box">$123,456</div>
         </div>
         <div class="daily-overlay__kpi-row">
-          <p class="daily-overlay__daily-title">Variance</p>
+          <p class="daily-overlay__daily-title">差額</p>
           <div class="daily-overlay__daily-value-box">$123,456</div>
         </div>
         <div class="daily-overlay__kpi-row">
-          <p class="daily-overlay__daily-title">Achievement Rate</p>
+          <p class="daily-overlay__daily-title">達成率</p>
           <div class="daily-overlay__daily-value-box">$123,456</div>
         </div>
       </div>
       <div class="daily-overlay__daily-graph" aria-hidden="true">
-        <p class="daily-overlay__daily-graph-title">Sales
-Target Sales</p>
+        <p class="daily-overlay__daily-graph-title">日次売上
+日次目標売上</p>
         <div class="daily-overlay__daily-graph-track">
           <span class="daily-overlay__daily-graph-tri" aria-hidden="true"></span>
           <span class="daily-overlay__daily-graph-fill" aria-hidden="true"></span>
@@ -15096,7 +15305,7 @@ Target Sales</p>
 
   <script>
     (function () {
-                                                                                                                                                                                                                    /* KPI-INSIGHT-EXPENSE-READ */
+                                                                                                                                                                                                                                        /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -15560,7 +15769,7 @@ Target Sales</p>
       });
     })();
     /* END KPI-INSIGHT-EXPENSE-READ */
-                    /* KPI-INSIGHT-TW-DIFF */
+        /* KPI-INSIGHT-TW-DIFF */
     (function () {
       var DASH = '—';
 
@@ -15731,11 +15940,18 @@ Target Sales</p>
        * - Suggested Target: annualTarget * (1 + adj/100)
        */
       function computeAnnualTargetRevisionKpi(m, iso) {
+        var ja =
+          typeof insightIsJaLang === 'function'
+            ? insightIsJaLang()
+            : String(document.documentElement.getAttribute('lang') || '')
+                .toLowerCase()
+                .indexOf('ja') === 0;
         var term = DASH;
         if (iso) {
           var month = Number(String(iso).split('-')[1]);
           if (Number.isFinite(month) && month >= 1 && month <= 12) {
-            term = 'Term ' + (Math.floor((month - 1) / 3) + 1);
+            var termNum = Math.floor((month - 1) / 3) + 1;
+            term = ja ? '第' + termNum + '四半期' : 'Term ' + termNum;
           }
         }
         if (
@@ -15751,7 +15967,11 @@ Target Sales</p>
         if (adj > 20) adj = 20;
         if (adj < -20) adj = -20;
         var abs = Math.abs(adj);
-        var status = abs < 3 ? 'On Track' : abs <= 10 ? 'Watch' : 'Revise';
+        var status = abs < 3
+          ? ja ? '順調' : 'On Track'
+          : abs <= 10
+            ? ja ? '要注意' : 'Watch'
+            : ja ? '要改訂' : 'Revise';
         var adjText = (adj > 0 ? '+' : '') + adj + '%';
         var targetText = DASH;
         if (m.annualTarget != null && Number.isFinite(Number(m.annualTarget))) {
@@ -17160,7 +17380,9 @@ Target Sales</p>
           { code: 'storm', ja: '嵐', en: 'Storm' },
           { code: 'gale', ja: '暴風', en: 'Gale' },
         ];
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        var low = s.toLowerCase();
+        if (low === 'fine') s = 'sunny';
         var ja = insightIsJaLang();
         for (var i = 0; i < presets.length; i++) {
           if (presets[i].code === s) return ja ? presets[i].ja : presets[i].en;
@@ -17242,6 +17464,29 @@ Target Sales</p>
         }
       }
 
+      function patchDualInsightLabels(block, year) {
+        if (!block) return;
+        var ja = insightIsJaLang();
+        var todayTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--today .insight-analyze-dual-insight__title'
+        );
+        var lyTitle = block.querySelector(
+          '.insight-analyze-dual-insight__col--last-year .insight-analyze-dual-insight__title'
+        );
+        if (todayTitle) todayTitle.textContent = ja ? '本日の考察' : "Today's Insight";
+        if (lyTitle) lyTitle.textContent = ja ? '前年同曜日の考察' : 'Last Year Day of Week Insight';
+        var weatherDt = ja ? '天気 :' : 'Weather :';
+        var memoLabels = historicalReasonMemoLabels(year);
+        var cols = block.querySelectorAll('.insight-analyze-dual-insight__col');
+        for (var c = 0; c < cols.length; c++) {
+          var dts = cols[c].querySelectorAll('.insight-analyze-dual-insight__row dt');
+          if (dts[0]) dts[0].textContent = weatherDt;
+          for (var i = 0; i < 6; i++) {
+            if (dts[i + 1] && memoLabels[i]) dts[i + 1].textContent = memoLabels[i] + ' :';
+          }
+        }
+      }
+
       function patchAnalyzeDualInsight(root, iso) {
         if (!root) return;
         var blocks = root.querySelectorAll('.insight-analyze-dual-insight');
@@ -17252,7 +17497,18 @@ Target Sales</p>
             ? window.__sameWeekdayIso(iso, 1)
             : null;
         var lyFields = dualInsightDayFields(lyIso);
+        var year = null;
+        if (iso && typeof iso === 'string' && iso.length >= 4) {
+          year = Number(iso.slice(0, 4));
+        }
+        if (!Number.isFinite(year)) {
+          year =
+            window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+              ? Number(KpiYearStore.getOperatingYear())
+              : new Date().getFullYear();
+        }
         blocks.forEach(function (block) {
+          patchDualInsightLabels(block, year);
           fillDualInsightCol(
             block.querySelector('.insight-analyze-dual-insight__col--today'),
             todayFields
@@ -17295,6 +17551,35 @@ Target Sales</p>
         return kind === 'year' ? 'No memo for this period' : 'No memo for this month';
       }
 
+      function resolveInsightMemoLabel(row, idx, ja) {
+        var defaults = ja
+          ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+          : [
+              'Store Event',
+              'Area Event',
+              'Social Media',
+              'Marketing',
+              'Promo Conversion',
+              'Reservation',
+            ];
+        var enFixed = [
+          'Store Event',
+          'Area Event',
+          'Social Media',
+          'Marketing',
+          'Promo Conversion',
+          'Reservation',
+        ];
+        var fallback = defaults[idx] || '';
+        if (!row) return fallback;
+        var lab = ja
+          ? row.labelJa || row.labelEn || fallback
+          : row.labelEn || row.labelJa || fallback;
+        lab = String(lab || '');
+        if (ja && enFixed.indexOf(lab) >= 0) return fallback;
+        return lab || fallback;
+      }
+
       function historicalReasonMemoLabels(year) {
         var ja = insightIsJaLang();
         var defaults = ja
@@ -17311,11 +17596,7 @@ Target Sales</p>
         var labels = defaults.slice();
         if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {
           for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {
-            var row = payload.mepMemoRows[i];
-            var lab = ja
-              ? row.labelJa || row.labelEn || defaults[i]
-              : row.labelEn || row.labelJa || defaults[i];
-            if (lab) labels[i] = String(lab);
+            labels[i] = resolveInsightMemoLabel(payload.mepMemoRows[i], i, ja);
           }
         }
         return labels;
@@ -18073,7 +18354,7 @@ Target Sales</p>
           });
         });
       }
-      var insightTabTitles = { summary: 'Summary', analyze: 'Analyze', graph: 'Graph' };
+      var insightTabTitles = { summary: 'サマリー', analyze: '分析', graph: 'グラフ' };
       function updateInsightJumpHrefs() {
         var pane = 'summary';
         if (paneAnalyze && !paneAnalyze.hidden) pane = 'analyze';
@@ -18939,10 +19220,10 @@ Target Sales</p>
           // UNLOCKED はステータス表示のみ: href を外してクリック不可にする
           lockLink.classList.remove('monthly-access-btn--locked');
           lockLink.removeAttribute('href');
-          lockLink.setAttribute('aria-label', 'Plan status: Unlocked');
+          lockLink.setAttribute('aria-label', 'プラン状態: アンロック');
           lockLink.setAttribute('aria-disabled', 'true');
           lockLink.style.cursor = 'default';
-          lockLabel.textContent = 'UNLOCKED';
+          lockLabel.textContent = 'アンロック';
           lockFrame.setAttribute('src', FRAME_EDIT);
           topEditBtn.style.display = '';
         } else {
@@ -30652,6 +30933,7 @@ Target Sales</p>
     (function () {
       var MEMO_COLS = ['store', 'area', 'social', 'marketing', 'promo', 'reservation'];
       var WD_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WD_JA = ['日', '月', '火', '水', '木', '金', '土'];
       var WEATHER_PRESETS = [
         { code: '', ja: '—', en: '—' },
         { code: 'sunny', ja: '晴れ', en: 'Sunny' },
@@ -30670,6 +30952,19 @@ Target Sales</p>
       var noneLabel = useJa ? 'なし' : 'None';
       var offSuffix = useJa ? ' OFF' : ' OFF';
       var todayNavLabel = useJa ? '本日' : 'Today';
+      var weeklyTitleLabel = useJa ? '週間考察' : 'Weekly Insight';
+      var dateColLabel = useJa ? '日付' : 'Date';
+      var weatherColLabel = useJa ? '天気' : 'Weather';
+      var memoColDefaults = useJa
+        ? ['店舗イベント', 'エリアイベント', 'SNS', 'マーケ', 'プロモ', '予約']
+        : [
+            'Store Event',
+            'Area Event',
+            'Social Media',
+            'Marketing',
+            'Promo Conversion',
+            'Reservation'
+          ];
       var dash = '—';
       var sharedAnchorIso = null;
       var roots = [];
@@ -30750,7 +31045,8 @@ Target Sales</p>
       }
 
       function weatherLabel(code) {
-        var s = String(code == null ? '' : code);
+        var s = String(code == null ? '' : code).trim();
+        if (s.toLowerCase() === 'fine') s = 'sunny';
         for (var i = 0; i < WEATHER_PRESETS.length; i++) {
           if (WEATHER_PRESETS[i].code === s) {
             return useJa ? WEATHER_PRESETS[i].ja : WEATHER_PRESETS[i].en;
@@ -30783,6 +31079,50 @@ Target Sales</p>
         }
         var memos = (payload.dailyMeta && payload.dailyMeta.memos) || {};
         return Object.keys(memos);
+      }
+
+      function memoColLabelsForYear(year) {
+        var labels = memoColDefaults.slice();
+        var enFixed = [
+          'Store Event',
+          'Area Event',
+          'Social Media',
+          'Marketing',
+          'Promo Conversion',
+          'Reservation',
+        ];
+        var payload = loadYearPayload(year);
+        if (payload && payload.mepMemoRows && payload.mepMemoRows.length) {
+          for (var i = 0; i < 6 && i < payload.mepMemoRows.length; i++) {
+            var row = payload.mepMemoRows[i];
+            var lab = useJa
+              ? row.labelJa || row.labelEn || labels[i]
+              : row.labelEn || row.labelJa || labels[i];
+            lab = String(lab || '');
+            if (useJa && enFixed.indexOf(lab) >= 0) lab = labels[i];
+            if (lab) labels[i] = lab;
+          }
+        }
+        return labels;
+      }
+
+      function weekdayLabel(dow) {
+        return useJa ? WD_JA[dow] : WD_EN[dow];
+      }
+
+      function updateWeeklyChrome(root, year) {
+        if (!root) return;
+        var title = root.querySelector('.insight-analyze-weekly__title');
+        if (title) title.textContent = weeklyTitleLabel;
+        var dateTh = root.querySelector('th.insight-analyze-weekly__col--date');
+        if (dateTh) dateTh.textContent = dateColLabel;
+        var weatherTh = root.querySelector('th.insight-analyze-weekly__col--weather');
+        if (weatherTh) weatherTh.textContent = weatherColLabel;
+        var labels = memoColLabelsForYear(year);
+        MEMO_COLS.forEach(function (colKey, idx) {
+          var th = root.querySelector('th.insight-analyze-weekly__col--' + colKey);
+          if (th && labels[idx]) th.textContent = labels[idx];
+        });
       }
 
       function readMemoText(year, rowId, iso) {
@@ -30840,14 +31180,14 @@ Target Sales</p>
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        return p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        return p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
       }
 
       function formatRowDate(iso, isOff) {
         var p = parseIso(iso);
         if (!p) return iso;
         var dt = new Date(p.y, p.m0, p.d);
-        var base = p.m0 + 1 + '/' + p.d + ' ' + WD_EN[dt.getDay()];
+        var base = p.m0 + 1 + '/' + p.d + ' ' + weekdayLabel(dt.getDay());
         return isOff ? base + offSuffix : base;
       }
 
@@ -30869,6 +31209,8 @@ Target Sales</p>
         sharedAnchorIso = anchorIso;
         var tbody = root.querySelector('.insight-analyze-weekly__table tbody');
         if (!tbody) return;
+        var anchorParts = parseIso(anchorIso);
+        updateWeeklyChrome(root, anchorParts ? anchorParts.y : operatingYear());
         updateNav(root, anchorIso);
         var isoList = weekIsoList(anchorIso);
         tbody.innerHTML = '';

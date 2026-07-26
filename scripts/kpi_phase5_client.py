@@ -141,12 +141,16 @@ def sales_input_path_toggle_html(variant: str, lang: str) -> str:
     else:
         cls = "kpi-daily-input-path kpi-daily-input-path--sales-data"
     el_id = toggle_element_id(variant)
-    title = "編集" if is_ja else "Edit"
-    aria = "日次売上の入力経路" if is_ja else "Daily sales input path"
-    switch_aria = (
-        "日次売上を Annual と Monthly で切り替え"
+    title = "売上入力" if is_ja else "Sales Input"
+    aria = (
+        "売上入力の経路（Annual / Monthly）"
         if is_ja
-        else "Switch daily sales between Annual and Monthly"
+        else "Sales input path (Annual / Monthly)"
+    )
+    switch_aria = (
+        "売上入力を Annual と Monthly で切り替え"
+        if is_ja
+        else "Switch sales input between Annual and Monthly"
     )
     return f"""        <div
           class="{cls}"
