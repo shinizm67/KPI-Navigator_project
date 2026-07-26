@@ -63,13 +63,16 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "ページ先頭へ戻る",
         "dl_label": "DL",
-        "dl_aria": "支出の雛形（テンプレート）をダウンロード",
-        "dl_menu_aria": "雛形ダウンロード",
-        "dl_heading": "支出雛形のダウンロード",
+        "dl_aria": "雛形・収支データのダウンロード",
+        "dl_menu_aria": "ダウンロードメニュー",
+        "dl_heading": "雛形",
         "dl_daily": "支出雛形をダウンロード（日次）",
         "dl_monthly": "支出雛形をダウンロード（月次）",
         "dl_daily_file": "支出入力_日次_雛形.csv",
         "dl_monthly_file": "支出入力_月次_雛形.csv",
+        "dl_data_heading": "データ出力",
+        "dl_export_pl_mep": "収支データ（MEP＋PL）",
+        "dl_export_pl_mep_aria": "MEPとPLの収支データをExcelでダウンロード（Pro）",
     },
     "en": {
         "logo_href": "https://forge-laboratory.com/en",
@@ -106,13 +109,16 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "Back to top",
         "dl_label": "DL",
-        "dl_aria": "Download expense templates",
-        "dl_menu_aria": "Template downloads",
-        "dl_heading": "Download Expense Templates",
+        "dl_aria": "Download templates and P&L data",
+        "dl_menu_aria": "Download menu",
+        "dl_heading": "Templates",
         "dl_daily": "Download Expense Template (Daily)",
         "dl_monthly": "Download Expense Template (Monthly)",
         "dl_daily_file": "expense-import_daily_template.csv",
         "dl_monthly_file": "expense-import_monthly_template.csv",
+        "dl_data_heading": "Data export",
+        "dl_export_pl_mep": "P&L data (MEP + PL)",
+        "dl_export_pl_mep_aria": "Download MEP and PL workbook as Excel (Pro)",
     },
     "zh-tw": {
         "logo_href": "https://forge-laboratory.com",
@@ -149,13 +155,16 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "回到頁首",
         "dl_label": "DL",
-        "dl_aria": "下載支出範本",
-        "dl_menu_aria": "範本下載",
-        "dl_heading": "下載支出範本",
+        "dl_aria": "下載範本與收支資料",
+        "dl_menu_aria": "下載選單",
+        "dl_heading": "範本",
         "dl_daily": "下載支出範本（每日）",
         "dl_monthly": "下載支出範本（月度）",
         "dl_daily_file": "expense-import_daily_template.csv",
         "dl_monthly_file": "expense-import_monthly_template.csv",
+        "dl_data_heading": "資料輸出",
+        "dl_export_pl_mep": "收支資料（MEP＋PL）",
+        "dl_export_pl_mep_aria": "下載 MEP 與 PL 的 Excel（專業方案）",
     },
 }
 
@@ -328,6 +337,9 @@ def build_header(
             <p class="template-dl-heading">{L['dl_heading']}</p>
             <a href="{img}excel/{L['dl_daily_file']}" download class="template-dl-item" role="menuitem">{L['dl_daily']}</a>
             <a href="{img}excel/{L['dl_monthly_file']}" download class="template-dl-item" role="menuitem">{L['dl_monthly']}</a>
+            <hr class="template-dl-sep" aria-hidden="true">
+            <p class="template-dl-heading">{L['dl_data_heading']}</p>
+            <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="{base}setting/change_plan.html" aria-label="{L['dl_export_pl_mep_aria']}">{L['dl_export_pl_mep']}</button>
           </div>
         </details>
         <button type="button" class="icon-button icon-button-menu" aria-label="{L['menu_aria']}">

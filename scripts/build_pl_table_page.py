@@ -10139,21 +10139,28 @@ def render_page(lang: str, lang_switch: str) -> str:
 
 
 def main() -> None:
+    # Keep PL pages in sync with Global Menu DL export client after rebuild.
+    from apply_kpi_pl_mep_export import inject_script  # noqa: WPS433
+
     ja_path = ROOT / "app/profit/pl/index.html"
     en_path = ROOT / "en/app/profit/pl/index.html"
     ja_path.parent.mkdir(parents=True, exist_ok=True)
     en_path.parent.mkdir(parents=True, exist_ok=True)
     ja_path.write_text(
-        render_page(
-            "ja",
-            'data-url-en="../../../en/app/profit/pl/index.html" data-url-ja="index.html"',
+        inject_script(
+            render_page(
+                "ja",
+                'data-url-en="../../../en/app/profit/pl/index.html" data-url-ja="index.html"',
+            )
         ),
         encoding="utf-8",
     )
     en_path.write_text(
-        render_page(
-            "en",
-            'data-url-en="index.html" data-url-ja="../../../../app/profit/pl/index.html"',
+        inject_script(
+            render_page(
+                "en",
+                'data-url-en="index.html" data-url-ja="../../../../app/profit/pl/index.html"',
+            )
         ),
         encoding="utf-8",
     )
