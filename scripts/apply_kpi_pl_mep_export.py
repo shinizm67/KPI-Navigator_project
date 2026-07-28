@@ -20,12 +20,18 @@ TARGET_GLOBS = [
     "app/profit/index.html",
     "app/profit/pl/index.html",
     "en/app/annual/index.html",
+    "zh-tw/app/annual/index.html",
     "en/app/monthly/index.html",
+    "zh-tw/app/monthly/index.html",
     "en/app/monthly/edit/index.html",
+    "zh-tw/app/monthly/edit/index.html",
     "en/app/profit/index.html",
+    "zh-tw/app/profit/index.html",
     "en/app/profit/pl/index.html",
+    "zh-tw/app/profit/pl/index.html",
     "setting/*.html",
     "en/setting/*.html",
+    "zh-tw/setting/*.html",
 ]
 
 

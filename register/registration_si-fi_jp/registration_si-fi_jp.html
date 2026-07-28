@@ -9,6 +9,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
+  <style id="kpi-lang-switcher-locale">
+    /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
+    html[lang='ja'] .lang-option-zh-tw {
+      display: none !important;
+    }
+    html[lang='zh-TW'] .lang-option-ja,
+    html[lang^='zh'] .lang-option-ja {
+      display: none !important;
+    }
+    html[lang='en'] #lang-select-wrap {
+      display: none !important;
+    }
+  </style>
 </head>
 <body class="si-fi registration-page" id="body-el">
   <!-- Navigation Menu（画面幅全体） -->
@@ -118,7 +131,7 @@
   </div>
 
   <!-- Language selector（画面右下・Forge Lab 風）・相互リンク用 data-url 指定 -->
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/register/registration_si-fi_en.html" data-url-ja="registration_si-fi_jp.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../en/register/registration_si-fi_en.html" data-url-ja="registration_si-fi_jp.html" data-url-zh-tw="../../zh-tw/register/registration_si-fi_zh-tw.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
       <span class="lang-code" aria-hidden="true">JP</span>
       <span class="lang-name">Japanese</span>
@@ -127,6 +140,7 @@
     <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
       <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
       <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+      <button type="button" class="lang-option lang-option-zh-tw" role="option" data-lang="zh-tw">TW - Traditional Chinese</button>
     </div>
   </div>
 

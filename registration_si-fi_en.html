@@ -9,6 +9,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="register/style.css">
+  <style id="kpi-lang-switcher-locale">
+    /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
+    html[lang='ja'] .lang-option-zh-tw {
+      display: none !important;
+    }
+    html[lang='zh-TW'] .lang-option-ja,
+    html[lang^='zh'] .lang-option-ja {
+      display: none !important;
+    }
+    html[lang='en'] #lang-select-wrap {
+      display: none !important;
+    }
+  </style>
 </head>
 <body class="si-fi registration-page">
   <!-- Navigation Menu（画面幅全体） -->

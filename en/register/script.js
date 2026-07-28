@@ -77,6 +77,7 @@
     var wrap = document.getElementById('lang-select-wrap');
     var urlEn = wrap && wrap.getAttribute('data-url-en');
     var urlJa = wrap && wrap.getAttribute('data-url-ja');
+    var urlZhTw = wrap && wrap.getAttribute('data-url-zh-tw');
 
     langOptions.forEach(function (opt) {
       opt.addEventListener('click', function (e) {
@@ -87,7 +88,14 @@
         var params = new URLSearchParams(window.location.search);
         var plan = (params.get('plan') || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
         var lang = this.getAttribute('data-lang');
-        var baseUrl = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;
+        var baseUrl =
+          lang === 'ja' && urlJa
+            ? urlJa
+            : lang === 'en' && urlEn
+              ? urlEn
+              : lang === 'zh-tw' && urlZhTw
+                ? urlZhTw
+                : null;
         if (baseUrl) {
           var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
           window.location.href = baseUrl + sep + 'plan=' + plan;

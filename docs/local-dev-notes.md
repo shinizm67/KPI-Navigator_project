@@ -5,9 +5,43 @@
 
 ## フォント（プロダクト共通）
 
-- **Sci-Fi モードかつ英語（`html[lang="en"]`）ページのみ**、本文フォントに **`Orbitron`** を用いる。
-- **上記以外**（日本語ページ、Office モード、Sci-Fi の日本語ページなど）**すべて** **`BIZ UDPGothic`** に統一する。
-- **例外として別のフォントファミリーを追加しない**（全体でこの 2 種類のみとする）
+詳細・実装メモは **[`docs/font-locale-policy.md`](./font-locale-policy.md)** を正とする。
+
+- **`Orbitron`** を使うのは、**Sci-Fi モードかつ英語（`html[lang="en"]`）など、アルファベット表記の言語ページのみ**。
+- **それ以外の言語**（日本語・**繁體中文（台湾 / `zh-TW`）** など、アルファベット以外を主とするロケール）および **Office モード**は、**ラベル・本文・数値ともすべて `BIZ UDPGothic`（表記ゆれ `BIZ UDP Gothic` 可）** に統一する。
+- **数値だけ Orbitron・文言だけ BIZ** のような混在はしない（画面の統一感のため。台湾語ページの金額・％・日付数字も BIZ）。
+- **例外として別のフォントファミリーを追加しない**（全体でこの 2 種類のみとする）。
+
+## 右下の言語スイッチャー
+
+詳細は **[`docs/lang-switcher-locale-policy.md`](./lang-switcher-locale-policy.md)**。要約: JA は JP+EN、zh-TW は TW+EN、EN は右下非表示。フル言語切替は Preferences の `#pref-lang`。
+
+## zh-TW サイト外周（公開ページ）
+
+ログイン前ページの zh-TW は `scripts/build_zh_tw_public_pages.py` で生成・配線する。
+
+### ローカル確認（毎回ここ）
+
+リポジトリ直下で `python3 -m http.server 8765` を起動したうえで、ブラウザで開く:
+
+- 一覧: http://127.0.0.1:8765/
+- 登入: http://127.0.0.1:8765/zh-tw/login/
+- 方案: http://127.0.0.1:8765/zh-tw/plan/
+- 註冊: http://127.0.0.1:8765/zh-tw/register/registration_si-fi_zh-tw.html
+- 服務條款: http://127.0.0.1:8765/zh-tw/legal/terms/
+- 隱私權政策: http://127.0.0.1:8765/zh-tw/legal/privacy/
+
+（`file://` で HTML を直接開くより、上記 HTTP の方が確実）
+
+| パス | 内容 |
+|------|------|
+| `zh-tw/login/` | 登入 |
+| `zh-tw/plan/` | 公開方案表（Basic $5 / Pro $29） |
+| `zh-tw/register/registration_si-fi_zh-tw.html` | 註冊 |
+| `zh-tw/legal/terms/` · `privacy/` | 服務條款 · 隱私權政策 |
+| `zh-tw/account_protection/` | 帳戶保護（スイッチャーなし） |
+
+再生成後は同スクリプト内で `build_site_chrome.py public` も走る。共有 CSS の `html[lang="ja"]` BIZ 上書きも zh-TW へ展開される。
 
 ---
 

@@ -41,8 +41,11 @@ PAGES_APP = [
     {"path": "app/monthly/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "monthly", "daily": "overlay"},
     {"path": "app/profit/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "profit", "daily": "link"},
     {"path": "en/app/annual/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
+    {"path": "zh-tw/app/annual/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
     {"path": "en/app/monthly/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
+    {"path": "zh-tw/app/monthly/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
     {"path": "en/app/profit/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "profit", "daily": "link"},
+    {"path": "zh-tw/app/profit/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "profit", "daily": "link"},
 ]
 
 # Settings pages share ONE canonical chrome (unified with the app header).
@@ -80,6 +83,12 @@ def _settings_pages() -> list[dict]:
             "path": f"en/setting/{fname}", "lang": "en", "base": "../", "img": "../../",
             "active": None, "daily": "link", "account_current": current,
         })
+        zh_rel = f"zh-tw/setting/{fname}"
+        if (ROOT / zh_rel).is_file():
+            pages.append({
+                "path": zh_rel, "lang": "zh-tw", "base": "../", "img": "../../",
+                "active": None, "daily": "link", "account_current": current,
+            })
     return pages
 
 
@@ -93,14 +102,19 @@ PAGES_SETTINGS = _settings_pages()
 PAGES_PUBLIC = [
     {"path": "login/index.html", "lang": "ja", "img": "../", "variant": "public"},
     {"path": "en/login/index.html", "lang": "en", "img": "../../", "variant": "public"},
+    {"path": "zh-tw/login/index.html", "lang": "zh-tw", "img": "../../", "variant": "public"},
     {"path": "plan/index.html", "lang": "ja", "img": "../", "variant": "public"},
     {"path": "en/plan/index.html", "lang": "en", "img": "../../", "variant": "public"},
+    {"path": "zh-tw/plan/index.html", "lang": "zh-tw", "img": "../../", "variant": "public"},
     {"path": "legal/terms/index.html", "lang": "ja", "img": "../../", "variant": "public"},
     {"path": "legal/privacy/index.html", "lang": "ja", "img": "../../", "variant": "public"},
     {"path": "en/legal/terms/index.html", "lang": "en", "img": "../../../", "variant": "public"},
     {"path": "en/legal/privacy/index.html", "lang": "en", "img": "../../../", "variant": "public"},
+    {"path": "zh-tw/legal/terms/index.html", "lang": "zh-tw", "img": "../../../", "variant": "public"},
+    {"path": "zh-tw/legal/privacy/index.html", "lang": "zh-tw", "img": "../../../", "variant": "public"},
     {"path": "register/registration_si-fi_jp/registration_si-fi_jp.html", "lang": "ja", "img": "../../", "variant": "public"},
     {"path": "en/register/registration_si-fi_en.html", "lang": "en", "img": "../../", "variant": "public"},
+    {"path": "zh-tw/register/registration_si-fi_zh-tw.html", "lang": "zh-tw", "img": "../../", "variant": "public"},
 ]
 
 # Generated pages that are updated in place here (their own generators are not
@@ -118,6 +132,12 @@ PAGES_GENERATED = [
     },
     {
         "path": "en/app/monthly/edit/index.html", "lang": "en",
+        "base": "../../../", "img": "../../../../", "active": "monthly",
+        "daily": "overlay", "daily_href": "../index.html?open=daily",
+        "profit_href": "../index.html?open=insight", "footer": False,
+    },
+    {
+        "path": "zh-tw/app/monthly/edit/index.html", "lang": "zh-tw",
         "base": "../../../", "img": "../../../../", "active": "monthly",
         "daily": "overlay", "daily_href": "../index.html?open=daily",
         "profit_href": "../index.html?open=insight", "footer": False,

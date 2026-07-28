@@ -1,5 +1,9 @@
 # Insight / Daily Floating Window メモ
 
+## 左側縦ラベル（CJK 天地向き）
+
+FW で左端に縦書きラベル（Daily の **日次 / 月次 / 年次**、Insight の **Sales Status** 等）を置く場合、EN 向け `rotate(180deg)` を JA / zh-TW にそのまま使うと文字が逆さになる。**毎回確認が必要**。詳細は `docs/fw-left-vertical-label-orientation-memo.md`。
+
 ## 日本語ページ（jp）と表示モード
 
 - **日本語の月次・年次ページ**（`app/monthly/index.html`, `app/annual/index.html`）の Insight は、現状 **背景が黒系・フォントが Orbitron** のため、**Sci-Fi（通常）モードの見た目に寄っている**理解でよい。

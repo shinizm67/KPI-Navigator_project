@@ -11,7 +11,9 @@ html[lang="en"] .si-fi.terms-page {
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi.terms-page {
+html[lang="ja"] .si-fi.terms-page,
+html[lang="zh-TW"] .si-fi.terms-page,
+html[lang^="zh"] .si-fi.terms-page {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 

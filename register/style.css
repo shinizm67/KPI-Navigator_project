@@ -48,7 +48,9 @@ html[lang="en"] .si-fi.registration-page {
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi.registration-page {
+html[lang="ja"] .si-fi.registration-page,
+html[lang="zh-TW"] .si-fi.registration-page,
+html[lang^="zh"] .si-fi.registration-page {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -169,7 +171,9 @@ html[lang="ja"] .si-fi.registration-page {
   pointer-events: none;
 }
 
-html[lang="ja"] .si-fi .btn-mode-text {
+html[lang="ja"] .si-fi .btn-mode-text,
+html[lang="zh-TW"] .si-fi .btn-mode-text,
+html[lang^="zh"] .si-fi .btn-mode-text {
   font-family: 'BIZ UDPGothic', sans-serif;
   letter-spacing: 0.06em;
 }
@@ -209,7 +213,9 @@ html[lang="ja"] .si-fi .btn-mode-text {
 .si-fi .header-dl[open] > summary {
   background: rgba(88, 225, 243, 0.15);
 }
-html[lang="ja"] .si-fi .header-dl > summary {
+html[lang="ja"] .si-fi .header-dl > summary,
+html[lang="zh-TW"] .si-fi .header-dl > summary,
+html[lang^="zh"] .si-fi .header-dl > summary {
   letter-spacing: 0.06em;
 }
 .si-fi.office-mode .header-dl > summary {
@@ -244,7 +250,9 @@ html[lang="ja"] .si-fi .header-dl > summary {
   font-weight: 600;
   letter-spacing: 0.04em;
 }
-html[lang="ja"] .si-fi .template-dl-heading {
+html[lang="ja"] .si-fi .template-dl-heading,
+html[lang="zh-TW"] .si-fi .template-dl-heading,
+html[lang^="zh"] .si-fi .template-dl-heading {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 .si-fi .template-dl-item {
@@ -256,7 +264,9 @@ html[lang="ja"] .si-fi .template-dl-heading {
   border-radius: 3px;
   white-space: nowrap;
 }
-html[lang="ja"] .si-fi .template-dl-item {
+html[lang="ja"] .si-fi .template-dl-item,
+html[lang="zh-TW"] .si-fi .template-dl-item,
+html[lang^="zh"] .si-fi .template-dl-item {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 .si-fi .template-dl-item:hover {
@@ -464,7 +474,9 @@ html[lang="en"] .si-fi .form-group input {
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi .form-group input {
+html[lang="ja"] .si-fi .form-group input,
+html[lang="zh-TW"] .si-fi .form-group input,
+html[lang^="zh"] .si-fi .form-group input {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -596,7 +608,9 @@ html[lang="en"] .si-fi .btn-submit {
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi .btn-submit {
+html[lang="ja"] .si-fi .btn-submit,
+html[lang="zh-TW"] .si-fi .btn-submit,
+html[lang^="zh"] .si-fi .btn-submit {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -617,7 +631,9 @@ html[lang="en"] .si-fi .lang-select-wrap {
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi .lang-select-wrap {
+html[lang="ja"] .si-fi .lang-select-wrap,
+html[lang="zh-TW"] .si-fi .lang-select-wrap,
+html[lang^="zh"] .si-fi .lang-select-wrap {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -963,7 +979,11 @@ html[lang="ja"] .si-fi .lang-select-wrap {
 }
 
 /* Office Mode: JP は本文すべて BIZ UDPGothic（タイトル・SCI-FI ボタンは上で Orbitron 指定済み） */
-html[lang="ja"] .si-fi.office-mode.registration-page {
+html[lang="ja"] .si-fi.office-mode.registration-page,
+/* Office Mode: JP は本文すべて BIZ UDPGothic（タイトル・SCI-FI ボタンは上で Orbitron 指定済み） */
+html[lang="zh-TW"] .si-fi.office-mode.registration-page,
+/* Office Mode: JP は本文すべて BIZ UDPGothic（タイトル・SCI-FI ボタンは上で Orbitron 指定済み） */
+html[lang^="zh"] .si-fi.office-mode.registration-page {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 

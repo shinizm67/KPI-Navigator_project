@@ -36,11 +36,16 @@ def main() -> None:
         "kpi-pl-expenses-v1:",
         "loadMepYearPayload",
         "book_append_sheet",
+        "exportLang",
+        "NON_EXPENSE_IDS",
         "xlsx-js-style",
         "DEFAULT_EXPENSE_LINES",
         "— 固定費 —",
         "lineMonthAmount",
         "!cols",
+        "kpi-pl-mep-export-include-pl",
+        "Excelファイル生成中",
+        "preloadXlsx",
     ):
         if needle not in js:
             raise SystemExit(f"missing in export JS: {needle}")

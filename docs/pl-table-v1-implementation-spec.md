@@ -103,7 +103,7 @@ pl-table-window
 | 行高（固定ペイン〜Business Days） | **30px** |
 | 行高（Business Days より下・スクロール領域） | **40px**（縦ラベル用） |
 | 枠線 | 1px `#58e1f3`（Office: `#999`） |
-| フォント | EN: Orbitron / JA 本文: BIZ UDPGothic |
+| フォント | EN（Sci-Fi）: Orbitron / **JA・zh-TW 等（非アルファベット言語）および Office**: ラベル・**数値とも** BIZ UDPGothic（プロダクト共通。`docs/font-locale-policy.md` / `docs/local-dev-notes.md` 参照） |
 | 横文字の寄せ | **Profit & Loss のみ中央**、他は右寄せ（ラベル）／中央（数値） |
 
 ---

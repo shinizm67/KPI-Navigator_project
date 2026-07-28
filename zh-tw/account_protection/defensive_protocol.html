@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>防護通訊協定 | KPI Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../register/style.css">
+  <link rel="stylesheet" href="../../en/setting/style.css">
+</head>
+<body class="si-fi profile-page defensive-protocol-page" id="body-el">
+  <div class="page-wrap profile-wrap">
+    <main class="profile-main">
+      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h2 class="profile-title-sub">DEFENSIVE PROTOCOL</h2>
+
+      <section class="defense-card" aria-labelledby="defense-title">
+        <h3 id="defense-title" class="defense-title">目前已有其他裝置登入</h3>
+        <p class="defense-text">此帳戶目前正在其他裝置上使用中。</p>
+        <p class="defense-text">若要在此裝置繼續使用，請透過電子信箱驗證身分。</p>
+
+        <div class="defense-actions">
+          <button type="button" class="btn-submit btn-register defense-btn-main" id="btn-verify-email">以電子信箱驗證</button>
+        </div>
+
+        <p class="defense-help"><a href="account_protection.html" class="defense-link">若這不是您本人的操作，請聯絡支援。</a></p>
+      </section>
+
+      <div class="defense-actions-bottom">
+        <a href="account_protection.html" class="btn-submit btn-register defense-btn-sub">這不是我</a>
+      </div>
+
+      <p class="profile-alert" id="verify-feedback" role="status" aria-live="polite" hidden>
+        驗證郵件已寄出。請檢查您的收件匣。
+      </p>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <button class="footer-backtotop" id="footerBackToTop" aria-label="回到頁首"><img src="../../images/arrow_up.svg" alt="回到頁首" class="footer-backtotop__icon"></button>
+    <div class="footer-separator"></div>
+    <div class="footer-logo"><img src="../../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img"></div>
+    <p class="footer-copy">© 2025 Forge-Laboratory. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      var backTop = document.getElementById('footerBackToTop');
+      if (!backTop) return;
+      backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
+    (function () {
+      var btn = document.getElementById('btn-verify-email');
+      var feedback = document.getElementById('verify-feedback');
+      if (!btn || !feedback) return;
+      btn.addEventListener('click', function () {
+        feedback.hidden = false;
+      });
+    })();
+  </script>
+</body>
+</html>

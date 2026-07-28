@@ -8,7 +8,9 @@
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi.price-page {
+html[lang="ja"] .si-fi.price-page,
+html[lang="zh-TW"] .si-fi.price-page,
+html[lang^="zh"] .si-fi.price-page {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -50,7 +52,11 @@ html[lang="ja"] .si-fi.price-page {
 }
 
 html[lang="ja"] .price-title-main,
-html[lang="ja"] .price-title-sub {
+html[lang="ja"] .price-title-sub,
+html[lang="zh-TW"] .price-title-main,
+html[lang^="zh"] .price-title-main,
+html[lang="zh-TW"] .price-title-sub,
+html[lang^="zh"] .price-title-sub {
   font-family: 'Orbitron', sans-serif;
 }
 
@@ -157,7 +163,9 @@ html[lang="ja"] .price-title-sub {
   transition: box-shadow 0.2s, opacity 0.2s;
 }
 
-html[lang="ja"] .btn-register {
+html[lang="ja"] .btn-register,
+html[lang="zh-TW"] .btn-register,
+html[lang^="zh"] .btn-register {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 

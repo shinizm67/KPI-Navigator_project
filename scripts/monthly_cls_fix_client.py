@@ -109,17 +109,33 @@ DASH_ROW6_OLD = """      var OFF_CELL_DASH = '-';
       }"""
 
 DASH_ROW6_NEW = """      var OFF_CELL_DASH = '-';
+      /* CLS hydrate 用の幅確保スケルトン（非表示）。OFF 日の最終表示には使わない。 */
+      var TW_SKELETON_MONEY = '\\u00a50,000,000';
       var TW_SKELETON_PCT = '000%';
       function dashRow6() {
-        var skelMoney = fmtTwMoney(0);
         return [
-          skelMoney,
-          skelMoney,
-          skelMoney,
-          skelMoney,
-          skelMoney,
+          TW_SKELETON_MONEY,
+          TW_SKELETON_MONEY,
+          TW_SKELETON_MONEY,
+          TW_SKELETON_MONEY,
+          TW_SKELETON_MONEY,
           TW_SKELETON_PCT,
         ];
+      }
+      function twZeroMoney() {
+        if (typeof fmtTwMoney === 'function') return fmtTwMoney(0);
+        if (window.KpiCurrency) return KpiCurrency.zero();
+        return useJa ? '\\u00a50' : '$0';
+      }
+      /* OFF 日: 表記ルールどおり ¥0/$0（達成率は 0%、来客数などは 0） */
+      function offZeroRow6(groupNo) {
+        var z = twZeroMoney();
+        if (groupNo === 1) return [z, z, z, z, z, '0%'];
+        if (groupNo === 2) {
+          if (useJa) return ['0', '0', '0', '0', '0', '0'];
+          return ['0', '0', '0', z, z, z];
+        }
+        return [z, z, z, z, z, z];
       }"""
 
 FOCUS_BAR_INIT_OLD = """      var initialExpanded = false;

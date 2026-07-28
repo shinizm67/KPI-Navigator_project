@@ -8,7 +8,9 @@
   font-family: 'Orbitron', sans-serif;
 }
 
-html[lang="ja"] .si-fi.login-page {
+html[lang="ja"] .si-fi.login-page,
+html[lang="zh-TW"] .si-fi.login-page,
+html[lang^="zh"] .si-fi.login-page {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
@@ -125,7 +127,9 @@ html[lang="ja"] .si-fi.login-page {
   opacity: 0.95;
 }
 
-html[lang="ja"] .si-fi.login-page .btn-login {
+html[lang="ja"] .si-fi.login-page .btn-login,
+html[lang="zh-TW"] .si-fi.login-page .btn-login,
+html[lang^="zh"] .si-fi.login-page .btn-login {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
