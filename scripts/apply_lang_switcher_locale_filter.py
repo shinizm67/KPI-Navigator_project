@@ -4,7 +4,7 @@
 Policy: docs/lang-switcher-locale-policy.md
 - ja: JP + EN only (hide TW)
 - zh-TW: TW + EN only (hide JA)
-- en: hide entire #lang-select-wrap
+- en: keep switcher visible (for round-trip back to native pages)
 
 Preferences #pref-lang keeps full JP/EN/TW (not affected).
 """
@@ -24,9 +24,6 @@ STYLE_BLOCK = f"""  <style id="kpi-lang-switcher-locale">
     }}
     html[lang='zh-TW'] .lang-option-ja,
     html[lang^='zh'] .lang-option-ja {{
-      display: none !important;
-    }}
-    html[lang='en'] #lang-select-wrap {{
       display: none !important;
     }}
   </style>

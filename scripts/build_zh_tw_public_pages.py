@@ -26,9 +26,6 @@ LOCALE_STYLE = """  <style id="kpi-lang-switcher-locale">
     html[lang^='zh'] .lang-option-ja {
       display: none !important;
     }
-    html[lang='en'] #lang-select-wrap {
-      display: none !important;
-    }
   </style>"""
 
 

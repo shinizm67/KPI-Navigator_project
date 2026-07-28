@@ -12554,9 +12554,6 @@
     html[lang^='zh'] .lang-option-ja {
       display: none !important;
     }
-    html[lang='en'] #lang-select-wrap {
-      display: none !important;
-    }
   </style>
 </head>
 <body class="si-fi profile-page monthly-page" id="body-el">
@@ -30737,18 +30734,40 @@ Cumulative Target Annual Sales</p>
           window.__ANNUAL_UI.setDailyDateByISO(nextIso, 'monthly-vfocus-nav');
         }
       }
-      if (vPrevDayBtn) {
-        vPrevDayBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          stepFocusDay(-1);
+      function bindMonthlyVfocusDayHoldRepeat(btn, delta) {
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) { clearTimeout(delayId); delayId = null; }
+          if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+        }
+        function stepOnce() {
+          stepFocusDay(delta);
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 400);
+        }
+        function onPointerUp() { clearHold(); }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          stepOnce();
         });
       }
-      if (vNextDayBtn) {
-        vNextDayBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          stepFocusDay(1);
-        });
-      }
+      bindMonthlyVfocusDayHoldRepeat(vPrevDayBtn, -1);
+      bindMonthlyVfocusDayHoldRepeat(vNextDayBtn, 1);
       if (vEditBtn) {
         vEditBtn.addEventListener('click', function () {
           if (window.__MONTHLY_EDIT_NAV__) {
