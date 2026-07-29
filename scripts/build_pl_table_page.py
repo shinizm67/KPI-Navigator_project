@@ -6168,6 +6168,11 @@ def render_page(lang: str, lang_switch: str) -> str:
       border-color: #555 !important;
       color: #111 !important;
     }}
+    /* KPI-PL-INSIGHT-OFFICE-BIZ: Office はパネル内を BIZ に統一（Orbitron 残存を上書き） */
+    body.office-mode .pl-graph-overlay__panel,
+    body.office-mode .pl-graph-overlay__panel *:not(svg):not(svg *) {{
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+    }}
     body.office-mode .pl-graph-overlay__close {{
       border-color: #111 !important;
       background: #d0d0d0 !important;

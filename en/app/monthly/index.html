@@ -6745,6 +6745,11 @@
       border-color: #555 !important;
       color: #111 !important;
     }
+    /* Office: パネル内は Orbitron 残存を上書きし BIZ に統一（方針: docs/font-locale-policy.md） */
+    .office-mode .insight-overlay__panel,
+    .office-mode .insight-overlay__panel *:not(svg):not(svg *) {
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+    }
     .office-mode .insight-overlay__close {
       border-color: #111 !important;
       background: #d0d0d0 !important;
@@ -29355,6 +29360,30 @@ Cumulative Target Annual Sales</p>
           syncYearUi(y);
           return;
         }
+        /* KPI-ARP-YEAR-COCKPIT-SYNC: DisplayOnly 後に Cockpit/Open 表を同年へ（イベント非発火） */
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function'
+        ) {
+          window.__ANNUAL_UI.syncCockpitForCalendarYear(Number(y));
+        }
+        /* KPI-ARP-YEAR-NAV-PERSIST: calendarYear のみ軽量永続（selectedIso は維持） */
+        try {
+          var gwNav = window.__KPI_DATA_GATEWAY;
+          if (gwNav && typeof gwNav.getJson === 'function' && typeof gwNav.setJson === 'function') {
+            var prevNav = gwNav.getJson('kpiNavigator.annualNav') || {};
+            var keepIso =
+              (window.__ANNUAL_DATA &&
+                window.__ANNUAL_DATA.daily &&
+                window.__ANNUAL_DATA.daily.selectedDate) ||
+              prevNav.selectedIso ||
+              null;
+            gwNav.setJson('kpiNavigator.annualNav', {
+              calendarYear: Number(y),
+              selectedIso: keepIso,
+            });
+          }
+        } catch (_eNavPersist) {}
         syncMonthlyVfocusYearBadge(Number(y));
       }
       function syncArea2ByIso(iso) {

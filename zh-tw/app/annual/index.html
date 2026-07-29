@@ -475,6 +475,25 @@
       outline: none;
     }
     /* KPI-ANNUAL-CLS-FIX */
+    /* KPI-MODE-TOGGLE-INP */
+    /* KPI-MODE-TOGGLE-INP-V2: * 全称をやめ、日次一覧の描画だけ一時スキップ */
+    body.kpi-mode-switching {
+      transition: none !important;
+      animation: none !important;
+    }
+    body.kpi-mode-switching #annual-daily-rows,
+    body.kpi-mode-switching .annual-daily-focus-scroll,
+    body.kpi-mode-switching .annual-daily-focus-global-scroll {
+      content-visibility: hidden;
+      contain: strict;
+    }
+    /* KPI-SDM-CLOSE-INP-V3: モーダル表示中は日次365行の描画をスキップ（閉じるINP用・開く後に付与） */
+    body.sales-data-modal-open #annual-daily-rows,
+    body.sales-data-modal-open .annual-daily-focus-scroll,
+    body.sales-data-modal-open .annual-daily-focus-global-scroll {
+      content-visibility: hidden;
+      contain: strict;
+    }
     .annual-frame-img {
       width: 100%;
       display: block;
@@ -4580,6 +4599,11 @@
     .office-mode .insight-overlay__panel {
       border-color: #555 !important;
       color: #111 !important;
+    }
+    /* Office: パネル内は Orbitron 残存を上書きし BIZ に統一（方針: docs/font-locale-policy.md） */
+    .office-mode .insight-overlay__panel,
+    .office-mode .insight-overlay__panel *:not(svg):not(svg *) {
+      font-family: 'BIZ UDPGothic', sans-serif !important;
     }
     .office-mode .insight-overlay__close {
       border-color: #111 !important;
@@ -21633,9 +21657,12 @@
       var btnModeToggle = document.getElementById('btn-mode-toggle');
       var btnModeText = document.getElementById('btn-mode-text');
       var settingsOfficeLabel = document.getElementById('settings-office-label');
-      function updateModeButton() {
+      function updateModeButton(isOfficeOpt) {
         if (!btnModeText || !btnModeToggle) return;
-        var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+        var isOffice =
+          typeof isOfficeOpt === 'boolean'
+            ? isOfficeOpt
+            : !!(bodyEl && bodyEl.classList.contains('office-mode'));
         btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'OFFICE MODE';
         btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');
         if (settingsOfficeLabel) {
@@ -21646,18 +21673,31 @@
         if (sessionStorage.getItem(STORAGE_KEY) === '1') {
           bodyEl.classList.add('office-mode');
         }
+        /* KPI-MODE-TOGGLE-INP: ラベル即時反映、office-mode 切替は rAF へ */
+        /* KPI-MODE-TOGGLE-INP-V2: 先に日次一覧を描画スキップ → 切替 → 再表示 */
+        var __modeToggleBusy = false;
         btnModeToggle.addEventListener('click', function (e) {
           e.preventDefault();
-          bodyEl.classList.toggle('office-mode');
-          if (bodyEl.classList.contains('office-mode')) {
+          if (__modeToggleBusy || !bodyEl) return;
+          __modeToggleBusy = true;
+          var willBeOffice = !bodyEl.classList.contains('office-mode');
+          if (willBeOffice) {
             sessionStorage.setItem(STORAGE_KEY, '1');
           } else {
             sessionStorage.removeItem(STORAGE_KEY);
           }
-          updateModeButton();
-          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.refreshFocusBarAsset === 'function') {
-            window.__ANNUAL_UI.refreshFocusBarAsset();
-          }
+          updateModeButton(willBeOffice);
+          bodyEl.classList.add('kpi-mode-switching');
+          requestAnimationFrame(function () {
+            bodyEl.classList.toggle('office-mode', willBeOffice);
+            if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.refreshFocusBarAsset === 'function') {
+              window.__ANNUAL_UI.refreshFocusBarAsset();
+            }
+            requestAnimationFrame(function () {
+              bodyEl.classList.remove('kpi-mode-switching');
+              __modeToggleBusy = false;
+            });
+          });
         });
         updateModeButton();
       }
@@ -21874,9 +21914,29 @@
         render();
       });
       render();
-      new MutationObserver(placeToggleForMode).observe(document.body, {
+      /* KPI-MODE-TOGGLE-INP: office-mode 変化時の DOM 移動は rAF へ */
+      var __placeToggleRaf = 0;
+      function schedulePlaceToggleForMode() {
+        if (__placeToggleRaf) return;
+        __placeToggleRaf = requestAnimationFrame(function () {
+          __placeToggleRaf = 0;
+          placeToggleForMode();
+        });
+      }
+      new MutationObserver(function (mutations) {
+        for (var mi = 0; mi < mutations.length; mi++) {
+          var oldVal = mutations[mi].oldValue || '';
+          var hadOffice = /\boffice-mode\b/.test(oldVal);
+          var hasOffice = document.body.classList.contains('office-mode');
+          if (hadOffice !== hasOffice) {
+            schedulePlaceToggleForMode();
+            return;
+          }
+        }
+      }).observe(document.body, {
         attributes: true,
         attributeFilter: ['class'],
+        attributeOldValue: true,
       });
     })();
     (function () {
@@ -22029,81 +22089,161 @@
       }
 
       /* KPI-COCKPIT-BUSINESS-DAYS */
+      /* KPI-COCKPIT-BUSINESS-DAYS-PERF */
+      var __cockpitBmapCache = null;
+      var __cockpitBmapCacheModalLive = false;
+      var __businessDayCountsCache = Object.create(null);
+
+      function invalidateCockpitBusinessDayCache() {
+        __cockpitBmapCache = null;
+        __cockpitBmapCacheModalLive = false;
+        __businessDayCountsCache = Object.create(null);
+      }
+
       function resolveBusinessDayMapForCockpit() {
         var sdm = document.getElementById('sales-data-modal');
         var sdmTable = document.getElementById('sales-data-modal-table');
         var modalLive = sdm && !sdm.hasAttribute('hidden') && sdmTable;
+        if (!modalLive && __cockpitBmapCache && !__cockpitBmapCacheModalLive) {
+          return __cockpitBmapCache;
+        }
         if (!modalLive && window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
         var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
-        var bmap = Object.assign({}, (daily && daily.businessDayByDate) || {});
+        var base = (daily && daily.businessDayByDate) || {};
+        var bmap;
         if (modalLive) {
+          bmap = Object.assign({}, base);
           sdmTable.querySelectorAll('.sales-data-modal__cb[data-iso-date]').forEach(function (cb) {
             var iso = cb.getAttribute('data-iso-date');
             if (iso) bmap[iso] = !!cb.checked;
           });
+          __cockpitBmapCache = null;
+          __cockpitBmapCacheModalLive = true;
+        } else {
+          bmap = base;
+          __cockpitBmapCache = bmap;
+          __cockpitBmapCacheModalLive = false;
         }
         return bmap;
       }
 
       /** Cockpit 営業日数: Sales Data の B.DAY が明示的に true の日のみ（平日フォールバックなし） */
-      function isCalendarBusinessDay(y, m0, day) {
+      function isCalendarBusinessDay(y, m0, day, bmap) {
         var d = new Date(y, m0, day);
         if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
         var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-        var bmap = resolveBusinessDayMapForCockpit();
-        if (!Object.prototype.hasOwnProperty.call(bmap, iso)) return false;
-        return !!bmap[iso];
+        var map = bmap || resolveBusinessDayMapForCockpit();
+        if (!Object.prototype.hasOwnProperty.call(map, iso)) return false;
+        return !!map[iso];
       }
 
-      function countBusinessDaysInMonth(y, m0) {
-        var dc = new Date(y, m0 + 1, 0).getDate();
-        var c = 0;
-        for (var day = 1; day <= dc; day++) {
-          if (isCalendarBusinessDay(y, m0, day)) c++;
-        }
-        return c;
-      }
-
-      function countBusinessDaysInYear(y) {
+      function computeBusinessDayCountsForYear(y, bmap) {
         y = Number(y);
-        if (!isFinite(y)) return 0;
-        var c = 0;
-        for (var m0 = 0; m0 < 12; m0++) c += countBusinessDaysInMonth(y, m0);
-        return c;
+        if (!isFinite(y)) {
+          return { total: 0, monthly: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] };
+        }
+        if (!bmap && __businessDayCountsCache[y]) return __businessDayCountsCache[y];
+        var map = bmap || resolveBusinessDayMapForCockpit();
+        var monthly = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        var total = 0;
+        var yearPrefix = String(y) + '-';
+        var isoKeys = Object.keys(map || {});
+        if (isoKeys.length) {
+          for (var ki = 0; ki < isoKeys.length; ki++) {
+            var iso = isoKeys[ki];
+            if (!map[iso]) continue;
+            if (String(iso).indexOf(yearPrefix) !== 0) continue;
+            var m = Number(String(iso).slice(5, 7)) - 1;
+            if (!Number.isFinite(m) || m < 0 || m > 11) continue;
+            monthly[m] += 1;
+            total += 1;
+          }
+          var result = { total: total, monthly: monthly };
+          if (!bmap) __businessDayCountsCache[y] = result;
+          return result;
+        }
+        for (var m0 = 0; m0 < 12; m0++) {
+          var dc = new Date(y, m0 + 1, 0).getDate();
+          var mc = 0;
+          for (var day = 1; day <= dc; day++) {
+            if (isCalendarBusinessDay(y, m0, day, map)) mc++;
+          }
+          monthly[m0] = mc;
+          total += mc;
+        }
+        var result = { total: total, monthly: monthly };
+        if (!bmap) __businessDayCountsCache[y] = result;
+        return result;
       }
 
+      function countBusinessDaysInMonth(y, m0, bmap) {
+        var counts = computeBusinessDayCountsForYear(y, bmap);
+        return counts.monthly[Number(m0)] || 0;
+      }
+
+      function countBusinessDaysInYear(y, bmap) {
+        return computeBusinessDayCountsForYear(y, bmap).total;
+      }
+
+      var __syncBdDisplayTimer = null;
       function syncBusinessDayDisplayFromDailyMap() {
         var cy =
           window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear != null
             ? Number(window.__ANNUAL_DATA.calendarYear)
             : new Date().getFullYear();
         if (!isFinite(cy)) cy = new Date().getFullYear();
-        var total = countBusinessDaysInYear(cy);
+        invalidateCockpitBusinessDayCache();
+        var bmap = resolveBusinessDayMapForCockpit();
+        var counts = computeBusinessDayCountsForYear(cy, bmap);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-        window.__ANNUAL_DATA.totalBusinessDay = total;
-        bdEl.textContent = String(total);
+        window.__ANNUAL_DATA.totalBusinessDay = counts.total;
+        bdEl.textContent = String(counts.total);
 
         var rows = document.querySelectorAll('.annual-open-table tbody tr');
         for (var i = 0; i < rows.length && i < 12; i++) {
           var cells = rows[i].getElementsByTagName('td');
-          if (cells.length >= 2) cells[1].textContent = String(countBusinessDaysInMonth(cy, i));
+          if (cells.length >= 2) cells[1].textContent = String(counts.monthly[i]);
         }
+      }
+
+      function scheduleSyncBusinessDayDisplayFromDailyMap() {
+        if (__syncBdDisplayTimer != null) window.clearTimeout(__syncBdDisplayTimer);
+        __syncBdDisplayTimer = window.setTimeout(function () {
+          __syncBdDisplayTimer = null;
+          syncBusinessDayDisplayFromDailyMap();
+        }, 0);
       }
 
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};
       window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap = syncBusinessDayDisplayFromDailyMap;
+      window.__ANNUAL_UI.scheduleSyncBusinessDayDisplayFromDailyMap =
+        scheduleSyncBusinessDayDisplayFromDailyMap;
       window.__ANNUAL_UI.resolveBusinessDayMapForCockpit = resolveBusinessDayMapForCockpit;
+      window.__ANNUAL_UI.computeBusinessDayCountsForYear = computeBusinessDayCountsForYear;
+      window.__ANNUAL_UI.invalidateCockpitBusinessDayCache = invalidateCockpitBusinessDayCache;
 
-      document.addEventListener('annual:calendarYearChanged', function () {
-        syncBusinessDayDisplayFromDailyMap();
+      document.addEventListener('annual:calendarYearChanged', scheduleSyncBusinessDayDisplayFromDailyMap);
+      document.addEventListener('annual:editModalSaved', scheduleSyncBusinessDayDisplayFromDailyMap);
+      document.addEventListener('annual:businessDayMapChanged', function () {
+        invalidateCockpitBusinessDayCache();
+        scheduleSyncBusinessDayDisplayFromDailyMap();
       });
-      document.addEventListener('annual:editModalSaved', function () {
-        syncBusinessDayDisplayFromDailyMap();
+      document.addEventListener('annual:salesMapChanged', function () {
+        invalidateCockpitBusinessDayCache();
+        scheduleSyncBusinessDayDisplayFromDailyMap();
+      });
+      document.addEventListener('annual:salesDataSaved', function () {
+        invalidateCockpitBusinessDayCache();
+        scheduleSyncBusinessDayDisplayFromDailyMap();
       });
 
-      syncBusinessDayDisplayFromDailyMap();
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(syncBusinessDayDisplayFromDailyMap, { timeout: 150 });
+      } else {
+        window.setTimeout(syncBusinessDayDisplayFromDailyMap, 0);
+      }
     })();
     (function () {
       if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function') {
@@ -29546,6 +29686,20 @@
           ) {
             window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
           }
+          /* KPI-ARP-YEAR-COCKPIT-SYNC: DisplayOnly 後に Open 表・年次目標を同年へ（イベント非発火） */
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function'
+          ) {
+            window.__ANNUAL_UI.syncCockpitForCalendarYear(nextYear);
+          }
+          /* KPI-ARP-YEAR-NAV-PERSIST: 年セレクタ相当の calendarYear だけ永続（selectedIso は既存ヘルパに委譲） */
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.syncAnnualNavToStorage === 'function'
+          ) {
+            window.__ANNUAL_UI.syncAnnualNavToStorage();
+          }
         }
         __geomCache = null;
         __anchorRangeCache = null;
@@ -32391,10 +32545,19 @@
         return false;
       }
 
+      /* KPI-PSM-INP: year committed 判定を totals 走査中にキャッシュ */
+      var __psmCommittedYearCache = Object.create(null);
       function hasPastSalesRowInputSource(iso) {
         if (state.rowStateByIso[iso]) return true;
         var y = isoYearFromIso(iso);
-        if (!pastSalesYearHasCommittedData(y)) return false;
+        var committed;
+        if (Object.prototype.hasOwnProperty.call(__psmCommittedYearCache, y)) {
+          committed = __psmCommittedYearCache[y];
+        } else {
+          committed = pastSalesYearHasCommittedData(y);
+          __psmCommittedYearCache[y] = committed;
+        }
+        if (!committed) return false;
         var ps = ensurePastSalesDaily();
         var map = ps.salesByDate || {};
         var bmap = ps.businessDayByDate || {};
@@ -32426,6 +32589,7 @@
       }
 
       function buildPastSalesTotalsMap(y) {
+        __psmCommittedYearCache = Object.create(null);
         var all = gatherYearDays(y);
         var monthRunning = 0;
         var yearRunning = 0;
@@ -32459,6 +32623,17 @@
         return formatAmountCell(n);
       }
 
+      /* KPI-PSM-INP: キー入力は rAF 集約（summary+totals をキー毎同期実行しない） */
+      var __psmInputRefreshRaf = 0;
+      function schedulePastSalesInputRefresh() {
+        if (__psmInputRefreshRaf) return;
+        __psmInputRefreshRaf = requestAnimationFrame(function () {
+          __psmInputRefreshRaf = 0;
+          __psmCommittedYearCache = Object.create(null);
+          updatePastSalesSummary();
+          refreshPastSalesTableTotals();
+        });
+      }
       function refreshPastSalesTableTotals() {
         if (!modalTable) return;
         var totalsMap = buildPastSalesTotalsMap(state.year);
@@ -33555,8 +33730,10 @@
           });
           inp.addEventListener('input', function () {
             state.modalDirty = true;
-            updatePastSalesSummary();
-            refreshPastSalesTableTotals();
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
+            else inp.removeAttribute('data-last-active');
+            schedulePastSalesInputRefresh();
           });
           inp.addEventListener('change', function () {
             pushUndoSnapshot();
@@ -34176,10 +34353,19 @@
         return false;
       }
 
+      /* KPI-SDM-INP: year committed 判定を totals 走査中にキャッシュ */
+      var __sdmCommittedYearCache = Object.create(null);
       function hasSalesDataRowInputSource(iso) {
         if (state.rowStateByIso[iso]) return true;
         var y = isoYearFromIso(iso);
-        if (!salesDataYearHasCommittedData(y)) return false;
+        var committed;
+        if (Object.prototype.hasOwnProperty.call(__sdmCommittedYearCache, y)) {
+          committed = __sdmCommittedYearCache[y];
+        } else {
+          committed = salesDataYearHasCommittedData(y);
+          __sdmCommittedYearCache[y] = committed;
+        }
+        if (!committed) return false;
         var ps = ensureSalesDataDaily();
         var map = ps.targetSalesByDate || {};
         var bmap = ps.businessDayByDate || {};
@@ -34211,6 +34397,7 @@
       }
 
       function buildSalesDataTotalsMap(y) {
+        __sdmCommittedYearCache = Object.create(null);
         var all = gatherYearDays(y);
         var monthRunning = 0;
         var yearRunning = 0;
@@ -34244,6 +34431,17 @@
         return formatAmountCell(n);
       }
 
+      /* KPI-SDM-INP: キー入力は rAF 集約（summary+totals をキー毎同期実行しない） */
+      var __sdmInputRefreshRaf = 0;
+      function scheduleSalesDataInputRefresh() {
+        if (__sdmInputRefreshRaf) return;
+        __sdmInputRefreshRaf = requestAnimationFrame(function () {
+          __sdmInputRefreshRaf = 0;
+          __sdmCommittedYearCache = Object.create(null);
+          updateSalesDataSummary();
+          refreshSalesDataTableTotals();
+        });
+      }
       function refreshSalesDataTableTotals() {
         if (!modalTable) return;
         updateSalesDataYmBdCount();
@@ -35120,6 +35318,11 @@
       }
 
       function requestCloseModal() {
+        /* KPI-SDM-CLOSE-INP: 未保存なしは Promise を挟まず即 close */
+        if (!hasSalesDataUnsavedChanges()) {
+          closeModal();
+          return;
+        }
         requestSalesDataLeaveNavigation().then(function (ok) {
           if (ok) closeModal();
         });
@@ -35467,11 +35670,13 @@
           modalTable.removeChild(tbodies[tb]);
         }
 
+        /* KPI-SDM-OPEN-INP: 行は DocumentFragment に構築して1回挿入 */
+        var __sdmRowsFrag = document.createDocumentFragment();
         var tbodySeg = null;
         function ensureTbodySeg() {
           if (!tbodySeg) {
             tbodySeg = document.createElement('tbody');
-            modalTable.appendChild(tbodySeg);
+            __sdmRowsFrag.appendChild(tbodySeg);
           }
         }
 
@@ -35598,8 +35803,10 @@
               return;
             }
             state.modalDirty = true;
-            updateSalesDataSummary();
-            refreshSalesDataTableTotals();
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
+            else inp.removeAttribute('data-last-active');
+            scheduleSalesDataInputRefresh();
           });
           inp.addEventListener('change', function () {
             pushUndoSnapshot();
@@ -35613,6 +35820,7 @@
 
           tbodySeg.appendChild(tr);
         }
+        modalTable.appendChild(__sdmRowsFrag);
         updateFilterToggleActive();
         updateSalesSortToggleActive();
         updateSalesDataYmBdCount();
@@ -35633,65 +35841,96 @@
         else scrollEl.scrollTop = 0;
       }
 
+      /* KPI-SDM-OPEN-INP-V2: 殻を即表示 → 次ペイント後に重い準備・年次テーブル構築 */
       function openModal() {
         lastFocusEl = document.activeElement;
-        state.rowStateByIso = {};
-        state.salesPinnedAmount = null;
-        state.salesAmountSort = null;
-        syncYearMonthFromApp();
-        syncColheadDatePickerValue();
-        clearDateFilterUi();
-        closeSalesSortPanel();
-        setSalesDataTab('input');
-        updateSalesDataSummary();
-        renderSalesDataTable();
         if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
           if (!window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : (String(document.documentElement.getAttribute('lang')||'').indexOf('zh')===0 ? '營業額資料' : 'Sales Data'))) {
             return;
           }
         }
-        modal.removeAttribute('hidden');
-        modal.removeAttribute('aria-hidden');
-        if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
-          window.__KPI_SALES_INPUT_PATH_UI.sync();
-        }
-        if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.sync === 'function') {
-          window.__SDM_DAILY_TARGET_MODE.sync();
-        }
-        if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.closePanel === 'function') {
-          window.__SDM_DAILY_TARGET_MODE.closePanel();
-        }
-        if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
-          window.__KPI_EDIT_GUARDS.applyAll();
-        }
-        document.body.style.overflow = 'hidden';
-        scrollToViewMonth();
+        state.rowStateByIso = {};
+        state.salesPinnedAmount = null;
+        state.salesAmountSort = null;
         state.modalDirty = false;
         sessionSaved = false;
         sdmHlAllocWarnShown = false;
         undoStack = [];
+        if (modalTable) {
+          var tbodiesOpen = modalTable.querySelectorAll('tbody');
+          for (var tbOpen = 0; tbOpen < tbodiesOpen.length; tbOpen++) {
+            modalTable.removeChild(tbodiesOpen[tbOpen]);
+          }
+        }
+        modal.removeAttribute('hidden');
+        modal.removeAttribute('aria-hidden');
+        document.body.style.overflow = 'hidden';
         syncUndoButton();
-        if (btnClose) btnClose.focus();
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            if (!modal || modal.hasAttribute('hidden')) return;
+            syncYearMonthFromApp();
+            syncColheadDatePickerValue();
+            clearDateFilterUi();
+            closeSalesSortPanel();
+            setSalesDataTab('input');
+            updateSalesDataSummary();
+            renderSalesDataTable();
+            if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
+              window.__KPI_SALES_INPUT_PATH_UI.sync();
+            }
+            if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.sync === 'function') {
+              window.__SDM_DAILY_TARGET_MODE.sync();
+            }
+            if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.closePanel === 'function') {
+              window.__SDM_DAILY_TARGET_MODE.closePanel();
+            }
+            if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
+              window.__KPI_EDIT_GUARDS.applyAll();
+            }
+            scrollToViewMonth();
+            if (btnClose) btnClose.focus();
+            /* 開くINPの後で背面365行をスキップ（閉じる用の準備） */
+            document.body.classList.add('sales-data-modal-open');
+          });
+        });
       }
 
+      /* KPI-SDM-CLOSE-INP-V3: 殻だけ先に消す → フォーカス復帰後に365行復帰（keyboard INP分離） */
       function closeModal() {
-        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
-          window.__KPI_EDIT_LEASE.release();
-        }
-        hideSalesDataCloseChooser();
-        closeDateFilterPanel();
-        closeSalesSortPanel();
-        if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.closePanel === 'function') {
-          window.__SDM_DAILY_TARGET_MODE.closePanel();
-        }
         modal.setAttribute('hidden', '');
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
-        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function') {
-          window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
-        }
-        if (lastFocusEl && typeof lastFocusEl.focus === 'function') lastFocusEl.focus();
-        else if (openBtn) openBtn.focus();
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            hideSalesDataCloseChooser();
+            closeDateFilterPanel();
+            closeSalesSortPanel();
+            if (window.__SDM_DAILY_TARGET_MODE && typeof window.__SDM_DAILY_TARGET_MODE.closePanel === 'function') {
+              window.__SDM_DAILY_TARGET_MODE.closePanel();
+            }
+            /* 365行はまだスキップしたまま focus（keyboard 次描画を軽く保つ） */
+            if (lastFocusEl && typeof lastFocusEl.focus === 'function') lastFocusEl.focus();
+            else if (openBtn) openBtn.focus();
+            if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
+              window.__KPI_EDIT_LEASE.release();
+            }
+            if (
+              window.__ANNUAL_UI &&
+              typeof window.__ANNUAL_UI.scheduleSyncBusinessDayDisplayFromDailyMap === 'function'
+            ) {
+              window.__ANNUAL_UI.scheduleSyncBusinessDayDisplayFromDailyMap();
+            } else if (
+              window.__ANNUAL_UI &&
+              typeof window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap === 'function'
+            ) {
+              window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
+            }
+            requestAnimationFrame(function () {
+              document.body.classList.remove('sales-data-modal-open');
+            });
+          });
+        });
       }
 
       
@@ -35836,7 +36075,7 @@
       if (summaryReferenceInput) {
         summaryReferenceInput.addEventListener('input', function () {
           state.modalDirty = true;
-          updateSalesDataSummary();
+          scheduleSalesDataInputRefresh();
         });
         summaryReferenceInput.addEventListener('change', function () {
           pushReferenceUndoSnapshot();

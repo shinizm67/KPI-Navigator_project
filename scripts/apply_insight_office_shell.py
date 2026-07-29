@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Office Mode Insight shell: gray frame/bg, black text/lines, darker gray close."""
+"""Office Mode Insight shell: gray frame/bg, black text/lines, BIZ font, darker gray close."""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ PAGES = [
     ROOT / "app/annual/index.html",
     ROOT / "en/app/monthly/index.html",
     ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/monthly/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
 ]
 
 MARKER_START = "    /* ===== INSIGHT-OFFICE-SHELL-START ===== */"
@@ -101,6 +103,11 @@ BLOCK = f"""{MARKER_START}
       border-color: #555 !important;
       color: #111 !important;
     }}
+    /* Office: パネル内は Orbitron 残存を上書きし BIZ に統一（方針: docs/font-locale-policy.md） */
+    .office-mode .insight-overlay__panel,
+    .office-mode .insight-overlay__panel *:not(svg):not(svg *) {{
+      font-family: 'BIZ UDPGothic', sans-serif !important;
+    }}
     .office-mode .insight-overlay__close {{
       border-color: #111 !important;
       background: #d0d0d0 !important;
@@ -178,6 +185,8 @@ def inject(text: str) -> str:
 
 def main() -> None:
     for page in PAGES:
+        if not page.is_file():
+            raise SystemExit(f"missing {page}")
         raw = page.read_text(encoding="utf-8")
         page.write_text(inject(raw), encoding="utf-8")
         print("patched", page.relative_to(ROOT))

@@ -58,6 +58,16 @@
   - `window.__ANNUAL_UI.setCalendarYearDisplayOnly(y)`: `currentYear` / `yearBtn` / `calendarYear` / メニューのみ更新。`annual:calendarYearChanged` は**飛ばさない**（二重描画・`selectedDate` 上書きを回避）
   - 営業日数表示 `syncBusinessDayDisplayFromDailyMap()` も追従（純粋な表示更新）
   - 境界日着地: `requestAnimationFrame` で `scrollTop` を再セットし慣性を打ち消し、`snapping` 保持を 160ms に延長
+- **KPI-ARP-YEAR-COCKPIT-SYNC（2026-07-29）** — DisplayOnly 後に Open 12 行表・年次目標を同年へ
+  - Annual: `__arpDeferredYearSync` 内で `syncCockpitForCalendarYear(nextYear)`（**イベント非発火**）
+  - Monthly: `syncYearUiDisplayOnly` 内で同型呼び出し
+  - 明示年セレクタ（`renderYear` → `annual:calendarYearChanged`）は従来どおりフル同期済み
+  - スクリプト: `scripts/apply_arp_year_cockpit_sync_annual.py` / `..._monthly.py`
+- **KPI-ARP-YEAR-NAV-PERSIST（2026-07-29）** — DisplayOnly 後に `kpiNavigator.annualNav.calendarYear` を永続
+  - Annual: `syncAnnualNavToStorage()`（selectedIso は既存ヘルパのルール）
+  - Monthly: gateway へ `calendarYear` + 既存 `selectedIso` を軽量書き込み
+  - **やらないこと:** `calendarYearChanged` 発火、DisplayOnly 契約の拡大、selectedIso の強制上書き
+  - スクリプト: `scripts/apply_arp_year_nav_persist_annual.py` / `..._monthly.py`
 
 ### 目標パターン（Monthly から移植）
 
