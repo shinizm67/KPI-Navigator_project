@@ -3064,18 +3064,24 @@
       border-left: none;
     }
     .pl-table--v1 .pl-v-major {
+      position: relative;
       width: var(--pl-v-major-w);
       min-width: var(--pl-v-major-w);
       max-width: var(--pl-v-major-w);
       padding: 0;
       vertical-align: middle;
       text-align: center;
+      overflow: visible;
     }
+    /* 長い EN ラベル（Total Expenses）もセル中央に置く（rotate だけだと右寄せに見える） */
     .pl-table--v1 .pl-v-major__text {
+      position: absolute;
+      left: 50%;
+      top: 50%;
       display: inline-block;
       margin: 0;
       white-space: nowrap;
-      transform: rotate(-90deg);
+      transform: translate(-50%, -50%) rotate(-90deg);
       transform-origin: center center;
       font-size: 13px;
       font-weight: 400;
@@ -3106,8 +3112,6 @@
     }
 
     .pl-table--v1 .pl-v-major--expenses {
-      position: relative;
-      overflow: visible;
       height: calc(var(--pl-row-label-h) * 3);
       min-height: calc(var(--pl-row-label-h) * 3);
       max-height: calc(var(--pl-row-label-h) * 3);
@@ -4127,6 +4131,8 @@
 </head>
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
+  <script src="../../../../js/kpi-data-gateway.js"></script>
+
   <script src="../../../../js/kpi-currency.js"></script>
   <!-- KPI-CURRENCY-JS:END -->
   <header class="site-header pl-site-header">
@@ -4369,7 +4375,7 @@
                   <colgroup><col class="pl-col-v-major"><col class="pl-col-h-label"></colgroup>
                   <tbody id="pl-table-label-body">
                     <tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="store_sales"><td class="pl-v-major" rowspan="4" data-pl-section="income"><span class="pl-v-major__text">Income</span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="store_sales" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Store Sales</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_a"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_a" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Sales A</span></span></th></tr><tr class="pl-data-row pl-data-row--income" data-pl-section="income" data-row="sales_b"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="sales_b" data-label-scope="income" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Sales B</span></span></th></tr><tr class="pl-data-row pl-data-row--income pl-data-row--total" data-pl-section="income" data-row="sales_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Sales</span></th></tr>
-                    <tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_fixed"><td class="pl-v-major pl-v-major--expenses" rowspan="3" data-pl-section="expenses"><span class="pl-v-major__text">Total Expenses</span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_fixed" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Fixed</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_expected"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_expected" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Expected</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-pl-section="expenses" data-row="expenses_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Expenses</span></th></tr>
+                    <tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_fixed"><td class="pl-v-major pl-v-major--expenses" rowspan="3" data-pl-section="expenses"><span class="pl-v-major__text pl-v-major__text--multiline"><span class="pl-v-major__line">Total</span><span class="pl-v-major__line">Expenses</span></span></td><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_fixed" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Fixed</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses" data-pl-section="expenses" data-row="expense_expected"><th scope="row" class="pl-h-label pl-h-label--editable"><span class="pl-h-label__row"><span class="pl-h-label__text pl-h-label__text--editable" data-pl-label-editable="1" data-label-id="expense_expected" data-label-scope="expenses-summary" tabindex="0" role="button" aria-label="Edit label (double-click or F2)">Expected</span></span></th></tr><tr class="pl-data-row pl-data-row--expenses pl-data-row--total" data-pl-section="expenses" data-row="expenses_total"><th scope="row" class="pl-h-label pl-h-label--total"><span class="pl-h-label__text">Total Expenses</span></th></tr>
                     <tr class="pl-data-row pl-data-row--ref-budget" data-pl-section="ref-budget" data-row="var_ref_budget"><th scope="row" class="pl-h-label pl-h-label--ref-budget" colspan="2" title="Guideline for variable spend = target cost rate minus fixed-cost rate (not a prescribed ideal)"><span class="pl-h-label__text">Variable expense guideline</span></th></tr>
                     <tr class="pl-data-row pl-data-row--profit" data-pl-section="profit"><th class="pl-h-label pl-h-label--total pl-h-label--profit" scope="row" colspan="2" id="pl-row-profit"><span class="pl-h-label__text">Profit</span></th></tr>
                   </tbody>

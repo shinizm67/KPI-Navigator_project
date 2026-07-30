@@ -7,6 +7,12 @@ Thumbs.db
 .env.local
 *.pem
 
+# Backend Phase A — local secrets & stored blobs
+api/v1/config.local.php
+api/v1/data/*.json
+!api/v1/data/.gitkeep
+api/v1/data/*.tmp
+
 # 依存関係（プロジェクトの種類に応じて）
 node_modules/
 __pycache__/

@@ -74,6 +74,11 @@
 - **本番の Web アプリ**では、表示内容を **サーバー（PHP）** が **DB（MySQL）** から取得して埋め込む、または **API（JSON）** を **フロントで fetch** して差し替える、という形が一般的。  
 - 将来 DB 連携する場合は、**表示用の要素に `id` を振る**、**API のレスポンス形（フィールド名）を先に決める**など、つなぎやすい仕込みを検討するとよい。
 
+### Backend Phase A（着手済み）
+
+正本ミラー API の契約・手順は **[`docs/backend-phase-a-store-api.md`](./backend-phase-a-store-api.md)** / `api/v1/README.md`。  
+ローカル API 確認は `python3 -m http.server` ではなく **`php -S 127.0.0.1:8080 -t .`**。
+
 ---
 
 ## 4. このリポジトリでやりたいこと（メモ）

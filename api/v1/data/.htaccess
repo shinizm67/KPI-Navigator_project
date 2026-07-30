@@ -1,0 +1,2 @@
+# Deny direct HTTP access to stored JSON blobs
+Require all denied

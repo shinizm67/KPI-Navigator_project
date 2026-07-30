@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store API smoke | KPI Navigator</title>
+  <style>
+    body { font-family: 'BIZ UDPGothic', sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; line-height: 1.5; }
+    code, pre { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+    pre { padding: 12px; overflow: auto; }
+    label { display: block; margin-top: 12px; font-weight: 700; }
+    input { width: 100%; box-sizing: border-box; padding: 8px; margin-top: 4px; }
+    button { margin: 8px 8px 0 0; padding: 8px 14px; cursor: pointer; }
+    .ok { color: #0f9403; }
+    .err { color: #b71c1c; }
+  </style>
+</head>
+<body>
+  <h1>Phase A Store API — smoke</h1>
+  <p>Docs: <code>docs/backend-phase-a-store-api.md</code></p>
+  <p>Local API: <code>php -S 127.0.0.1:8080 -t .</code> then open this page via that server or set Base URL.</p>
+
+  <label>Base URL</label>
+  <input id="baseUrl" value="/api/v1/store.php">
+
+  <label>Token (<code>X-KPI-Store-Token</code>)</label>
+  <input id="token" value="dev-change-me">
+
+  <div>
+    <button type="button" id="btnGet">GET</button>
+    <button type="button" id="btnPut">PUT sample</button>
+    <button type="button" id="btnEnable">Enable sync in this browser</button>
+  </div>
+  <p id="status"></p>
+  <pre id="out">—</pre>
+
+  <script>
+    var statusEl = document.getElementById('status');
+    var outEl = document.getElementById('out');
+    function cfg() {
+      return {
+        baseUrl: document.getElementById('baseUrl').value.trim(),
+        token: document.getElementById('token').value.trim(),
+      };
+    }
+    function show(ok, msg, data) {
+      statusEl.className = ok ? 'ok' : 'err';
+      statusEl.textContent = msg;
+      outEl.textContent = data != null ? JSON.stringify(data, null, 2) : '—';
+    }
+    document.getElementById('btnGet').onclick = function () {
+      var c = cfg();
+      fetch(c.baseUrl, { headers: { 'X-KPI-Store-Token': c.token } })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+        .then(function (x) { show(x.r.ok && x.j.ok, 'GET ' + x.r.status, x.j); })
+        .catch(function (e) { show(false, String(e), null); });
+    };
+    document.getElementById('btnPut').onclick = function () {
+      var c = cfg();
+      var body = {
+        store: {
+          meta: { schemaVersion: 4, operatingYear: 2026, legacyMigrated: true, selectedDate: '2026-05-23' },
+          timeline: { dailySales: { '2026-05-23': 3633 }, businessDays: { '2026-05-23': true } },
+          years: {},
+        },
+        annualNav: { calendarYear: 2026, selectedIso: '2026-05-23' },
+      };
+      fetch(c.baseUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-KPI-Store-Token': c.token },
+        body: JSON.stringify(body),
+      })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+        .then(function (x) { show(x.r.ok && x.j.ok, 'PUT ' + x.r.status, x.j); })
+        .catch(function (e) { show(false, String(e), null); });
+    };
+    document.getElementById('btnEnable').onclick = function () {
+      var c = cfg();
+      localStorage.setItem(
+        'kpiNavigator.storeSync',
+        JSON.stringify({ enabled: true, token: c.token, baseUrl: c.baseUrl })
+      );
+      show(true, 'storeSync enabled — reload Annual with same origin to hydrate', JSON.parse(localStorage.getItem('kpiNavigator.storeSync')));
+    };
+  </script>
+</body>
+</html>

@@ -809,8 +809,8 @@ def income_data_rows_v1(lang: str) -> str:
 
 
 def expenses_major_label_html(lang: str) -> str:
-    """Vertical Total Expenses label (single line, same orientation as Income)."""
-    return _major_label_html(lang, ("Total Expenses",), ("総支出",))
+    """Vertical Total Expenses label — two lines, cell-centered (Total / Expenses)."""
+    return _major_label_html(lang, ("Total", "Expenses"), ("総", "支出"))
 
 
 def expenses_label_rows_v1(lang: str) -> str:
@@ -7895,18 +7895,24 @@ def render_page(lang: str, lang_switch: str) -> str:
       border-left: none;
     }}
     .pl-table--v1 .pl-v-major {{
+      position: relative;
       width: var(--pl-v-major-w);
       min-width: var(--pl-v-major-w);
       max-width: var(--pl-v-major-w);
       padding: 0;
       vertical-align: middle;
       text-align: center;
+      overflow: visible;
     }}
+    /* 長い EN ラベル（Total Expenses）もセル中央に置く（rotate だけだと右寄せに見える） */
     .pl-table--v1 .pl-v-major__text {{
+      position: absolute;
+      left: 50%;
+      top: 50%;
       display: inline-block;
       margin: 0;
       white-space: nowrap;
-      transform: rotate(-90deg);
+      transform: translate(-50%, -50%) rotate(-90deg);
       transform-origin: center center;
       font-size: 13px;
       font-weight: 400;
@@ -7919,8 +7925,6 @@ def render_page(lang: str, lang_switch: str) -> str:
       font-family: 'BIZ UDPGothic', sans-serif;
     }}
     .pl-table--v1 .pl-v-major--expenses {{
-      position: relative;
-      overflow: visible;
       height: calc(var(--pl-row-label-h) * 3);
       min-height: calc(var(--pl-row-label-h) * 3);
       max-height: calc(var(--pl-row-label-h) * 3);
