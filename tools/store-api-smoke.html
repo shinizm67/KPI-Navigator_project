@@ -13,12 +13,27 @@
     button { margin: 8px 8px 0 0; padding: 8px 14px; cursor: pointer; }
     .ok { color: #0f9403; }
     .err { color: #b71c1c; }
+    .hint { color: #555; font-size: 14px; }
+    .box { background: #f8f8f8; border: 1px solid #ddd; padding: 12px 14px; margin: 12px 0; border-radius: 6px; }
   </style>
 </head>
 <body>
   <h1>Phase A Store API — smoke</h1>
   <p>Docs: <code>docs/backend-phase-a-store-api.md</code></p>
   <p>Local API: <code>php -S 127.0.0.1:8080 -t .</code> then open this page via that server or set Base URL.</p>
+
+  <div class="box">
+    <strong>このページ（smoke）に戻る方法</strong>
+    <ol style="margin: 8px 0 0; padding-left: 1.2em;">
+      <li>アドレス欄にこれを貼る（いちばん確実）:<br>
+        <code id="smokeUrl">http://127.0.0.1:8080/tools/store-api-smoke.html</code>
+        <button type="button" id="btnCopyUrl">住所をコピー</button>
+      </li>
+      <li>同じタブで開いた場合 → ブラウザ左上の <strong>← 戻る</strong></li>
+      <li>タブが残っている場合 → <strong>Store API smoke</strong> のタブをクリック</li>
+    </ol>
+    <p class="hint" style="margin-bottom:0;">※ Monthly / Annual 側には「smokeへ戻る」ボタンはありません。上の方法で戻ってください。</p>
+  </div>
 
   <label>Base URL</label>
   <input id="baseUrl" value="/api/v1/store.php">
@@ -30,9 +45,44 @@
     <button type="button" id="btnGet">GET</button>
     <button type="button" id="btnPut">PUT sample</button>
     <button type="button" id="btnEnable">Enable sync in this browser</button>
+    <button type="button" id="btnDisable">Disable sync（同期OFF）</button>
   </div>
   <p id="status"></p>
   <pre id="out">—</pre>
+
+  <hr style="margin: 28px 0; border: none; border-top: 1px solid #ccc;">
+  <h2>次にやること（ここまでできたら）</h2>
+  <ol>
+    <li>上の GET / PUT / Enable sync が成功している（もうOKならそのままで大丈夫）</li>
+    <li><button type="button" id="btnCheckLocal">このブラウザのノートを見る</button>
+      — ロッカー（サーバ）から取り込めたか確認</li>
+    <li><a id="linkAnnual" href="/app/annual/index.html">Annual を開く（同じ 8080）</a>
+      — 開いたら、上の「smokeに戻る方法」で戻る → 「ノートを見る」</li>
+    <li><a id="linkMonthly" href="/app/monthly/index.html">Monthly を開く（同じ 8080）</a>
+      — 別ページでも同じノートか確認。戻ったら「ノートを見る」</li>
+  </ol>
+
+  <h2>いまの確認：同期OFF（ローカルだけ）</h2>
+  <ol>
+    <li><button type="button" id="btnDisable2">Disable sync（同期OFF）</button> を押す</li>
+    <li>緑で「同期OFF」と出たらOK</li>
+    <li>そのあと <button type="button" id="btnCheckSync">同期スイッチの状態を見る</button></li>
+    <li>灰色の箱で <code>"enabled": false</code> なら成功（ノートの数字は残っていて大丈夫）</li>
+  </ol>
+
+  <h2>次の確認：別の窓でも同じノートか</h2>
+  <p class="hint">これは「別の人が同じロッカーを開ける」テストです。同じタブではダメで、<strong>シークレット（プライベート）ウィンドウ</strong>を使います。</p>
+  <ol>
+    <li>いまの窓で <button type="button" id="btnEnable2">Enable sync</button> → <button type="button" id="btnPut2">PUT sample</button> の順（ロッカーに最新を入れる）</li>
+    <li>Chrome ならメニューから <strong>新しいシークレットウィンドウ</strong>（Safari ならプライベート）を開く</li>
+    <li>新しい窓のアドレス欄にこれを貼る:<br><code>http://127.0.0.1:8080/tools/store-api-smoke.html</code></li>
+    <li>新しい窓だけで: <strong>Enable sync</strong> → （必要なら）Annual を開く → <strong>ノートを見る</strong></li>
+    <li>新しい窓でも緑の「OK: …3633」なら成功</li>
+  </ol>
+  <p class="hint">※ 新しい窓は最初はノートが空です。同期ONにするとロッカーからコピーされます。</p>
+
+  <p class="hint">※ 同期ONのときは、サーバの内容がブラウザのノートに入ります（テスト用サンプルに上書きされることがあります）。</p>
+  <p class="hint">※ Annual / Monthly / smoke は同じ「8080の家」なので、ノート（メモ）も共通です。</p>
 
   <script>
     var statusEl = document.getElementById('status');
@@ -48,6 +98,27 @@
       statusEl.textContent = msg;
       outEl.textContent = data != null ? JSON.stringify(data, null, 2) : '—';
     }
+    function readSync() {
+      try { return JSON.parse(localStorage.getItem('kpiNavigator.storeSync') || 'null'); } catch (_e) { return null; }
+    }
+    function disableSync() {
+      var c = cfg();
+      var next = { enabled: false, token: c.token, baseUrl: c.baseUrl };
+      localStorage.setItem('kpiNavigator.storeSync', JSON.stringify(next));
+      show(true, '同期OFFです — ロッカーへは送りません（ノートは残ります）', next);
+    }
+    document.getElementById('btnCopyUrl').onclick = function () {
+      var url = document.getElementById('smokeUrl').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          show(true, 'smokeの住所をコピーしました。アドレス欄に貼ってEnterで戻れます', { url: url });
+        }).catch(function () {
+          show(true, 'コピーに失敗したので、上のURLを手で選んでコピーしてください', { url: url });
+        });
+      } else {
+        show(true, '上のURLを手で選んでコピーしてください', { url: url });
+      }
+    };
     document.getElementById('btnGet').onclick = function () {
       var c = cfg();
       fetch(c.baseUrl, { headers: { 'X-KPI-Store-Token': c.token } })
@@ -55,7 +126,15 @@
         .then(function (x) { show(x.r.ok && x.j.ok, 'GET ' + x.r.status, x.j); })
         .catch(function (e) { show(false, String(e), null); });
     };
-    document.getElementById('btnPut').onclick = function () {
+    function enableSync() {
+      var c = cfg();
+      localStorage.setItem(
+        'kpiNavigator.storeSync',
+        JSON.stringify({ enabled: true, token: c.token, baseUrl: c.baseUrl })
+      );
+      show(true, 'storeSync enabled — 下の「Annual を開く」へ進んでOK', JSON.parse(localStorage.getItem('kpiNavigator.storeSync')));
+    }
+    function putSample() {
       var c = cfg();
       var body = {
         store: {
@@ -73,14 +152,38 @@
         .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
         .then(function (x) { show(x.r.ok && x.j.ok, 'PUT ' + x.r.status, x.j); })
         .catch(function (e) { show(false, String(e), null); });
-    };
-    document.getElementById('btnEnable').onclick = function () {
-      var c = cfg();
-      localStorage.setItem(
-        'kpiNavigator.storeSync',
-        JSON.stringify({ enabled: true, token: c.token, baseUrl: c.baseUrl })
+    }
+    document.getElementById('btnEnable').onclick = enableSync;
+    document.getElementById('btnEnable2').onclick = enableSync;
+    document.getElementById('btnPut').onclick = putSample;
+    document.getElementById('btnPut2').onclick = putSample;
+    document.getElementById('btnDisable').onclick = disableSync;
+    document.getElementById('btnDisable2').onclick = disableSync;
+    document.getElementById('btnCheckSync').onclick = function () {
+      var sync = readSync();
+      var off = !(sync && sync.enabled);
+      show(
+        off,
+        off ? 'OK: 同期はOFFです（ローカルのノートだけで動きます）' : 'まだ同期ONです。Disable sync を押してください',
+        { sync: sync }
       );
-      show(true, 'storeSync enabled — reload Annual with same origin to hydrate', JSON.parse(localStorage.getItem('kpiNavigator.storeSync')));
+    };
+    document.getElementById('btnCheckLocal').onclick = function () {
+      var store = null;
+      var sync = null;
+      try { store = JSON.parse(localStorage.getItem('kpiNavigator.kpiYearStore') || 'null'); } catch (_e) {}
+      sync = readSync();
+      var sales = store && store.timeline && store.timeline.dailySales
+        ? store.timeline.dailySales['2026-05-23']
+        : null;
+      var ok = Number(sales) === 3633;
+      show(
+        ok,
+        ok
+          ? 'OK: ノートにサンプル売上 2026-05-23 = 3633 があります'
+          : 'まだサンプルがありません。PUT → Enable sync → Annualを開く → ここに戻って再確認',
+        { sync: sync, sampleSales_2026_05_23: sales, storeMeta: store && store.meta }
+      );
     };
   </script>
 </body>

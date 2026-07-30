@@ -129,9 +129,18 @@
               })
             );
           } catch (_e) {}
+          // Year store は起動時に一度だけ読むため、取り込み後に再読込する
           try {
-            window.dispatchEvent(new Event('storage'));
-          } catch (_e2) {}
+            if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
+              window.KpiYearStore.reload();
+            }
+          } catch (_eReload) {}
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:readSurfacesRefresh'));
+          } catch (_e3) {}
+          try {
+            console.info('[KPI Store Sync] hydrated from server', data.updatedAt || '');
+          } catch (_eLog) {}
         }
       })
       .catch(function () {});
