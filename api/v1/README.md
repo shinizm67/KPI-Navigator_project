@@ -26,6 +26,8 @@ Note: `python3 -m http.server` does **not** run PHP. Use `php -S` for API tests.
 
 ## Lolipop
 
+**詳細手順（日本語）:** [`docs/lolipop-phase-a-deploy.md`](../docs/lolipop-phase-a-deploy.md)
+
 1. Upload `api/v1/` (and app/`js/` as usual).
 2. Create `config.local.php` on the server from `config.example.php` (do not commit it).
 3. Ensure `api/v1/data/` is writable by PHP.

@@ -122,6 +122,8 @@
 
 ## 6. ロリポップ
 
+**手順の詳細:** [`docs/lolipop-phase-a-deploy.md`](./lolipop-phase-a-deploy.md)
+
 1. リポジトリ相当をアップロード（少なくとも `app/` · `js/` · `api/v1/`）
 2. `api/v1/config.example.php` をコピーして `config.local.php` を作り token を設定（**Git に入れない**）
 3. `api/v1/data/` を書き込み可に

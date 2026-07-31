@@ -54,11 +54,13 @@
   <h2>次にやること（ここまでできたら）</h2>
   <ol>
     <li>上の GET / PUT / Enable sync が成功している（もうOKならそのままで大丈夫）</li>
+    <li><button type="button" id="btnHydrate">ロッカーからノートへ取り込む</button>
+      — smoke のままサーバ内容をノートにコピー（Annual を開かなくても可）</li>
     <li><button type="button" id="btnCheckLocal">このブラウザのノートを見る</button>
-      — ロッカー（サーバ）から取り込めたか確認</li>
-    <li><a id="linkAnnual" href="/app/annual/index.html">Annual を開く（同じ 8080）</a>
+      — 取り込めたか確認</li>
+    <li><a id="linkAnnual" href="../app/annual/index.html">Annual を開く（同じサイト）</a>
       — 開いたら、上の「smokeに戻る方法」で戻る → 「ノートを見る」</li>
-    <li><a id="linkMonthly" href="/app/monthly/index.html">Monthly を開く（同じ 8080）</a>
+    <li><a id="linkMonthly" href="../app/monthly/index.html">Monthly を開く（同じサイト）</a>
       — 別ページでも同じノートか確認。戻ったら「ノートを見る」</li>
   </ol>
 
@@ -87,6 +89,21 @@
   <script>
     var statusEl = document.getElementById('status');
     var outEl = document.getElementById('out');
+    // /.../tools/store-api-smoke.html → /... をアプリの根にする
+    var appRoot = (function () {
+      var path = window.location.pathname || '';
+      return path.replace(/\/tools\/[^/]*$/, '') || '';
+    })();
+    (function initPaths() {
+      var smokeEl = document.getElementById('smokeUrl');
+      if (smokeEl) {
+        smokeEl.textContent = window.location.origin + appRoot + '/tools/store-api-smoke.html';
+      }
+      var baseInput = document.getElementById('baseUrl');
+      if (baseInput && (!baseInput.value || baseInput.value === '/api/v1/store.php')) {
+        baseInput.value = appRoot + '/api/v1/store.php';
+      }
+    })();
     function cfg() {
       return {
         baseUrl: document.getElementById('baseUrl').value.trim(),
@@ -159,6 +176,34 @@
     document.getElementById('btnPut2').onclick = putSample;
     document.getElementById('btnDisable').onclick = disableSync;
     document.getElementById('btnDisable2').onclick = disableSync;
+    document.getElementById('btnHydrate').onclick = function () {
+      var c = cfg();
+      fetch(c.baseUrl, { headers: { 'X-KPI-Store-Token': c.token } })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+        .then(function (x) {
+          if (!(x.r.ok && x.j.ok)) {
+            show(false, '取り込み失敗 GET ' + x.r.status, x.j);
+            return;
+          }
+          if (x.j.store) {
+            localStorage.setItem('kpiNavigator.kpiYearStore', JSON.stringify(x.j.store));
+          }
+          if (x.j.annualNav) {
+            localStorage.setItem('kpiNavigator.annualNav', JSON.stringify(x.j.annualNav));
+          }
+          var sales = x.j.store && x.j.store.timeline && x.j.store.timeline.dailySales
+            ? x.j.store.timeline.dailySales['2026-05-23']
+            : null;
+          show(
+            Number(sales) === 3633,
+            Number(sales) === 3633
+              ? 'OK: ロッカーからノートへ取り込みました（2026-05-23 = 3633）'
+              : '取り込みはしたがサンプル 3633 がありません',
+            { sampleSales_2026_05_23: sales, updatedAt: x.j.updatedAt }
+          );
+        })
+        .catch(function (e) { show(false, String(e), null); });
+    };
     document.getElementById('btnCheckSync').onclick = function () {
       var sync = readSync();
       var off = !(sync && sync.enabled);
@@ -181,7 +226,7 @@
         ok,
         ok
           ? 'OK: ノートにサンプル売上 2026-05-23 = 3633 があります'
-          : 'まだサンプルがありません。PUT → Enable sync → Annualを開く → ここに戻って再確認',
+          : 'まだサンプルがありません。PUT → Enable sync →「ロッカーからノートへ取り込む」→ 再確認',
         { sync: sync, sampleSales_2026_05_23: sales, storeMeta: store && store.meta }
       );
     };
