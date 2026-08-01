@@ -3,7 +3,7 @@
 **目的:** ブラウザ `localStorage` の正本を、サーバ上の **1ユーザー相当 JSON** にミラーする最小 API。  
 **非目的（この段階ではやらない）:** 本格認証、マルチテナント、リアルタイム共同編集、AWS。
 
-関連: `docs/year-rollover-data-architecture.md` · `docs/local-dev-notes.md`
+関連: `docs/year-rollover-data-architecture.md` · `docs/local-dev-notes.md` · **Codex引き継ぎ:** [`codex-cursor-backend-handoff.md`](./codex-cursor-backend-handoff.md)
 
 ---
 
