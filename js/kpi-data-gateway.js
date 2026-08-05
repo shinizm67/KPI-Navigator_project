@@ -1,11 +1,14 @@
 /**
- * KPI Data Gateway — localStorage first, optional Phase A server mirror.
- * Docs: docs/backend-phase-a-store-api.md
+ * KPI Data Gateway — localStorage first, optional server mirror.
+ * Docs: docs/backend-phase-a-store-api.md · docs/codex-cursor-backend-handoff.md
  *
  * Enable sync (any one):
- * - localStorage key kpiNavigator.storeSync = {"enabled":true,"token":"dev-change-me","baseUrl":"/api/v1/store.php"}
- * - URL ?kpiSync=1 (uses token from storeSync or meta[name=kpi-store-token])
- * - window.__KPI_STORE_SYNC = { enabled:true, token:'...', baseUrl:'/api/v1/store.php' }
+ * - localStorage kpiNavigator.storeSync =
+ *     {"enabled":true,"authMode":"session","baseUrl":"/api/v1/store.php"}
+ *   or legacy token:
+ *     {"enabled":true,"token":"dev-change-me","baseUrl":"/api/v1/store.php"}
+ * - URL ?kpiSync=1 (session if no token; token via kpiSyncToken)
+ * - window.__KPI_STORE_SYNC = { enabled:true, authMode:'session', baseUrl:'...' }
  *
  * Default: sync OFF (existing local-only behavior).
  */
@@ -22,11 +25,33 @@
   var putTimer = null;
   var hydrated = false;
 
+  function resolveAppRoot() {
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
+        return window.__KPI_AUTH.resolveAppRoot();
+      }
+    } catch (_e) {}
+    var path = window.location.pathname || '';
+    var m = path.match(/^(.*?\/kpi-navigator)(?:\/|$)/);
+    if (m) return m[1];
+    return '';
+  }
+
+  function defaultStoreUrl() {
+    return resolveAppRoot() + '/api/v1/store.php';
+  }
+
   function readSyncConfig() {
-    var cfg = { enabled: false, token: '', baseUrl: '/api/v1/store.php' };
+    var cfg = {
+      enabled: false,
+      authMode: 'session',
+      token: '',
+      baseUrl: defaultStoreUrl(),
+    };
     try {
       if (window.__KPI_STORE_SYNC && typeof window.__KPI_STORE_SYNC === 'object') {
-        cfg.enabled = !!window.__KPI_STORE_SYNC.enabled;
+        if (window.__KPI_STORE_SYNC.enabled != null) cfg.enabled = !!window.__KPI_STORE_SYNC.enabled;
+        if (window.__KPI_STORE_SYNC.authMode) cfg.authMode = String(window.__KPI_STORE_SYNC.authMode);
         if (window.__KPI_STORE_SYNC.token) cfg.token = String(window.__KPI_STORE_SYNC.token);
         if (window.__KPI_STORE_SYNC.baseUrl) cfg.baseUrl = String(window.__KPI_STORE_SYNC.baseUrl);
       }
@@ -37,6 +62,7 @@
         var o = JSON.parse(raw);
         if (o && typeof o === 'object') {
           if (o.enabled != null) cfg.enabled = !!o.enabled;
+          if (o.authMode) cfg.authMode = String(o.authMode);
           if (o.token) cfg.token = String(o.token);
           if (o.baseUrl) cfg.baseUrl = String(o.baseUrl);
         }
@@ -47,6 +73,7 @@
       if (params.get('kpiSync') === '1') cfg.enabled = true;
       if (params.get('kpiSyncToken')) cfg.token = String(params.get('kpiSyncToken'));
       if (params.get('kpiSyncUrl')) cfg.baseUrl = String(params.get('kpiSyncUrl'));
+      if (params.get('kpiSyncAuth')) cfg.authMode = String(params.get('kpiSyncAuth'));
     } catch (_e2) {}
     try {
       var metaTok = document.querySelector('meta[name="kpi-store-token"]');
@@ -54,7 +81,51 @@
       var metaUrl = document.querySelector('meta[name="kpi-store-api"]');
       if (metaUrl && metaUrl.content) cfg.baseUrl = String(metaUrl.content);
     } catch (_e3) {}
+
+    // Default authMode: explicit > token-only legacy > session
+    var authModeExplicit = false;
+    try {
+      if (window.__KPI_STORE_SYNC && window.__KPI_STORE_SYNC.authMode) authModeExplicit = true;
+    } catch (_eA) {}
+    try {
+      var rawMode = localStorage.getItem(SYNC_KEY);
+      var oMode = rawMode ? JSON.parse(rawMode) : null;
+      if (oMode && oMode.authMode) authModeExplicit = true;
+    } catch (_eB) {}
+    try {
+      var paramsMode = new URLSearchParams(window.location.search || '');
+      if (paramsMode.get('kpiSyncAuth')) authModeExplicit = true;
+    } catch (_eC) {}
+    if (!authModeExplicit) {
+      cfg.authMode = cfg.token ? 'token' : 'session';
+    }
+
+    if (!cfg.baseUrl || cfg.baseUrl === '/api/v1/store.php') {
+      cfg.baseUrl = defaultStoreUrl();
+    }
     return cfg;
+  }
+
+  function canSync(cfg) {
+    if (!cfg || !cfg.enabled) return false;
+    if (cfg.authMode === 'token') return !!cfg.token;
+    if (cfg.authMode === 'dual') return true; // session cookie and/or token
+    // session (default)
+    return true;
+  }
+
+  function buildHeaders(cfg, withJson) {
+    var headers = {};
+    if (withJson) headers['Content-Type'] = 'application/json';
+    if (cfg.token && (cfg.authMode === 'token' || cfg.authMode === 'dual')) {
+      headers['X-KPI-Store-Token'] = cfg.token;
+    }
+    return headers;
+  }
+
+  function fetchCreds(cfg) {
+    // Session / dual need cookies. Token-only can omit, but include is fine same-origin.
+    return cfg.authMode === 'token' ? 'omit' : 'include';
   }
 
   function localGet(key) {
@@ -78,7 +149,7 @@
   }
 
   function schedulePut(cfg) {
-    if (!cfg.enabled || !cfg.token) return;
+    if (!canSync(cfg)) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
@@ -88,23 +159,20 @@
       };
       fetch(cfg.baseUrl, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-KPI-Store-Token': cfg.token,
-        },
+        headers: buildHeaders(cfg, true),
         body: JSON.stringify(body),
-        credentials: 'omit',
+        credentials: fetchCreds(cfg),
       }).catch(function () {});
     }, 400);
   }
 
   function hydrateFromServer(cfg) {
-    if (!cfg.enabled || !cfg.token || hydrated) return;
+    if (!canSync(cfg) || hydrated) return;
     hydrated = true;
     fetch(cfg.baseUrl, {
       method: 'GET',
-      headers: { 'X-KPI-Store-Token': cfg.token },
-      credentials: 'omit',
+      headers: buildHeaders(cfg, false),
+      credentials: fetchCreds(cfg),
     })
       .then(function (res) {
         if (!res.ok) return null;
@@ -129,7 +197,6 @@
               })
             );
           } catch (_e) {}
-          // Year store は起動時に一度だけ読むため、取り込み後に再読込する
           try {
             if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
               window.KpiYearStore.reload();
@@ -163,9 +230,24 @@
     syncConfig: function () {
       return {
         enabled: !!cfg.enabled,
+        authMode: cfg.authMode || 'session',
         baseUrl: cfg.baseUrl,
         hasToken: !!cfg.token,
       };
+    },
+    enableSessionSync: function (baseUrl) {
+      var next = {
+        enabled: true,
+        authMode: 'session',
+        baseUrl: baseUrl || defaultStoreUrl(),
+      };
+      try {
+        localStorage.setItem(SYNC_KEY, JSON.stringify(next));
+      } catch (_e) {}
+      cfg = readSyncConfig();
+      hydrated = false;
+      hydrateFromServer(cfg);
+      return next;
     },
     pullFromServer: function () {
       hydrated = false;
@@ -182,7 +264,7 @@
     },
   };
 
-  if (cfg.enabled) {
+  if (canSync(cfg)) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         hydrateFromServer(cfg);

@@ -121,6 +121,25 @@
 
 **次:** gateway の session 同期（`credentials: include`）／**B3** Entitlement
 
+#### B2.1（gateway session 同期）— **実装済み（2026-08-05・Cursor）**
+
+**タイトル:** `kpi-data-gateway.js` をセッション Cookie で Store 同期
+
+**実装:**
+
+- `authMode: 'session' | 'token' | 'dual'`（未指定＋token あり → 従来どおり token）
+- session 時は `credentials: 'include'`、トークンヘッダ不要
+- ログイン成功時に `storeSync = { enabled:true, authMode:'session' }` を自動セット（`kpi-login-page.js`）
+- `enableSessionSync()` ヘルパーを gateway に追加
+
+**受け入れ:**
+
+1. ログイン後 localStorage に session sync が入る
+2. Cookie 付き GET/PUT `store.php` が通る（ユーザー別 JSON）
+3. 従来の token 設定だけでも動作継続
+
+**次:** **B3** Entitlement ／ 本番へ api + js 配備
+
 ### B3. Entitlement（Basic / Pro）
 
 - 正はサーバ判定（[`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md)）
@@ -152,7 +171,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1-T1 / B2 / B1-T2（フロント結線）は main に実装済み。次は gateway session 同期または B3（Entitlement）。
+現状: B1-T1 / B2 / B1-T2 / B2.1（gateway session 同期）は main 実装済み。次は B3（Entitlement）または本番配備。
 ```
 
 ---

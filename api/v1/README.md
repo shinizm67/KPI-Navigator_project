@@ -78,6 +78,19 @@ Note: `python3 -m http.server` does **not** run PHP. Use `php -S` for API tests.
 ```js
 localStorage.setItem('kpiNavigator.storeSync', JSON.stringify({
   enabled: true,
+  authMode: 'session',
+  baseUrl: '/api/v1/store.php'
+}));
+location.reload();
+```
+
+Login page already sets this automatically after successful login.
+
+Legacy token mode (Phase A):
+
+```js
+localStorage.setItem('kpiNavigator.storeSync', JSON.stringify({
+  enabled: true,
   token: 'YOUR_TOKEN',
   baseUrl: '/api/v1/store.php'
 }));

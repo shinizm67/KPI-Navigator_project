@@ -23,6 +23,25 @@
     return '../app/annual/index.html';
   }
 
+  function enableSessionStoreSync() {
+    var baseUrl =
+      (window.__KPI_AUTH && window.__KPI_AUTH.resolveAppRoot
+        ? window.__KPI_AUTH.resolveAppRoot()
+        : '') + '/api/v1/store.php';
+    try {
+      if (window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.enableSessionSync === 'function') {
+        window.__KPI_DATA_GATEWAY.enableSessionSync(baseUrl);
+        return;
+      }
+    } catch (_e0) {}
+    try {
+      localStorage.setItem(
+        'kpiNavigator.storeSync',
+        JSON.stringify({ enabled: true, authMode: 'session', baseUrl: baseUrl })
+      );
+    } catch (_e1) {}
+  }
+
   function busy(on) {
     btnLogin.disabled = !!on;
     if (on) {
@@ -57,6 +76,7 @@
       .login(email, pw)
       .then(function (r) {
         if (r.status === 200 && r.data && r.data.ok) {
+          enableSessionStoreSync();
           window.location.href = annualHref();
           return;
         }
