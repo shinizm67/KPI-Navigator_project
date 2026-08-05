@@ -1,6 +1,6 @@
-# API v1 — Store (Phase A)
+# API v1 — Store (Phase A/B2) + Auth (Phase B1-T1)
 
-See **`docs/backend-phase-a-store-api.md`**.
+See **`docs/backend-phase-a-store-api.md`** and **`docs/codex-cursor-backend-handoff.md`** (B1-T1, B2).
 
 ## Local
 
@@ -10,17 +10,59 @@ cp api/v1/config.example.php api/v1/config.local.php   # edit token if you want
 php -S 127.0.0.1:8080 -t .
 ```
 
-Smoke:
+### Store (Phase B2 — session auth)
 
-- Browser: http://127.0.0.1:8080/tools/store-api-smoke.html
-- curl:
+Default `storeAuthMode` is `session`. Login first, then use store with session cookie.
 
 ```bash
-curl -s -H 'X-KPI-Store-Token: dev-change-me' http://127.0.0.1:8080/api/v1/store.php
-curl -s -X PUT -H 'Content-Type: application/json' -H 'X-KPI-Store-Token: dev-change-me' \
+COOKIE=/tmp/kpi-cookies.txt
+# register (or login)
+curl -s -c $COOKIE -X POST -H 'Content-Type: application/json' \
+  -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
+  http://127.0.0.1:8080/api/v1/auth/register.php
+# store (requires cookie)
+curl -s -b $COOKIE http://127.0.0.1:8080/api/v1/store.php
+curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
   -d '{"store":{"meta":{"schemaVersion":4},"timeline":{"dailySales":{},"businessDays":{}},"years":{}},"annualNav":{"calendarYear":2026,"selectedIso":null}}' \
   http://127.0.0.1:8080/api/v1/store.php
 ```
+
+Legacy Phase A token mode: set `'storeAuthMode' => 'token'` in `config.local.php`, then:
+
+```bash
+curl -s -H 'X-KPI-Store-Token: dev-change-me' http://127.0.0.1:8080/api/v1/store.php
+```
+
+Smoke:
+
+- Browser: http://127.0.0.1:8080/tools/store-api-smoke.html
+
+### Auth (Phase B1-T1)
+
+Endpoints (session cookie `KPISESSID`):
+
+| Method | Path | Notes |
+|--------|------|--------|
+| POST | `/api/v1/auth/register.php` | 201 + session |
+| POST | `/api/v1/auth/login.php` | 200 + session |
+| POST | `/api/v1/auth/logout.php` | 200 |
+| GET | `/api/v1/auth/me.php` | 200 or 401 |
+
+```bash
+COOKIE=/tmp/kpi-cookies.txt
+curl -s -i -c $COOKIE -X POST -H 'Content-Type: application/json' \
+  -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
+  http://127.0.0.1:8080/api/v1/auth/register.php
+curl -s -i http://127.0.0.1:8080/api/v1/auth/me.php
+curl -s -i -c $COOKIE -X POST -H 'Content-Type: application/json' \
+  -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
+  http://127.0.0.1:8080/api/v1/auth/login.php
+curl -s -i -b $COOKIE http://127.0.0.1:8080/api/v1/auth/me.php
+curl -s -i -b $COOKIE -c $COOKIE -X POST http://127.0.0.1:8080/api/v1/auth/logout.php
+curl -s -i -b $COOKIE http://127.0.0.1:8080/api/v1/auth/me.php
+```
+
+Users are stored under `api/v1/data/users/` (gitignored JSON). Store blobs: `api/v1/data/{userId}.json` (gitignored).
 
 Note: `python3 -m http.server` does **not** run PHP. Use `php -S` for API tests.
 

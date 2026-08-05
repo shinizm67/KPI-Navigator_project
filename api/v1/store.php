@@ -1,22 +1,16 @@
 <?php
 /**
- * Phase A — kpiYearStore (+ optional annualNav) GET/PUT.
+ * Phase A/B2 — kpiYearStore (+ optional annualNav) GET/PUT.
+ * Phase B2: session auth (per-user JSON). Legacy token via storeAuthMode=token.
  * Docs: docs/backend-phase-a-store-api.md
  */
 
-require __DIR__ . '/_bootstrap.php';
+require __DIR__ . '/_auth.php';
 
 $cfg = kpi_v1_load_config();
-kpi_v1_send_cors($cfg['corsOrigin']);
+kpi_v1_store_boot($cfg);
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-kpi_v1_require_token($cfg);
-
-$userId = (string) $cfg['userId'];
+$userId = kpi_v1_store_resolve_user_id($cfg);
 $path = kpi_v1_data_path($userId);
 $method = $_SERVER['REQUEST_METHOD'];
 

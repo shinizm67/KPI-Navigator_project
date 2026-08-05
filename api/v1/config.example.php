@@ -4,10 +4,12 @@
  * config.local.php is gitignored.
  */
 return [
-    // Shared secret for X-KPI-Store-Token (change before any real deploy)
+    // Shared secret for X-KPI-Store-Token (legacy Phase A; storeAuthMode=token|dual only)
     'token' => 'dev-change-me',
-    // Single-user id for now
+    // Legacy single-user id when storeAuthMode=token|dual without session
     'userId' => 'default',
+    // session (default) | token (Phase A only) | dual (session first, else token)
+    'storeAuthMode' => 'session',
     // Allow browser calls from same site / local tools
     'corsOrigin' => '*',
 ];

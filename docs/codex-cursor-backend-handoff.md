@@ -59,9 +59,17 @@
 - セッション or JWT（ロリポップ PHP 前提ならセッション＋Cookie が現実的）
 - 登録完了時にフロントへ合図（既存方針: `localStorage.kpiNavigator.registrationComplete = '1'` は **UX ヒント**。正はサーバセッション）
 
-#### B1-T1（最初に Codex へ渡す1枚・確定案）
+#### B1-T1（最初の認証チケット）— **実装済み（2026-08-05・Cursor）**
 
 **タイトル:** 登録／ログイン API スケルトン（セッション Cookie）
+
+**状態:** ローカル curl 受け入れ 1–5 通過。`store.php` 未変更。フロント本結線は後続。
+
+**実装パス:**
+
+- `api/v1/_auth.php`
+- `api/v1/auth/register.php` / `login.php` / `logout.php` / `me.php`
+- ユーザー: `api/v1/data/users/{userId}.json` + `_email_index.json`（gitignore）
 
 **スコープ（これだけ）:**
 
@@ -72,51 +80,26 @@
 | `POST` | `/api/v1/auth/logout.php` | セッション破棄 |
 | `GET` | `/api/v1/auth/me.php` | ログイン中なら `{ userId, email }`、未ログインは 401 |
 
-**制約:**
+**次チケット:** **B2**（ユーザーごとの Store / 認証必須化）。フロント登録・ログイン画面の API 結線は B1-T2 候補。
 
-- Phase A の `GET|PUT /api/v1/store.php`（共有トークン）は **壊さない・触らない**
-- パスワードは `password_hash` / `password_verify`（平文保存禁止）
-- ユーザー保存は当面ファイルで可: `api/v1/data/users/{userId}.json`（gitignore 済み想定）
-- `config.local.php` 以外に秘密を置かない。巨大な `app/**/index.html` は編集禁止
-- フロント HTML の本結線は後続チケット（このチケットは API + curl 受け入れのみ）
+（B2 完了 → 下記 §B2 参照）
 
-**受け入れ（ローカル `php -S 127.0.0.1:8080 -t .`）:**
+### B2. ユーザーごとの Store — **実装済み（2026-08-05・Cursor）**
 
-```bash
-# 1) 登録 → 201
-curl -s -i -c /tmp/kpi-cookies.txt -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
-  http://127.0.0.1:8080/api/v1/auth/register.php
-# 期待: HTTP 201, JSON に userId / email
+- `store.php` は **セッション Cookie 必須**（`storeAuthMode: session` がデフォルト）
+- ログインユーザーごとに `api/v1/data/{userId}.json` を読み書き
+- HTTP 契約（GET/PUT の JSON 形）は Phase A 互換
+- レガシー: `config.local.php` で `storeAuthMode` を `token` または `dual` にすると Phase A トークン門番も使える
 
-# 2) 未ログイン me → 401
-curl -s -i http://127.0.0.1:8080/api/v1/auth/me.php
-# 期待: HTTP 401
+**受け入れ（curl）:**
 
-# 3) ログイン → 200 + Set-Cookie
-curl -s -i -c /tmp/kpi-cookies.txt -X POST \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
-  http://127.0.0.1:8080/api/v1/auth/login.php
-# 期待: HTTP 200
+1. 未ログイン `GET store.php` → 401
+2. `register` 後、Cookie 付き `GET store.php` → 200（`store: null`）
+3. Cookie 付き `PUT` → 200
+4. 再 `GET` → 保存内容が返る
+5. 別ユーザーは別 `userId`・空 store（分離）
 
-# 4) me（Cookie 付き）→ 200
-curl -s -i -b /tmp/kpi-cookies.txt http://127.0.0.1:8080/api/v1/auth/me.php
-# 期待: HTTP 200, {"email":"demo@example.com", ...}
-
-# 5) ログアウト → 200、その後 me → 401
-curl -s -i -b /tmp/kpi-cookies.txt -c /tmp/kpi-cookies.txt -X POST \
-  http://127.0.0.1:8080/api/v1/auth/logout.php
-curl -s -i -b /tmp/kpi-cookies.txt http://127.0.0.1:8080/api/v1/auth/me.php
-```
-
-**完了定義:** 上記 1–5 が通る PR。ストア同期の認証必須化は **B2**。
-
-### B2. ユーザーごとの Store
-
-- Phase A の単一 `default` ユーザーを、ログインユーザー単位の JSON / DB 行へ拡張
-- HTTP 契約は可能なら `store.php` 互換を維持し、認証必須化する
+**次チケット:** **B1-T2**（登録・ログイン画面の API 結線）または **B3**（Entitlement）
 
 ### B3. Entitlement（Basic / Pro）
 
@@ -149,8 +132,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-最初のタスク: B1-T1（登録/ログイン/logout/me の PHP スケルトン）
-受け入れ: docs/codex-cursor-backend-handoff.md の B1-T1 curl 1–5 が通ること
+現状: B1-T1（認証）と B2（ユーザー別 store）は main に実装済み。次は B1-T2（フロント結線）または B3（Entitlement）。
 ```
 
 ---
