@@ -222,7 +222,16 @@
         alert(isJa ? 'パスワードが一致しません。' : 'Passwords do not match.');
         return;
       }
+      // UX フラグ（本格認証は Phase B）。Global Menu 分岐用。
+      try {
+        localStorage.setItem('kpiNavigator.registrationComplete', '1');
+      } catch (err) {
+        console.warn('Could not set registrationComplete flag', err);
+      }
       console.log('Registration form submitted (placeholder).');
+      alert(isJa ? '登録が完了しました（仮）。ログイン画面へ進みます。' : 'Registration complete (placeholder). Proceeding to login.');
+      // JA HTML は register/registration_si-fi_jp/ 配下
+      window.location.href = '../../login/index.html';
     });
   }
 })();

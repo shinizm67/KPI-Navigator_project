@@ -13,12 +13,14 @@
 |----|----------------------------------|---------------------------------------------|
 | **Sales Data** | **戻る**（`data-last-active`） | **戻らない**（0 のまま） |
 | **Past Sales Data** | **戻る**（`data-last-active`） | **戻らない**（0 のまま） |
-| **MEP**（先行確認） | http では戻りにくい／`file://` では戻りやすい | 店休確定後は 0（控えなし） |
+| **MEP** | **戻る**（セッション stash・2026-08-03 実装） | Confirm 後は控え破棄 → **0 のまま** |
 
 本番 URL（`https://forge-laboratory.com/...`）も **http(s) オリジン**なので、Sales Data / Past Sales / MEP いずれも **「Save／Confirm 後に店休として確定した日は、再度営業日にしても売上は自動復元されない」** と考えてよい。
 
+**同一セッション（Confirm / Save 前）** は Sales Data / Past Sales / MEP いずれも OFF→ON で金額が戻る。
+
 **致命バグではない。** 店休時に売上を 0 として永続化する現行契約に沿っている。  
-「OFF→ON で金額を戻したい」は **今後の UX 改善候補**（店休時に前回金額を stash して永続化する等）。
+「Confirm / Save 後も金額を戻したい」は **今後の UX 改善候補**（店休時に前回金額を stash して永続化する等）。
 
 ---
 
@@ -72,8 +74,9 @@ businessDay = !off
 
 ### MEP との対比
 
-- Sales / Past: UI セッション内だけ控えあり
-- MEP: 営業日トグル時に Annual store へ 0 を書きやすい一方、同種の `data-last-active` 控えは無い  
+- Sales / Past: UI セッション内は `data-last-active` で控え
+- MEP（2026-08-03〜）: `bizDayValueStashByIso`（`/* KPI-MEP-BIZDAY-SESSION-STASH */`）で Confirm 前のみ同様に復元。Confirm で stash 破棄
+- 適用: `scripts/apply_mep_bizday_session_stash.py` → JA/EN/zh-tw `app/monthly/edit/index.html`
 - `file://` と `http://127.0.0.1` は **localStorage オリジンが別**なので、挙動比較の正本は常に http(s)
 
 ---
@@ -104,3 +107,4 @@ businessDay = !off
 | 日付 | 内容 |
 |------|------|
 | 2026-08-03 | Sales Data / Past Sales を http://127.0.0.1:8080 で実測。同一セッションは復元、Save 後は非復元を確認。docs 化。 |
+| 2026-08-03 | MEP に Confirm 前セッション stash を実装（`apply_mep_bizday_session_stash.py`）。http 実測で OFF→ON 復元を確認。 |

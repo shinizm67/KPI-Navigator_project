@@ -207,7 +207,21 @@
         alert(pageLang === 'ja' ? 'パスワードが一致しません。' : pageLang === 'zh' ? '密碼不一致。' : 'Passwords do not match.');
         return;
       }
+      // UX flag for Global Menu branching (real auth is Phase B).
+      try {
+        localStorage.setItem('kpiNavigator.registrationComplete', '1');
+      } catch (err) {
+        console.warn('Could not set registrationComplete flag', err);
+      }
       console.log('Registration form submitted (placeholder).');
+      alert(
+        pageLang === 'ja'
+          ? '登録が完了しました（仮）。ログイン画面へ進みます。'
+          : pageLang === 'zh'
+            ? '註冊完成（暫定）。前往登入頁面。'
+            : 'Registration complete (placeholder). Proceeding to login.'
+      );
+      window.location.href = '../login/index.html';
     });
   }
 })();

@@ -159,19 +159,22 @@ KPI Navigator のバックエンド Phase B 着手。
 
 Codex とぶつかりにくいフロント／プロダクト作業:
 
-- [x] LP（`/kpi-navigator/`）骨格・YouTube 1本目埋め込み（骨格実装済み・本番アップロードは動画完了後）
-- [x] Forge Lab Global Menu 分岐スニペット準備: `tools/forge-lab-kpi-menu-branch.js`（本番組込は LP 公開時）
+- [x] LP（`/kpi-navigator/`）骨格・YouTube 1–2本目埋め込み
+- [x] Forge Lab Global Menu 分岐スニペット準備: `tools/forge-lab-kpi-menu-branch.js`（ゲスト→LP 直リンクは本番反映済み）
 - [x] 登録完了時に `kpiNavigator.registrationComplete = '1'` を立てる配線（JA/EN/zh-tw register）
 - [x] Phase B の最初チケット受け入れ（B1-T1）をこのメモへ固定
-- [ ] LP 動画 02–05（ユーザー作業・並行中）
-- [ ] LP / Forge Lab メニューの本番アップロード（動画完了後）
+- [x] LP / Forge Lab メニューの本番アップロード（2026-08-04〜05・`public_html/kpi-navigator/`）
+- [x] MEP Confirm 前 biz-day stash（同一セッション OFF→ON 復元）
+- [ ] LP 動画 03–05（ユーザー作業・並行中）
+- [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
 
 ### 営業日チェックと売上復元（2026-08-03 検証）
 
 - 詳細: [`bizday-checkbox-sales-restore-verification.md`](./bizday-checkbox-sales-restore-verification.md)
 - Sales Data / Past Sales: **同一セッション** OFF→ON は金額復帰。**Save 後**は 0 のまま（控えなし）
-- MEP も Save/Confirm 相当後は同様。`file://` は正本にしない
+- MEP: **同一セッション** OFF→ON は金額復帰（`bizDayValueStashByIso`）。**Confirm 後**は stash 破棄で 0 のまま
+- `file://` は正本にしない
 
 ### LP 実装メモ（2026-08-02）
 

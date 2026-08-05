@@ -6721,6 +6721,43 @@
       var memoValueById = {};
       var weatherByIso = {};
       var bizDayByIso = {};
+
+      /* KPI-MEP-BIZDAY-SESSION-STASH */
+      /** Confirm 前のみ: 営業日 OFF 時の金額控え。Confirm で破棄。 */
+      var bizDayValueStashByIso = {};
+      function stashBizDayValuesForIso(iso) {
+        if (!iso) return;
+        var snap = {};
+        Object.keys(rowValueById || {}).forEach(function (rowId) {
+          var byIso = rowValueById[rowId];
+          if (!byIso || !Object.prototype.hasOwnProperty.call(byIso, iso)) return;
+          var n = Number(byIso[iso]);
+          snap[rowId] = Number.isFinite(n) ? n : 0;
+        });
+        bizDayValueStashByIso[iso] = snap;
+      }
+      function restoreBizDayValuesForIso(iso) {
+        if (!iso) return false;
+        var snap = bizDayValueStashByIso[iso];
+        if (!snap || typeof snap !== 'object') return false;
+        Object.keys(snap).forEach(function (rowId) {
+          writeValue(rowId, iso, snap[rowId]);
+        });
+        delete bizDayValueStashByIso[iso];
+        return true;
+      }
+      function clearBizDayValueStash() {
+        bizDayValueStashByIso = {};
+      }
+      function zeroBizDayValuesForIso(iso) {
+        if (!iso) return;
+        Object.keys(rowValueById || {}).forEach(function (rowId) {
+          var byIso = rowValueById[rowId];
+          if (!byIso || !Object.prototype.hasOwnProperty.call(byIso, iso)) return;
+          writeValue(rowId, iso, 0);
+        });
+      }
+
       var rowById = {};
       var undoStack = [];
       var currentScale = 1;
@@ -9041,6 +9078,7 @@
           memoValueById: memoValueById,
           weatherByIso: weatherByIso,
           bizDayByIso: bizDayByIso,
+          bizDayValueStashByIso: bizDayValueStashByIso,
           sharedTargetSalesByDate: daily.targetSalesByDate || {},
           sharedBusinessDayByDate: daily.businessDayByDate || {}
         });
@@ -9059,6 +9097,10 @@
         memoValueById = snap.memoValueById || memoValueById;
         weatherByIso = snap.weatherByIso || weatherByIso;
         bizDayByIso = snap.bizDayByIso || bizDayByIso;
+        bizDayValueStashByIso =
+          snap.bizDayValueStashByIso && typeof snap.bizDayValueStashByIso === 'object'
+            ? snap.bizDayValueStashByIso
+            : {};
         var daily = ensureAnnualDailyStore();
         if (snap.sharedTargetSalesByDate && typeof snap.sharedTargetSalesByDate === 'object') {
           daily.targetSalesByDate = Object.assign({}, snap.sharedTargetSalesByDate);
@@ -10642,11 +10684,21 @@
             return;
           }
           pushUndo();
-          bizDayByIso[iso] = !!target.checked;
-          persistBusinessDayToAnnualStore(iso, !!target.checked);
+          var turningOn = !!target.checked;
+          if (!turningOn) {
+            stashBizDayValuesForIso(iso);
+            zeroBizDayValuesForIso(iso);
+          } else {
+            restoreBizDayValuesForIso(iso);
+          }
+          bizDayByIso[iso] = turningOn;
+          persistBusinessDayToAnnualStore(iso, turningOn);
+          if (turningOn && typeof syncMonthlySalesToAnnualStoreForMonth === 'function') {
+            syncMonthlySalesToAnnualStoreForMonth();
+          }
           document.dispatchEvent(
             new CustomEvent('annual:businessDayMapChanged', {
-              detail: { year: mefYear, source: 'monthly-edit-float', iso: iso, businessDay: !!target.checked }
+              detail: { year: mefYear, source: 'monthly-edit-float', iso: iso, businessDay: turningOn }
             })
           );
           markDirty();

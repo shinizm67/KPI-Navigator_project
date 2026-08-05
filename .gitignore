@@ -7,9 +7,10 @@ Thumbs.db
 .env.local
 *.pem
 
-# Backend Phase A — local secrets & stored blobs
+# Backend Phase A/B — local secrets & stored blobs
 api/v1/config.local.php
 api/v1/data/*.json
+api/v1/data/**/*.json
 !api/v1/data/.gitkeep
 api/v1/data/*.tmp
 
