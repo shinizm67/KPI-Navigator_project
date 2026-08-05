@@ -117,23 +117,6 @@
       }
     })();
     (function () {
-      var userId = document.getElementById('user-id');
-      var password = document.getElementById('password');
-      var btnLogin = document.getElementById('btn-login');
-
-      function checkActive() {
-        var idOk = userId.value.trim().length > 0;
-        var pwOk = password.value.length >= 8;
-        btnLogin.disabled = !(idOk && pwOk);
-      }
-
-      if (userId && password && btnLogin) {
-        userId.addEventListener('input', checkActive);
-        userId.addEventListener('change', checkActive);
-        password.addEventListener('input', checkActive);
-        password.addEventListener('change', checkActive);
-      }
-
       /* Language selector（Registration と同じ動作） */
       var langBtn = document.getElementById('lang-select-btn');
       var langDropdown = document.getElementById('lang-select-dropdown');
@@ -176,5 +159,7 @@
       }
     })();
   </script>
+  <script src="../js/kpi-auth-client.js"></script>
+  <script src="../js/kpi-login-page.js"></script>
 </body>
 </html>

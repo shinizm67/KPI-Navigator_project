@@ -214,6 +214,7 @@
       e.preventDefault();
       var password = document.getElementById('password');
       var passwordConfirm = document.getElementById('password-confirm');
+      var emailEl = document.getElementById('email');
       if (password && !isPasswordValid(password.value)) {
         alert(msg.passwordLength);
         return;
@@ -222,16 +223,28 @@
         alert(isJa ? 'パスワードが一致しません。' : 'Passwords do not match.');
         return;
       }
-      // UX フラグ（本格認証は Phase B）。Global Menu 分岐用。
-      try {
-        localStorage.setItem('kpiNavigator.registrationComplete', '1');
-      } catch (err) {
-        console.warn('Could not set registrationComplete flag', err);
+      if (!window.__KPI_AUTH) {
+        alert(isJa ? '認証モジュールを読み込めませんでした。' : 'Auth module failed to load.');
+        return;
       }
-      console.log('Registration form submitted (placeholder).');
-      alert(isJa ? '登録が完了しました（仮）。ログイン画面へ進みます。' : 'Registration complete (placeholder). Proceeding to login.');
-      // JA HTML は register/registration_si-fi_jp/ 配下
-      window.location.href = '../../login/index.html';
+      var email = emailEl ? emailEl.value.trim() : '';
+      var pw = password ? password.value : '';
+      if (btnRegister) btnRegister.disabled = true;
+      window.__KPI_AUTH
+        .register(email, pw)
+        .then(function (r) {
+          if (r.status === 201 && r.data && r.data.ok) {
+            alert(isJa ? '登録が完了しました。ログイン画面へ進みます。' : 'Registration complete. Proceeding to login.');
+            window.location.href = '../../login/index.html';
+            return;
+          }
+          alert(window.__KPI_AUTH.errorMessage(isJa ? 'ja' : 'en', r.status, r.data));
+          setRegisterButtonState();
+        })
+        .catch(function () {
+          alert(window.__KPI_AUTH.errorMessage(isJa ? 'ja' : 'en', 0, { error: 'network' }));
+          setRegisterButtonState();
+        });
     });
   }
 })();

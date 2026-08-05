@@ -199,6 +199,7 @@
       e.preventDefault();
       var password = document.getElementById('password');
       var passwordConfirm = document.getElementById('password-confirm');
+      var emailEl = document.getElementById('email');
       if (password && !isPasswordValid(password.value)) {
         alert(msg.passwordLength);
         return;
@@ -207,21 +208,28 @@
         alert(pageLang === 'ja' ? 'パスワードが一致しません。' : pageLang === 'zh' ? '密碼不一致。' : 'Passwords do not match.');
         return;
       }
-      // UX flag for Global Menu branching (real auth is Phase B).
-      try {
-        localStorage.setItem('kpiNavigator.registrationComplete', '1');
-      } catch (err) {
-        console.warn('Could not set registrationComplete flag', err);
+      if (!window.__KPI_AUTH) {
+        alert(pageLang === 'zh' ? '無法載入認證模組。' : 'Auth module failed to load.');
+        return;
       }
-      console.log('Registration form submitted (placeholder).');
-      alert(
-        pageLang === 'ja'
-          ? '登録が完了しました（仮）。ログイン画面へ進みます。'
-          : pageLang === 'zh'
-            ? '註冊完成（暫定）。前往登入頁面。'
-            : 'Registration complete (placeholder). Proceeding to login.'
-      );
-      window.location.href = '../login/index.html';
+      var email = emailEl ? emailEl.value.trim() : '';
+      var pw = password ? password.value : '';
+      if (btnRegister) btnRegister.disabled = true;
+      window.__KPI_AUTH
+        .register(email, pw)
+        .then(function (r) {
+          if (r.status === 201 && r.data && r.data.ok) {
+            alert(pageLang === 'zh' ? '註冊完成。前往登入頁面。' : 'Registration complete. Proceeding to login.');
+            window.location.href = '../login/index.html';
+            return;
+          }
+          alert(window.__KPI_AUTH.errorMessage(pageLang === 'zh' ? 'zh' : 'en', r.status, r.data));
+          setRegisterButtonState();
+        })
+        .catch(function () {
+          alert(window.__KPI_AUTH.errorMessage(pageLang === 'zh' ? 'zh' : 'en', 0, { error: 'network' }));
+          setRegisterButtonState();
+        });
     });
   }
 })();

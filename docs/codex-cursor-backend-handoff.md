@@ -101,6 +101,26 @@
 
 **次チケット:** **B1-T2**（登録・ログイン画面の API 結線）または **B3**（Entitlement）
 
+#### B1-T2（フロント結線）— **実装済み（2026-08-05・Cursor）**
+
+**タイトル:** 登録／ログイン画面を auth API に結線
+
+**実装:**
+
+- `js/kpi-auth-client.js` … register / login / logout / me（`credentials: 'include'`）
+- `js/kpi-login-page.js` … ログイン送信 → Annual へ遷移
+- JA/EN/zh-tw の `register/script.js` … placeholder を API 登録に置換
+- JA/EN/zh-tw の `login/index.html` … auth client 読込
+
+**受け入れ:**
+
+1. `php -S` 上で登録フォーム → 201 → `registrationComplete=1` → ログイン画面
+2. ログイン成功 → `../app/annual/index.html` へ遷移、Cookie 付き `me` が 200
+3. 誤パスワード → エラー表示、遷移しない
+4. 既存メール再登録 → `email_taken` メッセージ
+
+**次:** gateway の session 同期（`credentials: include`）／**B3** Entitlement
+
 ### B3. Entitlement（Basic / Pro）
 
 - 正はサーバ判定（[`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md)）
@@ -132,7 +152,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1-T1（認証）と B2（ユーザー別 store）は main に実装済み。次は B1-T2（フロント結線）または B3（Entitlement）。
+現状: B1-T1 / B2 / B1-T2（フロント結線）は main に実装済み。次は gateway session 同期または B3（Entitlement）。
 ```
 
 ---
@@ -145,6 +165,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] Forge Lab Global Menu 分岐スニペット準備: `tools/forge-lab-kpi-menu-branch.js`（ゲスト→LP 直リンクは本番反映済み）
 - [x] 登録完了時に `kpiNavigator.registrationComplete = '1'` を立てる配線（JA/EN/zh-tw register）
 - [x] Phase B の最初チケット受け入れ（B1-T1）をこのメモへ固定
+- [x] B1-T2 登録／ログイン画面の API 結線（`js/kpi-auth-client.js`）
 - [x] LP / Forge Lab メニューの本番アップロード（2026-08-04〜05・`public_html/kpi-navigator/`）
 - [x] MEP Confirm 前 biz-day stash（同一セッション OFF→ON 復元）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
