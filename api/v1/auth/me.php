@@ -23,4 +23,4 @@ if ($user === null) {
     kpi_v1_json_out(401, ['ok' => false, 'error' => 'unauthorized']);
 }
 
-kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user)));
+kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

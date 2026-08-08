@@ -12921,7 +12921,7 @@
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">年度目標營業額</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
-            <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">$0</span>
           </div>
         </div>
         <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">紀錄</button>
@@ -12946,7 +12946,7 @@
                   <tr>
                     <td>2026-03-27 21:10</td>
                     <td>擁有者</td>
-                    <td>$652,528.55</td>
+                    <td>$0</td>
                     <td>已調整年度目標營業額與月度旺淡季權重。</td>
                     <td>
                       <div class="annual-history-actions">
@@ -22480,8 +22480,6 @@
               var mem = Number(window.__ANNUAL_DATA.targetSales);
               if (Number.isFinite(mem) && mem > 0) return mem;
             }
-            var dom = parseTargetFromDom();
-            if (dom != null) return dom;
           }
           var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
           if (
@@ -23003,21 +23001,21 @@
     (function () {
       var targetEl = document.getElementById('annual-target-sales-value');
       if (!targetEl) return;
-      var fallback = 652528.55;
-      var raw = fallback;
+      /* LE: do not seed demo annual target into memory / Sales Data */
+      var raw = null;
       if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.targetSales != null) {
-        raw = window.__ANNUAL_DATA.targetSales;
+        var nMem = Number(window.__ANNUAL_DATA.targetSales);
+        if (Number.isFinite(nMem) && nMem > 0) raw = nMem;
       }
-      window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-      if (window.__ANNUAL_DATA.targetSales == null && typeof raw === 'number' && Number.isFinite(raw)) {
-        window.__ANNUAL_DATA.targetSales = raw;
-      }
-      if (typeof raw === 'number' && Number.isFinite(raw)) {
+      var zeroLabel = ((document.documentElement.getAttribute('lang') || '').toLowerCase().indexOf('ja') === 0) ? '¥0' : '$0';
+      if (raw != null) {
         targetEl.textContent = window.KpiCurrency
           ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : ('$' + raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+          : (zeroLabel.charAt(0) + Number(raw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       } else {
-        targetEl.textContent = String(raw);
+        targetEl.textContent = window.KpiCurrency
+          ? KpiCurrency.format(0, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+          : zeroLabel;
       }
       if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function') {
         window.__ANNUAL_UI.syncCockpitForCalendarYear();

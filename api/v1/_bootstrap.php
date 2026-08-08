@@ -28,6 +28,15 @@ function kpi_v1_load_config()
             'token' => 'dev-change-me',
             'userId' => 'default',
             'corsOrigin' => '*',
+            'storeAuthMode' => 'session',
+            // B3: new registrations; users missing plan use legacyPlan
+            'defaultPlan' => 'basic',
+            'legacyPlan' => 'pro',
+            // Local QA: allow logged-in user to POST /auth/set-plan.php
+            'allowSelfPlanChange' => true,
+            'planAdminToken' => 'dev-plan-admin-change-me',
+            // Token-mode store (no user file): treat as this plan
+            'tokenModePlan' => 'pro',
         ],
         $cfg
     );

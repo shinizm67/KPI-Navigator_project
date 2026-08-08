@@ -1,26 +1,33 @@
 <?php
 /**
- * Phase A/B2 — kpiYearStore (+ optional annualNav) GET/PUT.
+ * Phase A/B2/B3 — kpiYearStore (+ optional annualNav) GET/PUT.
  * Phase B2: session auth (per-user JSON). Legacy token via storeAuthMode=token.
- * Docs: docs/backend-phase-a-store-api.md
+ * Phase B3: Basic plan strips / rejects Pro fields (years.*.dailyExpenses).
+ * Docs: docs/backend-phase-a-store-api.md · docs/plan-entitlement-security-memo.md
  */
 
-require __DIR__ . '/_auth.php';
+require __DIR__ . '/_entitlement.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_store_boot($cfg);
 
 $userId = kpi_v1_store_resolve_user_id($cfg);
+$plan = kpi_v1_entitlement_plan_for_store_user($cfg, $userId);
 $path = kpi_v1_data_path($userId);
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $blob = kpi_v1_read_blob($path);
+    $storeOut = $blob->store;
+    if ($plan === 'basic' && $storeOut !== null) {
+        $storeOut = kpi_v1_entitlement_strip_pro_from_store($storeOut);
+    }
     kpi_v1_json_out(200, [
         'ok' => true,
         'userId' => $userId,
+        'plan' => $plan,
         'updatedAt' => $blob->updatedAt,
-        'store' => $blob->store,
+        'store' => $storeOut,
         'annualNav' => $blob->annualNav,
     ]);
 }
@@ -40,7 +47,19 @@ if ($method === 'PUT') {
         if ($body->store !== null && !is_object($body->store)) {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'store_must_be_object_or_null']);
         }
-        $blob->store = $body->store;
+        if ($plan === 'basic' && $body->store !== null) {
+            if (kpi_v1_entitlement_store_has_pro_payload($body->store)) {
+                kpi_v1_json_out(403, [
+                    'ok' => false,
+                    'error' => 'entitlement_required',
+                    'plan' => 'basic',
+                    'feature' => 'expenses',
+                ]);
+            }
+            $blob->store = kpi_v1_entitlement_merge_store_preserving_pro($body->store, $blob->store);
+        } else {
+            $blob->store = $body->store;
+        }
     }
     if (property_exists($body, 'annualNav')) {
         if ($body->annualNav !== null && !is_object($body->annualNav)) {
@@ -54,6 +73,7 @@ if ($method === 'PUT') {
     kpi_v1_json_out(200, [
         'ok' => true,
         'userId' => $userId,
+        'plan' => $plan,
         'updatedAt' => $blob->updatedAt,
     ]);
 }

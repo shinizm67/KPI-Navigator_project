@@ -1,6 +1,6 @@
-# API v1 — Store (Phase A/B2) + Auth (Phase B1-T1)
+# API v1 — Store (Phase A/B2/B3) + Auth (Phase B1 + B3)
 
-See **`docs/backend-phase-a-store-api.md`** and **`docs/codex-cursor-backend-handoff.md`** (B1-T1, B2).
+See **`docs/backend-phase-a-store-api.md`** and **`docs/codex-cursor-backend-handoff.md`** (B1–B3).
 
 ## Local
 
@@ -46,7 +46,8 @@ Endpoints (session cookie `KPISESSID`):
 | POST | `/api/v1/auth/register.php` | 201 + session |
 | POST | `/api/v1/auth/login.php` | 200 + session |
 | POST | `/api/v1/auth/logout.php` | 200 |
-| GET | `/api/v1/auth/me.php` | 200 or 401 |
+| GET | `/api/v1/auth/me.php` | 200 or 401（`plan` 含む） |
+| POST | `/api/v1/auth/set-plan.php` | plan 変更（self / admin token） |
 
 ```bash
 COOKIE=/tmp/kpi-cookies.txt
@@ -58,6 +59,9 @@ curl -s -i -c $COOKIE -X POST -H 'Content-Type: application/json' \
   -d '{"email":"demo@example.com","password":"Passw0rd!"}' \
   http://127.0.0.1:8080/api/v1/auth/login.php
 curl -s -i -b $COOKIE http://127.0.0.1:8080/api/v1/auth/me.php
+# B3: change plan (local allowSelfPlanChange=true)
+curl -s -b $COOKIE -X POST -H 'Content-Type: application/json' \
+  -d '{"plan":"pro"}' http://127.0.0.1:8080/api/v1/auth/set-plan.php
 curl -s -i -b $COOKIE -c $COOKIE -X POST http://127.0.0.1:8080/api/v1/auth/logout.php
 curl -s -i -b $COOKIE http://127.0.0.1:8080/api/v1/auth/me.php
 ```

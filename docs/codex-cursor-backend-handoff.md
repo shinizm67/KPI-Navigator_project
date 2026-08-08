@@ -8,6 +8,7 @@
 
 - Phase A 契約: [`backend-phase-a-store-api.md`](./backend-phase-a-store-api.md)
 - ロリポップ配備: [`lolipop-phase-a-deploy.md`](./lolipop-phase-a-deploy.md)
+- **Phase B 本番配備（登録）:** [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
 - データ設計: [`year-rollover-data-architecture.md`](./year-rollover-data-architecture.md)
 - 権限方針: [`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md)
 
@@ -140,10 +141,39 @@
 
 **次:** **B3** Entitlement ／ 本番へ api + js 配備
 
-### B3. Entitlement（Basic / Pro）
+### B3. Entitlement（Basic / Pro）— **B3-T1 実装済み（2026-08-08・Cursor）**
 
-- 正はサーバ判定（[`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md)）
-- クライアントの `kpiNavigator.subscriptionTier` は表示用に降格
+**タイトル:** サーバ plan 正本 + Store の Pro データ遮断 + クライアント同期
+
+**方針:** [`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md)  
+クライアントの `kpiNavigator.subscriptionTier` は**表示用**。正はユーザ JSON の `plan`。
+
+**実装:**
+
+| パス | 役割 |
+|------|------|
+| `api/v1/_entitlement.php` | plan 正規化、store の Pro フィールド strip/merge |
+| `api/v1/auth/register.php` | 新規 `plan` = config `defaultPlan`（既定 `basic`） |
+| `api/v1/auth/me.php` / login | 応答に `plan` |
+| `api/v1/auth/set-plan.php` | plan 変更（self: `allowSelfPlanChange` / admin: `planAdminToken`） |
+| `api/v1/store.php` | GET/PUT に `plan`。Basic は `years.*.dailyExpenses` を返さない／非空 PUT は 403 |
+| `js/kpi-auth-client.js` | `applyServerPlan` / `setPlan` / login・me で tier 同期 |
+| `js/kpi-data-gateway.js` | hydrate 時に plan 適用、Basic PUT 前に Pro キー除去 |
+
+**Pro フィールド（B3-T1）:** `kpiYearStore.years.*.dailyExpenses` のみ（支出＝Pro）。`kpi-pl-expenses-v1:*` は未ミラーのため後続。
+
+**受け入れ（curl）:**
+
+1. register → 201 + `"plan":"basic"`（defaultPlan）
+2. `me` → 同 plan
+3. admin/self `set-plan` → `"plan":"pro"` 後、PUT に `dailyExpenses` 可
+4. Basic のまま `dailyExpenses` 付き PUT → **403** `entitlement_required`
+5. Pro で支出保存後 Basic に戻し GET → 応答に `dailyExpenses` **無し**（ディスク上は保持）
+
+**config（`config.example.php`）:** `defaultPlan` / `legacyPlan` / `allowSelfPlanChange` / `planAdminToken`  
+本番: `allowSelfPlanChange => false`、`planAdminToken` を強固に。
+
+**次:** B3-T2（PL ローカルキーのサーバ保管）または **B4** MySQL／本番へ api+js 配備
 
 ### B4. 永続化の強化（任意・後続）
 
@@ -171,7 +201,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1-T1 / B2 / B1-T2 / B2.1（gateway session 同期）は main 実装済み。次は B3（Entitlement）または本番配備。
+現状: B1–B2.1 と B3-T1（Entitlement）は main 実装済み。次は B3-T2 / B4 または本番配備。
 ```
 
 ---
@@ -187,6 +217,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] B1-T2 登録／ログイン画面の API 結線（`js/kpi-auth-client.js`）
 - [x] LP / Forge Lab メニューの本番アップロード（2026-08-04〜05・`public_html/kpi-navigator/`）
 - [x] MEP Confirm 前 biz-day stash（同一セッション OFF→ON 復元）
+- [x] B3-T1 Entitlement（サーバ plan + Store Pro 遮断 + クライアント同期）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
 - [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）

@@ -4,7 +4,7 @@
  * Body: { "email": "...", "password": "..." }
  */
 
-require __DIR__ . '/../_auth.php';
+require __DIR__ . '/../_entitlement.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
@@ -36,6 +36,7 @@ $user = [
     'userId' => $userId,
     'email' => $email,
     'passwordHash' => $hash,
+    'plan' => kpi_v1_entitlement_default_plan($cfg),
     'createdAt' => gmdate('c'),
 ];
 kpi_v1_auth_write_user($user);
@@ -43,4 +44,4 @@ $index[$email] = $userId;
 kpi_v1_auth_write_email_index($index);
 
 kpi_v1_auth_set_session_user($userId);
-kpi_v1_json_out(201, array_merge(['ok' => true], kpi_v1_auth_public_user($user)));
+kpi_v1_json_out(201, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

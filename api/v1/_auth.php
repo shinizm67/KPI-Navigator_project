@@ -11,7 +11,7 @@ function kpi_v1_auth_cors($cfg)
     $origin = isset($cfg['corsOrigin']) ? (string) $cfg['corsOrigin'] : '*';
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Plan-Admin-Token');
     header('Access-Control-Max-Age: 86400');
     if ($origin !== '*') {
         header('Access-Control-Allow-Credentials: true');
@@ -136,11 +136,20 @@ function kpi_v1_auth_normalize_email($email)
     return $email;
 }
 
-function kpi_v1_auth_public_user($user)
+function kpi_v1_auth_public_user($user, $cfg = null)
 {
+    $plan = 'pro';
+    if (is_array($user) && isset($user['plan']) && (string) $user['plan'] !== '') {
+        $p = strtolower(trim((string) $user['plan']));
+        $plan = ($p === 'basic') ? 'basic' : 'pro';
+    } elseif (is_array($cfg) && isset($cfg['legacyPlan'])) {
+        $p = strtolower(trim((string) $cfg['legacyPlan']));
+        $plan = ($p === 'basic') ? 'basic' : 'pro';
+    }
     return [
         'userId' => (string) $user['userId'],
         'email' => (string) $user['email'],
+        'plan' => $plan,
     ];
 }
 
@@ -187,7 +196,7 @@ function kpi_v1_store_boot($cfg)
     $origin = isset($cfg['corsOrigin']) ? (string) $cfg['corsOrigin'] : '*';
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token');
+    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token, X-KPI-Plan-Admin-Token');
     header('Access-Control-Max-Age: 86400');
     if ($origin !== '*') {
         header('Access-Control-Allow-Credentials: true');

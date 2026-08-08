@@ -22,8 +22,56 @@
   var STORE_KEY = 'kpiNavigator.kpiYearStore';
   var NAV_KEY = 'kpiNavigator.annualNav';
   var SYNC_KEY = 'kpiNavigator.storeSync';
+  var TIER_KEY = 'kpiNavigator.subscriptionTier';
   var putTimer = null;
   var hydrated = false;
+
+  function applyPlanFromPayload(data) {
+    if (!data || !data.plan) return;
+    var p = String(data.plan).toLowerCase() === 'basic' ? 'basic' : 'pro';
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.applyServerPlan === 'function') {
+        window.__KPI_AUTH.applyServerPlan(p);
+        return;
+      }
+    } catch (_e0) {}
+    try {
+      localStorage.setItem(TIER_KEY, p);
+    } catch (_e1) {}
+    try {
+      sessionStorage.setItem(TIER_KEY, p);
+    } catch (_e2) {}
+    try {
+      window.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: 'server' } }));
+    } catch (_e3) {}
+  }
+
+  function localTier() {
+    try {
+      var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY);
+      return String(t || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    } catch (_e) {
+      return 'pro';
+    }
+  }
+
+  function stripProFromStore(store) {
+    if (!store || typeof store !== 'object') return store;
+    var out;
+    try {
+      out = JSON.parse(JSON.stringify(store));
+    } catch (_e) {
+      return store;
+    }
+    var years = out.years;
+    if (!years || typeof years !== 'object') return out;
+    Object.keys(years).forEach(function (yk) {
+      if (years[yk] && typeof years[yk] === 'object' && years[yk].dailyExpenses != null) {
+        delete years[yk].dailyExpenses;
+      }
+    });
+    return out;
+  }
 
   function resolveAppRoot() {
     try {
@@ -153,8 +201,12 @@
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
+      var storePayload = localGet(STORE_KEY);
+      if (localTier() === 'basic') {
+        storePayload = stripProFromStore(storePayload);
+      }
       var body = {
-        store: localGet(STORE_KEY),
+        store: storePayload,
         annualNav: localGet(NAV_KEY),
       };
       fetch(cfg.baseUrl, {
@@ -180,6 +232,7 @@
       })
       .then(function (data) {
         if (!data || !data.ok) return;
+        applyPlanFromPayload(data);
         var changed = false;
         if (data.store && typeof data.store === 'object') {
           localSet(STORE_KEY, data.store);
@@ -193,7 +246,7 @@
           try {
             document.dispatchEvent(
               new CustomEvent('kpi:storeHydratedFromServer', {
-                detail: { updatedAt: data.updatedAt || null },
+                detail: { updatedAt: data.updatedAt || null, plan: data.plan || null },
               })
             );
           } catch (_e) {}
@@ -206,7 +259,7 @@
             document.dispatchEvent(new CustomEvent('kpi:readSurfacesRefresh'));
           } catch (_e3) {}
           try {
-            console.info('[KPI Store Sync] hydrated from server', data.updatedAt || '');
+            console.info('[KPI Store Sync] hydrated from server', data.updatedAt || '', data.plan || '');
           } catch (_eLog) {}
         }
       })

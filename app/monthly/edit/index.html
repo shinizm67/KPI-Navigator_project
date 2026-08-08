@@ -2721,13 +2721,13 @@
         </div>
         <div class="monthly-edit-float__zoom">
           <div class="monthly-edit-float__zoom-controls">
-            <label for="monthly-edit-float-zoom">表示</label>
+          <label for="monthly-edit-float-zoom">表示</label>
             <button type="button" class="monthly-edit-float__zoom-step" id="monthly-edit-float-zoom-minus" aria-label="表示を縮小">−</button>
             <input type="range" id="monthly-edit-float-zoom" min="80" max="150" value="100" aria-valuemin="80" aria-valuemax="150" aria-valuenow="100" />
             <button type="button" class="monthly-edit-float__zoom-step" id="monthly-edit-float-zoom-plus" aria-label="表示を拡大">+</button>
           </div>
           <div class="monthly-edit-float__zoom-pct-wrap">
-            <span id="monthly-edit-float-zoom-pct" aria-hidden="true">100%</span>
+          <span id="monthly-edit-float-zoom-pct" aria-hidden="true">100%</span>
           </div>
         </div>
         <div class="monthly-edit-float__kpi-strip" id="monthly-edit-float-kpi-strip"></div>
@@ -6714,7 +6714,7 @@
       /* initEditPage() runs later in the same IIFE; defer so year/month + notes are ready. */
       setTimeout(maybeOpenStrategyNoteFromQuery, 0);
 
-            var mefYear = new Date().getFullYear();
+      var mefYear = new Date().getFullYear();
       var mefMonth0 = new Date().getMonth();
       var nextRowId = 1;
       var rowValueById = {};
@@ -7554,11 +7554,11 @@
               var hasBiz = Object.prototype.hasOwnProperty.call(bizDayByIso, iso);
               if (!hasSales && !hasBiz) return;
             }
-            var total = Math.round(aggregateValue('totalSales', iso));
-            var isBusiness = bizDayByIso[iso] !== false;
-            bmap[iso] = !!isBusiness;
-            tmap[iso] = isBusiness ? total : 0;
-          });
+          var total = Math.round(aggregateValue('totalSales', iso));
+          var isBusiness = bizDayByIso[iso] !== false;
+          bmap[iso] = !!isBusiness;
+          tmap[iso] = isBusiness ? total : 0;
+        });
         }
         daily.businessDayByDate = bmap;
         daily.targetSalesByDate = tmap;
@@ -9054,8 +9054,8 @@
           }
         } else {
           var now = new Date();
-          if (now.getFullYear() === mefYear && now.getMonth() === mefMonth0) {
-            dayIdx = Math.max(0, Math.min(ths.length - 1, now.getDate() - 1));
+        if (now.getFullYear() === mefYear && now.getMonth() === mefMonth0) {
+          dayIdx = Math.max(0, Math.min(ths.length - 1, now.getDate() - 1));
           }
         }
         var target = ths[dayIdx];
@@ -9522,7 +9522,7 @@
                       'data-tooltip',
                       t('メモがあります。クリックして見る', 'You have a memo. Click to view.')
                     );
-                  } else {
+              } else {
                     flagBtn.setAttribute('aria-label', t('メモを開く', 'Open memo'));
                   }
                   td.appendChild(flagBtn);
@@ -9531,7 +9531,7 @@
                 var out = document.createElement('span');
                 out.textContent = fmtMoney(aggregateValue(r.id, iso));
                 if (bizDayByIso[iso]) setKpiFill(td, 'has');
-                td.appendChild(out);
+              td.appendChild(out);
               }
               tr.appendChild(td);
             });
@@ -9670,10 +9670,10 @@
                       : t('店舗売上 − フード売上（自動）', 'Store − Food (auto)')
                   );
                 } else {
-                  inp.value = fmtMoney(readValue(r.row.id, iso));
-                  inp.setAttribute('data-action', 'money-input');
-                  inp.setAttribute('data-row-id', r.row.id);
-                  inp.setAttribute('data-iso', iso);
+                inp.value = fmtMoney(readValue(r.row.id, iso));
+                inp.setAttribute('data-action', 'money-input');
+                inp.setAttribute('data-row-id', r.row.id);
+                inp.setAttribute('data-iso', iso);
                   if (r.row.mepEditable) {
                     if (r.section === 'income') {
                       inp.setAttribute('data-mep-sales-path', '1');
@@ -9693,7 +9693,7 @@
                           'Daily sales input is via Annual / Sales Data (switch to MEP in settings)'
                         )
                       );
-                    } else {
+              } else {
                       inp.setAttribute('title', manualInputHint());
                     }
                   } else {
@@ -9932,8 +9932,8 @@
         }
         if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
           applyMepSelectedIso(iso);
-          return;
-        }
+              return;
+            }
         applyMepDefaultMonth();
       }
       function persistMefMonth() {
@@ -10176,8 +10176,8 @@
       function requestCloseFloat() {
         requestLeaveNavigation().then(function (ok) {
           if (!ok) return;
-          clearDirty();
-          navigateBackToMonthly();
+        clearDirty();
+        navigateBackToMonthly();
         });
       }
       function addRow(section) {
@@ -10467,7 +10467,7 @@
       }
       window.addEventListener('resize', function () {
         queueSyncDateRailColumnWidths();
-      });
+        });
       if (zoom) {
         zoom.addEventListener('input', applyZoom);
         zoom.addEventListener('change', applyZoom);
@@ -10559,13 +10559,13 @@
       }
       dateRailScroll.addEventListener('wheel', routeWheelToScroller, { passive: false });
       root.addEventListener(
-        'wheel',
-        function (ev) {
+          'wheel',
+          function (ev) {
           if (!scroller || !root.contains(ev.target)) return;
           routeWheelToScroller(ev);
-        },
+          },
         { passive: false, capture: true }
-      );
+        );
       root.addEventListener('click', function (ev) {
         if (
           monthPicker &&
@@ -10632,7 +10632,7 @@
           if (sec2 === 'memo') {
             removeFreeMemoRowAt(WEEKLY_MEMO_FIXED_COUNT + idxPicked);
           } else {
-            arr.splice(idxPicked, 1);
+          arr.splice(idxPicked, 1);
           }
           syncMonthlySalesToAnnualStoreForMonth();
           document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
@@ -10723,8 +10723,8 @@
           pushUndo();
           writeValue(rowId, iso2, parseMoney(target.value));
           if (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0) {
-            syncMonthlySalesToAnnualStoreForMonth();
-            document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+          syncMonthlySalesToAnnualStoreForMonth();
+          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
           }
           markDirty();
           buildGrid();
@@ -12714,7 +12714,7 @@
     bind();
   }
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
-})();
+    })();
   </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /**
- * KPI Auth Client — Phase B1-T2
+ * KPI Auth Client — Phase B1-T2 / B3
  * Session cookie (KPISESSID) against /api/v1/auth/*.php
  *
  * Override base:
@@ -16,6 +16,7 @@
 
   var REG_FLAG = 'kpiNavigator.registrationComplete';
   var AUTH_BASE_KEY = 'kpiNavigator.authBase';
+  var TIER_KEY = 'kpiNavigator.subscriptionTier';
 
   function resolveAppRoot() {
     var path = global.location.pathname || '';
@@ -45,13 +46,37 @@
     } catch (_e) {}
   }
 
-  function request(method, path, body) {
+  function normalizePlan(plan) {
+    return String(plan || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+  }
+
+  /** Server plan → localStorage/sessionStorage (display gate). Dispatches kpi:planChanged. */
+  function applyServerPlan(plan) {
+    var p = normalizePlan(plan);
+    try {
+      localStorage.setItem(TIER_KEY, p);
+    } catch (_e0) {}
+    try {
+      sessionStorage.setItem(TIER_KEY, p);
+    } catch (_e1) {}
+    try {
+      global.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: 'server' } }));
+    } catch (_e2) {}
+    return p;
+  }
+
+  function request(method, path, body, extraHeaders) {
     var url = resolveAuthBase() + path;
     var opts = {
       method: method,
       credentials: 'include',
       headers: {},
     };
+    if (extraHeaders && typeof extraHeaders === 'object') {
+      Object.keys(extraHeaders).forEach(function (k) {
+        opts.headers[k] = extraHeaders[k];
+      });
+    }
     if (body != null) {
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(body);
@@ -72,6 +97,7 @@
     }).then(function (r) {
       if (r.status === 201 && r.data && r.data.ok) {
         setRegistrationComplete();
+        if (r.data.plan) applyServerPlan(r.data.plan);
       }
       return r;
     });
@@ -84,6 +110,7 @@
     }).then(function (r) {
       if (r.status === 200 && r.data && r.data.ok) {
         setRegistrationComplete();
+        if (r.data.plan) applyServerPlan(r.data.plan);
       }
       return r;
     });
@@ -94,7 +121,31 @@
   }
 
   function me() {
-    return request('GET', '/auth/me.php', null);
+    return request('GET', '/auth/me.php', null).then(function (r) {
+      if (r.status === 200 && r.data && r.data.ok && r.data.plan) {
+        applyServerPlan(r.data.plan);
+      }
+      return r;
+    });
+  }
+
+  function setPlan(plan, opts) {
+    opts = opts || {};
+    var body = { plan: normalizePlan(plan) };
+    if (opts.email) body.email = opts.email;
+    if (opts.adminToken) body.adminToken = opts.adminToken;
+    var headers = {};
+    if (opts.adminToken) headers['X-KPI-Plan-Admin-Token'] = opts.adminToken;
+    return request('POST', '/auth/set-plan.php', body, headers).then(function (r) {
+      if (r.status === 200 && r.data && r.data.ok && r.data.plan) {
+        applyServerPlan(r.data.plan);
+      }
+      return r;
+    });
+  }
+
+  function syncPlanFromServer() {
+    return me();
   }
 
   function errorMessage(lang, status, data) {
@@ -121,6 +172,11 @@
       if (isZh) return '密碼至少需 8 個字元。';
       return 'Password must be at least 8 characters.';
     }
+    if (code === 'entitlement_required' || status === 403) {
+      if (isJa) return 'この機能には Pro プランが必要です。';
+      if (isZh) return '此功能需要 Pro 方案。';
+      return 'This feature requires the Pro plan.';
+    }
     if (isJa) return '通信エラーが発生しました。しばらくしてから再試行してください。';
     if (isZh) return '發生通訊錯誤，請稍後再試。';
     return 'A network error occurred. Please try again.';
@@ -134,6 +190,9 @@
     login: login,
     logout: logout,
     me: me,
+    setPlan: setPlan,
+    applyServerPlan: applyServerPlan,
+    syncPlanFromServer: syncPlanFromServer,
     setRegistrationComplete: setRegistrationComplete,
     errorMessage: errorMessage,
   };

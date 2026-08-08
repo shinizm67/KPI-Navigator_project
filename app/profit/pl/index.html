@@ -4202,7 +4202,7 @@
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">データ出力</p>
             <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../../setting/change_plan.html" aria-label="MEPとPLの収支データをExcelでダウンロード（Pro）">収支データ（MEP＋PL）</button>
-          </div>
+      </div>
         </details>
         <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
           <img src="../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
@@ -4210,7 +4210,7 @@
         <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
           <img src="../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-      </div>
+    </div>
       <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
         <h3 class="account-settings-popup-title">アカウント設定</h3>
         <section class="account-settings-section">
@@ -4290,7 +4290,7 @@
                     <span class="kpi-daily-input-path__knob"></span>
                   </span>
                   <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>
-                </div>
+        </div>
               </div>
               <a class="pl-toolbar__back" id="pl-back-edit" href="../../monthly/edit/index.html" hidden data-pl-nav="1" aria-label="月次編集ページへ戻る">← 月次編集へ</a>
               <button type="button" class="pl-toolbar__btn" id="pl-line-manage-open"
@@ -4334,7 +4334,7 @@
               <div class="pl-label-pane">
                 <table class="pl-table pl-table--v1 pl-table--labels pl-table--labels-frozen" id="pl-table-labels-frozen">
                   <colgroup><col class="pl-col-v-major"><col class="pl-col-h-label"></colgroup>
-                  <thead>
+            <thead>
                     <tr class="pl-head-months">
                       <th class="pl-label-corner" scope="colgroup" colspan="2" id="pl-label-corner" rowspan="2">
                         <span class="pl-label-corner__text">損益表</span>
@@ -4344,7 +4344,7 @@
                       </th>
                     </tr>
                     <tr class="pl-head-sub pl-head-sub--label-gap" aria-hidden="true"></tr>
-                  </thead>
+            </thead>
                   <tbody id="pl-table-label-frozen-body">
                     <tr class="pl-data-row pl-data-row--bizdays" data-row="bizdays"><th class="pl-row-label" scope="row" id="pl-row-bizdays" colspan="2"><span class="pl-row-label__text">営業日</span></th></tr>
                   </tbody>
@@ -4451,12 +4451,12 @@
                   <table class="pl-table pl-table--v1 pl-table--labels pl-table--labels-graph"
                     id="pl-table-labels-graph">
                     <colgroup><col class="pl-col-v-mid"><col class="pl-col-h-label-detail"></colgroup>
-                    <tbody>
+            <tbody>
                       <tr class="pl-graph-label-row" data-pl-section="graph">
                         <th colspan="2" scope="row" class="pl-graph-band-label">グラフ</th>
                       </tr>
-                    </tbody>
-                  </table>
+            </tbody>
+          </table>
                 </div>
                 <div class="pl-data-pane pl-data-pane--graph" id="pl-data-pane-graph">
                   <table class="pl-table pl-table--v1 pl-table--data pl-table--data-graph"
@@ -4495,8 +4495,8 @@
           data-pl-input-source-action="cancel">キャンセル</button>
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--primary"
           data-pl-input-source-action="confirm">決定</button>
-      </div>
     </div>
+  </div>
   </div>
 
   <div class="pl-input-source-modal pl-expense-label-edit-modal" id="pl-expense-label-edit-modal" hidden role="dialog"
@@ -10720,7 +10720,7 @@
           function (e) {
             var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
             if (!isInternalLeaveLink(a)) return;
-            e.preventDefault();
+        e.preventDefault();
             e.stopPropagation();
             var targetHref = resolveLeaveHref(a);
             requestLeaveNavigation().then(function (ok) {
@@ -14952,7 +14952,7 @@
     bind();
   }
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
-})();
+    })();
   </script>
 </body>
 </html>

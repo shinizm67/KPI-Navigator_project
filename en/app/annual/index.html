@@ -14639,7 +14639,7 @@
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">Annual Target Sales</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
-            <span class="annual-target-sales-amount" id="annual-target-sales-value">$652,528.55</span>
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">$0</span>
           </div>
         </div>
         <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">History</button>
@@ -14664,7 +14664,7 @@
                   <tr>
                     <td>2026-03-27 21:10</td>
                     <td>Owner</td>
-                    <td>$652,528.55</td>
+                    <td>$0</td>
                     <td>Adjusted annual target and monthly seasonal weights.</td>
                     <td>
                       <div class="annual-history-actions">
@@ -26850,8 +26850,6 @@ Cumulative Target Annual Sales</p>
               var mem = Number(window.__ANNUAL_DATA.targetSales);
               if (Number.isFinite(mem) && mem > 0) return mem;
             }
-            var dom = parseTargetFromDom();
-            if (dom != null) return dom;
           }
           var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
           if (
@@ -32135,6 +32133,7 @@ Cumulative Target Annual Sales</p>
         salesPinnedAmount: null,
         salesAmountSort: null,
         modalDirty: false,
+        referenceDirty: false,
         activeTab: 'input'
       };
       var sessionSaved = false;
@@ -32432,17 +32431,14 @@ Cumulative Target Annual Sales</p>
       function getReferenceFromInputEl() {
         if (!summaryReferenceInput) return null;
         var parsed = parseSalesInputRaw(summaryReferenceInput);
-        if (parsed == null || !isFinite(parsed) || parsed <= 0) return null;
+        if (parsed == null || !isFinite(parsed) || parsed < 0) return null;
         return Math.round(parsed);
       }
 
+      /* LE: reference is draft until Save — do not persist here */
       function commitReferenceForYear(y) {
         if (!isFinite(y)) return;
         stashReferenceForYear(y);
-        persistPastSalesShared();
-        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
-          detail: { year: y, targetSales: getReferenceForYear(y), source: 'past-sales-reference' }
-        }));
       }
 
       function stashReferenceForYear(y) {
@@ -32450,7 +32446,7 @@ Cumulative Target Annual Sales</p>
         var ps = ensurePastSalesDaily();
         ps.referenceAnnualSalesByYear = ps.referenceAnnualSalesByYear || {};
         var parsed = getReferenceFromInputEl();
-        if (parsed == null) {
+        if (parsed == null || parsed === 0) {
           delete ps.referenceAnnualSalesByYear[String(y)];
         } else {
           ps.referenceAnnualSalesByYear[String(y)] = parsed;
@@ -32459,14 +32455,14 @@ Cumulative Target Annual Sales</p>
 
       function syncReferenceInputForYear(y) {
         if (!summaryReferenceInput || document.activeElement === summaryReferenceInput) return;
+        if (state.referenceDirty) return; /* LE: keep unsaved draft (incl. ¥0) */
         var ref = getReferenceForYear(y);
-        summaryReferenceInput.value = ref != null ? fmtSalesInput(ref) : '';
+        summaryReferenceInput.value = ref != null ? fmtSalesInput(ref) : fmtSalesInput(0);
       }
 
       function commitReferenceBeforeYearChange() {
-        var y = state.year;
-        if (!isFinite(y)) return;
-        stashReferenceForYear(y);
+        /* LE: year switch discards unsaved reference draft; saved map stays until Save */
+        state.referenceDirty = false;
       }
 
       function updatePastSalesSummary() {
@@ -32485,7 +32481,9 @@ Cumulative Target Annual Sales</p>
         }
 
         var refNum = getReferenceFromInputEl();
-        if (refNum == null) refNum = getReferenceForYear(y);
+        if (refNum == null) {
+          refNum = state.referenceDirty ? 0 : getReferenceForYear(y);
+        }
 
         if (summaryRemainingEl && summaryPctEl) {
           if (cumulative == null || refNum == null || refNum <= 0) {
@@ -32832,6 +32830,64 @@ Cumulative Target Annual Sales</p>
         var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
         return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
+
+      function bindSalesAmountZeroClearUx(inp) {
+        if (!inp || inp.getAttribute('data-kpi-zero-ux') === '1') return;
+        inp.setAttribute('data-kpi-zero-ux', '1');
+        function isZeroLike() {
+          var n = parseSalesInputRaw(inp);
+          return n == null || !isFinite(n) || Number(n) === 0;
+        }
+        function clearIfZero() {
+          if (inp.readOnly) return false;
+          if (!isZeroLike()) return false;
+          inp.value = '';
+          return true;
+        }
+        // Typing into ¥0 / $0 must not leave a sticky leading zero (¥012345).
+        function stripLeadingZerosWhileTyping() {
+          if (inp.readOnly) return;
+          var v = String(inp.value || '');
+          var m = v.match(/^([^\d]*)(0+)(\d+)$/);
+          if (!m) return;
+          var next = m[1] + m[3];
+          if (next === v) return;
+          var start = inp.selectionStart;
+          var end = inp.selectionEnd;
+          var removed = m[2].length;
+          inp.value = next;
+          try {
+            if (typeof start === 'number') {
+              inp.setSelectionRange(Math.max(0, start - removed), Math.max(0, (end || 0) - removed));
+            }
+          } catch (_e) {}
+        }
+        inp.addEventListener('focus', function () {
+          if (inp.readOnly) return;
+          if (clearIfZero()) return;
+          try {
+            inp.select();
+          } catch (_e) {}
+        });
+        // Click often places caret after "0" before focus clear sticks.
+        inp.addEventListener('mouseup', function (e) {
+          if (clearIfZero()) {
+            try {
+              e.preventDefault();
+            } catch (_e) {}
+          }
+        });
+        inp.addEventListener('input', stripLeadingZerosWhileTyping);
+        inp.addEventListener('blur', function () {
+          if (inp.readOnly) return;
+          var n = parseSalesInputRaw(inp);
+          if (n == null || !isFinite(n) || Number(n) < 0) {
+            inp.value = fmtSalesInput(0);
+            return;
+          }
+          inp.value = fmtSalesInput(n);
+        });
+      }
       function syncUndoButton() {
         if (btnUndo) btnUndo.disabled = undoStack.length === 0;
       }
@@ -32980,6 +33036,8 @@ Cumulative Target Annual Sales</p>
       }
 
       function savePastSalesModal() {
+        var ySave = state.year;
+        if (isFinite(ySave)) stashReferenceForYear(ySave);
         var ps = ensurePastSalesDaily();
         ps.salesByDate = ps.salesByDate || {};
         ps.businessDayByDate = ps.businessDayByDate || {};
@@ -32994,6 +33052,7 @@ Cumulative Target Annual Sales</p>
         }
         state.rowStateByIso = {};
         state.modalDirty = false;
+        state.referenceDirty = false;
         undoStack = [];
         syncUndoButton();
         sessionSaved = true;
@@ -33431,6 +33490,7 @@ Cumulative Target Annual Sales</p>
             inp.readOnly = false;
           }
           tdSales.appendChild(inp);
+          bindSalesAmountZeroClearUx(inp);
 
           var totalsEntry = totalsMap[item.iso];
           let tdMonthly = document.createElement('td');
@@ -33516,6 +33576,7 @@ Cumulative Target Annual Sales</p>
         }
         scrollToViewMonth();
         state.modalDirty = false;
+        state.referenceDirty = false;
         sessionSaved = false;
         undoStack = [];
         syncUndoButton();
@@ -33680,19 +33741,24 @@ Cumulative Target Annual Sales</p>
       }
 
       if (summaryReferenceInput) {
+        bindSalesAmountZeroClearUx(summaryReferenceInput);
         summaryReferenceInput.addEventListener('input', function () {
           state.modalDirty = true;
+          state.referenceDirty = true;
           updatePastSalesSummary();
         });
         summaryReferenceInput.addEventListener('change', function () {
-          var y = state.year;
-          if (!isFinite(y) && yearSelect) y = Number(yearSelect.value);
-          commitReferenceForYear(y);
+          state.modalDirty = true;
+          state.referenceDirty = true;
           updatePastSalesSummary();
         });
         summaryReferenceInput.addEventListener('blur', function () {
           var parsed = parseSalesInputRaw(summaryReferenceInput);
-          summaryReferenceInput.value = parsed != null ? fmtSalesInput(parsed) : '';
+          if (parsed != null && isFinite(parsed) && parsed >= 0) {
+            summaryReferenceInput.value = fmtSalesInput(parsed);
+          } else {
+            summaryReferenceInput.value = fmtSalesInput(0);
+          }
         });
       }
 
@@ -33955,6 +34021,7 @@ Cumulative Target Annual Sales</p>
         salesPinnedAmount: null,
         salesAmountSort: null,
         modalDirty: false,
+        referenceDirty: false,
         activeTab: 'input'
       };
       var sessionSaved = false;
@@ -34243,32 +34310,21 @@ Cumulative Target Annual Sales</p>
       function getReferenceFromInputEl() {
         if (!summaryReferenceInput) return null;
         var parsed = parseSalesInputRaw(summaryReferenceInput);
-        if (parsed == null || !isFinite(parsed) || parsed <= 0) return null;
+        if (parsed == null || !isFinite(parsed) || parsed < 0) return null;
         return Math.round(parsed);
       }
 
+      /* LE: reference is draft until Save — no Store / localStorage write here */
       function commitReferenceForYear(y) {
         if (!isFinite(y)) return;
         stashReferenceForYear(y);
-        var parsed = getReferenceFromInputEl();
-        if (parsed == null) parsed = getReferenceForYear(y);
-        if (parsed != null && window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
-          KpiYearStore.writeAnnualTarget(y, parsed, { source: 'sales-data-reference' });
-        } else if (parsed != null) {
-          window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-          window.__ANNUAL_DATA.targetSales = parsed;
-        }
-        persistSalesDataShared();
-        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
-          detail: { year: y, targetSales: parsed, source: 'sales-data-reference' }
-        }));
       }
 
       function stashReferenceForYear(y) {
         if (!isFinite(y) || y !== getOperatingYear()) return;
         var daily = ensureSalesDataDaily();
         var parsed = getReferenceFromInputEl();
-        if (parsed == null) {
+        if (parsed == null || parsed === 0) {
           daily.referenceAnnualSales = null;
         } else {
           daily.referenceAnnualSales = parsed;
@@ -34277,8 +34333,9 @@ Cumulative Target Annual Sales</p>
 
       function syncReferenceInputForYear(y) {
         if (!summaryReferenceInput || document.activeElement === summaryReferenceInput) return;
+        if (state.referenceDirty) return; /* LE: keep unsaved draft (incl. ¥0) */
         var ref = getReferenceForYear(y);
-        summaryReferenceInput.value = ref != null ? fmtSalesInput(ref) : '';
+        summaryReferenceInput.value = ref != null ? fmtSalesInput(ref) : fmtSalesInput(0);
       }
 
       function commitReferenceBeforeYearChange() {
@@ -34303,7 +34360,9 @@ Cumulative Target Annual Sales</p>
         }
 
         var refNum = getReferenceFromInputEl();
-        if (refNum == null) refNum = getReferenceForYear(y);
+        if (refNum == null) {
+          refNum = state.referenceDirty ? 0 : getReferenceForYear(y);
+        }
 
         if (summaryRemainingEl && summaryPctEl) {
           if (cumulative == null || refNum == null || refNum <= 0) {
@@ -34824,6 +34883,64 @@ Cumulative Target Annual Sales</p>
         var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
         return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
       }
+
+      function bindSalesAmountZeroClearUx(inp) {
+        if (!inp || inp.getAttribute('data-kpi-zero-ux') === '1') return;
+        inp.setAttribute('data-kpi-zero-ux', '1');
+        function isZeroLike() {
+          var n = parseSalesInputRaw(inp);
+          return n == null || !isFinite(n) || Number(n) === 0;
+        }
+        function clearIfZero() {
+          if (inp.readOnly) return false;
+          if (!isZeroLike()) return false;
+          inp.value = '';
+          return true;
+        }
+        // Typing into ¥0 / $0 must not leave a sticky leading zero (¥012345).
+        function stripLeadingZerosWhileTyping() {
+          if (inp.readOnly) return;
+          var v = String(inp.value || '');
+          var m = v.match(/^([^\d]*)(0+)(\d+)$/);
+          if (!m) return;
+          var next = m[1] + m[3];
+          if (next === v) return;
+          var start = inp.selectionStart;
+          var end = inp.selectionEnd;
+          var removed = m[2].length;
+          inp.value = next;
+          try {
+            if (typeof start === 'number') {
+              inp.setSelectionRange(Math.max(0, start - removed), Math.max(0, (end || 0) - removed));
+            }
+          } catch (_e) {}
+        }
+        inp.addEventListener('focus', function () {
+          if (inp.readOnly) return;
+          if (clearIfZero()) return;
+          try {
+            inp.select();
+          } catch (_e) {}
+        });
+        // Click often places caret after "0" before focus clear sticks.
+        inp.addEventListener('mouseup', function (e) {
+          if (clearIfZero()) {
+            try {
+              e.preventDefault();
+            } catch (_e) {}
+          }
+        });
+        inp.addEventListener('input', stripLeadingZerosWhileTyping);
+        inp.addEventListener('blur', function () {
+          if (inp.readOnly) return;
+          var n = parseSalesInputRaw(inp);
+          if (n == null || !isFinite(n) || Number(n) < 0) {
+            inp.value = fmtSalesInput(0);
+            return;
+          }
+          inp.value = fmtSalesInput(n);
+        });
+      }
       function syncUndoButton() {
         if (btnUndo) btnUndo.disabled = undoStack.length === 0;
       }
@@ -34865,10 +34982,11 @@ Cumulative Target Annual Sales</p>
             if (!isFinite(y)) y = getOperatingYear();
             var refVal = snap.reference;
             summaryReferenceInput.value =
-              refVal != null && isFinite(Number(refVal)) && Number(refVal) > 0
+              refVal != null && isFinite(Number(refVal)) && Number(refVal) >= 0
                 ? fmtSalesInput(Number(refVal))
-                : '';
-            if (isFinite(y)) commitReferenceForYear(y);
+                : fmtSalesInput(0);
+            state.modalDirty = true;
+            state.referenceDirty = true;
           }
           syncUndoButton();
           updateSalesDataSummary();
@@ -35015,9 +35133,16 @@ Cumulative Target Annual Sales</p>
         if (!isFinite(y)) y = getOperatingYear();
         stashReferenceForYear(y);
         var refParsed = getReferenceFromInputEl();
-        if (refParsed != null && window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
-          KpiYearStore.writeAnnualTarget(y, refParsed, { source: 'sales-data-save' });
+        var targetToWrite = refParsed == null ? 0 : refParsed;
+        if (window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
+          KpiYearStore.writeAnnualTarget(y, targetToWrite, { source: 'sales-data-save' });
+        } else {
+          window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+          window.__ANNUAL_DATA.targetSales = targetToWrite;
         }
+        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
+          detail: { year: y, targetSales: targetToWrite > 0 ? targetToWrite : null, source: 'sales-data-save' }
+        }));
         var ps = ensureSalesDataDaily();
         ps.targetSalesByDate = ps.targetSalesByDate || {};
         ps.businessDayByDate = ps.businessDayByDate || {};
@@ -35032,6 +35157,7 @@ Cumulative Target Annual Sales</p>
         }
         state.rowStateByIso = {};
         state.modalDirty = false;
+        state.referenceDirty = false;
         undoStack = [];
         syncUndoButton();
         sessionSaved = true;
@@ -35478,6 +35604,7 @@ Cumulative Target Annual Sales</p>
             inp.readOnly = false;
           }
           tdSales.appendChild(inp);
+          bindSalesAmountZeroClearUx(inp);
 
           var totalsEntry = totalsMap[item.iso];
           let tdMonthly = document.createElement('td');
@@ -35581,6 +35708,7 @@ Cumulative Target Annual Sales</p>
         state.salesPinnedAmount = null;
         state.salesAmountSort = null;
         state.modalDirty = false;
+        state.referenceDirty = false;
         sessionSaved = false;
         sdmHlAllocWarnShown = false;
         undoStack = [];
@@ -35801,20 +35929,25 @@ Cumulative Target Annual Sales</p>
       }
 
       if (summaryReferenceInput) {
+        bindSalesAmountZeroClearUx(summaryReferenceInput);
         summaryReferenceInput.addEventListener('input', function () {
           state.modalDirty = true;
+          state.referenceDirty = true;
           scheduleSalesDataInputRefresh();
         });
         summaryReferenceInput.addEventListener('change', function () {
           pushReferenceUndoSnapshot();
-          var y = state.year;
-          if (!isFinite(y)) y = getOperatingYear();
-          commitReferenceForYear(y);
+          state.modalDirty = true;
+          state.referenceDirty = true;
           updateSalesDataSummary();
         });
         summaryReferenceInput.addEventListener('blur', function () {
           var parsed = parseSalesInputRaw(summaryReferenceInput);
-          summaryReferenceInput.value = parsed != null ? fmtSalesInput(parsed) : '';
+          if (parsed != null && isFinite(parsed) && parsed >= 0) {
+            summaryReferenceInput.value = fmtSalesInput(parsed);
+          } else {
+            summaryReferenceInput.value = fmtSalesInput(0);
+          }
         });
       }
 
@@ -36188,6 +36321,64 @@ Cumulative Target Annual Sales</p>
         if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
         var _isJa = (document.documentElement.lang || '').indexOf('ja') === 0;
         return (_isJa ? '¥' : '$') + Math.round(Number(v)).toLocaleString('en-US');
+      }
+
+      function bindSalesAmountZeroClearUx(inp) {
+        if (!inp || inp.getAttribute('data-kpi-zero-ux') === '1') return;
+        inp.setAttribute('data-kpi-zero-ux', '1');
+        function isZeroLike() {
+          var n = parseSalesInputRaw(inp);
+          return n == null || !isFinite(n) || Number(n) === 0;
+        }
+        function clearIfZero() {
+          if (inp.readOnly) return false;
+          if (!isZeroLike()) return false;
+          inp.value = '';
+          return true;
+        }
+        // Typing into ¥0 / $0 must not leave a sticky leading zero (¥012345).
+        function stripLeadingZerosWhileTyping() {
+          if (inp.readOnly) return;
+          var v = String(inp.value || '');
+          var m = v.match(/^([^\d]*)(0+)(\d+)$/);
+          if (!m) return;
+          var next = m[1] + m[3];
+          if (next === v) return;
+          var start = inp.selectionStart;
+          var end = inp.selectionEnd;
+          var removed = m[2].length;
+          inp.value = next;
+          try {
+            if (typeof start === 'number') {
+              inp.setSelectionRange(Math.max(0, start - removed), Math.max(0, (end || 0) - removed));
+            }
+          } catch (_e) {}
+        }
+        inp.addEventListener('focus', function () {
+          if (inp.readOnly) return;
+          if (clearIfZero()) return;
+          try {
+            inp.select();
+          } catch (_e) {}
+        });
+        // Click often places caret after "0" before focus clear sticks.
+        inp.addEventListener('mouseup', function (e) {
+          if (clearIfZero()) {
+            try {
+              e.preventDefault();
+            } catch (_e) {}
+          }
+        });
+        inp.addEventListener('input', stripLeadingZerosWhileTyping);
+        inp.addEventListener('blur', function () {
+          if (inp.readOnly) return;
+          var n = parseSalesInputRaw(inp);
+          if (n == null || !isFinite(n) || Number(n) < 0) {
+            inp.value = fmtSalesInput(0);
+            return;
+          }
+          inp.value = fmtSalesInput(n);
+        });
       }
       function syncUndoButton() {
         if (btnUndo) btnUndo.disabled = undoStack.length === 0;
@@ -36632,6 +36823,7 @@ Cumulative Target Annual Sales</p>
             inp.readOnly = false;
           }
           tdSales.appendChild(inp);
+          bindSalesAmountZeroClearUx(inp);
 
           tr.appendChild(tdDate);
           tr.appendChild(tdCb);

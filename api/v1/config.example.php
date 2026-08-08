@@ -12,4 +12,10 @@ return [
     'storeAuthMode' => 'session',
     // Allow browser calls from same site / local tools
     'corsOrigin' => '*',
+    // B3 Entitlement
+    'defaultPlan' => 'basic',       // new registrations
+    'legacyPlan' => 'pro',          // users created before plan field
+    'allowSelfPlanChange' => true,  // set false on production
+    'planAdminToken' => 'dev-plan-admin-change-me',
+    'tokenModePlan' => 'pro',
 ];
