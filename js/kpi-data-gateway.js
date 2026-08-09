@@ -11,6 +11,9 @@
  * - window.__KPI_STORE_SYNC = { enabled:true, authMode:'session', baseUrl:'...' }
  *
  * Default: sync OFF (existing local-only behavior).
+ *
+ * B3-T2: also mirrors PL keys (catalog / expenses / adjustments / rate) as `pl`
+ * on the same store.php blob. Raw localStorage writes to those keys trigger PUT.
  */
 (function () {
   'use strict';
@@ -23,8 +26,17 @@
   var NAV_KEY = 'kpiNavigator.annualNav';
   var SYNC_KEY = 'kpiNavigator.storeSync';
   var TIER_KEY = 'kpiNavigator.subscriptionTier';
+  var PL_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
+  var PL_EXP_PREFIX = 'kpi-pl-expenses-v1:';
+  var PL_ADJ_PREFIX = 'kpi-pl-expense-adjustments-v1:';
+  var PL_RATE_KEY = 'kpiNavigator.plTargetCostRate';
+
   var putTimer = null;
   var hydrated = false;
+  var hookQuiet = false;
+  var origSetItem = Storage.prototype.setItem;
+  var origRemoveItem = Storage.prototype.removeItem;
+  var origGetItem = Storage.prototype.getItem;
 
   function applyPlanFromPayload(data) {
     if (!data || !data.plan) return;
@@ -36,7 +48,7 @@
       }
     } catch (_e0) {}
     try {
-      localStorage.setItem(TIER_KEY, p);
+      origSetItem.call(localStorage, TIER_KEY, p);
     } catch (_e1) {}
     try {
       sessionStorage.setItem(TIER_KEY, p);
@@ -48,11 +60,19 @@
 
   function localTier() {
     try {
-      var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY);
+      var t = origGetItem.call(sessionStorage, TIER_KEY) || origGetItem.call(localStorage, TIER_KEY);
       return String(t || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
     } catch (_e) {
       return 'pro';
     }
+  }
+
+  function isPlSyncKey(key) {
+    if (!key) return false;
+    if (key === PL_CATALOG_KEY || key === PL_RATE_KEY) return true;
+    if (String(key).indexOf(PL_EXP_PREFIX) === 0) return true;
+    if (String(key).indexOf(PL_ADJ_PREFIX) === 0) return true;
+    return false;
   }
 
   function stripProFromStore(store) {
@@ -105,7 +125,7 @@
       }
     } catch (_e0) {}
     try {
-      var raw = localStorage.getItem(SYNC_KEY);
+      var raw = origGetItem.call(localStorage, SYNC_KEY);
       if (raw) {
         var o = JSON.parse(raw);
         if (o && typeof o === 'object') {
@@ -130,13 +150,12 @@
       if (metaUrl && metaUrl.content) cfg.baseUrl = String(metaUrl.content);
     } catch (_e3) {}
 
-    // Default authMode: explicit > token-only legacy > session
     var authModeExplicit = false;
     try {
       if (window.__KPI_STORE_SYNC && window.__KPI_STORE_SYNC.authMode) authModeExplicit = true;
     } catch (_eA) {}
     try {
-      var rawMode = localStorage.getItem(SYNC_KEY);
+      var rawMode = origGetItem.call(localStorage, SYNC_KEY);
       var oMode = rawMode ? JSON.parse(rawMode) : null;
       if (oMode && oMode.authMode) authModeExplicit = true;
     } catch (_eB) {}
@@ -157,8 +176,7 @@
   function canSync(cfg) {
     if (!cfg || !cfg.enabled) return false;
     if (cfg.authMode === 'token') return !!cfg.token;
-    if (cfg.authMode === 'dual') return true; // session cookie and/or token
-    // session (default)
+    if (cfg.authMode === 'dual') return true;
     return true;
   }
 
@@ -172,13 +190,12 @@
   }
 
   function fetchCreds(cfg) {
-    // Session / dual need cookies. Token-only can omit, but include is fine same-origin.
     return cfg.authMode === 'token' ? 'omit' : 'include';
   }
 
   function localGet(key) {
     try {
-      var raw = localStorage.getItem(key);
+      var raw = origGetItem.call(localStorage, key);
       if (!raw) return null;
       var parsed = JSON.parse(raw);
       return parsed && typeof parsed === 'object' ? parsed : null;
@@ -187,13 +204,121 @@
     }
   }
 
-  function localSet(key, value) {
+  function localSetRaw(key, stringValue) {
+    hookQuiet = true;
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      origSetItem.call(localStorage, key, stringValue);
       return true;
     } catch (_e) {
       return false;
+    } finally {
+      hookQuiet = false;
     }
+  }
+
+  function localRemoveRaw(key) {
+    hookQuiet = true;
+    try {
+      origRemoveItem.call(localStorage, key);
+      return true;
+    } catch (_e) {
+      return false;
+    } finally {
+      hookQuiet = false;
+    }
+  }
+
+  function localSet(key, value) {
+    try {
+      return localSetRaw(key, JSON.stringify(value));
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function collectPlFromLocal() {
+    var pl = {
+      catalog: localGet(PL_CATALOG_KEY) || {},
+      expensesByYear: {},
+      adjustmentsByYear: {},
+      targetCostRate: null,
+    };
+    try {
+      var rateRaw = origGetItem.call(localStorage, PL_RATE_KEY);
+      if (rateRaw != null && rateRaw !== '') {
+        var n = Number(rateRaw);
+        if (isFinite(n)) pl.targetCostRate = n;
+      }
+    } catch (_eRate) {}
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        if (k.indexOf(PL_EXP_PREFIX) === 0) {
+          var yExp = k.slice(PL_EXP_PREFIX.length);
+          pl.expensesByYear[yExp] = localGet(k) || {};
+        } else if (k.indexOf(PL_ADJ_PREFIX) === 0) {
+          var yAdj = k.slice(PL_ADJ_PREFIX.length);
+          pl.adjustmentsByYear[yAdj] = localGet(k) || {};
+        }
+      }
+    } catch (_eScan) {}
+    return pl;
+  }
+
+  function plHasLocalPayload(pl) {
+    if (!pl || typeof pl !== 'object') return false;
+    if (pl.catalog && typeof pl.catalog === 'object' && Object.keys(pl.catalog).length) return true;
+    var ey = pl.expensesByYear || {};
+    var ay = pl.adjustmentsByYear || {};
+    var yk;
+    for (yk in ey) {
+      if (ey[yk] && typeof ey[yk] === 'object' && Object.keys(ey[yk]).length) return true;
+    }
+    for (yk in ay) {
+      if (ay[yk] && typeof ay[yk] === 'object' && Object.keys(ay[yk]).length) return true;
+    }
+    if (pl.targetCostRate != null && isFinite(Number(pl.targetCostRate))) return true;
+    return false;
+  }
+
+  function applyPlToLocal(pl) {
+    if (!pl || typeof pl !== 'object') return false;
+    var changed = false;
+    if (pl.catalog && typeof pl.catalog === 'object') {
+      localSet(PL_CATALOG_KEY, pl.catalog);
+      changed = true;
+    }
+    if (pl.expensesByYear && typeof pl.expensesByYear === 'object') {
+      Object.keys(pl.expensesByYear).forEach(function (y) {
+        localSet(PL_EXP_PREFIX + y, pl.expensesByYear[y] || {});
+        changed = true;
+      });
+    }
+    if (pl.adjustmentsByYear && typeof pl.adjustmentsByYear === 'object') {
+      Object.keys(pl.adjustmentsByYear).forEach(function (y) {
+        localSet(PL_ADJ_PREFIX + y, pl.adjustmentsByYear[y] || {});
+        changed = true;
+      });
+    }
+    if (pl.targetCostRate != null && isFinite(Number(pl.targetCostRate))) {
+      localSetRaw(PL_RATE_KEY, String(Number(pl.targetCostRate)));
+      changed = true;
+    }
+    return changed;
+  }
+
+  function clearLocalPlKeys() {
+    var toRemove = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (isPlSyncKey(k)) toRemove.push(k);
+      }
+    } catch (_e) {}
+    toRemove.forEach(function (k) {
+      localRemoveRaw(k);
+    });
   }
 
   function schedulePut(cfg) {
@@ -202,13 +327,16 @@
     putTimer = window.setTimeout(function () {
       putTimer = null;
       var storePayload = localGet(STORE_KEY);
-      if (localTier() === 'basic') {
-        storePayload = stripProFromStore(storePayload);
-      }
       var body = {
         store: storePayload,
         annualNav: localGet(NAV_KEY),
       };
+      if (localTier() === 'basic') {
+        body.store = stripProFromStore(storePayload);
+        // Do not send pl for Basic (avoids 403; server keeps disk pl).
+      } else {
+        body.pl = collectPlFromLocal();
+      }
       fetch(cfg.baseUrl, {
         method: 'PUT',
         headers: buildHeaders(cfg, true),
@@ -242,11 +370,22 @@
           localSet(NAV_KEY, data.annualNav);
           changed = true;
         }
+        if (data.plan === 'basic') {
+          // Server omits pl; drop any leftover local Pro PL keys so UI cannot leak.
+          clearLocalPlKeys();
+          changed = true;
+        } else if (data.pl && typeof data.pl === 'object') {
+          if (applyPlToLocal(data.pl)) changed = true;
+        }
         if (changed) {
           try {
             document.dispatchEvent(
               new CustomEvent('kpi:storeHydratedFromServer', {
-                detail: { updatedAt: data.updatedAt || null, plan: data.plan || null },
+                detail: {
+                  updatedAt: data.updatedAt || null,
+                  plan: data.plan || null,
+                  hasPl: !!(data.pl && plHasLocalPayload(data.pl)),
+                },
               })
             );
           } catch (_e) {}
@@ -266,7 +405,27 @@
       .catch(function () {});
   }
 
+  function installLocalStorageHooks() {
+    Storage.prototype.setItem = function (key, value) {
+      origSetItem.apply(this, arguments);
+      if (hookQuiet || this !== localStorage) return;
+      if (!canSync(cfg)) return;
+      if (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key)) {
+        schedulePut(cfg);
+      }
+    };
+    Storage.prototype.removeItem = function (key) {
+      origRemoveItem.apply(this, arguments);
+      if (hookQuiet || this !== localStorage) return;
+      if (!canSync(cfg)) return;
+      if (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key)) {
+        schedulePut(cfg);
+      }
+    };
+  }
+
   var cfg = readSyncConfig();
+  installLocalStorageHooks();
 
   window.__KPI_DATA_GATEWAY = {
     __kpiStoreSyncReady: true,
@@ -275,7 +434,7 @@
     },
     setJson: function (key, value) {
       var ok = localSet(key, value);
-      if (ok && (key === STORE_KEY || key === NAV_KEY)) {
+      if (ok && (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key))) {
         schedulePut(cfg);
       }
       return ok;
@@ -295,7 +454,7 @@
         baseUrl: baseUrl || defaultStoreUrl(),
       };
       try {
-        localStorage.setItem(SYNC_KEY, JSON.stringify(next));
+        localSetRaw(SYNC_KEY, JSON.stringify(next));
       } catch (_e) {}
       cfg = readSyncConfig();
       hydrated = false;
@@ -315,6 +474,7 @@
       }
       schedulePut(cfg);
     },
+    collectPlFromLocal: collectPlFromLocal,
   };
 
   if (canSync(cfg)) {

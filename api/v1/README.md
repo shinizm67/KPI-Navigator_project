@@ -27,6 +27,20 @@ curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
   http://127.0.0.1:8080/api/v1/store.php
 ```
 
+### Store `pl` (Phase B3-T2 — Pro only)
+
+Same endpoint. Body may include `pl` (catalog / expensesByYear / adjustmentsByYear / targetCostRate).
+
+- **Pro:** GET returns `pl`; PUT accepts `pl`
+- **Basic:** GET returns `"pl": null`; non-empty `pl` PUT → `403 entitlement_required` (disk `pl` kept)
+
+```bash
+# after set-plan pro
+curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
+  -d '{"pl":{"catalog":{"lines":[]},"expensesByYear":{"2026":{"food:0":100}},"adjustmentsByYear":{},"targetCostRate":0.65}}' \
+  http://127.0.0.1:8080/api/v1/store.php
+```
+
 Legacy Phase A token mode: set `'storeAuthMode' => 'token'` in `config.local.php`, then:
 
 ```bash

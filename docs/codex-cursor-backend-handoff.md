@@ -175,6 +175,42 @@
 
 **次:** B3-T2（PL ローカルキーのサーバ保管）または **B4** MySQL／本番へ api+js 配備
 
+### B3-T2. PL ローカルキーのサーバ保管 — **実装済み（2026-08-08・Cursor）**
+
+**タイトル:** `kpi-pl-expenses-v1:*` 等を store blob の `pl` にミラーし Basic に渡さない
+
+**実装:**
+
+| パス | 役割 |
+|------|------|
+| `api/v1/_bootstrap.php` | blob に `pl` |
+| `api/v1/_entitlement.php` | `pl` の has / preserve |
+| `api/v1/store.php` | GET/PUT `pl`。Basic は GET で `pl:null`、非空 PUT は 403 |
+| `js/kpi-data-gateway.js` | localStorage hook で PL キー変更 → PUT。hydrate で展開／Basic 時はローカル PL キー削除 |
+
+**`pl` 形:**
+
+```json
+{
+  "catalog": {},
+  "expensesByYear": { "2026": {} },
+  "adjustmentsByYear": { "2026": {} },
+  "targetCostRate": 0.65
+}
+```
+
+対応 localStorage: `kpiNavigator.plLineCatalog` / `kpi-pl-expenses-v1:{Y}` / `kpi-pl-expense-adjustments-v1:{Y}` / `kpiNavigator.plTargetCostRate`
+
+**受け入れ（curl）:**
+
+1. Pro: PUT `pl.expensesByYear` → 200、再 GET で同内容
+2. Basic: GET で `pl` が `null`
+3. Basic: 非空 `pl` PUT → 403 `entitlement_required`
+4. Basic: `store` のみ PUT → 200、Pro に戻して GET → 以前の `pl` が残る
+5. 既存 `store` / `annualNav` / `plan` 契約は壊さない
+
+**次:** **B4** MySQL／本番へ api+js 配備
+
 ### B4. 永続化の強化（任意・後続）
 
 - ファイル JSON → MySQL
@@ -201,7 +237,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1–B2.1 と B3-T1（Entitlement）は main 実装済み。次は B3-T2 / B4 または本番配備。
+現状: B1–B3-T2 は main 実装済み。次は B4 または本番配備。
 ```
 
 ---
@@ -218,6 +254,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] LP / Forge Lab メニューの本番アップロード（2026-08-04〜05・`public_html/kpi-navigator/`）
 - [x] MEP Confirm 前 biz-day stash（同一セッション OFF→ON 復元）
 - [x] B3-T1 Entitlement（サーバ plan + Store Pro 遮断 + クライアント同期）
+- [x] B3-T2 PL ローカルキーのサーバ保管（`pl` bundle）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
 - [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）

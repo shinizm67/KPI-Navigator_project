@@ -83,8 +83,8 @@ Basic / Pro の機能出し分けと、そのチート対策の考え方をま�
 ### 未対応・保留
 
 - [x] **B3-T1（2026-08-08）** サーバ `plan` 正本 + Store の `dailyExpenses` 遮断 + クライアント tier 同期（詳細: `docs/codex-cursor-backend-handoff.md` §B3）
-- [ ] **B3-T2** `kpi-pl-expenses-v1:*` 等のローカル Pro キーをサーバ保管し Basic に渡さない
-- ロックの意匠（ぼかし量・CTA 文言・Office Mode 配色）はプロトタイプ。目視レビューで調整余地あり。
+- [x] **B3-T2（2026-08-08）** `pl` bundle で PL ローカルキーをサーバ保管。Basic GET は `pl:null`、非空 PUT は 403
+- [ ] ロックの意匠（ぼかし量・CTA 文言・Office Mode 配色）はプロトタイプ。目視レビューで調整余地あり。
 
 ## 関連ドキュメント
 

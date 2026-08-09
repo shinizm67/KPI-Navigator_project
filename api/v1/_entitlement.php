@@ -1,7 +1,8 @@
 <?php
 /**
  * Phase B3 — Basic / Pro entitlement helpers.
- * Pro payload in kpiYearStore (for now): years.*.dailyExpenses
+ * Pro in kpiYearStore: years.*.dailyExpenses
+ * Pro PL bundle (B3-T2): blob.pl (catalog / expenses / adjustments / rate)
  * Docs: docs/plan-entitlement-security-memo.md
  */
 
@@ -101,6 +102,65 @@ function kpi_v1_entitlement_store_has_pro_payload($store)
 }
 
 /**
+ * Non-empty object/array map?
+ */
+function kpi_v1_entitlement_map_nonempty($map)
+{
+    if ($map === null) {
+        return false;
+    }
+    if (is_object($map)) {
+        return count(get_object_vars($map)) > 0;
+    }
+    if (is_array($map)) {
+        return count($map) > 0;
+    }
+    return false;
+}
+
+/**
+ * True when pl bundle carries Pro content (empty {} does not count).
+ */
+function kpi_v1_entitlement_pl_has_payload($pl)
+{
+    if ($pl === null) {
+        return false;
+    }
+    if (!is_object($pl) && !is_array($pl)) {
+        return false;
+    }
+    $catalog = is_object($pl)
+        ? (isset($pl->catalog) ? $pl->catalog : null)
+        : (isset($pl['catalog']) ? $pl['catalog'] : null);
+    if (kpi_v1_entitlement_map_nonempty($catalog)) {
+        return true;
+    }
+
+    foreach (['expensesByYear', 'adjustmentsByYear'] as $field) {
+        $byYear = is_object($pl)
+            ? (isset($pl->{$field}) ? $pl->{$field} : null)
+            : (isset($pl[$field]) ? $pl[$field] : null);
+        if ($byYear === null) {
+            continue;
+        }
+        $years = is_object($byYear) ? get_object_vars($byYear) : (is_array($byYear) ? $byYear : []);
+        foreach ($years as $map) {
+            if (kpi_v1_entitlement_map_nonempty($map)) {
+                return true;
+            }
+        }
+    }
+
+    $rate = is_object($pl)
+        ? (property_exists($pl, 'targetCostRate') ? $pl->targetCostRate : null)
+        : (array_key_exists('targetCostRate', $pl) ? $pl['targetCostRate'] : null);
+    if ($rate !== null && $rate !== '' && is_numeric($rate)) {
+        return true;
+    }
+    return false;
+}
+
+/**
  * Deep-ish clone via JSON (store blobs are JSON-safe).
  */
 function kpi_v1_entitlement_clone_json($value)
@@ -164,11 +224,17 @@ function kpi_v1_entitlement_merge_store_preserving_pro($incoming, $existing)
         }
     }
 
-    // Years present only on server (Basic client omitted them): keep Pro data by
-    // not deleting those years — last-write-wins on whole store means client years
-    // replace. Preserve dailyExpenses on overlapping years only (above).
-    // If a year exists only on server and client omitted it, it is dropped (same as
-    // full store replace). Acceptable for B3-T1; Basic clients hydrate stripped store.
-
     return $merged;
+}
+
+/**
+ * Basic must not replace on-disk pl. Empty/null incoming → keep existing.
+ */
+function kpi_v1_entitlement_merge_pl_preserving($incoming, $existing)
+{
+    if ($incoming === null || !kpi_v1_entitlement_pl_has_payload($incoming)) {
+        return $existing;
+    }
+    // Non-empty should have been rejected with 403 before calling this.
+    return $existing;
 }

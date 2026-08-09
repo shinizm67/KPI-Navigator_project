@@ -1,8 +1,9 @@
 <?php
 /**
- * Phase A/B2/B3 — kpiYearStore (+ optional annualNav) GET/PUT.
+ * Phase A/B2/B3 — kpiYearStore (+ optional annualNav + pl) GET/PUT.
  * Phase B2: session auth (per-user JSON). Legacy token via storeAuthMode=token.
- * Phase B3: Basic plan strips / rejects Pro fields (years.*.dailyExpenses).
+ * Phase B3-T1: Basic strips / rejects years.*.dailyExpenses.
+ * Phase B3-T2: Basic omits / rejects pl bundle (PL localStorage mirror).
  * Docs: docs/backend-phase-a-store-api.md · docs/plan-entitlement-security-memo.md
  */
 
@@ -22,6 +23,10 @@ if ($method === 'GET') {
     if ($plan === 'basic' && $storeOut !== null) {
         $storeOut = kpi_v1_entitlement_strip_pro_from_store($storeOut);
     }
+    $plOut = $blob->pl;
+    if ($plan === 'basic') {
+        $plOut = null;
+    }
     kpi_v1_json_out(200, [
         'ok' => true,
         'userId' => $userId,
@@ -29,6 +34,7 @@ if ($method === 'GET') {
         'updatedAt' => $blob->updatedAt,
         'store' => $storeOut,
         'annualNav' => $blob->annualNav,
+        'pl' => $plOut,
     ]);
 }
 
@@ -38,8 +44,10 @@ if ($method === 'PUT') {
     if (!is_object($body)) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_json']);
     }
-    if (!property_exists($body, 'store') && !property_exists($body, 'annualNav')) {
-        kpi_v1_json_out(400, ['ok' => false, 'error' => 'missing_store_or_annualNav']);
+    if (!property_exists($body, 'store')
+        && !property_exists($body, 'annualNav')
+        && !property_exists($body, 'pl')) {
+        kpi_v1_json_out(400, ['ok' => false, 'error' => 'missing_store_or_annualNav_or_pl']);
     }
 
     $blob = kpi_v1_read_blob($path);
@@ -66,6 +74,25 @@ if ($method === 'PUT') {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'annualNav_must_be_object_or_null']);
         }
         $blob->annualNav = $body->annualNav;
+    }
+    if (property_exists($body, 'pl')) {
+        if ($body->pl !== null && !is_object($body->pl)) {
+            kpi_v1_json_out(400, ['ok' => false, 'error' => 'pl_must_be_object_or_null']);
+        }
+        if ($plan === 'basic') {
+            if (kpi_v1_entitlement_pl_has_payload($body->pl)) {
+                kpi_v1_json_out(403, [
+                    'ok' => false,
+                    'error' => 'entitlement_required',
+                    'plan' => 'basic',
+                    'feature' => 'pl',
+                ]);
+            }
+            // Empty/null pl from Basic must not wipe server Pro data.
+            $blob->pl = kpi_v1_entitlement_merge_pl_preserving($body->pl, $blob->pl);
+        } else {
+            $blob->pl = $body->pl;
+        }
     }
     $blob->userId = $userId;
     $blob->updatedAt = gmdate('c');

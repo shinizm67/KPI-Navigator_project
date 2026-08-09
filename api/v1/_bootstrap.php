@@ -85,6 +85,7 @@ function kpi_v1_read_blob($path)
         'updatedAt' => null,
         'store' => null,
         'annualNav' => null,
+        'pl' => null,
     ];
     if (!is_file($path)) {
         return $empty;
@@ -100,6 +101,7 @@ function kpi_v1_read_blob($path)
         'updatedAt' => isset($data->updatedAt) ? $data->updatedAt : null,
         'store' => property_exists($data, 'store') ? $data->store : null,
         'annualNav' => property_exists($data, 'annualNav') ? $data->annualNav : null,
+        'pl' => property_exists($data, 'pl') ? $data->pl : null,
     ];
 }
 
