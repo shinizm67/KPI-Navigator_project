@@ -1,6 +1,6 @@
 # プレスリリース／後回し機能ネタ — 索引
 
-更新日: 2026-06-04
+更新日: 2026-08-09
 
 ## このファイルの役割
 
@@ -37,6 +37,8 @@
 | 16 | **ツールチップ → YouTube チュートリアル** | 全般 | 小 | `docs/csv-upload-pos-import-memo.md` §ホバー |
 | 17 | ~~**Strategy Note：Monthly Edit 導線**~~ | Basic / Pro | 小 | **実装済み（2026-07-22）** — Monthly User Note クリック → Monthly Edit + Strategy Note。Annual 帯の重複 UI は削除。`docs/memo-read-surfaces.md` |
 | 18 | **Sales Data — 繁閑期%アシスト**（過去平均参照・100%正規化） | Basic / Pro | 中〜大 | **本ファイル § Sales Data 繁閑期%アシスト** · `docs/year-rollover-data-architecture.md` |
+| 19 | **歯車フィードバック／リクエスト窓口**（Survey 本製品ではない） | 全般 | 小 | `docs/ops-support-email-and-mobile-view-memo.md` §2（**実装済み 2026-08-09・本番配備待ち**） |
+| 20 | **スマホ縦持ち「数値を見る」専用面**（閲覧優先・情報量削減） | Basic / Pro | 大 | `docs/ops-support-email-and-mobile-view-memo.md` §3 |
 
 ### ローンチ済み・索引から外すもの（参考）
 

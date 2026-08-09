@@ -50,6 +50,30 @@ curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
 curl -s -b $COOKIE -D - -o /tmp/kpi-export.json http://127.0.0.1:8080/api/v1/export.php | head
 ```
 
+### MySQL storage (Phase B4-T2)
+
+Default remains **file**. To use MySQL:
+
+1. Create DB and apply [`schema.sql`](./schema.sql) (or run the migrate tool).
+2. In `config.local.php`:
+
+```php
+'storageDriver' => 'mysql',
+'dbHost' => '127.0.0.1',
+'dbPort' => 3306,
+'dbName' => 'your_db',
+'dbUser' => 'your_user',
+'dbPass' => 'your_pass',
+```
+
+3. Migrate existing JSON (optional):
+
+```bash
+php tools/migrate-json-to-mysql.php
+```
+
+Auth + store HTTP contracts are unchanged. Switch back with `'storageDriver' => 'file'`.
+
 Legacy Phase A token mode: set `'storeAuthMode' => 'token'` in `config.local.php`, then:
 
 ```bash

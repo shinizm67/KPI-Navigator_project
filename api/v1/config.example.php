@@ -21,4 +21,15 @@ return [
     // B4-T1 store backups
     'backupEnabled' => true,
     'backupKeep' => 10,
+    // B4-T2: keep 'file' until MySQL is ready; then 'mysql'
+    'storageDriver' => 'file',
+    'dbHost' => '127.0.0.1',
+    'dbPort' => 3306,
+    'dbName' => '',
+    'dbUser' => '',
+    'dbPass' => '',
+    'dbCharset' => 'utf8mb4',
+    // Feedback / survey mail (gear → ご意見・リクエスト)
+    'supportEmail' => 'support@forge-laboratory.com',
+    'supportFrom' => 'support@forge-laboratory.com',
 ];

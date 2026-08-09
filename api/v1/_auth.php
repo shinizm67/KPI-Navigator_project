@@ -65,6 +65,11 @@ function kpi_v1_auth_user_path($userId)
 
 function kpi_v1_auth_read_email_index()
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        return kpi_v1_db_read_email_index($cfg);
+    }
     $path = kpi_v1_auth_email_index_path();
     if (!is_file($path)) {
         return [];
@@ -75,6 +80,11 @@ function kpi_v1_auth_read_email_index()
 
 function kpi_v1_auth_write_email_index($index)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        // Users table is source of truth; index writes are no-ops under MySQL.
+        return;
+    }
     $path = kpi_v1_auth_email_index_path();
     $tmp = $path . '.tmp';
     $json = json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
@@ -89,6 +99,11 @@ function kpi_v1_auth_write_email_index($index)
 
 function kpi_v1_auth_read_user($userId)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        return kpi_v1_db_read_user($cfg, $userId);
+    }
     $path = kpi_v1_auth_user_path($userId);
     if ($path === null || !is_file($path)) {
         return null;
@@ -101,6 +116,22 @@ function kpi_v1_auth_write_user($user)
 {
     if (!is_array($user) || empty($user['userId'])) {
         kpi_v1_json_out(500, ['ok' => false, 'error' => 'invalid_user']);
+    }
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        try {
+            kpi_v1_db_write_user($cfg, $user);
+        } catch (PDOException $e) {
+            $info = $e->errorInfo;
+            if (isset($info[0]) && $info[0] === '23000') {
+                kpi_v1_json_out(409, ['ok' => false, 'error' => 'email_taken']);
+            }
+            kpi_v1_json_out(500, ['ok' => false, 'error' => 'user_write_failed']);
+        } catch (Throwable $e) {
+            kpi_v1_json_out(500, ['ok' => false, 'error' => 'user_write_failed']);
+        }
+        return;
     }
     $path = kpi_v1_auth_user_path($user['userId']);
     if ($path === null) {

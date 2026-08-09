@@ -40,9 +40,30 @@ function kpi_v1_load_config()
             // B4-T1: PUT 前に現行 blob を backups/ へ
             'backupEnabled' => true,
             'backupKeep' => 10,
+            // B4-T2: file (default) | mysql
+            'storageDriver' => 'file',
+            'dbHost' => '127.0.0.1',
+            'dbPort' => 3306,
+            'dbName' => '',
+            'dbUser' => '',
+            'dbPass' => '',
+            'dbCharset' => 'utf8mb4',
+            'supportEmail' => 'support@forge-laboratory.com',
+            'supportFrom' => 'support@forge-laboratory.com',
         ],
         $cfg
     );
+}
+
+function kpi_v1_storage_driver($cfg)
+{
+    $d = isset($cfg['storageDriver']) ? strtolower(trim((string) $cfg['storageDriver'])) : 'file';
+    return ($d === 'mysql') ? 'mysql' : 'file';
+}
+
+function kpi_v1_storage_is_mysql($cfg)
+{
+    return kpi_v1_storage_driver($cfg) === 'mysql';
 }
 
 function kpi_v1_json_out($code, $payload)
@@ -83,6 +104,13 @@ function kpi_v1_data_path($userId)
 
 function kpi_v1_read_blob($path)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        $userId = basename((string) $path, '.json');
+        return kpi_v1_db_read_blob($cfg, $userId);
+    }
+
     $empty = (object) [
         'userId' => null,
         'updatedAt' => null,
@@ -110,6 +138,16 @@ function kpi_v1_read_blob($path)
 
 function kpi_v1_write_blob($path, $blob)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        $userId = isset($blob->userId) && $blob->userId !== null && $blob->userId !== ''
+            ? (string) $blob->userId
+            : basename((string) $path, '.json');
+        kpi_v1_db_write_blob($cfg, $userId, $blob);
+        return;
+    }
+
     $tmp = $path . '.tmp';
     $json = json_encode($blob, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     if ($json === false) {
@@ -123,7 +161,6 @@ function kpi_v1_write_blob($path, $blob)
         kpi_v1_json_out(500, ['ok' => false, 'error' => 'rename_failed']);
     }
 }
-
 /**
  * B4-T1 — directory for per-user store backups (under data/, blocked by .htaccess).
  */
@@ -141,16 +178,12 @@ function kpi_v1_backup_dir($userId)
 }
 
 /**
- * Copy current on-disk blob to backups/{userId}/{timestamp}.json, then prune to backupKeep.
- * No-op when backupEnabled is false or there is no existing file yet.
+ * Snapshot previous blob to backups/{userId}/{timestamp}.json, then prune to backupKeep.
+ * Prefer $previousBlob (works for file + mysql). Falls back to copying on-disk file.
  */
-function kpi_v1_backup_blob($cfg, $userId)
+function kpi_v1_backup_blob($cfg, $userId, $previousBlob = null)
 {
     if (empty($cfg['backupEnabled'])) {
-        return;
-    }
-    $path = kpi_v1_data_path($userId);
-    if (!is_file($path)) {
         return;
     }
     $keep = isset($cfg['backupKeep']) ? (int) $cfg['backupKeep'] : 10;
@@ -160,9 +193,31 @@ function kpi_v1_backup_blob($cfg, $userId)
     $dir = kpi_v1_backup_dir($userId);
     $stamp = gmdate('Ymd\THis') . '_' . bin2hex(random_bytes(2));
     $dest = $dir . '/' . $stamp . '.json';
-    if (!@copy($path, $dest)) {
-        return;
+
+    $wrote = false;
+    if ($previousBlob !== null && is_object($previousBlob)) {
+        $has =
+            (property_exists($previousBlob, 'store') && $previousBlob->store !== null)
+            || (property_exists($previousBlob, 'annualNav') && $previousBlob->annualNav !== null)
+            || (property_exists($previousBlob, 'pl') && $previousBlob->pl !== null)
+            || (!empty($previousBlob->updatedAt));
+        if ($has) {
+            $json = json_encode($previousBlob, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+            if ($json !== false && file_put_contents($dest, $json, LOCK_EX) !== false) {
+                $wrote = true;
+            }
+        }
     }
+    if (!$wrote) {
+        $path = kpi_v1_data_path($userId);
+        if (!is_file($path)) {
+            return;
+        }
+        if (!@copy($path, $dest)) {
+            return;
+        }
+    }
+
     $files = glob($dir . '/*.json');
     if (!is_array($files) || count($files) <= $keep) {
         return;
