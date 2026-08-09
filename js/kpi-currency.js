@@ -1,5 +1,5 @@
 /**
- * Shared currency symbol for KPI Navigator.
+ * Shared currency symbol for KPI Pilot.
  * Source of truth: localStorage['kpi-currency'] = JPY|USD|EUR|GBP|TWD
  * Fallback: browser timezone / language guess, then document lang.
  * No FX conversion — display symbol only.

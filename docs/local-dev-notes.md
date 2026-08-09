@@ -1,4 +1,4 @@
-# KPI Navigator — ローカル開発メモ（PHP / MySQL）
+# KPI Pilot — ローカル開発メモ（PHP / MySQL）
 
 このドキュメントは、**複数 Mac や将来の自分・チーム**が同じ前提で開発できるようにするためのメモです。  
 （AI チャットの会話履歴は端末間で共有されないため、**Git に残す**のが確実です。）
@@ -158,7 +158,7 @@
 ### delete_account2 のリンク運用メモ（TODO）
 
 - Option A「Keep Plan」ボタン:
-  - 最終的に **KPI Navigatorメインページ（Annual）** のURLへ差し替える。
+  - 最終的に **KPI Pilotメインページ（Annual）** のURLへ差し替える。
   - 現在は暫定リンク（`../../index.html`）。
 - Option C「Cancel Subscription」ボタン:
   - **Stripeの任意URL** が確定後に差し替える。

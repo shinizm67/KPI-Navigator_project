@@ -28,8 +28,8 @@ DST = ROOT / "zh-tw" / "app" / "profit" / "index.html"
 REPLACEMENTS = [
     ('<html lang="en">', '<html lang="zh-TW">'),
     (
-        "Profit | KPI Navigator | FORGE LABORATORY",
-        "利潤 | KPI Navigator | FORGE LABORATORY",
+        "Profit | KPI Pilot | FORGE LABORATORY",
+        "利潤 | KPI Pilot | FORGE LABORATORY",
     ),
     (
         'href="../../setting/style.css"',
@@ -173,7 +173,7 @@ def verify() -> None:
     t = DST.read_text(encoding="utf-8")
     checks = [
         ('lang="zh-TW"', 'lang="zh-TW"' in t),
-        ("title 利潤", "利潤 | KPI Navigator" in t),
+        ("title 利潤", "利潤 | KPI Pilot" in t),
         ("hub title", "利潤摘要（專業方案）" in t),
         ("PL card", "損益表（PL）" in t),
         ("chrome 洞察", "洞察" in t or ">洞察<" in t),

@@ -14,9 +14,9 @@ OPT_TW = "TW - Traditional Chinese"
 
 # Visible EN → zh-TW (Taiwan) replacements for Profile surfaces.
 PROFILE_REPLACEMENTS = [
-    ("Profile (Fixed) | KPI Navigator | FORGE LABORATORY", "個人資料（檢視） | KPI Navigator | FORGE LABORATORY"),
-    ("Profile (Edit) | KPI Navigator | FORGE LABORATORY", "個人資料（編輯） | KPI Navigator | FORGE LABORATORY"),
-    ("Profile | KPI Navigator | FORGE LABORATORY", "個人資料 | KPI Navigator | FORGE LABORATORY"),
+    ("Profile (Fixed) | KPI Pilot | FORGE LABORATORY", "個人資料（檢視） | KPI Pilot | FORGE LABORATORY"),
+    ("Profile (Edit) | KPI Pilot | FORGE LABORATORY", "個人資料（編輯） | KPI Pilot | FORGE LABORATORY"),
+    ("Profile | KPI Pilot | FORGE LABORATORY", "個人資料 | KPI Pilot | FORGE LABORATORY"),
     ("<html lang=\"en\">", "<html lang=\"zh-TW\">"),
     ('href="style.css"', 'href="../../en/setting/style.css"'),
     ("https://forge-laboratory.com/en", "https://forge-laboratory.com"),
@@ -254,7 +254,7 @@ def write_zh_tw_index() -> None:
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="refresh" content="0; url=profile.html">
-  <title>個人資料 | KPI Navigator</title>
+  <title>個人資料 | KPI Pilot</title>
   <script>
     (function () {
       try {
@@ -303,8 +303,8 @@ def refresh_chrome_and_export() -> None:
 
 
 def main() -> None:
-    build_zh_tw_from_en("profile.html", "個人資料（檢視） | KPI Navigator | FORGE LABORATORY")
-    build_zh_tw_from_en("profile_edit.html", "個人資料（編輯） | KPI Navigator | FORGE LABORATORY")
+    build_zh_tw_from_en("profile.html", "個人資料（檢視） | KPI Pilot | FORGE LABORATORY")
+    build_zh_tw_from_en("profile_edit.html", "個人資料（編輯） | KPI Pilot | FORGE LABORATORY")
     write_zh_tw_index()
     wire_ja_en_lang_switchers()
     refresh_chrome_and_export()

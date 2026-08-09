@@ -163,7 +163,7 @@ L2 参考予算を「前年以前のデータがある時だけ」出す方針�
 
 ## 位置づけ：マスト機能（2026-07-17 合意）
 
-- **CSV / Excel アップロードは KPI Navigator の生命線**（売上側は [csv-upload-pos-import-memo.md](./csv-upload-pos-import-memo.md) で既に「マスト」と明記）。**支出側も同格でマスト**とする。
+- **CSV / Excel アップロードは KPI Pilot の生命線**（売上側は [csv-upload-pos-import-memo.md](./csv-upload-pos-import-memo.md) で既に「マスト」と明記）。**支出側も同格でマスト**とする。
 - **併せて「Excel 雛形をユーザーに DL させる」導線も必須**。雛形＝クリーンデータの担保＝根拠を説明できる（L2 の思想と一致）＋サポートコスト削減。
 - MEP（月次管理）と PL は、この取り込み・雛形・費目カタログが絡む**最も肝で複雑な領域**という認識を共有。
 

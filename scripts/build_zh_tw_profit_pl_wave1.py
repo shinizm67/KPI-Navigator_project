@@ -25,12 +25,12 @@ DST = ROOT / "zh-tw" / "app" / "profit" / "pl" / "index.html"
 REPLACEMENTS = [
     ('<html lang="en">', '<html lang="zh-TW">'),
     (
-        "Profit &amp; Loss (PL) | KPI Navigator",
-        "損益表（PL） | KPI Navigator",
+        "Profit &amp; Loss (PL) | KPI Pilot",
+        "損益表（PL） | KPI Pilot",
     ),
     (
-        "Profit & Loss (PL) | KPI Navigator",
-        "損益表（PL） | KPI Navigator",
+        "Profit & Loss (PL) | KPI Pilot",
+        "損益表（PL） | KPI Pilot",
     ),
     ("https://forge-laboratory.com/en", "https://forge-laboratory.com"),
     # Global nav (EN chrome baked into PL page)

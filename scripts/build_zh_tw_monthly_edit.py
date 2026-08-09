@@ -30,8 +30,8 @@ REPLACEMENTS = [
     ('<html lang="en">', '<html lang="zh-TW">'),
     ('<meta http-equiv="content-language" content="en">\n', ""),
     (
-        "Monthly Edit | KPI Navigator | FORGE LABORATORY",
-        "月度編輯 | KPI Navigator | FORGE LABORATORY",
+        "Monthly Edit | KPI Pilot | FORGE LABORATORY",
+        "月度編輯 | KPI Pilot | FORGE LABORATORY",
     ),
     (
         'href="../../../setting/style.css"',
@@ -254,7 +254,7 @@ def verify() -> None:
     t = DST.read_text(encoding="utf-8")
     checks = [
         ('lang="zh-TW"', 'lang="zh-TW"' in t),
-        ("title 月度編輯", "月度編輯 | KPI Navigator" in t),
+        ("title 月度編輯", "月度編輯 | KPI Pilot" in t),
         ("儲存", ">儲存<" in t or ">儲存</button>" in t),
         ("復原", "復原" in t),
         ("每日備註", "每日備註" in t),

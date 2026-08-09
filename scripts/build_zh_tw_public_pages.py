@@ -206,8 +206,8 @@ def build_login() -> None:
     dst = ROOT / "zh-tw" / "login" / "index.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Log IN | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>登入 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Log IN | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>登入 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace('href="../../register/style.css"', 'href="../../register/style.css"')
     text = text.replace('href="style.css"', 'href="../../en/login/style.css"')
@@ -242,8 +242,8 @@ def build_plan() -> None:
     dst = ROOT / "zh-tw" / "plan" / "index.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Plan | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>方案 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Plan | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>方案 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace('href="style.css"', 'href="../../plan/style.css"')
     text = text.replace(">Plan</h2>", ">方案</h2>")
@@ -296,8 +296,8 @@ def build_account_protection() -> None:
     dst = ROOT / "zh-tw" / "account_protection" / "account_protection.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Account Protection | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>帳戶保護 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Account Protection | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>帳戶保護 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace('href="../../register/style.css"', 'href="../../register/style.css"')
     text = text.replace('href="../setting/style.css"', 'href="../../en/setting/style.css"')
@@ -320,8 +320,8 @@ def build_account_protection() -> None:
     dst2 = ROOT / "zh-tw" / "account_protection" / "defensive_protocol.html"
     text = apply_common_zh(src2.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Defensive Protocol | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>防護通訊協定 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Defensive Protocol | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>防護通訊協定 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace('href="../setting/style.css"', 'href="../../en/setting/style.css"')
     reps = [
@@ -356,20 +356,20 @@ def build_legal_terms() -> None:
     dst = ROOT / "zh-tw" / "legal" / "terms" / "index.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Terms of Service | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>服務條款 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Terms of Service | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>服務條款 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace('href="style.css"', 'href="../../../legal/terms/style.css"')
     text = text.replace('href="../../../register/style.css"', 'href="../../../register/style.css"')
 
     # Replace main content block
     main_zh = """    <main class="terms-content">
-      <h1 class="terms-title">服務條款（KPI Navigator）</h1>
+      <h1 class="terms-title">服務條款（KPI Pilot）</h1>
       <p class="terms-meta">最後更新：2026年2月16日<br>營運者：Forge-Lab（由松下真一郎營運）（下稱「本公司」）</p>
 
       <section class="terms-section">
         <h2>1. 適用範圍</h2>
-        <p>本條款規範您對 KPI Navigator（下稱「本服務」）的存取與使用。一旦建立帳戶、存取或使用本服務，即表示您同意受本條款與隱私權政策拘束。</p>
+        <p>本條款規範您對 KPI Pilot（下稱「本服務」）的存取與使用。一旦建立帳戶、存取或使用本服務，即表示您同意受本條款與隱私權政策拘束。</p>
       </section>
 
       <section class="terms-section">
@@ -479,8 +479,8 @@ def build_legal_privacy() -> None:
     dst = ROOT / "zh-tw" / "legal" / "privacy" / "index.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>Privacy Policy | KPI Navigator | FORGE LABORATORY</title>",
-        "<title>隱私權政策 | KPI Navigator | FORGE LABORATORY</title>",
+        "<title>Privacy Policy | KPI Pilot | FORGE LABORATORY</title>",
+        "<title>隱私權政策 | KPI Pilot | FORGE LABORATORY</title>",
     )
     text = text.replace(
         'href="../terms/style.css"',
@@ -612,8 +612,8 @@ def build_register() -> None:
     dst = ROOT / "zh-tw" / "register" / "registration_si-fi_zh-tw.html"
     text = apply_common_zh(src.read_text(encoding="utf-8"))
     text = text.replace(
-        "<title>KPI Navigator - Registration | FORGE LABORATORY WEB SERVICE</title>",
-        "<title>KPI Navigator - 註冊 | FORGE LABORATORY WEB SERVICE</title>",
+        "<title>KPI Pilot - Registration | FORGE LABORATORY WEB SERVICE</title>",
+        "<title>KPI Pilot - 註冊 | FORGE LABORATORY WEB SERVICE</title>",
     )
     text = text.replace('href="style.css"', 'href="../../register/style.css"')
     text = text.replace('src="script.js"', 'src="script.js"')

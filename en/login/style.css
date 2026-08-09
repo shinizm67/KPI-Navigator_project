@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Navigator - Log IN page (EN) Sci-Fi
+   KPI Pilot - Log IN page (EN) Sci-Fi
    ======================================== */
 
 .si-fi.login-page {
@@ -193,7 +193,7 @@ html[lang^="zh"] .si-fi.login-page .btn-login {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
-/* タイトル（KPI Navigator / ログイン or Log IN）は Orbitron のまま・文字色は黒 */
+/* タイトル（KPI Pilot / ログイン or Log IN）は Orbitron のまま・文字色は黒 */
 .si-fi.office-mode .login-title-main,
 .si-fi.office-mode .login-title-sub {
   font-family: 'Orbitron', sans-serif;

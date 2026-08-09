@@ -1,4 +1,4 @@
--- KPI Navigator Phase B4-T2 schema (MySQL / MariaDB)
+-- KPI Pilot Phase B4-T2 schema (MySQL / MariaDB)
 -- Apply once on local or Lolipop DB, then set storageDriver=mysql in config.local.php
 
 CREATE TABLE IF NOT EXISTS kpi_users (

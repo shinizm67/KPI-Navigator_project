@@ -1,4 +1,4 @@
-/* KPI Navigator — Landing page (JA)
+/* KPI Pilot — Landing page (JA)
    Brand system aligned with Si-Fi app chrome: black / cyan / green.
 */
 
@@ -135,6 +135,14 @@ main,
 
 html[lang='en'] .lp-brand {
   font-family: var(--lp-display);
+}
+
+.lp-powered {
+  margin: 10px 0 0;
+  font-size: clamp(0.78rem, 1.8vw, 0.95rem);
+  letter-spacing: 0.04em;
+  color: var(--lp-muted);
+  font-weight: 400;
 }
 
 .lp-tagline {

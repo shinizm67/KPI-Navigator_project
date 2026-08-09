@@ -37,9 +37,9 @@ LANG_META = {
         "url_ja": "preferences.html",
         "url_en": "../en/setting/preferences.html",
         "url_zh_tw": "../zh-tw/setting/preferences.html",
-        "title": "環境設定 | KPI Navigator | FORGE LABORATORY",
+        "title": "環境設定 | KPI Pilot | FORGE LABORATORY",
         "page_sub": "設定",
-        "hint": "変更は KPI Navigator 全体に反映されます。表示モードはヘッダーのトグルとも同期します。",
+        "hint": "変更は KPI Pilot 全体に反映されます。表示モードはヘッダーのトグルとも同期します。",
         "label_lang": "言語を選択 :",
         "label_currency": "通貨を選択 :",
         "label_mode": "表示モード :",
@@ -70,9 +70,9 @@ LANG_META = {
         "url_ja": "../../setting/preferences.html",
         "url_en": "preferences.html",
         "url_zh_tw": "../../zh-tw/setting/preferences.html",
-        "title": "Preferences | KPI Navigator | FORGE LABORATORY",
+        "title": "Preferences | KPI Pilot | FORGE LABORATORY",
         "page_sub": "Preferences",
-        "hint": "Changes apply across KPI Navigator. Display Mode also syncs with the header toggle.",
+        "hint": "Changes apply across KPI Pilot. Display Mode also syncs with the header toggle.",
         "label_lang": "Choose Language :",
         "label_currency": "Choose Currency :",
         "label_mode": "Display Mode :",
@@ -103,9 +103,9 @@ LANG_META = {
         "url_ja": "../../setting/preferences.html",
         "url_en": "../../en/setting/preferences.html",
         "url_zh_tw": "preferences.html",
-        "title": "設定 | KPI Navigator | FORGE LABORATORY",
+        "title": "設定 | KPI Pilot | FORGE LABORATORY",
         "page_sub": "設定",
-        "hint": "變更會套用至整個 KPI Navigator。顯示模式也會與頁首切換同步。",
+        "hint": "變更會套用至整個 KPI Pilot。顯示模式也會與頁首切換同步。",
         "label_lang": "選擇語言 :",
         "label_currency": "選擇貨幣 :",
         "label_mode": "顯示模式 :",
@@ -199,7 +199,7 @@ def build(lang: str) -> str:
           </div>
         </div>
       </div>
-      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h1 class="profile-title-main">KPI Pilot</h1>
       <h2 class="profile-title-sub">{m['page_sub']}</h2>
       <p class="profile-preferences-hint">{m['hint']}</p>
 

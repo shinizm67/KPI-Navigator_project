@@ -20,8 +20,8 @@ SRC_NAME = "session_management.html"
 
 SESSION_REPLACEMENTS = [
     (
-        "Session Management | KPI Navigator | FORGE LABORATORY",
-        "工作階段管理 | KPI Navigator | FORGE LABORATORY",
+        "Session Management | KPI Pilot | FORGE LABORATORY",
+        "工作階段管理 | KPI Pilot | FORGE LABORATORY",
     ),
     ("<html lang=\"en\">", "<html lang=\"zh-TW\">"),
     ('href="style.css"', 'href="../../en/setting/style.css"'),

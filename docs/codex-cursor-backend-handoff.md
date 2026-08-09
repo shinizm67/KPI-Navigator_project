@@ -285,7 +285,7 @@ Windows 機＋Codex 利用開始時:
 ### Codex に最初に貼るプロンプト例（短く）
 
 ```text
-KPI Navigator のバックエンド Phase B 着手。
+KPI Pilot のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
@@ -315,6 +315,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
 - [ ] 運用: `support@` → info@ と同じ転送（作成済み・転送設定は本人）／フィードバック本番確認（[`ops-support-email-and-mobile-view-memo.md`](./ops-support-email-and-mobile-view-memo.md)）
 - [ ] 後続: スマホ閲覧（同メモ §3・SVG 枠含む・ローンチ必須ではない）
+- [ ] ブランド: 表示名 **KPI Pilot**（リポ内置換済）／Forge Lab 本体 Global Menu ラベル（本番サイト側）／[`brand-kpi-pilot-rename-memo.md`](./brand-kpi-pilot-rename-memo.md)
 
 ### 営業日チェックと売上復元（2026-08-03 検証）
 

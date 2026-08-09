@@ -33,8 +33,8 @@ WAVE1_REPLACEMENTS = [
     ('<html lang="en">', '<html lang="zh-TW">'),
     ('<meta http-equiv="content-language" content="en">', ""),
     (
-        "Monthly | KPI Navigator | FORGE LABORATORY",
-        "月度 | KPI Navigator | FORGE LABORATORY",
+        "Monthly | KPI Pilot | FORGE LABORATORY",
+        "月度 | KPI Pilot | FORGE LABORATORY",
     ),
     (
         'href="../../setting/style.css"',
@@ -144,7 +144,7 @@ def verify() -> None:
     t = DST.read_text(encoding="utf-8")
     checks = [
         ('lang="zh-TW"', 'lang="zh-TW"' in t),
-        ("title 月度", "月度 | KPI Navigator" in t),
+        ("title 月度", "月度 | KPI Pilot" in t),
         ("chrome 月度 nav", ">月度</span>" in t),
         ("chrome 帳戶", "帳戶" in t),
         ("setting href", "../../setting/profile.html" in t),

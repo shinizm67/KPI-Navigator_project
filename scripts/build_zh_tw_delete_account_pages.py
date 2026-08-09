@@ -32,32 +32,32 @@ DELETE_REPLACEMENTS = [
     ("https://forge-laboratory.com/en", "https://forge-laboratory.com"),
     # Titles
     (
-        "Delete Account (Step 4-1) | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶（步驟 4-1） | KPI Navigator | FORGE LABORATORY",
+        "Delete Account (Step 4-1) | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶（步驟 4-1） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Delete Account (Step 4-2) | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶（步驟 4-2） | KPI Navigator | FORGE LABORATORY",
+        "Delete Account (Step 4-2) | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶（步驟 4-2） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Delete Account (Step 2) | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶（步驟 2） | KPI Navigator | FORGE LABORATORY",
+        "Delete Account (Step 2) | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶（步驟 2） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Delete Account (Step 3) | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶（步驟 3） | KPI Navigator | FORGE LABORATORY",
+        "Delete Account (Step 3) | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶（步驟 3） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Delete Account (Step 5) | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶（步驟 5） | KPI Navigator | FORGE LABORATORY",
+        "Delete Account (Step 5) | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶（步驟 5） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Delete Account | KPI Navigator | FORGE LABORATORY",
-        "刪除帳戶 | KPI Navigator | FORGE LABORATORY",
+        "Delete Account | KPI Pilot | FORGE LABORATORY",
+        "刪除帳戶 | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Account Deleted | KPI Navigator | FORGE LABORATORY",
-        "帳戶已刪除 | KPI Navigator | FORGE LABORATORY",
+        "Account Deleted | KPI Pilot | FORGE LABORATORY",
+        "帳戶已刪除 | KPI Pilot | FORGE LABORATORY",
     ),
     # Page headings
     (">DELETE ACCOUNT</h2>", ">刪除帳戶</h2>"),
@@ -128,7 +128,7 @@ DELETE_REPLACEMENTS = [
     (">Keep Plan</h4>", ">維持方案</h4>"),
     (">Change Plan</h4>", ">變更方案</h4>"),
     (">Cancel Subscription</h4>", ">取消訂閱</h4>"),
-    (">Back to KPI Navigator →</a>", ">返回 KPI Navigator →</a>"),
+    (">Back to KPI Pilot →</a>", ">返回 KPI Pilot →</a>"),
     (">Manage Plan →</a>", ">管理方案 →</a>"),
     (">Go to Stripe →</a>", ">前往 Stripe →</a>"),
     # Step 3
@@ -237,8 +237,8 @@ DELETE_REPLACEMENTS = [
         ">您的帳戶已刪除。</h3>",
     ),
     (
-        ">Thank you for using KPI Navigator.</p>",
-        ">感謝您使用 KPI Navigator。</p>",
+        ">Thank you for using KPI Pilot.</p>",
+        ">感謝您使用 KPI Pilot。</p>",
     ),
     (
         ">We would appreciate your feedback.</p>",
