@@ -4,6 +4,7 @@
  * Phase B2: session auth (per-user JSON). Legacy token via storeAuthMode=token.
  * Phase B3-T1: Basic strips / rejects years.*.dailyExpenses.
  * Phase B3-T2: Basic omits / rejects pl bundle (PL localStorage mirror).
+ * Phase B4-T1: PUT snapshots previous blob under data/backups/{userId}/.
  * Docs: docs/backend-phase-a-store-api.md · docs/plan-entitlement-security-memo.md
  */
 
@@ -96,6 +97,8 @@ if ($method === 'PUT') {
     }
     $blob->userId = $userId;
     $blob->updatedAt = gmdate('c');
+    // B4-T1: snapshot previous on-disk blob before overwrite
+    kpi_v1_backup_blob($cfg, $userId);
     kpi_v1_write_blob($path, $blob);
     kpi_v1_json_out(200, [
         'ok' => true,

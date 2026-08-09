@@ -211,10 +211,35 @@
 
 **次:** **B4** MySQL／本番へ api+js 配備
 
-### B4. 永続化の強化（任意・後続）
+### B4. 永続化の強化
+
+#### B4-T1. Store バックアップ／エクスポート — **実装済み（2026-08-09・Cursor）**
+
+**タイトル:** PUT 前の自動バックアップ + `GET export.php`
+
+**実装:**
+
+| パス | 役割 |
+|------|------|
+| `api/v1/_bootstrap.php` | `kpi_v1_backup_blob` / `backupEnabled` / `backupKeep` |
+| `api/v1/store.php` | PUT 成功直前に現行 blob を `data/backups/{userId}/` へ |
+| `api/v1/export.php` | ログイン必須の JSON ダウンロード（Basic は `pl:null`） |
+
+**受け入れ（curl）:**
+
+1. PUT 後に `data/backups/{userId}/` へスナップショットが増える（初回 PUT でファイルが無い場合はスキップ）
+2. `backupKeep` 超分は古い順に削除
+3. `GET /api/v1/export.php`（Cookie）→ 200 + attachment JSON
+4. 未ログイン export → 401
+5. Basic export は `pl: null`
+6. 既存 GET/PUT store 契約は壊さない
+
+**次:** **B4-T2** MySQL 正本（HTTP 契約は維持したまま差し替え）
+
+#### B4-T2. MySQL 正本（未着手）
 
 - ファイル JSON → MySQL
-- バックアップ／エクスポート
+- users / store blob の移行。GET/PUT 契約は維持
 
 ---
 
@@ -237,7 +262,7 @@ KPI Navigator のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1–B3-T2 は main 実装済み。次は B4 または本番配備。
+現状: B1–B4-T1 は main 実装済み。次は B4-T2（MySQL）または本番配備。
 ```
 
 ---
@@ -255,6 +280,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] MEP Confirm 前 biz-day stash（同一セッション OFF→ON 復元）
 - [x] B3-T1 Entitlement（サーバ plan + Store Pro 遮断 + クライアント同期）
 - [x] B3-T2 PL ローカルキーのサーバ保管（`pl` bundle）
+- [x] B4-T1 Store バックアップ／エクスポート
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
 - [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
@@ -271,7 +297,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - ルート JA: `index.html` + `lp.css`
 - ルート EN: `en/index.html`（Orbitron）
 - 右下言語スイッチャー: JA↔EN（TW は後続・非表示）
-- 動画01: `https://youtu.be/fdUp5vW___g`（embed 済み）
+- 動画01: `https://youtu.be/dxVkErJXW-E`（embed 済み・2026-08-09 差し替え）
 - 動画02 Annual: `https://youtu.be/1zVhNgySero`（embed 済み）
 - 動画03–05: Coming soon 枠
 - 動画間の文言: 全動画完了後に一括で入れる予定

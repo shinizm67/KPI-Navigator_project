@@ -14,6 +14,10 @@ api/v1/data/**/*.json
 !api/v1/data/.gitkeep
 !api/v1/data/users/.gitkeep
 api/v1/data/*.tmp
+# Keep backups/ tree in repo; ignore only JSON snapshots inside
+api/v1/data/backups/**
+!api/v1/data/backups/
+!api/v1/data/backups/.gitkeep
 
 # 依存関係（プロジェクトの種類に応じて）
 node_modules/

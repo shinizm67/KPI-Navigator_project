@@ -1,6 +1,6 @@
-# API v1 — Store (Phase A/B2/B3) + Auth (Phase B1 + B3)
+# API v1 — Store (Phase A/B2/B3/B4-T1) + Auth (Phase B1 + B3)
 
-See **`docs/backend-phase-a-store-api.md`** and **`docs/codex-cursor-backend-handoff.md`** (B1–B3).
+See **`docs/backend-phase-a-store-api.md`** and **`docs/codex-cursor-backend-handoff.md`** (B1–B4).
 
 ## Local
 
@@ -39,6 +39,15 @@ Same endpoint. Body may include `pl` (catalog / expensesByYear / adjustmentsByYe
 curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
   -d '{"pl":{"catalog":{"lines":[]},"expensesByYear":{"2026":{"food:0":100}},"adjustmentsByYear":{},"targetCostRate":0.65}}' \
   http://127.0.0.1:8080/api/v1/store.php
+```
+
+### Backup + export (Phase B4-T1)
+
+- Each successful **PUT** copies the previous on-disk blob to `api/v1/data/backups/{userId}/` (keeps `backupKeep`, default 10).
+- `GET /api/v1/export.php` — session required; download JSON (`store` / `annualNav` / `pl`). Basic gets `pl: null`.
+
+```bash
+curl -s -b $COOKIE -D - -o /tmp/kpi-export.json http://127.0.0.1:8080/api/v1/export.php | head
 ```
 
 Legacy Phase A token mode: set `'storeAuthMode' => 'token'` in `config.local.php`, then:

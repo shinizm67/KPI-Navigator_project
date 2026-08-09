@@ -37,6 +37,9 @@ function kpi_v1_load_config()
             'planAdminToken' => 'dev-plan-admin-change-me',
             // Token-mode store (no user file): treat as this plan
             'tokenModePlan' => 'pro',
+            // B4-T1: PUT 前に現行 blob を backups/ へ
+            'backupEnabled' => true,
+            'backupKeep' => 10,
         ],
         $cfg
     );
@@ -118,5 +121,62 @@ function kpi_v1_write_blob($path, $blob)
     if (!rename($tmp, $path)) {
         @unlink($tmp);
         kpi_v1_json_out(500, ['ok' => false, 'error' => 'rename_failed']);
+    }
+}
+
+/**
+ * B4-T1 — directory for per-user store backups (under data/, blocked by .htaccess).
+ */
+function kpi_v1_backup_dir($userId)
+{
+    $safe = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $userId);
+    if ($safe === '') {
+        $safe = 'default';
+    }
+    $dir = __DIR__ . '/data/backups/' . $safe;
+    if (!is_dir($dir)) {
+        mkdir($dir, 0750, true);
+    }
+    return $dir;
+}
+
+/**
+ * Copy current on-disk blob to backups/{userId}/{timestamp}.json, then prune to backupKeep.
+ * No-op when backupEnabled is false or there is no existing file yet.
+ */
+function kpi_v1_backup_blob($cfg, $userId)
+{
+    if (empty($cfg['backupEnabled'])) {
+        return;
+    }
+    $path = kpi_v1_data_path($userId);
+    if (!is_file($path)) {
+        return;
+    }
+    $keep = isset($cfg['backupKeep']) ? (int) $cfg['backupKeep'] : 10;
+    if ($keep < 1) {
+        $keep = 1;
+    }
+    $dir = kpi_v1_backup_dir($userId);
+    $stamp = gmdate('Ymd\THis') . '_' . bin2hex(random_bytes(2));
+    $dest = $dir . '/' . $stamp . '.json';
+    if (!@copy($path, $dest)) {
+        return;
+    }
+    $files = glob($dir . '/*.json');
+    if (!is_array($files) || count($files) <= $keep) {
+        return;
+    }
+    usort($files, function ($a, $b) {
+        $ma = @filemtime($a);
+        $mb = @filemtime($b);
+        if ($ma === $mb) {
+            return strcmp($a, $b);
+        }
+        return ($ma < $mb) ? -1 : 1;
+    });
+    $excess = count($files) - $keep;
+    for ($i = 0; $i < $excess; $i++) {
+        @unlink($files[$i]);
     }
 }

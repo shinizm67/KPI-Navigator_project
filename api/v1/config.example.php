@@ -18,4 +18,7 @@ return [
     'allowSelfPlanChange' => true,  // set false on production
     'planAdminToken' => 'dev-plan-admin-change-me',
     'tokenModePlan' => 'pro',
+    // B4-T1 store backups
+    'backupEnabled' => true,
+    'backupKeep' => 10,
 ];
