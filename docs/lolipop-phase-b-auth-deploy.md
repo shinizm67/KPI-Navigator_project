@@ -14,6 +14,9 @@
 1ステップずつ上げて、ブラウザで確認してから次へ。  
 終わったらチャットに「Step N 完了」と書いてください。問題があればその場で戻します。
 
+**パス表の書き方（必須）:** [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)  
+→ ローカルは **絶対パス**、サーバは `public_html/kpi-navigator/...`。`index.html` 単独は禁止。
+
 ---
 
 ## 上げるもの / 上げないもの

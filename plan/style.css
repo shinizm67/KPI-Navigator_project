@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Pilot - Plan page (JP)
+   Key Performance Navigator - Plan page (JP)
    ======================================== */
 
 .si-fi.price-page {
@@ -193,7 +193,7 @@ html[lang^="zh"] .btn-register {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
-/* タイトル（KPI Pilot / プラン）は Orbitron のまま・文字色は黒 */
+/* タイトル（Key Performance Navigator / プラン）は Orbitron のまま・文字色は黒 */
 .si-fi.office-mode .price-title-main,
 .si-fi.office-mode .price-title-sub {
   font-family: 'Orbitron', sans-serif;

@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Pilot - Global & Si-Fi Mode
+   Key Performance Navigator - Global & Si-Fi Mode
    ======================================== */
 
 /* --- Si-Fi color variables --- */
@@ -124,7 +124,7 @@ html[lang="ja"] .si-fi.registration-page {
 }
 
 /* --- Office Mode ボタン（装飾フレーム内にテキスト固定）
-     KPI Pilot 共通: フレームが @media で幅変更しても
+     Key Performance Navigator 共通: フレームが @media で幅変更しても
      テキストは常にフレーム内に収まるようレスポンシブ対応 --- */
 .si-fi .btn-mode {
   display: inline-block;
@@ -703,7 +703,7 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   background: #2B2B2B;
 }
 
-/* KPI Pilot: グローバルメニュー（.site-header）を縦スクロールで固定＋すりガラス。
+/* Key Performance Navigator: グローバルメニュー（.site-header）を縦スクロールで固定＋すりガラス。
    `profile-page`: 年次・月次・setting/*・account_protection/* 等（setting/style.css 併用ページ）。
    それ以外へ広げるときは body に `kpi-sticky-site-header` を追加（本 register を読むページのみ）。 */
 .si-fi.profile-page .site-header,
@@ -763,7 +763,7 @@ html[lang="ja"] .si-fi .lang-select-wrap {
   color: #000;
 }
 
-/* プランタイトル（KPI Pilot Basic/Pro）は Orbitron のまま・文字色は黒 */
+/* プランタイトル（Key Performance Navigator Basic/Pro）は Orbitron のまま・文字色は黒 */
 .si-fi.office-mode .registration-plan-title,
 .si-fi.office-mode .registration-plan-price {
   font-family: 'Orbitron', sans-serif;

@@ -126,10 +126,10 @@ main,
   margin: 0;
   font-family: inherit;
   font-weight: 700;
-  font-size: clamp(2.4rem, 7vw, 3.6rem);
-  letter-spacing: 0.04em;
+  font-size: clamp(1.55rem, 4.8vw, 2.65rem);
+  letter-spacing: 0.02em;
   color: #fff;
-  line-height: 1.15;
+  line-height: 1.2;
   text-shadow: 0 0 40px rgba(88, 225, 243, 0.35);
 }
 
@@ -137,10 +137,11 @@ html[lang='en'] .lp-brand {
   font-family: var(--lp-display);
 }
 
+.lp-brand-sub,
 .lp-powered {
   margin: 10px 0 0;
-  font-size: clamp(0.78rem, 1.8vw, 0.95rem);
-  letter-spacing: 0.04em;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  letter-spacing: 0.06em;
   color: var(--lp-muted);
   font-weight: 400;
 }
