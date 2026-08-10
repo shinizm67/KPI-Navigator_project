@@ -45,6 +45,17 @@ public_html/kpi-navigator/
 
 ※ `jp/` フォルダはない。日本語の `setting` は **玄関直下** `.../kpi-navigator/setting/`。
 
+### Forge Lab 本体（Step 6・Global Menu）
+
+`kpi-navigator` の外。サーバは **サイト根** `public_html/`（`public_html/kpi-navigator/` ではない）。
+
+```text
+ローカル正本: /Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/
+サーバ玄関:   public_html/
+```
+
+例: 左 `…/12. New Forge-lab Web Site/index.shtml` → 右 `public_html/index.shtml`
+
 ---
 
 ## チャットでの言い方

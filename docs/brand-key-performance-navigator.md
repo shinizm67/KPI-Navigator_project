@@ -90,8 +90,8 @@ URL `/kpi-navigator/`・`kpiNavigator.*`・Cookie・API は **現状維持で問
 | **2** | 登録・ログイン・plan（JA/EN/zh-tw）の見えるタイトル | **完了（本番確認済 2026-08-09）** |
 | **3** | setting / account_protection の `profile-title-main` と title | **完了（本番確認済 2026-08-10）** |
 | **4** | app（annual / monthly / profit）の `<title>` 等 | **完了（本番確認済 2026-08-11・正規URLでOK）** |
-| **5** | 法務（terms / privacy）のサービス名 | 未着手 |
-| **6** | Forge Lab 本体 Global Menu ラベル（本番サイト側・このリポ外） | 未着手 |
+| **5** | 法務（terms / privacy）のサービス名 | **完了（本番確認済 2026-08-11）** |
+| **6** | Forge Lab 本体 Global Menu ラベル（本番サイト側・このリポ外） | **完了（本番確認済 2026-08-11）** |
 
 各 Step 完了後にブラウザ確認 → 次へ。一気上げ不要。
 
@@ -237,6 +237,77 @@ FileZilla 左は必ずローカル列のパスまで開く。右はサーバ列�
 | `…/kpi-navigator/index.html`（玄関 LP） | Step 1 済み |
 | `…/setting/...` | Step 3 済み |
 | `…/legal/...` | Step 5 |
+
+### Step 5 — FileZilla（法務 terms / privacy）
+
+ファイルは少ないので **個別**でも、**フォルダごと**でも可。  
+サーバに `legal` が無い場合は、親へフォルダごとドラッグ。
+
+#### 必須
+
+| # | ローカル（左・絶対パス） | サーバ（右） | 確認 URL |
+|---|--------------------------|--------------|----------|
+| 1 | `/Users/shinmatsushita/Desktop/kpi-navigator/legal/terms/index.html` | `public_html/kpi-navigator/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/legal/terms/ |
+| 2 | `/Users/shinmatsushita/Desktop/kpi-navigator/legal/terms/style.css` | `public_html/kpi-navigator/legal/terms/style.css` | （terms と一緒） |
+| 3 | `/Users/shinmatsushita/Desktop/kpi-navigator/legal/privacy/index.html` | `public_html/kpi-navigator/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/legal/privacy/ |
+| 4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/legal/terms/index.html` | `public_html/kpi-navigator/en/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/en/legal/terms/ |
+| 5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/legal/terms/style.css` | `public_html/kpi-navigator/en/legal/terms/style.css` | （同上） |
+| 6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/legal/privacy/index.html` | `public_html/kpi-navigator/en/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/en/legal/privacy/ |
+| 7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/legal/terms/index.html` | `public_html/kpi-navigator/zh-tw/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/legal/terms/ |
+| 8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/legal/privacy/index.html` | `public_html/kpi-navigator/zh-tw/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/legal/privacy/ |
+
+#### フォルダごと上げる場合（`legal` がサーバに無いとき）
+
+| # | ローカル | 右のドロップ先（親） |
+|---|----------|----------------------|
+| A | `/Users/shinmatsushita/Desktop/kpi-navigator/legal/` | `public_html/kpi-navigator/` |
+| B | `/Users/shinmatsushita/Desktop/kpi-navigator/en/legal/` | `public_html/kpi-navigator/en/` |
+| C | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/legal/` | `public_html/kpi-navigator/zh-tw/` |
+
+見出しや本文に **Key Performance Navigator**（例: 「本サービス」定義の正式名）が見えたら **「Step 5 完了」**。
+
+**Step 5 では上げない:** `app/` / `setting/` / 玄関 `index.html`
+
+### Step 6 — FileZilla（Forge Lab 本体 Global Menu）
+
+**注意:** これは `kpi-navigator` 配下ではない。右ペインは **`public_html/`（サイト根）**。  
+ローカル正本は次（`14.New...` はコピー。上げるのは **12** 側だけ）:
+
+```text
+/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/
+```
+
+メニュー文言: `KPI Navigator` → `Key Performance Navigator`  
+href: JA `/kpi-navigator/` ・ EN `/kpi-navigator/en/`（`coming_soon` に戻さない）
+
+#### 必須（ナビが入っているページ）
+
+| # | ローカル（左・絶対パス） | サーバ（右） | 確認 URL |
+|---|--------------------------|--------------|----------|
+| 1 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/index.shtml` | `public_html/index.shtml` | https://forge-laboratory.com/ |
+| 2 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/index.shtml` | `public_html/en/index.shtml` | https://forge-laboratory.com/en/ |
+| 3 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/about/about.shtml` | `public_html/about/about.shtml` | https://forge-laboratory.com/about/about.shtml |
+| 4 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/about/about.shtml` | `public_html/en/about/about.shtml` | https://forge-laboratory.com/en/about/about.shtml |
+| 5 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/price/price.shtml` | `public_html/price/price.shtml` | https://forge-laboratory.com/price/price.shtml |
+| 6 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/price/price.shtml` | `public_html/en/price/price.shtml` | https://forge-laboratory.com/en/price/price.shtml |
+| 7 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/profile/profile.shtml` | `public_html/profile/profile.shtml` | https://forge-laboratory.com/profile/profile.shtml |
+| 8 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/profile/profile.shtml` | `public_html/en/profile/profile.shtml` | https://forge-laboratory.com/en/profile/profile.shtml |
+| 9 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/service/service.shtml` | `public_html/service/service.shtml` | https://forge-laboratory.com/service/service.shtml |
+| 10 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/service/service.shtml` | `public_html/en/service/service.shtml` | https://forge-laboratory.com/en/service/service.shtml |
+| 11 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/work_results/work_results.shtml` | `public_html/work_results/work_results.shtml` | https://forge-laboratory.com/work_results/work_results.shtml |
+| 12 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/work_results/work_results.shtml` | `public_html/en/work_results/work_results.shtml` | https://forge-laboratory.com/en/work_results/work_results.shtml |
+
+**最低限（急ぎ）:** 上表の **#1 と #2 だけ**でもトップのメニューは直る。残りは続けて上げてください。
+
+**Step 6 では上げない**
+
+| これは上げない | 理由 |
+|----------------|------|
+| `…/kpi-navigator/...` | 別アプリ（Step 1–5） |
+| `14.New Forge-lab Web Site/...` | コピー。正本は `12.` |
+| `style.css` / `service.css` など | コメント変更のみ。メニュー文言は `.shtml` |
+
+トップ JA/EN のナビに **Key Performance Navigator** が見えたら **「Step 6 完了」**。
 
 ## 7. 次の実装メモ
 
