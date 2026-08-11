@@ -75,8 +75,10 @@ URL `/kpi-navigator/`・`kpiNavigator.*`・Cookie・API は **現状維持で問
 
 ## 5. Forge Lab Global Menu
 
-`tools/forge-lab-kpi-menu-branch.js` は href 分岐のみ。  
-メニュー文言は forge-laboratory.com 側で **Key Performance Navigator** に更新する。
+`tools/forge-lab-kpi-menu-branch.js` は href 分岐のみ（リポ内正本）。  
+本番 Forge Lab は **`script.js` / `en/script.js` 末尾に同梱**（2026-08-11）。  
+メニュー文言は forge-laboratory.com 側で **Key Performance Navigator**。  
+登録済みフラグあり → Login、なし → LP。
 
 ## 6. LE 手順（表示名のみ）
 

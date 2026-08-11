@@ -78,10 +78,10 @@ $labels = [
 ];
 $label = $labels[$category];
 $stamp = gmdate('Y-m-d\TH:i:s\Z');
-$subject = '[KPI Pilot] ' . $label . ' / ' . ($userId !== null ? $userId : 'guest');
+$subject = '[Key Performance Navigator] ' . $label . ' / ' . ($userId !== null ? $userId : 'guest');
 
 $lines = [
-    'KPI Pilot feedback',
+    'Key Performance Navigator feedback',
     '---',
     'At: ' . $stamp,
     'Category: ' . $category . ' (' . $label . ')',
@@ -124,7 +124,7 @@ $headers = [
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: 8bit',
-    'From: KPI Pilot <' . $from . '>',
+    'From: Key Performance Navigator <' . $from . '>',
 ];
 if ($contact !== '') {
     $headers[] = 'Reply-To: ' . $contact;

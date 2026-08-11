@@ -1,10 +1,8 @@
 /**
- * Forge Lab Global Menu — Key Performance Navigator リンク分岐（ローカル準備用）
+ * Forge Lab Global Menu — Key Performance Navigator リンク分岐
  *
- * 使い方（本番アップロードは LP 動画完了後でOK）:
- * 1. このファイルを Forge Lab サイト側にコピーするか、同等の IIFE を共通 JS に貼る
- * 2. メニューの KPI リンクに class="nav--kpi" が付いていること（既存）
- * 3. メニュー表示ラベルは Forge Lab 本体 HTML で「Key Performance Navigator」（この JS は href のみ）
+ * 本番反映: Forge Lab 本体の `script.js` / `en/script.js` 末尾に同等 IIFE を同梱済み（2026-08-11）。
+ * このファイルは kpi-navigator リポ内の正本コピー（貼り付け・差分確認用）。
  *
  * 分岐:
  * - localStorage.kpiNavigator.registrationComplete === '1'

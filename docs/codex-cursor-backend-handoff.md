@@ -311,11 +311,11 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] B4-T2 MySQL ドライバ（storageDriver・schema・migrate）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
 - [ ] LP 動画: 新01差し替え＋現行01→02移動（メモ済み・未実施）
-- [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
+- [x] 登録済み→Login 分岐を Forge Lab に組込（`script.js` / `en/script.js` 末尾・2026-08-11・本番上げ待ち）
 - [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
-- [ ] 運用: `support@` → info@ と同じ転送（作成済み・転送設定は本人）／フィードバック本番確認（[`ops-support-email-and-mobile-view-memo.md`](./ops-support-email-and-mobile-view-memo.md)）
+- [x] 運用: `support@` 転送 + フィードバック本番通し（[`ops-support-email-and-mobile-view-memo.md`](./ops-support-email-and-mobile-view-memo.md)）
 - [ ] 後続: スマホ閲覧（同メモ §3・SVG 枠含む・ローンチ必須ではない）
-- [ ] ブランド: **Key Performance Navigator** 確定（[`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md)）／画面・Forge Lab Menu への反映は後続
+- [x] ブランド: **Key Performance Navigator** 表示反映（[`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md)）
 
 ### 営業日チェックと売上復元（2026-08-03 検証）
 

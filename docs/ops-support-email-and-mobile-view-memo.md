@@ -1,8 +1,8 @@
 # 運用メモ: support@ / フィードバック窓口 / スマホ閲覧（将来）
 
-更新日: 2026-08-09  
-状態: §2 フィードバック実装済み（本番アップロード＋転送確認待ち）／§3 スマホは将来課題  
-関連: [`press-release-backlog.md`](./press-release-backlog.md) · 歯車メニューは Annual 等の `account-settings-popup`
+更新日: 2026-08-11  
+状態: §1–§2 本番通しOK（差出人名も Key Performance Navigator）／§3 スマホは将来課題  
+関連: [`press-release-backlog.md`](./press-release-backlog.md) · LE パス表 [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)
 
 ---
 
@@ -10,21 +10,26 @@
 
 法務・LP・プライバシーに **`support@forge-laboratory.com`** が書いてある。
 
-### 状態（2026-08-09）
+### 状態（2026-08-11）
 
 - [x] ロリポップで **`support@forge-laboratory.com` を作成済み**
-- [ ] **転送:** `info@` と同様に、`support@` 受信 → `s.matsushita@forge-laboratory.com` と `funkizm@mac.com` へ自動転送（本人設定予定）
-- [ ] 必要ならローカル／スマホのメールアプリでも `support@`（または転送先）を確認できること
+- [x] **転送:** `info@` と同様に、`support@` 受信 → 個人宛へ自動転送（本人設定済）
+- [x] フィードバック送信 → 転送先受信箱で件名・本文・差出人 **Key Performance Navigator** を確認
 
-### やること（運用・本人作業）
+### LE Step A — 本人作業（ロリポップ転送）— **完了**
 
-1. ロリポップで `support@` の転送を `info@` と同じ仕様にする（上記2宛先）  
-2. フィードバック／問い合わせの宛先はこのアドレスに揃える（Form・歯車窓口）
+ロリポップ管理画面で `support@` の転送を `info@` と同じにする。
+
+| 受信 | 転送先（2つ） |
+|------|----------------|
+| `support@forge-laboratory.com` | `s.matsushita@forge-laboratory.com` |
+| （同上） | `funkizm@mac.com` |
 
 ### メモ
 
 - 当面ひとり運用なら **転送で十分**（専用受信箱を IMAP 同期しなくても、個人メールに届く）  
 - PHP `mail()` の From / Reply-To もこのドメインのアドレスに揃える（実装: `api/v1/feedback.php`）
+- `From:` 表示名は **Key Performance Navigator**（旧「KPI Pilot」は除去済）
 
 ---
 
@@ -32,33 +37,23 @@
 
 **本格 Survey 製品ではなく、リクエスト窓口。**
 
-### 実装（2026-08-09）
+### 実装（2026-08-09）／本番通し（2026-08-11）
 
-| 要素 | パス |
-|------|------|
-| 画面 JA/EN/zh-tw | `setting/feedback.html` · `en/setting/feedback.html` · `zh-tw/setting/feedback.html` |
-| 歯車リンク | アカウント設定ポップアップ内「サポート / Support」→ ご意見・リクエスト |
-| API | `POST /api/v1/feedback.php`（session Cookie 任意・ログイン推奨） |
-| クライアント | `js/kpi-feedback-page.js` |
-| 宛先設定 | `supportEmail` / `supportFrom`（`config.example.php`・bootstrap 既定は support@） |
-| サーバ控え | `api/v1/data/feedback/*.json`（HTTP 拒否・`.htaccess`） |
+| 要素 | パス | 本番 |
+|------|------|------|
+| 画面 JA | `setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/setting/feedback.html **OK** |
+| 画面 EN / zh-tw | `en/setting/…` · `zh-tw/setting/…` | （同系統） |
+| 歯車リンク | アカウント設定 → サポート → ご意見・リクエスト | 実装済 |
+| API | `POST /api/v1/feedback.php` | **通しOK** |
+| クライアント | `js/kpi-feedback-page.js` | |
+| 宛先 | `supportEmail` / `supportFrom`（既定 support@） | |
+| サーバ控え | `api/v1/data/feedback/*.json` | |
 
 種別: `bug` / `ux` / `feature` / `other`。本文必須（最大 2000 字）。45 秒レート制限。
 
-### 本番アップロード（FileZilla）
+### LE Step B / C — **完了**
 
-| ローカル | サーバ（`public_html/kpi-navigator/` 配下） |
-|----------|-----------------------------------------------|
-| `api/v1/feedback.php` | `api/v1/feedback.php` |
-| `api/v1/_bootstrap.php` | `api/v1/_bootstrap.php`（support* 既定） |
-| `api/v1/config.example.php` | （参考。本番 `config.local.php` に `supportEmail` が無ければ既定で support@） |
-| `js/kpi-feedback-page.js` | `js/kpi-feedback-page.js` |
-| `setting/feedback.html` | `setting/feedback.html` |
-| `en/setting/feedback.html` | `en/setting/feedback.html` |
-| `zh-tw/setting/feedback.html` | `zh-tw/setting/feedback.html` |
-| 歯車にリンクが入った HTML（annual/monthly/setting 等） | 対応パスへ上書き |
-
-転送設定後、歯車 → 送信 → 転送先受信箱で通ることを確認。
+件名・本文・差出人表示名とも **Key Performance Navigator**。
 
 ばら撒きトライアルとセットで回す想定。長文アンケートは Google Form リンクでも可（併用可）。
 
@@ -99,6 +94,6 @@
 
 ## 4. 優先度の置き方（目安）
 
-1. **今〜ローンチ直前:** §1 support@ 転送を info@ と同じにする（作成済み）  
-2. **トライアルばら撒き前後:** §2 フィードバック窓口（**実装済み・本番アップロード＋転送確認**）  
+1. **完了:** §1 support@ 転送 + §2 フィードバック通し  
+2. **トライアルばら撒き前後:** 窓口が安定して動くこと（追加監視のみ）  
 3. **ローンチ後の大きな尾根:** §3 スマホ閲覧デザイン（SVG 枠含む）

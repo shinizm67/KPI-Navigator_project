@@ -56,6 +56,17 @@ public_html/kpi-navigator/
 
 例: 左 `…/12. New Forge-lab Web Site/index.shtml` → 右 `public_html/index.shtml`
 
+### Forge Lab メニュー分岐（登録済み → Login）
+
+ローカル正本の共通 JS 末尾に IIFE 同梱済み。上げるのは次の2つだけ。
+
+| # | ローカル（左・絶対パス） | サーバ（右） | 確認 |
+|---|--------------------------|--------------|------|
+| 1 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/script.js` | `public_html/script.js` | ゲスト: メニュー → LP。登録済みフラグあり: → `/kpi-navigator/login/` |
+| 2 | `/Users/shinmatsushita/Desktop/12. New Forge-lab Web Site/en/script.js` | `public_html/en/script.js` | EN は `/kpi-navigator/en/login/` |
+
+フラグ: `localStorage.kpiNavigator.registrationComplete = '1'`（登録完了時にアプリ側で立てる）
+
 ---
 
 ## チャットでの言い方
