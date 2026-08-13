@@ -311,9 +311,10 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] B4-T2 MySQL ドライバ（storageDriver・schema・migrate）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
 - [ ] LP 動画: 新01差し替え＋現行01→02移動（メモ済み・未実施）
-- [x] 登録済み→Login 分岐を Forge Lab に組込（`script.js` / `en/script.js` 末尾・2026-08-11・本番上げ待ち）
-- [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
+- [x] 登録済み→Login 分岐を Forge Lab に組込（`kpi-nav-branch.js`・本番確認済 2026-08-11）
+- [x] 古いサーバ残骸の整理（[`server-remnant-cleanup.md`](./server-remnant-cleanup.md)・`kpi-navigator-old` 退避＋ smoke `.off`）
 - [x] 運用: `support@` 転送 + フィードバック本番通し（[`ops-support-email-and-mobile-view-memo.md`](./ops-support-email-and-mobile-view-memo.md)）
+- [ ] 無料お試し配布の運用固め（[`free-trial-account-ops.md`](./free-trial-account-ops.md)・管理者 create/set-password/disable API 実装済・本番上げ待ち）
 - [ ] 後続: スマホ閲覧（同メモ §3・SVG 枠含む・ローンチ必須ではない）
 - [x] ブランド: **Key Performance Navigator** 表示反映（[`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md)）
 

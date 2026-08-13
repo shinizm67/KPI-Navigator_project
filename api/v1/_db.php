@@ -116,10 +116,19 @@ function kpi_v1_db_read_user($cfg, $userId)
 {
     $pdo = kpi_v1_db($cfg);
     $stmt = $pdo->prepare(
-        'SELECT user_id, email, password_hash, plan, plan_updated_at, created_at
+        'SELECT user_id, email, password_hash, plan, disabled, plan_updated_at, created_at
          FROM kpi_users WHERE user_id = ? LIMIT 1'
     );
-    $stmt->execute([(string) $userId]);
+    try {
+        $stmt->execute([(string) $userId]);
+    } catch (PDOException $e) {
+        // Pre-migration DBs without disabled column.
+        $stmt = $pdo->prepare(
+            'SELECT user_id, email, password_hash, plan, plan_updated_at, created_at
+             FROM kpi_users WHERE user_id = ? LIMIT 1'
+        );
+        $stmt->execute([(string) $userId]);
+    }
     $row = $stmt->fetch();
     if (!$row) {
         return null;
@@ -129,6 +138,7 @@ function kpi_v1_db_read_user($cfg, $userId)
         'email' => (string) $row['email'],
         'passwordHash' => (string) $row['password_hash'],
         'plan' => (string) $row['plan'],
+        'disabled' => !empty($row['disabled']),
         'createdAt' => !empty($row['created_at'])
             ? gmdate('c', strtotime($row['created_at'] . ' UTC'))
             : gmdate('c'),
@@ -146,6 +156,7 @@ function kpi_v1_db_write_user($cfg, $user)
     $email = (string) $user['email'];
     $hash = (string) $user['passwordHash'];
     $plan = isset($user['plan']) ? (string) $user['plan'] : 'basic';
+    $disabled = !empty($user['disabled']) ? 1 : 0;
     $created = isset($user['createdAt']) ? (string) $user['createdAt'] : gmdate('c');
     $createdTs = gmdate('Y-m-d H:i:s', strtotime($created) ?: time());
     $planUpdatedTs = null;
@@ -153,17 +164,33 @@ function kpi_v1_db_write_user($cfg, $user)
         $planUpdatedTs = gmdate('Y-m-d H:i:s', strtotime((string) $user['planUpdatedAt']) ?: time());
     }
     $now = gmdate('Y-m-d H:i:s');
-    $stmt = $pdo->prepare(
-        'INSERT INTO kpi_users (user_id, email, password_hash, plan, plan_updated_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           email = VALUES(email),
-           password_hash = VALUES(password_hash),
-           plan = VALUES(plan),
-           plan_updated_at = VALUES(plan_updated_at),
-           updated_at = VALUES(updated_at)'
-    );
-    $stmt->execute([$userId, $email, $hash, $plan, $planUpdatedTs, $createdTs, $now]);
+    try {
+        $stmt = $pdo->prepare(
+            'INSERT INTO kpi_users (user_id, email, password_hash, plan, disabled, plan_updated_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               email = VALUES(email),
+               password_hash = VALUES(password_hash),
+               plan = VALUES(plan),
+               disabled = VALUES(disabled),
+               plan_updated_at = VALUES(plan_updated_at),
+               updated_at = VALUES(updated_at)'
+        );
+        $stmt->execute([$userId, $email, $hash, $plan, $disabled, $planUpdatedTs, $createdTs, $now]);
+    } catch (PDOException $e) {
+        // Fallback if disabled column not migrated yet.
+        $stmt = $pdo->prepare(
+            'INSERT INTO kpi_users (user_id, email, password_hash, plan, plan_updated_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               email = VALUES(email),
+               password_hash = VALUES(password_hash),
+               plan = VALUES(plan),
+               plan_updated_at = VALUES(plan_updated_at),
+               updated_at = VALUES(updated_at)'
+        );
+        $stmt->execute([$userId, $email, $hash, $plan, $planUpdatedTs, $createdTs, $now]);
+    }
 }
 
 function kpi_v1_db_find_user_id_by_email($cfg, $email)

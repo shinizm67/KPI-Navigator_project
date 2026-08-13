@@ -40,12 +40,15 @@ PAGES_APP = [
     {"path": "app/annual/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "annual", "daily": "overlay"},
     {"path": "app/monthly/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "monthly", "daily": "overlay"},
     {"path": "app/profit/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "profit", "daily": "link"},
+    {"path": "app/booking/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": None, "daily": "link"},
     {"path": "en/app/annual/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
     {"path": "zh-tw/app/annual/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
     {"path": "en/app/monthly/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
     {"path": "zh-tw/app/monthly/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
     {"path": "en/app/profit/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "profit", "daily": "link"},
+    {"path": "en/app/booking/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": None, "daily": "link"},
     {"path": "zh-tw/app/profit/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "profit", "daily": "link"},
+    {"path": "zh-tw/app/booking/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": None, "daily": "link"},
 ]
 
 # Settings pages share ONE canonical chrome (unified with the app header).

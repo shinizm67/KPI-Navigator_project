@@ -144,8 +144,120 @@
     });
   }
 
+  /** Shared in-flight me() so Insight gate can wait for server plan. */
+  var planSyncPromise = null;
+
   function syncPlanFromServer() {
-    return me();
+    if (!planSyncPromise) {
+      planSyncPromise = me().then(
+        function (r) {
+          return r;
+        },
+        function (err) {
+          planSyncPromise = null;
+          throw err;
+        }
+      );
+    }
+    return planSyncPromise;
+  }
+
+  function readStoredTier() {
+    try {
+      return sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '';
+    } catch (_e) {
+      return '';
+    }
+  }
+
+  function isBasicPlan() {
+    return String(readStoredTier() || '').toLowerCase() === 'basic';
+  }
+
+  /** Locale-aware Change Plan URL (absolute under /kpi-navigator when possible). */
+  function resolveChangePlanHref() {
+    var root = resolveAppRoot();
+    var path = String(global.location.pathname || '');
+    if (root) {
+      if (path.indexOf('/zh-tw/') >= 0) return root + '/zh-tw/setting/change_plan.html';
+      if (path.indexOf('/en/') >= 0) return root + '/en/setting/change_plan.html';
+      return root + '/setting/change_plan.html';
+    }
+    if (
+      path.indexOf('/app/booking') >= 0 ||
+      path.indexOf('/app/profit') >= 0 ||
+      path.indexOf('/app/monthly') >= 0 ||
+      path.indexOf('/app/annual') >= 0
+    ) {
+      if (path.indexOf('/en/') >= 0 || path.indexOf('/zh-tw/') >= 0) return '../../../setting/change_plan.html';
+      return '../../setting/change_plan.html';
+    }
+    return '../setting/change_plan.html';
+  }
+
+  /**
+   * Capture-phase Pro gate for links with data-href-basic / data-href-pro.
+   * Waits for /auth/me.php so stale localStorage "basic" cannot send Pro users to Change Plan.
+   */
+  function bindProHrefGate(el) {
+    if (!el || el.getAttribute('data-kpi-plan-gate') === '1') return;
+    var hrefBasic = el.getAttribute('data-href-basic') || '';
+    if (!hrefBasic) return;
+    el.setAttribute('data-kpi-plan-gate', '1');
+    el.addEventListener(
+      'click',
+      function (ev) {
+        var hrefPro = el.getAttribute('data-href-pro') || el.getAttribute('href') || '';
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        function go() {
+          var target = isBasicPlan() ? hrefBasic : hrefPro;
+          if (target) window.location.href = target;
+        }
+        syncPlanFromServer().then(go).catch(go);
+      },
+      true
+    );
+  }
+
+  /**
+   * Insight (#global-nav-index-btn) + Booking (#header-booking-btn) + [data-kpi-pro-gate].
+   */
+  function bindInsightNavGate(root) {
+    var doc = root && root.querySelector ? root : document;
+    bindProHrefGate(doc.getElementById ? doc.getElementById('global-nav-index-btn') : null);
+    bindProHrefGate(doc.getElementById ? doc.getElementById('header-booking-btn') : null);
+    var nodes = doc.querySelectorAll ? doc.querySelectorAll('[data-kpi-pro-gate]') : [];
+    for (var i = 0; i < nodes.length; i++) {
+      bindProHrefGate(nodes[i]);
+    }
+  }
+
+  /**
+   * Page entry guard (Booking / similar Pro-only surfaces).
+   * Syncs plan from server then redirects Basic → Change Plan.
+   */
+  function guardProPage(changePlanHref) {
+    var href = changePlanHref || resolveChangePlanHref();
+    function bounceIfBasic() {
+      if (!isBasicPlan()) return false;
+      try {
+        global.location.replace(href);
+      } catch (_e) {
+        global.location.href = href;
+      }
+      return true;
+    }
+    if (bounceIfBasic()) {
+      return Promise.resolve({ redirected: true });
+    }
+    return syncPlanFromServer()
+      .then(function () {
+        return { redirected: bounceIfBasic() };
+      })
+      .catch(function () {
+        return { redirected: bounceIfBasic() };
+      });
   }
 
   function errorMessage(lang, status, data) {
@@ -193,7 +305,24 @@
     setPlan: setPlan,
     applyServerPlan: applyServerPlan,
     syncPlanFromServer: syncPlanFromServer,
+    isBasicPlan: isBasicPlan,
+    resolveChangePlanHref: resolveChangePlanHref,
+    bindProHrefGate: bindProHrefGate,
+    bindInsightNavGate: bindInsightNavGate,
+    guardProPage: guardProPage,
     setRegistrationComplete: setRegistrationComplete,
     errorMessage: errorMessage,
   };
+
+  // App pages: refresh display gate from server session as soon as the client loads.
+  try {
+    syncPlanFromServer().catch(function () {});
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        bindInsightNavGate(document);
+      });
+    } else {
+      bindInsightNavGate(document);
+    }
+  } catch (_boot) {}
 })(typeof window !== 'undefined' ? window : this);

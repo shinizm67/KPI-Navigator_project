@@ -30,6 +30,9 @@ if ($user === null || empty($user['passwordHash'])) {
 if (!password_verify($password, (string) $user['passwordHash'])) {
     kpi_v1_json_out(401, ['ok' => false, 'error' => 'invalid_credentials']);
 }
+if (kpi_v1_auth_user_is_disabled($user)) {
+    kpi_v1_json_out(403, ['ok' => false, 'error' => 'account_disabled']);
+}
 
 kpi_v1_auth_set_session_user($user['userId']);
 kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

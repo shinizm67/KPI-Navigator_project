@@ -12626,8 +12626,41 @@
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
+        <a
+          href="../../app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="../../app/booking/index.html"
+          data-href-basic="../../setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="Open reservation ledger (Pro). Basic plan goes to Change Plan"
+          data-kpi-tutorial-tip
+          data-tooltip="Booking"
+        >
+          <img
+            src="../../../images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="../../../images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="Download templates and P&L data">DL</summary>
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="Download templates and P&L data"
+            data-kpi-tutorial-tip
+            data-tooltip="Download"
+          >DL</summary>
           <div class="template-dl-menu" role="menu" aria-label="Download menu">
             <p class="template-dl-heading">Templates</p>
             <a href="../../../excel/expense-import_daily_template.csv" download class="template-dl-item" role="menuitem">Download Expense Template (Daily)</a>
@@ -12640,7 +12673,16 @@
         <button type="button" class="icon-button icon-button-menu" aria-label="Open navigation menu">
           <img src="../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="Account settings" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="Account settings"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="Settings"
+        >
           <img src="../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
@@ -12663,12 +12705,6 @@
             <a href="../../setting/change_plan.html" class="account-settings-item" role="menuitem">Change Plan</a>
           </nav>
         </section>
-        <section class="account-settings-section" data-kpi-feedback-nav="1">
-          <h4 class="account-settings-heading">Support</h4>
-          <nav class="account-settings-nav">
-            <a href="../../en/setting/feedback.html" class="account-settings-item" role="menuitem">Feedback &amp; Requests</a>
-          </nav>
-        </section>
         <div class="account-settings-sep"></div>
         <a href="../../setting/delete_account1.html" class="account-settings-item account-settings-item-danger" role="menuitem">Delete Account</a>
       </div>
@@ -12689,6 +12725,7 @@
         </div>
       </div>
     </div>
+    <script src="../../../js/kpi-auth-client.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -12702,6 +12739,17 @@
         var dl = document.getElementById('header-dl');
         if (dl && dl.open) dl.removeAttribute('open');
       });
+    })();
+    (function () {
+      if (!window.__KPI_AUTH) return;
+      try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+      } catch (_e) {}
     })();
     </script>
   </header>
@@ -30952,28 +31000,6 @@ Cumulative Target Annual Sales</p>
           if (subs) subs.hidden = collapsed;
           if (icon) icon.textContent = collapsed ? '\u25C0' : '\u25BC';
         });
-      });
-    })();
-  </script>
-  <script>
-    (function () {
-      var btn = document.getElementById('global-nav-index-btn');
-      if (!btn) return;
-      var KEY = 'kpiNavigator.subscriptionTier';
-      function isBasicPlan() {
-        try {
-          return (sessionStorage.getItem(KEY) || localStorage.getItem(KEY)) === 'basic';
-        } catch (e) {
-          return false;
-        }
-      }
-      var hrefPro = btn.getAttribute('data-href-pro');
-      var hrefBasic = btn.getAttribute('data-href-basic');
-      if (hrefPro) btn.setAttribute('href', hrefPro);
-      btn.addEventListener('click', function (ev) {
-        if (!isBasicPlan()) return;
-        ev.preventDefault();
-        if (hrefBasic) window.location.href = hrefBasic;
       });
     })();
   </script>

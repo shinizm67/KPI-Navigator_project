@@ -1,6 +1,6 @@
 # プレスリリース／後回し機能ネタ — 索引
 
-更新日: 2026-08-09
+更新日: 2026-08-11
 
 ## このファイルの役割
 
@@ -40,6 +40,7 @@
 | 19 | **歯車フィードバック／リクエスト窓口**（Survey 本製品ではない） | 全般 | 小 | `docs/ops-support-email-and-mobile-view-memo.md` §2（**実装済み 2026-08-09・本番配備待ち**） |
 | 20 | **スマホ縦持ち「数値を見る」専用面**（閲覧優先・情報量削減） | Basic / Pro | 大 | `docs/ops-support-email-and-mobile-view-memo.md` §3 |
 | 21 | **ブランド改称 → Key Performance Navigator**（JA/zh-TW サブ付き・確定） | 全般 | 大（必須） | `docs/brand-key-performance-navigator.md`（旧 Pilot 案は同メモ §2） |
+| 22 | **予約台帳（Restaurant / Salon Edition）** — 仮売上ナビ・CSV・カレンダー/Row切替 | Basic / Pro | 大（ローンチ直後〜配布相手次第で前倒し） | `docs/reservation-ledger-edition-memo.md` |
 
 ### ローンチ済み・索引から外すもの（参考）
 

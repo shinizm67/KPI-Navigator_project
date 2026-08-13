@@ -46,6 +46,7 @@ LABELS = {
         "office_text": "OFFICE MODE",
         "menu_aria": "ナビゲーションメニューを開く",
         "gear_aria": "アカウント設定",
+        "gear_tooltip": "設定",
         "popup_aria": "アカウント設定",
         "account_heading": "アカウント",
         "profile": "プロフィール",
@@ -63,6 +64,7 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "ページ先頭へ戻る",
         "dl_label": "DL",
+        "dl_tooltip": "ダウンロード",
         "dl_aria": "雛形・収支データのダウンロード",
         "dl_menu_aria": "ダウンロードメニュー",
         "dl_heading": "雛形",
@@ -73,6 +75,8 @@ LABELS = {
         "dl_data_heading": "データ出力",
         "dl_export_pl_mep": "収支データ（MEP＋PL）",
         "dl_export_pl_mep_aria": "MEPとPLの収支データをExcelでダウンロード（Pro）",
+        "booking_label": "予約",
+        "booking_aria": "予約台帳を開く（プロプラン）。ベーシックの場合はプラン変更へ",
     },
     "en": {
         "logo_href": "https://forge-laboratory.com/en",
@@ -92,6 +96,7 @@ LABELS = {
         "office_text": "OFFICE MODE",
         "menu_aria": "Open navigation menu",
         "gear_aria": "Account settings",
+        "gear_tooltip": "Settings",
         "popup_aria": "Account Settings",
         "account_heading": "Account",
         "profile": "Profile",
@@ -109,6 +114,7 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "Back to top",
         "dl_label": "DL",
+        "dl_tooltip": "Download",
         "dl_aria": "Download templates and P&L data",
         "dl_menu_aria": "Download menu",
         "dl_heading": "Templates",
@@ -119,6 +125,8 @@ LABELS = {
         "dl_data_heading": "Data export",
         "dl_export_pl_mep": "P&L data (MEP + PL)",
         "dl_export_pl_mep_aria": "Download MEP and PL workbook as Excel (Pro)",
+        "booking_label": "Booking",
+        "booking_aria": "Open reservation ledger (Pro). Basic plan goes to Change Plan",
     },
     "zh-tw": {
         "logo_href": "https://forge-laboratory.com",
@@ -138,6 +146,7 @@ LABELS = {
         "office_text": "OFFICE MODE",
         "menu_aria": "開啟導覽選單",
         "gear_aria": "帳戶設定",
+        "gear_tooltip": "設定",
         "popup_aria": "帳戶設定",
         "account_heading": "帳戶",
         "profile": "個人資料",
@@ -155,6 +164,7 @@ LABELS = {
         "office_dropdown_label": "Office Mode",
         "footer_backtotop_aria": "回到頁首",
         "dl_label": "DL",
+        "dl_tooltip": "下載",
         "dl_aria": "下載範本與收支資料",
         "dl_menu_aria": "下載選單",
         "dl_heading": "範本",
@@ -165,6 +175,8 @@ LABELS = {
         "dl_data_heading": "資料匯出",
         "dl_export_pl_mep": "損益資料（MEP＋PL）",
         "dl_export_pl_mep_aria": "下載 MEP 與 PL 的 Excel（專業方案）",
+        "booking_label": "預約",
+        "booking_aria": "開啟預約台帳（專業方案）。基本方案請前往變更方案",
     },
 }
 
@@ -337,8 +349,41 @@ def build_header(
             <span class="btn-mode-text" id="btn-mode-text">{L['office_text']}</span>
           </span>
         </a>
+        <a
+          href="{base}app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="{base}app/booking/index.html"
+          data-href-basic="{base}setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="{L['booking_aria']}"
+          data-kpi-tutorial-tip
+          data-tooltip="{L['booking_label']}"
+        >
+          <img
+            src="{img}images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="{img}images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="{L['dl_aria']}">{L['dl_label']}</summary>
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="{L['dl_aria']}"
+            data-kpi-tutorial-tip
+            data-tooltip="{L['dl_tooltip']}"
+          >{L['dl_label']}</summary>
           <div class="template-dl-menu" role="menu" aria-label="{L['dl_menu_aria']}">
             <p class="template-dl-heading">{L['dl_heading']}</p>
             <a href="{img}excel/{L['dl_daily_file']}" download class="template-dl-item" role="menuitem">{L['dl_daily']}</a>
@@ -351,7 +396,16 @@ def build_header(
         <button type="button" class="icon-button icon-button-menu" aria-label="{L['menu_aria']}">
           <img src="{img}images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="{L['gear_aria']}" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="{L['gear_aria']}"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="{L['gear_tooltip']}"
+        >
           <img src="{img}images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
@@ -394,6 +448,7 @@ def build_header(
         </div>
       </div>
     </div>
+    <script src="{img}js/kpi-auth-client.js"></script>
     <script>
     (function () {{
       if (window.__headerDlBound) return;
@@ -407,6 +462,17 @@ def build_header(
         var dl = document.getElementById('header-dl');
         if (dl && dl.open) dl.removeAttribute('open');
       }});
+    }})();
+    (function () {{
+      if (!window.__KPI_AUTH) return;
+      try {{
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {{
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {{}});
+        }}
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {{
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }}
+      }} catch (_e) {{}}
     }})();
     </script>
   </header>"""

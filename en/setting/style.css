@@ -1648,6 +1648,20 @@ html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
   color: rgba(88, 225, 243, 0.95);
 }
 
+.change-plan-already-pro {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(88, 225, 243, 0.35);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(232, 247, 250, 0.9);
+}
+
+.change-plan-already-pro a {
+  color: var(--si-fi-cyan);
+}
+
 .change-plan-table-source {
   margin: 0 0 14px;
   font-size: 11px;

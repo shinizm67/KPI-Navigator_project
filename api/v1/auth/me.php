@@ -22,5 +22,9 @@ if ($user === null) {
     kpi_v1_auth_clear_session();
     kpi_v1_json_out(401, ['ok' => false, 'error' => 'unauthorized']);
 }
+if (kpi_v1_auth_user_is_disabled($user)) {
+    kpi_v1_auth_clear_session();
+    kpi_v1_json_out(403, ['ok' => false, 'error' => 'account_disabled']);
+}
 
 kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

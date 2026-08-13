@@ -181,7 +181,57 @@ function kpi_v1_auth_public_user($user, $cfg = null)
         'userId' => (string) $user['userId'],
         'email' => (string) $user['email'],
         'plan' => $plan,
+        'disabled' => kpi_v1_auth_user_is_disabled($user),
     ];
+}
+
+function kpi_v1_auth_user_is_disabled($user)
+{
+    if (!is_array($user)) {
+        return false;
+    }
+    if (array_key_exists('disabled', $user)) {
+        return !empty($user['disabled']);
+    }
+    return false;
+}
+
+/**
+ * Admin gate via X-KPI-Plan-Admin-Token or body.adminToken.
+ * @return true
+ */
+function kpi_v1_auth_require_admin($cfg, $body = null)
+{
+    $adminTok = '';
+    if (isset($_SERVER['HTTP_X_KPI_PLAN_ADMIN_TOKEN'])) {
+        $adminTok = (string) $_SERVER['HTTP_X_KPI_PLAN_ADMIN_TOKEN'];
+    } elseif (is_array($body) && isset($body['adminToken'])) {
+        $adminTok = (string) $body['adminToken'];
+    }
+    $expectedAdmin = isset($cfg['planAdminToken']) ? (string) $cfg['planAdminToken'] : '';
+    if ($expectedAdmin === '' || !hash_equals($expectedAdmin, $adminTok)) {
+        kpi_v1_json_out(403, ['ok' => false, 'error' => 'forbidden']);
+    }
+    return true;
+}
+
+function kpi_v1_auth_find_user_by_email($email)
+{
+    $index = kpi_v1_auth_read_email_index();
+    if (!isset($index[$email])) {
+        return null;
+    }
+    return kpi_v1_auth_read_user($index[$email]);
+}
+
+/**
+ * Reject disabled accounts (login / me / store).
+ */
+function kpi_v1_auth_reject_if_disabled($user)
+{
+    if (kpi_v1_auth_user_is_disabled($user)) {
+        kpi_v1_json_out(403, ['ok' => false, 'error' => 'account_disabled']);
+    }
 }
 
 function kpi_v1_auth_set_session_user($userId)
@@ -262,6 +312,12 @@ function kpi_v1_store_resolve_user_id($cfg)
     if ($mode === 'session' || $mode === 'dual') {
         $uid = kpi_v1_auth_current_user_id();
         if ($uid !== null) {
+            $user = kpi_v1_auth_read_user($uid);
+            if ($user === null) {
+                kpi_v1_auth_clear_session();
+                kpi_v1_json_out(401, ['ok' => false, 'error' => 'unauthorized']);
+            }
+            kpi_v1_auth_reject_if_disabled($user);
             return $uid;
         }
         if ($mode === 'session') {

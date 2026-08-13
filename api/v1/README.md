@@ -95,6 +95,9 @@ Endpoints (session cookie `KPISESSID`):
 | POST | `/api/v1/auth/logout.php` | 200 |
 | GET | `/api/v1/auth/me.php` | 200 or 401（`plan` 含む） |
 | POST | `/api/v1/auth/set-plan.php` | plan 変更（self / admin token） |
+| POST | `/api/v1/auth/admin-create-user.php` | 管理者: 決め打ちアカウント作成（`plan` 任意・既定 pro） |
+| POST | `/api/v1/auth/admin-set-password.php` | 管理者: パスワード再設定 |
+| POST | `/api/v1/auth/admin-set-disabled.php` | 管理者: 無効化／再開（`disabled`） |
 
 ```bash
 COOKIE=/tmp/kpi-cookies.txt

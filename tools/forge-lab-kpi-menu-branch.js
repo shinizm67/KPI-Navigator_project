@@ -1,8 +1,10 @@
 /**
  * Forge Lab Global Menu — Key Performance Navigator リンク分岐
  *
- * 本番反映: Forge Lab 本体の `script.js` / `en/script.js` 末尾に同等 IIFE を同梱済み（2026-08-11）。
- * このファイルは kpi-navigator リポ内の正本コピー（貼り付け・差分確認用）。
+ * 本番反映（2026-08-11）:
+ * - Forge Lab サイト根に `kpi-nav-branch.js` として配置（キャッシュ回避のため script.js と分離）
+ * - 各ページで `script.js` の直後に読み込む
+ * - このファイルは kpi-navigator リポ内の正本コピー
  *
  * 分岐:
  * - localStorage.kpiNavigator.registrationComplete === '1'
