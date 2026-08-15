@@ -1090,3 +1090,65 @@ html[lang^="zh"] .si-fi.office-mode.registration-page {
   -webkit-text-fill-color: #000 !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Phase 0: bulk CSV / save overlay (snapshot-store-phased-plan.md) */
+.kpi-busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: rgba(8, 18, 22, 0.78);
+}
+.kpi-busy-overlay.is-on {
+  display: flex;
+}
+.kpi-busy-overlay__panel {
+  max-width: 420px;
+  padding: 22px 24px;
+  border: 1px solid rgba(88, 225, 243, 0.55);
+  border-radius: 4px;
+  background: rgba(8, 18, 22, 0.98);
+  color: #e8f7fa;
+  text-align: center;
+}
+.kpi-busy-overlay__title {
+  margin: 0 0 10px;
+  font-family: Orbitron, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--si-fi-cyan, #58e1f3);
+}
+.kpi-busy-overlay__msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(232, 247, 250, 0.88);
+}
+html[lang="ja"] .kpi-busy-overlay__msg,
+html[lang="zh-TW"] .kpi-busy-overlay__msg,
+html[lang^="zh"] .kpi-busy-overlay__msg {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+body.kpi-busy-lock {
+  overflow: hidden;
+}
+body.office-mode .kpi-busy-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+body.office-mode .kpi-busy-overlay__panel {
+  border-color: rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #111;
+}
+body.office-mode .kpi-busy-overlay__title {
+  color: #111;
+  font-family: 'BIZ UDPGothic', Orbitron, sans-serif;
+}
+body.office-mode .kpi-busy-overlay__msg {
+  color: #333;
+}

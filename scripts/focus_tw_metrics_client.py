@@ -1122,10 +1122,11 @@ def focus_tw_metrics_js() -> str:
         }}
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
         if (__twTimelineRefreshTimer != null) window.clearTimeout(__twTimelineRefreshTimer);
+        /* KPI-BULK-REFRESH-PERF: 120ms coalesce (CSV multi-year / dual events) */
         __twTimelineRefreshTimer = window.setTimeout(function () {{
           __twTimelineRefreshTimer = null;
           renderAnnualDailyTimeline(cy, opts);
-        }}, 32);
+        }}, 120);
       }}
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
       [

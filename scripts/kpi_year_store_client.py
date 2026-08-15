@@ -5,6 +5,7 @@ from __future__ import annotations
 from weekday_target_kpi_client import weekday_target_kpi_js
 
 KPI_YEAR_STORE_MARKER = "/* KPI-YEAR-STORE */"
+KPI_DAILY_FACTS_MARKER = "/* KPI-DAILY-FACTS (Phase 1) */"
 KPI_YEAR_STORE_KEY = "kpiNavigator.kpiYearStore"
 EDIT_LEASE_KEY = "kpiNavigator.kpiEditLeases"
 TAB_ID_SESSION_KEY = "kpiNavigator.kpiTabId"
@@ -617,6 +618,11 @@ def kpi_year_store_js() -> str:
           if (meta && meta.hlBaselineYears && meta.hlBaselineYears.length) {{
             rec.plan.hlBaselineYears = meta.hlBaselineYears.slice();
           }}
+          invalidateDailyFacts({{
+            year: y,
+            planChanged: true,
+            reason: 'hl-weights',
+          }});
           persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:annualPlanChanged', {{
@@ -1048,6 +1054,11 @@ def kpi_year_store_js() -> str:
           }} else {{
             store.timeline.dailySales[iso] = Number.isFinite(n) ? n : 0;
           }}
+          invalidateDailyFacts({{
+            year: isoYear(iso),
+            fromIso: iso,
+            reason: 'write-daily-sales',
+          }});
           persistStore();
           dispatchChange('dailySalesChanged', {{
             iso: iso,
@@ -1060,6 +1071,11 @@ def kpi_year_store_js() -> str:
         function writeBusinessDay(iso, isOpen, meta) {{
           if (!canWriteBusinessDayFrom((meta && meta.source) || '', iso)) return false;
           store.timeline.businessDays[iso] = !!isOpen;
+          invalidateDailyFacts({{
+            year: isoYear(iso),
+            fromIso: iso,
+            reason: 'write-business-day',
+          }});
           persistStore();
           dispatchChange('businessDayChanged', {{
             iso: iso,
@@ -1082,6 +1098,161 @@ def kpi_year_store_js() -> str:
           if (!validIso(iso)) return null;
           if (!Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) return null;
           return !!store.timeline.businessDays[iso];
+        }}
+
+        {KPI_DAILY_FACTS_MARKER}
+        function yearStartIso(year) {{
+          return String(year) + '-01-01';
+        }}
+
+        function snapshotIsBusinessDay(iso) {{
+          if (!validIso(iso)) return false;
+          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {{
+            return !!store.timeline.businessDays[iso];
+          }}
+          var d = new Date(iso + 'T00:00:00');
+          if (!isFinite(d.getTime())) return false;
+          var dow = d.getDay();
+          return dow !== 0 && dow !== 6;
+        }}
+
+        function snapshotSalesAmt(iso) {{
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return 0;
+          var n = Number(store.timeline.dailySales[iso]);
+          if (!Number.isFinite(n) || isLegacyPlaceholderSales(n)) return 0;
+          return n;
+        }}
+
+        function snapshotDailyTargetValue(year, iso, isBiz) {{
+          if (!isBiz) return null;
+          if (typeof resolveDailyTargetByIso !== 'function') return null;
+          var resolved = resolveDailyTargetByIso(year, iso);
+          var v = resolved && resolved.value;
+          v = Number(v);
+          return Number.isFinite(v) ? v : null;
+        }}
+
+        function readDailyFacts(iso) {{
+          if (!validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyFacts || typeof rec.dailyFacts !== 'object') return null;
+          return rec.dailyFacts[iso] || null;
+        }}
+
+        function readAnnualFacts(year) {{
+          var y = Number(year);
+          var rec = store.years[y];
+          if (!rec || !rec.annualFacts) return null;
+          return rec.annualFacts;
+        }}
+
+        function readMonthlyFacts(yearMonth) {{
+          if (typeof yearMonth !== 'string' || !/^\\d{{4}}-\\d{{2}}$/.test(yearMonth)) return null;
+          var y = Number(yearMonth.slice(0, 4));
+          var rec = store.years[y];
+          if (!rec || !rec.monthlyFacts || typeof rec.monthlyFacts !== 'object') return null;
+          return rec.monthlyFacts[yearMonth] || null;
+        }}
+
+        /**
+         * One overwrite + invalidation function.
+         * Touches only opts.year. Other years stay as they are.
+         * Sales / businessDay: MTD from that month, YTD from fromIso through Dec 31.
+         * Plan change (annual target / HL / daily-target mode): whole year from Jan 1.
+         * Prefix days are rewritten with the same numbers so a first save still has Jan 1.
+         */
+        function invalidateDailyFacts(opts) {{
+          opts = opts || {{}};
+          var year = Number(opts.year);
+          if (!Number.isFinite(year)) return null;
+          var planChanged = !!opts.planChanged;
+          var fromIso = opts.fromIso;
+          if (planChanged || !validIso(fromIso) || isoYear(fromIso) !== year) {{
+            fromIso = yearStartIso(year);
+          }}
+          if (typeof clearDailyTargetDisplayCache === 'function') {{
+            clearDailyTargetDisplayCache();
+          }}
+          var rec = ensureYearRecord(year);
+          if (!rec.dailyFacts || typeof rec.dailyFacts !== 'object') rec.dailyFacts = {{}};
+          if (!rec.monthlyFacts || typeof rec.monthlyFacts !== 'object') rec.monthlyFacts = {{}};
+          var ytdA = 0;
+          var ytdT = 0;
+          var mtdA = 0;
+          var mtdT = 0;
+          var prevMonth = -1;
+          var lastIso = null;
+          for (var m = 0; m < 12; m++) {{
+            var dc = new Date(year, m + 1, 0).getDate();
+            for (var day = 1; day <= dc; day++) {{
+              var iso = year + '-' + pad2(m + 1) + '-' + pad2(day);
+              if (m !== prevMonth) {{
+                mtdA = 0;
+                mtdT = 0;
+                prevMonth = m;
+              }}
+              var isBiz = snapshotIsBusinessDay(iso);
+              var sales = snapshotSalesAmt(iso);
+              var dailyTarget = snapshotDailyTargetValue(year, iso, isBiz);
+              if (isBiz) {{
+                ytdA += sales;
+                mtdA += sales;
+                if (dailyTarget != null) {{
+                  ytdT += dailyTarget;
+                  mtdT += dailyTarget;
+                }}
+              }}
+              rec.dailyFacts[iso] = {{
+                sales: sales,
+                businessDay: isBiz,
+                dailyTarget: dailyTarget,
+                mtdActual: mtdA,
+                mtdTarget: mtdT,
+                ytdActual: ytdA,
+                ytdTarget: ytdT,
+              }};
+              lastIso = iso;
+            }}
+            rec.monthlyFacts[year + '-' + pad2(m + 1)] = {{
+              actual: mtdA,
+              target: mtdT,
+            }};
+          }}
+          rec.annualFacts = {{
+            annualTarget: readAnnualTarget(year),
+            yearActual: ytdA,
+            yearTarget: ytdT,
+          }};
+          rec.dailyFactsUpdatedAt = Date.now();
+          rec.dailyFactsFromIso = fromIso;
+          rec.dailyFactsReason = opts.reason || 'invalidate';
+          try {{
+            if (
+              window.__KPI_DAILY_FACTS_SYNC &&
+              typeof window.__KPI_DAILY_FACTS_SYNC.schedulePutYear === 'function'
+            ) {{
+              window.__KPI_DAILY_FACTS_SYNC.schedulePutYear(year);
+            }}
+          }} catch (_eFactsPut) {{}}
+          return {{
+            year: year,
+            fromIso: fromIso,
+            throughIso: lastIso,
+            otherYearsUntouched: true,
+          }};
+        }}
+
+        function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged) {{
+          Object.keys(yearsMap || {{}}).forEach(function (y) {{
+            var yn = Number(y);
+            if (!Number.isFinite(yn)) return;
+            invalidateDailyFacts({{
+              year: yn,
+              fromIso: yearStartIso(yn),
+              planChanged: !!planChanged,
+              reason: reason || 'touched-year',
+            }});
+          }});
         }}
 
         /* dailyIncome: 収入ストリーム別の日次額（store_sales は timeline.dailySales が正、
@@ -1189,14 +1360,30 @@ def kpi_year_store_js() -> str:
             Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
             Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
           }}
+          invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
           persistStore();
-          Object.keys(yearsAll).forEach(function (y) {{
-            var yn = Number(y);
-            dispatchChange('dailySalesChanged', {{ year: yn, source: src }});
-            if (yearsBiz[y]) {{
-              dispatchChange('businessDayChanged', {{ year: yn, source: src }});
+          /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
+          var yearsList = Object.keys(yearsAll)
+            .map(Number)
+            .filter(Number.isFinite)
+            .sort(function (a, b) {{ return a - b; }});
+          if (yearsList.length) {{
+            dispatchChange('dailySalesChanged', {{
+              years: yearsList,
+              source: src,
+              bulk: true,
+            }});
+            var bizYears = yearsList.filter(function (y) {{
+              return !!yearsBiz[String(y)] || !!yearsBiz[y];
+            }});
+            if (bizYears.length) {{
+              dispatchChange('businessDayChanged', {{
+                years: bizYears,
+                source: src,
+                bulk: true,
+              }});
             }}
-          }});
+          }}
           maybeRefreshObservedAfterTimelineChange(yearsAll);
         }}
 
@@ -1223,17 +1410,33 @@ def kpi_year_store_js() -> str:
               yearsBiz[isoYear(iso)] = true;
             }});
           }}
-          persistStore();
           var yearsAll = {{}};
           Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
           Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
-          Object.keys(yearsAll).forEach(function (y) {{
-            var yn = Number(y);
-            dispatchChange('dailySalesChanged', {{ year: yn, source: src }});
-            if (yearsBiz[y]) {{
-              dispatchChange('businessDayChanged', {{ year: yn, source: src }});
+          invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
+          persistStore();
+          /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
+          var yearsList = Object.keys(yearsAll)
+            .map(Number)
+            .filter(Number.isFinite)
+            .sort(function (a, b) {{ return a - b; }});
+          if (yearsList.length) {{
+            dispatchChange('dailySalesChanged', {{
+              years: yearsList,
+              source: src,
+              bulk: true,
+            }});
+            var bizYears = yearsList.filter(function (y) {{
+              return !!yearsBiz[String(y)] || !!yearsBiz[y];
+            }});
+            if (bizYears.length) {{
+              dispatchChange('businessDayChanged', {{
+                years: bizYears,
+                source: src,
+                bulk: true,
+              }});
             }}
-          }});
+          }}
           maybeRefreshObservedAfterTimelineChange(yearsAll);
         }}
 
@@ -1351,6 +1554,11 @@ def kpi_year_store_js() -> str:
           }});
           if (!yearTouched) return;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          invalidateDailyFacts({{
+            year: oy,
+            fromIso: yearStartIso(oy),
+            reason: 'sales-data-save',
+          }});
           persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({{ [String(oy)]: true }});
@@ -1440,6 +1648,11 @@ def kpi_year_store_js() -> str:
           rec.plan.targetSales = Number.isFinite(n) ? n : 0;
           rec.plan.updatedAt = Date.now();
           rec.plan.source = (meta && meta.source) || 'kpi-year-store';
+          invalidateDailyFacts({{
+            year: y,
+            planChanged: true,
+            reason: 'annual-target',
+          }});
           persistStore();
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {{
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
@@ -1690,6 +1903,10 @@ def kpi_year_store_js() -> str:
           }},
           writeDailySales: writeDailySales,
           writeBusinessDay: writeBusinessDay,
+          invalidateDailyFacts: invalidateDailyFacts,
+          readDailyFacts: readDailyFacts,
+          readMonthlyFacts: readMonthlyFacts,
+          readAnnualFacts: readAnnualFacts,
           writeDailyIncome: writeDailyIncome,
           readDailyIncome: readDailyIncome,
           readDailySales: readDailySales,

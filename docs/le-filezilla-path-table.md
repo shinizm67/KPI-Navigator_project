@@ -1,6 +1,6 @@
 # LE 配備: FileZilla パス表（必須ルール）
 
-更新日: 2026-08-13  
+更新日: 2026-08-14  
 目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。
 
 関連: ブランド LE [`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md) · Phase B [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
@@ -220,6 +220,184 @@ Annual 以外の画面でも **予約ボタン・plan 同期** を揃えるな�
 確認 URL: https://forge-laboratory.com/kpi-navigator/app/annual/index.html  
 期待: DL 左が **アイコン**（シアン）。ホバーで「予約」。Office 切替で **黒**アイコン。
 
+### Step H — 段階0 Loading（CSV / Past Sales Save）2026-08-14
+
+スキーマ変更なし。新規 JS 1本 ＋ CSS ＋ Annual / MEP HTML。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| H1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-busy-overlay.js` | `public_html/kpi-navigator/js/kpi-busy-overlay.js` | 新規 |
+| H2 | `/Users/shinmatsushita/Desktop/kpi-navigator/register/style.css` | `public_html/kpi-navigator/register/style.css` | 上書き |
+| H3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | 上書き |
+| H4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | 上書き |
+| H5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | 上書き |
+| H6 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | 上書き |
+| H7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | 上書き |
+| H8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | 上書き |
+
+確認: Annual で CSV 取込 → 「取り込み中」オーバーレイ。キャンセル時は表が変わらない。Past Sales の Save でも「保存中」。
+
+### Step I — 段階1 日ファクトを保存時に書く（2026-08-15）
+
+スキーマ変更なし。既存 blob（`kpiNavigator.kpiYearStore`）へ `dailyFacts` を併記。新規ファイルなし。HTML のストアブロックだけ上書き。
+
+画面の Cockpit / TW はまだ既存計算。見るだけなら変わって見えない。Save / CSV のあと DevTools で確認する。
+
+#### I-1 — Annual（3言語）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| I1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | `https://forge-laboratory.com/kpi-navigator/app/annual/index.html` |
+| I2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | `https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html` |
+| I3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | `https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html` |
+
+#### I-2 — Monthly（3言語）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| I4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | `https://forge-laboratory.com/kpi-navigator/app/monthly/index.html` |
+| I5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | EN Monthly |
+| I6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | zh-TW Monthly |
+
+#### I-3 — MEP（3言語）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| I7 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | `https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html` |
+| I8 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | EN MEP |
+| I9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | zh-TW MEP |
+
+**上げない:** `schema.sql`、PHP、`js/` 新規、MySQL。サーバから消さない。上書きのみ。
+
+**ローカル確認（上げる前）**
+
+1. Annual を開く → Sales Data で **1日だけ** 売上を直して Save
+2. DevTools Console:
+   - `KpiYearStore.readDailyFacts('YYYY-MM-DD')` → `sales` / `mtdActual` / `ytdActual` がその日の値
+   - 前日の `mtdActual` は変わらない。翌営業日の `ytdActual` は増える
+   - 別年: `KpiYearStore.getStore().years[別年].dailyFacts` は Save 前後で同じ（または未作成のまま）
+3. 画面の Cockpit は今まで通り動く（まだ facts を読まない）
+
+### Step J — 段階2a 日ファクト表を作る（2026-08-15）※phpMyAdmin。FileZilla なし
+
+**HTML / PHP / schema.sql は上げない。** 既存 `kpi_store` は消さない・構造も変えない。画面は今までどおり。
+
+**バックアップ（実行前・必須）**
+
+1. phpMyAdmin で本番 KPN の DB を開く（`config.local.php` の `dbName`。中身はチャットに貼らない）
+2. 左で表 **`kpi_store`** をクリック
+3. 上部 **「エクスポート」** → SQL → 実行
+4. ダウンロードした `.sql` を Desktop に残す（切戻し用）
+
+**表を作る**
+
+5. 上部タブ **「SQL」** を開く
+6. ローカルファイル  
+   `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/schema_kpi_daily_facts.add.sql`  
+   を開き、`CREATE TABLE` から末尾までを **そのまま** 貼る（コメント行が付いていても可）
+7. **実行**
+8. 左の表一覧を再読み込みし、**`kpi_daily_facts`** があることを見る
+9. `kpi_daily_facts` → **構造**: 列 `user_id`, `iso`, `sales`, `business_day`, `daily_target`, `mtd_actual`, `mtd_target`, `ytd_actual`, `ytd_target`, `updated_at`
+10. **閲覧**: 行は 0 件でよい
+
+| 表示 | 意味 | やること |
+|------|------|----------|
+| 成功／Query OK | 表ができた | 構造を目視 |
+| `already exists` | もうある | 何もしなくてよい |
+| `Table '…kpi_users' doesn't exist` | DB を間違えている | 左の DB 名を `dbName` と照合 |
+| `kpi_store` の列が消えた | 別の SQL を実行した | エクスポートから戻す。この ADD は `kpi_store` を触らない |
+
+確認 URL は無し（画面は変わらない）。Annual が今までどおり開けば成功。
+
+「Step J 完了」と送ってください。次（2b API）は表ができてから。
+
+### Step K — 段階2b 日ファクト API（2026-08-15）※HTML なし
+
+既存 `store.php` は上げない（今の同期のまま）。サーバから消さない。上書き／新規のみ。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| K1 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/daily-facts.php` | `public_html/kpi-navigator/api/v1/daily-facts.php` | **新規** |
+| K2 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/_db.php` | `public_html/kpi-navigator/api/v1/_db.php` | 上書き |
+
+**上げない:** `app/annual/index.html`、Monthly、MEP、`store.php`、`schema.sql`
+
+**確認（ログインした状態・同じブラウザ）**
+
+1. Annual が今までどおり開く
+2. アドレス欄に貼る:  
+   `https://forge-laboratory.com/kpi-navigator/api/v1/daily-facts.php?from=2026-01-01&to=2026-01-31`
+3. `{ "ok": true, ... "rows": [] }` なら成功（行はまだ空でよい）
+4. ログアウトして同じ URL → `"error":"unauthorized"`（401）
+5. phpMyAdmin の `kpi_store` はそのまま。`kpi_daily_facts` も 0 行のままでよい
+
+「Step K 完了」と送ってください。2c（画面が窓を読む）はまだやらない。
+
+### Step L — 段階2c 窓 GET/PUT を画面から結線（2026-08-15）
+
+`store.php` は上げない（JSON 丸ごとは残す）。サーバから消さない。
+
+作業窓: **見ている年の 1/1〜12/31 ＋前後2ヶ月**（1月1日で前年12月が薄く見える仕様用）。
+
+Cockpit / TW の計算はまだ既存のまま（段階3）。
+
+#### L-1 — JS（新規・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| L1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` | **新規** |
+
+#### L-2 — Annual（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| L2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| L3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| L4 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+
+#### L-3 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| L5 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| L6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| L7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+#### L-4 — MEP（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| L8 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+| L9 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| L10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `store.php`、`schema.sql`、phpMyAdmin
+
+**確認（ログインしたまま）**
+
+1. **L1 を先に**上げてから HTML。逆だと 404
+2. Annual を開く（数秒待つ）
+3. 同じブラウザで  
+   `https://forge-laboratory.com/kpi-navigator/api/v1/daily-facts.php?from=2026-01-01&to=2026-01-31`
+4. 以前は `count: 0`。今は **count が 1以上** で、1/5 なら `sales` が 1997 付近
+5. phpMyAdmin の `kpi_daily_facts` に行がある
+6. Annual の Cockpit は今までどおり動く
+
+迷ったら **L1 + L2 だけ**先に上げて「L-2 完了」と送る。
+
+### Step M — 予約アイコン画像（2026-08-15）※HTML なし
+
+本番 `images/booking_sci-fi.svg` / `booking_office.svg` が **404**。HTML のリンクは正しい。画像2枚を `images/` に新規するだけ。全言語の Global Menu が直る。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| M1 | `/Users/shinmatsushita/Desktop/kpi-navigator/images/booking_sci-fi.svg` | `public_html/kpi-navigator/images/booking_sci-fi.svg` | **新規** |
+| M2 | `/Users/shinmatsushita/Desktop/kpi-navigator/images/booking_office.svg` | `public_html/kpi-navigator/images/booking_office.svg` | **新規** |
+
+**上げない:** HTML、`en/images/`、`zh-tw/images/`（そこには置かない）
+
+確認: https://forge-laboratory.com/kpi-navigator/images/booking_sci-fi.svg が SVG で開く。Annual を再読み込み → Insight の右がアイコン。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -235,6 +413,11 @@ Annual 以外の画面でも **予約ボタン・plan 同期** を揃えるな�
 | 予約ボタンが無い | D 未反映 | D1〜D9 を上書き |
 | 予約クリックで 404 | E 未反映 | E1〜E3 新規UP |
 | 予約が文字のまま / 壊れた画像 | G 未反映 | G1〜G3 必須。HTML は G4〜 |
+| CSV中に Loading が出ない | H 未反映 | H1 新規 ＋ H2〜H5 上書き |
+| Save後も `readDailyFacts` が null | I 未反映 | I-1 の Annual HTML を上書き |
+| phpMyAdmin で kpi_daily_facts が無い | J 未実行 | ADD SQL を SQL タブで実行。FileZilla では作られない |
+| daily-facts.php が 404 | K1 未反映 | 新規 UP。`store.php` と同じフォルダ |
+| kpi-daily-facts-sync.js が 404 | L1 未反映 | L1 を HTML より先に新規 UP |
 | Forge Lab トップが壊れた | LP を kpi-navigator 内に上げた | **LP は `public_html/` 直下** に戻す（別フォルダ正本から） |
 
 ---

@@ -215,3 +215,136 @@ function kpi_v1_db_read_email_index($cfg)
     }
     return $index;
 }
+
+function kpi_v1_facts_valid_iso($iso)
+{
+    if (!is_string($iso) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $iso)) {
+        return false;
+    }
+    $dt = DateTime::createFromFormat('Y-m-d', $iso);
+    return $dt && $dt->format('Y-m-d') === $iso;
+}
+
+function kpi_v1_facts_num($value, $allowNull)
+{
+    if ($value === null || $value === '') {
+        return $allowNull ? null : 0.0;
+    }
+    if (!is_numeric($value)) {
+        return false;
+    }
+    return round((float) $value, 2);
+}
+
+function kpi_v1_facts_row_to_api(array $row)
+{
+    $numOrNull = function ($raw) {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        return round((float) $raw, 2);
+    };
+    return [
+        'iso' => (string) $row['iso'],
+        'sales' => round((float) $row['sales'], 2),
+        'businessDay' => !empty($row['business_day']),
+        'dailyTarget' => $numOrNull($row['daily_target']),
+        'mtdActual' => round((float) $row['mtd_actual'], 2),
+        'mtdTarget' => $numOrNull($row['mtd_target']),
+        'ytdActual' => round((float) $row['ytd_actual'], 2),
+        'ytdTarget' => $numOrNull($row['ytd_target']),
+    ];
+}
+
+function kpi_v1_db_facts_table_missing(PDOException $e)
+{
+    $state = (string) $e->getCode();
+    $msg = $e->getMessage();
+    return $state === '42S02' || strpos($msg, 'kpi_daily_facts') !== false;
+}
+
+/**
+ * Window GET. Does not return rows outside [$fromIso, $toIso]. Other years stay on the server.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function kpi_v1_db_read_daily_facts($cfg, $userId, $fromIso, $toIso)
+{
+    $pdo = kpi_v1_db($cfg);
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT iso, sales, business_day, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target
+             FROM kpi_daily_facts
+             WHERE user_id = ? AND iso >= ? AND iso <= ?
+             ORDER BY iso ASC'
+        );
+        $stmt->execute([(string) $userId, $fromIso, $toIso]);
+    } catch (PDOException $e) {
+        if (kpi_v1_db_facts_table_missing($e)) {
+            kpi_v1_json_out(503, ['ok' => false, 'error' => 'facts_table_missing']);
+        }
+        throw $e;
+    }
+    $out = [];
+    while ($row = $stmt->fetch()) {
+        if (!empty($row['iso'])) {
+            $out[] = kpi_v1_facts_row_to_api($row);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Last-write-wins upsert. Does not delete other dates or touch kpi_store.store_json.
+ *
+ * @param array<int, array<string, mixed>> $rows
+ * @return int written count
+ */
+function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
+{
+    $pdo = kpi_v1_db($cfg);
+    $sql = 'INSERT INTO kpi_daily_facts
+              (user_id, iso, sales, business_day, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              sales = VALUES(sales),
+              business_day = VALUES(business_day),
+              daily_target = VALUES(daily_target),
+              mtd_actual = VALUES(mtd_actual),
+              mtd_target = VALUES(mtd_target),
+              ytd_actual = VALUES(ytd_actual),
+              ytd_target = VALUES(ytd_target),
+              updated_at = VALUES(updated_at)';
+    $now = gmdate('Y-m-d H:i:s');
+    $uid = (string) $userId;
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare($sql);
+        $n = 0;
+        foreach ($rows as $row) {
+            $stmt->execute([
+                $uid,
+                $row['iso'],
+                $row['sales'],
+                $row['business_day'],
+                $row['daily_target'],
+                $row['mtd_actual'],
+                $row['mtd_target'],
+                $row['ytd_actual'],
+                $row['ytd_target'],
+                $now,
+            ]);
+            $n++;
+        }
+        $pdo->commit();
+        return $n;
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        if (kpi_v1_db_facts_table_missing($e)) {
+            kpi_v1_json_out(503, ['ok' => false, 'error' => 'facts_table_missing']);
+        }
+        throw $e;
+    }
+}

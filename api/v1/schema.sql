@@ -28,3 +28,22 @@ CREATE TABLE IF NOT EXISTS kpi_store (
     FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 段階2: 日ファクト行。既存 DB は schema_kpi_daily_facts.add.sql を phpMyAdmin で1回。
+-- kpi_store.store_json は残す（切戻し）。
+CREATE TABLE IF NOT EXISTS kpi_daily_facts (
+  user_id VARCHAR(64) NOT NULL,
+  iso DATE NOT NULL,
+  sales DECIMAL(15,2) NOT NULL DEFAULT 0,
+  business_day TINYINT(1) NOT NULL DEFAULT 0,
+  daily_target DECIMAL(15,2) NULL,
+  mtd_actual DECIMAL(15,2) NOT NULL DEFAULT 0,
+  mtd_target DECIMAL(15,2) NULL,
+  ytd_actual DECIMAL(15,2) NOT NULL DEFAULT 0,
+  ytd_target DECIMAL(15,2) NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (user_id, iso),
+  CONSTRAINT fk_kpi_daily_facts_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

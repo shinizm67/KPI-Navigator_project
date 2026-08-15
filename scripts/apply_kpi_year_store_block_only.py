@@ -18,10 +18,13 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGETS = [
     ROOT / "app/annual/index.html",
     ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
     ROOT / "app/monthly/index.html",
     ROOT / "en/app/monthly/index.html",
+    ROOT / "zh-tw/app/monthly/index.html",
     ROOT / "app/monthly/edit/index.html",
     ROOT / "en/app/monthly/edit/index.html",
+    ROOT / "zh-tw/app/monthly/edit/index.html",
 ]
 
 
