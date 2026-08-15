@@ -7368,7 +7368,7 @@
         return !isWeekend;
       }
 
-      /* KPI-FOCUS-TW-METRICS */
+                                    /* KPI-FOCUS-TW-METRICS */
 
         var DAILY_DERIVED_KEYS = {
           diff: true,
@@ -7618,8 +7618,159 @@
       function createTwCumState() {
         return { month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false };
       }
+      /* KPI-TW-DRAW-WINDOW */
+      var TW_DRAW_HALF_DAYS = 28;
+      var TW_DRAW_EDGE_DAYS = 7;
+      var TW_YEAR_PAD_DAYS = 14;
+      var __twDrawShiftLock = false;
+      var __twDrawBound = false;
+      function twIsoAddDays(iso, days) {
+        var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+        if (!p) return '';
+        var d = new Date(Number(p[1]), Number(p[2]) - 1, Number(p[3]));
+        d.setDate(d.getDate() + Number(days));
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      window.__twShiftIso = twIsoAddDays;
+      function twIsoDaysApart(a, b) {
+        var da = new Date(String(a) + 'T00:00:00');
+        var db = new Date(String(b) + 'T00:00:00');
+        if (!isFinite(da.getTime()) || !isFinite(db.getTime())) return 9999;
+        return Math.round((da.getTime() - db.getTime()) / 86400000);
+      }
+      function twLocalIso(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      function resolveTwDrawFocusIso(anchorYear, opts) {
+        opts = opts || {};
+        var raw = '';
+        if (opts.focusIso && /^\d{4}-\d{2}-\d{2}$/.test(String(opts.focusIso))) {
+          raw = String(opts.focusIso);
+        } else {
+          try {
+            if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+              raw = String(KpiYearStore.getSelectedDate() || '');
+            }
+          } catch (_e) {}
+          if (!raw && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
+            raw = String(window.__ANNUAL_DATA.daily.selectedDate || '');
+          }
+        }
+        anchorYear = Number(anchorYear);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          var iy = Number(raw.slice(0, 4));
+          if (Number.isFinite(anchorYear) && iy === anchorYear) return raw;
+          if (Number.isFinite(anchorYear) && iy !== anchorYear) {
+            /* 年跨ぎ: 同月日に寄せると 12/31 → 翌年末に着地して連続跨ぎする */
+            return iy < anchorYear
+              ? String(anchorYear) + '-01-01'
+              : String(anchorYear) + '-12-31';
+          }
+          return raw;
+        }
+        var now = new Date();
+        if (now.getFullYear() === Number(anchorYear)) {
+          return twLocalIso(now);
+        }
+        return String(anchorYear) + '-01-01';
+      }
+      function twFocusAnchorEl() {
+        var lower = document.querySelector(
+          '.annual-daily-focus-bar-lower:not(.annual-daily-focus-bar-lower--ghost)'
+        );
+        var lowerScroll = document.getElementById('annual-daily-focus-bar-lower-scroll');
+        var expanded = document.body.classList.contains('annual-focus-bar-expanded');
+        if (!expanded && lowerScroll) {
+          var cs = window.getComputedStyle(lowerScroll);
+          if (cs.display !== 'none' && cs.visibility !== 'hidden') return lowerScroll;
+        }
+        if (lower) {
+          var ls = window.getComputedStyle(lower);
+          if (ls.display !== 'none' && ls.visibility !== 'hidden') return lower;
+        }
+        return lowerScroll || lower;
+      }
+      function alignTwFocusIso(iso) {
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.scrollTableToIso === 'function'
+        ) {
+          return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), { lockMs: 400 });
+        }
+        var el = document.getElementById('annual-daily-focus-scroll');
+        var row = iso
+          ? document.querySelector(
+              '#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]'
+            )
+          : null;
+        if (!el || !row) return false;
+        var anchor = twFocusAnchorEl();
+        var tableRect = el.getBoundingClientRect();
+        var rowRect = row.getBoundingClientRect();
+        var anchorRect = anchor ? anchor.getBoundingClientRect() : tableRect;
+        var rowCenter = rowRect.top + rowRect.height / 2;
+        var anchorCenter = anchorRect.top + anchorRect.height / 2;
+        var delta = rowCenter - anchorCenter;
+        if (Math.abs(delta) > 1) {
+          el.scrollTop += delta;
+        }
+        if (typeof __geomCache !== 'undefined') __geomCache = null;
+        if (typeof __anchorRangeCache !== 'undefined') __anchorRangeCache = null;
+        return Math.abs(delta) <= 2;
+      }
+      function finishTwDrawRender(focusIso, preserveY, scrollEl) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            if (typeof __geomCache !== 'undefined') __geomCache = null;
+            if (focusIso) alignTwFocusIso(String(focusIso));
+            requestAnimationFrame(function () {
+              if (focusIso) {
+                alignTwFocusIso(String(focusIso));
+                if (typeof window.__invalidateAnnualFocusBarLowerCache === 'function') {
+                  window.__invalidateAnnualFocusBarLowerCache();
+                }
+                if (typeof window.__refreshAnnualFocusBarLower === 'function') {
+                  window.__refreshAnnualFocusBarLower();
+                }
+              } else if (preserveY != null && scrollEl) {
+                scrollEl.scrollTop = preserveY;
+              }
+              document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+            });
+          });
+        });
+      }
+      function computeDrawWindowTimelineBounds(anchorYear, focusIso) {
+        /* 滑る ±28日窓は日付飛び・2/6 停止・ページスクロールの原因。DOM は年+14日パッド。 */
+        anchorYear = Number(anchorYear);
+        if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
+        var rangeStart;
+        var rangeEnd;
+        if (typeof computeAnchorYearTimelineBounds === 'function') {
+          var yearBounds = computeAnchorYearTimelineBounds(anchorYear);
+          rangeStart = yearBounds.rangeStart;
+          rangeEnd = yearBounds.rangeEnd;
+        } else {
+          rangeStart = new Date(anchorYear, 0, 1);
+          rangeStart.setDate(rangeStart.getDate() - TW_YEAR_PAD_DAYS);
+          rangeEnd = new Date(anchorYear, 11, 31);
+          rangeEnd.setDate(rangeEnd.getDate() + TW_YEAR_PAD_DAYS);
+        }
+        var fp = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(focusIso || ''));
+        var focus = fp
+          ? new Date(Number(fp[1]), Number(fp[2]) - 1, Number(fp[3]))
+          : new Date(anchorYear, 0, 1);
+        return {
+          rangeStart: rangeStart,
+          rangeEnd: rangeEnd,
+          minYear: rangeStart.getFullYear(),
+          maxYear: rangeEnd.getFullYear(),
+          focusIso: twLocalIso(focus),
+        };
+      }
       function renderAnnualDailyTimeline(anchorYear, opts) {
         opts = opts || {};
+        if (!opts.boundsHint) opts.boundsHint = 'anchor-year-only';
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
@@ -7627,11 +7778,11 @@
         }
         var scrollEl = document.getElementById('annual-daily-focus-scroll');
         var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
-        var bounds =
-          opts.boundsHint === 'anchor-year-only' &&
-          typeof computeAnchorYearTimelineBounds === 'function'
-            ? computeAnchorYearTimelineBounds(anchorYear)
-            : computeFocusTimelineBounds(anchorYear);
+        var prevDrawStart = rowsRoot.getAttribute('data-tw-draw-start') || '';
+        var bounds = computeDrawWindowTimelineBounds(
+          anchorYear,
+          resolveTwDrawFocusIso(anchorYear, opts)
+        );
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
         window.__ANNUAL_DATA.calendarYear = anchorYear;
         var daily = window.__ANNUAL_DATA.daily || {};
@@ -7658,10 +7809,132 @@
           if (!cumByYear[y]) cumByYear[y] = createTwCumState();
           return cumByYear[y];
         }
+        function applyTwCumForIso(iso, d, rowYear, isBusiness) {
+          var salesNum = 0;
+          var dailyTgt = null;
+          var mtdA = 0;
+          var mtdT = 0;
+          var ytdA = 0;
+          var ytdT = 0;
+          var rowHasPlan = false;
+          if (!isBusiness) {
+            return {
+              salesNum: salesNum,
+              dailyTgt: dailyTgt,
+              mtdA: mtdA,
+              mtdT: mtdT,
+              ytdA: ytdA,
+              ytdT: ytdT,
+              rowHasPlan: rowHasPlan,
+            };
+          }
+          var fact =
+            window.KpiYearStore && typeof KpiYearStore.readDailyFacts === 'function'
+              ? KpiYearStore.readDailyFacts(iso)
+              : null;
+          if (fact) {
+            salesNum = Number(fact.sales) || 0;
+            dailyTgt = fact.dailyTarget;
+            if (dailyTgt != null) {
+              dailyTgt = Number(dailyTgt);
+              if (!Number.isFinite(dailyTgt)) dailyTgt = null;
+            }
+            var cf = cumForYear(rowYear);
+            cf.month = d.getMonth();
+            cf.mtdA = Number(fact.mtdActual) || 0;
+            cf.mtdT =
+              fact.mtdTarget != null && Number.isFinite(Number(fact.mtdTarget))
+                ? Number(fact.mtdTarget)
+                : 0;
+            cf.ytdA = Number(fact.ytdActual) || 0;
+            cf.ytdT =
+              fact.ytdTarget != null && Number.isFinite(Number(fact.ytdTarget))
+                ? Number(fact.ytdTarget)
+                : 0;
+            cf.hasPlan =
+              dailyTgt != null || fact.mtdTarget != null || fact.ytdTarget != null;
+            return {
+              salesNum: salesNum,
+              dailyTgt: dailyTgt,
+              mtdA: cf.mtdA,
+              mtdT: cf.mtdT,
+              ytdA: cf.ytdA,
+              ytdT: cf.ytdT,
+              rowHasPlan: cf.hasPlan,
+            };
+          }
+          salesNum = readTwSalesAmt(iso, smap);
+          var tgtMap = targetMapForYear(rowYear);
+          if (Object.prototype.hasOwnProperty.call(tgtMap, iso)) {
+            dailyTgt = Number(tgtMap[iso]);
+            if (!Number.isFinite(dailyTgt)) dailyTgt = null;
+          }
+          var c = cumForYear(rowYear);
+          var m0 = d.getMonth();
+          if (c.month !== m0) {
+            c.month = m0;
+            c.mtdA = 0;
+            c.mtdT = 0;
+          }
+          c.mtdA += salesNum;
+          c.ytdA += salesNum;
+          if (dailyTgt != null) {
+            c.mtdT += dailyTgt;
+            c.ytdT += dailyTgt;
+            c.hasPlan = true;
+          }
+          return {
+            salesNum: salesNum,
+            dailyTgt: dailyTgt,
+            mtdA: c.mtdA,
+            mtdT: c.mtdT,
+            ytdA: c.ytdA,
+            ytdT: c.ytdT,
+            rowHasPlan: c.hasPlan,
+          };
+        }
+        function seedTwCumUpTo(exclusiveStartDate) {
+          var seedYears = {};
+          seedYears[exclusiveStartDate.getFullYear()] = true;
+          seedYears[anchorYear] = true;
+          Object.keys(seedYears).forEach(function (ys) {
+            var y = Number(ys);
+            var seedFrom = new Date(y, 0, 1);
+            var seedTo = new Date(exclusiveStartDate.getTime());
+            seedTo.setDate(seedTo.getDate() - 1);
+            var yearEnd = new Date(y, 11, 31);
+            if (seedTo > yearEnd) seedTo = yearEnd;
+            if (seedFrom > seedTo) return;
+            for (
+              var sd = new Date(seedFrom.getTime());
+              sd <= seedTo;
+              sd.setDate(sd.getDate() + 1)
+            ) {
+              var siso = twLocalIso(sd);
+              var sWk = sd.getDay() === 0 || sd.getDay() === 6;
+              applyTwCumForIso(
+                siso,
+                sd,
+                sd.getFullYear(),
+                isTimelineBusinessDay(siso, bmap, sWk)
+              );
+            }
+          });
+        }
+        var probeFact =
+          bounds.focusIso &&
+          window.KpiYearStore &&
+          typeof KpiYearStore.readDailyFacts === 'function'
+            ? KpiYearStore.readDailyFacts(bounds.focusIso)
+            : null;
+        if (!probeFact) seedTwCumUpTo(bounds.rangeStart);
         rowsRoot.innerHTML = '';
         rowsRoot.setAttribute('data-year', String(anchorYear));
         rowsRoot.setAttribute('data-timeline-min-year', String(bounds.minYear));
         rowsRoot.setAttribute('data-timeline-max-year', String(bounds.maxYear));
+        rowsRoot.setAttribute('data-tw-draw-start', twLocalIso(bounds.rangeStart));
+        rowsRoot.setAttribute('data-tw-draw-end', twLocalIso(bounds.rangeEnd));
+        rowsRoot.setAttribute('data-tw-draw-focus', String(bounds.focusIso || ''));
         rowsRoot.setAttribute(
           'aria-label',
           isJa
@@ -7697,17 +7970,9 @@
           row.setAttribute('data-active-year', isOutsideYear ? '0' : '1');
 
           var dateLabel;
-          var useCjkDow =
-            isJa ||
-            (typeof isZh !== 'undefined' && isZh) ||
-            (typeof useZh !== 'undefined' && useZh) ||
-            (typeof useCjkMonths !== 'undefined' && useCjkMonths) ||
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('zh') === 0;
-          if (useCjkDow) {
+          if (isJa) {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
-            if (!isBusiness) dateLabel += ' 公休';
+            if (!isBusiness) dateLabel += ' OFF';
           } else {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
             if (!isBusiness) dateLabel += ' OFF';
@@ -7749,33 +8014,14 @@
           var ytdA = 0;
           var ytdT = 0;
           var rowHasPlan = false;
-          if (isBusiness) {
-            salesNum = readTwSalesAmt(iso, smap);
-            var tgtMap = targetMapForYear(rowYear);
-            if (Object.prototype.hasOwnProperty.call(tgtMap, iso)) {
-              dailyTgt = Number(tgtMap[iso]);
-              if (!Number.isFinite(dailyTgt)) dailyTgt = null;
-            }
-            var c = cumForYear(rowYear);
-            var m0 = d.getMonth();
-            if (c.month !== m0) {
-              c.month = m0;
-              c.mtdA = 0;
-              c.mtdT = 0;
-            }
-            c.mtdA += salesNum;
-            c.ytdA += salesNum;
-            if (dailyTgt != null) {
-              c.mtdT += dailyTgt;
-              c.ytdT += dailyTgt;
-              c.hasPlan = true;
-            }
-            mtdA = c.mtdA;
-            mtdT = c.mtdT;
-            ytdA = c.ytdA;
-            ytdT = c.ytdT;
-            rowHasPlan = c.hasPlan;
-          }
+          var twRow = applyTwCumForIso(iso, d, rowYear, isBusiness);
+          salesNum = twRow.salesNum;
+          dailyTgt = twRow.dailyTgt;
+          mtdA = twRow.mtdA;
+          mtdT = twRow.mtdT;
+          ytdA = twRow.ytdA;
+          ytdT = twRow.ytdT;
+          rowHasPlan = twRow.rowHasPlan;
 
           var groupBase = document.createElement('div');
           groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
@@ -7785,7 +8031,7 @@
             dateCell.setAttribute('data-has-memo', '1');
             dateCell.setAttribute(
               'title',
-              (typeof useZh !== 'undefined' && useZh) || String(document.documentElement.getAttribute('lang')||'').toLowerCase().indexOf('zh')===0 ? '已有備註' : isJa ? 'メモがあります' : 'Memo saved'
+              isJa ? 'メモがあります' : 'Memo saved'
             );
             dateCell.setAttribute(
               'aria-label',
@@ -7860,9 +8106,15 @@
           rowsRoot.appendChild(row);
         }
 
-        if (prevScroll != null && scrollEl) {
-          scrollEl.scrollTop = prevScroll;
-        }
+        var focusIso = bounds.focusIso;
+        var focusRow = focusIso
+          ? rowsRoot.querySelector('.annual-daily-row[data-iso-date="' + focusIso + '"]')
+          : null;
+        var keepScroll =
+          opts.preserveScroll &&
+          prevScroll != null &&
+          focusRow &&
+          !opts.forceScrollToFocus;
         if (document.body.classList.contains('monthly-page')) {
           if (opts.boundsHint === 'anchor-year-only') {
             window.__monthlyVerticalTwPartialRendered = true;
@@ -7871,13 +8123,484 @@
             window.__monthlyVerticalTwFullRendered = true;
           }
         }
-        document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+        if (opts.skipBootstrapScroll) {
+          document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+        } else if (keepScroll && scrollEl) {
+          var nextStart = twLocalIso(bounds.rangeStart);
+          if (prevDrawStart && prevDrawStart === nextStart) {
+            scrollEl.scrollTop = prevScroll;
+            document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+          } else {
+            finishTwDrawRender(focusIso, null, scrollEl);
+          }
+        } else {
+          finishTwDrawRender(focusIso, prevScroll, scrollEl);
+        }
       }
-      function computeTwMetricsForIso(iso) {
-        if (!iso) return null;
+      window.__ensureTwDrawWindow = function (iso) {
+        if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return false;
+        var row = document.querySelector(
+          '#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]'
+        );
+        if (!row) return false;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.scrollTableToIso === 'function') {
+          return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), { lockMs: 400 });
+        }
+        return alignTwFocusIso(iso);
+      };
+      function buildMonthlyCumulativeTrendPayload(year, month, cutoffIso) {
+        var y = Number(year);
+        var m = Number(month);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dim = new Date(y, m, 0).getDate();
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var parts = String(cutoffIso).split('-');
+          var cy = Number(parts[0]);
+          var cm = Number(parts[1]);
+          var cd = Number(parts[2]);
+          if (cy === y && cm === m && Number.isFinite(cd)) {
+            cutoffDay = Math.max(1, Math.min(dim, cd));
+          }
+        }
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var day = 1; day <= dim; day++) {
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(day);
+          var dt = new Date(y, m - 1, day);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          var isBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dtVal = 0;
+          var daVal = 0;
+          if (isBiz) {
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }
+            if (day <= cutoffDay) daVal = readTwSalesAmt(dayIso, smap);
+          }
+          tSum += dtVal;
+          if (day <= cutoffDay) aSum += daVal;
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          target.push(tSum);
+          actual.push(aSum);
+        }
+        return {
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        };
+      }
+      window.__buildMonthlyCumulativeTrendPayload = buildMonthlyCumulativeTrendPayload;
+      function buildAnnualCumulativeTrendPayload(year, cutoffIso) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var dim = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }
+          } else if (String(cutoffIso) < y + '-01-01') {
+            cutoffDay = 0;
+          }
+        }
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var target = [];
+        var actual = [];
+        var dailyTarget = [];
+        var dailyActual = [];
+        var tSum = 0;
+        var aSum = 0;
+        for (var doy = 1; doy <= dim; doy++) {
+          var dtObj = new Date(y, 0, doy);
+          var month = dtObj.getMonth() + 1;
+          var day = dtObj.getDate();
+          var dayIso = y + '-' + pad2(month) + '-' + pad2(day);
+          var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+          var dtVal = 0;
+          var daVal = 0;
+          if (isTimelineBusinessDay(dayIso, bmap, isWk)) {
+            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+              var t = Number(tgtMap[dayIso]);
+              if (Number.isFinite(t)) dtVal = t;
+            }
+            if (cutoffDay > 0 && doy <= cutoffDay) {
+              daVal = readTwSalesAmt(dayIso, smap);
+            }
+          }
+          dailyTarget.push(dtVal);
+          dailyActual.push(daVal);
+          tSum += dtVal;
+          if (cutoffDay > 0 && doy <= cutoffDay) aSum += daVal;
+          target.push(tSum);
+          actual.push(aSum);
+        }
+        return {
+          target: target,
+          actual: actual,
+          dailyTarget: dailyTarget,
+          dailyActual: dailyActual,
+          todayDay: cutoffDay,
+        };
+      }
+      window.__buildAnnualCumulativeTrendPayload = buildAnnualCumulativeTrendPayload;
+      function buildAnnualCompareTrendPayload(year, cutoffIso) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return null;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        function dimOf(yy) {
+          return (yy % 4 === 0 && yy % 100 !== 0) || yy % 400 === 0 ? 366 : 365;
+        }
+        var dim = dimOf(y);
+        var cutoffDay = dim;
+        if (cutoffIso) {
+          var cp = String(cutoffIso).split('-');
+          var cy = Number(cp[0]);
+          if (cy === y) {
+            var cm = Number(cp[1]);
+            var cd = Number(cp[2]);
+            if (Number.isFinite(cm) && Number.isFinite(cd)) {
+              var dtCut = new Date(y, cm - 1, cd);
+              cutoffDay = Math.floor((dtCut - new Date(y, 0, 1)) / 86400000) + 1;
+              cutoffDay = Math.max(0, Math.min(dim, cutoffDay));
+            }
+          } else if (String(cutoffIso) < y + '-01-01') {
+            cutoffDay = 0;
+          }
+        }
+        function seriesForYear(yy, untilDoy) {
+          var dimY = dimOf(yy);
+          var maxD = untilDoy == null ? dimY : Math.max(0, Math.min(dimY, untilDoy));
+          var arr = [];
+          var sum = 0;
+          for (var doy = 1; doy <= maxD; doy++) {
+            var dtObj = new Date(yy, 0, doy);
+            var dayIso = yy + '-' + pad2(dtObj.getMonth() + 1) + '-' + pad2(dtObj.getDate());
+            var isWk = dtObj.getDay() === 0 || dtObj.getDay() === 6;
+            var daVal = 0;
+            if (isTimelineBusinessDay(dayIso, bmap, isWk)) {
+              daVal = readTwSalesAmt(dayIso, smap);
+            }
+            sum += daVal;
+            arr.push(sum);
+          }
+          return arr;
+        }
+        function alignToDim(src, alignDim) {
+          var out = [];
+          var last = 0;
+          for (var i = 0; i < alignDim; i++) {
+            if (i < src.length) {
+              last = src[i];
+              out.push(src[i]);
+            } else {
+              out.push(last);
+            }
+          }
+          return out;
+        }
+        var current = cutoffDay > 0 ? seriesForYear(y, cutoffDay) : [];
+        var lastYear = alignToDim(seriesForYear(y - 1, null), dim);
+        var bestYearNum = null;
+        var bestTotal = -1;
+        var scanYears = [];
+        if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+          try {
+            var st = KpiYearStore.getStore();
+            if (st && st.years) {
+              Object.keys(st.years).forEach(function (k) {
+                var yn = Number(k);
+                if (Number.isFinite(yn) && yn < y) scanYears.push(yn);
+              });
+            }
+          } catch (_e) {}
+        }
+        if (!scanYears.length) {
+          for (var back = 1; back <= 15; back++) scanYears.push(y - back);
+        }
+        scanYears.sort(function (a, b) { return b - a; });
+        for (var si = 0; si < scanYears.length; si++) {
+          var yy = scanYears[si];
+          var full = seriesForYear(yy, null);
+          var total = full.length ? full[full.length - 1] : 0;
+          if (!(total > 0)) continue;
+          if (total > bestTotal) {
+            bestTotal = total;
+            bestYearNum = yy;
+          }
+        }
+        var best = bestYearNum != null
+          ? alignToDim(seriesForYear(bestYearNum, null), dim)
+          : alignToDim([], dim);
+        return {
+          current: current,
+          lastYear: lastYear,
+          best: best,
+          todayDay: cutoffDay,
+          bestYear: bestYearNum,
+        };
+      }
+      window.__buildAnnualCompareTrendPayload = buildAnnualCompareTrendPayload;
+      var twMetricsCache = {};
+      function shiftTwIsoByDays(iso, delta) {
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        d.setDate(d.getDate() + (Number(delta) || 0));
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }
+      function finalizeTwMetricsNeeds(m) {
+        var monthlyNeed =
+          m.hasPlan && Number.isFinite(m.monthlyFullTarget) ? m.monthlyFullTarget - m.mtdA : null;
+        m.monthlyDailyNeed =
+          m.monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
+            ? monthlyNeed / m.monthRemainingBD
+            : null;
+        m.annualRemaining =
+          m.annualTarget != null && Number.isFinite(m.annualTarget) ? m.annualTarget - m.ytdA : null;
+        m.annualDailyNeed =
+          m.yearRemainingBD > 0 &&
+          m.annualRemaining != null &&
+          Number.isFinite(m.annualRemaining)
+            ? m.annualRemaining / m.yearRemainingBD
+            : null;
+        return m;
+      }
+      function cloneTwMetrics(src) {
+        return {
+          iso: src.iso,
+          isBusinessToday: src.isBusinessToday,
+          hasPlan: src.hasPlan,
+          dailySales: src.dailySales,
+          dailyTarget: src.dailyTarget,
+          mtdA: src.mtdA,
+          mtdT: src.mtdT,
+          ytdA: src.ytdA,
+          ytdT: src.ytdT,
+          monthlyFullTarget: src.monthlyFullTarget,
+          monthRemainingBD: src.monthRemainingBD,
+          monthlyDailyNeed: src.monthlyDailyNeed,
+          annualTarget: src.annualTarget,
+          annualRemaining: src.annualRemaining,
+          yearRemainingBD: src.yearRemainingBD,
+          annualDailyNeed: src.annualDailyNeed,
+        };
+      }
+      function tryIncrementalTwMetrics(fromIso, toIso, fromMetrics, direction) {
+        // direction: +1 = from -> to (to = from+1), -1 = from -> to (to = from-1)
+        if (!fromMetrics || !fromIso || !toIso) return null;
+        var fromD = new Date(String(fromIso).trim() + 'T00:00:00');
+        var toD = new Date(String(toIso).trim() + 'T00:00:00');
+        if (!isFinite(fromD.getTime()) || !isFinite(toD.getTime())) return null;
+        if (fromD.getFullYear() !== toD.getFullYear()) return null;
+        if (fromD.getMonth() !== toD.getMonth()) return null;
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        var y = toD.getFullYear();
+        var tgtMap = buildDailyTargetMapForYearCached(y, bmap);
+        var m = cloneTwMetrics(fromMetrics);
+        m.iso = toIso;
+
+        function dayMeta(dayIso) {
+          var dd = new Date(String(dayIso).trim() + 'T00:00:00');
+          var isWk = dd.getDay() === 0 || dd.getDay() === 6;
+          var biz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var dayTarget = null;
+          if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+            dayTarget = Number(tgtMap[dayIso]);
+            if (!Number.isFinite(dayTarget)) dayTarget = null;
+          }
+          return {
+            biz: biz,
+            sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
+            target: biz ? dayTarget : null,
+          };
+        }
+
+        if (direction > 0) {
+          // leave fromIso, enter toIso
+          var left = dayMeta(fromIso);
+          if (left.biz) {
+            m.yearRemainingBD = Math.max(0, Number(m.yearRemainingBD) - 1);
+            m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
+          }
+          var entered = dayMeta(toIso);
+          if (entered.biz) {
+            m.ytdA = Number(m.ytdA) + entered.sales;
+            m.mtdA = Number(m.mtdA) + entered.sales;
+            if (entered.target != null) {
+              m.ytdT = Number(m.ytdT) + entered.target;
+              m.mtdT = Number(m.mtdT) + entered.target;
+              m.hasPlan = true;
+            }
+            m.isBusinessToday = true;
+            m.dailySales = entered.sales;
+            m.dailyTarget = entered.target;
+          } else {
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }
+        } else {
+          // leave fromIso (newer), enter toIso (older)
+          var dropped = dayMeta(fromIso);
+          if (dropped.biz) {
+            m.ytdA = Number(m.ytdA) - dropped.sales;
+            m.mtdA = Number(m.mtdA) - dropped.sales;
+            if (dropped.target != null) {
+              m.ytdT = Number(m.ytdT) - dropped.target;
+              m.mtdT = Number(m.mtdT) - dropped.target;
+            }
+            m.yearRemainingBD = Number(m.yearRemainingBD) + 1;
+            m.monthRemainingBD = Number(m.monthRemainingBD) + 1;
+          }
+          var back = dayMeta(toIso);
+          if (back.biz) {
+            m.isBusinessToday = true;
+            m.dailySales = back.sales;
+            m.dailyTarget = back.target;
+          } else {
+            m.isBusinessToday = false;
+            m.dailySales = 0;
+            m.dailyTarget = null;
+          }
+        }
+        return finalizeTwMetricsNeeds(m);
+      }
+      function remainingBdFromDailyFacts(facts, iso) {
+        var y = Number(String(iso).slice(0, 4));
+        var m0 = Number(String(iso).slice(5, 7)) - 1;
+        var monthRemainingBD = 0;
+        var yearRemainingBD = 0;
+        var monthlyFullTarget = 0;
+        if (!facts || typeof facts !== 'object' || !Number.isFinite(y) || !Number.isFinite(m0)) {
+          return {
+            monthRemainingBD: 0,
+            yearRemainingBD: 0,
+            monthlyFullTarget: 0,
+          };
+        }
+        for (var m = 0; m < 12; m++) {
+          var dc = new Date(y, m + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {
+            var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
+            var f = facts[dayIso];
+            if (!f || !f.businessDay) continue;
+            var tgt = f.dailyTarget;
+            if (m === m0 && tgt != null && Number.isFinite(Number(tgt))) {
+              monthlyFullTarget += Number(tgt);
+            }
+            if (dayIso >= iso) {
+              yearRemainingBD++;
+              if (m === m0) monthRemainingBD++;
+            }
+          }
+        }
+        return {
+          monthRemainingBD: monthRemainingBD,
+          yearRemainingBD: yearRemainingBD,
+          monthlyFullTarget: monthlyFullTarget,
+        };
+      }
+      function metricsFromDailyFacts(iso) {
+        if (!iso || !window.KpiYearStore || typeof KpiYearStore.readDailyFacts !== 'function') {
+          return null;
+        }
+        var fact = KpiYearStore.readDailyFacts(iso);
+        if (!fact) return null;
+        var y = Number(String(iso).slice(0, 4));
+        var rec =
+          Number.isFinite(y) && KpiYearStore.getStore
+            ? (KpiYearStore.getStore().years || {})[y]
+            : null;
+        var rest = remainingBdFromDailyFacts(rec && rec.dailyFacts, iso);
+        var annualTarget =
+          typeof KpiYearStore.readAnnualTarget === 'function'
+            ? KpiYearStore.readAnnualTarget(y)
+            : null;
+        var hasPlan =
+          fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
+        return finalizeTwMetricsNeeds({
+          iso: iso,
+          isBusinessToday: !!fact.businessDay,
+          hasPlan: hasPlan,
+          dailySales: Number(fact.sales) || 0,
+          dailyTarget: fact.businessDay ? fact.dailyTarget : null,
+          mtdA: Number(fact.mtdActual) || 0,
+          mtdT: fact.mtdTarget,
+          ytdA: Number(fact.ytdActual) || 0,
+          ytdT: fact.ytdTarget,
+          monthlyFullTarget: rest.monthlyFullTarget,
+          monthRemainingBD: rest.monthRemainingBD,
+          monthlyDailyNeed: null,
+          annualTarget: annualTarget,
+          annualRemaining: null,
+          yearRemainingBD: rest.yearRemainingBD,
+          annualDailyNeed: null,
+        });
+      }
+      function computeTwMetricsForIso(iso) {
+        if (!iso) return null;
+        if (Object.prototype.hasOwnProperty.call(twMetricsCache, iso)) {
+          return twMetricsCache[iso];
+        }
+        var fromFacts = metricsFromDailyFacts(iso);
+        if (fromFacts) {
+          twMetricsCache[iso] = fromFacts;
+          return fromFacts;
+        }
+        var prevIso = shiftTwIsoByDays(iso, -1);
+        if (prevIso && Object.prototype.hasOwnProperty.call(twMetricsCache, prevIso)) {
+          var fwd = tryIncrementalTwMetrics(prevIso, iso, twMetricsCache[prevIso], 1);
+          if (fwd) {
+            twMetricsCache[iso] = fwd;
+            return fwd;
+          }
+        }
+        var nextIso = shiftTwIsoByDays(iso, 1);
+        if (nextIso && Object.prototype.hasOwnProperty.call(twMetricsCache, nextIso)) {
+          var back = tryIncrementalTwMetrics(nextIso, iso, twMetricsCache[nextIso], -1);
+          if (back) {
+            twMetricsCache[iso] = back;
+            return back;
+          }
+        }
+
+        ensureTwAnnualDailySynced();
         var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
         var smap = daily.targetSalesByDate || {};
         var bmap = daily.businessDayByDate || {};
@@ -7933,21 +8656,7 @@
             }
           }
         }
-        var monthlyNeed =
-          hasPlan && Number.isFinite(monthlyFullTarget) ? monthlyFullTarget - mtdA : null;
-        var monthlyDailyNeed =
-          monthRemainingBD > 0 && monthlyNeed != null && Number.isFinite(monthlyNeed)
-            ? monthlyNeed / monthRemainingBD
-            : null;
-        var annualRemaining =
-          annualTarget != null && Number.isFinite(annualTarget) ? annualTarget - ytdA : null;
-        var annualDailyNeed =
-          yearRemainingBD > 0 &&
-          annualRemaining != null &&
-          Number.isFinite(annualRemaining)
-            ? annualRemaining / yearRemainingBD
-            : null;
-        return {
+        var result = finalizeTwMetricsNeeds({
           iso: iso,
           isBusinessToday: isBusinessToday,
           hasPlan: hasPlan,
@@ -7959,19 +8668,195 @@
           ytdT: ytdT,
           monthlyFullTarget: monthlyFullTarget,
           monthRemainingBD: monthRemainingBD,
-          monthlyDailyNeed: monthlyDailyNeed,
+          monthlyDailyNeed: null,
           annualTarget: annualTarget,
-          annualRemaining: annualRemaining,
+          annualRemaining: null,
           yearRemainingBD: yearRemainingBD,
-          annualDailyNeed: annualDailyNeed,
-        };
+          annualDailyNeed: null,
+        });
+        twMetricsCache[iso] = result;
+        return result;
       }
+      var salesThroughCache = {};
+      function invalidateTwSalesThroughCache() {
+        salesThroughCache = {};
+        twMetricsCache = {};
+        window.__TW_ANNUAL_DAILY_SYNCED = false;
+      }
+      window.__invalidateTwSalesThroughCache = invalidateTwSalesThroughCache;
+      function ensureTwAnnualDailySynced() {
+        if (window.__TW_ANNUAL_DAILY_SYNCED) return;
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        window.__TW_ANNUAL_DAILY_SYNCED = true;
+      }
+      function addOneSalesDay(acc, y, mm, d, smap, bmap) {
+        var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+        var dt = new Date(y, mm - 1, d);
+        var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+        if (!isTimelineBusinessDay(dayIso, bmap, isWk)) return acc;
+        if (Object.prototype.hasOwnProperty.call(smap, dayIso)) acc.hasData = true;
+        acc.sum += readTwSalesAmt(dayIso, smap);
+        return acc;
+      }
+      function sumMonthSalesThroughDay(year, month, day) {
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        var dim = new Date(y, m, 0).getDate();
+        var until = Math.max(0, Math.min(dim, Math.floor(dayN)));
+        var cacheKey = 'm:' + y + '-' + m + '-' + until;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {
+          return salesThroughCache[cacheKey];
+        }
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        if (until > 0) {
+          var prevMKey = 'm:' + y + '-' + m + '-' + (until - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMKey)) {
+            var prevM = salesThroughCache[prevMKey];
+            var fwdM = { sum: prevM.sum, hasData: prevM.hasData };
+            addOneSalesDay(fwdM, y, m, until, smap, bmap);
+            salesThroughCache[cacheKey] = fwdM;
+            return fwdM;
+          }
+        }
+        if (until < dim) {
+          var nextMKey = 'm:' + y + '-' + m + '-' + (until + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextMKey)) {
+            var nextM = salesThroughCache[nextMKey];
+            var backM = { sum: nextM.sum, hasData: nextM.hasData };
+            var remIso = y + '-' + pad2(m) + '-' + pad2(until + 1);
+            var remDt = new Date(y, m - 1, until + 1);
+            var remWk = remDt.getDay() === 0 || remDt.getDay() === 6;
+            if (isTimelineBusinessDay(remIso, bmap, remWk)) {
+              backM.sum -= readTwSalesAmt(remIso, smap);
+            }
+            salesThroughCache[cacheKey] = backM;
+            return backM;
+          }
+        }
+        var sum = 0;
+        var hasData = false;
+        for (var d = 1; d <= until; d++) {
+          var dayIso = y + '-' + pad2(m) + '-' + pad2(d);
+          var dt = new Date(y, m - 1, d);
+          var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+          if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+          if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+          sum += readTwSalesAmt(dayIso, smap);
+        }
+        var monthResult = { sum: sum, hasData: hasData };
+        salesThroughCache[cacheKey] = monthResult;
+        return monthResult;
+      }
+      window.__sumMonthSalesThroughDay = sumMonthSalesThroughDay;
+      function sumYearSalesThroughDay(year, month, day) {
+        var y = Number(year);
+        var m = Number(month);
+        var dayN = Number(day);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dayN)) return null;
+        if (m < 1 || m > 12) return null;
+        var dimMonth = new Date(y, m, 0).getDate();
+        var untilDay = Math.max(1, Math.min(dimMonth, Math.floor(dayN)));
+        var cacheKey = 'y:' + y + '-' + m + '-' + untilDay;
+        if (Object.prototype.hasOwnProperty.call(salesThroughCache, cacheKey)) {
+          return salesThroughCache[cacheKey];
+        }
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var smap = daily.targetSalesByDate || {};
+        var bmap = daily.businessDayByDate || {};
+        if (untilDay > 1) {
+          var prevYKey = 'y:' + y + '-' + m + '-' + (untilDay - 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevYKey)) {
+            var prevY = salesThroughCache[prevYKey];
+            var fwdY = { sum: prevY.sum, hasData: prevY.hasData };
+            addOneSalesDay(fwdY, y, m, untilDay, smap, bmap);
+            salesThroughCache[cacheKey] = fwdY;
+            return fwdY;
+          }
+        } else if (m > 1) {
+          var prevDim = new Date(y, m - 1, 0).getDate();
+          var prevMonthEndKey = 'y:' + y + '-' + (m - 1) + '-' + prevDim;
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, prevMonthEndKey)) {
+            var prevEnd = salesThroughCache[prevMonthEndKey];
+            var fromPrev = { sum: prevEnd.sum, hasData: prevEnd.hasData };
+            addOneSalesDay(fromPrev, y, m, 1, smap, bmap);
+            salesThroughCache[cacheKey] = fromPrev;
+            return fromPrev;
+          }
+        }
+        if (untilDay < dimMonth) {
+          var nextYKey = 'y:' + y + '-' + m + '-' + (untilDay + 1);
+          if (Object.prototype.hasOwnProperty.call(salesThroughCache, nextYKey)) {
+            var nextY = salesThroughCache[nextYKey];
+            var backY = { sum: nextY.sum, hasData: nextY.hasData };
+            var remYIso = y + '-' + pad2(m) + '-' + pad2(untilDay + 1);
+            var remYDt = new Date(y, m - 1, untilDay + 1);
+            var remYWk = remYDt.getDay() === 0 || remYDt.getDay() === 6;
+            if (isTimelineBusinessDay(remYIso, bmap, remYWk)) {
+              backY.sum -= readTwSalesAmt(remYIso, smap);
+            }
+            salesThroughCache[cacheKey] = backY;
+            return backY;
+          }
+        }
+        var sum = 0;
+        var hasData = false;
+        for (var mm = 1; mm <= m; mm++) {
+          var dim = new Date(y, mm, 0).getDate();
+          var last = mm === m ? untilDay : dim;
+          for (var d = 1; d <= last; d++) {
+            var dayIso = y + '-' + pad2(mm) + '-' + pad2(d);
+            var dt = new Date(y, mm - 1, d);
+            var isWk = dt.getDay() === 0 || dt.getDay() === 6;
+            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            if (Object.prototype.hasOwnProperty.call(smap, dayIso)) hasData = true;
+            sum += readTwSalesAmt(dayIso, smap);
+          }
+        }
+        var yearResult = { sum: sum, hasData: hasData };
+        salesThroughCache[cacheKey] = yearResult;
+        return yearResult;
+      }
+      window.__sumYearSalesThroughDay = sumYearSalesThroughDay;
       window.__computeTwMetricsForIso = computeTwMetricsForIso;
       window.__twFmtMoney = fmtMoney;
       window.__twFmtDiff = fmtTwDiff;
       window.__twFmtAchPct = fmtTwAchPct;
       window.__twDiffSeverityClass = twDiffSeverityClass;
       window.__twDiffLevels = TW_DIFF_LEVELS;
+      /** Same weekday N years back (364 * yearsBack days). yearsBack=0 → iso itself. */
+      window.__sameWeekdayIso = function (iso, yearsBack) {
+        var d = new Date(String(iso || '').trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        var n = Number(yearsBack);
+        if (!Number.isFinite(n) || n < 0) n = 1;
+        if (n > 0) d.setDate(d.getDate() - 364 * n);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      };
+      window.__readTwDaySales = function (iso) {
+        if (!iso) return 0;
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        return readTwSalesAmt(iso, daily.targetSalesByDate || {});
+      };
+      window.__isTwBusinessDay = function (iso) {
+        if (!iso) return false;
+        ensureTwAnnualDailySynced();
+        var daily = (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) || {};
+        var bmap = daily.businessDayByDate || {};
+        var d = new Date(String(iso).trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return false;
+        var isWk = d.getDay() === 0 || d.getDay() === 6;
+        return isTimelineBusinessDay(iso, bmap, isWk);
+      };
       var __twTimelineRefreshTimer = null;
       function scheduleRenderAnnualDailyTimeline(anchorYear, opts) {
         opts = opts || { preserveScroll: true };
@@ -7981,12 +8866,29 @@
         }
         if (!Number.isFinite(cy)) cy = new Date().getFullYear();
         if (__twTimelineRefreshTimer != null) window.clearTimeout(__twTimelineRefreshTimer);
+        /* KPI-BULK-REFRESH-PERF: 120ms coalesce (CSV multi-year / dual events) */
         __twTimelineRefreshTimer = window.setTimeout(function () {
           __twTimelineRefreshTimer = null;
           renderAnnualDailyTimeline(cy, opts);
-        }, 120); /* KPI-BULK-REFRESH-PERF */
+        }, 120);
       }
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
+      if (!__twDrawBound) {
+        __twDrawBound = true;
+      }
+      [
+        'annual:salesMapChanged',
+        'kpi:dailySalesChanged',
+        'kpi:businessDayChanged',
+        'kpi:annualPlanChanged',
+        'kpi:dailyTargetModeChanged',
+        'kpi:weekdayBaselineChanged',
+        'annual:pastSalesSaved',
+      ].forEach(function (evName) {
+        document.addEventListener(evName, function () {
+          invalidateTwSalesThroughCache();
+        });
+      });
       /* END KPI-FOCUS-TW-METRICS */
 
       function sumTargetByDateRange(startDate, endDate) {

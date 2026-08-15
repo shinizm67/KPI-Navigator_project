@@ -234,8 +234,159 @@ def focus_tw_metrics_js() -> str:
       function createTwCumState() {{
         return {{ month: -1, mtdA: 0, mtdT: 0, ytdA: 0, ytdT: 0, hasPlan: false }};
       }}
+      /* KPI-TW-DRAW-WINDOW */
+      var TW_DRAW_HALF_DAYS = 28;
+      var TW_DRAW_EDGE_DAYS = 7;
+      var TW_YEAR_PAD_DAYS = 14;
+      var __twDrawShiftLock = false;
+      var __twDrawBound = false;
+      function twIsoAddDays(iso, days) {{
+        var p = /^(\\d{{4}})-(\\d{{2}})-(\\d{{2}})$/.exec(String(iso || ''));
+        if (!p) return '';
+        var d = new Date(Number(p[1]), Number(p[2]) - 1, Number(p[3]));
+        d.setDate(d.getDate() + Number(days));
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }}
+      window.__twShiftIso = twIsoAddDays;
+      function twIsoDaysApart(a, b) {{
+        var da = new Date(String(a) + 'T00:00:00');
+        var db = new Date(String(b) + 'T00:00:00');
+        if (!isFinite(da.getTime()) || !isFinite(db.getTime())) return 9999;
+        return Math.round((da.getTime() - db.getTime()) / 86400000);
+      }}
+      function twLocalIso(d) {{
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+      }}
+      function resolveTwDrawFocusIso(anchorYear, opts) {{
+        opts = opts || {{}};
+        var raw = '';
+        if (opts.focusIso && /^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(opts.focusIso))) {{
+          raw = String(opts.focusIso);
+        }} else {{
+          try {{
+            if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {{
+              raw = String(KpiYearStore.getSelectedDate() || '');
+            }}
+          }} catch (_e) {{}}
+          if (!raw && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {{
+            raw = String(window.__ANNUAL_DATA.daily.selectedDate || '');
+          }}
+        }}
+        anchorYear = Number(anchorYear);
+        if (/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(raw)) {{
+          var iy = Number(raw.slice(0, 4));
+          if (Number.isFinite(anchorYear) && iy === anchorYear) return raw;
+          if (Number.isFinite(anchorYear) && iy !== anchorYear) {{
+            /* 年跨ぎ: 同月日に寄せると 12/31 → 翌年末に着地して連続跨ぎする */
+            return iy < anchorYear
+              ? String(anchorYear) + '-01-01'
+              : String(anchorYear) + '-12-31';
+          }}
+          return raw;
+        }}
+        var now = new Date();
+        if (now.getFullYear() === Number(anchorYear)) {{
+          return twLocalIso(now);
+        }}
+        return String(anchorYear) + '-01-01';
+      }}
+      function twFocusAnchorEl() {{
+        var lower = document.querySelector(
+          '.annual-daily-focus-bar-lower:not(.annual-daily-focus-bar-lower--ghost)'
+        );
+        var lowerScroll = document.getElementById('annual-daily-focus-bar-lower-scroll');
+        var expanded = document.body.classList.contains('annual-focus-bar-expanded');
+        if (!expanded && lowerScroll) {{
+          var cs = window.getComputedStyle(lowerScroll);
+          if (cs.display !== 'none' && cs.visibility !== 'hidden') return lowerScroll;
+        }}
+        if (lower) {{
+          var ls = window.getComputedStyle(lower);
+          if (ls.display !== 'none' && ls.visibility !== 'hidden') return lower;
+        }}
+        return lowerScroll || lower;
+      }}
+      function alignTwFocusIso(iso) {{
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.scrollTableToIso === 'function'
+        ) {{
+          return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), {{ lockMs: 400 }});
+        }}
+        var el = document.getElementById('annual-daily-focus-scroll');
+        var row = iso
+          ? document.querySelector(
+              '#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]'
+            )
+          : null;
+        if (!el || !row) return false;
+        var anchor = twFocusAnchorEl();
+        var tableRect = el.getBoundingClientRect();
+        var rowRect = row.getBoundingClientRect();
+        var anchorRect = anchor ? anchor.getBoundingClientRect() : tableRect;
+        var rowCenter = rowRect.top + rowRect.height / 2;
+        var anchorCenter = anchorRect.top + anchorRect.height / 2;
+        var delta = rowCenter - anchorCenter;
+        if (Math.abs(delta) > 1) {{
+          el.scrollTop += delta;
+        }}
+        if (typeof __geomCache !== 'undefined') __geomCache = null;
+        if (typeof __anchorRangeCache !== 'undefined') __anchorRangeCache = null;
+        return Math.abs(delta) <= 2;
+      }}
+      function finishTwDrawRender(focusIso, preserveY, scrollEl) {{
+        requestAnimationFrame(function () {{
+          requestAnimationFrame(function () {{
+            if (typeof __geomCache !== 'undefined') __geomCache = null;
+            if (focusIso) alignTwFocusIso(String(focusIso));
+            requestAnimationFrame(function () {{
+              if (focusIso) {{
+                alignTwFocusIso(String(focusIso));
+                if (typeof window.__invalidateAnnualFocusBarLowerCache === 'function') {{
+                  window.__invalidateAnnualFocusBarLowerCache();
+                }}
+                if (typeof window.__refreshAnnualFocusBarLower === 'function') {{
+                  window.__refreshAnnualFocusBarLower();
+                }}
+              }} else if (preserveY != null && scrollEl) {{
+                scrollEl.scrollTop = preserveY;
+              }}
+              document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+            }});
+          }});
+        }});
+      }}
+      function computeDrawWindowTimelineBounds(anchorYear, focusIso) {{
+        /* 滑る ±28日窓は日付飛び・2/6 停止・ページスクロールの原因。DOM は年+14日パッド。 */
+        anchorYear = Number(anchorYear);
+        if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
+        var rangeStart;
+        var rangeEnd;
+        if (typeof computeAnchorYearTimelineBounds === 'function') {{
+          var yearBounds = computeAnchorYearTimelineBounds(anchorYear);
+          rangeStart = yearBounds.rangeStart;
+          rangeEnd = yearBounds.rangeEnd;
+        }} else {{
+          rangeStart = new Date(anchorYear, 0, 1);
+          rangeStart.setDate(rangeStart.getDate() - TW_YEAR_PAD_DAYS);
+          rangeEnd = new Date(anchorYear, 11, 31);
+          rangeEnd.setDate(rangeEnd.getDate() + TW_YEAR_PAD_DAYS);
+        }}
+        var fp = /^(\\d{{4}})-(\\d{{2}})-(\\d{{2}})$/.exec(String(focusIso || ''));
+        var focus = fp
+          ? new Date(Number(fp[1]), Number(fp[2]) - 1, Number(fp[3]))
+          : new Date(anchorYear, 0, 1);
+        return {{
+          rangeStart: rangeStart,
+          rangeEnd: rangeEnd,
+          minYear: rangeStart.getFullYear(),
+          maxYear: rangeEnd.getFullYear(),
+          focusIso: twLocalIso(focus),
+        }};
+      }}
       function renderAnnualDailyTimeline(anchorYear, opts) {{
         opts = opts || {{}};
+        if (!opts.boundsHint) opts.boundsHint = 'anchor-year-only';
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {{
@@ -243,11 +394,11 @@ def focus_tw_metrics_js() -> str:
         }}
         var scrollEl = document.getElementById('annual-daily-focus-scroll');
         var prevScroll = opts.preserveScroll && scrollEl ? scrollEl.scrollTop : null;
-        var bounds =
-          opts.boundsHint === 'anchor-year-only' &&
-          typeof computeAnchorYearTimelineBounds === 'function'
-            ? computeAnchorYearTimelineBounds(anchorYear)
-            : computeFocusTimelineBounds(anchorYear);
+        var prevDrawStart = rowsRoot.getAttribute('data-tw-draw-start') || '';
+        var bounds = computeDrawWindowTimelineBounds(
+          anchorYear,
+          resolveTwDrawFocusIso(anchorYear, opts)
+        );
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {{}};
         window.__ANNUAL_DATA.calendarYear = anchorYear;
         var daily = window.__ANNUAL_DATA.daily || {{}};
@@ -274,10 +425,132 @@ def focus_tw_metrics_js() -> str:
           if (!cumByYear[y]) cumByYear[y] = createTwCumState();
           return cumByYear[y];
         }}
+        function applyTwCumForIso(iso, d, rowYear, isBusiness) {{
+          var salesNum = 0;
+          var dailyTgt = null;
+          var mtdA = 0;
+          var mtdT = 0;
+          var ytdA = 0;
+          var ytdT = 0;
+          var rowHasPlan = false;
+          if (!isBusiness) {{
+            return {{
+              salesNum: salesNum,
+              dailyTgt: dailyTgt,
+              mtdA: mtdA,
+              mtdT: mtdT,
+              ytdA: ytdA,
+              ytdT: ytdT,
+              rowHasPlan: rowHasPlan,
+            }};
+          }}
+          var fact =
+            window.KpiYearStore && typeof KpiYearStore.readDailyFacts === 'function'
+              ? KpiYearStore.readDailyFacts(iso)
+              : null;
+          if (fact) {{
+            salesNum = Number(fact.sales) || 0;
+            dailyTgt = fact.dailyTarget;
+            if (dailyTgt != null) {{
+              dailyTgt = Number(dailyTgt);
+              if (!Number.isFinite(dailyTgt)) dailyTgt = null;
+            }}
+            var cf = cumForYear(rowYear);
+            cf.month = d.getMonth();
+            cf.mtdA = Number(fact.mtdActual) || 0;
+            cf.mtdT =
+              fact.mtdTarget != null && Number.isFinite(Number(fact.mtdTarget))
+                ? Number(fact.mtdTarget)
+                : 0;
+            cf.ytdA = Number(fact.ytdActual) || 0;
+            cf.ytdT =
+              fact.ytdTarget != null && Number.isFinite(Number(fact.ytdTarget))
+                ? Number(fact.ytdTarget)
+                : 0;
+            cf.hasPlan =
+              dailyTgt != null || fact.mtdTarget != null || fact.ytdTarget != null;
+            return {{
+              salesNum: salesNum,
+              dailyTgt: dailyTgt,
+              mtdA: cf.mtdA,
+              mtdT: cf.mtdT,
+              ytdA: cf.ytdA,
+              ytdT: cf.ytdT,
+              rowHasPlan: cf.hasPlan,
+            }};
+          }}
+          salesNum = readTwSalesAmt(iso, smap);
+          var tgtMap = targetMapForYear(rowYear);
+          if (Object.prototype.hasOwnProperty.call(tgtMap, iso)) {{
+            dailyTgt = Number(tgtMap[iso]);
+            if (!Number.isFinite(dailyTgt)) dailyTgt = null;
+          }}
+          var c = cumForYear(rowYear);
+          var m0 = d.getMonth();
+          if (c.month !== m0) {{
+            c.month = m0;
+            c.mtdA = 0;
+            c.mtdT = 0;
+          }}
+          c.mtdA += salesNum;
+          c.ytdA += salesNum;
+          if (dailyTgt != null) {{
+            c.mtdT += dailyTgt;
+            c.ytdT += dailyTgt;
+            c.hasPlan = true;
+          }}
+          return {{
+            salesNum: salesNum,
+            dailyTgt: dailyTgt,
+            mtdA: c.mtdA,
+            mtdT: c.mtdT,
+            ytdA: c.ytdA,
+            ytdT: c.ytdT,
+            rowHasPlan: c.hasPlan,
+          }};
+        }}
+        function seedTwCumUpTo(exclusiveStartDate) {{
+          var seedYears = {{}};
+          seedYears[exclusiveStartDate.getFullYear()] = true;
+          seedYears[anchorYear] = true;
+          Object.keys(seedYears).forEach(function (ys) {{
+            var y = Number(ys);
+            var seedFrom = new Date(y, 0, 1);
+            var seedTo = new Date(exclusiveStartDate.getTime());
+            seedTo.setDate(seedTo.getDate() - 1);
+            var yearEnd = new Date(y, 11, 31);
+            if (seedTo > yearEnd) seedTo = yearEnd;
+            if (seedFrom > seedTo) return;
+            for (
+              var sd = new Date(seedFrom.getTime());
+              sd <= seedTo;
+              sd.setDate(sd.getDate() + 1)
+            ) {{
+              var siso = twLocalIso(sd);
+              var sWk = sd.getDay() === 0 || sd.getDay() === 6;
+              applyTwCumForIso(
+                siso,
+                sd,
+                sd.getFullYear(),
+                isTimelineBusinessDay(siso, bmap, sWk)
+              );
+            }}
+          }});
+        }}
+        var probeFact =
+          bounds.focusIso &&
+          window.KpiYearStore &&
+          typeof KpiYearStore.readDailyFacts === 'function'
+            ? KpiYearStore.readDailyFacts(bounds.focusIso)
+            : null;
+        if (!probeFact) seedTwCumUpTo(bounds.rangeStart);
         rowsRoot.innerHTML = '';
         rowsRoot.setAttribute('data-year', String(anchorYear));
         rowsRoot.setAttribute('data-timeline-min-year', String(bounds.minYear));
         rowsRoot.setAttribute('data-timeline-max-year', String(bounds.maxYear));
+        rowsRoot.setAttribute('data-tw-draw-start', twLocalIso(bounds.rangeStart));
+        rowsRoot.setAttribute('data-tw-draw-end', twLocalIso(bounds.rangeEnd));
+        rowsRoot.setAttribute('data-tw-draw-focus', String(bounds.focusIso || ''));
         rowsRoot.setAttribute(
           'aria-label',
           isJa
@@ -357,33 +630,14 @@ def focus_tw_metrics_js() -> str:
           var ytdA = 0;
           var ytdT = 0;
           var rowHasPlan = false;
-          if (isBusiness) {{
-            salesNum = readTwSalesAmt(iso, smap);
-            var tgtMap = targetMapForYear(rowYear);
-            if (Object.prototype.hasOwnProperty.call(tgtMap, iso)) {{
-              dailyTgt = Number(tgtMap[iso]);
-              if (!Number.isFinite(dailyTgt)) dailyTgt = null;
-            }}
-            var c = cumForYear(rowYear);
-            var m0 = d.getMonth();
-            if (c.month !== m0) {{
-              c.month = m0;
-              c.mtdA = 0;
-              c.mtdT = 0;
-            }}
-            c.mtdA += salesNum;
-            c.ytdA += salesNum;
-            if (dailyTgt != null) {{
-              c.mtdT += dailyTgt;
-              c.ytdT += dailyTgt;
-              c.hasPlan = true;
-            }}
-            mtdA = c.mtdA;
-            mtdT = c.mtdT;
-            ytdA = c.ytdA;
-            ytdT = c.ytdT;
-            rowHasPlan = c.hasPlan;
-          }}
+          var twRow = applyTwCumForIso(iso, d, rowYear, isBusiness);
+          salesNum = twRow.salesNum;
+          dailyTgt = twRow.dailyTgt;
+          mtdA = twRow.mtdA;
+          mtdT = twRow.mtdT;
+          ytdA = twRow.ytdA;
+          ytdT = twRow.ytdT;
+          rowHasPlan = twRow.rowHasPlan;
 
           var groupBase = document.createElement('div');
           groupBase.className = 'annual-daily-row__group annual-daily-row__group--base';
@@ -468,9 +722,15 @@ def focus_tw_metrics_js() -> str:
           rowsRoot.appendChild(row);
         }}
 
-        if (prevScroll != null && scrollEl) {{
-          scrollEl.scrollTop = prevScroll;
-        }}
+        var focusIso = bounds.focusIso;
+        var focusRow = focusIso
+          ? rowsRoot.querySelector('.annual-daily-row[data-iso-date="' + focusIso + '"]')
+          : null;
+        var keepScroll =
+          opts.preserveScroll &&
+          prevScroll != null &&
+          focusRow &&
+          !opts.forceScrollToFocus;
         if (document.body.classList.contains('monthly-page')) {{
           if (opts.boundsHint === 'anchor-year-only') {{
             window.__monthlyVerticalTwPartialRendered = true;
@@ -479,8 +739,31 @@ def focus_tw_metrics_js() -> str:
             window.__monthlyVerticalTwFullRendered = true;
           }}
         }}
-        document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+        if (opts.skipBootstrapScroll) {{
+          document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+        }} else if (keepScroll && scrollEl) {{
+          var nextStart = twLocalIso(bounds.rangeStart);
+          if (prevDrawStart && prevDrawStart === nextStart) {{
+            scrollEl.scrollTop = prevScroll;
+            document.dispatchEvent(new CustomEvent('annual:timelineRowsRendered'));
+          }} else {{
+            finishTwDrawRender(focusIso, null, scrollEl);
+          }}
+        }} else {{
+          finishTwDrawRender(focusIso, prevScroll, scrollEl);
+        }}
       }}
+      window.__ensureTwDrawWindow = function (iso) {{
+        if (!iso || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(iso))) return false;
+        var row = document.querySelector(
+          '#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]'
+        );
+        if (!row) return false;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.scrollTableToIso === 'function') {{
+          return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), {{ lockMs: 400 }});
+        }}
+        return alignTwFocusIso(iso);
+      }};
       function buildMonthlyCumulativeTrendPayload(year, month, cutoffIso) {{
         var y = Number(year);
         var m = Number(month);
@@ -834,10 +1117,87 @@ def focus_tw_metrics_js() -> str:
         }}
         return finalizeTwMetricsNeeds(m);
       }}
+      function remainingBdFromDailyFacts(facts, iso) {{
+        var y = Number(String(iso).slice(0, 4));
+        var m0 = Number(String(iso).slice(5, 7)) - 1;
+        var monthRemainingBD = 0;
+        var yearRemainingBD = 0;
+        var monthlyFullTarget = 0;
+        if (!facts || typeof facts !== 'object' || !Number.isFinite(y) || !Number.isFinite(m0)) {{
+          return {{
+            monthRemainingBD: 0,
+            yearRemainingBD: 0,
+            monthlyFullTarget: 0,
+          }};
+        }}
+        for (var m = 0; m < 12; m++) {{
+          var dc = new Date(y, m + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {{
+            var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
+            var f = facts[dayIso];
+            if (!f || !f.businessDay) continue;
+            var tgt = f.dailyTarget;
+            if (m === m0 && tgt != null && Number.isFinite(Number(tgt))) {{
+              monthlyFullTarget += Number(tgt);
+            }}
+            if (dayIso >= iso) {{
+              yearRemainingBD++;
+              if (m === m0) monthRemainingBD++;
+            }}
+          }}
+        }}
+        return {{
+          monthRemainingBD: monthRemainingBD,
+          yearRemainingBD: yearRemainingBD,
+          monthlyFullTarget: monthlyFullTarget,
+        }};
+      }}
+      function metricsFromDailyFacts(iso) {{
+        if (!iso || !window.KpiYearStore || typeof KpiYearStore.readDailyFacts !== 'function') {{
+          return null;
+        }}
+        var fact = KpiYearStore.readDailyFacts(iso);
+        if (!fact) return null;
+        var y = Number(String(iso).slice(0, 4));
+        var rec =
+          Number.isFinite(y) && KpiYearStore.getStore
+            ? (KpiYearStore.getStore().years || {{}})[y]
+            : null;
+        var rest = remainingBdFromDailyFacts(rec && rec.dailyFacts, iso);
+        var annualTarget =
+          typeof KpiYearStore.readAnnualTarget === 'function'
+            ? KpiYearStore.readAnnualTarget(y)
+            : null;
+        var hasPlan =
+          fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
+        return finalizeTwMetricsNeeds({{
+          iso: iso,
+          isBusinessToday: !!fact.businessDay,
+          hasPlan: hasPlan,
+          dailySales: Number(fact.sales) || 0,
+          dailyTarget: fact.businessDay ? fact.dailyTarget : null,
+          mtdA: Number(fact.mtdActual) || 0,
+          mtdT: fact.mtdTarget,
+          ytdA: Number(fact.ytdActual) || 0,
+          ytdT: fact.ytdTarget,
+          monthlyFullTarget: rest.monthlyFullTarget,
+          monthRemainingBD: rest.monthRemainingBD,
+          monthlyDailyNeed: null,
+          annualTarget: annualTarget,
+          annualRemaining: null,
+          yearRemainingBD: rest.yearRemainingBD,
+          annualDailyNeed: null,
+        }});
+      }}
       function computeTwMetricsForIso(iso) {{
         if (!iso) return null;
         if (Object.prototype.hasOwnProperty.call(twMetricsCache, iso)) {{
           return twMetricsCache[iso];
+        }}
+        var fromFacts = metricsFromDailyFacts(iso);
+        if (fromFacts) {{
+          twMetricsCache[iso] = fromFacts;
+          return fromFacts;
         }}
         var prevIso = shiftTwIsoByDays(iso, -1);
         if (prevIso && Object.prototype.hasOwnProperty.call(twMetricsCache, prevIso)) {{
@@ -1129,6 +1489,9 @@ def focus_tw_metrics_js() -> str:
         }}, 120);
       }}
       window.__scheduleRenderAnnualDailyTimeline = scheduleRenderAnnualDailyTimeline;
+      if (!__twDrawBound) {{
+        __twDrawBound = true;
+      }}
       [
         'annual:salesMapChanged',
         'kpi:dailySalesChanged',

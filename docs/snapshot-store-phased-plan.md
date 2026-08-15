@@ -148,11 +148,19 @@ blob / MySQL は触っていない。
 
 ### 段階 3 — 画面は解を読む
 
-Cockpit / TW が facts 行を表示。日付移動で再集計しない。
+**状態: 本番済み（FileZilla Step N）。**
+
+Cockpit / TW の `__computeTwMetricsForIso` が `KpiYearStore.readDailyFacts(iso)` を先に読む。日付移動で全日ループしない。facts が無い日だけ既存計算。
+
+実装: `scripts/focus_tw_metrics_client.py` · `js/kpi-daily-facts-sync.js`（GET 後に Cockpit 再描画）
+
+確認: Annual で日付を動かす → Cockpit の売上・累計が `readDailyFacts` と同じ。画面が止まらない。
 
 ### 段階 4 — 描画窓（仮想化）
 
-TW は Focus 周辺数十行だけ DOM。作業窓のデータを持っていても全日 `innerHTML` しない。
+**状態: 滑る±28日窓は撤回（2026-08-15）。DOM は年+14日パッド。解の読み取り（段階3）は維持。本番は FileZilla Step O の上書き。**
+
+TW の Focus ±4週だけ DOM は、1月始まりだと窓の端が 2/6 になり日付飛び・停止・ページスクロールが起きた。年の一覧は残す。仮想化（スペーサ）は次の機会。
 
 ### 段階 5 — 一括計算をサーバへ（任意）
 
@@ -182,4 +190,4 @@ TW は Focus 周辺数十行だけ DOM。作業窓のデータを持っていて
 
 ## 7. 次の一手
 
-段階 0・1・2a・2b は本番済み。段階2c は FileZilla Step L（JS 新規＋ HTML。`store.php` は上げない）。
+段階 0〜3 は本番済み。段階4 は FileZilla Step O（Annual / Monthly HTML。schema / store.php / JS 新規は上げない）。

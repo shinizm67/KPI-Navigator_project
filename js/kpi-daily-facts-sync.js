@@ -115,6 +115,14 @@
         ytdTarget: row.ytdTarget,
       };
     });
+    try {
+      if (typeof window.__invalidateTwSalesThroughCache === 'function') {
+        window.__invalidateTwSalesThroughCache();
+      }
+    } catch (_eInv) {}
+    try {
+      document.dispatchEvent(new CustomEvent('kpi:readSurfacesRefresh', { detail: { source: 'daily-facts' } }));
+    } catch (_eRef) {}
   }
 
   function collectYearRows(year) {

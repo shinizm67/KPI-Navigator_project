@@ -398,6 +398,156 @@ Cockpit / TW の計算はまだ既存のまま（段階3）。
 
 確認: https://forge-laboratory.com/kpi-navigator/images/booking_sci-fi.svg が SVG で開く。Annual を再読み込み → Insight の右がアイコン。
 
+### Step N — 段階3 Cockpit / TW が解を読む（2026-08-15）
+
+schema / `store.php` は上げない。サーバから消さない。
+
+#### N-1 — JS（上書き・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| N1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` | 上書き |
+
+#### N-2 — Annual（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| N2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| N3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| N4 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+
+#### N-3 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| N5 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| N6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| N7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+#### N-4 — MEP（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| N8 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+| N9 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| N10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `store.php`、phpMyAdmin、`en/images/`
+
+**確認**
+
+1. **N1 を先に**上げてから HTML
+2. Annual を開く → 日付を動かす（Cockpit が付いてくる、止まらない）
+3. DevTools: `KpiYearStore.readDailyFacts('2026-01-05')` の `mtdActual` / `ytdActual` が Cockpit の月累計・年累計と一致
+
+迷ったら N1 + N2 だけ先に。
+
+### Step O — 段階4 TW 描画窓（Focus 前後4週）（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### O-1 — Annual（3言語・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| O1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| O2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| O3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+#### O-2 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| O4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| O5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| O6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+#### O-3 — MEP（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| O7 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+| O8 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| O9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `store.php`、phpMyAdmin、`js/` 新規、`en/images/`
+
+**確認**
+
+1. **English を見ているなら O2 を先に**（日本語なら O1）。ハードリロード
+2. 1月〜2月を縦スクロール → **2/6 で止まらない**。日付がコロコロ飛ばない
+3. TW の端まで行っても **ページ全体が落ちない**
+4. Cockpit と Focus Bar の日付・曜日が一致
+5. Console: `document.querySelectorAll('#annual-daily-rows .annual-daily-row').length` → **約 390**（年+前後14日。57 ではない）
+
+迷ったら O1 だけ先に。
+
+### Step P — Cockpit ◀︎▶︎ と TW の日付同期（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+Cockpit の ◀︎▶︎ が TW を smooth scroll し、途中の行が Cockpit に書き戻して日付が飛ぶのを止める。MEP は対象外。
+
+#### P-1 — Annual（3言語・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| P1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| P2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| P3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+#### P-2 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| P4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| P5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| P6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**上げない:** `store.php`、phpMyAdmin、`js/` 新規、MEP の `index.html`
+
+**確認**
+
+1. **English を見ているなら P2 を先に**（日本語なら P1）。ハードリロード
+2. Cockpit の ▶︎ を1回 → **1日だけ**進む。TW もその日へ即着地（滑らかに何行も滑らない）
+3. ◀︎ も同様に1日だけ戻る
+4. ▶︎ を押しっぱなし → 日付が飛ばず、1日ずつ進む
+5. 12/31 で ▶︎ → **翌年 1/1**（翌年末へ飛ばない）。1/1 で ◀︎ → **前年 12/31**
+6. TW を手でスクロールしたとき、Cockpit 日付は今まで通り付いてくる
+
+迷ったら P2 だけ先に。
+
+### Step Q — Cockpit ◀︎▶︎ 押しっぱなし速度を戻す（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。P と同じ6ファイルの上書き。日付飛び防止（即着地）は残し、押しっぱなし間隔だけ元の 75ms に戻す。
+
+#### Q-1 — Annual（3言語・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| Q1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| Q2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| Q3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+#### Q-2 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| Q4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| Q5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| Q6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**上げない:** `store.php`、phpMyAdmin、`js/` 新規、MEP
+
+**確認**
+
+1. **English を見ているなら Q2 を先に**（日本語なら Q1）。ハードリロード
+2. ▶︎ 押しっぱなしの速さが、P の前と同じくらいに戻る
+3. それでも **1日ずつ**（飛ばない）。TW も付いてくる
+4. 12/31 ▶︎ → 翌年 1/1 のまま
+
+迷ったら Q2 だけ先に。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -417,6 +567,8 @@ Cockpit / TW の計算はまだ既存のまま（段階3）。
 | Save後も `readDailyFacts` が null | I 未反映 | I-1 の Annual HTML を上書き |
 | phpMyAdmin で kpi_daily_facts が無い | J 未実行 | ADD SQL を SQL タブで実行。FileZilla では作られない |
 | daily-facts.php が 404 | K1 未反映 | 新規 UP。`store.php` と同じフォルダ |
+| TW が 2/6 で止まる・日付が飛ぶ | 滑る±28日窓の残り | O1/O2 をこの修正版で上書き |
+| Cockpit ◀︎▶︎ で日付が飛ぶ | smooth scroll の残り | P1/P2 をこの修正版で上書き |
 | kpi-daily-facts-sync.js が 404 | L1 未反映 | L1 を HTML より先に新規 UP |
 | Forge Lab トップが壊れた | LP を kpi-navigator 内に上げた | **LP は `public_html/` 直下** に戻す（別フォルダ正本から） |
 
