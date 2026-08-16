@@ -121,11 +121,49 @@ def kpi_year_store_js() -> str:
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {{
             store.meta.schemaVersion = SCHEMA_VERSION;
             persistStore();
+          }} else {{
+            var hadFacts = false;
+            Object.keys(store.years || {{}}).forEach(function (yk) {{
+              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
+            }});
+            if (hadFacts) persistStore();
           }}
         }}
 
+        function persistableStore() {{
+          var out = {{}};
+          Object.keys(store).forEach(function (k) {{
+            if (k === 'years') return;
+            out[k] = store[k];
+          }});
+          var years = store.years || {{}};
+          var slimYears = {{}};
+          Object.keys(years).forEach(function (yk) {{
+            var rec = years[yk];
+            if (!rec || typeof rec !== 'object') {{
+              slimYears[yk] = rec;
+              return;
+            }}
+            var copy = {{}};
+            Object.keys(rec).forEach(function (rk) {{
+              if (
+                rk === 'dailyFacts' ||
+                rk === 'dailyFactsUpdatedAt' ||
+                rk === 'dailyFactsFromIso' ||
+                rk === 'dailyFactsReason'
+              ) {{
+                return;
+              }}
+              copy[rk] = rec[rk];
+            }});
+            slimYears[yk] = copy;
+          }});
+          out.years = slimYears;
+          return out;
+        }}
+
         function persistStore() {{
-          gw().setJson(STORE_KEY, store);
+          gw().setJson(STORE_KEY, persistableStore());
           syncLegacyKeys();
         }}
 

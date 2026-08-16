@@ -1,7 +1,7 @@
 # LE 配備: FileZilla パス表（必須ルール）
 
-更新日: 2026-08-14  
-目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。
+更新日: 2026-08-16  
+目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。FileZilla は **表層フォルダ／言語で完結**させ、上に戻らない。
 
 関連: ブランド LE [`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md) · Phase B [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
 
@@ -52,12 +52,27 @@ public_html/                    ← サイト根（Forge Lab LP）
 3. **同名ファイルは親フォルダを必ず書く**（`index.html` 単独禁止）
 4. **1 Step = 少ない行数**（迷ったら分割。修復より予防）
 5. 可能なら **確認 URL** を1行添える
+6. **並びは表層フォルダ単位・言語で完結**（下に進むだけで終わる。Annual 3言語まとめてから Monthly に戻らない）
 
-### 表のテンプレ（コピー用）
+### グループ順（上から。関係ないグループは出さない）
+
+1. `js/` の中だけで完結
+2. `api/` の中だけで完結
+3. 日本語 `app/`（中は `annual` → `monthly` → `monthly/edit` → 他）
+4. 英語 `en/app/`（同じ順）
+5. 繁中 `zh-tw/app/`（同じ順）
+6. その他も表層フォルダ単位（`setting/`、`images/` など）。言語があるなら日 → 英 → 台湾
+
+### 表のテンプレ（コピー用・言語で完結）
 
 | # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
 |---|----------------------------------|------------------------|----------|
-| 1 | `/Users/shinmatsushita/Desktop/kpi-navigator/【ここ】` | `public_html/kpi-navigator/【ここ】` | `https://forge-laboratory.com/kpi-navigator/【ここ】` |
+| 1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| 2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| 3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| 4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| 5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| 6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
 
 ### やってはいけない例
 
@@ -548,6 +563,305 @@ schema / `store.php` / 新規 JS は上げない。サーバから消さない�
 
 迷ったら Q2 だけ先に。
 
+### Step R — persist から解（dailyFacts）を外す（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。入力（売上・営業日・計画）は blob のまま。解だけ localStorage / blob に書かない。
+
+#### R-1 — Annual（3言語・先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| R1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| R2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| R3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+#### R-2 — Monthly（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| R4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| R5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| R6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+#### R-3 — MEP（3言語）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| R7 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+| R8 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| R9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `store.php`、phpMyAdmin、`js/` 新規、schema
+
+**確認**
+
+1. **English を見ているなら R2 を先に**（日本語なら R1）。ハードリロード
+2. Cockpit の売上・累計は今までどおり
+3. DevTools Console（ログインした状態）:
+   - `KpiYearStore.readDailyFacts('YYYY-MM-DD')` → 値がある（メモリ or GET）
+   - 数秒待ってから `JSON.parse(localStorage.getItem('kpiNavigator.kpiYearStore')).years['YYYY'].dailyFacts` → **undefined**
+4. ◀︎▶︎ と TW スクロールは Q のまま（飛ばない・速さそのまま）
+
+迷ったら R2 だけ先に。
+
+### Step S — Monthly 横 TW の点滅を抑える（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| S1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| S2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| S3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`、phpMyAdmin、`js/` 新規
+
+**確認**
+
+1. English なら S2 を先に。ハードリロード
+2. Monthly を開く
+3. 表を左右にスクロールする
+4. 数字が消えて点滅しなければ OK
+
+迷ったら S2 だけ先に。
+
+### Step T — Monthly 縦帯と横スクロールの重なり（2026-08-15）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。S の上書き。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| T1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| T2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| T3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. English なら T2 を先に。ハードリロード
+2. Monthly を開く（中央の Edit 縦帯が出ている状態）
+3. 表を左右にスクロールする
+4. 縦帯の数字が、下の表と二重に重なってチラつかなければ OK
+
+迷ったら T2 だけ先に。
+
+### Step U — Monthly 縦帯の下の表列を隠す（2026-08-16）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。T の上書き。
+
+前回の黒塗りでは、横スクロールの表が縦帯の上に乗ることがあり、見た目が変わらなかった。今回は縦帯と重なる表の列だけ切り抜く。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| U1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| U2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| U3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. English なら U2 を先に。ハードリロード
+2. Monthly を開く（中央の Edit 縦帯が出ている状態）
+3. 表を左右にスクロールする
+4. 縦帯の中で、表の数字が二重に重ならなければ OK
+
+迷ったら U2 だけ先に。
+
+**結果（2026-08-16）:** 本番照合は一致。録画で列に黒い穴・数字の重なりが増えた。**切り抜きは撤回（Step V）。**
+
+### Step V — U の切り抜きを戻し、DB到着後に縦帯を追従（2026-08-16）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。U の上書き。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| V1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| V2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| V3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. English なら V2 を先に。ハードリロード
+2. Monthly を開く（中央の Edit 縦帯が出ている状態）
+3. 表を左右にスクロールする
+4. 列のあいだに黒い穴が開いていなければ OK（U の穴が消える）
+5. 縦帯の数字が、隣の列と同じ通貨・同じ値に追いつく
+
+迷ったら V2 だけ先に。
+
+### Step W — 縦帯の位置では表を描かない（2026-08-16）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。V の上書き。
+
+列を切らない。縦帯の幅だけ、表側を描画しない。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| W1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| W2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| W3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. English なら W2 を先に。ハードリロード
+2. Monthly を開く（中央の Edit 縦帯が出ている状態）
+3. 表を左右にスクロールする
+4. 縦帯の中で数字が二重に重ならなければ OK
+5. 列のあいだに黒い穴が開いていなければ OK
+
+迷ったら W2 だけ先に。
+
+**結果（2026-08-16）:** 本番照合は一致。マスクは表に黒い隙間を作り、縦帯のコピー数字は残った。**マスク撤回。コピー表示を止める（Step X）。**
+
+### Step X — 縦帯のコピー数字を止める（2026-08-16）
+
+schema / `store.php` / 新規 JS は上げない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。Monthly だけ。W の上書き。
+
+縦帯は枠・Edit / Today / Graph / 年だけ。数字は表が唯一。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| X1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| X2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| X3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. English なら X2 を先に。ハードリロード
+2. Monthly を開く（中央の Edit 縦帯が出ている状態）
+3. 表を左右にスクロールする
+4. 数字が二重に重ならなければ OK
+5. 列のあいだに黒い穴が開いていなければ OK
+
+迷ったら X2 だけ先に。
+
+**結果（2026-08-16）:** 本番照合は一致。コピー停止では全セル点滅・メモリ警告は止まらない。原因は横スクロールのたびにストア全体を保存し、表を作り直していたこと。
+
+### Step Y — スクロール中の全ストア保存と再描画ループを止める（2026-08-16）
+
+サーバから消さない。同名 `index.html` は **親フォルダ必須**。Y4 の JS も上げる。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| Y1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| Y2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| Y3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| Y4 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` | 共通 JS |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. メモリ警告が出ているタブは閉じる
+2. English なら Y2 と Y4 を先に。ハードリロード
+3. Monthly を開く
+4. 表を左右にスクロールする → 数字が狂ったように明滅しなければ OK
+5. 月の端まで送って隣月へ移れる
+6. メモリ警告が連続で出なければ OK
+
+迷ったら Y2 + Y4 だけ先に。
+
+**結果（2026-08-16 11:21）:** Y1〜Y3 は本番とバイト一致。**Y4 は未上げ**（本番 Last-Modified は 8/15）。Focus Bar 真っ黒は Step X のコピー非表示が残っているため。settle の busy return が月跨ぎを止めていた。スクロール中の annualNav 書き込みが store.php 全ストア PUT を起こしメモリを食う。
+
+### Step Z — Focus Bar を戻し、月跨ぎとメモリを直す（2026-08-16）
+
+サーバから消さない。同名 `index.html` は **親フォルダ必須**。Z4 は Y で上がっていないので **今回必ず上げる**。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| Z1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| Z2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| Z3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| Z4 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` | 共通 JS |
+
+**上げない:** Annual、MEP、`store.php`
+
+**確認**
+
+1. メモリ警告が出ているタブは閉じる
+2. English なら **Z2 と Z4 を先に**。ハードリロード
+3. Monthly を開く → 中央 Focus Bar に日付と数字が出る（真っ黒の穴ではない）
+4. 表を左右にスクロールする → 全セルが ¥0,000,000 に明滅しなければ OK
+5. 月の端まで送って隣月へ移れる
+6. メモリ警告が連続で出なければ OK
+
+迷ったら Z2 + Z4 だけ先に。
+
+**結果（2026-08-16 11:37）:** 新しいタブで Monthly 横 TW は問題なし。Focus Bar・月跨ぎ・明滅は改善。古いメモリ警告タブは捨ててよい。
+
+### Step AA — 段階 2d: blob GET/PUT から解を外す（2026-08-16）
+
+Annual / Monthly / MEP の HTML は Step R で本番一致済み。残っていたのは `store.php` の GET が古い blob の解を localStorage に戻すこと。`store.php` は上げない。共通 JS 1本だけ。
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| AA1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` | 共通 JS（Annual / Monthly が読む） |
+
+**上げない:** Annual、Monthly、MEP、`store.php`、schema、phpMyAdmin
+
+**確認**
+
+1. メモリ警告が出ているタブは閉じる
+2. AA1 を上げてから、English なら Annual をハードリロード
+3. Cockpit の売上・累計が出る（空にならない）
+4. ◀︎▶︎ で日付を動かす → 数字が追従する
+5. Monthly 横 TW をスクロール → Focus Bar に数字があり、月が跨げる
+6. もう一度リロードしても同じ
+
+迷ったら AA1 だけ。
+
+**結果（2026-08-16 12:08）:** 本番照合はバイト一致。Last-Modified `Sun, 16 Aug 2026 03:04:15 GMT`。2d の GET/PUT 除外マーカーは本番にあり。画面確認済み。
+
+### Step AB — スペーサ仮想化（年+14日は残す）（2026-08-16）
+
+滑る ±28日窓は使わない。論理一覧は年+前後14日のまま。DOM は Focus 前後約28日だけ。高さはスペーサで保つ。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+並びは **言語フォルダで完結**（下に進むだけ。Annual 3言語まとめてから Monthly に戻らない）。
+
+#### AB — 日本語 `app/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| AB1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AB2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### AB — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AB3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AB4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+
+#### AB — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AB5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AB6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** MEP、`store.php`、schema、`js/`、phpMyAdmin
+
+**確認**
+
+1. メモリ警告タブは閉じる。英語画面なら **AB3 を先に**。ハードリロード
+2. Annual を縦にスクロール → **2/6 で止まらない**。1月〜12月まで送れる
+3. Focus Bar の日付が行に追従する
+4. 12/31 で一旦止まってから再スクロール → 翌年 1/1（従来の2段階）
+5. Open / Close どちらでも同じ
+6. Monthly 横 TW は Step Z のまま（Focus Bar に数字、月が跨げる）
+
+迷ったら英語なら AB3 だけ先に。
+
+**結果（2026-08-16 15:08 / 再照合 16:37）:** 6本とも本番とバイト一致。スペーサ仮想化マーカーは全て本番にあり。画面挙動も問題なし。最初の上げ表は Annual 3言語→Monthly 3言語だった。今後の番号はこの言語完結並びに統一。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -567,9 +881,12 @@ schema / `store.php` / 新規 JS は上げない。サーバから消さない�
 | Save後も `readDailyFacts` が null | I 未反映 | I-1 の Annual HTML を上書き |
 | phpMyAdmin で kpi_daily_facts が無い | J 未実行 | ADD SQL を SQL タブで実行。FileZilla では作られない |
 | daily-facts.php が 404 | K1 未反映 | 新規 UP。`store.php` と同じフォルダ |
-| TW が 2/6 で止まる・日付が飛ぶ | 滑る±28日窓の残り | O1/O2 をこの修正版で上書き |
+| TW が 2/6 で止まる・日付が飛ぶ | 滑る±28日窓の残り、またはスペーサ未反映 | 英語なら AB3（`en/app/annual`）を先に上書き。ハードリロード |
 | Cockpit ◀︎▶︎ で日付が飛ぶ | smooth scroll の残り | P1/P2 をこの修正版で上書き |
+| localStorage の years[].dailyFacts が消えない | R 未反映 or GET が解を戻している | R 済みなら **AA1** を上書き。ハードリロード |
 | kpi-daily-facts-sync.js が 404 | L1 未反映 | L1 を HTML より先に新規 UP |
+| Monthly Focus Bar が真っ黒 | Step X のコピー非表示 | Z1〜Z3 を上書き。ハードリロード |
+| 月が跨げない・メモリ警告 | Y4 未上げ or annualNav PUT | Z2 + Z4 を先に上書き |
 | Forge Lab トップが壊れた | LP を kpi-navigator 内に上げた | **LP は `public_html/` 直下** に戻す（別フォルダ正本から） |
 
 ---
@@ -577,4 +894,5 @@ schema / `store.php` / 新規 JS は上げない。サーバから消さない�
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
+並びは **表層フォルダ単位・言語で完結**（`js/` → `api/` → 日本語 `app/` → 英語 `en/app/` → 繁中 `zh-tw/app/`。各言語内は `annual` → `monthly` → `monthly/edit`）。  
 「完了したら Step N 完了 と送って」で区切る。

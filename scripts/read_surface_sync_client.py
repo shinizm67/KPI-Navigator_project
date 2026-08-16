@@ -31,17 +31,22 @@ READ_SURFACE_TW_FINAL_NEW = """      refreshAnnualReadSurfaces({ preserveScroll:
     })();"""
 
 READ_SURFACE_MONTHLY_BLOCK = """      /* KPI-READ-SURFACE-SYNC */
-      document.addEventListener('kpi:readSurfacesRefresh', function () {
+      document.addEventListener('kpi:readSurfacesRefresh', function (ev) {
+        var detail = (ev && ev.detail) || {};
+        if (detail.source === 'init') return;
+        if (detail.kind === 'dailySalesChanged' || detail.kind === 'businessDayChanged') return;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
-        invalidateMonthlyMepMetricsCache();
-        var keepIso =
-          currentFocusIso ||
-          readDailySelectedIso() ||
-          toISODateLocal(new Date(state.year, state.month0, 1));
-        rebuildColumns();
-        scheduleScroll(keepIso);
+        if (typeof invalidateMonthlyMepMetricsCache === 'function') {
+          invalidateMonthlyMepMetricsCache();
+        }
+        if (
+          window.__MONTHLY_UI &&
+          typeof window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace === 'function'
+        ) {
+          window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace();
+        }
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;

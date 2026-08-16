@@ -92,11 +92,16 @@
     return new Date().getFullYear();
   }
 
+  function factKey(f) {
+    if (!f) return '';
+    return [f.sales, f.businessDay ? 1 : 0, f.dailyTarget, f.mtdActual, f.mtdTarget, f.ytdActual, f.ytdTarget].join('|');
+  }
   function applyRows(rows) {
     if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return;
     if (!rows || !rows.length) return;
     var store = KpiYearStore.getStore();
     if (!store.years) store.years = {};
+    var changed = false;
     rows.forEach(function (row) {
       if (!row || !row.iso) return;
       var y = Number(String(row.iso).slice(0, 4));
@@ -105,7 +110,7 @@
       if (!store.years[y].dailyFacts || typeof store.years[y].dailyFacts !== 'object') {
         store.years[y].dailyFacts = {};
       }
-      store.years[y].dailyFacts[row.iso] = {
+      var next = {
         sales: row.sales,
         businessDay: !!row.businessDay,
         dailyTarget: row.dailyTarget,
@@ -114,7 +119,11 @@
         ytdActual: row.ytdActual,
         ytdTarget: row.ytdTarget,
       };
+      if (factKey(store.years[y].dailyFacts[row.iso]) === factKey(next)) return;
+      store.years[y].dailyFacts[row.iso] = next;
+      changed = true;
     });
+    if (!changed) return;
     try {
       if (typeof window.__invalidateTwSalesThroughCache === 'function') {
         window.__invalidateTwSalesThroughCache();

@@ -93,6 +93,59 @@
     return out;
   }
 
+  /* 段階 2d: blob に解を戻さない。メモリと kpi_daily_facts が正本 */
+  function yearRecordHasDailyFacts(rec) {
+    return !!(
+      rec &&
+      typeof rec === 'object' &&
+      (rec.dailyFacts || rec.dailyFactsUpdatedAt || rec.dailyFactsFromIso || rec.dailyFactsReason)
+    );
+  }
+
+  function storeHasDailyFacts(store) {
+    var years = store && store.years;
+    if (!years || typeof years !== 'object') return false;
+    var keys = Object.keys(years);
+    for (var i = 0; i < keys.length; i++) {
+      if (yearRecordHasDailyFacts(years[keys[i]])) return true;
+    }
+    return false;
+  }
+
+  function stripDailyFactsFromStore(store) {
+    if (!store || typeof store !== 'object') return store;
+    var years = store.years;
+    if (!years || typeof years !== 'object') return store;
+    var slimYears = {};
+    Object.keys(years).forEach(function (yk) {
+      var rec = years[yk];
+      if (!rec || typeof rec !== 'object') {
+        slimYears[yk] = rec;
+        return;
+      }
+      var copy = {};
+      Object.keys(rec).forEach(function (rk) {
+        if (
+          rk === 'dailyFacts' ||
+          rk === 'dailyFactsUpdatedAt' ||
+          rk === 'dailyFactsFromIso' ||
+          rk === 'dailyFactsReason'
+        ) {
+          return;
+        }
+        copy[rk] = rec[rk];
+      });
+      slimYears[yk] = copy;
+    });
+    var out = {};
+    Object.keys(store).forEach(function (k) {
+      if (k === 'years') return;
+      out[k] = store[k];
+    });
+    out.years = slimYears;
+    return out;
+  }
+
   function resolveAppRoot() {
     try {
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
@@ -326,7 +379,7 @@
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
-      var storePayload = localGet(STORE_KEY);
+      var storePayload = stripDailyFactsFromStore(localGet(STORE_KEY));
       var body = {
         store: storePayload,
         annualNav: localGet(NAV_KEY),
@@ -362,8 +415,10 @@
         if (!data || !data.ok) return;
         applyPlanFromPayload(data);
         var changed = false;
+        var storeHadFacts = false;
         if (data.store && typeof data.store === 'object') {
-          localSet(STORE_KEY, data.store);
+          storeHadFacts = storeHasDailyFacts(data.store);
+          localSet(STORE_KEY, stripDailyFactsFromStore(data.store));
           changed = true;
         }
         if (data.annualNav && typeof data.annualNav === 'object') {
@@ -377,6 +432,7 @@
         } else if (data.pl && typeof data.pl === 'object') {
           if (applyPlToLocal(data.pl)) changed = true;
         }
+        if (storeHadFacts) schedulePut(cfg);
         if (changed) {
           try {
             document.dispatchEvent(

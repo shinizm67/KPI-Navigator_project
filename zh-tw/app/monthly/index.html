@@ -873,11 +873,21 @@
     .annual-daily-rows {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 0;
       width: 600px;
       max-width: none;
       margin: 0;
       padding: 0;
+    }
+    /* KPI-TW-SPACER: 年+14日の高さは残し、実DOM行は Focus 前後だけ */
+    .annual-daily-rows-spacer {
+      flex: 0 0 auto;
+      width: 100%;
+      pointer-events: none;
+      visibility: hidden;
+    }
+    .annual-daily-rows > .annual-daily-row {
+      margin-bottom: 2px;
     }
     body.annual-focus-bar-expanded .annual-daily-rows {
       width: calc(1570px + var(--annual-daily-focus-scroll-end-gap));
@@ -4831,6 +4841,8 @@
       height: var(--monthly-vfocus-frame-h);
       z-index: 5;
       pointer-events: none;
+      isolation: isolate;
+      transform: translateZ(0);
     }
     .monthly-vertical-focus-bar .monthly-vfocus-frame {
       position: absolute;
@@ -5041,6 +5053,11 @@
       box-sizing: border-box;
       overflow: hidden;
       pointer-events: none;
+      background: #000;
+      isolation: isolate;
+    }
+    .office-mode .monthly-vfocus-fill {
+      background: #2a2a2a;
     }
     .monthly-vfocus-stack {
       display: flex;
@@ -5064,7 +5081,6 @@
       width: 300%;
       box-sizing: border-box;
       transform: translateX(-33.333333%);
-      will-change: transform;
     }
     .monthly-vfocus-lane {
       flex: 0 0 33.333333%;
@@ -5515,7 +5531,6 @@
       height: var(--monthly-hscroll-outer-h);
       overflow-x: auto;
       overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
       overscroll-behavior-y: auto;
       z-index: 2;
@@ -19694,7 +19709,7 @@
         }
       };
 
-                                                                                                                                                                                                                                                                        /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                                                    /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -19800,11 +19815,49 @@
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
             persistStore();
+          } else {
+            var hadFacts = false;
+            Object.keys(store.years || {}).forEach(function (yk) {
+              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
+            });
+            if (hadFacts) persistStore();
           }
         }
 
+        function persistableStore() {
+          var out = {};
+          Object.keys(store).forEach(function (k) {
+            if (k === 'years') return;
+            out[k] = store[k];
+          });
+          var years = store.years || {};
+          var slimYears = {};
+          Object.keys(years).forEach(function (yk) {
+            var rec = years[yk];
+            if (!rec || typeof rec !== 'object') {
+              slimYears[yk] = rec;
+              return;
+            }
+            var copy = {};
+            Object.keys(rec).forEach(function (rk) {
+              if (
+                rk === 'dailyFacts' ||
+                rk === 'dailyFactsUpdatedAt' ||
+                rk === 'dailyFactsFromIso' ||
+                rk === 'dailyFactsReason'
+              ) {
+                return;
+              }
+              copy[rk] = rec[rk];
+            });
+            slimYears[yk] = copy;
+          });
+          out.years = slimYears;
+          return out;
+        }
+
         function persistStore() {
-          gw().setJson(STORE_KEY, store);
+          gw().setJson(STORE_KEY, persistableStore());
           syncLegacyKeys();
         }
 
@@ -21271,17 +21324,23 @@
 
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
+          var src = source || 'kpi-year-store';
+          if (store.meta.selectedDate === iso) return;
           store.meta.selectedDate = iso;
-          persistStore();
+          /* focus-sync = 横TWスクロール。全ストア保存するとメモリが死ぬ */
+          if (src !== 'focus-sync' && src !== 'monthly-vfocus-nav') persistStore();
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
-          try {
-            gw().setJson(SELECTED_DATE_KEY, {
-              calendarYear: isoYear(iso),
-              selectedIso: iso,
-            });
-          } catch (_e) {}
+          /* 横スクロール中に annualNav を書くと store.php へ全ストアPUTが走る */
+          if (src !== 'focus-sync' && src !== 'monthly-vfocus-nav') {
+            try {
+              gw().setJson(SELECTED_DATE_KEY, {
+                calendarYear: isoYear(iso),
+                selectedIso: iso,
+              });
+            } catch (_e) {}
+          }
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
               detail: { isoDate: iso, source: source || 'kpi-year-store' },
@@ -22918,17 +22977,22 @@
           });
         });
         /* KPI-READ-SURFACE-SYNC */
-      document.addEventListener('kpi:readSurfacesRefresh', function () {
+      document.addEventListener('kpi:readSurfacesRefresh', function (ev) {
+        var detail = (ev && ev.detail) || {};
+        if (detail.source === 'init') return;
+        if (detail.kind === 'dailySalesChanged' || detail.kind === 'businessDayChanged') return;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
-        invalidateMonthlyMepMetricsCache();
-        var keepIso =
-          currentFocusIso ||
-          readDailySelectedIso() ||
-          toISODateLocal(new Date(state.year, state.month0, 1));
-        rebuildColumns();
-        scheduleScroll(keepIso);
+        if (typeof invalidateMonthlyMepMetricsCache === 'function') {
+          invalidateMonthlyMepMetricsCache();
+        }
+        if (
+          window.__MONTHLY_UI &&
+          typeof window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace === 'function'
+        ) {
+          window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace();
+        }
       });
       window.addEventListener('storage', function (ev) {
         if (!ev || !ev.key) return;
@@ -25895,23 +25959,33 @@
       }
 
       function getNearestFocusRowIndex() {
+        var root = document.getElementById('annual-daily-rows');
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return 0;
+        var visLo = Number(root && root.getAttribute('data-tw-vis-lo')) || 0;
+        var logicalCount = Number(root && root.getAttribute('data-tw-logical-count')) || rows.length;
         var rowStart = getRowStartYInContent();
         if (rowStart == null) return 0;
+        rowStart -= visLo * SNAP_ROW_PITCH;
         var anchorOffset = getFocusAnchorOffsetY();
         var anchorYInContent = tableScroll.scrollTop + anchorOffset;
         var idx = Math.round((anchorYInContent - (rowStart + SNAP_ROW_HEIGHT / 2)) / SNAP_ROW_PITCH);
         if (idx < 0) idx = 0;
-        if (idx >= rows.length) idx = rows.length - 1;
+        if (idx >= logicalCount) idx = logicalCount - 1;
         return idx;
       }
 
       function getScrollTopForRowIndex(idx) {
+        var root = document.getElementById('annual-daily-rows');
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return tableScroll.scrollTop;
+        var visLo = Number(root && root.getAttribute('data-tw-vis-lo')) || 0;
+        var logicalCount = Number(root && root.getAttribute('data-tw-logical-count')) || rows.length;
         var rowStart = getRowStartYInContent();
         if (rowStart == null) return tableScroll.scrollTop;
+        rowStart -= visLo * SNAP_ROW_PITCH;
+        if (idx < 0) idx = 0;
+        if (idx >= logicalCount) idx = logicalCount - 1;
         var anchorOffset = getFocusAnchorOffsetY();
         var target = rowStart + idx * SNAP_ROW_PITCH + SNAP_ROW_HEIGHT / 2 - anchorOffset;
         var maxTop = tableScroll.scrollHeight - tableScroll.clientHeight;
@@ -26012,10 +26086,18 @@
         }
       }
       function syncDailyDateFromFocusedRowForIndex(idx) {
-        var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
-        if (!rows || !rows.length) return;
-        if (idx < 0 || idx >= rows.length) return;
-        var iso = rows[idx].getAttribute('data-iso-date');
+        var root = document.getElementById('annual-daily-rows');
+        var row = root
+          ? root.querySelector('.annual-daily-row[data-tw-logical-idx="' + idx + '"]')
+          : null;
+        if (!row) {
+          if (window.__twMaybeShiftVisibleWindow) window.__twMaybeShiftVisibleWindow();
+          row = root
+            ? root.querySelector('.annual-daily-row[data-tw-logical-idx="' + idx + '"]')
+            : null;
+        }
+        if (!row) return;
+        var iso = row.getAttribute('data-iso-date');
         if (!iso) return;
         syncCalendarYearFromIso(iso);
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
@@ -26026,8 +26108,10 @@
       function syncDailyDateFromFocusedRow() {
         syncDailyDateFromFocusedRowForIndex(getNearestFocusRowIndex());
       }
+      window.__annualTwFocusRowIndex = getNearestFocusRowIndex;
 
       tableScroll.addEventListener('scroll', function () {
+        if (window.__twMaybeShiftVisibleWindow) window.__twMaybeShiftVisibleWindow();
         syncScrollLeft(tableScroll);
         scheduleSnap();
       }, { passive: true });
@@ -26839,8 +26923,54 @@
             : 'Daily rows ' + bounds.minYear + '–' + bounds.maxYear
         );
 
+        var logicalDays = [];
+        for (
+          var dScan = new Date(bounds.rangeStart);
+          dScan <= bounds.rangeEnd;
+          dScan.setDate(dScan.getDate() + 1)
+        ) {
+          logicalDays.push(new Date(dScan.getFullYear(), dScan.getMonth(), dScan.getDate()));
+        }
+        var nLog = logicalDays.length;
+        var activeFirst = -1;
+        var activeLast = -1;
+        for (var ai = 0; ai < nLog; ai++) {
+          if (logicalDays[ai].getFullYear() === anchorYear) {
+            if (activeFirst < 0) activeFirst = ai;
+            activeLast = ai;
+          }
+        }
+        rowsRoot.setAttribute('data-tw-logical-count', String(nLog));
+        rowsRoot.setAttribute('data-tw-active-first', String(activeFirst));
+        rowsRoot.setAttribute('data-tw-active-last', String(activeLast));
+        var focusIdxPaint = 0;
+        var focusIsoPaint = String(bounds.focusIso || '');
+        for (var fi = 0; fi < nLog; fi++) {
+          if (twLocalIso(logicalDays[fi]) === focusIsoPaint) {
+            focusIdxPaint = fi;
+            break;
+          }
+        }
+        var halfPaint = typeof TW_DRAW_HALF_DAYS === 'number' ? TW_DRAW_HALF_DAYS : 28;
+        function paintTwVisibleRows(centerIdx) {
+          centerIdx = Number(centerIdx);
+          if (!Number.isFinite(centerIdx)) centerIdx = 0;
+          if (centerIdx < 0) centerIdx = 0;
+          if (centerIdx >= nLog) centerIdx = nLog - 1;
+          var visLo = Math.max(0, centerIdx - halfPaint);
+          var visHi = Math.min(nLog - 1, centerIdx + halfPaint);
+          rowsRoot.setAttribute('data-tw-vis-lo', String(visLo));
+          rowsRoot.setAttribute('data-tw-vis-hi', String(visHi));
+          if (logicalDays[visLo]) seedTwCumUpTo(logicalDays[visLo]);
+          var frag = document.createDocumentFragment();
+          var spB = document.createElement('div');
+          spB.className = 'annual-daily-rows-spacer annual-daily-rows-spacer--before';
+          spB.setAttribute('aria-hidden', 'true');
+          spB.style.height = visLo * 42 + 'px';
+          frag.appendChild(spB);
         var prevYearMarker = null;
-        for (var d = new Date(bounds.rangeStart); d <= bounds.rangeEnd; d.setDate(d.getDate() + 1)) {
+        for (var pi = visLo; pi <= visHi; pi++) {
+          var d = logicalDays[pi];
           var iso =
             d.getFullYear() +
             '-' +
@@ -27000,8 +27130,62 @@
           row.appendChild(groupBase);
           row.appendChild(groupMonthly);
           row.appendChild(groupAnnual);
-          rowsRoot.appendChild(row);
+          row.setAttribute('data-tw-logical-idx', String(pi));
+          frag.appendChild(row);
         }
+          var spA = document.createElement('div');
+          spA.className = 'annual-daily-rows-spacer annual-daily-rows-spacer--after';
+          spA.setAttribute('aria-hidden', 'true');
+          spA.style.height = Math.max(0, nLog - visHi - 1) * 42 + 'px';
+          frag.appendChild(spA);
+          rowsRoot.replaceChildren(frag);
+          if (typeof __geomCache !== 'undefined') __geomCache = null;
+          if (typeof __anchorRangeCache !== 'undefined') __anchorRangeCache = null;
+        }
+        window.__paintTwVisibleWindow = function (iso) {
+          if (!iso || !nLog) return false;
+          var idx = -1;
+          for (var qi = 0; qi < nLog; qi++) {
+            if (twLocalIso(logicalDays[qi]) === String(iso)) {
+              idx = qi;
+              break;
+            }
+          }
+          if (idx < 0) return false;
+          var lo = Number(rowsRoot.getAttribute('data-tw-vis-lo'));
+          var hi = Number(rowsRoot.getAttribute('data-tw-vis-hi'));
+          var edge = typeof TW_DRAW_EDGE_DAYS === 'number' ? TW_DRAW_EDGE_DAYS : 7;
+          if (!Number.isFinite(lo) || idx < lo || idx > hi || idx <= lo + edge || idx >= hi - edge) {
+            paintTwVisibleRows(idx);
+          }
+          return true;
+        };
+        window.__ensureTwDrawWindow = function (iso) {
+          if (!window.__paintTwVisibleWindow(iso)) return false;
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.scrollTableToIso === 'function') {
+            return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), { lockMs: 400 });
+          }
+          return alignTwFocusIso(iso);
+        };
+        window.__twMaybeShiftVisibleWindow = function () {
+          var n = Number(rowsRoot.getAttribute('data-tw-logical-count') || 0);
+          var lo = Number(rowsRoot.getAttribute('data-tw-vis-lo'));
+          var hi = Number(rowsRoot.getAttribute('data-tw-vis-hi'));
+          if (!n || !Number.isFinite(lo) || !Number.isFinite(hi)) return;
+          var idx = 0;
+          if (typeof window.__annualTwFocusRowIndex === 'function') {
+            idx = window.__annualTwFocusRowIndex();
+          }
+          if (idx < 0) idx = 0;
+          if (idx >= n) idx = n - 1;
+          var edge = typeof TW_DRAW_EDGE_DAYS === 'number' ? TW_DRAW_EDGE_DAYS : 7;
+          if (idx > lo + edge && idx < hi - edge) return;
+          var nextLo = Math.max(0, idx - halfPaint);
+          var nextHi = Math.min(n - 1, idx + halfPaint);
+          if (nextLo === lo && nextHi === hi) return;
+          paintTwVisibleRows(idx);
+        };
+        paintTwVisibleRows(focusIdxPaint);
 
         var focusIso = bounds.focusIso;
         var focusRow = focusIso
@@ -27034,17 +27218,7 @@
           finishTwDrawRender(focusIso, prevScroll, scrollEl);
         }
       }
-      window.__ensureTwDrawWindow = function (iso) {
-        if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return false;
-        var row = document.querySelector(
-          '#annual-daily-rows .annual-daily-row[data-iso-date="' + iso + '"]'
-        );
-        if (!row) return false;
-        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.scrollTableToIso === 'function') {
-          return !!window.__ANNUAL_UI.scrollTableToIso(String(iso), { lockMs: 400 });
-        }
-        return alignTwFocusIso(iso);
-      };
+      /* KPI-TW-SPACER: __ensureTwDrawWindow は renderAnnualDailyTimeline 内で定義 */
       function buildMonthlyCumulativeTrendPayload(year, month, cutoffIso) {
         var y = Number(year);
         var m = Number(month);
@@ -28268,22 +28442,25 @@
       }
 
       function getFocusedRowState() {
-        var rows = rowsRoot.children;
+        var rows = rowsRoot.querySelectorAll('.annual-daily-row');
         if (!rows || !rows.length) return { row: null, offset: 0, idx: 0 };
         var rowPitch = 42;
         var rowHeight = 40;
+        var visLo = Number(rowsRoot.getAttribute('data-tw-vis-lo')) || 0;
+        var logicalCount = Number(rowsRoot.getAttribute('data-tw-logical-count')) || rows.length;
         var tableRect = tableScroll.getBoundingClientRect();
         var anchorRect = lowerScroll ? lowerScroll.getBoundingClientRect() : tableRect;
         var anchorOffset = (anchorRect.top + anchorRect.height / 2) - tableRect.top;
         var firstRect = rows[0].getBoundingClientRect();
-        var rowStart = tableScroll.scrollTop + (firstRect.top - tableRect.top);
+        var rowStart = tableScroll.scrollTop + (firstRect.top - tableRect.top) - visLo * rowPitch;
         var anchorYInContent = tableScroll.scrollTop + anchorOffset;
         var idx = Math.round((anchorYInContent - (rowStart + rowHeight / 2)) / rowPitch);
         if (idx < 0) idx = 0;
-        if (idx >= rows.length) idx = rows.length - 1;
+        if (idx >= logicalCount) idx = logicalCount - 1;
         var idealTop = rowStart + idx * rowPitch + rowHeight / 2 - anchorOffset;
         var offset = tableScroll.scrollTop - idealTop;
-        return { row: rows[idx], offset: offset, idx: idx };
+        var row = rowsRoot.querySelector('.annual-daily-row[data-tw-logical-idx="' + idx + '"]');
+        return { row: row, offset: offset, idx: idx };
       }
 
       var raf = 0;
@@ -28295,9 +28472,8 @@
           var state = getFocusedRowState();
           writeLowerFromRow(state.row);
           var expanded = document.body.classList.contains('annual-focus-bar-expanded');
-          var rows = rowsRoot.children;
-          var prevRow = state.idx > 0 ? rows[state.idx - 1] : state.row;
-          var nextRow = state.idx < rows.length - 1 ? rows[state.idx + 1] : state.row;
+          var prevRow = rowsRoot.querySelector('.annual-daily-row[data-tw-logical-idx="' + (state.idx - 1) + '"]') || state.row;
+          var nextRow = rowsRoot.querySelector('.annual-daily-row[data-tw-logical-idx="' + (state.idx + 1) + '"]') || state.row;
           writeLowerFromRowTo(lowerPrev, prevRow);
           writeLowerFromRowTo(lowerNext, nextRow);
           lowerPrev.style.display = 'flex';
@@ -29729,6 +29905,7 @@
       var CROSS_STICKY_WINDOW_MS = 720;
       var EDGE_EPS = 6;
       var settleSkip = 0;
+      var __monthlyEdgeLockUntil = 0;
       /* KPI-MRP-PHASE2-7 */
       var __monthlyTwFirstSchedule = true;
       var __monthlyTwHydratePaused = false;
@@ -29846,6 +30023,7 @@
         return s;
       }
       var vFocusRaf = null;
+      var __vfocusLastIdx = null;
       function scheduleVFocusUpdate() {
         if (!vfocusOk) return;
         if (vFocusRaf != null) return;
@@ -29951,6 +30129,7 @@
         ];
         var laneProfits = [vProfitPrev, vProfitBottom, vProfitNext];
         if (n === 0) {
+          __vfocusLastIdx = null;
           syncMonthlyVfocusYearBadge(NaN);
           for (var le = 0; le < 3; le++) {
             if (laneDates[le]) {
@@ -30048,6 +30227,13 @@
           }
         }
 
+        if (vFocusLanesEl && vFocusStackEl) {
+          var laneW = vFocusStackEl.clientWidth;
+          var shift = -laneW * (1 + frac);
+          vFocusLanesEl.style.transform = 'translateX(' + shift + 'px)';
+        }
+        if (__vfocusLastIdx === idx) return;
+        __vfocusLastIdx = idx;
         fillLane(0, idx - 1);
         fillLane(1, idx);
         fillLane(2, idx + 1);
@@ -30066,11 +30252,6 @@
         syncVFocusLaneTwState(vLanePrev, idx - 1);
         syncVFocusLaneTwState(vLaneCenter, idx);
         syncVFocusLaneTwState(vLaneNext, idx + 1);
-        if (vFocusLanesEl && vFocusStackEl) {
-          var laneW = vFocusStackEl.clientWidth;
-          var shift = -laneW * (1 + frac);
-          vFocusLanesEl.style.transform = 'translateX(' + shift + 'px)';
-        }
 
         var hdr = trackDate.children[idx];
         if (hdr) {
@@ -30088,6 +30269,7 @@
         if (next.year === state.year && next.month0 === state.month0) return false;
         state.year = next.year;
         state.month0 = next.month0;
+        __monthlyEdgeLockUntil = Date.now() + 900;
         /* KPI-MRP-PHASE2-4 */
         primeMonthlyTwNeighborTargetMaps(state.year);
         persistMonthlyLast();
@@ -30107,11 +30289,14 @@
         if (settleSkip > 0) return;
 
         var maxScroll = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
-        if (lastScrollDir < 0 && scrollEl.scrollLeft <= EDGE_EPS) {
-          if (crossMonthByEdge(-1)) return;
-        }
-        if (lastScrollDir > 0 && scrollEl.scrollLeft >= maxScroll - EDGE_EPS) {
-          if (crossMonthByEdge(1)) return;
+        var edgeLocked = __monthlyEdgeLockUntil && Date.now() < __monthlyEdgeLockUntil;
+        if (!edgeLocked) {
+          if (lastScrollDir < 0 && scrollEl.scrollLeft <= EDGE_EPS) {
+            if (crossMonthByEdge(-1)) return;
+          }
+          if (lastScrollDir > 0 && scrollEl.scrollLeft >= maxScroll - EDGE_EPS) {
+            if (crossMonthByEdge(1)) return;
+          }
         }
 
         pendingCross = null;
@@ -31087,6 +31272,36 @@
           hi: Math.min(n - 1, centerIdx + MONTHLY_TW_VISIBLE_HYDRATE_PAD),
         };
       }
+      function refreshMonthlyTwCellsInPlace() {
+        if (window.__monthlyTwColumnsBusy) return false;
+        if (document.documentElement.getAttribute('data-monthly-tw-hydrated') !== '1') return false;
+        if (!trackGroup1 || !trackGroup1.children.length) return false;
+        if (typeof invalidateGroup1TwCache === 'function') invalidateGroup1TwCache();
+        var y = state.year;
+        var m0 = state.month0;
+        var range = getMonthlyTwVisibleColRange();
+        var metricsByIso = Object.create(null);
+        for (var ci = range.lo; ci <= range.hi; ci++) {
+          var col = trackGroup1.children[ci];
+          if (!col) continue;
+          var iso = col.getAttribute('data-iso');
+          if (!iso) continue;
+          var d = parseISODateLocal(iso);
+          if (!d) continue;
+          var buffer = d.getMonth() !== m0 || d.getFullYear() !== y;
+          var off = !isBusinessDayByIso(iso, d);
+          var metrics = getMonthlyRebuildMetrics(metricsByIso, d);
+          hydrateMonthlyColumnCells(trackGroup1.children[ci], 1, metrics, iso, buffer, off);
+          hydrateMonthlyColumnCells(trackGroup2.children[ci], 2, metrics, iso, buffer, off);
+          hydrateMonthlyColumnCells(trackGroup3.children[ci], 3, metrics, iso, buffer, off);
+          hydrateMonthlyProfitCell(trackProfit.children[ci], metrics, off, iso);
+        }
+        __vfocusLastIdx = null;
+        if (typeof scheduleVFocusUpdate === 'function') scheduleVFocusUpdate();
+        return true;
+      }
+      window.__MONTHLY_UI = window.__MONTHLY_UI || {};
+      window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace = refreshMonthlyTwCellsInPlace;
       function hydrateMonthlyTwColumnAt(colIdx, days, y, m0, metricsByIso) {
         if (isMonthlyTwColHydrated(colIdx)) return;
         var dayObj = days[colIdx];
@@ -31139,7 +31354,10 @@
             hydrateMonthlyTwColumnAt(ci, ctx.days, ctx.y, ctx.m0, metricsByIso);
             touched = true;
           }
-          if (touched) scheduleVFocusUpdate();
+          if (touched) {
+            __vfocusLastIdx = null;
+            scheduleVFocusUpdate();
+          }
         }, 80);
       }
       function scheduleMonthlyTwHydrate(runToken, days, y, m0, focusIso) {
@@ -31168,6 +31386,7 @@
           }
           document.documentElement.setAttribute('data-monthly-tw-hydrated', '1');
           document.documentElement.setAttribute('data-monthly-tw-interactive', '1');
+          __vfocusLastIdx = null;
           scheduleVFocusUpdate();
           scheduleMonthlyTwHydrateTick(runPhase2);
         }
@@ -31205,9 +31424,14 @@
       function rebuildColumnsChunked(runToken, onDone) {
         /* KPI-MRP-PHASE2-5 */
         window.__monthlyTwColumnsBusy = true;
-        document.documentElement.setAttribute('data-monthly-tw-hydrated', '0');
-        document.documentElement.removeAttribute('data-monthly-tw-interactive');
-        document.documentElement.removeAttribute('data-monthly-tw-fully-hydrated');
+        __vfocusLastIdx = null;
+        var alreadyShown =
+          document.documentElement.getAttribute('data-monthly-tw-hydrated') === '1';
+        if (!alreadyShown) {
+          document.documentElement.setAttribute('data-monthly-tw-hydrated', '0');
+          document.documentElement.removeAttribute('data-monthly-tw-interactive');
+          document.documentElement.removeAttribute('data-monthly-tw-fully-hydrated');
+        }
         /* KPI-MRP-PHASE3-0 */
         clearMonthlyTwHydratedCols();
         __monthlyTwDaysCtx = null;

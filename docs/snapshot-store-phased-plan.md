@@ -141,10 +141,15 @@ blob / MySQL は触っていない。
 - 新規: [`js/kpi-daily-facts-sync.js`](../js/kpi-daily-facts-sync.js)
 - 作業窓: Focus の年の 1/1〜12/31 ＋前後2ヶ月（年境の非アクティブ行用）
 - Save / CSV 後にその年の行を PUT（最大 366）。起動時 GET。サーバが空なら手元の解を1回送る
-- **`store.php` の JSON 丸ごとは残す**（切戻し）。localStorage を細くするのはこのあと
-- 画面の Cockpit / TW はまだ既存計算（段階3）
+- **`store.php` の JSON 丸ごとは残す**（切戻し）。**入力**（売上・営業日・計画）は blob のまま。**解（`dailyFacts`）は persist しない**（段階 2d）。画面メモリと `kpi_daily_facts` GET で持つ。
 
-確認: Annual を開いたあと GET の `count` が 0 でなくなる。phpMyAdmin の `kpi_daily_facts` に行がある。
+#### 2d — persist から解を外す（blob は残す）
+
+**状態: HTML は本番済み（FileZilla Step R）。GET が blob の解を戻す穴は Step AA（`kpi-data-gateway.js`）。`store.php` は上げない。**
+
+`persistStore` は `years[Y].dailyFacts` を書かない。ゲートウェイは GET の blob から解を外し、解が残っていたときだけ slim を PUT してサーバ blob を掃除する。メモリの解はそのまま。MySQL の行もそのまま。切戻し用 blob は入力＋計画だけになる。
+
+確認（画面）: Annual をハードリロード → Cockpit の売上・累計が出る。◀︎▶︎ で日付が追従。Monthly 横 TW は Step Z のまま。
 
 ### 段階 3 — 画面は解を読む
 
@@ -158,9 +163,9 @@ Cockpit / TW の `__computeTwMetricsForIso` が `KpiYearStore.readDailyFacts(iso
 
 ### 段階 4 — 描画窓（仮想化）
 
-**状態: 滑る±28日窓は撤回（2026-08-15）。DOM は年+14日パッド。解の読み取り（段階3）は維持。本番は FileZilla Step O の上書き。**
+**状態: 滑る±28日窓は撤回済み。スペーサ仮想化は Step AB（2026-08-16）。論理一覧は年+14日。DOM は Focus ±28日。**
 
-TW の Focus ±4週だけ DOM は、1月始まりだと窓の端が 2/6 になり日付飛び・停止・ページスクロールが起きた。年の一覧は残す。仮想化（スペーサ）は次の機会。
+TW の Focus ±4週だけを一覧にすると、1月始まりで窓の端が 2/6 になり日付飛び・停止が起きた。年の一覧（高さ）は残し、見えない日はスペーサにする。
 
 ### 段階 5 — 一括計算をサーバへ（任意）
 
@@ -190,4 +195,4 @@ TW の Focus ±4週だけ DOM は、1月始まりだと窓の端が 2/6 にな�
 
 ## 7. 次の一手
 
-段階 0〜3 は本番済み。段階4 は FileZilla Step O（Annual / Monthly HTML。schema / store.php / JS 新規は上げない）。
+段階 0〜3・2d・Cockpit ◀︎▶︎ は本番済み。スペーサ仮想化は **Step AB**。そのあとが段階5（サーバ一括計算）。
