@@ -34,6 +34,10 @@
     return resolveAppRoot() + '/api/v1/daily-facts.php';
   }
 
+  function rebuildUrl() {
+    return resolveAppRoot() + '/api/v1/rebuild-year-facts.php';
+  }
+
   function readSyncEnabled() {
     try {
       if (window.__KPI_STORE_SYNC && window.__KPI_STORE_SYNC.enabled != null) {
@@ -183,14 +187,14 @@
 
   function hydrateWindow(opts) {
     opts = opts || {};
-    if (!readSyncEnabled()) return;
+    if (!readSyncEnabled()) return Promise.resolve();
     var year = opts.year != null ? Number(opts.year) : focusYear();
-    if (!Number.isFinite(year)) return;
-    if (!opts.force && lastGetYear === year) return;
+    if (!Number.isFinite(year)) return Promise.resolve();
+    if (!opts.force && lastGetYear === year) return Promise.resolve();
     lastGetYear = year;
     var win = workWindow(year);
     var url = factsUrl() + '?from=' + encodeURIComponent(win.from) + '&to=' + encodeURIComponent(win.to);
-    fetch(url, { method: 'GET', credentials: 'include' })
+    return fetch(url, { method: 'GET', credentials: 'include' })
       .then(function (res) {
         if (!res.ok) return null;
         return res.json();
@@ -206,6 +210,35 @@
         }
       })
       .catch(function () {});
+  }
+
+  function rebuildYear(year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) {
+      return Promise.resolve({ ok: false, error: 'invalid_year' });
+    }
+    return fetch(rebuildUrl(), {
+      method: 'POST',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ year: y }),
+    })
+      .then(function (res) {
+        return res.json().then(
+          function (data) {
+            if (!res.ok) {
+              return data && typeof data === 'object' ? data : { ok: false, error: 'http_' + res.status };
+            }
+            return data;
+          },
+          function () {
+            return { ok: false, error: 'http_' + res.status };
+          }
+        );
+      })
+      .catch(function () {
+        return { ok: false, error: 'network' };
+      });
   }
 
   function bootOnce() {
@@ -232,6 +265,7 @@
     schedulePutYear: schedulePutYear,
     putYear: putYear,
     hydrateWindow: hydrateWindow,
+    rebuildYear: rebuildYear,
     workWindow: workWindow,
   };
 })();

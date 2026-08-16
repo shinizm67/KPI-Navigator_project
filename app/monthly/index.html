@@ -19515,7 +19515,7 @@
         }
       };
 
-                                                                                                                                                                                                                                                      /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                            /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -20143,6 +20143,101 @@
           return null;
         }
 
+        /* KPI-PLAN-REBUILD-AD */
+        var __planRebuildTimer = null;
+        var __planRebuildYear = null;
+        var __planRebuildReason = null;
+        var __planRebuildExtra = null;
+
+        function emitAnnualPlanChanged(year, extra) {
+          extra = extra || {};
+          extra.year = year;
+          document.dispatchEvent(new CustomEvent('kpi:annualPlanChanged', { detail: extra }));
+        }
+
+        function runServerYearRebuild(year, reason, extra) {
+          extra = extra || {};
+          var y = Number(year);
+          if (!Number.isFinite(y)) return Promise.resolve();
+          function fallbackJs() {
+            invalidateDailyFacts({
+              year: y,
+              planChanged: true,
+              reason: reason || 'plan-rebuild-fallback',
+            });
+            persistStore();
+            emitAnnualPlanChanged(y, extra);
+          }
+          persistStore();
+          var work = function () {
+            var gwObj = window.__KPI_DATA_GATEWAY;
+            var flush =
+              gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
+            return Promise.resolve(flush)
+              .then(function () {
+                if (
+                  window.__KPI_DAILY_FACTS_SYNC &&
+                  typeof window.__KPI_DAILY_FACTS_SYNC.rebuildYear === 'function'
+                ) {
+                  return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y);
+                }
+                return { ok: false, skipped: true };
+              })
+              .then(function (data) {
+                if (!data || !data.ok) {
+                  fallbackJs();
+                  return;
+                }
+                var hyd =
+                  window.__KPI_DAILY_FACTS_SYNC &&
+                  typeof window.__KPI_DAILY_FACTS_SYNC.hydrateWindow === 'function'
+                    ? window.__KPI_DAILY_FACTS_SYNC.hydrateWindow({
+                        force: true,
+                        year: y,
+                        backfill: false,
+                      })
+                    : Promise.resolve();
+                return Promise.resolve(hyd).then(function () {
+                  emitAnnualPlanChanged(y, extra);
+                });
+              })
+              .catch(function () {
+                fallbackJs();
+              });
+          };
+          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
+            return window.__KPI_BUSY.run(work, { kind: 'save' }).catch(function () {});
+          }
+          return work();
+        }
+
+        function scheduleServerYearRebuild(year, reason, extra) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return;
+          __planRebuildYear = y;
+          __planRebuildReason = reason || 'plan';
+          __planRebuildExtra = extra || {};
+          if (__planRebuildTimer) window.clearTimeout(__planRebuildTimer);
+          __planRebuildTimer = window.setTimeout(function () {
+            __planRebuildTimer = null;
+            runServerYearRebuild(__planRebuildYear, __planRebuildReason, __planRebuildExtra);
+          }, 800);
+        }
+
+        function flushServerYearRebuildNow() {
+          if (!__planRebuildTimer) return;
+          window.clearTimeout(__planRebuildTimer);
+          __planRebuildTimer = null;
+          if (Number.isFinite(__planRebuildYear)) {
+            runServerYearRebuild(__planRebuildYear, __planRebuildReason, __planRebuildExtra);
+          }
+        }
+
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') flushServerYearRebuildNow();
+        });
+        window.addEventListener('pagehide', flushServerYearRebuildNow);
+
         function writeMonthlyHlWeights(year, weights, meta) {
           var y = Number(year);
           if (!Number.isFinite(y) || isYearLocked(y)) return false;
@@ -20156,21 +20251,10 @@
           if (meta && meta.hlBaselineYears && meta.hlBaselineYears.length) {
             rec.plan.hlBaselineYears = meta.hlBaselineYears.slice();
           }
-          invalidateDailyFacts({
-            year: y,
-            planChanged: true,
-            reason: 'hl-weights',
+          scheduleServerYearRebuild(y, 'hl-weights', {
+            monthlyHlWeights: normalized.slice(),
+            source: (meta && meta.source) || 'kpi-year-store',
           });
-          persistStore();
-          document.dispatchEvent(
-            new CustomEvent('kpi:annualPlanChanged', {
-              detail: {
-                year: y,
-                monthlyHlWeights: normalized.slice(),
-                source: (meta && meta.source) || 'kpi-year-store',
-              },
-            })
-          );
           return true;
         }
 
@@ -21130,23 +21214,17 @@
 
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
-          var src = source || 'kpi-year-store';
-          if (store.meta.selectedDate === iso) return;
           store.meta.selectedDate = iso;
-          /* focus-sync = 横TWスクロール。全ストア保存するとメモリが死ぬ */
-          if (src !== 'focus-sync' && src !== 'monthly-vfocus-nav') persistStore();
+          persistStore();
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
-          /* 横スクロール中に annualNav を書くと store.php へ全ストアPUTが走る */
-          if (src !== 'focus-sync' && src !== 'monthly-vfocus-nav') {
-            try {
-              gw().setJson(SELECTED_DATE_KEY, {
-                calendarYear: isoYear(iso),
-                selectedIso: iso,
-              });
-            } catch (_e) {}
-          }
+          try {
+            gw().setJson(SELECTED_DATE_KEY, {
+              calendarYear: isoYear(iso),
+              selectedIso: iso,
+            });
+          } catch (_e) {}
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
               detail: { isoDate: iso, source: source || 'kpi-year-store' },
@@ -21192,20 +21270,12 @@
           rec.plan.targetSales = Number.isFinite(n) ? n : 0;
           rec.plan.updatedAt = Date.now();
           rec.plan.source = (meta && meta.source) || 'kpi-year-store';
-          invalidateDailyFacts({
-            year: y,
-            planChanged: true,
-            reason: 'annual-target',
-          });
-          persistStore();
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
           }
-          document.dispatchEvent(
-            new CustomEvent('kpi:annualPlanChanged', {
-              detail: { year: y, targetSales: rec.plan.targetSales },
-            })
-          );
+          scheduleServerYearRebuild(y, 'annual-target', {
+            targetSales: rec.plan.targetSales,
+          });
         }
 
         function readAnnualTarget(year) {
@@ -21790,12 +21860,10 @@
           rec.plan.dailyTargetModeUpdatedAt = Date.now();
           rec.plan.dailyTargetModeSource = (meta && meta.source) || 'kpi-year-store';
           clearDailyTargetDisplayCache();
-          invalidateDailyFacts({
-            year: y,
-            planChanged: true,
-            reason: 'daily-target-mode',
+          scheduleServerYearRebuild(y, 'daily-target-mode', {
+            dailyTargetMode: next,
+            source: rec.plan.dailyTargetModeSource,
           });
-          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:dailyTargetModeChanged', {
               detail: {
@@ -22092,6 +22160,7 @@
           readAnnualTarget: readAnnualTarget,
           readMonthlyHlWeights: readMonthlyHlWeights,
           writeMonthlyHlWeights: writeMonthlyHlWeights,
+          flushServerYearRebuildNow: flushServerYearRebuildNow,
           normalizeHlWeights: normalizeHlWeights,
           getYearMeta: getYearMeta,
           isYearLocked: isYearLocked,

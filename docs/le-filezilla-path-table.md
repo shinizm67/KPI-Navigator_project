@@ -862,6 +862,76 @@ Annual / Monthly / MEP の HTML は Step R で本番一致済み。残ってい�
 
 **結果（2026-08-16 15:08 / 再照合 16:37）:** 6本とも本番とバイト一致。スペーサ仮想化マーカーは全て本番にあり。画面挙動も問題なし。最初の上げ表は Annual 3言語→Monthly 3言語だった。今後の番号はこの言語完結並びに統一。
 
+### Step AC — 1年の解をサーバで作り直す（API だけ）（2026-08-16）
+
+画面はまだ呼ばない。上げただけでは Annual / Monthly の動きは変わらない。`store.php` は触らない。サーバから消さない。
+
+#### AC — `api/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| AC1 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/rebuild-year-facts.php` | `public_html/kpi-navigator/api/v1/rebuild-year-facts.php` | 新規。右ペインは **`v1` の中**（`daily-facts.php` の隣） |
+
+**上げない:** `store.php`、`_db.php`、schema、`js/`、`app/` 3言語、phpMyAdmin
+
+**確認**
+
+1. 右ペインを `public_html/kpi-navigator/api/v1/` まで入る
+2. `daily-facts.php` の隣に `rebuild-year-facts.php` がある
+3. 画面の操作は今までどおり（この Step では HTML を上げない）
+
+迷ったら AC1 だけ。完了したら「Step AC 完了」と送る。
+
+**結果（2026-08-16 18:23）:** 本番 GET は未ログイン 401（`daily-facts.php` と同じ）。`api/rebuild-year-facts.php`（v1 の外）は 404。PHP は動いている。画面は未配線。
+
+### Step AD — 繁閑%はクリック中に再計算しない（2026-08-16）
+
+AC 済みが前提。▲▼は数字だけ即時。手を止めてから persist → サーバ1年再計算 → 窓 GET。失敗時は今のブラウザ計算。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AD — `js/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| AD1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` | 共通 JS |
+| AD2 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` | 共通 JS |
+
+#### AD — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AD3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AD4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AD5 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AD — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AD6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AD7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AD8 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AD — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AD9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AD10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AD11 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**上げない:** `store.php`、schema、`rebuild-year-facts.php`（AC 済み）、phpMyAdmin
+
+**確認**
+
+1. メモリ警告タブは閉じる。英語なら AD6 を先にハードリロード
+2. Sales Data で今年の繁閑%を ▲▼ → 数字はすぐ変わる。クリック中に真っ黒にならない
+3. 手を止める → 「保存しています」が出て消える
+4. Cockpit / TW の日次目標が新しい繁閑%に合う
+
+迷ったら AD1 → AD2 を先に。完了したら「Step AD 完了」と送る。
+
+**結果（2026-08-16 18:32）:** AD1〜AD11 は本番とバイト一致。繁閑%のサーバ再計算配線は全言語の HTML と共通 JS にあり。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -881,6 +951,7 @@ Annual / Monthly / MEP の HTML は Step R で本番一致済み。残ってい�
 | Save後も `readDailyFacts` が null | I 未反映 | I-1 の Annual HTML を上書き |
 | phpMyAdmin で kpi_daily_facts が無い | J 未実行 | ADD SQL を SQL タブで実行。FileZilla では作られない |
 | daily-facts.php が 404 | K1 未反映 | 新規 UP。`store.php` と同じフォルダ |
+| rebuild-year-facts.php が 404 | AC1 未反映 | 新規 UP。`daily-facts.php` の隣（`api/v1/`） |
 | TW が 2/6 で止まる・日付が飛ぶ | 滑る±28日窓の残り、またはスペーサ未反映 | 英語なら AB3（`en/app/annual`）を先に上書き。ハードリロード |
 | Cockpit ◀︎▶︎ で日付が飛ぶ | smooth scroll の残り | P1/P2 をこの修正版で上書き |
 | localStorage の years[].dailyFacts が消えない | R 未反映 or GET が解を戻している | R 済みなら **AA1** を上書き。ハードリロード |

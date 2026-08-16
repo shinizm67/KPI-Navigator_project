@@ -374,29 +374,62 @@
     });
   }
 
+  var putInFlight = null;
+
+  function buildPutBody(cfg) {
+    var storePayload = stripDailyFactsFromStore(localGet(STORE_KEY));
+    var body = {
+      store: storePayload,
+      annualNav: localGet(NAV_KEY),
+    };
+    if (localTier() === 'basic') {
+      body.store = stripProFromStore(storePayload);
+    } else {
+      body.pl = collectPlFromLocal();
+    }
+    return body;
+  }
+
+  function doPut(cfg) {
+    if (!canSync(cfg)) return Promise.resolve();
+    var body = buildPutBody(cfg);
+    putInFlight = fetch(cfg.baseUrl, {
+      method: 'PUT',
+      headers: buildHeaders(cfg, true),
+      body: JSON.stringify(body),
+      credentials: fetchCreds(cfg),
+    })
+      .catch(function () {})
+      .then(function () {
+        putInFlight = null;
+      });
+    return putInFlight;
+  }
+
   function schedulePut(cfg) {
     if (!canSync(cfg)) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
-      var storePayload = stripDailyFactsFromStore(localGet(STORE_KEY));
-      var body = {
-        store: storePayload,
-        annualNav: localGet(NAV_KEY),
-      };
-      if (localTier() === 'basic') {
-        body.store = stripProFromStore(storePayload);
-        // Do not send pl for Basic (avoids 403; server keeps disk pl).
-      } else {
-        body.pl = collectPlFromLocal();
-      }
-      fetch(cfg.baseUrl, {
-        method: 'PUT',
-        headers: buildHeaders(cfg, true),
-        body: JSON.stringify(body),
-        credentials: fetchCreds(cfg),
-      }).catch(function () {});
+      doPut(cfg);
     }, 400);
+  }
+
+  function flushPut() {
+    cfg = readSyncConfig();
+    if (putTimer != null) {
+      window.clearTimeout(putTimer);
+      putTimer = null;
+    }
+    if (!canSync(cfg)) {
+      return putInFlight || Promise.resolve();
+    }
+    if (putInFlight) {
+      return putInFlight.then(function () {
+        return doPut(cfg);
+      });
+    }
+    return doPut(cfg);
   }
 
   function hydrateFromServer(cfg) {
@@ -524,12 +557,9 @@
     },
     pushToServerNow: function () {
       cfg = readSyncConfig();
-      if (putTimer != null) {
-        window.clearTimeout(putTimer);
-        putTimer = null;
-      }
-      schedulePut(cfg);
+      return flushPut();
     },
+    flushPut: flushPut,
     collectPlFromLocal: collectPlFromLocal,
   };
 
