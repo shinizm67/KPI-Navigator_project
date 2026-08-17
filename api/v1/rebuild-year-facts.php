@@ -588,11 +588,79 @@ function kpi_v1_rebuild_month_display_map(
     return $map;
 }
 
-function kpi_v1_rebuild_year_rows($store, $year, $defaultHl, $placeholder, $fallback)
+/**
+ * Prefer kpi_daily_inputs for the rebuild year; fall back to timeline blob maps.
+ * KPI-REBUILD-INPUTS-AQ
+ *
+ * @return array{0:mixed,1:mixed,2:string} salesMap, bizMap, source
+ */
+function kpi_v1_rebuild_resolve_input_maps($cfg, $userId, $store, $year)
 {
     $timeline = kpi_v1_rebuild_prop($store, 'timeline');
     $salesMap = kpi_v1_rebuild_prop($timeline, 'dailySales');
     $bizMap = kpi_v1_rebuild_prop($timeline, 'businessDays');
+    if ($salesMap === null) {
+        $salesMap = new stdClass();
+    }
+    if ($bizMap === null) {
+        $bizMap = new stdClass();
+    }
+    $from = ((int) $year) . '-01-01';
+    $to = ((int) $year) . '-12-31';
+    try {
+        $rows = kpi_v1_db_read_daily_inputs_soft($cfg, $userId, $from, $to);
+    } catch (Exception $e) {
+        return [$salesMap, $bizMap, 'blob'];
+    }
+    if (!is_array($rows) || !count($rows)) {
+        return [$salesMap, $bizMap, 'blob'];
+    }
+    if (is_object($salesMap)) {
+        $salesOut = clone $salesMap;
+    } elseif (is_array($salesMap)) {
+        $salesOut = $salesMap;
+    } else {
+        $salesOut = new stdClass();
+    }
+    if (is_object($bizMap)) {
+        $bizOut = clone $bizMap;
+    } elseif (is_array($bizMap)) {
+        $bizOut = $bizMap;
+    } else {
+        $bizOut = new stdClass();
+    }
+    foreach ($rows as $row) {
+        if (!is_array($row) || empty($row['iso'])) {
+            continue;
+        }
+        $iso = (string) $row['iso'];
+        $sales = isset($row['sales']) ? (float) $row['sales'] : 0.0;
+        $biz = !empty($row['businessDay']);
+        if (is_array($salesOut)) {
+            $salesOut[$iso] = $sales;
+        } else {
+            $salesOut->{$iso} = $sales;
+        }
+        if (is_array($bizOut)) {
+            $bizOut[$iso] = $biz;
+        } else {
+            $bizOut->{$iso} = $biz;
+        }
+    }
+    return [$salesOut, $bizOut, 'inputs'];
+}
+
+function kpi_v1_rebuild_year_rows($store, $year, $defaultHl, $placeholder, $fallback, $salesMapOverride = null, $bizMapOverride = null)
+{
+    $timeline = kpi_v1_rebuild_prop($store, 'timeline');
+    $salesMap = $salesMapOverride !== null ? $salesMapOverride : kpi_v1_rebuild_prop($timeline, 'dailySales');
+    $bizMap = $bizMapOverride !== null ? $bizMapOverride : kpi_v1_rebuild_prop($timeline, 'businessDays');
+    if ($salesMap === null) {
+        $salesMap = new stdClass();
+    }
+    if ($bizMap === null) {
+        $bizMap = new stdClass();
+    }
     $plan = kpi_v1_rebuild_plan_monthly_targets($salesMap, $bizMap, $store, $year, $defaultHl);
     $mode = kpi_v1_rebuild_daily_target_mode($store, $year);
     $baselineYears = kpi_v1_rebuild_read_baseline_years($store, $salesMap, $year);
@@ -693,12 +761,15 @@ if ($method === 'POST') {
     if ($store === null) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'no_store']);
     }
+    list($salesMap, $bizMap, $inputSource) = kpi_v1_rebuild_resolve_input_maps($cfg, $userId, $store, $year);
     $rows = kpi_v1_rebuild_year_rows(
         $store,
         $year,
         $KPI_REBUILD_DEFAULT_HL,
         $KPI_REBUILD_PLACEHOLDER_SALES,
-        $KPI_REBUILD_WEEKDAY_FALLBACK
+        $KPI_REBUILD_WEEKDAY_FALLBACK,
+        $salesMap,
+        $bizMap
     );
     $written = kpi_v1_db_upsert_daily_facts($cfg, $userId, $rows);
     kpi_v1_json_out(200, [
@@ -706,6 +777,7 @@ if ($method === 'POST') {
         'userId' => $userId,
         'year' => $year,
         'written' => $written,
+        'inputSource' => $inputSource,
     ]);
 }
 

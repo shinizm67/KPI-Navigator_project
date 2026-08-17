@@ -692,9 +692,18 @@ def kpi_year_store_js() -> str:
           var flush =
             gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
           return Promise.resolve(flush).then(function () {{
+            var total = list.length;
             var p = Promise.resolve();
-            list.forEach(function (y) {{
+            list.forEach(function (y, idx) {{
               p = p.then(function () {{
+                /* KPI-BULK-YEAR-REBUILD-AK: year-chunk progress on overlay */
+                if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {{
+                  window.__KPI_BUSY.update('rebuild', {{
+                    year: y,
+                    index: idx + 1,
+                    total: total,
+                  }});
+                }}
                 return rebuildOneYearFromServer(y, reason);
               }});
             }});
@@ -1153,6 +1162,14 @@ def kpi_year_store_js() -> str:
             reason: 'write-daily-sales',
           }});
           persistStore();
+          try {{
+            if (
+              window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.schedulePutYear === 'function'
+            ) {{
+              window.__KPI_DAILY_INPUTS_SYNC.schedulePutYear(isoYear(iso));
+            }}
+          }} catch (_eIn) {{}}
           dispatchChange('dailySalesChanged', {{
             iso: iso,
             year: isoYear(iso),
@@ -1170,6 +1187,14 @@ def kpi_year_store_js() -> str:
             reason: 'write-business-day',
           }});
           persistStore();
+          try {{
+            if (
+              window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.schedulePutYear === 'function'
+            ) {{
+              window.__KPI_DAILY_INPUTS_SYNC.schedulePutYear(isoYear(iso));
+            }}
+          }} catch (_eIn2) {{}}
           dispatchChange('businessDayChanged', {{
             iso: iso,
             year: isoYear(iso),
@@ -1339,7 +1364,7 @@ def kpi_year_store_js() -> str:
           return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year');
         }}
 
-        /* KPI-BULK-YEAR-REBUILD-AE */
+        /* KPI-BULK-YEAR-REBUILD-AK */
 
         function rebuildTouchedYearsOnServer(yearsMap, reason) {{
           var years = Object.keys(yearsMap || {{}})
@@ -1348,6 +1373,13 @@ def kpi_year_store_js() -> str:
             .sort(function (a, b) {{ return a - b; }});
           if (!years.length) return Promise.resolve();
           var work = function () {{
+            if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {{
+              window.__KPI_BUSY.update('rebuild', {{
+                year: years[0],
+                index: 1,
+                total: years.length,
+              }});
+            }}
             return flushThenRebuildYears(years, reason).then(function () {{
               var focus = getOperatingYear();
               var hyd =
@@ -1366,7 +1398,9 @@ def kpi_year_store_js() -> str:
             return work();
           }}
           if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {{
-            return window.__KPI_BUSY.run('import', work, {{ count: years.length }}).catch(function () {{}});
+            return window.__KPI_BUSY
+              .run('rebuild', work, {{ yearCount: years.length, year: years[0], index: 1, total: years.length }})
+              .catch(function () {{}});
           }}
           return work();
         }}
@@ -1480,9 +1514,18 @@ def kpi_year_store_js() -> str:
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
-          return Promise.resolve(
-            invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales')
-          ).then(function () {{
+          /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
+          var dual =
+            window.__KPI_DAILY_INPUTS_SYNC &&
+            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+              : Promise.resolve();
+          return Promise.resolve(dual)
+            .catch(function () {{}})
+            .then(function () {{
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
+            }})
+            .then(function () {{
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
             if (yearsList.length) {{
               dispatchChange('dailySalesChanged', {{
@@ -1535,9 +1578,18 @@ def kpi_year_store_js() -> str:
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
-          return Promise.resolve(
-            invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily')
-          ).then(function () {{
+          /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
+          var dual =
+            window.__KPI_DAILY_INPUTS_SYNC &&
+            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+              : Promise.resolve();
+          return Promise.resolve(dual)
+            .catch(function () {{}})
+            .then(function () {{
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
+            }})
+            .then(function () {{
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
             if (yearsList.length) {{
               dispatchChange('dailySalesChanged', {{
@@ -1676,7 +1728,17 @@ def kpi_year_store_js() -> str:
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({{ [String(oy)]: true }});
-          return rebuildTouchedYearsOnServer({{ [String(oy)]: true }}, 'sales-data-save');
+          /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
+          var dualSd =
+            window.__KPI_DAILY_INPUTS_SYNC &&
+            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap({{ [String(oy)]: true }})
+              : Promise.resolve();
+          return Promise.resolve(dualSd)
+            .catch(function () {{}})
+            .then(function () {{
+              return rebuildTouchedYearsOnServer({{ [String(oy)]: true }}, 'sales-data-save');
+            }});
         }}
 
         function persistFromAnnualDaily(daily, meta) {{

@@ -1,7 +1,8 @@
 # 入力値＋計算解の保存 — 段階計画（LE 慎重）
 
-更新日: 2026-08-15  
+更新日: 2026-08-17  
 状態: **方針確定・実装は段階ごと**（このメモが正本）  
+入力正本化: Daily Sales / Business Day → `kpi_daily_inputs`（Step AL〜AR）  
 関連: [`backend-phase-a-store-api.md`](./backend-phase-a-store-api.md) · [`year-rollover-data-architecture.md`](./year-rollover-data-architecture.md) · [`display-vs-operating-year.md`](./display-vs-operating-year.md) · [`bulk-store-refresh-perf-memo.md`](./bulk-store-refresh-perf-memo.md) · [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)
 
 ---
@@ -169,7 +170,31 @@ TW の Focus ±4週だけを一覧にすると、1月始まりで窓の端が 2/
 
 ### 段階 5 — 一括計算をサーバへ（任意）
 
-10年 CSV の解生成を PHP 側へ。タイムアウト対策（年チャンク）。Loading は段階0の延長。
+**状態: 核は AC〜AE 本番済み。進捗 UX は Step AK（2026-08-17）。**
+
+10年 CSV の解生成は PHP（`rebuild-year-facts.php`）へ。ブラウザは **年チャンク**（1年ずつ POST）で呼び、Loading は全チャンク終了まで残す。失敗した年だけ JS フォールバック。`store.php` / schema は触らない。
+
+- API: [`api/v1/rebuild-year-facts.php`](../api/v1/rebuild-year-facts.php)（1年・`set_time_limit(90)`）
+- クライアント: `flushThenRebuildYears` → 年ごと `rebuildYear` + オーバーレイ進捗（`KPI-BULK-YEAR-REBUILD-AK`）
+- Loading: [`js/kpi-busy-overlay.js`](../js/kpi-busy-overlay.js)（`rebuild` / `update`）
+
+確認: 複数年を触る Save / 取込で「年次計算中（YYYY・i/n）」が出て、終わってから操作できる。Cockpit / TW の日次目標がサーバ解と一致。
+
+### 段階 6 — 入力正本化（Daily Sales / Business Day）
+
+**状態: Step AL〜AR 本番済み（2026-08-17）。**
+
+| Step | 内容 |
+|------|------|
+| **AL** | `kpi_daily_inputs` 表（phpMyAdmin） |
+| **AM** | `daily-inputs.php` GET/PUT |
+| **AN** | Dual Write（inputs + timeline blob） |
+| **AO** | 窓 GET を DB 優先 + blob fallback |
+| **AP** | blob → inputs 年チャンク移行 |
+| **AQ** | rebuild が inputs 優先 |
+| **AR** | localStorage の timeline 全日 hydrate 縮小 |
+
+Inputs = 原因。Facts = 解。H/L・PL・MEP は blob のまま。
 
 ---
 
@@ -195,4 +220,4 @@ TW の Focus ±4週だけを一覧にすると、1月始まりで窓の端が 2/
 
 ## 7. 次の一手
 
-段階 0〜3・2d・Cockpit ◀︎▶︎ は本番済み。スペーサ仮想化は **Step AB**。段階5の繁閑%は **AC/AD 本番済み**。Past Sales 保存のサーバ再計算は **Step AE 本番済み**。Past Sales Analyze の実績のみ計算は **Step AF 本番済み**。Focus Bar Edit 保存のサーバ再計算は **Step AG 本番済み**。参考繁閑期%単純平均は **Step AH / AJ 本番済み**（annual は AI、Monthly/MEP は AJ）。Past Sales 年送りと Sales Data 繁閑%▲▼ は **Step AI 本番済み**。年の二系統ルールは [`display-vs-operating-year.md`](./display-vs-operating-year.md)。
+段階 0〜3・2d・Cockpit ◀︎▶︎ は本番済み。スペーサ仮想化は **Step AB**。段階5の繁閑%は **AC/AD 本番済み**。Past Sales 保存のサーバ再計算は **Step AE 本番済み**。Past Sales Analyze の実績のみ計算は **Step AF 本番済み**。Focus Bar Edit 保存のサーバ再計算は **Step AG 本番済み**。参考繁閑期%単純平均は **Step AH / AJ 本番済み**。Past Sales 年送りと Sales Data 繁閑%▲▼ は **Step AI 本番済み**。複数年サーバ再計算進捗は **Step AK 本番済み**。年の二系統ルールは [`display-vs-operating-year.md`](./display-vs-operating-year.md)。**段階6 入力正本化 Step AL〜AR 本番済み（2026-08-17）**。次の大きな線は未定（H/L・PL・MEP の行正本化、予約台帳などは別トラック）。

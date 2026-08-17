@@ -348,3 +348,127 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
         throw $e;
     }
 }
+
+function kpi_v1_db_inputs_table_missing(PDOException $e)
+{
+    $state = (string) $e->getCode();
+    $msg = $e->getMessage();
+    return $state === '42S02' || strpos($msg, 'kpi_daily_inputs') !== false;
+}
+
+function kpi_v1_inputs_row_to_api(array $row)
+{
+    return [
+        'iso' => (string) $row['iso'],
+        'sales' => round((float) $row['sales'], 2),
+        'businessDay' => !empty($row['business_day']),
+    ];
+}
+
+/**
+ * Window GET for daily inputs. Does not touch kpi_daily_facts or store_json.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function kpi_v1_db_read_daily_inputs($cfg, $userId, $fromIso, $toIso)
+{
+    $pdo = kpi_v1_db($cfg);
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT iso, sales, business_day
+             FROM kpi_daily_inputs
+             WHERE user_id = ? AND iso >= ? AND iso <= ?
+             ORDER BY iso ASC'
+        );
+        $stmt->execute([(string) $userId, $fromIso, $toIso]);
+    } catch (PDOException $e) {
+        if (kpi_v1_db_inputs_table_missing($e)) {
+            kpi_v1_json_out(503, ['ok' => false, 'error' => 'inputs_table_missing']);
+        }
+        throw $e;
+    }
+    $out = [];
+    while ($row = $stmt->fetch()) {
+        if (!empty($row['iso'])) {
+            $out[] = kpi_v1_inputs_row_to_api($row);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Same as read, but returns [] if table missing (for rebuild fallback).
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function kpi_v1_db_read_daily_inputs_soft($cfg, $userId, $fromIso, $toIso)
+{
+    $pdo = kpi_v1_db($cfg);
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT iso, sales, business_day
+             FROM kpi_daily_inputs
+             WHERE user_id = ? AND iso >= ? AND iso <= ?
+             ORDER BY iso ASC'
+        );
+        $stmt->execute([(string) $userId, $fromIso, $toIso]);
+    } catch (PDOException $e) {
+        if (kpi_v1_db_inputs_table_missing($e)) {
+            return [];
+        }
+        throw $e;
+    }
+    $out = [];
+    while ($row = $stmt->fetch()) {
+        if (!empty($row['iso'])) {
+            $out[] = kpi_v1_inputs_row_to_api($row);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Last-write-wins upsert for daily inputs. Does not delete other dates.
+ *
+ * @param array<int, array<string, mixed>> $rows each: iso, sales, business_day
+ * @return int written count
+ */
+function kpi_v1_db_upsert_daily_inputs($cfg, $userId, array $rows)
+{
+    $pdo = kpi_v1_db($cfg);
+    $sql = 'INSERT INTO kpi_daily_inputs
+              (user_id, iso, sales, business_day, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              sales = VALUES(sales),
+              business_day = VALUES(business_day),
+              updated_at = VALUES(updated_at)';
+    $now = gmdate('Y-m-d H:i:s');
+    $uid = (string) $userId;
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare($sql);
+        $n = 0;
+        foreach ($rows as $row) {
+            $stmt->execute([
+                $uid,
+                $row['iso'],
+                $row['sales'],
+                $row['business_day'],
+                $now,
+                $now,
+            ]);
+            $n++;
+        }
+        $pdo->commit();
+        return $n;
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        if (kpi_v1_db_inputs_table_missing($e)) {
+            kpi_v1_json_out(503, ['ok' => false, 'error' => 'inputs_table_missing']);
+        }
+        throw $e;
+    }
+}

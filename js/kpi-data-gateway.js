@@ -146,6 +146,76 @@
     return out;
   }
 
+  /* KPI-TIMELINE-SLIM-AR: LS には作業窓だけ残し、PUT はメモリのフル timeline を優先 */
+  var TIMELINE_SLIM_PAD_MONTHS = 2;
+
+  function slimTimelineForLocalStorage(store) {
+    if (!store || typeof store !== 'object') return store;
+    var tl = store.timeline;
+    if (!tl || typeof tl !== 'object') return store;
+    var sales = tl.dailySales;
+    var biz = tl.businessDays;
+    if ((!sales || typeof sales !== 'object') && (!biz || typeof biz !== 'object')) {
+      return store;
+    }
+    var focusY = null;
+    try {
+      if (window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+        focusY = Number(KpiYearStore.getOperatingYear());
+      }
+    } catch (_e0) {}
+    if (!Number.isFinite(focusY)) {
+      try {
+        var nav = localGet(NAV_KEY);
+        if (nav && nav.calendarYear != null) focusY = Number(nav.calendarYear);
+      } catch (_e1) {}
+    }
+    if (!Number.isFinite(focusY)) focusY = new Date().getFullYear();
+    var start = new Date(focusY, -TIMELINE_SLIM_PAD_MONTHS, 1);
+    var end = new Date(focusY, 12 + TIMELINE_SLIM_PAD_MONTHS, 0);
+    function inWindow(iso) {
+      if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+      var p = iso.split('-').map(Number);
+      var d = new Date(p[0], p[1] - 1, p[2]);
+      return d >= start && d <= end;
+    }
+    var slimSales = {};
+    var slimBiz = {};
+    if (sales && typeof sales === 'object') {
+      Object.keys(sales).forEach(function (iso) {
+        if (inWindow(iso)) slimSales[iso] = sales[iso];
+      });
+    }
+    if (biz && typeof biz === 'object') {
+      Object.keys(biz).forEach(function (iso) {
+        if (inWindow(iso)) slimBiz[iso] = biz[iso];
+      });
+    }
+    var out = {};
+    Object.keys(store).forEach(function (k) {
+      if (k === 'timeline') return;
+      out[k] = store[k];
+    });
+    out.timeline = {
+      dailySales: slimSales,
+      businessDays: slimBiz,
+    };
+    return out;
+  }
+
+  function storePayloadForPut() {
+    var fromMem = null;
+    try {
+      if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+        fromMem = window.KpiYearStore.getStore();
+      }
+    } catch (_e) {}
+    if (fromMem && typeof fromMem === 'object') {
+      return stripDailyFactsFromStore(fromMem);
+    }
+    return stripDailyFactsFromStore(localGet(STORE_KEY));
+  }
+
   function resolveAppRoot() {
     try {
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
@@ -377,7 +447,7 @@
   var putInFlight = null;
 
   function buildPutBody(cfg) {
-    var storePayload = stripDailyFactsFromStore(localGet(STORE_KEY));
+    var storePayload = storePayloadForPut();
     var body = {
       store: storePayload,
       annualNav: localGet(NAV_KEY),
@@ -451,8 +521,21 @@
         var storeHadFacts = false;
         if (data.store && typeof data.store === 'object') {
           storeHadFacts = storeHasDailyFacts(data.store);
-          localSet(STORE_KEY, stripDailyFactsFromStore(data.store));
+          var fullStore = stripDailyFactsFromStore(data.store);
+          /* Load full into LS briefly so KpiYearStore.reload sees full timeline, then slim LS. */
+          localSet(STORE_KEY, fullStore);
           changed = true;
+          try {
+            if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
+              window.KpiYearStore.reload();
+            }
+          } catch (_eReloadEarly) {}
+          hookQuiet = true;
+          try {
+            localSet(STORE_KEY, slimTimelineForLocalStorage(fullStore));
+          } finally {
+            hookQuiet = false;
+          }
         }
         if (data.annualNav && typeof data.annualNav === 'object') {
           localSet(NAV_KEY, data.annualNav);
@@ -479,8 +562,11 @@
             );
           } catch (_e) {}
           try {
-            if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
-              window.KpiYearStore.reload();
+            /* reload already ran above when store present */
+            if (!(data.store && typeof data.store === 'object')) {
+              if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
+                window.KpiYearStore.reload();
+              }
             }
           } catch (_eReload) {}
           try {
@@ -522,7 +608,11 @@
       return localGet(key);
     },
     setJson: function (key, value) {
-      var ok = localSet(key, value);
+      var toStore = value;
+      if (key === STORE_KEY && value && typeof value === 'object') {
+        toStore = slimTimelineForLocalStorage(stripDailyFactsFromStore(value));
+      }
+      var ok = localSet(key, toStore);
       if (ok && (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key))) {
         schedulePut(cfg);
       }

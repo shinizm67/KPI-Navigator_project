@@ -1161,6 +1161,195 @@ AH の annual は AI 済み。残りは Monthly と monthly/edit だけ。各年
 
 **結果（2026-08-17）:** Step AJ 完了（本番反映済み）。AH 残分（Monthly / monthly/edit）反映。
 
+### Step AK — 段階5: 複数年サーバ再計算の年チャンク進捗（2026-08-17）
+
+解の計算は既に `rebuild-year-facts.php`（1年）へ寄せ済み。複数年は **1年ずつ** POST し、Loading に「YYYY・i/n」を出す。`store.php` / schema / PHP 本体は触らない（タイムアウトは既存 90 秒のまま）。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AK — `js/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AK1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-busy-overlay.js` | `public_html/kpi-navigator/js/kpi-busy-overlay.js` | 共通 JS（先に上げる） |
+
+#### AK — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AK2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AK3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AK4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AK — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AK5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AK6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AK7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AK — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AK8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AK9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AK10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**上げない:** `api/`、`rebuild-year-facts.php`、`store.php`、schema、phpMyAdmin
+
+**確認**
+
+1. 古いタブは閉じる。**AK1 を先に**ハードリロード（英語なら AK5）
+2. Past Sales / Sales Data の Save で「保存中」→ サーバ年次計算が終わるまでオーバーレイが残る（従来どおり）
+3. 複数年を一度に触る取込・Save では「年次計算中（YYYY・i/n）」が進む
+4. 終わったあと Cockpit / TW の日次目標が新しい解と一致する
+
+迷ったら AK1 → AK2 だけ先に。完了したら「Step AK 完了」と送る。
+
+**結果（2026-08-17）:** Step AK 完了（本番反映済み）。
+
+### Step AL — `kpi_daily_inputs` 表を足す（入力正本化・表だけ）（2026-08-17）
+
+Daily Sales / Business Day の行正本テーブル。**解の `kpi_daily_facts` とは別。** 既存表は ALTER しない。`CREATE TABLE IF NOT EXISTS` のみ。画面・API はまだ動かない。サーバから消さない。
+
+**バックアップ（必須）**
+
+1. phpMyAdmin で表 **`kpi_store`** をエクスポート（SQL）
+2. Desktop に残す
+
+#### AL — phpMyAdmin（FileZilla では表を作れない）
+
+| # | 作業 | 確認 |
+|---|------|------|
+| AL1 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/schema_kpi_daily_inputs.add.sql` の **CREATE TABLE 以降**を SQL タブで実行 | 左に表 `kpi_daily_inputs`。列: `user_id`, `iso`, `sales`, `business_day`, `created_at`, `updated_at`。行数 0 でよい |
+
+**上げない:** HTML、`js/`、`store.php`、`daily-facts.php`、既存表の DROP
+
+**確認**
+
+1. `kpi_store` / `kpi_daily_facts` / `kpi_users` の構造が変わっていない
+2. Annual は今までどおり（この Step では画面を上げない）
+
+迷ったら AL1 だけ。完了したら「Step AL 完了」と送る。
+
+**結果（2026-08-17）:** Step AL 完了（本番に表 `kpi_daily_inputs` 作成済み）。
+
+### Step AM — `daily-inputs.php` API（HTML なし）（2026-08-17）
+
+AL 済みが前提。窓 GET / bulk PUT。`store.php` は触らない。サーバから消さない。
+
+#### AM — `api/`
+
+| # | ローカル | サーバ | 確認 |
+|---|----------|--------|------|
+| AM1 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/_db.php` | `public_html/kpi-navigator/api/v1/_db.php` | 上書き |
+| AM2 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/daily-inputs.php` | `public_html/kpi-navigator/api/v1/daily-inputs.php` | 新規。`daily-facts.php` の隣 |
+
+**上げない:** HTML、`js/`、`store.php`、schema（AL 済み）
+
+**確認**
+
+1. 未ログイン GET → 401
+2. ログイン後 GET `?from=2026-01-01&to=2026-01-31` → `{ ok: true, rows: [] }`（空でよい）
+3. Annual は今までどおり
+
+迷ったら AM1→AM2。完了したら「Step AM 完了」と送る。
+
+**結果（2026-08-17）:** Step AM 完了（本番 API 反映済み）。
+
+### Step AN — Dual Write（inputs + timeline）（2026-08-17）
+
+Save / merge 時に `kpi_daily_inputs` へも書く。timeline blob は従来どおり。サーバから消さない。同名 `index.html` は親フォルダ必須。
+
+#### AN — `js/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AN1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-inputs-sync.js` | `public_html/kpi-navigator/js/kpi-daily-inputs-sync.js` | 新規。先に上げる |
+
+#### AN — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AN2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AN3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AN4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AN — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AN5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AN6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AN7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AN — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AN8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AN9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AN10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**確認:** Past Sales / Sales Data Save 後、phpMyAdmin の `kpi_daily_inputs` に行が増える。timeline も従来どおり。
+
+完了したら「Step AN 完了」と送る。
+
+**結果（2026-08-17）:** Step AN 完了（本番 Dual Write 確認済み。`kpi_daily_inputs` に行あり）。
+
+### Step AO — 窓 GET を DB 優先（fallback 付き）（2026-08-17）
+
+AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイルを上げ直すだけでよい（HTML は AN 済みなら不要）。失敗時は既存 blob/LS。
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| AO1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-inputs-sync.js` | `public_html/kpi-navigator/js/kpi-daily-inputs-sync.js` |
+
+**確認:** ハードリロード後も窓の売上が出る。
+
+**結果（2026-08-17）:** Step AO 完了（本番確認済み。Past Sales 2025 実績 → Monthly TW に表示）。
+
+完了したら「Step AO 完了」と送る。
+
+### Step AP — blob → inputs 年チャンク移行（2026-08-17）
+
+サーバ CLI。ブラウザから10年 PUT しない。
+
+| # | ローカル | 作業 |
+|---|----------|------|
+| AP1 | `/Users/shinmatsushita/Desktop/kpi-navigator/tools/migrate-timeline-to-daily-inputs.php` | SSH または手元で `php tools/migrate-timeline-to-daily-inputs.php`（本番は `config.local.php` の mysql 必須） |
+
+**確認:** phpMyAdmin で年ごとの行数。サンプル ISO が blob と一致。
+
+完了したら「Step AP 完了」と送る。
+
+**結果（2026-08-17）:** Step AP 完了（CLI 移行済み。2024=366 / 2025=365 / 2026=365、計 1096 行）。
+
+### Step AQ — rebuild が inputs 優先（2026-08-17）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| AQ1 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/rebuild-year-facts.php` | `public_html/kpi-navigator/api/v1/rebuild-year-facts.php` |
+| AQ2 | `/Users/shinmatsushita/Desktop/kpi-navigator/api/v1/_db.php` | `public_html/kpi-navigator/api/v1/_db.php` | AM1 と同内容なら再UP可 |
+
+**確認:** 繁閑%変更後の日次目標。応答に `inputSource: "inputs"`（行がある年）。
+
+完了したら「Step AQ 完了」と送る。
+
+**結果（2026-08-17）:** Step AQ 完了（本番確認済み。繁閑%変更 → 日次目標が更新される）。
+
+### Step AR — localStorage timeline 全日 hydrate 縮小（2026-08-17）
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| AR1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` |
+
+**確認:** DevTools で `kpiNavigator.kpiYearStore` の `timeline.dailySales` キー数が作業窓程度。Save 後も他年データがサーバから消えない。
+
+完了したら「Step AR 完了」と送る。
+
+**結果（2026-08-17）:** Step AR 完了（本番 LS 確認済み。`kpiYearStore.timeline.dailySales` は 2026 作業窓。2024/2025 全日は載っていない）。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -1179,7 +1368,10 @@ AH の annual は AI 済み。残りは Monthly と monthly/edit だけ。各年
 | CSV中に Loading が出ない | H 未反映 | H1 新規 ＋ H2〜H5 上書き |
 | Save後も `readDailyFacts` が null | I 未反映 | I-1 の Annual HTML を上書き |
 | phpMyAdmin で kpi_daily_facts が無い | J 未実行 | ADD SQL を SQL タブで実行。FileZilla では作られない |
+| phpMyAdmin で kpi_daily_inputs が無い | AL1 未実行 | `schema_kpi_daily_inputs.add.sql` を SQL タブで実行 |
 | daily-facts.php が 404 | K1 未反映 | 新規 UP。`store.php` と同じフォルダ |
+| daily-inputs.php が 404 | AM2 未反映 | 新規 UP。`daily-facts.php` の隣 |
+| kpi-daily-inputs-sync.js が 404 | AN1 未反映 | HTML より先に新規 UP |
 | rebuild-year-facts.php が 404 | AC1 未反映 | 新規 UP。`daily-facts.php` の隣（`api/v1/`） |
 | TW が 2/6 で止まる・日付が飛ぶ | 滑る±28日窓の残り、またはスペーサ未反映 | 英語なら AB3（`en/app/annual`）を先に上書き。ハードリロード |
 | Cockpit ◀︎▶︎ で日付が飛ぶ | smooth scroll の残り | P1/P2 をこの修正版で上書き |

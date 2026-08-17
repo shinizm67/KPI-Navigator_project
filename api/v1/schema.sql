@@ -47,3 +47,19 @@ CREATE TABLE IF NOT EXISTS kpi_daily_facts (
     FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- snapshot-store 入力正本化: Daily Sales / Business Day の行正本。
+-- 既存 DB は schema_kpi_daily_inputs.add.sql を phpMyAdmin で1回。
+CREATE TABLE IF NOT EXISTS kpi_daily_inputs (
+  user_id VARCHAR(64) NOT NULL,
+  iso DATE NOT NULL,
+  sales DECIMAL(15,2) NOT NULL DEFAULT 0,
+  business_day TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (user_id, iso),
+  KEY idx_kpi_daily_inputs_user_updated (user_id, updated_at),
+  CONSTRAINT fk_kpi_daily_inputs_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
