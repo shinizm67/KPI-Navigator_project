@@ -231,7 +231,7 @@ MODAL_REPLACEMENTS = [
     ),
     (">Baseline Monthly Sales</th>", ">基準月次銷售</th>"),
     (">Monthly Target Sales</th>", ">月次目標銷售</th>"),
-    (">Last Year of Seasonality %</th>", ">前年旺淡期%</th>"),
+    (">Reference Seasonality %</th>", ">參考旺淡季%</th>"),
     (">H/L Season% Setting</th>", ">旺淡期%設定</th>"),
     (
         'data-hl-tip="12-month average → 100%"',

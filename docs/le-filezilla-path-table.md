@@ -1,6 +1,6 @@
 # LE 配備: FileZilla パス表（必須ルール）
 
-更新日: 2026-08-16  
+更新日: 2026-08-17  
 目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。FileZilla は **表層フォルダ／言語で完結**させ、上に戻らない。
 
 関連: ブランド LE [`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md) · Phase B [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
@@ -931,6 +931,235 @@ AC 済みが前提。▲▼は数字だけ即時。手を止めてから persist
 迷ったら AD1 → AD2 を先に。完了したら「Step AD 完了」と送る。
 
 **結果（2026-08-16 18:32）:** AD1〜AD11 は本番とバイト一致。繁閑%のサーバ再計算配線は全言語の HTML と共通 JS にあり。
+
+### Step AE — Past Sales / Sales Data 保存も年単位でサーバ再計算（2026-08-16）
+
+AC/AD 済み。新しい PHP は上げない。保存中オーバーレイがサーバ1年再計算の終わりまで残る。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AE — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AE1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AE2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AE3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AE — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AE4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AE5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AE6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AE — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AE7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AE8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AE9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**上げない:** `js/`、`api/`、`store.php`、schema、phpMyAdmin
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AE4 を先にハードリロード
+2. Past Sales で過去年を入れて保存 → 保存中が出て消える。画面が真っ黒にならない
+3. 今年の Sales Data も保存できる
+4. そのあと繁閑%の ▲▼ は Step AD のまま軽い
+
+迷ったら AE1 だけ先に。完了したら「Step AE 完了」と送る。
+
+**結果（2026-08-16 22:09）:** AE1〜AE9 は本番とバイト一致。
+
+### Step AF — Past Sales Analyze は入力売上だけ（目標は使わない）（2026-08-16）
+
+Past Sales の繁閑%は **その年の入力売上 ÷ 総営業日** が分母。年間目標売上は見ない。H/L も掛けない。Sales Data の今年目標・参考繁閑%（過去年の平均）は変えない。AE の保存中オーバーレイが Promise を落とさないよう `js/kpi-busy-overlay.js` も上げる。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AF — `js/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AF1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-busy-overlay.js` | `public_html/kpi-navigator/js/kpi-busy-overlay.js` | 共通 JS |
+
+#### AF — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AF2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+
+#### AF — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AF3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+
+#### AF — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AF4 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+**上げない:** Monthly、MEP、`store.php`、schema、phpMyAdmin、`rebuild-year-facts.php`
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AF3 を先にハードリロード
+2. Past Sales 2025 Analyze → **年間目標を空のまま**でも、入力売上から平均日次・基準月次・繁閑%が出る
+3. 2024 も同じ（目標の有無で%が変わらない）
+4. 2026 Sales Data の目標と参考 H/L は今までどおり
+
+迷ったら AF1 → AF2。完了したら「Step AF 完了」と送る。
+
+**結果（2026-08-16 23:39）:** AF1〜AF4 は本番とバイト一致。Last-Modified `Sun, 16 Aug 2026 14:36–14:37 GMT`。Past Sales Analyze の実績のみマーカーは 3言語 HTML にあり。画面確認 1・2・3 問題なし。
+
+### Step AG — Focus Bar Edit 保存もサーバ再計算（2026-08-16）
+
+Past Sales / Sales Data の Save は AE でサーバ再計算済み。Focus Bar の **Edit** 保存は JSON だけ書いてストアと `kpi_daily_facts` に乗っていなかった。今年のその年だけ timeline へ書き、保存中オーバーレイは再計算が終わるまで残す。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AG — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AG1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+
+#### AG — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AG2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+
+#### AG — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AG3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+**上げない:** Monthly、MEP、`js/`、`store.php`、schema、`rebuild-year-facts.php`
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AG2 を先にハードリロード
+2. 入力経路が Annual のとき、Focus Bar **Edit** → 1日の売上を変えて保存 → 保存中が出て消える。Cockpit / TW のその日が変わる
+3. Past Sales / Sales Data の Save と Analyze は Step AF のまま
+
+迷ったら AG1 だけ先に。完了したら「Step AG 完了」と送る。
+
+**結果（2026-08-17 00:12）:** AG1〜AG3 は本番とバイト一致。Last-Modified `Sun, 16 Aug 2026 15:07 GMT`。3言語とも保存中の Save 表示と画面は問題なし。
+
+### Step AH — 参考繁閑期%は各年%の単純平均（2026-08-17）
+
+参考繁閑期%と H/L 初期値を一本にする。各過去年で繁閑%を出し、同月を単純平均する。金額の合算はしない。H/L 初期だけ 5% 刻み。ユーザーが ▲▼ した H/L は上書きしない。`rebuild-year-facts.php` は触らない（H/L を読むだけ）。サーバから消さない。同名 `index.html` は **親フォルダ必須**。
+
+#### AH — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AH1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| AH2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AH3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AH — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AH4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| AH5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AH6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AH — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AH7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| AH8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AH9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**上げない:** `js/`、`store.php`、schema、`rebuild-year-facts.php`
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AH4 を先にハードリロード
+2. Sales Data Analyze の列名が **参考繁閑期%**（EN: Reference Seasonality %）
+3. 2024 1月 90%・2025 1月 110% なら参考は 100%。売上規模が違っても 100% のまま
+4. H/L を一度も触っていない月だけ、参考の 5% 刻みが初期値。▲▼ 済みは変わらない
+
+迷ったら AH1 だけ先に。完了したら「Step AH 完了」と送る。
+
+**注（2026-08-17）:** AH1 / AH4 / AH7（annual）は Step AI 上げで本番に同梱済み。残分は **Step AJ**（Monthly / monthly/edit）。
+
+### Step AI — Past Sales 年送りと Sales Data 繁閑%（2026-08-17）
+
+カレンダーで 2025 を見ていると、Past Sales の上限が 2024 になり 2025 へ ◀︎▶︎ できない。Sales Data も 2025（確定済み）のままなので H/L の ▲▼ が押せない。計画年（2026）をストアから読む。サーバから消さない。同名 `index.html` は **親フォルダ必須**。`js/`・`api/`・Monthly は触らない。
+
+#### AI — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AI1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+
+#### AI — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AI2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+
+#### AI — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AI3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+
+**上げない:** `js/`、`api/`、Monthly、`monthly/edit`、`rebuild-year-facts.php`
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AI2 を先にハードリロード
+2. Annual カレンダーが 2025 でも、Past Sales の ◀︎▶︎ で **2025** に行ける（2024→▶︎→2025。2026 には行かない）
+3. Sales Data の年表示は **2026**。Target Sales の ▲▼ が押せて、Monthly Allocated Total を 100% に合わせられる
+4. 2023 以前への ◀︎ はこれまで通り
+
+AH 未上げなら annual は AI を上げれば AH の annual 分も入る。Monthly の AH は別途。迷ったら AI1 だけ先に。完了したら「Step AI 完了」と送る。
+
+**結果（2026-08-17）:** Step AI 完了（本番反映済み）。年の二系統ルールは [`display-vs-operating-year.md`](./display-vs-operating-year.md)。
+
+### Step AJ — AH 残分（Monthly / MEP・参考繁閑期%単純平均）（2026-08-17）
+
+AH の annual は AI 済み。残りは Monthly と monthly/edit だけ。各年%の単純平均・H/L 初期 5% 刻み・ユーザー編集 H/L は上書きしない。サーバから消さない。同名 `index.html` は **親フォルダ必須**。`js/`・`api/`・annual は上げない。
+
+#### AJ — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AJ1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| AJ2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### AJ — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AJ3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| AJ4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+
+#### AJ — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| AJ5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| AJ6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+
+**上げない:** annual、`js/`、`api/`、`rebuild-year-facts.php`
+
+**確認**
+
+1. 古いタブは閉じる。英語なら AJ3 を先にハードリロード
+2. Monthly / MEP 経由でも繁閑%の参考値が各年%の単純平均になっている（金額合算ではない）
+3. Annual の Sales Data Analyze（AI 済み）と矛盾しない
+
+迷ったら AJ1 だけ先に。完了したら「Step AJ 完了」と送る。
+
+**結果（2026-08-17）:** Step AJ 完了（本番反映済み）。AH 残分（Monthly / monthly/edit）反映。
 
 ### 上げ終わったら確認（削除不要）
 

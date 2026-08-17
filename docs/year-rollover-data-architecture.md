@@ -16,6 +16,7 @@
 
 | ドキュメント | 役割 |
 |--------------|------|
+| `docs/display-vs-operating-year.md` | **必須** displayYear と operatingYear / planningYear の混同禁止 |
 | `docs/target-sales-daily-monthly-annual.md` | 目標売上・繁閑期の算出フロー（高レベル） |
 | `docs/past-sales-floating-window-memo.md` | Past Sales 窓の現行実装・`pastSalesShared` |
 | `docs/annual-current-year-sales-floating-window-plan.md` | Sales Data 窓・`annualDailyShared` |

@@ -13004,7 +13004,7 @@
                   <th>月次売上実績</th>
                   <th data-tooltip="月間KGI（= 月次売上実績 - 月次目標売上）。月次目標に対する達成差額を示します。">月間KGI</th>
                   <th data-tooltip="月次平均％（平均売上額に対して実績売上が何％だったか）。翌年の繁閑期％設定の基準です。">月次平均%</th>
-                  <th data-tooltip="月次実質％（前年繁閑％から算出した目標売上KPIに対して、実績売上が何％か）。">月次実質%</th>
+                  <th data-tooltip="月次実質％（参考繁閑％から算出した目標売上KPIに対して、実績売上が何％か）。">月次実質%</th>
                 </tr>
               </thead>
 
@@ -19515,7 +19515,7 @@
         }
       };
 
-                                                                                                                                                                                                                                                            /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                                  /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -20155,8 +20155,7 @@
           document.dispatchEvent(new CustomEvent('kpi:annualPlanChanged', { detail: extra }));
         }
 
-        function runServerYearRebuild(year, reason, extra) {
-          extra = extra || {};
+        function rebuildOneYearFromServer(year, reason) {
           var y = Number(year);
           if (!Number.isFinite(y)) return Promise.resolve();
           function fallbackJs() {
@@ -20166,47 +20165,65 @@
               reason: reason || 'plan-rebuild-fallback',
             });
             persistStore();
-            emitAnnualPlanChanged(y, extra);
           }
+          if (
+            !window.__KPI_DAILY_FACTS_SYNC ||
+            typeof window.__KPI_DAILY_FACTS_SYNC.rebuildYear !== 'function'
+          ) {
+            fallbackJs();
+            return Promise.resolve();
+          }
+          return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y)
+            .then(function (data) {
+              if (!data || !data.ok) fallbackJs();
+            })
+            .catch(function () {
+              fallbackJs();
+            });
+        }
+
+        function flushThenRebuildYears(years, reason) {
+          var list = (years || [])
+            .map(Number)
+            .filter(Number.isFinite)
+            .sort(function (a, b) { return a - b; });
           persistStore();
-          var work = function () {
-            var gwObj = window.__KPI_DATA_GATEWAY;
-            var flush =
-              gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
-            return Promise.resolve(flush)
-              .then(function () {
-                if (
-                  window.__KPI_DAILY_FACTS_SYNC &&
-                  typeof window.__KPI_DAILY_FACTS_SYNC.rebuildYear === 'function'
-                ) {
-                  return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y);
-                }
-                return { ok: false, skipped: true };
-              })
-              .then(function (data) {
-                if (!data || !data.ok) {
-                  fallbackJs();
-                  return;
-                }
-                var hyd =
-                  window.__KPI_DAILY_FACTS_SYNC &&
-                  typeof window.__KPI_DAILY_FACTS_SYNC.hydrateWindow === 'function'
-                    ? window.__KPI_DAILY_FACTS_SYNC.hydrateWindow({
-                        force: true,
-                        year: y,
-                        backfill: false,
-                      })
-                    : Promise.resolve();
-                return Promise.resolve(hyd).then(function () {
-                  emitAnnualPlanChanged(y, extra);
-                });
-              })
-              .catch(function () {
-                fallbackJs();
+          var gwObj = window.__KPI_DATA_GATEWAY;
+          var flush =
+            gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
+          return Promise.resolve(flush).then(function () {
+            var p = Promise.resolve();
+            list.forEach(function (y) {
+              p = p.then(function () {
+                return rebuildOneYearFromServer(y, reason);
               });
+            });
+            return p;
+          });
+        }
+
+        function runServerYearRebuild(year, reason, extra) {
+          extra = extra || {};
+          var y = Number(year);
+          if (!Number.isFinite(y)) return Promise.resolve();
+          var work = function () {
+            return flushThenRebuildYears([y], reason).then(function () {
+              var hyd =
+                window.__KPI_DAILY_FACTS_SYNC &&
+                typeof window.__KPI_DAILY_FACTS_SYNC.hydrateWindow === 'function'
+                  ? window.__KPI_DAILY_FACTS_SYNC.hydrateWindow({
+                      force: true,
+                      year: y,
+                      backfill: false,
+                    })
+                  : Promise.resolve();
+              return Promise.resolve(hyd).then(function () {
+                emitAnnualPlanChanged(y, extra);
+              });
+            });
           };
           if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
-            return window.__KPI_BUSY.run(work, { kind: 'save' }).catch(function () {});
+            return window.__KPI_BUSY.run('save', work).catch(function () {});
           }
           return work();
         }
@@ -20369,58 +20386,24 @@
         }
 
         function computeAverageSeasonalityPct(operatingYear, maxYears) {
+          /* KPI-SEASON-PCT-MEAN-AH: equal-weight mean of each year's monthlyPct */
           var eligible = listEligiblePastYearsForBaseline(operatingYear, maxYears);
           if (!eligible.length) return null;
-          var nYears = eligible.length;
-          var sumBaseline = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-          var sumActual = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-          var hasComponents = true;
-          eligible.forEach(function (item) {
-            var obs = item.observed;
-            if (
-              !obs ||
-              !obs.monthlySales ||
-              obs.monthlySales.length !== 12 ||
-              !obs.monthlyBizDays ||
-              obs.monthlyBizDays.length !== 12
-            ) {
-              hasComponents = false;
-              return;
-            }
-            var dailyAvg =
-              obs.totalBusinessDays > 0 && obs.annualSales != null
-                ? Number(obs.annualSales) / obs.totalBusinessDays
-                : 0;
-            for (var m = 0; m < 12; m++) {
-              var baseline = dailyAvg * Number(obs.monthlyBizDays[m] || 0);
-              sumBaseline[m] += baseline;
-              sumActual[m] += Number(obs.monthlySales[m] || 0);
-            }
-          });
           var months = [];
-          if (hasComponents) {
-            for (var mi = 0; mi < 12; mi++) {
-              var avgBaseline = sumBaseline[mi] / nYears;
-              var avgActual = sumActual[mi] / nYears;
-              months.push(
-                avgBaseline > 0
-                  ? Math.round((avgActual / avgBaseline) * 10000) / 100
-                  : null
-              );
-            }
-          } else {
-            for (var mj = 0; mj < 12; mj++) {
-              var sum = 0;
-              var n = 0;
-              eligible.forEach(function (item) {
-                var v = item.observed.monthlyPct[mj];
-                if (v != null && Number.isFinite(Number(v))) {
-                  sum += Number(v);
-                  n++;
-                }
-              });
-              months.push(n ? Math.round((sum / n) * 100) / 100 : null);
-            }
+          for (var mj = 0; mj < 12; mj++) {
+            var sum = 0;
+            var n = 0;
+            eligible.forEach(function (item) {
+              var v =
+                item.observed && item.observed.monthlyPct
+                  ? item.observed.monthlyPct[mj]
+                  : null;
+              if (v != null && Number.isFinite(Number(v))) {
+                sum += Number(v);
+                n++;
+              }
+            });
+            months.push(n ? Math.round((sum / n) * 100) / 100 : null);
           }
           return {
             months: months,
@@ -20449,23 +20432,11 @@
         }
 
         function computeBaselineHlWeights(operatingYear, maxYears) {
-          var oy = Number(operatingYear);
-          if (!Number.isFinite(oy)) return null;
-          var cap = maxYears == null ? 2 : Math.max(1, Math.min(5, Number(maxYears) || 2));
-          var eligible = listEligiblePastYearsForBaseline(oy, cap);
-          if (!eligible.length) return null;
+          var pack = computeAverageSeasonalityPct(operatingYear, maxYears);
+          if (!pack || !pack.months || pack.months.length !== 12) return null;
           var months = [];
           for (var m = 0; m < 12; m++) {
-            var sum = 0;
-            var n = 0;
-            eligible.forEach(function (item) {
-              var v = item.observed.monthlyPct[m];
-              if (v != null && Number.isFinite(Number(v))) {
-                sum += Number(v);
-                n++;
-              }
-            });
-            months.push(n ? snapHlWeightFromObserved(sum / n) : 100);
+            months.push(snapHlWeightFromObserved(pack.months[m]));
           }
           return months;
         }
@@ -20865,16 +20836,39 @@
         }
 
         function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged) {
-          Object.keys(yearsMap || {}).forEach(function (y) {
-            var yn = Number(y);
-            if (!Number.isFinite(yn)) return;
-            invalidateDailyFacts({
-              year: yn,
-              fromIso: yearStartIso(yn),
-              planChanged: !!planChanged,
-              reason: reason || 'touched-year',
+          return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year');
+        }
+
+        /* KPI-BULK-YEAR-REBUILD-AE */
+
+        function rebuildTouchedYearsOnServer(yearsMap, reason) {
+          var years = Object.keys(yearsMap || {})
+            .map(Number)
+            .filter(Number.isFinite)
+            .sort(function (a, b) { return a - b; });
+          if (!years.length) return Promise.resolve();
+          var work = function () {
+            return flushThenRebuildYears(years, reason).then(function () {
+              var focus = getOperatingYear();
+              var hyd =
+                window.__KPI_DAILY_FACTS_SYNC &&
+                typeof window.__KPI_DAILY_FACTS_SYNC.hydrateWindow === 'function'
+                  ? window.__KPI_DAILY_FACTS_SYNC.hydrateWindow({
+                      force: true,
+                      year: focus,
+                      backfill: false,
+                    })
+                  : Promise.resolve();
+              return Promise.resolve(hyd);
             });
-          });
+          };
+          if (window.__KPI_BUSY && (window.__KPI_BUSY._inRun || window.__KPI_BUSY.isBusy())) {
+            return work();
+          }
+          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
+            return window.__KPI_BUSY.run('import', work, { count: years.length }).catch(function () {});
+          }
+          return work();
         }
 
         /* dailyIncome: 収入ストリーム別の日次額（store_sales は timeline.dailySales が正、
@@ -20982,31 +20976,33 @@
             Object.keys(yearsSales).forEach(function (y) { yearsAll[y] = true; });
             Object.keys(yearsBiz).forEach(function (y) { yearsAll[y] = true; });
           }
-          invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
-          persistStore();
-          /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
           var yearsList = Object.keys(yearsAll)
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
-          if (yearsList.length) {
-            dispatchChange('dailySalesChanged', {
-              years: yearsList,
-              source: src,
-              bulk: true,
-            });
-            var bizYears = yearsList.filter(function (y) {
-              return !!yearsBiz[String(y)] || !!yearsBiz[y];
-            });
-            if (bizYears.length) {
-              dispatchChange('businessDayChanged', {
-                years: bizYears,
+          return Promise.resolve(
+            invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales')
+          ).then(function () {
+            /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
+            if (yearsList.length) {
+              dispatchChange('dailySalesChanged', {
+                years: yearsList,
                 source: src,
                 bulk: true,
               });
+              var bizYears = yearsList.filter(function (y) {
+                return !!yearsBiz[String(y)] || !!yearsBiz[y];
+              });
+              if (bizYears.length) {
+                dispatchChange('businessDayChanged', {
+                  years: bizYears,
+                  source: src,
+                  bulk: true,
+                });
+              }
             }
-          }
-          maybeRefreshObservedAfterTimelineChange(yearsAll);
+            maybeRefreshObservedAfterTimelineChange(yearsAll);
+          });
         }
 
         function mergeDailyMaps(salesMap, bizMap, meta) {
@@ -21035,31 +21031,33 @@
           var yearsAll = {};
           Object.keys(yearsSales).forEach(function (y) { yearsAll[y] = true; });
           Object.keys(yearsBiz).forEach(function (y) { yearsAll[y] = true; });
-          invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
-          persistStore();
-          /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
           var yearsList = Object.keys(yearsAll)
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
-          if (yearsList.length) {
-            dispatchChange('dailySalesChanged', {
-              years: yearsList,
-              source: src,
-              bulk: true,
-            });
-            var bizYears = yearsList.filter(function (y) {
-              return !!yearsBiz[String(y)] || !!yearsBiz[y];
-            });
-            if (bizYears.length) {
-              dispatchChange('businessDayChanged', {
-                years: bizYears,
+          return Promise.resolve(
+            invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily')
+          ).then(function () {
+            /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
+            if (yearsList.length) {
+              dispatchChange('dailySalesChanged', {
+                years: yearsList,
                 source: src,
                 bulk: true,
               });
+              var bizYears = yearsList.filter(function (y) {
+                return !!yearsBiz[String(y)] || !!yearsBiz[y];
+              });
+              if (bizYears.length) {
+                dispatchChange('businessDayChanged', {
+                  years: bizYears,
+                  source: src,
+                  bulk: true,
+                });
+              }
             }
-          }
-          maybeRefreshObservedAfterTimelineChange(yearsAll);
+            maybeRefreshObservedAfterTimelineChange(yearsAll);
+          });
         }
 
         function syncLegacyKeys() {
@@ -21174,34 +21172,32 @@
             store.timeline.businessDays[iso] = !!bizMap[iso];
             yearTouched = true;
           });
-          if (!yearTouched) return;
+          if (!yearTouched) return Promise.resolve();
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          invalidateDailyFacts({
-            year: oy,
-            fromIso: yearStartIso(oy),
-            reason: 'sales-data-save',
-          });
-          persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({ [String(oy)]: true });
+          return rebuildTouchedYearsOnServer({ [String(oy)]: true }, 'sales-data-save');
         }
 
         function persistFromAnnualDaily(daily, meta) {
-          if (!daily) return;
+          if (!daily) return Promise.resolve();
           var m = Object.assign({ source: 'annual-daily-compat' }, meta || {});
           if (m.source === 'sales-data-save') {
-            persistSalesDataModalSave(daily, m);
-            return;
+            var saved = persistSalesDataModalSave(daily, m);
+            syncToAnnualDaily();
+            return saved;
           }
-          mergeDailyMaps(daily.targetSalesByDate, daily.businessDayByDate, m);
+          var merged = mergeDailyMaps(daily.targetSalesByDate, daily.businessDayByDate, m);
           syncToAnnualDaily();
+          return merged;
         }
 
         function persistFromPastSales(ps, meta) {
-          if (!ps) return;
+          if (!ps) return Promise.resolve();
           var m = Object.assign({ source: 'past-sales-compat' }, meta || {});
-          mergePastSalesMaps(ps.salesByDate, ps.businessDayByDate, m);
+          var merged = mergePastSalesMaps(ps.salesByDate, ps.businessDayByDate, m);
           syncToAnnualDaily();
+          return merged;
         }
 
         function hydrateNavFromStorage() {
@@ -21272,6 +21268,10 @@
           rec.plan.source = (meta && meta.source) || 'kpi-year-store';
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
+          }
+          if (meta && (meta.skipRebuild || meta.source === 'sales-data-save')) {
+            if (meta.skipRebuild) persistStore();
+            return;
           }
           scheduleServerYearRebuild(y, 'annual-target', {
             targetSales: rec.plan.targetSales,

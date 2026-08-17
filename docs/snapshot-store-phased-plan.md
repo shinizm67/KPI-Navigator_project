@@ -2,7 +2,7 @@
 
 更新日: 2026-08-15  
 状態: **方針確定・実装は段階ごと**（このメモが正本）  
-関連: [`backend-phase-a-store-api.md`](./backend-phase-a-store-api.md) · [`year-rollover-data-architecture.md`](./year-rollover-data-architecture.md) · [`bulk-store-refresh-perf-memo.md`](./bulk-store-refresh-perf-memo.md) · [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)
+関連: [`backend-phase-a-store-api.md`](./backend-phase-a-store-api.md) · [`year-rollover-data-architecture.md`](./year-rollover-data-architecture.md) · [`display-vs-operating-year.md`](./display-vs-operating-year.md) · [`bulk-store-refresh-perf-memo.md`](./bulk-store-refresh-perf-memo.md) · [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)
 
 ---
 
@@ -195,4 +195,4 @@ TW の Focus ±4週だけを一覧にすると、1月始まりで窓の端が 2/
 
 ## 7. 次の一手
 
-段階 0〜3・2d・Cockpit ◀︎▶︎ は本番済み。スペーサ仮想化は **Step AB**。段階5の最初は **Step AC 本番済み**。次は **Step AD**（繁閑%の画面配線）。
+段階 0〜3・2d・Cockpit ◀︎▶︎ は本番済み。スペーサ仮想化は **Step AB**。段階5の繁閑%は **AC/AD 本番済み**。Past Sales 保存のサーバ再計算は **Step AE 本番済み**。Past Sales Analyze の実績のみ計算は **Step AF 本番済み**。Focus Bar Edit 保存のサーバ再計算は **Step AG 本番済み**。参考繁閑期%単純平均は **Step AH / AJ 本番済み**（annual は AI、Monthly/MEP は AJ）。Past Sales 年送りと Sales Data 繁閑%▲▼ は **Step AI 本番済み**。年の二系統ルールは [`display-vs-operating-year.md`](./display-vs-operating-year.md)。

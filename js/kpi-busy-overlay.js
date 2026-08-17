@@ -121,10 +121,20 @@
   }
 
   function run(kind, fn, extra) {
+    if (typeof kind === 'function') {
+      extra = fn;
+      fn = kind;
+      kind = (extra && extra.kind) || 'save';
+    }
+    if (typeof fn !== 'function') {
+      return Promise.resolve();
+    }
     if (inRun) {
       return Promise.resolve(fn());
     }
-    if (busy) return Promise.resolve();
+    if (busy) {
+      return Promise.resolve(fn());
+    }
     inRun = true;
     show(kind, extra);
     return yieldPaint()

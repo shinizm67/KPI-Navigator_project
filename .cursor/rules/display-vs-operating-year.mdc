@@ -1,0 +1,33 @@
+---
+description: displayYear と operatingYear/planningYear を混同しない（必須）
+alwaysApply: true
+---
+
+# 年の二系統（必須・混同禁止）
+
+正本: [`docs/display-vs-operating-year.md`](../../docs/display-vs-operating-year.md)
+
+KPI Navigator で「年」を扱うときは、次の二系統を **絶対に混ぜない**。
+
+| 名前 | 意味 | 典型ソース | 使ってよいこと |
+|------|------|------------|----------------|
+| **displayYear** | 画面で見ている年（ナビ・タイムライン・Focus） | `__ANNUAL_DATA.calendarYear`、年セレクタ、選択日の年 | 表示・スクロール・過去日の閲覧 |
+| **operatingYear** / **planningYear** | いま計画・編集する運用年 | `KpiYearStore.getOperatingYear()` → `store.meta.operatingYear` | Sales Data の年、H/L 繁閑%の書き込み、Past Sales の上限（`oy - 1`）、目標・計画初期値 |
+
+## 必須
+
+- Past Sales / Sales Data / H/L / 繁閑% / 年次目標 / 計画デフォルトは **operatingYear（なければ planningYear と同義）** を使う
+- `getOperatingYear()` をモーダルや計画ロジックに置くなら、**先に** `KpiYearStore.getOperatingYear()`。`calendarYear` はフォールバックのみ
+- 変数名・コメントでどちらを指すか明示する（`cy` に calendar と operating を同居させない）
+
+## 禁止
+
+- `calendarYear` / displayYear を「計画年」「Sales Data の年」「Past Sales の maxYear」として使う
+- 表示年が過去でも、計画年の H/L を locked 年として扱うこと（Step AI の再発）
+- ロールオーバーや `maybeRolloverYear` の結果を無視して、表示年だけで編集可否を決めること
+
+## 回帰チェック（年まわりを触ったら）
+
+1. displayYear=2025・operatingYear=2026 で Past Sales が **2025** まで送れる
+2. 同じ状態で Sales Data の年表示が **2026**、H/L ▲▼ が押せる
+3. Past Sales は **2026（operatingYear）には行けない**

@@ -27,7 +27,7 @@ SAVE_FNS = ("savePastSalesModal", "saveSalesDataModal")
 
 GUARD = """        /* KPI-BUSY-OVERLAY */
         if (window.__KPI_BUSY && !window.__KPI_BUSY._inRun) {{
-          window.__KPI_BUSY.run('save', function () {{ {name}(); }});
+          window.__KPI_BUSY.run('save', function () {{ return {name}(); }});
           return;
         }}
 """
