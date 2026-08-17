@@ -1350,6 +1350,22 @@ AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイル�
 
 **結果（2026-08-17）:** Step AR 完了（本番 LS 確認済み。`kpiYearStore.timeline.dailySales` は 2026 作業窓。2024/2025 全日は載っていない）。
 
+### Step A — 運用片付け（AL〜AR 後・任意だが推奨）（2026-08-17）
+
+移行 CLI は1回きり。本番から消してよい。SSH パスワードは再発行推奨。
+
+| # | 作業 | 確認 |
+|---|------|------|
+| A1 | FileZilla でサーバ `public_html/kpi-navigator/tools/migrate-timeline-to-daily-inputs.php` を **削除** | 404 でよい。`kpi_daily_inputs` の 1096 行は触らない |
+| A2 | ロリポップ!マネージャー → **SSH** → パスワード **再発行** | 旧パスワード無効。チャットに貼らない |
+| A3 | Annual 本番をハードリロード → Past Sales / Sales Data / 繁閑% が今までどおり | 入力・目標が壊れていない |
+
+**残す:** `daily-inputs.php`、`kpi-daily-inputs-sync.js`、表 `kpi_daily_inputs`。ローカル `tools/migrate-timeline-to-daily-inputs.php` は Git に残してよい。
+
+完了したら「Step A 完了」と送る。
+
+**結果（2026-08-17）:** Step A 完了（サーバ migrate スクリプト削除・SSH 再発行・本番スモーク OK）。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
