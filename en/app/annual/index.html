@@ -2081,6 +2081,31 @@
       flex-shrink: 0;
       margin-top: 0.5px;
     }
+    .annual-graph-popover__date-nav {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .annual-graph-popover__date-nav-btn {
+      appearance: none;
+      border: 1px solid rgba(88, 225, 243, 0.55);
+      background: rgba(88, 225, 243, 0.08);
+      color: #58e1f3;
+      border-radius: 4px;
+      width: 28px;
+      height: 24px;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .annual-graph-popover__date-nav-btn:hover,
+    .annual-graph-popover__date-nav-btn:focus-visible {
+      background: rgba(88, 225, 243, 0.22);
+      outline: none;
+    }
     .annual-graph-popover__title {
       margin: 0;
       font-size: 16px;
@@ -2222,6 +2247,7 @@
       background: rgba(15, 148, 3, 0.33);
       overflow: visible;
     }
+    /* KPI-GRAPH-CH3-NAV-GREEN */
     .annual-graph-popover__bar-fill {
       position: absolute;
       left: 0;
@@ -2230,8 +2256,8 @@
       width: calc(var(--ag-kgi-pct) * 1%);
       max-width: 100%;
       box-sizing: border-box;
-      background: #58e1f3;
-      box-shadow: inset 0 0 0 1px rgba(88, 225, 243, 0.35);
+      background: #0f9403;
+      box-shadow: inset 0 0 0 1px rgba(15, 148, 3, 0.35);
     }
     .annual-graph-popover__bar-target-line {
       position: absolute;
@@ -2262,17 +2288,46 @@
     .annual-graph-popover--lose .annual-graph-popover__title {
       color: #0db13a;
     }
-    .annual-graph-popover--lose .annual-graph-popover__val-actual,
-    .annual-graph-popover--lose .annual-graph-popover__val-diff {
-      color: #ff6b6b;
-    }
-    .annual-graph-popover--win .annual-graph-popover__val-actual,
-    .annual-graph-popover--win .annual-graph-popover__val-diff {
+    /* KPI-GRAPH-CH3: Sales / Target = cyan (page default); Diff/Achievement = severity */
+    .annual-graph-popover__val-actual,
+    .annual-graph-popover__val-target {
       color: #58e1f3;
     }
-    .annual-graph-popover--neutral .annual-graph-popover__val-actual,
-    .annual-graph-popover--neutral .annual-graph-popover__val-diff {
-      color: rgba(88, 225, 243, 0.75);
+    .annual-graph-popover__val-diff.tw-diff--win {
+      color: #58e1f3;
+    }
+    .annual-graph-popover__val-diff.tw-diff--neutral {
+      color: #58e1f3;
+    }
+    /* KPI-GRAPH-CH3-NAV-CYAN-3 */
+    body.si-fi:not(.office-mode) .annual-graph-popover__panel .annual-graph-popover__val-actual,
+    body.si-fi:not(.office-mode) .annual-graph-popover__panel .annual-graph-popover__val-target {
+      color: #58e1f3 !important;
+    }
+    body.si-fi:not(.office-mode) .annual-graph-popover__panel .annual-graph-popover__val-diff.tw-diff--win,
+    body.si-fi:not(.office-mode) .annual-graph-popover__panel .annual-graph-popover__val-diff.tw-diff--neutral {
+      color: #58e1f3 !important;
+    }
+    .annual-graph-popover__date-nav[hidden] {
+      display: none !important;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-90 {
+      color: #f9a825;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-80 {
+      color: #ef6c00;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-70 {
+      color: #e65100;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-60 {
+      color: #e53935;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-50 {
+      color: #c62828;
+    }
+    .annual-graph-popover__val-diff.tw-diff--sev-below {
+      color: #b71c1c;
     }
     .office-mode .annual-graph-popover__panel {
       border-color: #666;
@@ -2326,17 +2381,33 @@
     .office-mode .annual-graph-popover__bar-tri-kgi {
       filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
     }
-    .office-mode .annual-graph-popover--lose .annual-graph-popover__val-actual,
-    .office-mode .annual-graph-popover--lose .annual-graph-popover__val-diff {
-      color: #b00020;
+    .office-mode .annual-graph-popover__val-actual,
+    .office-mode .annual-graph-popover__val-target {
+      color: #111;
     }
-    .office-mode .annual-graph-popover--win .annual-graph-popover__val-actual,
-    .office-mode .annual-graph-popover--win .annual-graph-popover__val-diff {
-      color: #0d5c24;
+    .office-mode .annual-graph-popover__val-diff.tw-diff--win {
+      color: #111;
     }
-    .office-mode .annual-graph-popover--neutral .annual-graph-popover__val-actual,
-    .office-mode .annual-graph-popover--neutral .annual-graph-popover__val-diff {
-      color: #555;
+    .office-mode .annual-graph-popover__val-diff.tw-diff--neutral {
+      color: #111;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-90 {
+      color: #e65100;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-80 {
+      color: #d84315;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-70 {
+      color: #c62828;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-60 {
+      color: #b71c1c;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-50 {
+      color: #9a0007;
+    }
+    .office-mode .annual-graph-popover__val-diff.tw-diff--sev-below {
+      color: #7f0000;
     }
 
     .annual-summary-bottom-cell {
@@ -15085,6 +15156,10 @@
     >
       <div class="annual-graph-popover__head">
         <h2 class="annual-graph-popover__title" id="annual-graph-popover-title">Daily Graph</h2>
+        <div class="annual-graph-popover__date-nav" id="annual-graph-popover-date-nav">
+          <button type="button" class="annual-graph-popover__date-nav-btn" id="annual-graph-popover-date-prev" aria-label="Previous day">◀︎</button>
+          <button type="button" class="annual-graph-popover__date-nav-btn" id="annual-graph-popover-date-next" aria-label="Next day">▶︎</button>
+        </div>
         <div class="annual-graph-popover__head-actions">
           <div class="annual-graph-popover__dropdown">
             <button
@@ -15125,14 +15200,14 @@
           </div>
           <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-date">Date :</span>
           <span class="annual-graph-popover__value" id="annual-graph-popover-val-date">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-ach">Achievement :</span>
-          <span class="annual-graph-popover__value annual-graph-popover__val-ach" id="annual-graph-popover-val-ach">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-target">Target Sales :</span>
-          <span class="annual-graph-popover__value" id="annual-graph-popover-val-target">—</span>
-          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-actual">Actual Sales :</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-actual">Today's Sales :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-actual" id="annual-graph-popover-val-actual">—</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-target">Today's Target Sales :</span>
+          <span class="annual-graph-popover__value annual-graph-popover__val-target" id="annual-graph-popover-val-target">—</span>
           <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-diff">Difference :</span>
           <span class="annual-graph-popover__value annual-graph-popover__val-diff" id="annual-graph-popover-val-diff">—</span>
+          <span class="annual-graph-popover__label" id="annual-graph-popover-lbl-ach">Achievement :</span>
+          <span class="annual-graph-popover__value annual-graph-popover__val-ach" id="annual-graph-popover-val-ach">—</span>
         </div>
       </div>
     </div>
@@ -24450,7 +24525,8 @@ Cumulative Target Annual Sales</p>
           var tabId = getTabId();
           var cur = leases[key];
           if (cur && cur.tabId !== tabId && cur.expiresAt >= now) {
-            return { ok: false, holder: cur };
+            /* KPI-MEP-LEASE-CF: 今開いている編集面が引き継ぐ */
+            if (!(meta && meta.steal)) return { ok: false, holder: cur };
           }
           leases[key] = {
             tabId: tabId,
@@ -24541,10 +24617,19 @@ Cumulative Target Annual Sales</p>
             /* Past Sales modal — path / lease / year-lock とは独立（§15 データ正本） */
             return true;
           }
-          if (!canEditIso(iso)) return false;
           var path = salesSourceToPath(src);
+          var y = isoYear(iso);
+          /* KPI-MEP-PAST-YEAR-CE: 過去年の売上・営業日は Monthly 経路 + lease なら year-lock を越える */
+          if (path === 'mep' && Number.isFinite(y) && y < getOperatingYear()) {
+            if (getDailySalesInputPath() !== 'mep') return false;
+            return holdsEditLease('daily-sales');
+          }
+          if (!canEditIso(iso)) return false;
           if (!path) return true;
-          if (path !== getDailySalesInputPath()) return false;
+          if (path !== getDailySalesInputPath()) {
+            /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP は同一 sales キー。lease 中は経路トグルに関わらず書く */
+            if (path !== 'mep' || !holdsEditLease('daily-sales')) return false;
+          }
           /* Sales Data モーダル Save は path 一致時に timeline へ反映（lease 未取得だと sync で巻き戻る） */
           if (src.indexOf('sales-data-save') >= 0) return true;
           return holdsEditLease('daily-sales');
@@ -25539,6 +25624,7 @@ Cumulative Target Annual Sales</p>
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -25603,6 +25689,7 @@ Cumulative Target Annual Sales</p>
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -27123,7 +27210,10 @@ Cumulative Target Annual Sales</p>
         }
         function tryAcquireLease(label, opts) {
           if (!storeReady()) return true;
-          var result = KpiYearStore.acquireEditLease(LEASE_SURFACE, { label: label });
+          var result = KpiYearStore.acquireEditLease(LEASE_SURFACE, {
+            label: label,
+            steal: !!(opts && opts.steal),
+          });
           if (result && result.ok) {
             startHeartbeat();
             return true;
@@ -32279,12 +32369,79 @@ Cumulative Target Annual Sales</p>
       }
 
       window.__renderAnnualDailyTable = renderAnnualDailyTable;
+
+      /* KPI-CY-HYDRATE-BEFORE-TW-CA */
+      function renderAnnualDailyTableAfterHydrate(year, opts) {
+        opts = opts || {};
+        year = Number(year);
+        if (!Number.isFinite(year)) return Promise.resolve();
+        function resolveFocusIso() {
+          if (typeof resolveTwDrawFocusIso === 'function') {
+            return resolveTwDrawFocusIso(year, opts);
+          }
+          return String(year) + '-01-01';
+        }
+        function pinFocusBar(iso) {
+          if (!iso) return;
+          window.__focusBarPinIso = String(iso);
+          if (window.__paintTwVisibleWindow) window.__paintTwVisibleWindow(String(iso));
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.scrollTableToIso === 'function') {
+            window.__ANNUAL_UI.scrollTableToIso(String(iso), { lockMs: 500 });
+          }
+          if (typeof window.__refreshAnnualFocusBarLowerFromIso === 'function') {
+            window.__refreshAnnualFocusBarLowerFromIso(String(iso));
+          } else if (typeof window.__refreshAnnualFocusBarLower === 'function') {
+            if (typeof window.__invalidateAnnualFocusBarLowerCache === 'function') {
+              window.__invalidateAnnualFocusBarLowerCache();
+            }
+            window.__refreshAnnualFocusBarLower();
+          }
+          window.setTimeout(function () {
+            if (window.__focusBarPinIso === String(iso)) window.__focusBarPinIso = null;
+          }, 400);
+        }
+        function doRender() {
+          if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+            KpiYearStore.syncToAnnualDaily();
+          }
+          var iso = resolveFocusIso();
+          try {
+            if (window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
+              KpiYearStore.setSelectedDate(iso, 'calendar-year');
+            }
+          } catch (_eSel) {}
+          if (typeof renderAnnualDailyTimeline === 'function') {
+            renderAnnualDailyTimeline(
+              year,
+              Object.assign({ preserveScroll: false, focusIso: iso, forceScrollToFocus: true }, opts)
+            );
+          } else if (typeof renderAnnualDailyTable === 'function') {
+            renderAnnualDailyTable(year);
+          }
+          window.requestAnimationFrame(function () {
+            pinFocusBar(iso);
+            window.setTimeout(function () { pinFocusBar(iso); }, 48);
+            window.setTimeout(function () { pinFocusBar(iso); }, 180);
+          });
+        }
+        var sync = window.__KPI_DAILY_INPUTS_SYNC;
+        if (sync && typeof sync.hydrateWindow === 'function') {
+          return Promise.resolve(sync.hydrateWindow({ force: true, year: year }))
+            .catch(function () { return null; })
+            .then(function () {
+              doRender();
+            });
+        }
+        doRender();
+        return Promise.resolve();
+      }
+
       window.__renderAnnualDailyTimeline = renderAnnualDailyTimeline;
 
       document.addEventListener('annual:calendarYearChanged', function (ev) {
         if (ev.detail && ev.detail.skipTableRender) return;
         var y = ev.detail && ev.detail.year;
-        if (y != null) renderAnnualDailyTable(Number(y));
+        if (y != null) renderAnnualDailyTableAfterHydrate(Number(y));
       });
       document.addEventListener('annual:businessDayMapChanged', function () {
         var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
@@ -32527,9 +32684,10 @@ Cumulative Target Annual Sales</p>
         raf = requestAnimationFrame(function () {
           var state = getFocusedRowState();
           var lockIso =
-            window.__ANNUAL_UI && typeof window.__ANNUAL_UI.getFocusDateLockIso === 'function'
+            window.__focusBarPinIso ||
+            (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.getFocusDateLockIso === 'function'
               ? window.__ANNUAL_UI.getFocusDateLockIso()
-              : null;
+              : null);
           if (lockIso) {
             var lockRow = rowsRoot.querySelector(
               '.annual-daily-row[data-iso-date="' + lockIso + '"]'
@@ -32575,7 +32733,7 @@ Cumulative Target Annual Sales</p>
       document.addEventListener('annual:calendarYearChanged', function () {
         __lowerLastIdx = -1;
         __lowerLastIso = '';
-        setTimeout(refreshLower, 0);
+        /* KPI-CY-HYDRATE-BEFORE-TW-CA: wait for timelineRowsRendered */
       });
       document.addEventListener('annual:timelineRowsRendered', function () {
         __lowerLastIdx = -1;
@@ -32591,6 +32749,30 @@ Cumulative Target Annual Sales</p>
       });
       setTimeout(refreshLower, 0);
 
+      /* KPI-FB-FROM-ISO-CB */
+      window.__refreshAnnualFocusBarLowerFromIso = function (iso) {
+        iso = String(iso || '');
+        window.__focusBarPinIso = iso;
+        if (window.__paintTwVisibleWindow && iso) window.__paintTwVisibleWindow(iso);
+        var row = iso
+          ? rowsRoot.querySelector('.annual-daily-row[data-iso-date="' + iso + '"]')
+          : null;
+        if (typeof window.__invalidateAnnualFocusBarLowerCache === 'function') {
+          window.__invalidateAnnualFocusBarLowerCache();
+        }
+        if (!row) {
+          refreshLower();
+          return;
+        }
+        var idx = Number(row.getAttribute('data-tw-logical-idx'));
+        writeLowerFromRow(row);
+        var prevRow = rowsRoot.querySelector('.annual-daily-row[data-tw-logical-idx="' + (idx - 1) + '"]') || row;
+        var nextRow = rowsRoot.querySelector('.annual-daily-row[data-tw-logical-idx="' + (idx + 1) + '"]') || row;
+        writeLowerFromRowTo(lowerPrev, prevRow);
+        writeLowerFromRowTo(lowerNext, nextRow);
+        lowerPrev.style.display = 'flex';
+        lowerNext.style.display = 'flex';
+      };
       window.__getAnnualDailyFocusedRowState = getFocusedRowState;
       /* KPI-ARP-PHASE3 */
       window.__refreshAnnualFocusBarLower = refreshLower;
@@ -32622,6 +32804,9 @@ Cumulative Target Annual Sales</p>
       var valTarget = document.getElementById('annual-graph-popover-val-target');
       var valActual = document.getElementById('annual-graph-popover-val-actual');
       var valDiff = document.getElementById('annual-graph-popover-val-diff');
+      var dateNav = document.getElementById('annual-graph-popover-date-nav');
+      var datePrevBtn = document.getElementById('annual-graph-popover-date-prev');
+      var dateNextBtn = document.getElementById('annual-graph-popover-date-next');
       if (!graphBtn || !root || !backdrop || !panel || !btnClose || !dropBtn || !dropMenu) return;
 
       var isJa = document.documentElement.getAttribute('lang') === 'ja';
@@ -32802,7 +32987,96 @@ Cumulative Target Annual Sales</p>
         return formatSignedDiff(actual - target);
       }
 
+      var graphRefreshRaf = null;
+      function scheduleRefreshGraphContent() {
+        if (graphRefreshRaf != null) return;
+        graphRefreshRaf = requestAnimationFrame(function () {
+          graphRefreshRaf = null;
+          refreshGraphContent();
+        });
+      }
+
+      function clearGraphAchColor(el) {
+        if (!el) return;
+        el.style.color = '';
+      }
+
+      function applyGraphAchColor(el, achValue) {
+        if (!el) return;
+        el.style.color = getAchievementMarkerColor(achValue);
+      }
+
+      function parseTwCellMoney(text) {
+        var raw = String(text || '').replace(/[^\d.-]/g, '');
+        if (raw === '' || raw === '-' || raw === '.' || raw === '-.') return NaN;
+        var n = Number(raw);
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      function readAnnualTwDailyFromRow(row) {
+        if (!row || (row.classList && row.classList.contains('annual-daily-row--off'))) return null;
+        var base = row.querySelector('.annual-daily-row__group--base');
+        if (!base) return null;
+        var salesEl = base.querySelector('[data-field$=".sales"]');
+        var targetEl = base.querySelector('[data-field$=".target"]');
+        if (!salesEl || !targetEl) return null;
+        var sales = parseTwCellMoney(salesEl.textContent);
+        var target = parseTwCellMoney(targetEl.textContent);
+        if (!(Number.isFinite(target) && target > 0)) return null;
+        return {
+          sales: Number.isFinite(sales) ? sales : 0,
+          target: target,
+          hasData: Number.isFinite(sales),
+        };
+      }
+
+      function syncGraphStaticValueColors() {
+        if (!valActual || !valTarget) return;
+        if (document.body.classList.contains('office-mode')) {
+          valActual.style.color = '';
+          valTarget.style.color = '';
+          return;
+        }
+        valActual.style.color = '#58e1f3';
+        valTarget.style.color = '#58e1f3';
+      }
+
+      function shiftGraphFocusIsoByDays(delta) {
+        delta = Number(delta);
+        if (!Number.isFinite(delta) || delta === 0) return;
+        var iso = resolveGraphFocusedIso(getFocusedRow());
+        if (!iso) return;
+        var d = new Date(String(iso).trim() + 'T00:00:00');
+        if (!isFinite(d.getTime())) return;
+        d.setDate(d.getDate() + delta);
+        var pad = function (n) {
+          return n < 10 ? '0' + n : String(n);
+        };
+        var nextIso =
+          d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        var moved = true;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          moved = window.__ANNUAL_UI.setDailyDateByISO(nextIso, 'graph-popover-nav') !== false;
+        }
+        if (!moved) return;
+        if (
+          typeof monthlyGraphBtn !== 'undefined' &&
+          monthlyGraphBtn &&
+          window.__MONTHLY_UI &&
+          typeof window.__MONTHLY_UI.syncFocusBarFromTw === 'function'
+        ) {
+          window.__MONTHLY_UI.syncFocusBarFromTw();
+        } else if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.scrollTableToIso === 'function'
+        ) {
+          window.__ANNUAL_UI.scrollTableToIso(nextIso, { lockMs: 400 });
+        }
+        scheduleRefreshGraphContent();
+      }
+
       function refreshGraphContent() {
+        syncGraphStaticValueColors();
         var row = getFocusedRow();
         var iso = resolveGraphFocusedIso(row);
         panel.classList.remove('annual-graph-popover--win', 'annual-graph-popover--lose', 'annual-graph-popover--neutral');
@@ -32815,6 +33089,7 @@ Cumulative Target Annual Sales</p>
           valActual.textContent = '—';
           valDiff.textContent = '—';
           clearGraphTwDiffClass(valDiff);
+          clearGraphAchColor(valAch);
           setGraphBarFromAchievementPercent(NaN);
           return;
         }
@@ -32825,6 +33100,10 @@ Cumulative Target Annual Sales</p>
             : null;
         var m = compute ? compute(iso) : null;
         var g = graphMetricsForMode(m, mode);
+        if (mode === 'daily') {
+          var fromRow = readAnnualTwDailyFromRow(row);
+          if (fromRow) g = fromRow;
+        }
 
         valDate.textContent = row ? getFocusedDateText(row) : iso;
         if (mode === 'daily' && isOffFocusedRow(row)) {
@@ -32834,6 +33113,7 @@ Cumulative Target Annual Sales</p>
           valActual.textContent = '—';
           valDiff.textContent = '—';
           clearGraphTwDiffClass(valDiff);
+          clearGraphAchColor(valAch);
           setGraphBarFromAchievementPercent(NaN);
           return;
         }
@@ -32847,6 +33127,7 @@ Cumulative Target Annual Sales</p>
             g && Number.isFinite(g.sales) ? fmtMoney(g.sales) : '—';
           valDiff.textContent = '—';
           clearGraphTwDiffClass(valDiff);
+          clearGraphAchColor(valAch);
           setGraphBarFromAchievementPercent(NaN);
           return;
         }
@@ -32856,12 +33137,15 @@ Cumulative Target Annual Sales</p>
         var diff = sales - target;
         var achValue = target > 0 ? (sales / target) * 100 : 0;
         setGraphBarFromAchievementPercent(achValue);
-        panel.classList.add(diff >= 0 ? 'annual-graph-popover--win' : 'annual-graph-popover--lose');
+        panel.classList.remove('annual-graph-popover--win', 'annual-graph-popover--lose');
+        panel.classList.add('annual-graph-popover--neutral');
         valAch.textContent = formatAchPercent(achValue);
+        applyGraphAchColor(valAch, achValue);
         valTarget.textContent = fmtMoney(target);
         valActual.textContent = fmtMoney(sales);
         valDiff.textContent = setGraphDiffText(sales, target);
         applyGraphTwDiffClass(valDiff, sales, target);
+        syncGraphStaticValueColors();
       }
 
       function syncLabels() {
@@ -32874,6 +33158,13 @@ Cumulative Target Annual Sales</p>
         lblActual.textContent = lbl.actual || '—';
         lblDiff.textContent = STR.diff;
         btnClose.setAttribute('aria-label', STR.close);
+        if (dateNav) dateNav.hidden = false;
+        if (datePrevBtn) {
+          datePrevBtn.setAttribute('aria-label', isJa ? '前日' : 'Previous day');
+        }
+        if (dateNextBtn) {
+          dateNextBtn.setAttribute('aria-label', isJa ? '翌日' : 'Next day');
+        }
       }
 
       function positionPanel() {
@@ -32943,6 +33234,48 @@ Cumulative Target Annual Sales</p>
         }
         openPopover(graphBtn);
       });
+      function bindGraphDateHoldRepeat(btn, delta) {
+        if (!btn) return;
+        var delayId = null;
+        var repeatId = null;
+        function clearHold() {
+          if (delayId != null) { clearTimeout(delayId); delayId = null; }
+          if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+        }
+        function stepOnce() {
+          shiftGraphFocusIsoByDays(delta);
+        }
+        function onPointerDown(ev) {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          try { btn.setPointerCapture(ev.pointerId); } catch (_capErr) {}
+          clearHold();
+          stepOnce();
+          delayId = setTimeout(function () {
+            repeatId = setInterval(stepOnce, 75);
+          }, 350);
+        }
+        function onPointerUp() {
+          clearHold();
+        }
+        btn.addEventListener('pointerdown', onPointerDown);
+        btn.addEventListener('pointerup', onPointerUp);
+        btn.addEventListener('pointercancel', onPointerUp);
+        btn.addEventListener('lostpointercapture', onPointerUp);
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        });
+        btn.addEventListener('keydown', function (ev) {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          stepOnce();
+        });
+      }
+      bindGraphDateHoldRepeat(datePrevBtn, -1);
+      bindGraphDateHoldRepeat(dateNextBtn, 1);
 
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};
       window.__ANNUAL_UI.openGraphPopoverForMode = function (graphMode, anchorEl) {
@@ -32988,10 +33321,10 @@ Cumulative Target Annual Sales</p>
       });
 
       document.addEventListener('annual:focusBarStateChanged', function () {
-        if (!root.hidden) refreshGraphContent();
+        if (!root.hidden) scheduleRefreshGraphContent();
       });
       document.addEventListener('annual:calendarYearChanged', function () {
-        if (!root.hidden) refreshGraphContent();
+        if (!root.hidden) scheduleRefreshGraphContent();
       });
 
       var tableScrollEl = document.getElementById('annual-daily-focus-scroll');
@@ -32999,7 +33332,7 @@ Cumulative Target Annual Sales</p>
         tableScrollEl.addEventListener(
           'scroll',
           function () {
-            if (!root.hidden) refreshGraphContent();
+            if (!root.hidden) scheduleRefreshGraphContent();
           },
           { passive: true }
         );
@@ -33014,7 +33347,7 @@ Cumulative Target Annual Sales</p>
       );
 
       function refreshGraphPopoverFromStore() {
-        if (!root.hidden) refreshGraphContent();
+        if (!root.hidden) scheduleRefreshGraphContent();
       }
       document.addEventListener('kpi:dailySalesChanged', refreshGraphPopoverFromStore);
       document.addEventListener('kpi:businessDayChanged', refreshGraphPopoverFromStore);
@@ -36689,9 +37022,16 @@ Cumulative Target Annual Sales</p>
       /* KPI-SDM-OPEN-INP-V2: 殻を即表示 → 次ペイント後に重い準備・年次テーブル構築 */
       function openModal() {
         lastFocusEl = document.activeElement;
-        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-          if (!window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : 'Sales Data')) {
-            return;
+        var sdmPath =
+          window.KpiYearStore && typeof window.KpiYearStore.getDailySalesInputPath === 'function'
+            ? window.KpiYearStore.getDailySalesInputPath()
+            : 'annual';
+        /* KPI-MEP-LEASE-CF: Monthly 経路中は Sales Data は閲覧のみ。編集権を奪わない */
+        if (sdmPath !== 'mep') {
+          if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
+            if (!window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : 'Sales Data')) {
+              return;
+            }
           }
         }
         state.rowStateByIso = {};
@@ -36720,6 +37060,10 @@ Cumulative Target Annual Sales</p>
             clearDateFilterUi();
             closeSalesSortPanel();
             setSalesDataTab('input');
+            /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP 保存後の timeline を Sales Data 表に載せる */
+            if (window.KpiYearStore && typeof window.KpiYearStore.syncToAnnualDaily === 'function') {
+              window.KpiYearStore.syncToAnnualDaily();
+            }
             updateSalesDataSummary();
             renderSalesDataTable();
             if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
@@ -36825,6 +37169,14 @@ Cumulative Target Annual Sales</p>
         if (state.modalDirty) return;
         var y = ev && ev.detail && Number(ev.detail.year);
         if (Number.isFinite(y) && y !== state.year) return;
+        renderSalesDataTable();
+      });
+      document.addEventListener('kpi:dailyInputsHydrated', function () {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (state.modalDirty) return;
+        if (window.KpiYearStore && typeof window.KpiYearStore.syncToAnnualDaily === 'function') {
+          window.KpiYearStore.syncToAnnualDaily();
+        }
         renderSalesDataTable();
       });
       document.addEventListener('annual:salesMapChanged', function (ev) {
