@@ -380,6 +380,10 @@
       background: rgba(120, 200, 230, 0.28);
       outline: none;
     }
+    .monthly-edit-float__csv-upload:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
     .monthly-edit-float__undo:disabled {
       opacity: 0.35;
       cursor: default;
@@ -2706,23 +2710,23 @@
           id="mep-sales-input-path"
           data-kpi-sales-input-path
           hidden
-          aria-label="売上入力の経路（Annual / Monthly）"
+          aria-label="売上入力の経路（年次 / 月次）"
         >
           <p class="kpi-daily-input-path__title">売上入力</p>
           <div class="kpi-daily-input-path__row">
-            <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
+            <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年次</span>
             <button
               type="button"
               class="kpi-daily-input-path__switch"
               data-kpi-path-switch
               role="switch"
               aria-checked="false"
-              aria-label="売上入力を Annual と Monthly で切り替え"
+              aria-label="売上入力を年次と月次で切り替え"
               data-kpi-guard-ignore
             >
               <span class="kpi-daily-input-path__knob" aria-hidden="true"></span>
             </button>
-            <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>
+            <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">月次</span>
           </div>
         </div>
       <button type="button" class="monthly-edit-float__undo" id="monthly-edit-float-undo" aria-label="直前の操作を戻す" disabled>
@@ -3594,7 +3598,8 @@
           var tabId = getTabId();
           var cur = leases[key];
           if (cur && cur.tabId !== tabId && cur.expiresAt >= now) {
-            return { ok: false, holder: cur };
+            /* KPI-MEP-LEASE-CF: 今開いている編集面が引き継ぐ */
+            if (!(meta && meta.steal)) return { ok: false, holder: cur };
           }
           leases[key] = {
             tabId: tabId,
@@ -3685,10 +3690,19 @@
             /* Past Sales modal — path / lease / year-lock とは独立（§15 データ正本） */
             return true;
           }
-          if (!canEditIso(iso)) return false;
           var path = salesSourceToPath(src);
+          var y = isoYear(iso);
+          /* KPI-MEP-PAST-YEAR-CE: 過去年の売上・営業日は Monthly 経路 + lease なら year-lock を越える */
+          if (path === 'mep' && Number.isFinite(y) && y < getOperatingYear()) {
+            if (getDailySalesInputPath() !== 'mep') return false;
+            return holdsEditLease('daily-sales');
+          }
+          if (!canEditIso(iso)) return false;
           if (!path) return true;
-          if (path !== getDailySalesInputPath()) return false;
+          if (path !== getDailySalesInputPath()) {
+            /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP は同一 sales キー。lease 中は経路トグルに関わらず書く */
+            if (path !== 'mep' || !holdsEditLease('daily-sales')) return false;
+          }
           /* Sales Data モーダル Save は path 一致時に timeline へ反映（lease 未取得だと sync で巻き戻る） */
           if (src.indexOf('sales-data-save') >= 0) return true;
           return holdsEditLease('daily-sales');
@@ -4683,6 +4697,7 @@
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -4747,6 +4762,7 @@
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -5205,6 +5221,645 @@
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }
           })();
+
+      /* KPI-DAILY-SALES-IMPORT */
+      (function () {
+        var XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+
+        function isJa() {
+          return (
+            String(document.documentElement.getAttribute('lang') || '')
+              .toLowerCase()
+              .indexOf('ja') === 0
+          );
+        }
+
+        function t(ja, en) {
+          return isJa() ? ja : en;
+        }
+
+        function pad2(n) {
+          return n < 10 ? '0' + n : String(n);
+        }
+
+        function isoFromYmd(y, m, d) {
+          y = Number(y);
+          m = Number(m);
+          d = Number(d);
+          if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+          var dt = new Date(y, m - 1, d);
+          if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+          return y + '-' + pad2(m) + '-' + pad2(d);
+        }
+
+        function isoYear(iso) {
+          return Number(String(iso || '').slice(0, 4));
+        }
+
+        function normalizeHeader(raw) {
+          return String(raw || '')
+            .replace(/\uFEFF/g, '')
+            .trim()
+            .toLowerCase()
+            .replace(/[\s_]+/g, '');
+        }
+
+        var DATE_KEYS = [
+          'date',
+          '日付',
+          '日にち',
+          '年月日',
+          '営業日付',
+          'transactiondate',
+          'salesdate',
+        ];
+        /** Optional business-day column. Values: 1/営業/open = 営業日, 0/店休/off = 店休日.
+         *  If no column is detected, 売上>0 を営業日とみなす（一般的な CSV 向け）。 */
+        var BIZ_KEYS = [
+          '営業日',
+          '営業日フラグ',
+          '営業フラグ',
+          'businessday',
+          'businessdayflag',
+          'bizday',
+          'bday',
+          'open',
+          'isopen',
+          'openflag',
+          'closed',
+          'closeday',
+          'dayoff',
+          'off',
+          '店休',
+          '店休日',
+          '休業',
+          '休業日',
+          '営業',
+        ];
+        var SALES_KEYS = [
+          '店舗売上',
+          'storesales',
+          '売上',
+          '売上高',
+          '売上金額',
+          'sales',
+          'amount',
+          'netsales',
+          'dailysales',
+          'grosssales',
+        ];
+        var FOOD_KEYS = [
+          'フード売上',
+          '食売上',
+          'foodsales',
+          'food_sales',
+          'foodsale',
+          'food',
+        ];
+        var DRINK_KEYS = [
+          'ドリンク売上',
+          '飲料売上',
+          'drinksales',
+          'drink_sales',
+          'drinksale',
+          'beveragesales',
+          'beverage',
+          'drink',
+        ];
+
+        function matchKey(norm, keys) {
+          for (var i = 0; i < keys.length; i++) {
+            var k = normalizeHeader(keys[i]);
+            if (!k) continue;
+            /* 完全一致、またはヘッダがキーを含む（キーがヘッダを含む逆方向は短い語の誤爆になるので不可） */
+            if (norm === k || norm.indexOf(k) >= 0) return true;
+          }
+          return false;
+        }
+
+        function isFoodHeader(norm) {
+          return matchKey(norm, FOOD_KEYS);
+        }
+        function isDrinkHeader(norm) {
+          return matchKey(norm, DRINK_KEYS);
+        }
+
+        function detectColumns(headerRow) {
+          var dateIdx = -1;
+          var bizIdx = -1;
+          var salesIdx = -1;
+          var foodIdx = -1;
+          var drinkIdx = -1;
+          for (var c = 0; c < headerRow.length; c++) {
+            var norm = normalizeHeader(headerRow[c]);
+            if (!norm) continue;
+            /* Food/Drink を先に拾い、汎用「売上」に食わないようにする */
+            if (foodIdx < 0 && isFoodHeader(norm)) foodIdx = c;
+            else if (drinkIdx < 0 && isDrinkHeader(norm)) drinkIdx = c;
+            else if (dateIdx < 0 && matchKey(norm, DATE_KEYS)) dateIdx = c;
+            else if (bizIdx < 0 && matchKey(norm, BIZ_KEYS)) bizIdx = c;
+            else if (
+              salesIdx < 0 &&
+              matchKey(norm, SALES_KEYS) &&
+              !isFoodHeader(norm) &&
+              !isDrinkHeader(norm)
+            ) {
+              salesIdx = c;
+            }
+          }
+          if (dateIdx < 0 && headerRow.length >= 1) dateIdx = 0;
+          if (salesIdx < 0 && headerRow.length >= 2) {
+            salesIdx = headerRow.length - 1;
+            while (
+              salesIdx >= 0 &&
+              (salesIdx === dateIdx ||
+                salesIdx === foodIdx ||
+                salesIdx === drinkIdx ||
+                salesIdx === bizIdx)
+            ) {
+              salesIdx--;
+            }
+          }
+          return {
+            dateIdx: dateIdx,
+            bizIdx: bizIdx,
+            salesIdx: salesIdx,
+            foodIdx: foodIdx,
+            drinkIdx: drinkIdx,
+          };
+        }
+
+        function excelSerialToIso(n) {
+          var serial = Number(n);
+          if (!Number.isFinite(serial) || serial < 20000) return null;
+          var base = Date.UTC(1899, 11, 30);
+          var ms = base + Math.round(serial) * 86400000;
+          var dt = new Date(ms);
+          return isoFromYmd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+        }
+
+        function parseDateCell(raw) {
+          if (raw == null || raw === '') return null;
+          if (typeof raw === 'number') return excelSerialToIso(raw);
+          var s = String(raw).trim();
+          if (!s) return null;
+          if (/^\d{4,5}(\.\d+)?$/.test(s)) {
+            var fromSerial = excelSerialToIso(Number(s));
+            if (fromSerial) return fromSerial;
+          }
+          var iso = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+          if (iso) return isoFromYmd(iso[1], iso[2], iso[3]);
+          var dt = new Date(s);
+          if (!isNaN(dt.getTime())) return isoFromYmd(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+          return null;
+        }
+
+        function parseSalesCell(raw) {
+          if (raw == null || raw === '') return 0;
+          if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+          var s = String(raw).replace(/[¥$,\s]/g, '');
+          if (s === '' || s === '-') return 0;
+          var n = Number(s);
+          return Number.isFinite(n) ? n : 0;
+        }
+
+        function parseBizCell(raw, salesAmount) {
+          if (raw == null || raw === '') {
+            return Number(salesAmount) > 0;
+          }
+          if (typeof raw === 'number') return raw !== 0;
+          var s = String(raw).trim().toLowerCase();
+          if (!s) return Number(salesAmount) > 0;
+          if (s === '0' || s === 'false' || s === 'no' || s === 'off' || s === '休' || s === '店休' || s === '×' || s === 'x') {
+            return false;
+          }
+          if (s === '1' || s === 'true' || s === 'yes' || s === 'on' || s === '営業' || s === '○' || s === '◯') {
+            return true;
+          }
+          var n = Number(s);
+          if (Number.isFinite(n)) return n !== 0;
+          return Number(salesAmount) > 0;
+        }
+
+        function splitCsvLine(line, delim) {
+          var out = [];
+          var cur = '';
+          var inQ = false;
+          for (var i = 0; i < line.length; i++) {
+            var ch = line[i];
+            if (ch === '"') {
+              if (inQ && line[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else inQ = !inQ;
+            } else if (!inQ && ch === delim) {
+              out.push(cur);
+              cur = '';
+            } else cur += ch;
+          }
+          out.push(cur);
+          return out;
+        }
+
+        function detectDelimiter(sample) {
+          var lines = sample.split(/\r?\n/).filter(function (l) { return l.trim(); });
+          if (!lines.length) return ',';
+          var c = (lines[0].match(/,/g) || []).length;
+          var t = (lines[0].match(/\t/g) || []).length;
+          var s = (lines[0].match(/;/g) || []).length;
+          if (t >= c && t >= s) return '\t';
+          if (s > c) return ';';
+          return ',';
+        }
+
+        function parseDelimitedText(text) {
+          var body = String(text || '').replace(/^\uFEFF/, '');
+          if (!body.trim()) return [];
+          var delim = detectDelimiter(body.slice(0, 2048));
+          var lines = body.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+          return lines.map(function (line) { return splitCsvLine(line, delim); });
+        }
+
+        function ensureXlsx() {
+          if (window.XLSX) return Promise.resolve(window.XLSX);
+          return new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = XLSX_CDN;
+            s.async = true;
+            s.onload = function () {
+              if (window.XLSX) resolve(window.XLSX);
+              else reject(new Error('xlsx'));
+            };
+            s.onerror = function () { reject(new Error('xlsx')); };
+            document.head.appendChild(s);
+          });
+        }
+
+        function sheetToRows(wb) {
+          var name = wb.SheetNames && wb.SheetNames[0];
+          if (!name) return [];
+          var sheet = wb.Sheets[name];
+          return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+        }
+
+        function parseWorkbookBuffer(buf) {
+          return ensureXlsx().then(function () {
+            var wb = window.XLSX.read(buf, { type: 'array' });
+            return sheetToRows(wb);
+          });
+        }
+
+        function cellHasValue(row, idx) {
+          if (idx < 0 || !row) return false;
+          var raw = row[idx];
+          if (raw == null) return false;
+          if (typeof raw === 'number') return Number.isFinite(raw);
+          return String(raw).trim() !== '';
+        }
+
+        function rowsToMaps(rows) {
+          if (!rows || !rows.length) throw new Error('empty');
+          var header = rows[0].map(function (c) { return String(c == null ? '' : c); });
+          var cols = detectColumns(header);
+          if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          var salesByDate = {};
+          var businessDayByDate = {};
+          var foodByDate = {};
+          var drinkByDate = {};
+          var years = {};
+          var imported = 0;
+          var foodCount = 0;
+          var drinkCount = 0;
+          var mismatchCount = 0;
+          for (var r = 1; r < rows.length; r++) {
+            var row = rows[r];
+            if (!row || !row.length) continue;
+            var iso = parseDateCell(row[cols.dateIdx]);
+            if (!iso) continue;
+            var sales = parseSalesCell(row[cols.salesIdx]);
+            var biz =
+              cols.bizIdx >= 0
+                ? parseBizCell(row[cols.bizIdx], sales)
+                : sales > 0;
+            if (!biz) sales = 0;
+            sales = Math.round(sales);
+            salesByDate[iso] = sales;
+            businessDayByDate[iso] = !!biz;
+            years[isoYear(iso)] = true;
+            imported++;
+
+            var hasFood = cellHasValue(row, cols.foodIdx);
+            var hasDrink = cellHasValue(row, cols.drinkIdx);
+            if (!biz) {
+              if (hasFood || hasDrink || cols.foodIdx >= 0 || cols.drinkIdx >= 0) {
+                foodByDate[iso] = 0;
+                drinkByDate[iso] = 0;
+              }
+              continue;
+            }
+            if (!hasFood && !hasDrink) continue;
+
+            var food = hasFood ? Math.round(parseSalesCell(row[cols.foodIdx])) : null;
+            var drink = hasDrink ? Math.round(parseSalesCell(row[cols.drinkIdx])) : null;
+            if (hasFood && hasDrink) {
+              if (Math.abs(sales - (food + drink)) > 1) mismatchCount++;
+            } else if (hasFood) {
+              drink = Math.max(0, sales - food);
+            } else {
+              food = Math.max(0, sales - drink);
+            }
+            foodByDate[iso] = food;
+            drinkByDate[iso] = drink;
+            if (hasFood) foodCount++;
+            if (hasDrink) drinkCount++;
+          }
+          if (!imported) throw new Error('rows');
+          return {
+            salesByDate: salesByDate,
+            businessDayByDate: businessDayByDate,
+            foodByDate: foodByDate,
+            drinkByDate: drinkByDate,
+            years: Object.keys(years).map(Number).filter(Number.isFinite).sort(),
+            imported: imported,
+            foodCount: foodCount,
+            drinkCount: drinkCount,
+            mismatchCount: mismatchCount,
+            hasFoodCol: cols.foodIdx >= 0,
+            hasDrinkCol: cols.drinkIdx >= 0,
+          };
+        }
+
+        function formatMoney(n) {
+          var v = Math.round(Number(n) || 0);
+          if (window.KpiCurrency) return KpiCurrency.format(v, { round: true });
+          if (isJa()) return '¥' + v.toLocaleString('en-US');
+          return '$' + v.toLocaleString('en-US');
+        }
+
+        function sumSales(map) {
+          var total = 0;
+          Object.keys(map || {}).forEach(function (k) {
+            total += Number(map[k]) || 0;
+          });
+          return total;
+        }
+
+        function decodeSpreadsheetText(buf) {
+          var bytes = new Uint8Array(buf);
+          if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
+            return new TextDecoder('utf-16le').decode(bytes);
+          }
+          if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
+            return new TextDecoder('utf-16be').decode(bytes);
+          }
+          var utf8 = new TextDecoder('utf-8').decode(bytes);
+          /* Excel が Shift_JIS で保存した CSV を救済（日本語ヘッダが文字化けしているとき） */
+          if (/\uFFFD/.test(utf8) || /[À-ÿ]{3,}/.test(utf8.slice(0, 80))) {
+            try {
+              var sjis = new TextDecoder('shift-jis').decode(bytes);
+              if (/日付|売上|日にち|営業/.test(sjis)) return sjis;
+            } catch (e) {}
+          }
+          return utf8;
+        }
+
+        function readFileAsText(file) {
+          return readFileAsArrayBuffer(file).then(decodeSpreadsheetText);
+        }
+
+        function readFileAsArrayBuffer(file) {
+          return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () { resolve(reader.result); };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+          });
+        }
+
+        function parseFile(file) {
+          var name = String(file && file.name ? file.name : '').toLowerCase();
+          if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+            return readFileAsArrayBuffer(file).then(parseWorkbookBuffer).then(rowsToMaps);
+          }
+          return readFileAsText(file).then(function (text) {
+            return rowsToMaps(parseDelimitedText(text));
+          });
+        }
+
+        function confirmImport(maps, targetYear) {
+          var years = maps.years || [];
+          var yearLine =
+            years.length === 1
+              ? String(years[0])
+              : years.join(', ');
+          var msg =
+            t(
+              '取り込み: ' +
+                maps.imported +
+                ' 日分（' +
+                yearLine +
+                '年）\n売上合計: ' +
+                formatMoney(sumSales(maps.salesByDate)),
+              'Import ' +
+                maps.imported +
+                ' day(s) (' +
+                yearLine +
+                ')\nTotal sales: ' +
+                formatMoney(sumSales(maps.salesByDate))
+            );
+          if (maps.hasFoodCol || maps.hasDrinkCol) {
+            msg +=
+              '\n' +
+              t(
+                'フード/ドリンク: フード ' +
+                  (maps.foodCount || 0) +
+                  ' 日 / ドリンク ' +
+                  (maps.drinkCount || 0) +
+                  ' 日（片方のみの日は店舗売上から逆算）',
+                'Food/Drink: food ' +
+                  (maps.foodCount || 0) +
+                  ' day(s) / drink ' +
+                  (maps.drinkCount || 0) +
+                  ' day(s) (missing side = Store − other)'
+              );
+          }
+          if (maps.mismatchCount > 0) {
+            msg +=
+              '\n' +
+              t(
+                '注意: 店舗売上 ≠ フード+ドリンク の日が ' +
+                  maps.mismatchCount +
+                  ' 日あります。MEP では Drink＝店舗−フードで再計算されます。',
+                'Note: Store ≠ Food+Drink on ' +
+                  maps.mismatchCount +
+                  ' day(s). MEP recomputes Drink as Store − Food.'
+              );
+          }
+          if (targetYear != null && years.indexOf(Number(targetYear)) < 0) {
+            msg +=
+              '\n\n' +
+              t(
+                '表示中の年（' + targetYear + '）はファイルに含まれていません。該当年のみ反映します。',
+                'The open year (' +
+                  targetYear +
+                  ') is not in this file. Only matching dates will be applied.'
+              );
+          } else if (targetYear != null && years.length > 1) {
+            msg +=
+              '\n\n' +
+              t(
+                '表示中の年（' + targetYear + '）の日付のみ表に反映します。',
+                'Only dates for the open year (' + targetYear + ') will be applied.'
+              );
+          }
+          msg += '\n\n' + t('この内容で表に反映しますか？', 'Apply to the table?');
+          return window.confirm(msg);
+        }
+
+        function applyToRowState(rowStateByIso, maps, yearFilter) {
+          if (!rowStateByIso || !maps) return;
+          var yf = yearFilter != null ? Number(yearFilter) : NaN;
+          Object.keys(maps.salesByDate).forEach(function (iso) {
+            if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
+            var biz = maps.businessDayByDate[iso] !== false;
+            var sales = Number(maps.salesByDate[iso]);
+            if (!biz || !Number.isFinite(sales) || sales <= 0) {
+              rowStateByIso[iso] = { off: true, last: '0' };
+            } else {
+              rowStateByIso[iso] = { off: false, last: String(Math.round(sales)) };
+            }
+          });
+        }
+
+        function countForYear(maps, year) {
+          var n = 0;
+          Object.keys(maps.salesByDate).forEach(function (iso) {
+            if (isoYear(iso) === year) n++;
+          });
+          return n;
+        }
+
+        var fileInput = null;
+        function ensureFileInput() {
+          if (fileInput) return fileInput;
+          fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = '.csv,.txt,.tsv,.xlsx,.xls';
+          fileInput.style.display = 'none';
+          document.body.appendChild(fileInput);
+          return fileInput;
+        }
+
+        function bindButton(btn, options) {
+          if (!btn || btn.getAttribute('data-kpi-import-bound') === '1') return;
+          btn.setAttribute('data-kpi-import-bound', '1');
+          var tip = t(
+            'CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。',
+            'Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK).'
+          );
+          btn.setAttribute('data-tooltip', tip);
+          btn.removeAttribute('title');
+
+          btn.addEventListener('click', function () {
+            if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
+            var input = ensureFileInput();
+            input.value = '';
+            input.onchange = function () {
+              var file = input.files && input.files[0];
+              if (!file) return;
+              var busy = window.__KPI_BUSY;
+              if (busy && typeof busy.show === 'function') busy.show('parse');
+              parseFile(file)
+                .then(function (maps) {
+                  if (busy && typeof busy.hide === 'function') busy.hide();
+                  var targetYear =
+                    options && typeof options.getYear === 'function'
+                      ? options.getYear()
+                      : null;
+                  if (!confirmImport(maps, targetYear)) return;
+                  if (targetYear != null && countForYear(maps, Number(targetYear)) === 0) {
+                    window.alert(
+                      t(
+                        'このファイルに表示中の年（' + targetYear + '）の日付がありません。',
+                        'This file has no dates for the open year (' + targetYear + ').'
+                      )
+                    );
+                    return;
+                  }
+                  if (options && typeof options.applyMaps !== 'function') return;
+                  var apply = function () {
+                    options.applyMaps(maps, targetYear);
+                  };
+                  if (busy && typeof busy.run === 'function') {
+                    return busy.run('import', apply, { count: maps.imported });
+                  }
+                  apply();
+                })
+                .catch(function (err) {
+                  if (window.__KPI_BUSY && typeof window.__KPI_BUSY.hide === 'function') {
+                    window.__KPI_BUSY.hide();
+                  }
+                  var code = err && err.message;
+                  if (code === 'xlsx') {
+                    window.alert(
+                      t(
+                        'Excel ライブラリを読み込めませんでした。CSVで保存してから再度お試しください。',
+                        'Could not load the Excel library. Save as CSV and try again.'
+                      )
+                    );
+                    return;
+                  }
+                  if (code === 'empty') {
+                    window.alert(
+                      t('ファイルが空です。', 'The file is empty.')
+                    );
+                    return;
+                  }
+                  if (code === 'columns') {
+                    window.alert(
+                      t(
+                        '列を認識できませんでした。1行目に「日付」「店舗売上」（任意で「フード売上」「ドリンク売上」）などの列名が必要です。',
+                        'Could not detect columns. Row 1 needs headers such as Date, Store Sales (optional Food Sales / Drink Sales).'
+                      )
+                    );
+                    return;
+                  }
+                  if (code === 'rows') {
+                    window.alert(
+                      t(
+                        '有効な日付行がありません。日付列（YYYY-MM-DD など）を確認してください。',
+                        'No valid date rows found. Check the date column (YYYY-MM-DD, etc.).'
+                      )
+                    );
+                    return;
+                  }
+                  window.alert(
+                    t(
+                      'ファイルを読み取れませんでした。1行目に列名（日付・営業日・売上など）があるか確認してください。' +
+                        (code ? '\n(' + code + ')' : ''),
+                      'Could not read the file. Ensure row 1 has column headers (date, business day, sales, etc.).' +
+                        (code ? '\n(' + code + ')' : '')
+                    )
+                  );
+                });
+            };
+            input.click();
+          });
+        }
+
+        window.__KPI_DAILY_IMPORT = {
+          parseFile: parseFile,
+          rowsToMaps: rowsToMaps,
+          applyToRowState: applyToRowState,
+          bindButton: bindButton,
+          tooltip: function () {
+            return t(
+              'CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。',
+              'Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK).'
+            );
+          },
+        };
+      })();
           hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
             var navCy = gw().getJson(SELECTED_DATE_KEY);
@@ -6008,7 +6663,10 @@
         }
         function tryAcquireLease(label, opts) {
           if (!storeReady()) return true;
-          var result = KpiYearStore.acquireEditLease(LEASE_SURFACE, { label: label });
+          var result = KpiYearStore.acquireEditLease(LEASE_SURFACE, {
+            label: label,
+            steal: !!(opts && opts.steal),
+          });
           if (result && result.ok) {
             startHeartbeat();
             return true;
@@ -6054,8 +6712,8 @@
           return !storeReady() || KpiYearStore.isProSubscription();
         }
         function pathLabel(path) {
-          if (path === 'mep') return t('Monthly（MEP）', 'Monthly (MEP)');
-          return t('Annual / Sales Data', 'Annual / Sales Data');
+          if (path === 'mep') return t('月次', 'Monthly');
+          return t('年次', 'Annual');
         }
         function applyWrapState(wrap, path) {
           var isMep = path === 'mep';
@@ -6159,12 +6817,12 @@
         }
         function confirmPathSwitch(next) {
           var msg = t(
-            '日次売上・営業日の入力面を「' +
+            '売上入力を「' +
               pathLabel(next) +
-              '」に切り替えます。\nもう一方は日次売上・営業日のみ閲覧（Read-Only）になります。\n\n支出・Daily Notes など MEP 固有項目は Monthly 側で引き続き編集できます。',
-            'Switch daily sales and business-day input to "' +
+              '」に切り替えます。\nもう一方では売上・営業日を編集できなくなります。',
+            'Switch Sales Input to "' +
               pathLabel(next) +
-              '".\nThe other surface becomes read-only for those fields only.\n\nMEP-only fields (expenses, Daily Notes, etc.) remain editable on Monthly.'
+              '".\nThe other side will not allow editing sales or business days.'
           );
           return Promise.resolve(window.confirm(msg));
         }
@@ -7188,8 +7846,29 @@
         return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
       }
       var MEF_STATIC_INPUT_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];
+      function isMepDailySalesPathBlocked() {
+        return !!(
+          window.KpiYearStore &&
+          typeof KpiYearStore.getDailySalesInputPath === 'function' &&
+          KpiYearStore.getDailySalesInputPath() !== 'mep'
+        );
+      }
+      function mepPathSwitchHint() {
+        return t(
+          '編集するには売上入力ボタンを月次に変更してください',
+          'To edit, change the Sales Input button to Monthly',
+          '如要編輯，請將營業額輸入切換鈕改為月度'
+        );
+      }
       function manualInputHint() {
-        return t('手入力が必要です（セルに直接入力）', 'Manual entry — type values in the cells');
+        if (isMepDailySalesPathBlocked()) {
+          return mepPathSwitchHint();
+        }
+        return t(
+          'セルに入力してください',
+          'Type values in the cells',
+          '請在儲存格輸入'
+        );
       }
       function parseCount(text) {
         var s = String(text == null ? '' : text).replace(/[^\d.-]/g, '');
@@ -10217,12 +10896,10 @@
               cb.checked = !!bizDayByIso[iso];
               cb.setAttribute('data-action', 'bizday-toggle');
               cb.setAttribute('data-iso', iso);
-              if (window.KpiYearStore && !KpiYearStore.canWriteBusinessDayFrom('mep', iso)) {
+              var mepPathBlockedForBiz = isMepDailySalesPathBlocked();
+              if (mepPathBlockedForBiz || (window.KpiYearStore && !KpiYearStore.canWriteBusinessDayFrom('mep', iso))) {
                 cb.disabled = true;
-                cb.title = t(
-                  '営業日の入力経路は Annual / Sales Data です',
-                  'Business-day input is via Annual / Sales Data'
-                );
+                cb.title = mepPathSwitchHint();
               }
               td.appendChild(cb);
               tr.appendChild(td);
@@ -10415,25 +11092,21 @@
                 inp.setAttribute('data-row-id', r.row.id);
                 inp.setAttribute('data-iso', iso);
                   if (r.row.mepEditable) {
+                    inp.setAttribute('data-mep-editable', '1');
                     if (r.section === 'income') {
                       inp.setAttribute('data-mep-sales-path', '1');
                     }
+                    var mepPathBlocked = isMepDailySalesPathBlocked();
                     var salesBlocked =
                       r.section === 'income' &&
                       window.KpiYearStore &&
                       iso &&
                       !KpiYearStore.canWriteDailySalesFrom('mep', iso);
-                    if (salesBlocked) {
+                    if (mepPathBlocked || salesBlocked) {
                       inp.disabled = true;
                       inp.readOnly = true;
-                      inp.setAttribute(
-                        'title',
-                        t(
-                          '日次売上の入力経路は Annual / Sales Data です（設定で MEP に切替可）',
-                          'Daily sales input is via Annual / Sales Data (switch to MEP in settings)'
-                        )
-                      );
-              } else {
+                      inp.setAttribute('title', mepPathSwitchHint());
+                    } else {
                       inp.setAttribute('title', manualInputHint());
                     }
                   } else {
@@ -10454,6 +11127,7 @@
                 inp.readOnly = true;
               } else {
                 var kind = r.valueKind || 'money';
+                var pathBlockedStatic = isMepDailySalesPathBlocked();
                 if (kind === 'count') {
                   inp.value = fmtCount(readValue(r.id, iso));
                   inp.setAttribute('data-action', 'count-input');
@@ -10463,7 +11137,14 @@
                 }
                 inp.setAttribute('data-row-id', r.id);
                 inp.setAttribute('data-iso', iso);
-                inp.setAttribute('title', manualInputHint());
+                inp.setAttribute('data-mep-daily-input', '1');
+                if (pathBlockedStatic) {
+                  inp.disabled = true;
+                  inp.readOnly = true;
+                  inp.setAttribute('title', mepPathSwitchHint());
+                } else {
+                  inp.setAttribute('title', manualInputHint());
+                }
               }
               td.appendChild(inp);
               if (bizDayByIso[iso]) {
@@ -10529,7 +11210,9 @@
           if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
           if (KpiYearStore.getDailySalesInputPath() === 'mep') {
             if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit');
+              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit', {
+                steal: true,
+              });
             }
           } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
             window.__KPI_EDIT_LEASE.release();
@@ -10714,7 +11397,9 @@
           window.__KPI_EDIT_LEASE &&
           typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function'
         ) {
-          window.__KPI_EDIT_LEASE.tryAcquire(useJa ? 'Monthly Edit' : 'Monthly Edit');
+          window.__KPI_EDIT_LEASE.tryAcquire(useJa ? 'Monthly Edit' : 'Monthly Edit', {
+            steal: true,
+          });
         }
         bindMepKpiStripRefresh();
         buildGrid();
@@ -10948,19 +11633,66 @@
           buildGrid();
         });
       }
-      if (btnCsvUpload && window.__KPI_DAILY_IMPORT) {
-        window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
-          getYear: function () { return mefYear; },
-          applyMaps: function (maps, year) {
-            pushUndo();
-            var applied = applyDailyImportMapsToOpenYear(maps, year);
-            if (!applied) return;
-            syncMonthlySalesToAnnualStoreForYear(mefYear);
-            markDirty();
-            syncUndoButton();
-            buildGrid();
-          },
-        });
+      if (btnCsvUpload) {
+        function mepCsvText(ja, en, zh) {
+          var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+          if (lang.indexOf('zh') === 0) return zh || en;
+          if (lang.indexOf('ja') === 0) return ja;
+          return en;
+        }
+        function isMepSalesPathActive() {
+          return !!(
+            window.KpiYearStore &&
+            typeof KpiYearStore.getDailySalesInputPath === 'function' &&
+            KpiYearStore.getDailySalesInputPath() === 'mep'
+          );
+        }
+        function syncCsvUploadTooltip() {
+          var active = isMepSalesPathActive();
+          var msg = active
+            ? mepCsvText(
+                'CSVファイルをアップロードしてください。支出はPL表の「支出CSV取込」をご利用ください。',
+                'Upload a CSV file. For expenses, use Expense CSV Import on the P&L page.',
+                '請上傳 CSV 檔。支出請使用損益表的「支出CSV匯入」。'
+              )
+            : mepCsvText(
+                '編集するには売上入力ボタンを月次に変更してください',
+                'To edit, change the Sales Input button to Monthly',
+                '如要編輯，請將營業額輸入切換鈕改為月度'
+              );
+          btnCsvUpload.disabled = !active;
+          btnCsvUpload.setAttribute('title', msg);
+          btnCsvUpload.setAttribute('data-tooltip', msg);
+          btnCsvUpload.setAttribute('aria-label', msg);
+        }
+
+        syncCsvUploadTooltip();
+        document.addEventListener('kpi:dailySalesInputPathChanged', syncCsvUploadTooltip);
+
+        if (window.__KPI_DAILY_IMPORT) {
+          window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
+            getYear: function () { return mefYear; },
+            applyMaps: function (maps, year) {
+              pushUndo();
+              var applied = applyDailyImportMapsToOpenYear(maps, year);
+              if (!applied) return;
+              syncMonthlySalesToAnnualStoreForYear(mefYear);
+              markDirty();
+              syncUndoButton();
+              buildGrid();
+            },
+          });
+        } else {
+          btnCsvUpload.addEventListener('click', function () {
+            window.alert(
+              mepCsvText(
+                'CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。',
+                'CSV import engine failed to load. Please reload the page.',
+                'CSV 匯入引擎載入失敗，請重新整理頁面。'
+              )
+            );
+          });
+        }
       }
 
       if (btnConfirm) {
@@ -11446,12 +12178,30 @@
         } else if (action === 'money-input') {
           var rowId = target.getAttribute('data-row-id');
           var iso2 = target.getAttribute('data-iso');
+          if (
+            isMepDailySalesPathBlocked() &&
+            (target.getAttribute('data-mep-daily-input') === '1' ||
+              target.getAttribute('data-mep-editable') === '1')
+          ) {
+            buildGrid();
+            return;
+          }
           var salesPathOnly =
             target.getAttribute('data-mep-sales-path') === '1' ||
             (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0 &&
               state.incomeItems.some(function (it) {
                 return it && (it.id === rowId || it.lineId === rowId) && !!it.mepEditable && !it.mepAutoCalc;
               }));
+          var mepEditableInput = target.getAttribute('data-mep-editable') === '1';
+          var mepPathBlockedAtEdit =
+            mepEditableInput &&
+            window.KpiYearStore &&
+            typeof KpiYearStore.getDailySalesInputPath === 'function' &&
+            KpiYearStore.getDailySalesInputPath() !== 'mep';
+          if (mepPathBlockedAtEdit) {
+            buildGrid();
+            return;
+          }
           if (
             salesPathOnly &&
             window.KpiYearStore &&
@@ -11469,6 +12219,10 @@
           markDirty();
           buildGrid();
         } else if (action === 'count-input') {
+          if (isMepDailySalesPathBlocked()) {
+            buildGrid();
+            return;
+          }
           var rowIdC = target.getAttribute('data-row-id');
           var isoC = target.getAttribute('data-iso');
           pushUndo();

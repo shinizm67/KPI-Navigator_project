@@ -143,6 +143,14 @@
             applyInputRows(data.rows || []);
             lastHydrateOk = true;
             try {
+              if (window.KpiYearStore && typeof window.KpiYearStore.syncToAnnualDaily === 'function') {
+                window.KpiYearStore.syncToAnnualDaily();
+              }
+              if (window.KpiYearStore && typeof window.KpiYearStore.syncLegacyKeys === 'function') {
+                window.KpiYearStore.syncLegacyKeys();
+              }
+            } catch (_eSync) {}
+            try {
               document.dispatchEvent(
                 new CustomEvent('kpi:dailyInputsHydrated', {
                   detail: { year: year, from: win.from, to: win.to, count: (data.rows || []).length },

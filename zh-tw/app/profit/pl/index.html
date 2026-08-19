@@ -4486,16 +4486,18 @@
             <div class="pl-toolbar__left">
               <label class="pl-year-label" for="pl-year-select">年度</label>
               <select id="pl-year-select" class="pl-year-select" aria-label="選擇顯示的會計年度"></select>
+              <!-- PL-SALES-INPUT-PATH-INDICATOR: disabled. Restore: docs/pl-edit-status-and-workspace-memo.md §8 -->
               <div
                 class="kpi-daily-input-path kpi-daily-input-path--pl-readonly"
                 id="pl-sales-input-path"
                 data-kpi-sales-input-path-readonly
+                data-pl-sales-path-indicator-disabled="1"
                 hidden
-                aria-label="每日營業額輸入路徑（唯讀）"
-                data-tooltip="每日營業額輸入路徑（唯讀）。請在 MEP 或 Sales Data 切換。"
-                title="每日營業額輸入路徑（唯讀）。請在 MEP 或 Sales Data 切換。"
+                aria-label="營業額輸入位置（僅顯示）"
+                data-tooltip="僅供顯示。請在月度編輯頁或年度營業額畫面切換。"
+                title="僅供顯示。請在月度編輯頁或年度營業額畫面切換。"
               >
-                <p class="kpi-daily-input-path__title">編輯</p>
+                <p class="kpi-daily-input-path__title">營業額輸入</p>
                 <div class="kpi-daily-input-path__row">
                   <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年度</span>
                   <span class="kpi-daily-input-path__switch kpi-daily-input-path__switch--readonly" aria-hidden="true">
@@ -13055,6 +13057,7 @@
         var TIER_KEY = 'kpiNavigator.subscriptionTier';
         var wrap = document.getElementById('pl-sales-input-path');
         if (!wrap) return;
+        var PL_SALES_INPUT_PATH_INDICATOR_ENABLED = false;
 
         function isJa() {
           return (
@@ -13104,16 +13107,27 @@
             el.classList.toggle('is-active', active);
             el.classList.toggle('is-inactive', !active);
           });
+          var tip = t(
+            '表示のみです。切替は月次編集ページ、または年次の売上画面で行います。',
+            'Display only. Switch this on the Monthly Edit page or the Annual sales screen.',
+            '僅供顯示。請在月度編輯頁或年度營業額畫面切換。'
+          );
           wrap.setAttribute(
             'aria-label',
             t(
-              '日次売上の入力経路: ' + (isMep ? 'Monthly（MEP）' : 'Annual / Sales Data') + '（表示のみ）',
-              'Daily sales input path: ' + (isMep ? 'Monthly (MEP)' : 'Annual / Sales Data') + ' (read-only)',
-              '每日營業額輸入路徑：' + (isMep ? '月度（MEP）' : '年度／Sales Data') + '（唯讀）'
+              '売上入力の場所: ' + (isMep ? '月次' : '年次') + '（表示のみ）',
+              'Sales input location: ' + (isMep ? 'Monthly' : 'Annual') + ' (display only)',
+              '營業額輸入位置：' + (isMep ? '月度' : '年度') + '（僅顯示）'
             )
           );
+          wrap.setAttribute('title', tip);
+          wrap.setAttribute('data-tooltip', tip);
         }
         function syncIndicator() {
+          if (!PL_SALES_INPUT_PATH_INDICATOR_ENABLED) {
+            wrap.hidden = true;
+            return;
+          }
           var st = readStore();
           wrap.hidden = !st.pro;
           if (!st.pro) return;

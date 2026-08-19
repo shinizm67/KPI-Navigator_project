@@ -11,7 +11,9 @@
           if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
           if (KpiYearStore.getDailySalesInputPath() === 'mep') {
             if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit');
+              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit', {
+                steal: true,
+              });
             }
           } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
             window.__KPI_EDIT_LEASE.release();

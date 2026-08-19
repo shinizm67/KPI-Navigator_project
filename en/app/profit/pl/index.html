@@ -216,7 +216,7 @@
       letter-spacing: 0.04em;
       background: rgba(88, 225, 243, 0.35);
     }
-    /* KPI-CSV-UPLOAD-TOOLTIP */
+        /* KPI-CSV-UPLOAD-TOOLTIP */
     #pl-csv-upload[data-tooltip] {
       z-index: 2;
     }
@@ -4280,16 +4280,18 @@
             <div class="pl-toolbar__left">
               <label class="pl-year-label" for="pl-year-select">Year</label>
               <select id="pl-year-select" class="pl-year-select" aria-label="Select fiscal year to display"></select>
+              <!-- PL-SALES-INPUT-PATH-INDICATOR: disabled. Restore: docs/pl-edit-status-and-workspace-memo.md §8 -->
               <div
                 class="kpi-daily-input-path kpi-daily-input-path--pl-readonly"
                 id="pl-sales-input-path"
                 data-kpi-sales-input-path-readonly
+                data-pl-sales-path-indicator-disabled="1"
                 hidden
-                aria-label="Daily sales input path (read-only)"
-                data-tooltip="Daily sales input path (read-only). Switch in MEP or Sales Data."
-                title="Daily sales input path (read-only). Switch in MEP or Sales Data."
+                aria-label="Sales input location (display only)"
+                data-tooltip="Display only. Switch this on the Monthly Edit page or the Annual sales screen."
+                title="Display only. Switch this on the Monthly Edit page or the Annual sales screen."
               >
-                <p class="kpi-daily-input-path__title">Edit</p>
+                <p class="kpi-daily-input-path__title">Sales Input</p>
                 <div class="kpi-daily-input-path__row">
                   <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
                   <span class="kpi-daily-input-path__switch kpi-daily-input-path__switch--readonly" aria-hidden="true">
@@ -12820,6 +12822,7 @@
         var TIER_KEY = 'kpiNavigator.subscriptionTier';
         var wrap = document.getElementById('pl-sales-input-path');
         if (!wrap) return;
+        var PL_SALES_INPUT_PATH_INDICATOR_ENABLED = false;
 
         function isJa() {
           return (
@@ -12866,15 +12869,25 @@
             el.classList.toggle('is-active', active);
             el.classList.toggle('is-inactive', !active);
           });
+          var tip = t(
+            '表示のみです。切替は月次編集ページ、または年次の売上画面で行います。',
+            'Display only. Switch this on the Monthly Edit page or the Annual sales screen.'
+          );
           wrap.setAttribute(
             'aria-label',
             t(
-              '日次売上の入力経路: ' + (isMep ? 'Monthly（MEP）' : 'Annual / Sales Data') + '（表示のみ）',
-              'Daily sales input path: ' + (isMep ? 'Monthly (MEP)' : 'Annual / Sales Data') + ' (read-only)'
+              '売上入力の場所: ' + (isMep ? '月次' : '年次') + '（表示のみ）',
+              'Sales input location: ' + (isMep ? 'Monthly' : 'Annual') + ' (display only)'
             )
           );
+          wrap.setAttribute('title', tip);
+          wrap.setAttribute('data-tooltip', tip);
         }
         function syncIndicator() {
+          if (!PL_SALES_INPUT_PATH_INDICATOR_ENABLED) {
+            wrap.hidden = true;
+            return;
+          }
           var st = readStore();
           wrap.hidden = !st.pro;
           if (!st.pro) return;

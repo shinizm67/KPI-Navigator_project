@@ -1,6 +1,6 @@
 # LE 配備: FileZilla パス表（必須ルール）
 
-更新日: 2026-08-17  
+更新日: 2026-08-19  
 目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。FileZilla は **表層フォルダ／言語で完結**させ、上に戻らない。
 
 関連: ブランド LE [`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md) · Phase B [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
@@ -1366,6 +1366,366 @@ AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイル�
 
 **結果（2026-08-17）:** Step A 完了（サーバ migrate スクリプト削除・SSH 再発行・本番スモーク OK）。
 
+### Step CB — Cockpit 年送りで Focus Bar が ¥0 になる（C トラック）（2026-08-17）
+
+**症状:** Cockpit ◀ 年 ▶ で表示年を変えると、Focus Bar の金額が一瞬すべて `¥0,000.00`。TW をスクロールすると戻る。  
+**原因:** `annual:calendarYearChanged` で TW / Focus Bar が先に描画され、`kpi_daily_inputs` の窓 GET（hydrate）より早い。  
+**修正:** 年変更時は `hydrateWindow` 完了後に TW を描画。Focus Bar の即時 refresh は `timelineRowsRendered` 待ち。
+
+#### CB — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 |
+|---|----------|--------|------|
+| CB1 | `…/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | Annual: Cockpit ◀年▶ → Focus Bar が ¥0 にならない |
+| CB2 | `…/app/monthly/index.html` | `…/app/monthly/index.html` | 同上（Monthly から Cockpit 年送り） |
+
+#### CB — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CB3 | `…/en/app/annual/index.html` | `…/en/app/annual/index.html` |
+| CB4 | `…/en/app/monthly/index.html` | `…/en/app/monthly/index.html` |
+
+#### CB — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CB5 | `…/zh-tw/app/annual/index.html` | `…/zh-tw/app/annual/index.html` |
+| CB6 | `…/zh-tw/app/monthly/index.html` | `…/zh-tw/app/monthly/index.html` |
+
+**上げない:** `js/`、`api/`（`kpi-daily-inputs-sync.js` は AN 済みのまま）
+
+**確認:** 2026 → 2025 → 2024 と Cockpit 年送り。Focus Bar の Today's Sales / 累計が TW と一致。`¥0,000.00` フラッシュなし。
+
+**結果（2026-08-17）:** 本番に CB hydrate/pin は載っていたが、Focus Bar がスクロール位置の行をコピーして ¥0 のまま。ISO 行直コピーに差し替え（再UP）。
+
+**結果（2026-08-18）:** CB の上げ自体は正しい。ただし Cockpit 年ボタンは `skipTableRender: true` のため CB の Annual hydrate 経路は Monthly では走らない。Monthly の残件は Step CC。
+
+完了したら「Step CB 完了」と送る。
+
+### Step CC — Monthly Focus Bar が年送りで ¥0,000,000 のまま（2026-08-18）
+
+**症状:** Monthly で Cockpit ◀ 年 ▶ すると、Focus Bar の数値だけ `¥0,000,000`（スケルトン）のまま。TW を一列横に動かすと戻る。新タブ→ブックマーク→Monthly でも再現。
+
+**原因（LE 本番 HTML で確認）:** CB パッチ（`KPI-CY-HYDRATE-BEFORE-TW-CA` / `KPI-FB-FROM-ISO-CB`）は本番 Monthly に載っている。Annual の縦 TW 行コピー用で、Monthly の `monthly-vfocus` は別物。年送りで横 TW をスケルトン列で組み、Focus Bar がそれをコピーしたあと `__vfocusLastIdx === idx` で同じ列への再コピーを止める。横スクロールで idx が変わると hydrate 済みセルを読み直す。
+
+**修正:** スケルトン列では lastIdx をロックしない。hydrate 直後は Focus Bar を同期コピーする。
+
+#### CC — 日本語 `app/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 |
+|---|----------------------------------|------------------------|------|
+| CC1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html → 新タブでハードリロード → Cockpit ◀年▶ → Focus Bar が `¥0,000,000` のまま残らない |
+
+#### CC — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CC2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+
+#### CC — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CC3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**上げない:** `js/`、`api/`、Annual HTML（CB 済み）
+
+**確認:** 新タブ → ブックマークの KPI Navigator → Monthly。2026 → 2025 → 2024。Focus Bar の Today's Sales が TW と同じ。一列スクロールしなくても戻る。
+
+完了したら「Step CC 完了」と送る。
+
+**結果（2026-08-18）:** Step CC 完了（Monthly Focus Bar 年送りのスケルトン固着は解消）。
+
+### Step CD — MEP の売上変更が Sales Data に出ない（2026-08-18）
+
+**症状:** CA7。MEP で 2,145 → 2,147 に変えても Sales Data は 2,145 のまま。
+
+**原因:** 売上の答えは一つのはずだが、(1) 入力経路が Sales Data 側だと MEP の保存が timeline に書けない (2) 書けてもブラウザ保存（localStorage）まで落としていなかった (3) Sales Data は古い表コピーを見ていた。
+
+**修正:** MEP が編集中なら同じ売上キーへ書く。保存したらブラウザにも残す。Sales Data を開くとき最新を読み直す。
+
+#### CD — `js/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） |
+|---|----------------------------------|------------------------|
+| CD1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-inputs-sync.js` | `public_html/kpi-navigator/js/kpi-daily-inputs-sync.js` |
+
+#### CD — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CD2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CD3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CD4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CD — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CD5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CD6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CD7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CD — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CD8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CD9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CD10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `api/`
+
+**確認:** MEP で 2026-06-15 付近を 2 だけ変えて Confirm → Annual の Sales Data を開く → 同じ数字。できれば 2025 の1日を MEP で変えて Past Sales も同じか。終わったら元の数字に戻してよい。
+
+完了したら「Step CD 完了」と送る。
+
+### Step CE — 2025 の MEP で Store Sales / 営業日が触れない（2026-08-18）
+
+**症状:** Sales Input を Monthly にしても、2025 の Store Sales と営業日チェックが動かない。
+
+**原因:** 2025 は運用年 2026 から見て締め済み（lock）。Past Sales は「過去データ編集」で lock を越えられるが、MEP の売上・営業日は lock で止まっていた。トグルを Monthly にしても、ロック年判定が先に false を返す。
+
+**修正:** 入力経路が Monthly で、そのタブが編集中なら、過去年の売上・営業日は MEP からも直せる。支出のロックは変えない。
+
+#### CE — 日本語 `app/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） |
+|---|----------------------------------|------------------------|
+| CE1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CE2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CE3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CE — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CE4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CE5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CE6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CE — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CE7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CE8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CE9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `js/`（CD1 をまだ上げていなければ、先に CD1 を上げてからこの表）
+
+**確認:** MEP 2025年1月、Sales Input = Monthly。1/5 など数字がある日の Store Sales が入力できる。営業日チェックが押せる。Confirm 後に Past Sales の同じ日が同じ数字。1/1〜1/4 のように $0 でチェックが外れている日は店休なので、そのままでよい。
+
+完了したら「Step CE 完了」と送る。
+
+### Step CF — 新しいタブで MEP の 2026 も触れない（編集権）（2026-08-18）
+
+**症状:** 一回だけ MEP を編集できた。新しいタブで Sales Input を Monthly にしても、2026 も含めて Store Sales / 営業日が動かない。
+
+**LE 確認:** 本番 HTML に CD / CE マーカーあり。上げ忘れではない。
+
+**原因:** 売上の編集権はブラウザ全体で1つ。最初のタブ（MEP または Sales Data）が持ったまま、新しいタブは閲覧だけになる。Monthly 経路なのに Sales Data を開くと編集権を奪う。トグルを Monthly にした「一回目」だけ取れて、以降のタブは取れない。
+
+**修正:** Monthly 経路の MEP を開いたタブが編集権を引き継ぐ。Monthly 経路中の Sales Data は閲覧のみで編集権を取らない。
+
+#### CF — 日本語 `app/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） |
+|---|----------------------------------|------------------------|
+| CF1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CF2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CF3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CF — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CF4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CF5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CF6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CF — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CF7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CF8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CF9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**上げない:** `js/`、`api/`、`scripts/`
+
+**確認:** 余分な KPI Navigator タブを閉じてからハードリロード。MEP で Sales Input = Monthly → 2026 の Store Sales と営業日が触れる。その状態で新しいタブの MEP を開いても、新しい方が触れる。
+
+完了したら「Step CF 完了」と送る。
+
+**結果（2026-08-18）:** Step CF 完了。MEP ↔ Monthly ↔ Annual ↔ Past Sales の売上が同期。CA7 / CA8 通過。
+
+**結果（2026-08-18 朝）:** CG1〜3 OK（別タブでもリロードなしで同期）。
+
+### Step CH — Monthly Graph の Target Sales が Focus Bar と違う（2026-08-18）
+
+**症状:** Monthly だけ。Focus Bar の Target Sales が `$2,964`、Graph Daily の Today's Target Sales が `$1,704`。売上 `$2,941` は両方同じ。Annual Graph は TW と一致。
+
+**原因:** 数字の取り元が違う。
+
+- Focus Bar / TW: 曜日加重の日次目標（金曜など忙しい日に厚く配分）
+- Graph: Cockpit の均等割り（月次目標 ÷ 営業日）が入った古い `dailyFacts`
+
+**修正:** Monthly Graph の Daily は Focus Bar と同じ曜日加重を使う。Difference / Achievement もそれに合わせて変わる。Annual は触らない。
+
+#### CH — 日本語 `app/`
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） | 確認 URL |
+|---|----------------------------------|------------------------|----------|
+| CH1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### CH — 英語 `en/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CH2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+
+#### CH — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CH3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+
+**上げない:** `js/`、`api/`、Annual、`monthly/edit`
+
+**確認:** 新タブでハードリロード。2026 の 2/13 など Focus した日で、Focus Bar の Target Sales と Graph Daily の Today's Target Sales が同じ。Difference / Achievement も Focus Bar と同じ向き。
+
+完了したら「Step CH 完了」と送る。
+
+### Step CH2 — CH 後に Monthly TW が重い・挙動がおかしい（2026-08-18）
+
+**症状:** Step CH 上げ後、Monthly TW のスクロールが重い／Focus Bar の追従がおかしい。
+
+**原因:** CH の Graph 更新が、スクロールのたびに **年間の日次目標マップを毎回再計算**していた。Graph ポップオーバーが開いている間、下段 TW の scroll イベントでも同じ重い処理が走り、メインスレッドを塞いでいた。
+
+**修正（CH1〜3 を上書き）:**
+
+- Graph Daily は TW と同じ **キャッシュ済み** `readGroup1TwSnapshot` だけを読む
+- Graph の scroll / store 更新は **rAF で1フレームに1回**に間引く
+- 重い `__buildDailyTargetMapForYear` のフォールバックを削除
+
+#### CH2 — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CH2-1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### CH2 — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CH2-2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+
+#### CH2 — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CH2-3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**確認:** 新タブでハードリロード。TW を左右スクロール → 以前より軽い。Graph を開いたまま下段 TW を動かしてもカクつきが減る。2/13 の Target Sales 一致（CH 確認）は維持。
+
+完了したら「Step CH2 完了」と送る。
+
+### Step CH3 — Graph の並び・色・日付送り（Annual + Monthly）（2026-08-18）
+
+**症状:** Graph の Today's Sales が赤字。並びが Achievement → Target → Sales → Difference。Monthly では Focus Bar と Graph の Target が違う。英語に日付送りが無い。Annual の Graph も同じ標準装備。
+
+**修正（Annual / Monthly 共通）:**
+
+- Daily Graph の数字は **Focus Bar のコピー元（TW 行／列）** を正本
+- 並び: Today's Sales → Today's Target Sales → Difference → Achievement
+- Sales / Target は **Cockpit 横棒と同じグリーン**（`#0db13a` / 棒 `#0f9403`）。Difference と Achievement は深刻度色
+- 見出し横に ◀︎▶︎（Daily のみ）。日付送りは **Graph 表示中の ISO** から ±1 日（`graph-popover-nav`）
+
+#### CH3 — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CH3-1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| CH3-2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### CH3 — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CH3-3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CH3-4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+
+#### CH3 — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CH3-5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CH3-6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**上げない:** `js/`、`api/`、`monthly/edit`
+
+**CH3b 追記（2026-08-18）:** 月次・年次 Graph でも ◀︎▶︎ が動く（±1月 / ±1年）。Monthly の Sales/Target 色は JS + CSS 二重指定。
+
+**確認:** 新タブでハードリロード（Monthly はキャッシュ注意）。Daily=±1日、Monthly=±1月、Annual=±1年。Sales / Target はグリーン（棒 `#0f9403`）。
+
+完了したら「Step CH3 完了」と送る。
+
+### Step CI — 売上入力パス guard・ツールチップ整理・PL インジケータ非表示（2026-08-19）
+
+**背景:** 売上入力トグル（年次／月次）と PL の表示-only スイッチが編集ロックと混同されやすい。対ユーザー文言に MEP / Annual / Sales Data を出さない方針。
+
+**修正:**
+
+- **MEP:** 入力経路が年次のとき CSV 無効・セル編集ブロック。ツールチップ「編集するには売上入力ボタンを月次に変更してください」
+- **Annual / Sales Data:** 逆に月次経路のときブロック。「…年次に変更してください」
+- **Past Sales:** 閲覧／編集トグル周りの guard 文言を `_kpi_edit_guards.js` と同期
+- **PL:** 売上入力インジケータ（`.kpi-daily-input-path--pl-readonly`）を **UI 非表示**（復活手順 → `docs/pl-edit-status-and-workspace-memo.md` §8）
+- **`js/kpi-daily-inputs-sync.js`:** hydrate 後に `syncToAnnualDaily` / `syncLegacyKeys`（CD 系・未上げ分があれば CI1 で上書き）
+
+#### CI — `js/`（先に）
+
+| # | ローカル（Finder / FileZilla 左） | サーバ（FileZilla 右） |
+|---|----------------------------------|------------------------|
+| CI1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-inputs-sync.js` | `public_html/kpi-navigator/js/kpi-daily-inputs-sync.js` |
+
+#### CI — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CI2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | Annual: 売上入力=月次 → Sales Data が閲覧-only、ツールチップに内部名なし |
+| CI3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | MEP: 売上入力=年次 → CSV 無効・セル不可、同上ツールチップ |
+| CI4 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | PL ツールバーに年次／月次スイッチが **出ない** |
+
+#### CI — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CI5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CI6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CI7 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CI — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CI8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CI9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+| CI10 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**上げない:** `api/`、`app/monthly/index.html`（CH 済み）、`scripts/`、`store.php`
+
+**確認:**
+
+1. **CI1 を先に**上げてから HTML（順: 日 annual → mep → pl → 英 → 台湾）
+2. MEP: 売上入力=**年次** → Store Sales セル・CSV が触れない。ホバーで「…月次に変更…」（MEP という語なし）
+3. Annual Sales Data: 売上入力=**月次** → セルが触れない。「…年次に変更…」
+4. PL: 年度セレクタ横に **売上入力スイッチが無い**。支出は従来どおり編集可
+5. 売上入力=月次の MEP / 年次の Sales Data では従来どおり編集可（CA7 回帰）
+
+完了したら「Step CI 完了」と送る。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -1394,6 +1754,15 @@ AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイル�
 | localStorage の years[].dailyFacts が消えない | R 未反映 or GET が解を戻している | R 済みなら **AA1** を上書き。ハードリロード |
 | kpi-daily-facts-sync.js が 404 | L1 未反映 | L1 を HTML より先に新規 UP |
 | Monthly Focus Bar が真っ黒 | Step X のコピー非表示 | Z1〜Z3 を上書き。ハードリロード |
+| Monthly 年送りで Focus Bar だけ `¥0,000,000`、一列動かすと戻る | CB は Annual 用。Monthly vfocus の lastIdx ロック | **CC1〜CC3** を上書き → 新タブでハードリロード |
+| MEP で売上を変えても Sales Data が元のまま | MEP 保存が Sales Data のコピーまで届いていない | **CD1〜CD10** を上書き（`js/` を先に） |
+| 2025 の MEP で Store Sales / 営業日が触れない | 締め済み年の lock。Monthly トグルでも lock が先 | **CE1〜CE9** を上書き |
+| 一回だけ MEP 編集でき、新しいタブでは 2026 も触れない | 別タブが編集権を持ったまま | **CF1〜CF9** を上書き。余分なタブを閉じてハードリロード |
+| Monthly Graph の Target Sales だけ Focus Bar と違う | Graph が均等割り、Focus Bar が曜日加重 | **CH2-1〜CH2-3** を上書き → 新タブでハードリロード |
+| CH 後に Monthly TW が重い・Focus Bar 追従がおかしい | Graph scroll ごとに日次目標マップ再計算 | **CH2-1〜CH2-3** を上書き（CH1〜3 と同じ3ファイル） |
+| Graph の Today's Sales が赤、並びが違う、Focus Bar と数字が違う | Graph が別計算＋英語の行順が古い | **CH3-1〜CH3-6** を上書き（Annual→Monthly、日→英→台湾） |
+| PL に年次／月次スイッチが残る／編集ロックと混同 | PL インジケータ未非表示 | **CI4 / CI7 / CI10**（PL 3言語） |
+| MEP / Sales Data のツールチップに MEP・Annual が出る | path guard 旧文言 | **CI2〜CI10**（Annual + MEP + PL） |
 | 月が跨げない・メモリ警告 | Y4 未上げ or annualNav PUT | Z2 + Z4 を先に上書き |
 | Forge Lab トップが壊れた | LP を kpi-navigator 内に上げた | **LP は `public_html/` 直下** に戻す（別フォルダ正本から） |
 
