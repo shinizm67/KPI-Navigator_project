@@ -1,6 +1,6 @@
 # LE 配備: FileZilla パス表（必須ルール）
 
-更新日: 2026-08-19  
+更新日: 2026-08-20  
 目的: ローカルフォルダが多く・同名ファイル（特に `index.html`）が複数あるため、**毎回フルパスで左右を対応づける**。人間の取り違えを先に潰す。FileZilla は **表層フォルダ／言語で完結**させ、上に戻らない。
 
 関連: ブランド LE [`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md) · Phase B [`lolipop-phase-b-auth-deploy.md`](./lolipop-phase-b-auth-deploy.md)
@@ -1726,6 +1726,805 @@ AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイル�
 
 完了したら「Step CI 完了」と送る。
 
+### Step CJ — MEP 支出CSVが Save しても定着しない（2026-08-20）
+
+**症状:** 2024 など過去年に支出CSVを取り込むと、画面上は入るが PL へ行く／戻ると `¥0`。Save しても残らない。PL 月次にも積み上がらない。
+
+**原因:** 過去年が locked のとき `bulkPersistMepYear` はメモだけ書いて `true` を返す。支出は書かれない。前回のフォールバックは「保存失敗時だけ」なので走らなかった。
+
+**上げない:** `js/`、`api/`、Annual、PL、`app/monthly/index.html`
+
+#### CJ — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CJ1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### CJ — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CJ2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CJ — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CJ3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. MEP を **2024** にして `検証用_2024支出_MEP日次.csv` を支出CSV取込 → Save
+2. PL へ移動し、年セレクタを **2024** にする（2026 のままでは空に見える）
+3. 食材・ドリンク・変動人件費が月次に積み上がる
+4. MEP に戻しても `¥0` に戻らない
+
+完了したら「Step CJ 完了」と送る。
+
+### Step CK — MEP→PL→MEP で支出が消える（サーバー同期）（2026-08-20）
+
+**症状:** Step CJ 後も同じ。MEP で 2024 支出CSV取込 → Save → PL → MEP 戻ると `¥0`。年は 2024 で確認済み。
+
+**原因:** MEP は `kpi-data-gateway.js` 未読込のため localStorage のみ更新。PL は起動時にサーバーから hydrate し、**未同期の `dailyExpenses` 無しストアで localStorage を上書き**していた。
+
+**修正:**
+- `js/kpi-data-gateway.js` … hydrate 時にローカルの `dailyExpenses` をマージ（未同期取込を消さない）
+- MEP 3言語 … gateway 読込、Save/取込/PL遷移前に `flushPut`、取込後セッション確定
+
+#### CK — `js/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CK1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` |
+
+#### CK — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CK2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### CK — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CK3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CK — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CK4 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. MEP を **2024** にして `検証用_2024支出_MEP日次.csv` を支出CSV取込（Save 不要でも取込で確定）
+2. PL へ移動 → 年セレクタ **2024** → 食材・ドリンク・変動人件費が月次合計に出る
+3. MEP に戻っても日次セルが `¥0` に戻らない
+4. 別タブで PL を開いても同じ 2024 支出が見える（サーバー同期）
+
+完了したら「Step CK 完了」と送る。
+
+### Step CL — MEP 収入が PL に反映されない（サーバー同期・収支計算）（2026-08-20）
+
+**症状:** Step CK 後、支出は PL に保存されるが **収入は PL に出ない**（MEP にはある）。月次累計・収支・利益が空のまま。
+
+**原因:**
+- `slimTimelineForLocalStorage` が operatingYear ±2ヶ月以外の `timeline.dailySales` を削除 → **2024 売上が localStorage から消える**
+- MEP の `flushMepStoreToServer` が支出のみ強制保存で、**timeline 売上・dailyIncome をサーバーへ送っていなかった**
+- locked 年の `dailyIncome` は `canEditIso` 必須で書けない（支出と同型）
+- PL 収入読取が gateway 未読込時に null になり、hydrate 後の再描画も不足
+
+**修正:**
+- `js/kpi-data-gateway.js` … `dailyIncome` + `timeline.dailySales/businessDays` をローカル優先マージ。`store.years` に存在する年は timeline を通年保持
+- MEP 3言語 … `persistMepTimelineForYear` / `persistMepIncomeStreamsToStore` / `forceIncome` を `flushMepStoreToServer` に追加
+- PL 3言語 … `plIncomeReadStore` に localStorage フォールバック、`plRefreshAllIncomeSurfaces()` で hydrate 後に収入・Analyze・比率・年計・グラフを再描画
+
+#### CL — `js/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CL1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` |
+
+#### CL — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CL2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| CL3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+
+#### CL — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CL4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CL5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CL — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CL6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+| CL7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認:**
+
+1. MEP を **2024** にして売上データが入っている状態（CSV 取込 or 手入力）
+2. **Save** または **PL** ボタンで MEP から PL へ（内部で `flushMepStoreToServer`）
+3. PL 年セレクタ **2024** → 収入ブロックに月次累計・店舗売上合計が出る
+4. Analyze の food/drink、収支・利益・年計行が数値化される
+5. 別タブで PL を開いても同じ 2024 収入が見える（サーバー同期）
+
+完了したら「Step CL 完了」と送る。
+
+### Step CM — PL 収入行が空（timeline 未同期・dailyIncome のみ）（2026-08-20）
+
+**症状:** Step CL 後も PL の Store Sales / Total Sales が `—`。Analyze の Drink Sales だけ数値あり。MEP には売上表示あり。
+
+**原因:**
+- PL 収入ブロックは `timeline.dailySales` のみ参照
+- MEP flush は `dailyIncome`（drink/food 等）はサーバー保存されるが、`timeline.dailySales` が PL 側で空のまま
+- Sales Input = **Annual** の過去年（2024）では timeline 書込ガードが効きやすい
+
+**修正:**
+- PL 3言語 … `timeline.dailySales` 無し時は `dailyIncome`（drink+food+A+B）から月次総売上を再構成
+- MEP 3言語 … flush 時に `store_sales` も `dailyIncome` へ保存。timeline 書込は stream 合算フォールバック
+
+#### CM — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CM1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| CM2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+
+#### CM — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CM3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CM4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CM — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CM5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+| CM6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認:**
+
+1. MEP **2024** で売上あり → **Save** または **PL** へ
+2. PL 年 **2024** → **店舗売上・総売上** に月次累計が出る（Analyze Drink と整合）
+3. **利益** 行が支出差引で数値化（マイナスから改善）
+4. 別タブ PL でも同じ
+
+完了したら「Step CM 完了」と送る。
+
+### Step CN — MEP Save で他月の売上を消す（PL 月次穴）（2026-08-20）
+
+**症状:** MEP には 2024 全年の売上があるのに、PL では一部月（例: 5月・8月）だけ収入が出て、他月は `—`。支出は全年ある。
+
+**原因:** `persistMepTimelineForYear` が全年の全日に対してグリッド値を書き込むが、MEP グリッドは**表示中の月以外のキーが無い**ことがある。キー無しを `¥0` とみなし timeline を上書き → **他月の売上が消える**。
+
+**修正（MEP 3言語）:**
+- Save/flush 前に timeline / annual / dailyIncome から全年をグリッドへ補完
+- グリッドにキーが無い日は **timeline を触らない**（既存売上を消さない）
+
+#### CN — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CN1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### CN — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CN2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CN — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CN3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. MEP を **2024** にし、売上がある月（例: 6月・8月）をざっと確認
+2. **Save**（または PL ボタン）
+3. PL 年 **2024** → 6・7・9月など、以前 `—` だった月にも収入が出る（MEP にデータがある月）
+4. 再度 MEP で別月を開いて Save → 他月の PL 売上が消えない
+
+※ すでにストアから消えた月は、MEP 画面にまだ残っているうちに Save するか、売上CSVの再取込が必要な場合あり。
+
+完了したら「Step CN 完了」と送る。
+
+### Step CO — MEP Save 後 Rebuilding で固まる（2026-08-20）
+
+**症状:** MEP で CSV 取込 → Save すると「Rebuilding year facts (2026, 3/3)」のまま 10 分以上フリーズ。
+
+**原因:**
+1. `persistAnnualDailyShared` が全年タイムラインを `mergeDailyMaps` に渡し、触っていない年まで rebuild（3/3）
+2. ネストした `__KPI_BUSY.run` が `work()` 直実行で overlay が閉じない
+3. `rebuildYear` にタイムアウトがなく、サーバ無応答時に永久待ち
+
+**修正:**
+- `js/kpi-busy-overlay.js` … キュー実行 + 90秒セーフティで必ず hide
+- `js/kpi-daily-facts-sync.js` … rebuild 60秒タイムアウト
+- MEP 3言語 … `mergeDailyMaps` に `limitToYear`、Save 時は表示年だけ rebuild
+
+#### CO — `js/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CO1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-busy-overlay.js` | `public_html/kpi-navigator/js/kpi-busy-overlay.js` |
+| CO2 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-daily-facts-sync.js` | `public_html/kpi-navigator/js/kpi-daily-facts-sync.js` |
+
+#### CO — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CO3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### CO — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CO4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CO — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CO5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. 固まったタブは閉じる／ハードリロード
+2. MEP 年を **意図した年**（2024 なら 2024）にして Save
+3. Rebuilding が出ても **数十秒以内に消える**（90秒超で強制解除）
+4. 表示年以外の年の rebuild が連鎖しないこと
+
+完了したら「Step CO 完了」と送る。
+
+### Step CP — PL の特定月だけ売上（収入）が積み上がらない（2026-08-20）
+
+**症状:** MEP では全日次売上があるのに、PL 2024 の **6・7・12月だけ** Income/売上が空。他月は OK。他年でも起きうる。
+
+**原因:**
+1. `timeline.dailySales[iso] = 0`（または placeholder `1234`）があると、PL が「値あり」とみなし `dailyIncome` フォールバックを捨てる
+2. MEP hydrate / `syncMonthlySalesFromAnnualStoreForMonth` も timeline の 0/1234 を正としてグリッドの実売上を潰す／埋めない
+
+**修正:**
+- PL 3言語 … `plIncomeLoadStore` は **>0 の実額だけ**採用。0/1234 は無視して annual / `dailyIncome` へフォールバック
+- MEP 3言語 … hydrate は 0/1234 を権威としない。sync はグリッドの正額を 0/1234 で上書きしない
+
+#### CP — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CP1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| CP2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+
+#### CP — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CP3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CP4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CP — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CP5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+| CP6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認（上げ後・ハードリロード）:**
+
+1. PL を **2024** で開く → Income の **6・7・12月** に数字が出る（他月と同様）
+2. 出ない月があれば MEP 2024 を開いて **Save 1回** → PL を再読込
+3. 2025 / 2026 でも、MEP に日次がある月は PL に月次が載ること
+
+完了したら「Step CP 完了」と送る。
+
+### Step CQ — PL 収入: store_sales=0 が drink/food を潰す（2026-08-21）
+
+**状況:** Step CP は本番バイト一致済み。それでも 2024 の 6・7・12月だけ Income が空。操作ミスではない。
+
+**原因（検証済み）:**
+1. 過去の壊れた Save が `years.2024.dailyIncome.store_sales[iso] = 0` を残した
+2. その後の Save は正の日だけ送るため、**0 キーが永久に残る**
+3. PL の合計は `store_sales != null` ならそれを使い、**drink/food を無視**（Analyze は drink/food を直接読むので数値が出る）
+4. `timeline.dailySales` も 0 のため、CP のフォールバックも `streamVal=0` で失敗 → 月次だけ空
+
+**修正:**
+- PL 3言語 … `store_sales <= 0` は無視し drink+food(+A/B) で合計
+- MEP 3言語 … hydrate も同様。`forceIncome` Save 時にその年の income 0 キーを掃除
+
+#### CQ — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CQ1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| CQ2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+
+#### CQ — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CQ3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CQ4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CQ — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CQ5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+| CQ6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認（上げ後・ハードリロード）:**
+
+1. PL **2024** → Income の **6・7・12月** に数字（Save 不要で出る想定）
+2. まだ空なら MEP 2024 を開いて **Save 1回**（0 キー掃除＋timeline 修復）→ PL 再読込
+3. Analyze の Drink/Food とその月の Income 合計が矛盾しないこと
+
+完了したら「Step CQ 完了」と送る。
+
+### Step CR — PL 収入: slim LS / 日付キーで月次が欠ける（2026-08-21）
+
+**状況:** Step CQ 6本は本番と **バイト一致**。それでも 2024 の 6・7・12月 Income が空。操作ミスではない。
+
+**原因:**
+1. `getJson(kpiYearStore)` が **slim 済み localStorage** を返し、メモリ上のフル timeline とズレる
+2. Income 集計が **ゼロ埋めカレンダー日だけ**参照。Analyze は **全キー走査**なので drink/food は見えるのに Income 合計だけ欠けるケースがある
+3. CQ の `store_sales=0` 対策だけでは、上記2つが残ると特定月が埋まらない
+
+**修正:**
+- `js/kpi-data-gateway.js` … `getJson(store)` は `KpiYearStore.getStore()`（フル）優先
+- PL 3言語 … ISO 正規化＋全キー吸収で timeline / annual / drink+food を月次に積む
+
+#### CR — `js/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CR1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` |
+
+#### CR — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CR2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+
+#### CR — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CR3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### CR — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CR4 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認（上げ後）:**
+
+1. **ハードリロード**（JS も更新なので必須）
+2. PL **2024** → 収入の **6・7・12月** に数字
+3. まだ空なら MEP 2024 → **Save 1回** → PL をハードリロード
+
+完了したら「Step CR 完了」と送る。
+
+### Step CS — Sales Data の Annual Target が Cockpit に出ない（2026-08-21）
+
+**症状:** 2024/2025 の売上・営業日はある。Sales Data で 2026 Annual Target を入れても Annual / Monthly Cockpit と日次目標に反映されない。
+
+**原因（他機能を触らない範囲）:**
+1. `writeAnnualTarget(..., { source: 'sales-data-save' })` が **`persistStore` をスキップ** → `years[2026].plan.targetSales` が再読込で消える
+2. Sales Data 用の `annualDailyShared.referenceAnnualSales` だけ残り、Cockpit の `resolveAnnualTarget` は plan しか見ない
+3. rebuild 後に `kpi:annualPlanChanged` が飛ばず、Focus / TW キャッシュが古いまま
+
+**修正（最小）:**
+- Annual / Monthly × 3言語 … Sales Data Save でも `persistStore` + plan 変更イベント
+- `referenceAnnualSales` → plan へ昇格（hydrate / syncToAnnualDaily）
+- Cockpit 解決のフォールバックに Sales Data reference を追加
+
+#### CS — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CS1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| CS2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### CS — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CS3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CS4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+
+#### CS — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CS5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CS6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**確認:**
+
+1. ハードリロード
+2. 表示年を **2026** にする（Cockpit は表示年）
+3. Sales Data で Annual Target を入れて **Save**
+4. Annual / Monthly Cockpit に年次目標・日次目標が出る
+5. もう一度ハードリロードしても残る
+
+完了したら「Step CS 完了」と送る。
+
+### Step CT — CS 副作用巻き戻し＋Target 本線だけ（2026-08-21）
+
+**謝罪対象（CS の失敗）:**
+1. ページ遷移のたびに Saving / Rebuilding が出た  
+2. それでも Annual Target が Cockpit に載らなかった  
+
+**CS が悪かった点:**
+- `syncToAnnualDaily` が毎回 `writeAnnualTarget` → `persistStore`（遷移で保存が走る）
+- `rebuildTouchedYearsOnServer` 後に `kpi:annualPlanChanged` を連発 → Monthly が再描画連鎖
+- 表示用の stale `dailyFacts`（目標 $0）を潰せず Cockpit が空のまま
+
+**CT の方針（他機能に触れない）:**
+- 遷移時の自動 persist / emit / promote **全削除**
+- Sales Data Save 時だけ `plan.targetSales` を `persistStore`
+- Cockpit は reference / shared を **読み取りのみ**でフォールバック
+- stale facts（plan あり・目標 0）は live 再計算へフォールバック（書き込みなし）
+
+#### CT — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CT1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| CT2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+
+#### CT — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CT3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CT4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+
+#### CT — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CT5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CT6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+
+**確認:**
+
+1. ハードリロード
+2. Annual ↔ Monthly を行き来 → **Saving / Rebuilding が出ない**
+3. Sales Data で 2026 Annual Target を入れて **Save 1回**
+4. Cockpit の Annual Target Sales と日次／累計 Target に数字が出る
+5. 再リロード後も残る
+
+完了したら「Step CT 完了」と送る。
+
+### Step CU — Annual Target ボックス復活＋MEP セル毎 Busy 停止（2026-08-21）
+
+**症状:**
+1. キャッシュ削除後、Cockpit の **Annual Target Sales ボックスごと消えた**（中身は DOM にあるが `opacity: 0` のまま）
+2. MEP でセルを1つ手打ちするたびに **Saving / Rebuilding** が出る
+
+**原因:**
+- Annual だけ `.annual-target-sales-group { opacity: 0 }` → `--positioned` が付くまで非表示。place 失敗／遅延で永久に消える
+- MEP セル blur → `persistFromAnnualDaily` → `mergeDailyMaps` → `rebuildTouchedYearsOnServer` → 毎回 `__KPI_BUSY.run('rebuild')`
+
+**CU の方針（他機能に触れない）:**
+- Annual Target ボックスは常に `opacity: 1`（位置調整だけ place）
+- MEP セル編集は **ローカル invalidate のみ**（Busy / サーバ rebuild なし）
+- **Save（Confirm）と CSV 取込だけ** `serverRebuild: true` で従来どおり1回 rebuild
+
+#### CU — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CU1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| CU2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+
+#### CU — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CU3 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CU4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CU — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CU5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CU6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. ハードリロード（キャッシュ無視）
+2. Annual Cockpit に **Annual Target Sales / 年次目標売上** ボックスが見える
+3. MEP でセルを連続入力 → **セル毎に Saving / Rebuilding が出ない**
+4. MEP の **Save** を1回 → そのときだけ Busy が出てもよい
+5. Annual ↔ Monthly を行き来 → 遷移だけで Busy が連発しない
+
+完了したら「Step CU 完了」と送る。
+
+### Step CV — Annual 巨大スクリプト構文エラー修正（2026-08-21）
+
+**症状（CU 後も）:**
+1. Annual Target Sales ボックスが日付に重なる
+2. TW が空っぽ
+3. 言語選択が効かない
+4. Monthly は Cockpit OK だが Saving/Rebuilding が残る場合あり（→ CU2 MEP 未上げも確認）
+
+**原因（Annual）:**
+- 日付 UI ブロックの先頭 `(function () {` が欠落
+- `return` が関数外 → **SyntaxError で巨大インライン JS 全体が未実行**
+- 結果: `KpiYearStore` 未定義・TW 未描画・place 未実行（`left:0`）・同スクリプト内の言語切替も死ぬ
+
+**CV の修正:**
+- 欠落していた `(function () {` を日付 UI の前に復元（日 / 英 / 繁中 Annual）
+- Target ボックスは place まで `opacity:0`、初期 `left` は Total BD 寄り（日付の上に載せない）
+
+#### CV — 日本語 `app/`
+
+| # | ローカル | サーバ | 確認 URL |
+|---|----------|--------|----------|
+| CV1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+
+#### CV — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CV2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+
+#### CV — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CV3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+
+**まだ Monthly でセル毎 Busy が出る場合（CU2 未上げ）:**
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CU2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+| CU4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+| CU6 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. ハードリロード
+2. Annual: Target ボックスが日付に重ならない / TW に行が出る / 言語切替で日↔英↔台湾へ遷移できる
+3. コンソールに `Unexpected token` / `return outside of function` が無い
+4. MEP セル入力で Busy が出ない（CU2/4/6 上げ済みの場合）
+
+完了したら「Step CV 完了」と送る。
+
+### Step CW — 遷移だけで Saving/Rebuilding が出るのを止める（2026-08-21）
+
+**はっきりした原因（Save していないのに Busy が出る理由）:**
+
+ページを開いただけでも次が走る:
+
+1. `syncObservedFromTimelineOnLoad`（過去年の実績を再計算）
+2. → `applyObservedBaselineToPlan`（運用年の H/L 繁閑%を自動書き込み）
+3. → `writeMonthlyHlWeights(..., source: 'observed-baseline')`
+4. → `scheduleServerYearRebuild` → **`__KPI_BUSY.run('save')`**  
+   （Monthly では不足時に `dom-seed` でも同じ）
+
+**つまり「売上を Save した」わけではない。**  
+入場時の **H/L 自動補完** が、サーバ年次 rebuild ＋ Saving オーバーレイまで起こしていた。
+
+**CW の修正:**  
+`observed-baseline` / `plan-default` / `dom-seed` は **persist のみ**（Busy・サーバ rebuild なし）。  
+ユーザーが H/L を触ったとき（例: `cockpit-plan-edit`）だけ従来どおり rebuild。
+
+#### CW — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CW1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CW2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CW3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CW — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CW4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CW5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CW6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CW — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CW7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CW8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CW9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**
+
+1. ハードリロード
+2. Annual → Monthly → MEP と **ただ移動するだけ** → Saving / Rebuilding **出ない**
+3. Sales Data Save / MEP Save / CSV では従来どおり Busy が出てよい
+
+完了したら「Step CW 完了」と送る。
+
+### Step CX — Monthly 入場 Busy を完全に消す＋勝手にやらないルール（2026-08-21）
+
+**Monthly だけまだ Busy が出た理由:**  
+CW で H/L 自動書き込みの schedule は止めたが、`runServerYearRebuild` / `rebuildTouchedYearsOnServer` が **別経路や pagehide flush** でも `__KPI_BUSY.run('save'|'rebuild')` を付けていた。Monthly 入場・遷移でオーバーレイが見える。
+
+**CX の方針（説明済みの範囲だけ）:**
+- 裏の年次 rebuild から **Busy オーバーレイを外す**（処理は必要なら裏で動いてよい）
+- 画面の Saving/Rebuilding は **明示 Save / CSV ボタン** に残す
+- `docs/agent-no-unilateral-changes.md` と `.cursor/rules/no-unilateral-changes.mdc` を追加（勝手に判断しない）
+
+#### CX — `js/` なし / `api/` なし
+
+#### CX — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CX1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CX2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CX3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CX — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CX4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CX5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CX6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CX — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CX7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CX8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CX9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:** Annual → Monthly → MEP を移動するだけ → **Saving / Rebuilding が出ない**。Sales Data Save 等の明示保存では出てもよい。
+
+完了したら「Step CX 完了」と送る。
+
+### Step CY — MEP sync のゼロ潰し禁止（2026-08-21）
+
+**Case:** KPN Case｜MEP・PL｜売上欠落とRebuildハング
+
+**原因:** `syncMonthlySalesToAnnualStoreForYear(year, onlyMonth0)` が **月スコープ時にグリッドに無い日まで** `total=0` で `targetSalesByDate` に書き、既存の正の売上を潰していた。
+
+**CY の方針（合意済み・この範囲だけ）:**
+- グリッドに売上キーも営業日キーも無い日は書かない
+- 既存の正の売上（`targetSalesByDate` / timeline）を **0 で上書きしない**
+- 明示的にグリッド上で 0 の日だけ 0 を書いてよい
+
+#### CY — `js/` なし / `api/` なし
+
+#### CY — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CY1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CY — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CY2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CY — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CY3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:** MEP を開く／セル入力だけで、他月・未入力日の正の売上が 0 にならない。Confirm で意図した日だけ反映。マーカー `KPI-MEP-NO-ZERO-WIPE-CY`。
+
+完了したら「Step CY 完了」と送る。
+
+### Step CZ — CSV取込後 Rebuilding が消えない（2026-08-21）
+
+**Case:** KPN Case｜MEP・PL｜売上欠落とRebuildハング
+
+**原因（CX の副作用）:** `rebuildTouchedYearsOnServer` から `__KPI_BUSY.run` を外した一方、`update('rebuild')` が **busy でなくても show** していた。CSV の `busy.run('import')` が先に hide したあと rebuild が再表示し、**閉じる人がいない**。
+
+**CZ の方針（この範囲だけ）:**
+- `update('rebuild')` は **すでに Busy 表示中だけ**
+- CSV `applyMaps` が rebuild の Promise を返し、Import オーバーレイが **完了まで待つ**
+- Confirm も同様に `busy.run('save')` で完了待ち
+- ナビ入場の Busy は出さない（CX の意図は維持）
+
+#### CZ — `js/` なし / `api/` なし
+
+#### CZ — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CZ1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/annual/index.html` | `public_html/kpi-navigator/app/annual/index.html` |
+| CZ2 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/index.html` | `public_html/kpi-navigator/app/monthly/index.html` |
+| CZ3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### CZ — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CZ4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/annual/index.html` | `public_html/kpi-navigator/en/app/annual/index.html` |
+| CZ5 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` |
+| CZ6 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### CZ — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| CZ7 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/annual/index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` |
+| CZ8 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` |
+| CZ9 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:** MEP で収入CSV取込 → 取り込み／年次計算の表示のあと **必ず閉じる**。画面操作に戻れる。ナビ移動だけでは Busy が出ない。
+
+マーカー: `KPI-BUSY-CSV-HIDE-CZ`
+
+完了したら「Step CZ 完了」と送る。
+
+### Step DA — EN CSV フリーズ確定修正（2026-08-21）
+
+**照合結果（本番＝ローカル・3言語とも）:**  
+`app|en|zh-tw` の Annual / Monthly / MEP と `js/kpi-busy-overlay.js` 等は **バイト一致**。EN だけ「ファイルが古い」ではなかった。
+
+**EN が固まった本線:**  
+CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完了まで待機**。rebuild は最大60秒／年、flushPut はタイムアウト無し。遅い／止まると EN では Rebuilding のままに見える（JA/TW はたまたま早く終わって成功に見えた）。
+
+**DA（次の一回で閉じる・合意範囲）:**
+1. CSV はグリッド反映後にオーバーレイを **即閉じ**、rebuild は裏で続行
+2. Confirm は最大20秒で閉じる
+3. Busy 安全上限 90s → **25s**
+4. `flushPut` に **15s** タイムアウト
+
+#### DA — `js/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DA1 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-busy-overlay.js` | `public_html/kpi-navigator/js/kpi-busy-overlay.js` |
+| DA2 | `/Users/shinmatsushita/Desktop/kpi-navigator/js/kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` |
+
+#### DA — `api/` なし
+
+#### DA — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DA3 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### DA — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DA4 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### DA — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DA5 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認（必須・ENを先に）:**  
+1. ハードリロード（キャッシュ無視）  
+2. EN MEP → 収入CSV取込 → **数秒以内に操作可能に戻る**（Rebuilding で固まらない）  
+3. JA / TW でも同様  
+マーカー: `KPI-BUSY-CSV-CLOSE-DA`
+
+完了したら「Step DA 完了」と送る。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）
@@ -1763,6 +2562,7 @@ AN の `kpi-daily-inputs-sync.js` に hydrate 済み。AN と同じファイル�
 | Graph の Today's Sales が赤、並びが違う、Focus Bar と数字が違う | Graph が別計算＋英語の行順が古い | **CH3-1〜CH3-6** を上書き（Annual→Monthly、日→英→台湾） |
 | PL に年次／月次スイッチが残る／編集ロックと混同 | PL インジケータ未非表示 | **CI4 / CI7 / CI10**（PL 3言語） |
 | MEP / Sales Data のツールチップに MEP・Annual が出る | path guard 旧文言 | **CI2〜CI10**（Annual + MEP + PL） |
+| MEP 支出CSVが Save しても PL 戻りで ¥0 | 過去年 lock で支出が書かれない | **CJ1〜CJ3** を上書き。PL 確認時は年を **2024** に切替 |
 | 月が跨げない・メモリ警告 | Y4 未上げ or annualNav PUT | Z2 + Z4 を先に上書き |
 | Forge Lab トップが壊れた | LP を kpi-navigator 内に上げた | **LP は `public_html/` 直下** に戻す（別フォルダ正本から） |
 

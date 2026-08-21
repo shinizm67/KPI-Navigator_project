@@ -217,12 +217,26 @@
     if (!Number.isFinite(y)) {
       return Promise.resolve({ ok: false, error: 'invalid_year' });
     }
-    return fetch(rebuildUrl(), {
+    var REBUILD_TIMEOUT_MS = 60000;
+    var controller = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = null;
+    var fetchOpts = {
       method: 'POST',
       headers: buildHeaders(),
       credentials: 'include',
       body: JSON.stringify({ year: y }),
-    })
+    };
+    if (controller) fetchOpts.signal = controller.signal;
+    var timed = new Promise(function (resolve) {
+      timer = window.setTimeout(function () {
+        timer = null;
+        try {
+          if (controller) controller.abort();
+        } catch (_e) {}
+        resolve({ ok: false, error: 'timeout' });
+      }, REBUILD_TIMEOUT_MS);
+    });
+    var req = fetch(rebuildUrl(), fetchOpts)
       .then(function (res) {
         return res.json().then(
           function (data) {
@@ -236,9 +250,17 @@
           }
         );
       })
-      .catch(function () {
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return { ok: false, error: 'timeout' };
         return { ok: false, error: 'network' };
       });
+    return Promise.race([req, timed]).then(function (result) {
+      if (timer != null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      return result;
+    });
   }
 
   function bootOnce() {

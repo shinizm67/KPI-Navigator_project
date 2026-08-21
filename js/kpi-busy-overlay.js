@@ -2,6 +2,7 @@
  * Phase 0 / Stage 5 busy overlay — CSV import / bulk save / year-chunk rebuild.
  * Schema unchanged. Docs: docs/snapshot-store-phased-plan.md
  * Marker: KPI-BUSY-YEAR-CHUNK-AK
+ * Step CO: nested-run queue + safety timeout so overlay cannot stick forever.
  */
 (function (global) {
   'use strict';
@@ -9,10 +10,14 @@
   if (global.__KPI_BUSY && global.__KPI_BUSY.__ready) return;
 
   var ROOT_ID = 'kpi-busy-overlay';
+  /* KPI-BUSY-CSV-CLOSE-DA: hard cap so Rebuilding cannot stick (was 90s) */
+  var SAFETY_MS = 25000;
   var busy = false;
   var inRun = false;
   var lastKind = 'save';
   var lastExtra = {};
+  var safetyTimer = null;
+  var runQueue = Promise.resolve();
 
   function lang() {
     var raw = String((document.documentElement && document.documentElement.getAttribute('lang')) || '');
@@ -119,6 +124,25 @@
     return el;
   }
 
+  function clearSafety() {
+    if (safetyTimer != null) {
+      window.clearTimeout(safetyTimer);
+      safetyTimer = null;
+    }
+  }
+
+  function armSafety() {
+    clearSafety();
+    safetyTimer = window.setTimeout(function () {
+      safetyTimer = null;
+      try {
+        console.warn('[KPI Busy] safety timeout — forcing overlay hide');
+      } catch (_e) {}
+      inRun = false;
+      hide();
+    }, SAFETY_MS);
+  }
+
   function show(kind, extra) {
     lastKind = kind || 'save';
     lastExtra = extra || {};
@@ -131,6 +155,7 @@
     el.classList.add('is-on');
     document.body.classList.add('kpi-busy-lock');
     busy = true;
+    armSafety();
   }
 
   function update(kind, extra) {
@@ -146,9 +171,11 @@
     var msg = document.getElementById('kpi-busy-overlay-msg');
     if (title) title.textContent = titleFor(lastKind);
     if (msg) msg.textContent = copy(lastKind, lastExtra);
+    armSafety();
   }
 
   function hide() {
+    clearSafety();
     var el = document.getElementById(ROOT_ID);
     if (el) {
       el.setAttribute('hidden', '');
@@ -173,21 +200,7 @@
     });
   }
 
-  function run(kind, fn, extra) {
-    if (typeof kind === 'function') {
-      extra = fn;
-      fn = kind;
-      kind = (extra && extra.kind) || 'save';
-    }
-    if (typeof fn !== 'function') {
-      return Promise.resolve();
-    }
-    if (inRun) {
-      return Promise.resolve(fn());
-    }
-    if (busy) {
-      return Promise.resolve(fn());
-    }
+  function runJob(kind, fn, extra) {
     inRun = true;
     show(kind, extra);
     return yieldPaint()
@@ -206,6 +219,26 @@
           throw err;
         }
       );
+  }
+
+  function run(kind, fn, extra) {
+    if (typeof kind === 'function') {
+      extra = fn;
+      fn = kind;
+      kind = (extra && extra.kind) || 'save';
+    }
+    if (typeof fn !== 'function') {
+      return Promise.resolve();
+    }
+    /* Queue nested runs instead of orphaning work without hide(). */
+    var job = runQueue.then(function () {
+      return runJob(kind, fn, extra);
+    });
+    runQueue = job.then(
+      function () {},
+      function () {}
+    );
+    return job;
   }
 
   global.__KPI_BUSY = {

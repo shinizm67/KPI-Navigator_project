@@ -1,0 +1,21 @@
+---
+description: Never ship unilateral product/UX changes; explain unknowns to the user first
+alwaysApply: true
+---
+
+# 勝手にやらない（必須）
+
+正本: [`docs/agent-no-unilateral-changes.md`](../../docs/agent-no-unilateral-changes.md)
+
+## 必須
+
+- ユーザーが頼んでいない挙動・仕様・UX 変更を **勝手に入れない**
+- 「直すついで」で Busy オーバーレイ／保存／rebuild／ナビ副作用を広げない
+- ユーザーが知らない実装・副作用があるなら、**コードを触る前に説明して合意を取る**
+- 迷ったら実装しない。先に短く聞いてから進む
+
+## 禁止
+
+- 「たぶん必要」「念のため」で Saving / Rebuilding / persist / server rebuild を足すこと
+- 説明なしで既存の手触り（遷移・セル入力・モーダル）を変えること
+- 問題 A の修正のついでに、頼まれていない問題 B の“改善”を混ぜること

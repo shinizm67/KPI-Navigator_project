@@ -254,9 +254,10 @@
       font-family: 'Orbitron', sans-serif;
       background: rgba(0, 0, 0, 0.1);
     }
+    /* KPI-ANNUAL-DATE-IIFE-CV: hide until placed; default left near Total BD (not date) */
     .annual-target-sales-group {
       position: absolute;
-      left: 0;
+      left: calc(100% - 620px);
       transform: none;
       top: 21px;
       z-index: 2;
@@ -25014,7 +25015,8 @@
             list.forEach(function (y, idx) {
               p = p.then(function () {
                 /* KPI-BULK-YEAR-REBUILD-AK: year-chunk progress on overlay */
-                if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {
+                /* KPI-BUSY-CSV-HIDE-CZ: progress only if overlay already owned */
+                if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy() && typeof window.__KPI_BUSY.update === 'function') {
                   window.__KPI_BUSY.update('rebuild', {
                     year: y,
                     index: idx + 1,
@@ -25048,9 +25050,8 @@
               });
             });
           };
-          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
-            return window.__KPI_BUSY.run('save', work).catch(function () {});
-          }
+          /* KPI-BUSY-NAV-OFF-CX: background year rebuild must NOT show Saving/Rebuilding.
+             Overlay stays only on explicit Save/CSV button handlers. */
           return work();
         }
 
@@ -25094,9 +25095,23 @@
           if (meta && meta.hlBaselineYears && meta.hlBaselineYears.length) {
             rec.plan.hlBaselineYears = meta.hlBaselineYears.slice();
           }
+          /* KPI-NAV-BUSY-SILENT-HL-CW: opening a page auto-writes H/L baseline
+             (observed-baseline / dom-seed / plan-default). That must NOT run
+             Saving/Rebuilding. User H/L edits still schedule rebuild. */
+          var srcHl = (meta && meta.source) || 'kpi-year-store';
+          var silentHl =
+            !!(meta && meta.skipRebuild) ||
+            srcHl === 'observed-baseline' ||
+            srcHl === 'plan-default' ||
+            srcHl === 'dom-seed' ||
+            srcHl === 'sales-data-analyze';
+          if (silentHl) {
+            persistStore();
+            return true;
+          }
           scheduleServerYearRebuild(y, 'hl-weights', {
             monthlyHlWeights: normalized.slice(),
-            source: (meta && meta.source) || 'kpi-year-store',
+            source: srcHl,
           });
           return true;
         }
@@ -25690,7 +25705,8 @@
             .sort(function (a, b) { return a - b; });
           if (!years.length) return Promise.resolve();
           var work = function () {
-            if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {
+            /* KPI-BUSY-CSV-HIDE-CZ: never open overlay here (orphan hang). Progress only if already busy. */
+            if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy() && typeof window.__KPI_BUSY.update === 'function') {
               window.__KPI_BUSY.update('rebuild', {
                 year: years[0],
                 index: 1,
@@ -25711,14 +25727,7 @@
               return Promise.resolve(hyd);
             });
           };
-          if (window.__KPI_BUSY && (window.__KPI_BUSY._inRun || window.__KPI_BUSY.isBusy())) {
-            return work();
-          }
-          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
-            return window.__KPI_BUSY
-              .run('rebuild', work, { yearCount: years.length, year: years[0], index: 1, total: years.length })
-              .catch(function () {});
-          }
+          /* KPI-BUSY-CSV-HIDE-CZ / CX: background silent; CSV/Save parent awaits this work(). */
           return work();
         }
 
@@ -26012,8 +26021,41 @@
           if (store.meta.selectedDate) daily.selectedDate = store.meta.selectedDate;
           var oy = getOperatingYear();
           var yr = store.years[oy];
-          if (yr && yr.plan && yr.plan.targetSales != null && Number.isFinite(Number(yr.plan.targetSales))) {
-            window.__ANNUAL_DATA.targetSales = Number(yr.plan.targetSales);
+          var planN =
+            yr && yr.plan && yr.plan.targetSales != null
+              ? Number(yr.plan.targetSales)
+              : NaN;
+          if (Number.isFinite(planN) && planN > 0) {
+            window.__ANNUAL_DATA.targetSales = planN;
+          } else {
+            /* KPI-SALES-DATA-TARGET-PERSIST-CT: memory-only heal — never persistStore here
+               (CS wrote on every nav → Saving/Rebuilding noise). */
+            try {
+              var refN = NaN;
+              if (daily.referenceAnnualSales != null) {
+                refN = Number(daily.referenceAnnualSales);
+              }
+              if (!(Number.isFinite(refN) && refN > 0)) {
+                var gwR = window.__KPI_DATA_GATEWAY;
+                var shared =
+                  gwR && typeof gwR.getJson === 'function'
+                    ? gwR.getJson('kpiNavigator.annualDailyShared')
+                    : null;
+                if (shared && shared.referenceAnnualSales != null) {
+                  refN = Number(shared.referenceAnnualSales);
+                }
+              }
+              if (Number.isFinite(refN) && refN > 0) {
+                daily.referenceAnnualSales = Math.round(refN);
+                window.__ANNUAL_DATA.targetSales = Math.round(refN);
+                var recHeal = ensureYearRecord(oy);
+                if (!recHeal.plan) recHeal.plan = {};
+                if (!(Number(recHeal.plan.targetSales) > 0)) {
+                  recHeal.plan.targetSales = Math.round(refN);
+                  recHeal.plan.source = 'memory-reference-heal';
+                }
+              }
+            } catch (_eSyncRef) {}
           }
           syncToPastSalesMemory();
         }
@@ -26150,8 +26192,15 @@
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
           }
-          if (meta && (meta.skipRebuild || meta.source === 'sales-data-save')) {
-            if (meta.skipRebuild) persistStore();
+          /* KPI-SALES-DATA-TARGET-PERSIST-CT:
+             Persist plan on Sales Data Save. Do not emit/rebuild here —
+             that caused nav Saving/Rebuilding (CS regression). */
+          if (meta && meta.source === 'sales-data-save') {
+            persistStore();
+            return;
+          }
+          if (meta && meta.skipRebuild) {
+            persistStore();
             return;
           }
           scheduleServerYearRebuild(y, 'annual-target', {
@@ -27652,6 +27701,26 @@
               if (Number.isFinite(mem) && mem > 0) return mem;
             }
           }
+          /* KPI-SALES-DATA-TARGET-PERSIST-CT: Sales Data reference (memory or shared LS) */
+          if (year === oy) {
+            var refSd = NaN;
+            if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
+              refSd = Number(window.__ANNUAL_DATA.daily.referenceAnnualSales);
+            }
+            if (!(Number.isFinite(refSd) && refSd > 0)) {
+              try {
+                var gwT = window.__KPI_DATA_GATEWAY;
+                var sharedT =
+                  gwT && typeof gwT.getJson === 'function'
+                    ? gwT.getJson('kpiNavigator.annualDailyShared')
+                    : null;
+                if (sharedT && sharedT.referenceAnnualSales != null) {
+                  refSd = Number(sharedT.referenceAnnualSales);
+                }
+              } catch (_eRef) {}
+            }
+            if (Number.isFinite(refSd) && refSd > 0) return refSd;
+          }
           var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
           if (
             past &&
@@ -28052,12 +28121,11 @@
         }
 
         function parseBizCell(raw, salesAmount) {
-          if (raw == null || raw === '') {
-            return Number(salesAmount) > 0;
-          }
+          /* 営業日列が存在してセルが空の場合は店休扱い（売上有無に依存しない） */
+          if (raw == null || raw === '') return false;
           if (typeof raw === 'number') return raw !== 0;
           var s = String(raw).trim().toLowerCase();
-          if (!s) return Number(salesAmount) > 0;
+          if (!s) return false;
           if (s === '0' || s === 'false' || s === 'no' || s === 'off' || s === '休' || s === '店休' || s === '×' || s === 'x') {
             return false;
           }
@@ -28066,6 +28134,7 @@
           }
           var n = Number(s);
           if (Number.isFinite(n)) return n !== 0;
+          /* 非数値文字列で解釈不能のときは売上ありなら営業日とみなす（フォールバック） */
           return Number(salesAmount) > 0;
         }
 
@@ -28351,10 +28420,12 @@
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
             var biz = maps.businessDayByDate[iso] !== false;
             var sales = Number(maps.salesByDate[iso]);
-            if (!biz || !Number.isFinite(sales) || sales <= 0) {
+            if (!biz) {
               rowStateByIso[iso] = { off: true, last: '0' };
             } else {
-              rowStateByIso[iso] = { off: false, last: String(Math.round(sales)) };
+              /* 営業日列で 1 が立っていれば売上が ¥0 でも営業日チェック ON */
+              var amt = Number.isFinite(sales) && sales > 0 ? String(Math.round(sales)) : '0';
+              rowStateByIso[iso] = { off: false, last: amt };
             }
           });
         }
@@ -29280,6 +29351,7 @@
         window.__KPI_SALES_INPUT_PATH_UI = { sync: syncToggleUi, requestPathChange: requestPathChange };
       })();
 
+    (function () {
       var dateBtn = document.getElementById('annual-daily-date-btn');
       var dateInput = document.getElementById('annual-daily-date-input');
       var todayBtn = document.getElementById('annual-daily-today-btn');
@@ -29296,9 +29368,13 @@
       /* KPI-ANNUAL-PLACE-PERF */
       var __placeTargetSalesLeft = null;
       function placeTargetSalesGroup() {
+        /* KPI-ANNUAL-TARGET-BOX-CU: always keep visible even if geometry missing */
         if (!targetGroup) return;
         var root = document.getElementById('annual-monthly-data');
-        if (!root) return;
+        if (!root || !todayBtn) {
+          targetGroup.classList.add('annual-target-sales-group--positioned');
+          return;
+        }
         var rootRect = root.getBoundingClientRect();
         var todayRect = todayBtn.getBoundingClientRect();
         var left = Math.round(todayRect.right - rootRect.left + 45);
@@ -32038,6 +32114,19 @@
           typeof KpiYearStore.readAnnualTarget === 'function'
             ? KpiYearStore.readAnnualTarget(y)
             : null;
+        if (!(Number(annualTarget) > 0) && typeof resolveAnnualTarget === 'function') {
+          annualTarget = resolveAnnualTarget(y);
+        }
+        /* KPI-SALES-DATA-TARGET-PERSIST-CT: stale facts with $0 targets while plan exists
+           must not block live recompute (Cockpit showed $0 / —). */
+        if (
+          Number(annualTarget) > 0 &&
+          !(Number(fact.dailyTarget) > 0) &&
+          !(Number(fact.mtdTarget) > 0) &&
+          !(Number(fact.ytdTarget) > 0)
+        ) {
+          return null;
+        }
         var hasPlan =
           fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
         return finalizeTwMetricsNeeds({
@@ -36740,6 +36829,31 @@
         syncUndoButton();
         sessionSaved = true;
         return Promise.resolve(persistSalesDataShared()).then(function () {
+          /* KPI-SALES-DATA-TARGET-PERSIST-CT: refresh day targets locally after Save
+             (no extra __KPI_BUSY — Save overlay already covers this). */
+          if (
+            targetToWrite > 0 &&
+            window.KpiYearStore &&
+            typeof KpiYearStore.invalidateDailyFacts === 'function'
+          ) {
+            try {
+              KpiYearStore.invalidateDailyFacts({
+                year: y,
+                planChanged: true,
+                reason: 'sales-data-target',
+              });
+            } catch (_eInv) {}
+            try {
+              if (typeof clearDailyTargetDisplayCache === 'function') {
+                clearDailyTargetDisplayCache();
+              }
+            } catch (_eClr) {}
+            try {
+              if (typeof window.clearTwMetricsCache === 'function') {
+                window.clearTwMetricsCache();
+              }
+            } catch (_eTw) {}
+          }
           document.dispatchEvent(
             new CustomEvent('annual:salesDataSaved', {
               detail: { year: state.year, source: 'sales-data-modal' }
