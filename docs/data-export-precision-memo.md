@@ -19,7 +19,7 @@
 | **Web UI（TW / Cockpit / Focus Bar / Daily FW）** | **整数表示**（現場向け）。月次は日次表示値の合計と一致（11-6 最終営業日調整） |
 | **CSV / Excel Export** | **小数フル精度**（精密バージョン）。経理・オーナーへの橋渡し用 |
 
-KPI Navigator は **店舗の Excel 日次表・目標表の代替** が主目的であり、**各国の税計算・会計ソフト連携はスコープ外**（`docs/currency-and-markets-memo.md` 参照）。
+KPI Pilot は **店舗の Excel 日次表・目標表の代替** が主目的であり、**各国の税計算・会計ソフト連携はスコープ外**（`docs/currency-and-markets-memo.md` 参照）。
 
 Export は「アプリを経理ツールにしない」前提の **任意機能**。必要とするユーザーがいれば、小さな需要 × 多国展開でも価値になる。
 

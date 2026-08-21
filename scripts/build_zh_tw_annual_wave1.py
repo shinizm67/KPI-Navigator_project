@@ -27,8 +27,8 @@ DST = ROOT / "zh-tw" / "app" / "annual" / "index.html"
 WAVE1_REPLACEMENTS = [
     ("<html lang=\"en\">", "<html lang=\"zh-TW\">"),
     (
-        "Annual | KPI Navigator | FORGE LABORATORY",
-        "年度 | KPI Navigator | FORGE LABORATORY",
+        "Annual | KPI Pilot | FORGE LABORATORY",
+        "年度 | KPI Pilot | FORGE LABORATORY",
     ),
     # zh-tw/setting has no style.css — use shared EN setting stylesheet.
     (
@@ -140,7 +140,7 @@ def verify() -> None:
     t = DST.read_text(encoding="utf-8")
     checks = [
         ('lang="zh-TW"', 'lang="zh-TW"' in t),
-        ("title 年度", "年度 | KPI Navigator" in t),
+        ("title 年度", "年度 | KPI Pilot" in t),
         ("chrome 年度 nav", ">年度</span>" in t),
         ("chrome 帳戶", "帳戶設定" in t or ">帳戶<" in t),
         ("setting href", "../../setting/profile.html" in t),

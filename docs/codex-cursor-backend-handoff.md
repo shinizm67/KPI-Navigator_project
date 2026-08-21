@@ -236,10 +236,37 @@
 
 **次:** **B4-T2** MySQL 正本（HTTP 契約は維持したまま差し替え）
 
-#### B4-T2. MySQL 正本（未着手）
+#### B4-T2. MySQL 正本 — **実装済み（2026-08-09・Cursor・既定は file）**
 
-- ファイル JSON → MySQL
-- users / store blob の移行。GET/PUT 契約は維持
+**タイトル:** `storageDriver=mysql` で users / store を PDO 正本化（HTTP 契約維持）
+
+**実装:**
+
+| パス | 役割 |
+|------|------|
+| `api/v1/schema.sql` | `kpi_users` / `kpi_store` |
+| `api/v1/_db.php` | PDO 接続 + CRUD |
+| `api/v1/_bootstrap.php` | `storageDriver` / read·write blob 分岐 |
+| `api/v1/_auth.php` | user / email index を MySQL 分岐 |
+| `tools/migrate-json-to-mysql.php` | 既存 JSON → MySQL 移行 |
+
+**既定:** `storageDriver => 'file'`（現行どおり）。MySQL 利用時のみ config で切替。
+
+**有効化手順:**
+
+1. ロリポップ（またはローカル）で DB 作成
+2. `schema.sql` を適用（または migrate が CREATE）
+3. `config.local.php` に `storageDriver=>'mysql'` + `dbHost/dbName/dbUser/dbPass`
+4. `php tools/migrate-json-to-mysql.php` で既存 JSON を取込
+5. curl で register / store GET·PUT / me を確認
+
+**受け入れ:**
+
+1. `storageDriver=file` のとき従来どおり動作（回帰）
+2. `mysql` + 空 DB で register → users 行が増える
+3. PUT store → `kpi_store` に JSON が入る、GET で戻る
+4. Basic/Pro entitlement（pl / dailyExpenses）は従来どおり
+5. フロント HTTP 契約（store.php / auth）は変えない
 
 ---
 
@@ -258,11 +285,11 @@ Windows 機＋Codex 利用開始時:
 ### Codex に最初に貼るプロンプト例（短く）
 
 ```text
-KPI Navigator のバックエンド Phase B 着手。
+KPI Pilot のバックエンド Phase B 着手。
 必読: docs/codex-cursor-backend-handoff.md , docs/backend-phase-a-store-api.md
 制約: Phase A の GET/PUT store 契約を壊さない。秘密をコミットしない。
 巨大な app/**/index.html は触らない。
-現状: B1–B4-T1 は main 実装済み。次は B4-T2（MySQL）または本番配備。
+現状: B1–B4-T2（MySQL ドライバ・既定 file）は main 実装済み。本番は DB 設定後に storageDriver=mysql。
 ```
 
 ---
@@ -281,9 +308,15 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - [x] B3-T1 Entitlement（サーバ plan + Store Pro 遮断 + クライアント同期）
 - [x] B3-T2 PL ローカルキーのサーバ保管（`pl` bundle）
 - [x] B4-T1 Store バックアップ／エクスポート
+- [x] B4-T2 MySQL ドライバ（storageDriver・schema・migrate）
 - [ ] LP 動画 03–05（ユーザー作業・並行中）
-- [ ] 登録済み→Login 分岐を Forge Lab に組込（任意・後続）
-- [ ] 古いサーバ残骸の整理（任意: `kpi-navigator-old` 等）
+- [ ] LP 動画: 新01差し替え＋現行01→02移動（メモ済み・未実施）
+- [x] 登録済み→Login 分岐を Forge Lab に組込（`kpi-nav-branch.js`・本番確認済 2026-08-11）
+- [x] 古いサーバ残骸の整理（[`server-remnant-cleanup.md`](./server-remnant-cleanup.md)・`kpi-navigator-old` 退避＋ smoke `.off`）
+- [x] 運用: `support@` 転送 + フィードバック本番通し（[`ops-support-email-and-mobile-view-memo.md`](./ops-support-email-and-mobile-view-memo.md)）
+- [ ] 無料お試し配布の運用固め（[`free-trial-account-ops.md`](./free-trial-account-ops.md)・管理者 create/set-password/disable API 実装済・本番上げ待ち）
+- [ ] 後続: スマホ閲覧（同メモ §3・SVG 枠含む・ローンチ必須ではない）
+- [x] ブランド: **Key Performance Navigator** 表示反映（[`brand-key-performance-navigator.md`](./brand-key-performance-navigator.md)）
 
 ### 営業日チェックと売上復元（2026-08-03 検証）
 
@@ -300,6 +333,7 @@ Codex とぶつかりにくいフロント／プロダクト作業:
 - 動画01: `https://youtu.be/dxVkErJXW-E`（embed 済み・2026-08-09 差し替え）
 - 動画02 Annual: `https://youtu.be/1zVhNgySero`（embed 済み）
 - 動画03–05: Coming soon 枠
+- **LP 動画差し替え予定（2026-08-09 メモ）:** いまの 01（`dxVkErJXW-E`）は **02 へ移動**する可能性あり。その場合、**新作を 01 に差し替え**、現行 01 を 02 の枠へ移す。02 の作り直し着手前にこの方針で揃える。
 - 動画間の文言: 全動画完了後に一括で入れる予定
 - 旧リンク一覧: `tools/dev-index.html`
 - メニュー分岐準備: `tools/forge-lab-kpi-menu-branch.js`

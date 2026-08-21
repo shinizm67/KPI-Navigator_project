@@ -470,13 +470,14 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 | 表示 | データ源 |
 |------|----------|
-| Annual Input Sales / 年間入力売上 | `getReferenceAnnualForAnalyze(y)` |
+| Annual Input Sales / 年間入力売上 | `getCumulativeInputAnnualTotal(y)`（入力売上の年次合計。**目標は使わない**） |
 | Total Business Days / 総営業日数 | 通年 B.DAY ON 件数 |
-| Average Daily Sales / 平均日次売上 | 年間目標 ÷ 総営業日数 |
+| Average Daily Sales / 平均日次売上 | 年間入力売上 ÷ 総営業日数 |
 | B. DAY（各月） | 月ごとチェック ON 件数 |
 | Monthly Sales ② | `getMonthlyCumulativeSalesByMonth`（Input 月次累計） |
-| Baseline ① | 年間目標 ÷ 総営業日 × 月営業日数 |
+| Baseline ① | 平均日次 × 月営業日数（H/L は掛けない） |
 | Seasonality % | ②÷①×100 |
+| 差額（表には出さない） | ② − ① |
 
 更新: `applyPastSalesTotalsToTable` → `updatePastSalesSummary` → `renderPastSalesAnalyze`（Analyze 表示中）。
 
@@ -524,6 +525,7 @@ Past Sales で確定した **フォント・セル透過・列構成・ヘッダ
 
 | 日付 | 内容 |
 |------|------|
+| 2026-08-16 | §12.3 Analyze は入力売上のみ。年間目標・H/L は繁閑%の分母に使わない（Step AF） |
 | 2026-07-02 | §9.0 未入力年 B.DAY 全 OFF 確定。§1 年跨ぎ §1.6 参照 |
 | 2026-06-17 | 年間目標売上ラベル確定、背景色 `--psm-bg-reference` 確定、サマリー折りたたみ、閉じる 3 択統一 |
 | 2026-06-01 | §12 Analyze 確定、左右ボタン・`past_sales_button.svg`、Sales 枠ボタン配置 |

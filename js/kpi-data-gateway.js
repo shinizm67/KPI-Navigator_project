@@ -75,6 +75,118 @@
     return false;
   }
 
+  function dailyExpensesHasData(de) {
+    if (!de || typeof de !== 'object') return false;
+    var lineIds = Object.keys(de);
+    for (var i = 0; i < lineIds.length; i++) {
+      var byIso = de[lineIds[i]];
+      if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+    }
+    return false;
+  }
+
+  function dailyIncomeHasData(di) {
+    if (!di || typeof di !== 'object') return false;
+    var streamIds = Object.keys(di);
+    for (var i = 0; i < streamIds.length; i++) {
+      var byIso = di[streamIds[i]];
+      if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+    }
+    return false;
+  }
+
+  function timelineMapHasYearData(map, year) {
+    if (!map || typeof map !== 'object') return false;
+    var yStr = String(year);
+    return Object.keys(map).some(function (iso) {
+      if (!iso || iso.slice(0, 4) !== yStr) return false;
+      return Number.isFinite(Number(map[iso]));
+    });
+  }
+
+  function mergeIsoTimelineMap(serverMap, localMap) {
+    var out = {};
+    if (serverMap && typeof serverMap === 'object') {
+      Object.keys(serverMap).forEach(function (iso) {
+        out[iso] = serverMap[iso];
+      });
+    }
+    if (!localMap || typeof localMap !== 'object') return out;
+    Object.keys(localMap).forEach(function (iso) {
+      var lv = Number(localMap[iso]);
+      if (!Number.isFinite(lv)) return;
+      var hasServer = Object.prototype.hasOwnProperty.call(out, iso);
+      var sv = hasServer ? Number(out[iso]) : NaN;
+      if (!hasServer || (!Number.isFinite(sv) && lv !== 0) || (lv !== 0 && sv === 0)) {
+        out[iso] = localMap[iso];
+      }
+    });
+    return out;
+  }
+
+  /** Keep local MEP data when server hydrate would wipe unsynced MEP/PL imports. */
+  function mergeStorePreservingLocalMepData(serverStore, localStore) {
+    if (!serverStore || typeof serverStore !== 'object') return localStore || serverStore;
+    if (!localStore || typeof localStore !== 'object') return serverStore;
+    var out;
+    try {
+      out = JSON.parse(JSON.stringify(serverStore));
+    } catch (_e) {
+      return serverStore;
+    }
+    var localYears = localStore.years || {};
+    if (!out.years || typeof out.years !== 'object') out.years = {};
+    Object.keys(localYears).forEach(function (yk) {
+      var localRec = localYears[yk];
+      if (!localRec || typeof localRec !== 'object') return;
+      var outRec = out.years[yk];
+      if (!outRec || typeof outRec !== 'object') {
+        out.years[yk] = JSON.parse(JSON.stringify(localRec));
+        outRec = out.years[yk];
+      }
+      var localTs = Number(localRec.mepUpdatedAt) || 0;
+      var serverTs = Number(outRec.mepUpdatedAt) || 0;
+      var localDe = localRec.dailyExpenses;
+      if (dailyExpensesHasData(localDe)) {
+        var serverDe = outRec.dailyExpenses;
+        if (!dailyExpensesHasData(serverDe) || localTs >= serverTs) {
+          outRec.dailyExpenses = JSON.parse(JSON.stringify(localDe));
+          if (localTs > serverTs && localRec.mepUpdatedAt != null) {
+            outRec.mepUpdatedAt = localRec.mepUpdatedAt;
+          }
+        }
+      }
+      var localDi = localRec.dailyIncome;
+      if (dailyIncomeHasData(localDi)) {
+        var serverDi = outRec.dailyIncome;
+        if (!dailyIncomeHasData(serverDi) || localTs >= serverTs) {
+          outRec.dailyIncome = JSON.parse(JSON.stringify(localDi));
+          if (localTs > serverTs && localRec.mepUpdatedAt != null) {
+            outRec.mepUpdatedAt = localRec.mepUpdatedAt;
+          }
+        }
+      }
+    });
+    if (localStore.timeline && typeof localStore.timeline === 'object') {
+      if (!out.timeline || typeof out.timeline !== 'object') {
+        out.timeline = { dailySales: {}, businessDays: {} };
+      }
+      out.timeline.dailySales = mergeIsoTimelineMap(
+        out.timeline.dailySales,
+        localStore.timeline.dailySales
+      );
+      out.timeline.businessDays = mergeIsoTimelineMap(
+        out.timeline.businessDays,
+        localStore.timeline.businessDays
+      );
+    }
+    return out;
+  }
+
+  function mergeStorePreservingLocalExpenses(serverStore, localStore) {
+    return mergeStorePreservingLocalMepData(serverStore, localStore);
+  }
+
   function stripProFromStore(store) {
     if (!store || typeof store !== 'object') return store;
     var out;
@@ -91,6 +203,151 @@
       }
     });
     return out;
+  }
+
+  /* 段階 2d: blob に解を戻さない。メモリと kpi_daily_facts が正本 */
+  function yearRecordHasDailyFacts(rec) {
+    return !!(
+      rec &&
+      typeof rec === 'object' &&
+      (rec.dailyFacts || rec.dailyFactsUpdatedAt || rec.dailyFactsFromIso || rec.dailyFactsReason)
+    );
+  }
+
+  function storeHasDailyFacts(store) {
+    var years = store && store.years;
+    if (!years || typeof years !== 'object') return false;
+    var keys = Object.keys(years);
+    for (var i = 0; i < keys.length; i++) {
+      if (yearRecordHasDailyFacts(years[keys[i]])) return true;
+    }
+    return false;
+  }
+
+  function stripDailyFactsFromStore(store) {
+    if (!store || typeof store !== 'object') return store;
+    var years = store.years;
+    if (!years || typeof years !== 'object') return store;
+    var slimYears = {};
+    Object.keys(years).forEach(function (yk) {
+      var rec = years[yk];
+      if (!rec || typeof rec !== 'object') {
+        slimYears[yk] = rec;
+        return;
+      }
+      var copy = {};
+      Object.keys(rec).forEach(function (rk) {
+        if (
+          rk === 'dailyFacts' ||
+          rk === 'dailyFactsUpdatedAt' ||
+          rk === 'dailyFactsFromIso' ||
+          rk === 'dailyFactsReason'
+        ) {
+          return;
+        }
+        copy[rk] = rec[rk];
+      });
+      slimYears[yk] = copy;
+    });
+    var out = {};
+    Object.keys(store).forEach(function (k) {
+      if (k === 'years') return;
+      out[k] = store[k];
+    });
+    out.years = slimYears;
+    return out;
+  }
+
+  /* KPI-TIMELINE-SLIM-AR: LS には作業窓だけ残し、PUT はメモリのフル timeline を優先 */
+  var TIMELINE_SLIM_PAD_MONTHS = 2;
+
+  function collectTimelineKeepYears(store, sales, biz) {
+    var years = {};
+    Object.keys((store && store.years) || {}).forEach(function (yk) {
+      var yn = Number(yk);
+      if (Number.isFinite(yn)) years[yn] = true;
+    });
+    function markFromMap(map) {
+      if (!map || typeof map !== 'object') return;
+      Object.keys(map).forEach(function (iso) {
+        if (!iso || iso.length < 4) return;
+        var yn = Number(iso.slice(0, 4));
+        if (Number.isFinite(yn)) years[yn] = true;
+      });
+    }
+    markFromMap(sales);
+    markFromMap(biz);
+    return years;
+  }
+
+  function slimTimelineForLocalStorage(store) {
+    if (!store || typeof store !== 'object') return store;
+    var tl = store.timeline;
+    if (!tl || typeof tl !== 'object') return store;
+    var sales = tl.dailySales;
+    var biz = tl.businessDays;
+    if ((!sales || typeof sales !== 'object') && (!biz || typeof biz !== 'object')) {
+      return store;
+    }
+    var keepYears = collectTimelineKeepYears(store, sales, biz);
+    var focusY = null;
+    try {
+      if (window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+        focusY = Number(KpiYearStore.getOperatingYear());
+      }
+    } catch (_e0) {}
+    if (!Number.isFinite(focusY)) {
+      try {
+        var nav = localGet(NAV_KEY);
+        if (nav && nav.calendarYear != null) focusY = Number(nav.calendarYear);
+      } catch (_e1) {}
+    }
+    if (!Number.isFinite(focusY)) focusY = new Date().getFullYear();
+    var start = new Date(focusY, -TIMELINE_SLIM_PAD_MONTHS, 1);
+    var end = new Date(focusY, 12 + TIMELINE_SLIM_PAD_MONTHS, 0);
+    function inWindow(iso) {
+      if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+      var y = Number(iso.slice(0, 4));
+      if (keepYears[y]) return true;
+      var p = iso.split('-').map(Number);
+      var d = new Date(p[0], p[1] - 1, p[2]);
+      return d >= start && d <= end;
+    }
+    var slimSales = {};
+    var slimBiz = {};
+    if (sales && typeof sales === 'object') {
+      Object.keys(sales).forEach(function (iso) {
+        if (inWindow(iso)) slimSales[iso] = sales[iso];
+      });
+    }
+    if (biz && typeof biz === 'object') {
+      Object.keys(biz).forEach(function (iso) {
+        if (inWindow(iso)) slimBiz[iso] = biz[iso];
+      });
+    }
+    var out = {};
+    Object.keys(store).forEach(function (k) {
+      if (k === 'timeline') return;
+      out[k] = store[k];
+    });
+    out.timeline = {
+      dailySales: slimSales,
+      businessDays: slimBiz,
+    };
+    return out;
+  }
+
+  function storePayloadForPut() {
+    var fromMem = null;
+    try {
+      if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+        fromMem = window.KpiYearStore.getStore();
+      }
+    } catch (_e) {}
+    if (fromMem && typeof fromMem === 'object') {
+      return stripDailyFactsFromStore(fromMem);
+    }
+    return stripDailyFactsFromStore(localGet(STORE_KEY));
   }
 
   function resolveAppRoot() {
@@ -321,29 +578,73 @@
     });
   }
 
+  var putInFlight = null;
+
+  function buildPutBody(cfg) {
+    var storePayload = storePayloadForPut();
+    var body = {
+      store: storePayload,
+      annualNav: localGet(NAV_KEY),
+    };
+    if (localTier() === 'basic') {
+      body.store = stripProFromStore(storePayload);
+    } else {
+      body.pl = collectPlFromLocal();
+    }
+    return body;
+  }
+
+  function doPut(cfg) {
+    if (!canSync(cfg)) return Promise.resolve();
+    var body = buildPutBody(cfg);
+    putInFlight = fetch(cfg.baseUrl, {
+      method: 'PUT',
+      headers: buildHeaders(cfg, true),
+      body: JSON.stringify(body),
+      credentials: fetchCreds(cfg),
+    })
+      .catch(function () {})
+      .then(function () {
+        putInFlight = null;
+      });
+    return putInFlight;
+  }
+
   function schedulePut(cfg) {
     if (!canSync(cfg)) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
-      var storePayload = localGet(STORE_KEY);
-      var body = {
-        store: storePayload,
-        annualNav: localGet(NAV_KEY),
-      };
-      if (localTier() === 'basic') {
-        body.store = stripProFromStore(storePayload);
-        // Do not send pl for Basic (avoids 403; server keeps disk pl).
-      } else {
-        body.pl = collectPlFromLocal();
-      }
-      fetch(cfg.baseUrl, {
-        method: 'PUT',
-        headers: buildHeaders(cfg, true),
-        body: JSON.stringify(body),
-        credentials: fetchCreds(cfg),
-      }).catch(function () {});
+      doPut(cfg);
     }, 400);
+  }
+
+  function flushPut() {
+    cfg = readSyncConfig();
+    if (putTimer != null) {
+      window.clearTimeout(putTimer);
+      putTimer = null;
+    }
+    /* KPI-BUSY-CSV-CLOSE-DA: never let store PUT hang the Busy overlay forever */
+    function withPutTimeout(p) {
+      return Promise.race([
+        Promise.resolve(p).catch(function () {}),
+        new Promise(function (resolve) {
+          window.setTimeout(function () { resolve(null); }, 15000);
+        }),
+      ]);
+    }
+    if (!canSync(cfg)) {
+      return withPutTimeout(putInFlight || Promise.resolve());
+    }
+    if (putInFlight) {
+      return withPutTimeout(
+        putInFlight.then(function () {
+          return doPut(cfg);
+        })
+      );
+    }
+    return withPutTimeout(doPut(cfg));
   }
 
   function hydrateFromServer(cfg) {
@@ -362,9 +663,27 @@
         if (!data || !data.ok) return;
         applyPlanFromPayload(data);
         var changed = false;
+        var storeHadFacts = false;
         if (data.store && typeof data.store === 'object') {
-          localSet(STORE_KEY, data.store);
+          storeHadFacts = storeHasDailyFacts(data.store);
+          var localBeforeHydrate = localGet(STORE_KEY);
+          var fullStore = stripDailyFactsFromStore(
+            mergeStorePreservingLocalMepData(data.store, localBeforeHydrate)
+          );
+          /* Load full into LS briefly so KpiYearStore.reload sees full timeline, then slim LS. */
+          localSet(STORE_KEY, fullStore);
           changed = true;
+          try {
+            if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
+              window.KpiYearStore.reload();
+            }
+          } catch (_eReloadEarly) {}
+          hookQuiet = true;
+          try {
+            localSet(STORE_KEY, slimTimelineForLocalStorage(fullStore));
+          } finally {
+            hookQuiet = false;
+          }
         }
         if (data.annualNav && typeof data.annualNav === 'object') {
           localSet(NAV_KEY, data.annualNav);
@@ -377,6 +696,7 @@
         } else if (data.pl && typeof data.pl === 'object') {
           if (applyPlToLocal(data.pl)) changed = true;
         }
+        if (storeHadFacts) schedulePut(cfg);
         if (changed) {
           try {
             document.dispatchEvent(
@@ -390,8 +710,11 @@
             );
           } catch (_e) {}
           try {
-            if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
-              window.KpiYearStore.reload();
+            /* reload already ran above when store present */
+            if (!(data.store && typeof data.store === 'object')) {
+              if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
+                window.KpiYearStore.reload();
+              }
             }
           } catch (_eReload) {}
           try {
@@ -430,10 +753,23 @@
   window.__KPI_DATA_GATEWAY = {
     __kpiStoreSyncReady: true,
     getJson: function (key) {
+      /* Prefer in-memory full store — LS may hold a slimmed timeline window. */
+      if (key === STORE_KEY) {
+        try {
+          if (window.KpiYearStore && typeof window.KpiYearStore.getStore === 'function') {
+            var mem = window.KpiYearStore.getStore();
+            if (mem && typeof mem === 'object') return mem;
+          }
+        } catch (_eMem) {}
+      }
       return localGet(key);
     },
     setJson: function (key, value) {
-      var ok = localSet(key, value);
+      var toStore = value;
+      if (key === STORE_KEY && value && typeof value === 'object') {
+        toStore = slimTimelineForLocalStorage(stripDailyFactsFromStore(value));
+      }
+      var ok = localSet(key, toStore);
       if (ok && (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key))) {
         schedulePut(cfg);
       }
@@ -468,12 +804,9 @@
     },
     pushToServerNow: function () {
       cfg = readSyncConfig();
-      if (putTimer != null) {
-        window.clearTimeout(putTimer);
-        putTimer = null;
-      }
-      schedulePut(cfg);
+      return flushPut();
     },
+    flushPut: flushPut,
     collectPlFromLocal: collectPlFromLocal,
   };
 

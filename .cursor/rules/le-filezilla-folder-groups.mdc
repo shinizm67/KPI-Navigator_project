@@ -1,0 +1,29 @@
+---
+description: FileZilla 上げ表は表層フォルダ・言語で完結させ、上下の行き来をなくす。
+alwaysApply: true
+---
+
+# FileZilla 上げ表の並び（必須）
+
+チャットと `docs/le-filezilla-path-table.md` の上げ表は、**画面種別（Annual 3言語まとめて）では並べない。** FileZilla が下に進むだけで終わる並びに固定する。
+
+## グループ順（上から）
+
+1. `js/` の中だけで完結（複数ならこのグループ内だけ）
+2. `api/` の中だけで完結
+3. 日本語 `app/`（その中は `annual` → `monthly` → `monthly/edit` → 他）
+4. 英語 `en/app/`（同じ順）
+5. 繁中 `zh-tw/app/`（同じ順）
+6. その他も **表層フォルダ単位**（`setting/`、`images/` など）。言語があるなら日→英→台湾
+
+## やってはいけない
+
+- Annual を日・英・台湾と上げてから、上に戻って Monthly を上げる並びにすること
+- `index.html` だけ書いて親フォルダを省略すること
+- 1 Step に関係ないファイルを混ぜること
+
+## 例（Annual + Monthly だけなら）
+
+- AB1 `app/annual/index.html` → AB2 `app/monthly/index.html`
+- AB3 `en/app/annual/index.html` → AB4 `en/app/monthly/index.html`
+- AB5 `zh-tw/app/annual/index.html` → AB6 `zh-tw/app/monthly/index.html`

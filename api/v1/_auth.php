@@ -65,6 +65,11 @@ function kpi_v1_auth_user_path($userId)
 
 function kpi_v1_auth_read_email_index()
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        return kpi_v1_db_read_email_index($cfg);
+    }
     $path = kpi_v1_auth_email_index_path();
     if (!is_file($path)) {
         return [];
@@ -75,6 +80,11 @@ function kpi_v1_auth_read_email_index()
 
 function kpi_v1_auth_write_email_index($index)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        // Users table is source of truth; index writes are no-ops under MySQL.
+        return;
+    }
     $path = kpi_v1_auth_email_index_path();
     $tmp = $path . '.tmp';
     $json = json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
@@ -89,6 +99,11 @@ function kpi_v1_auth_write_email_index($index)
 
 function kpi_v1_auth_read_user($userId)
 {
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        return kpi_v1_db_read_user($cfg, $userId);
+    }
     $path = kpi_v1_auth_user_path($userId);
     if ($path === null || !is_file($path)) {
         return null;
@@ -101,6 +116,22 @@ function kpi_v1_auth_write_user($user)
 {
     if (!is_array($user) || empty($user['userId'])) {
         kpi_v1_json_out(500, ['ok' => false, 'error' => 'invalid_user']);
+    }
+    $cfg = kpi_v1_load_config();
+    if (kpi_v1_storage_is_mysql($cfg)) {
+        require_once __DIR__ . '/_db.php';
+        try {
+            kpi_v1_db_write_user($cfg, $user);
+        } catch (PDOException $e) {
+            $info = $e->errorInfo;
+            if (isset($info[0]) && $info[0] === '23000') {
+                kpi_v1_json_out(409, ['ok' => false, 'error' => 'email_taken']);
+            }
+            kpi_v1_json_out(500, ['ok' => false, 'error' => 'user_write_failed']);
+        } catch (Throwable $e) {
+            kpi_v1_json_out(500, ['ok' => false, 'error' => 'user_write_failed']);
+        }
+        return;
     }
     $path = kpi_v1_auth_user_path($user['userId']);
     if ($path === null) {
@@ -150,7 +181,57 @@ function kpi_v1_auth_public_user($user, $cfg = null)
         'userId' => (string) $user['userId'],
         'email' => (string) $user['email'],
         'plan' => $plan,
+        'disabled' => kpi_v1_auth_user_is_disabled($user),
     ];
+}
+
+function kpi_v1_auth_user_is_disabled($user)
+{
+    if (!is_array($user)) {
+        return false;
+    }
+    if (array_key_exists('disabled', $user)) {
+        return !empty($user['disabled']);
+    }
+    return false;
+}
+
+/**
+ * Admin gate via X-KPI-Plan-Admin-Token or body.adminToken.
+ * @return true
+ */
+function kpi_v1_auth_require_admin($cfg, $body = null)
+{
+    $adminTok = '';
+    if (isset($_SERVER['HTTP_X_KPI_PLAN_ADMIN_TOKEN'])) {
+        $adminTok = (string) $_SERVER['HTTP_X_KPI_PLAN_ADMIN_TOKEN'];
+    } elseif (is_array($body) && isset($body['adminToken'])) {
+        $adminTok = (string) $body['adminToken'];
+    }
+    $expectedAdmin = isset($cfg['planAdminToken']) ? (string) $cfg['planAdminToken'] : '';
+    if ($expectedAdmin === '' || !hash_equals($expectedAdmin, $adminTok)) {
+        kpi_v1_json_out(403, ['ok' => false, 'error' => 'forbidden']);
+    }
+    return true;
+}
+
+function kpi_v1_auth_find_user_by_email($email)
+{
+    $index = kpi_v1_auth_read_email_index();
+    if (!isset($index[$email])) {
+        return null;
+    }
+    return kpi_v1_auth_read_user($index[$email]);
+}
+
+/**
+ * Reject disabled accounts (login / me / store).
+ */
+function kpi_v1_auth_reject_if_disabled($user)
+{
+    if (kpi_v1_auth_user_is_disabled($user)) {
+        kpi_v1_json_out(403, ['ok' => false, 'error' => 'account_disabled']);
+    }
 }
 
 function kpi_v1_auth_set_session_user($userId)
@@ -231,6 +312,12 @@ function kpi_v1_store_resolve_user_id($cfg)
     if ($mode === 'session' || $mode === 'dual') {
         $uid = kpi_v1_auth_current_user_id();
         if ($uid !== null) {
+            $user = kpi_v1_auth_read_user($uid);
+            if ($user === null) {
+                kpi_v1_auth_clear_session();
+                kpi_v1_json_out(401, ['ok' => false, 'error' => 'unauthorized']);
+            }
+            kpi_v1_auth_reject_if_disabled($user);
             return $uid;
         }
         if ($mode === 'session') {

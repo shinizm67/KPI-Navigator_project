@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Navigator - Profile page (EN) Sci-Fi
+   Key Performance Navigator - Profile page (EN) Sci-Fi
    ======================================== */
 
 .si-fi.profile-page {
@@ -241,7 +241,7 @@ html[lang="ja"] .si-fi.profile-page .profile-workspace-label {
 
 /* ========================================
    Profile ページ Office Mode
-   ①文字は全て黒・KPI Navigator 以外は BIZ UDPGothic
+   ①文字は全て黒・Key Performance Navigator 以外は BIZ UDPGothic
    ②入力ボックス: 枠線黒・背景薄いグレー
    ======================================== */
 .si-fi.office-mode.profile-page,
@@ -1646,6 +1646,20 @@ html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
 .change-plan-summary-list strong {
   font-weight: 600;
   color: rgba(88, 225, 243, 0.95);
+}
+
+.change-plan-already-pro {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(88, 225, 243, 0.35);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(232, 247, 250, 0.9);
+}
+
+.change-plan-already-pro a {
+  color: var(--si-fi-cyan);
 }
 
 .change-plan-table-source {

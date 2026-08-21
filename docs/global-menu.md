@@ -10,7 +10,7 @@
 - メインナビ（Annual / Monthly / Daily / Index など、`nav.global-nav`）
 - 右側のアクション（メニューアイコン・歯車＝アカウント設定 等）
 
-KPI Navigator の日次フォーカス窓内にある `annual-daily-focus-global-menu`（Edit 付きの列見出し帯）とは **別物**。
+KPI Pilot の日次フォーカス窓内にある `annual-daily-focus-global-menu`（Edit 付きの列見出し帯）とは **別物**。
 
 ## 仕様（縦スクロール時の挙動）
 

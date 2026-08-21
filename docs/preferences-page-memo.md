@@ -22,7 +22,7 @@ Account Settings → **Account** → Profile の次（上から2番目）→ **P
 | Choose Language | （ページ遷移） | JA / EN / **zh-TW** の Preferences へ移動。フッター言語ボタンと同挙動 |
 | Choose Currency | `localStorage kpi-currency` | `JPY`/`USD`/`EUR`/`GBP`/`TWD`。リスト並びは後述 |
 | Display Mode | `sessionStorage kpi-office-mode` | ヘッダー Mode トグルと双方向同期 |
-| Tutorial / Tooltips | `sessionStorage kpi-tutorial-advanced` | 左下 Tutorial トグルと同キー（ Preferences は鏡） |
+| Tutorial / Tooltips | `sessionStorage kpi-tutorial-advanced` | 左下 Tutorial トグルと同キー（ Preferences は鏡）。説明系 tooltip の同期は [`tutorial-tooltips-sync-memo.md`](./tutorial-tooltips-sync-memo.md) |
 
 ## 言語の実装方針（CSS クラスではない）
 

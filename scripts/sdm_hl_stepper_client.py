@@ -377,7 +377,7 @@ def sdm_hl_stepper_js() -> str:
                 '% です。\\n左の繁閑期%を参考に ▲▼ で各月を調整し、合計を 100% に近づけてください。'
             : 'Monthly Allocated Total is ' +
                 total.toFixed(2) +
-                '%.\\nUse ▲▼ to adjust each month (refer to Seasonality % on the left) until the total reaches 100%.'
+                '%.\\nUse ▲▼ to adjust each month (refer to Reference Seasonality % on the left) until the total reaches 100%.'
         );
       }}
       function updateSdmTargetSalesCell(tr, weights, monthIndex) {{

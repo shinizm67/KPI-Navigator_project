@@ -52,6 +52,7 @@ if ($method === 'PUT') {
     }
 
     $blob = kpi_v1_read_blob($path);
+    $previousBlob = json_decode(json_encode($blob));
     if (property_exists($body, 'store')) {
         if ($body->store !== null && !is_object($body->store)) {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'store_must_be_object_or_null']);
@@ -97,8 +98,8 @@ if ($method === 'PUT') {
     }
     $blob->userId = $userId;
     $blob->updatedAt = gmdate('c');
-    // B4-T1: snapshot previous on-disk blob before overwrite
-    kpi_v1_backup_blob($cfg, $userId);
+    // B4-T1: snapshot previous blob before overwrite (file or mysql)
+    kpi_v1_backup_blob($cfg, $userId, $previousBlob);
     kpi_v1_write_blob($path, $blob);
     kpi_v1_json_out(200, [
         'ok' => true,

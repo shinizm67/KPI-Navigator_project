@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Navigator - Global & Si-Fi Mode
+   Key Performance Navigator - Global & Si-Fi Mode
    ======================================== */
 
 /* --- Si-Fi color variables --- */
@@ -126,7 +126,7 @@ html[lang^="zh"] .si-fi.registration-page {
 }
 
 /* --- Office Mode ボタン（装飾フレーム内にテキスト固定）
-     KPI Navigator 共通: フレームが @media で幅変更しても
+     Key Performance Navigator 共通: フレームが @media で幅変更しても
      テキストは常にフレーム内に収まるようレスポンシブ対応 --- */
 .si-fi .btn-mode {
   display: inline-block;
@@ -186,6 +186,100 @@ html[lang^="zh"] .si-fi .btn-mode-text {
   position: relative;
   display: inline-block;
   vertical-align: middle;
+}
+/* Booking: icon-only (Sci-Fi cyan SVG / Office black SVG) */
+.si-fi .header-booking-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.si-fi .header-booking-btn__img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.si-fi .header-booking-btn__img--office {
+  display: none;
+}
+.si-fi.office-mode .header-booking-btn__img--scifi {
+  display: none;
+}
+.si-fi.office-mode .header-booking-btn__img--office {
+  display: block;
+}
+.si-fi .header-booking-btn:hover,
+.si-fi .header-booking-btn:focus-visible {
+  background: rgba(88, 225, 243, 0.12);
+  box-shadow: 0 0 8px rgba(88, 225, 243, 0.35);
+  outline: none;
+}
+.si-fi.office-mode .header-booking-btn:hover,
+.si-fi.office-mode .header-booking-btn:focus-visible {
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+.si-fi .header-booking-btn:focus-visible {
+  outline: 2px solid var(--si-fi-cyan);
+  outline-offset: 2px;
+}
+
+/* Header chrome tips (Booking / DL / Gear). Tutorial off → hidden */
+.si-fi .kpi-chrome-tip {
+  position: relative;
+}
+.si-fi .kpi-chrome-tip[data-tooltip]:hover::after,
+.si-fi .kpi-chrome-tip[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  padding: 5px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(88, 225, 243, 0.45);
+  background: rgba(8, 18, 22, 0.98);
+  color: var(--si-fi-cyan);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+html[lang="ja"] .si-fi .kpi-chrome-tip[data-tooltip]:hover::after,
+html[lang="ja"] .si-fi .kpi-chrome-tip[data-tooltip]:focus-visible::after,
+html[lang="zh-TW"] .si-fi .kpi-chrome-tip[data-tooltip]:hover::after,
+html[lang="zh-TW"] .si-fi .kpi-chrome-tip[data-tooltip]:focus-visible::after,
+html[lang^="zh"] .si-fi .kpi-chrome-tip[data-tooltip]:hover::after,
+html[lang^="zh"] .si-fi .kpi-chrome-tip[data-tooltip]:focus-visible::after {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  letter-spacing: 0.02em;
+}
+.si-fi.office-mode .kpi-chrome-tip[data-tooltip]:hover::after,
+.si-fi.office-mode .kpi-chrome-tip[data-tooltip]:focus-visible::after {
+  border-color: rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+body.tutorial-advanced-off [data-kpi-tutorial-tip]:hover::after,
+body.tutorial-advanced-off [data-kpi-tutorial-tip]:focus-visible::after {
+  content: none !important;
 }
 .si-fi .header-dl > summary {
   display: inline-flex;
@@ -795,7 +889,7 @@ html[lang^="zh"] .si-fi .lang-select-wrap {
   background: #2B2B2B;
 }
 
-/* KPI Navigator: グローバルメニュー（.site-header）を縦スクロールで固定＋すりガラス。
+/* Key Performance Navigator: グローバルメニュー（.site-header）を縦スクロールで固定＋すりガラス。
    `profile-page`: 年次・月次・setting/*・account_protection/* 等（en/setting/style.css 併用ページ）。
    それ以外へ広げるときは body に `kpi-sticky-site-header` を追加（本 register を読むページのみ）。 */
 .si-fi.profile-page .site-header,
@@ -853,7 +947,7 @@ html[lang^="zh"] .si-fi .lang-select-wrap {
   color: #000;
 }
 
-/* プランタイトル（KPI Navigator Basic/Pro）は Orbitron のまま・文字色は黒 */
+/* プランタイトル（Key Performance Navigator Basic/Pro）は Orbitron のまま・文字色は黒 */
 .si-fi.office-mode .registration-plan-title,
 .si-fi.office-mode .registration-plan-price {
   font-family: 'Orbitron', sans-serif;
@@ -995,4 +1089,66 @@ html[lang^="zh"] .si-fi.office-mode.registration-page {
   box-shadow: 0 0 0 30px #f0f0f0 inset !important;
   -webkit-text-fill-color: #000 !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Phase 0: bulk CSV / save overlay (snapshot-store-phased-plan.md) */
+.kpi-busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: rgba(8, 18, 22, 0.78);
+}
+.kpi-busy-overlay.is-on {
+  display: flex;
+}
+.kpi-busy-overlay__panel {
+  max-width: 420px;
+  padding: 22px 24px;
+  border: 1px solid rgba(88, 225, 243, 0.55);
+  border-radius: 4px;
+  background: rgba(8, 18, 22, 0.98);
+  color: #e8f7fa;
+  text-align: center;
+}
+.kpi-busy-overlay__title {
+  margin: 0 0 10px;
+  font-family: Orbitron, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--si-fi-cyan, #58e1f3);
+}
+.kpi-busy-overlay__msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(232, 247, 250, 0.88);
+}
+html[lang="ja"] .kpi-busy-overlay__msg,
+html[lang="zh-TW"] .kpi-busy-overlay__msg,
+html[lang^="zh"] .kpi-busy-overlay__msg {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+body.kpi-busy-lock {
+  overflow: hidden;
+}
+body.office-mode .kpi-busy-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+body.office-mode .kpi-busy-overlay__panel {
+  border-color: rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #111;
+}
+body.office-mode .kpi-busy-overlay__title {
+  color: #111;
+  font-family: 'BIZ UDPGothic', Orbitron, sans-serif;
+}
+body.office-mode .kpi-busy-overlay__msg {
+  color: #333;
 }

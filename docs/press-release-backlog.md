@@ -1,6 +1,6 @@
 # プレスリリース／後回し機能ネタ — 索引
 
-更新日: 2026-06-04
+更新日: 2026-08-21
 
 ## このファイルの役割
 
@@ -37,12 +37,17 @@
 | 16 | **ツールチップ → YouTube チュートリアル** | 全般 | 小 | `docs/csv-upload-pos-import-memo.md` §ホバー |
 | 17 | ~~**Strategy Note：Monthly Edit 導線**~~ | Basic / Pro | 小 | **実装済み（2026-07-22）** — Monthly User Note クリック → Monthly Edit + Strategy Note。Annual 帯の重複 UI は削除。`docs/memo-read-surfaces.md` |
 | 18 | **Sales Data — 繁閑期%アシスト**（過去平均参照・100%正規化） | Basic / Pro | 中〜大 | **本ファイル § Sales Data 繁閑期%アシスト** · `docs/year-rollover-data-architecture.md` |
+| 19 | ~~**歯車フィードバック／リクエスト窓口**~~（Survey 本製品ではない） | 全般 | 小 | **実装・本番済み（2026-08-11）** — 再スモーク 2026-08-21 OK。`docs/ops-support-email-and-mobile-view-memo.md` §2 |
+| 20 | **スマホ縦持ち「数値を見る」専用面**（閲覧優先・情報量削減） | Basic / Pro | 大 | `docs/ops-support-email-and-mobile-view-memo.md` §3 |
+| 21 | **ブランド改称 → Key Performance Navigator**（JA/zh-TW サブ付き・確定） | 全般 | 大（必須） | `docs/brand-key-performance-navigator.md`（旧 Pilot 案は同メモ §2） |
+| 22 | **予約台帳（Restaurant / Salon Edition）** — 仮売上ナビ・CSV・カレンダー/Row切替 | Basic / Pro | 大（ローンチ直後〜配布相手次第で前倒し） | `docs/reservation-ledger-edition-memo.md` |
 
 ### ローンチ済み・索引から外すもの（参考）
 
 | 項目 | 備考 |
 |------|------|
 | 今年の日次売上窓（Sales Data） | `docs/annual-current-year-sales-floating-window-plan.md` は当初「未実装」だったが **2026-06 接続済み**（`past-sales-floating-window-memo.md` §13） |
+| 歯車フィードバック／リクエスト窓口（#19） | 実装 2026-08-09・本番通し 2026-08-11・再スモーク 2026-08-21。`ops-support-email-and-mobile-view-memo.md` §1–§2 |
 
 ---
 

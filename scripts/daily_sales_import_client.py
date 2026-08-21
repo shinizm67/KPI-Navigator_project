@@ -545,13 +545,17 @@ def daily_sales_import_js() -> str:
           btn.removeAttribute('title');
 
           btn.addEventListener('click', function () {{
+            if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
             var input = ensureFileInput();
             input.value = '';
             input.onchange = function () {{
               var file = input.files && input.files[0];
               if (!file) return;
+              var busy = window.__KPI_BUSY;
+              if (busy && typeof busy.show === 'function') busy.show('parse');
               parseFile(file)
                 .then(function (maps) {{
+                  if (busy && typeof busy.hide === 'function') busy.hide();
                   var targetYear =
                     options && typeof options.getYear === 'function'
                       ? options.getYear()
@@ -566,11 +570,19 @@ def daily_sales_import_js() -> str:
                     );
                     return;
                   }}
-                  if (options && typeof options.applyMaps === 'function') {{
+                  if (options && typeof options.applyMaps !== 'function') return;
+                  var apply = function () {{
                     options.applyMaps(maps, targetYear);
+                  }};
+                  if (busy && typeof busy.run === 'function') {{
+                    return busy.run('import', apply, {{ count: maps.imported }});
                   }}
+                  apply();
                 }})
                 .catch(function (err) {{
+                  if (window.__KPI_BUSY && typeof window.__KPI_BUSY.hide === 'function') {{
+                    window.__KPI_BUSY.hide();
+                  }}
                   var code = err && err.message;
                   if (code === 'xlsx') {{
                     window.alert(

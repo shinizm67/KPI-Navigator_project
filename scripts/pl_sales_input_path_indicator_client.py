@@ -2,11 +2,16 @@
 
 Mirrors MEP / Sales Data toggle appearance; does not switch path.
 Pro only (Standard is always annual, toggle hidden elsewhere too).
+
+2026-08-18: UI 非表示（混乱回避）。復活手順 → docs/pl-edit-status-and-workspace-memo.md §8
 """
 
 from __future__ import annotations
 
 PL_SALES_PATH_INDICATOR_MARKER = "/* PL-SALES-INPUT-PATH-INDICATOR */"
+
+# False = PL ツールバーに出さない（HTML/CSS/JS は残す）。True で Pro 向け表示を復活。
+PL_SALES_INPUT_PATH_INDICATOR_ENABLED = False
 
 
 def pl_sales_path_indicator_css() -> str:
@@ -111,10 +116,21 @@ def pl_sales_path_indicator_html(lang: str) -> str:
         if is_ja
         else "Daily sales input path (read-only). Switch in MEP or Sales Data."
     )
-    return f"""              <div
+    disabled_note = (
+        '\n              <!-- PL-SALES-INPUT-PATH-INDICATOR: disabled. Restore: docs/pl-edit-status-and-workspace-memo.md §8 -->'
+        if not PL_SALES_INPUT_PATH_INDICATOR_ENABLED
+        else ""
+    )
+    disabled_attr = (
+        ' data-pl-sales-path-indicator-disabled="1"'
+        if not PL_SALES_INPUT_PATH_INDICATOR_ENABLED
+        else ""
+    )
+    return f"""{disabled_note}
+              <div
                 class="kpi-daily-input-path kpi-daily-input-path--pl-readonly"
                 id="pl-sales-input-path"
-                data-kpi-sales-input-path-readonly
+                data-kpi-sales-input-path-readonly{disabled_attr}
                 hidden
                 aria-label="{aria}"
                 data-tooltip="{tip}"
@@ -138,6 +154,7 @@ def pl_sales_input_path_indicator_js() -> str:
         var TIER_KEY = 'kpiNavigator.subscriptionTier';
         var wrap = document.getElementById('pl-sales-input-path');
         if (!wrap) return;
+        var PL_SALES_INPUT_PATH_INDICATOR_ENABLED = {str(PL_SALES_INPUT_PATH_INDICATOR_ENABLED).lower()};
 
         function isJa() {{
           return (
@@ -193,6 +210,10 @@ def pl_sales_input_path_indicator_js() -> str:
           );
         }}
         function syncIndicator() {{
+          if (!PL_SALES_INPUT_PATH_INDICATOR_ENABLED) {{
+            wrap.hidden = true;
+            return;
+          }}
           var st = readStore();
           wrap.hidden = !st.pro;
           if (!st.pro) return;

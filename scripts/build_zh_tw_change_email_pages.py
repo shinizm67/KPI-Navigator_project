@@ -17,12 +17,12 @@ from build_zh_tw_profile_pages import (  # noqa: E402
 
 EMAIL_REPLACEMENTS = [
     (
-        "Change Email Address (Edit) | KPI Navigator | FORGE LABORATORY",
-        "變更電子郵件地址（編輯） | KPI Navigator | FORGE LABORATORY",
+        "Change Email Address (Edit) | KPI Pilot | FORGE LABORATORY",
+        "變更電子郵件地址（編輯） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Change Email Address | KPI Navigator | FORGE LABORATORY",
-        "變更電子郵件地址 | KPI Navigator | FORGE LABORATORY",
+        "Change Email Address | KPI Pilot | FORGE LABORATORY",
+        "變更電子郵件地址 | KPI Pilot | FORGE LABORATORY",
     ),
     ("<html lang=\"en\">", "<html lang=\"zh-TW\">"),
     ('href="style.css"', 'href="../../en/setting/style.css"'),

@@ -17,12 +17,12 @@ from build_zh_tw_profile_pages import (  # noqa: E402
 
 PW_REPLACEMENTS = [
     (
-        "Change Password (Edit) | KPI Navigator | FORGE LABORATORY",
-        "變更密碼（編輯） | KPI Navigator | FORGE LABORATORY",
+        "Change Password (Edit) | KPI Pilot | FORGE LABORATORY",
+        "變更密碼（編輯） | KPI Pilot | FORGE LABORATORY",
     ),
     (
-        "Change Password | KPI Navigator | FORGE LABORATORY",
-        "變更密碼 | KPI Navigator | FORGE LABORATORY",
+        "Change Password | KPI Pilot | FORGE LABORATORY",
+        "變更密碼 | KPI Pilot | FORGE LABORATORY",
     ),
     ("<html lang=\"en\">", "<html lang=\"zh-TW\">"),
     ('href="style.css"', 'href="../../en/setting/style.css"'),

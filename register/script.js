@@ -1,5 +1,5 @@
 /**
- * KPI Navigator - Global script
+ * Key Performance Navigator - Global script
  * Si-Fi Registration page: language selector & form handling
  */
 
@@ -22,10 +22,10 @@
       sessionStorage.setItem(STORAGE_KEY_PLAN, plan);
     }
     if (plan === 'pro') {
-      planTitle.textContent = 'KPI Navigator Pro';
+      planTitle.textContent = 'Key Performance Navigator Pro';
       planPrice.textContent = isJa ? '¥3,000/月' : '$29 / Month';
     } else {
-      planTitle.textContent = 'KPI Navigator Basic';
+      planTitle.textContent = 'Key Performance Navigator Basic';
       planPrice.textContent = isJa ? '¥500/月' : '$5 / Month';
     }
     if (planCancel) {

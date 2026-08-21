@@ -20,11 +20,13 @@ from daily_sales_import_client import (  # noqa: E402
 ANNUAL_PAGES = [
     ROOT / "app/annual/index.html",
     ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
 ]
 
 MEP_PAGES = [
     ROOT / "app/monthly/edit/index.html",
     ROOT / "en/app/monthly/edit/index.html",
+    ROOT / "zh-tw/app/monthly/edit/index.html",
 ]
 
 CSV_BTN_TOOLTIP_JA_OLD = 'title="CSVファイルを取り込んで表を更新（準備中）"'
@@ -283,7 +285,7 @@ def patch_tooltips(text: str, is_ja: bool) -> str:
 
 def patch_annual_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    is_ja = "/en/" not in str(path)
+    is_ja = "/en/" not in str(path) and "/zh-tw/" not in str(path)
     text = inject_import_js(text)
     text = patch_tooltips(text, is_ja)
     if is_ja:
@@ -317,7 +319,7 @@ def patch_mep_apply_food_drink(text: str) -> str:
 
 def patch_mep_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    is_ja = "/en/" not in str(path)
+    is_ja = "/en/" not in str(path) and "/zh-tw/" not in str(path)
     text = inject_import_js(text)
     text = patch_tooltips(text, is_ja)
     text = patch_mep_apply_food_drink(text)

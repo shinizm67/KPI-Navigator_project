@@ -32,8 +32,8 @@ SHARED_REPLACEMENTS = [
 
 PLAN_DETAILS_REPLACEMENTS = [
     (
-        "Plan Details | KPI Navigator | FORGE LABORATORY",
-        "方案詳情 | KPI Navigator | FORGE LABORATORY",
+        "Plan Details | KPI Pilot | FORGE LABORATORY",
+        "方案詳情 | KPI Pilot | FORGE LABORATORY",
     ),
     (">Plan Details</h2>", ">方案詳情</h2>"),
     ("]</span> Current Plan</h3>", "]</span> 目前方案</h3>"),
@@ -123,8 +123,8 @@ PLAN_DETAILS_REPLACEMENTS = [
 
 CHANGE_PLAN_REPLACEMENTS = [
     (
-        "Change Plan | KPI Navigator | FORGE LABORATORY",
-        "變更方案 | KPI Navigator | FORGE LABORATORY",
+        "Change Plan | KPI Pilot | FORGE LABORATORY",
+        "變更方案 | KPI Pilot | FORGE LABORATORY",
     ),
     (">Change Plan</h2>", ">變更方案</h2>"),
     ("]</span> Current Plan</h3>", "]</span> 目前方案</h3>"),

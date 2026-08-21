@@ -1,9 +1,10 @@
 /**
- * Forge Lab Global Menu — KPI Navigator リンク分岐（ローカル準備用）
+ * Forge Lab Global Menu — Key Performance Navigator リンク分岐
  *
- * 使い方（本番アップロードは LP 動画完了後でOK）:
- * 1. このファイルを Forge Lab サイト側にコピーするか、同等の IIFE を共通 JS に貼る
- * 2. メニューの KPI リンクに class="nav--kpi" が付いていること（既存）
+ * 本番反映（2026-08-11）:
+ * - Forge Lab サイト根に `kpi-nav-branch.js` として配置（キャッシュ回避のため script.js と分離）
+ * - 各ページで `script.js` の直後に読み込む
+ * - このファイルは kpi-navigator リポ内の正本コピー
  *
  * 分岐:
  * - localStorage.kpiNavigator.registrationComplete === '1'
@@ -11,6 +12,8 @@
  * - それ以外 → 既存 href（LP: /kpi-navigator/ または /kpi-navigator/en/）を維持
  *
  * 注意: 本格セッション認証は Phase B。これは UX 用の仮フラグのみ。
+ * ブランド表示名は Key Performance Navigator（docs/brand-key-performance-navigator.md）。
+ * URL パスは当面 kpi-navigator。
  */
 (function () {
   'use strict';

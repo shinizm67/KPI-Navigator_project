@@ -2,7 +2,7 @@
 
 ## 1. 位置づけ（なぜ大事か）
 
-KPI Navigator のコアは **「目標売上（Target Sales）」を日次・月次・年次で一貫させ、TW / Focus Bar / Graph で実績と比較すること** である（`docs/target-sales-daily-monthly-annual.md`）。
+KPI Pilot のコアは **「目標売上（Target Sales）」を日次・月次・年次で一貫させ、TW / Focus Bar / Graph で実績と比較すること** である（`docs/target-sales-daily-monthly-annual.md`）。
 
 **月次繁閑期%（Seasonality / H/L Season%）だけでは不十分** な理由:
 

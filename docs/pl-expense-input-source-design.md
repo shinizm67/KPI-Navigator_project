@@ -14,6 +14,7 @@
 - [pl-table-v1-implementation-spec.md](./pl-table-v1-implementation-spec.md) — 現行 PL 表 UI の実装状況
 - [monthly-page-memo.md](./monthly-page-memo.md) — Monthly Edit
 - [expense-csv-excel-import-memo.md](./expense-csv-excel-import-memo.md) — 支出（費目）CSV/Excel 取り込み設計（費目名を Excel 由来の正にする構想・列マッピング）
+- [pl-edit-status-and-workspace-memo.md](./pl-edit-status-and-workspace-memo.md) — PL ツールバーの年次／月次表示は支出編集ロックではない。閲覧／編集・Workspace 権限は **未決**
 
 ---
 

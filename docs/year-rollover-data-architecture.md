@@ -16,6 +16,7 @@
 
 | ドキュメント | 役割 |
 |--------------|------|
+| `docs/display-vs-operating-year.md` | **必須** displayYear と operatingYear / planningYear の混同禁止 |
 | `docs/target-sales-daily-monthly-annual.md` | 目標売上・繁閑期の算出フロー（高レベル） |
 | `docs/past-sales-floating-window-memo.md` | Past Sales 窓の現行実装・`pastSalesShared` |
 | `docs/annual-current-year-sales-floating-window-plan.md` | Sales Data 窓・`annualDailyShared` |
@@ -29,7 +30,7 @@
 
 ### 1.1 なぜ今やるか
 
-KPI Navigator のコアは「ユーザーと一緒に作る年間月次 KPI」である。  
+KPI Pilot のコアは「ユーザーと一緒に作る年間月次 KPI」である。  
 その前提データ（日次売上・営業日・年次目標・繁閑期%）は**年を跨いでも残り、振り返れ、翌年の計画に使われなければならない**。
 
 現状は以下が未整備であり、年跨ぎで破綻する。

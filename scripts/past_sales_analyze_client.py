@@ -457,10 +457,9 @@ RENDER_NEW = f"""      function formatAnalyzeMoney(n) {{
       }}
 
       function buildPastSalesAnalyzeModel(y) {{
+        /* KPI-PSM-ANALYZE-ACTUAL-ONLY-AF: past year seasonality uses input sales, never target */
         var all = gatherYearDays(y);
-        var annualTarget = getReferenceAnnualForAnalyze(y);
         var monthlySales = getMonthlyCumulativeSalesByMonth(y);
-        var hlWeights = getHlWeightsForPastSalesAnalyze(y);
         var totalBD = 0;
         var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         for (var i = 0; i < all.length; i++) {{
@@ -471,14 +470,12 @@ RENDER_NEW = f"""      function formatAnalyzeMoney(n) {{
             monthlyBD[item.m0]++;
           }}
         }}
-        var avgDaily = annualTarget != null && totalBD > 0 ? annualTarget / totalBD : null;
         var cumulativeInput = getCumulativeInputAnnualTotal(y);
+        var avgDaily = cumulativeInput != null && totalBD > 0 ? cumulativeInput / totalBD : null;
         var months = [];
         for (var m0 = 0; m0 < 12; m0++) {{
-          var w = Number(hlWeights[m0]);
-          if (!isFinite(w)) w = 100;
           var baseline =
-            avgDaily != null && monthlyBD[m0] > 0 ? avgDaily * monthlyBD[m0] * (w / 100) : null;
+            avgDaily != null && monthlyBD[m0] > 0 ? avgDaily * monthlyBD[m0] : null;
           var sales = monthlySales[m0];
           var seasonality = baseline != null && baseline > 0 ? (sales / baseline) * 100 : null;
           months.push({{
@@ -491,7 +488,7 @@ RENDER_NEW = f"""      function formatAnalyzeMoney(n) {{
         }}
         return {{
           year: y,
-          annualTarget: annualTarget,
+          annualTarget: cumulativeInput,
           cumulativeInput: cumulativeInput,
           totalBD: totalBD,
           avgDaily: avgDaily,

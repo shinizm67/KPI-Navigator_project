@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>變更方案 | KPI Navigator | FORGE LABORATORY</title>
+  <title>變更方案 | Key Performance Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -80,8 +80,41 @@
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
+        <a
+          href="../app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="../app/booking/index.html"
+          data-href-basic="../setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="開啟預約台帳（專業方案）。基本方案請前往變更方案"
+          data-kpi-tutorial-tip
+          data-tooltip="預約"
+        >
+          <img
+            src="../../images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="../../images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="下載範本與收支資料">DL</summary>
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="下載範本與收支資料"
+            data-kpi-tutorial-tip
+            data-tooltip="下載"
+          >DL</summary>
           <div class="template-dl-menu" role="menu" aria-label="下載選單">
             <p class="template-dl-heading">範本</p>
             <a href="../../excel/expense-import_daily_template.csv" download class="template-dl-item" role="menuitem">下載支出範本（每日）</a>
@@ -94,7 +127,16 @@
         <button type="button" class="icon-button icon-button-menu" aria-label="開啟導覽選單">
           <img src="../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="帳戶設定" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="帳戶設定"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="設定"
+        >
           <img src="../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
@@ -137,6 +179,7 @@
         </div>
       </div>
     </div>
+    <script src="../../js/kpi-auth-client.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -150,6 +193,17 @@
         var dl = document.getElementById('header-dl');
         if (dl && dl.open) dl.removeAttribute('open');
       });
+    })();
+    (function () {
+      if (!window.__KPI_AUTH) return;
+      try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+      } catch (_e) {}
     })();
     </script>
   </header>
@@ -170,7 +224,7 @@
           </div>
         </div>
       </div>
-      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h1 class="profile-title-main">Key Performance Navigator</h1>
       <h2 class="profile-title-sub">變更方案</h2>
 
       <div class="plan-details-content change-plan-content">
@@ -184,10 +238,15 @@
         <section class="plan-details-section" aria-labelledby="change-plan-h2">
           <h3 class="plan-details-section-heading" id="change-plan-h2"><span class="plan-details-num">[ 2 ]</span> 目前方案摘要</h3>
           <ul class="change-plan-summary-list">
-            <li><strong>目前方案：</strong> 專業</li>
+            <li><strong>目前方案：</strong> <span id="change-plan-current-tier">…</span></li>
             <li><strong>帳單週期：</strong> 每月</li>
-            <li><strong>下次帳單日：</strong> 2025年3月14日</li>
+            <li><strong>下次帳單日：</strong> —</li>
           </ul>
+          <p class="change-plan-already-pro" id="change-plan-already-pro-note" hidden>
+            您已是專業方案。可從
+            <a href="../app/profit/index.html">洞察（Insight）</a>
+            開啟利潤中心。
+          </p>
         </section>
 
         <!-- [ 3 ] — 機能表は en/plan/index.html と同一（Basic $5 / Pro $29） -->
@@ -218,8 +277,8 @@
                 <tr><td>12. 月度利潤分析儀表板</td><td><span class="icon-x" aria-label="不包含"></span></td><td><span class="icon-check" aria-label="包含"></span></td></tr>
                 <tr class="row-buttons">
                   <td></td>
-                  <td><a href="#" class="btn-register btn-plan-downgrade">降級方案</a></td>
-                  <td><span class="btn-register btn-plan-current" role="status" aria-label="您目前的方案">目前方案</span></td>
+                  <td><a href="#" class="btn-register btn-plan-downgrade" id="change-plan-basic-action">降級方案</a></td>
+                  <td><span class="btn-register btn-plan-current" id="change-plan-pro-action" role="status" aria-label="您目前的方案">目前方案</span></td>
                 </tr>
               </tbody>
             </table>
@@ -1481,5 +1540,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+  <script src="../../js/kpi-change-plan-page.js"></script>
 </body>
 </html>

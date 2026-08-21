@@ -243,8 +243,13 @@ def cockpit_refresh_js() -> str:
       }}
       window.refreshArea1Cockpit = refreshArea1Cockpit;
       window.refreshArea1KpiStripDiffs = refreshArea1Cockpit;
+      var __area1CockpitRefreshTimer = null;
       function onArea1CockpitRefresh() {{
-        refreshArea1Cockpit(resolveArea1Iso());
+        if (__area1CockpitRefreshTimer != null) window.clearTimeout(__area1CockpitRefreshTimer);
+        __area1CockpitRefreshTimer = window.setTimeout(function () {{
+          __area1CockpitRefreshTimer = null;
+          refreshArea1Cockpit(resolveArea1Iso());
+        }}, 100);
       }}
       onArea1CockpitRefresh();
       document.addEventListener('annual:dailyDateChanged', onArea1CockpitRefresh);

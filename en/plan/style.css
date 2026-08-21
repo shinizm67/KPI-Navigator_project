@@ -1,5 +1,5 @@
 /* ========================================
-   KPI Navigator - Plan page (EN)
+   Key Performance Navigator - Plan page (EN)
    ======================================== */
 
 .si-fi.price-page {
@@ -172,7 +172,7 @@
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
-/* タイトル（KPI Navigator / Plan）は Orbitron のまま・文字色は黒 */
+/* タイトル（Key Performance Navigator / Plan）は Orbitron のまま・文字色は黒 */
 .si-fi.office-mode .price-title-main,
 .si-fi.office-mode .price-title-sub {
   font-family: 'Orbitron', sans-serif;

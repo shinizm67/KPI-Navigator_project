@@ -371,8 +371,11 @@ def weekday_target_kpi_js() -> str:
           rec.plan.dailyTargetMode = next;
           rec.plan.dailyTargetModeUpdatedAt = Date.now();
           rec.plan.dailyTargetModeSource = (meta && meta.source) || 'kpi-year-store';
-          persistStore();
           clearDailyTargetDisplayCache();
+          scheduleServerYearRebuild(y, 'daily-target-mode', {{
+            dailyTargetMode: next,
+            source: rec.plan.dailyTargetModeSource,
+          }});
           document.dispatchEvent(
             new CustomEvent('kpi:dailyTargetModeChanged', {{
               detail: {{

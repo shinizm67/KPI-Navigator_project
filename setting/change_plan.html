@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>プラン変更 | KPI Navigator | FORGE LABORATORY</title>
+  <title>プラン変更 | Key Performance Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -80,8 +80,41 @@
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
+        <a
+          href="../app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="../app/booking/index.html"
+          data-href-basic="../setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="予約台帳を開く（プロプラン）。ベーシックの場合はプラン変更へ"
+          data-kpi-tutorial-tip
+          data-tooltip="予約"
+        >
+          <img
+            src="../images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="../images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="雛形・収支データのダウンロード">DL</summary>
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="雛形・収支データのダウンロード"
+            data-kpi-tutorial-tip
+            data-tooltip="ダウンロード"
+          >DL</summary>
           <div class="template-dl-menu" role="menu" aria-label="ダウンロードメニュー">
             <p class="template-dl-heading">雛形</p>
             <a href="../excel/支出入力_日次_雛形.csv" download class="template-dl-item" role="menuitem">支出雛形をダウンロード（日次）</a>
@@ -94,7 +127,16 @@
         <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
           <img src="../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="アカウント設定"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="設定"
+        >
           <img src="../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
@@ -137,6 +179,7 @@
         </div>
       </div>
     </div>
+    <script src="../js/kpi-auth-client.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -150,6 +193,17 @@
         var dl = document.getElementById('header-dl');
         if (dl && dl.open) dl.removeAttribute('open');
       });
+    })();
+    (function () {
+      if (!window.__KPI_AUTH) return;
+      try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+      } catch (_e) {}
     })();
     </script>
   </header>
@@ -166,7 +220,7 @@
           <div class="workspace-popup-inner"><div class="workspace-popup-item is-current">Workspace : Personal</div></div>
         </div>
       </div>
-      <h1 class="profile-title-main">KPI Navigator</h1>
+      <h1 class="profile-title-main">Key Performance Navigator</h1>
       <h2 class="profile-title-sub">Change Plan</h2>
 
       <div class="plan-details-content change-plan-content">
@@ -178,10 +232,15 @@
         <section class="plan-details-section" aria-labelledby="change-plan-h2">
           <h3 class="plan-details-section-heading" id="change-plan-h2"><span class="plan-details-num">[ 2 ]</span> 現在の契約内容</h3>
           <ul class="change-plan-summary-list">
-            <li><strong>現在のプラン:</strong> プロ</li>
+            <li><strong>現在のプラン:</strong> <span id="change-plan-current-tier">…</span></li>
             <li><strong>請求サイクル:</strong> 月次</li>
-            <li><strong>次回請求日:</strong> 2025年3月14日</li>
+            <li><strong>次回請求日:</strong> —</li>
           </ul>
+          <p class="change-plan-already-pro" id="change-plan-already-pro-note" hidden>
+            すでに Pro です。支出・利益ハブは
+            <a href="../app/profit/index.html">考察（Insight）</a>
+            から開けます。
+          </p>
         </section>
 
         <section class="plan-details-section" aria-labelledby="change-plan-h3">
@@ -211,8 +270,8 @@
                 <tr><td>12. 月次利益分析ダッシュボード</td><td><span class="icon-x" aria-label="利用不可"></span></td><td><span class="icon-check" aria-label="利用可"></span></td></tr>
                 <tr class="row-buttons">
                   <td></td>
-                  <td><a href="#" class="btn-register btn-plan-downgrade">ダウングレード</a></td>
-                  <td><span class="btn-register btn-plan-current" role="status" aria-label="現在のプラン">現在のプラン</span></td>
+                  <td><a href="#" class="btn-register btn-plan-downgrade" id="change-plan-basic-action">ダウングレード</a></td>
+                  <td><span class="btn-register btn-plan-current" id="change-plan-pro-action" role="status" aria-label="現在のプラン">現在のプラン</span></td>
                 </tr>
               </tbody>
             </table>
@@ -1433,5 +1492,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+  <script src="../js/kpi-change-plan-page.js"></script>
 </body>
 </html>

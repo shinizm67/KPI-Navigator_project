@@ -50,6 +50,30 @@ curl -s -b $COOKIE -X PUT -H 'Content-Type: application/json' \
 curl -s -b $COOKIE -D - -o /tmp/kpi-export.json http://127.0.0.1:8080/api/v1/export.php | head
 ```
 
+### MySQL storage (Phase B4-T2)
+
+Default remains **file**. To use MySQL:
+
+1. Create DB and apply [`schema.sql`](./schema.sql) (or run the migrate tool).
+2. In `config.local.php`:
+
+```php
+'storageDriver' => 'mysql',
+'dbHost' => '127.0.0.1',
+'dbPort' => 3306,
+'dbName' => 'your_db',
+'dbUser' => 'your_user',
+'dbPass' => 'your_pass',
+```
+
+3. Migrate existing JSON (optional):
+
+```bash
+php tools/migrate-json-to-mysql.php
+```
+
+Auth + store HTTP contracts are unchanged. Switch back with `'storageDriver' => 'file'`.
+
 Legacy Phase A token mode: set `'storeAuthMode' => 'token'` in `config.local.php`, then:
 
 ```bash
@@ -71,6 +95,9 @@ Endpoints (session cookie `KPISESSID`):
 | POST | `/api/v1/auth/logout.php` | 200 |
 | GET | `/api/v1/auth/me.php` | 200 or 401（`plan` 含む） |
 | POST | `/api/v1/auth/set-plan.php` | plan 変更（self / admin token） |
+| POST | `/api/v1/auth/admin-create-user.php` | 管理者: 決め打ちアカウント作成（`plan` 任意・既定 pro） |
+| POST | `/api/v1/auth/admin-set-password.php` | 管理者: パスワード再設定 |
+| POST | `/api/v1/auth/admin-set-disabled.php` | 管理者: 無効化／再開（`disabled`） |
 
 ```bash
 COOKIE=/tmp/kpi-cookies.txt
