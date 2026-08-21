@@ -2525,6 +2525,119 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 完了したら「Step DA 完了」と送る。
 
+### Step DC — CSV取込: Business Day を buildGrid より先に persist（2026-08-21）
+
+**Case:** 2026-04-05 店休なのに MEP Business Day ON
+
+**原因:** CSV `applyMaps` が `buildGrid()` → `syncBizDayFromAnnualStore` を **persist より先**に呼び、CSV の `false` を旧 `store.timeline.businessDays` の `true` で上書きしていた。
+
+**修正（案A）:** `applyDailyImportMaps` → `syncMonthlySalesToAnnualStoreForYear` → `buildGrid()`  
+マーカー: `KPI-BIZDAY-CSV-ORDER-A`
+
+#### DC — `js/` なし / `api/` なし
+
+#### DC — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DC1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### DC — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DC2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### DC — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DC3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認:**  
+1. ハードリロード  
+2. 検証用CSV取込 → `2026-04-05` の Business Day が **OFF**  
+3. Trace: `store_timeline` / `daily_inputs` / `daily_facts` が **0**
+
+完了したら「Step DC 完了」と送る。
+
+### Step DD — CSV店休が MEP で営業日になる問題（2026-08-21）
+
+**Case:** `2026年売上入力用のコピー.xlsx` 取込後、日曜（営業日=0）が Business Day ON
+
+**検証結果:**
+- Excel 自体は正しい（例: `2026-12-06` 営業日=0・売上空）
+- パーサ `rowsToMaps` も false になる
+- 壊れるのは取込後: (1) `buildGrid`→`syncBizDay` が旧 store の true で上書き (2) キー欠落時 `null→true` で全日営業扱い (3) `isBusiness` 欠落時の黙認 `true`
+
+**修正マーカー:** `KPI-BIZDAY-IMPORT-DD`（案A `KPI-BIZDAY-CSV-ORDER-A` も維持）
+
+#### DD — `js/` なし / `api/` なし
+
+#### DD — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DD1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/monthly/edit/index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` |
+
+#### DD — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DD2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/monthly/edit/index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` |
+
+#### DD — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DD3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/monthly/edit/index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` |
+
+**確認（必須）:**  
+1. ハードリロード（キャッシュ無視）  
+2. 同じ xlsx を再取込  
+3. **2026/12** の `12/6 Sun`・`12/13 Sun` が Business Day **OFF**、売上 $0  
+4. 平日（例 12/1）は従来どおり売上あり・ON  
+
+完了したら「Step DD 完了」と送る。
+
+### Step DB — PL 収入を daily-inputs 正本で読む（2026-08-21）
+
+**Case:** KPN Case｜MEP・PL｜売上欠落とRebuildハング（問題1）
+
+**原因:** PL 収入が slim localStorage timeline だけを見ており、DB の `daily-inputs`（Trace で正）を見ない。
+
+**DB の方針（合意済み）:**
+- 売上／収入の最優先 = **`daily-inputs`**
+- `daily-facts`・支出系・PL計算・2026-12 復旧は触らない
+- 取れない日だけ従来の timeline → annual → streams
+
+#### DB — `js/` なし / `api/` なし
+
+#### DB — 日本語 `app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DB1 | `/Users/shinmatsushita/Desktop/kpi-navigator/app/profit/pl/index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` |
+
+#### DB — 英語 `en/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DB2 | `/Users/shinmatsushita/Desktop/kpi-navigator/en/app/profit/pl/index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` |
+
+#### DB — 繁中 `zh-tw/app/`
+
+| # | ローカル | サーバ |
+|---|----------|--------|
+| DB3 | `/Users/shinmatsushita/Desktop/kpi-navigator/zh-tw/app/profit/pl/index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` |
+
+**確認（完了）:**  
+1. 収入: 2024 の 6・7・12、2026 の 1・6・7・12 が PL に反映（ユーザー確認）  
+2. 支出経路: Fixed / Expected / Total Expenses は MEP・費目明細のまま（`daily-inputs` 未使用）。Profit は `売上−支出` のため売上修正に連動し得るが支出ロジック非変更  
+マーカー `KPI-PL-INCOME-INPUTS-DB`
+
+**Step DB 正式完了**（2026-08-21）。Case 残件だった 2026-12 `save_or_sync` は、その後の売上CSV再取込＋PL/MEP確認により解消済み（追加修正なし・Case完了）。
+
 ### 上げ終わったら確認（削除不要）
 
 1. ログアウト → 再ログイン（Full Authorized 01）

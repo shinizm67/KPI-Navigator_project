@@ -11020,7 +11020,15 @@
         if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
         if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       });
-      document.addEventListener('kpi:dailySalesChanged', function () {
+      document.addEventListener('kpi:dailySalesChanged', function (ev) {
+        var years = ev && ev.detail && ev.detail.years;
+        if (years && years.length) {
+          years.forEach(function (yy) {
+            plIncomeInvalidateInputsCache(yy);
+          });
+        } else {
+          plIncomeInvalidateInputsCache();
+        }
         syncPlBusinessDays();
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
@@ -12736,13 +12744,36 @@
       ];
 
       function plIncomeReadStore() {
-        var gw = window.__KPI_DATA_GATEWAY;
-        if (!gw || typeof gw.getJson !== 'function') return null;
         try {
-          return gw.getJson(PL_INCOME_STORE_KEY);
-        } catch (_e) {
+          if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+            var mem = KpiYearStore.getStore();
+            if (mem && typeof mem === 'object') return mem;
+          }
+        } catch (_eMem) {}
+        var gw = window.__KPI_DATA_GATEWAY;
+        if (gw && typeof gw.getJson === 'function') {
+          try {
+            return gw.getJson(PL_INCOME_STORE_KEY);
+          } catch (_e) {
+            return null;
+          }
+        }
+        try {
+          var raw = localStorage.getItem(PL_INCOME_STORE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_e2) {
           return null;
         }
+      }
+
+      function plRefreshAllIncomeSurfaces() {
+        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof fillDailyExpenseRowsFromMep === 'function') fillDailyExpenseRowsFromMep();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
       }
 
       function plIncomeEmptyMonthAgg() {
@@ -12754,28 +12785,302 @@
         };
       }
 
+      function plIncomePad2(n) {
+        var s = String(Number(n) || 0);
+        return s.length >= 2 ? s : '0' + s;
+      }
+
+      /** Accept 2024-6-1 / 2024-06-01 / etc. */
+      function plIncomeParseIso(iso) {
+        var m = String(iso || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (!m) return null;
+        var y = Number(m[1]);
+        var mo = Number(m[2]);
+        var d = Number(m[3]);
+        if (!Number.isFinite(y) || !(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null;
+        return {
+          y: y,
+          m0: mo - 1,
+          d: d,
+          norm: m[1] + '-' + plIncomePad2(mo) + '-' + plIncomePad2(d)
+        };
+      }
+
       function plIncomeSumIsoMap(map, year, excludePlaceholder) {
         var agg = plIncomeEmptyMonthAgg();
         if (!map || typeof map !== 'object') return agg;
-        var yStr = String(year);
+        var yNum = Number(year);
         Object.keys(map).forEach(function (iso) {
-          if (!iso || iso.length < 7) return;
-          if (iso.slice(0, 4) !== yStr) return;
-          var mo = parseInt(iso.slice(5, 7), 10);
-          if (!(mo >= 1 && mo <= 12)) return;
+          var p = plIncomeParseIso(iso);
+          if (!p || p.y !== yNum) return;
           var v = Number(map[iso]);
           if (!Number.isFinite(v)) return;
           if (excludePlaceholder && v === PL_INCOME_PLACEHOLDER) return;
-          agg.totals[mo - 1] += v;
-          agg.has[mo - 1] = true;
+          agg.totals[p.m0] += v;
+          agg.has[p.m0] = true;
         });
         return agg;
+      }
+
+      function plIncomeCollectYearIsos(store, year) {
+        var isoSet = {};
+        var yNum = Number(year);
+        function markMap(map) {
+          if (!map || typeof map !== 'object') return;
+          Object.keys(map).forEach(function (iso) {
+            var p = plIncomeParseIso(iso);
+            if (p && p.y === yNum) isoSet[p.norm] = true;
+          });
+        }
+        markMap(store && store.timeline && store.timeline.dailySales);
+        var rec = store && store.years && (store.years[year] || store.years[String(year)]);
+        var di = rec && rec.dailyIncome;
+        if (di) {
+          ['sales_a', 'sales_b', 'food_sales', 'drink_sales', 'store_sales'].forEach(function (sid) {
+            markMap(di[sid]);
+          });
+        }
+        return isoSet;
+      }
+
+      function plIncomeStreamVal(map, normIso) {
+        if (!map || typeof map !== 'object') return { has: false, v: 0 };
+        if (Object.prototype.hasOwnProperty.call(map, normIso)) {
+          var n0 = Number(map[normIso]);
+          return { has: true, v: Number.isFinite(n0) ? n0 : 0 };
+        }
+        /* Rare unpadded keys */
+        var p = plIncomeParseIso(normIso);
+        if (!p) return { has: false, v: 0 };
+        var alt =
+          p.y +
+          '-' +
+          String(p.m0 + 1) +
+          '-' +
+          String(p.d);
+        if (Object.prototype.hasOwnProperty.call(map, alt)) {
+          var n1 = Number(map[alt]);
+          return { has: true, v: Number.isFinite(n1) ? n1 : 0 };
+        }
+        return { has: false, v: 0 };
+      }
+
+      function plIncomeDailyTotalFromStreams(di, normIso) {
+        if (!di || typeof di !== 'object') return null;
+        var food = plIncomeStreamVal(di.food_sales, normIso);
+        var drink = plIncomeStreamVal(di.drink_sales, normIso);
+        var sa = plIncomeStreamVal(di.sales_a, normIso);
+        var sb = plIncomeStreamVal(di.sales_b, normIso);
+        var st = plIncomeStreamVal(di.store_sales, normIso);
+        if (!(st.has || food.has || drink.has || sa.has || sb.has)) return null;
+        /* Stale store_sales=0 must not block drink+food (Analyze still shows those). */
+        var store = st.has && st.v > 0 ? st.v : food.v + drink.v;
+        return Math.round(store + sa.v + sb.v);
+      }
+
+      /* KPI-PL-INCOME-INPUTS-DB: daily-inputs is sales/income truth for PL (not slim LS / facts). */
+      var __plIncomeInputsCache = {};
+      var __plIncomeInputsInflight = {};
+
+      function plIncomeResolveAppRoot() {
+        try {
+          if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
+            return window.__KPI_AUTH.resolveAppRoot();
+          }
+        } catch (_e) {}
+        var path = window.location.pathname || '';
+        var m = path.match(/^(.*?\/kpi-navigator)(?:\/|$)/);
+        return m ? m[1] : '';
+      }
+
+      function plIncomeInputsHeaders() {
+        var headers = { 'Content-Type': 'application/json' };
+        try {
+          var raw = localStorage.getItem('kpiNavigator.storeSync');
+          var o = raw ? JSON.parse(raw) : null;
+          if (o && o.token) headers['X-KPI-Store-Token'] = String(o.token);
+        } catch (_e) {}
+        return headers;
+      }
+
+      function plIncomeInvalidateInputsCache(year) {
+        var y = Number(year);
+        if (Number.isFinite(y)) {
+          delete __plIncomeInputsCache[y];
+          delete __plIncomeInputsInflight[y];
+          return;
+        }
+        __plIncomeInputsCache = {};
+        __plIncomeInputsInflight = {};
+      }
+
+      function plIncomeEnsureInputs(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return Promise.resolve(null);
+        if (__plIncomeInputsCache[y] && typeof __plIncomeInputsCache[y] === 'object') {
+          return Promise.resolve(__plIncomeInputsCache[y]);
+        }
+        if (__plIncomeInputsInflight[y]) return __plIncomeInputsInflight[y];
+        var from = y + '-01-01';
+        var to = y + '-12-31';
+        var url =
+          plIncomeResolveAppRoot() +
+          '/api/v1/daily-inputs.php?from=' +
+          encodeURIComponent(from) +
+          '&to=' +
+          encodeURIComponent(to);
+        var req = fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: plIncomeInputsHeaders(),
+        })
+          .then(function (res) {
+            return res.json().then(
+              function (data) {
+                return { ok: !!(res.ok && data && data.ok), rows: (data && data.rows) || [] };
+              },
+              function () {
+                return { ok: false, rows: [] };
+              }
+            );
+          })
+          .catch(function () {
+            return { ok: false, rows: [] };
+          })
+          .then(function (pack) {
+            var map = {};
+            if (pack && pack.ok && pack.rows && pack.rows.length) {
+              pack.rows.forEach(function (row) {
+                if (!row) return;
+                var iso = row.iso || row.date;
+                if (!iso) return;
+                var n = Number(row.sales != null ? row.sales : row.store_sales);
+                if (!Number.isFinite(n)) n = 0;
+                map[String(iso)] = n;
+              });
+            }
+            __plIncomeInputsCache[y] = map;
+            delete __plIncomeInputsInflight[y];
+            return map;
+          });
+        __plIncomeInputsInflight[y] = req;
+        return req;
       }
 
       function plIncomeLoadStore(year) {
         var store = plIncomeReadStore();
         var ds = store && store.timeline && store.timeline.dailySales;
-        return plIncomeSumIsoMap(ds, year, true);
+        var rec = store && store.years && (store.years[year] || store.years[String(year)]);
+        var di = (rec && rec.dailyIncome) || {};
+        var annualMap = {};
+        try {
+          var gwA = window.__KPI_DATA_GATEWAY;
+          var annual =
+            gwA && typeof gwA.getJson === 'function'
+              ? gwA.getJson('kpiNavigator.annualDailyShared')
+              : null;
+          if (!annual) {
+            var rawA = localStorage.getItem('kpiNavigator.annualDailyShared');
+            annual = rawA ? JSON.parse(rawA) : null;
+          }
+          if (annual && annual.targetSalesByDate && typeof annual.targetSalesByDate === 'object') {
+            annualMap = annual.targetSalesByDate;
+          }
+        } catch (_eA) {}
+        var agg = plIncomeEmptyMonthAgg();
+        var y = Number(year);
+        if (!Number.isFinite(y)) return agg;
+        var inputsMap =
+          __plIncomeInputsCache[y] && typeof __plIncomeInputsCache[y] === 'object'
+            ? __plIncomeInputsCache[y]
+            : null;
+
+        /* Build normIso -> values by scanning ALL keys (same as Analyze), not only padded calendar. */
+        var slotByNorm = {};
+        function absorbNumMap(map, field) {
+          if (!map || typeof map !== 'object') return;
+          Object.keys(map).forEach(function (iso) {
+            var p = plIncomeParseIso(iso);
+            if (!p || p.y !== y) return;
+            var n = Number(map[iso]);
+            if (!Number.isFinite(n)) return;
+            if (!slotByNorm[p.norm]) slotByNorm[p.norm] = { m0: p.m0 };
+            var slot = slotByNorm[p.norm];
+            if (field === 'inputs') {
+              slot.inputs = n;
+              slot.hasInputs = true;
+            } else if (field === 'timeline' || field === 'annual') {
+              if (n !== PL_INCOME_PLACEHOLDER) slot[field] = n;
+            } else {
+              slot[field] = n;
+            }
+          });
+        }
+        /* KPI-PL-INCOME-INPUTS-DB: inputs first, then legacy fallbacks */
+        absorbNumMap(inputsMap, 'inputs');
+        absorbNumMap(ds, 'timeline');
+        absorbNumMap(annualMap, 'annual');
+        absorbNumMap(di.store_sales, 'store_sales');
+        absorbNumMap(di.food_sales, 'food_sales');
+        absorbNumMap(di.drink_sales, 'drink_sales');
+        absorbNumMap(di.sales_a, 'sales_a');
+        absorbNumMap(di.sales_b, 'sales_b');
+
+        /* Also walk calendar so padded days with only memory-side maps still count. */
+        for (var m0c = 0; m0c < 12; m0c++) {
+          var dim = new Date(y, m0c + 1, 0).getDate();
+          for (var d = 1; d <= dim; d++) {
+            var norm =
+              String(y) + '-' + plIncomePad2(m0c + 1) + '-' + plIncomePad2(d);
+            if (!slotByNorm[norm]) slotByNorm[norm] = { m0: m0c };
+          }
+        }
+
+        Object.keys(slotByNorm).forEach(function (norm) {
+          var slot = slotByNorm[norm];
+          var v = null;
+          if (slot.hasInputs) {
+            var iv = Number(slot.inputs);
+            if (Number.isFinite(iv) && iv > 0 && iv !== PL_INCOME_PLACEHOLDER) v = iv;
+            else return;
+          } else {
+            var streamVal = plIncomeDailyTotalFromStreams(di, norm);
+            /* Prefer composed slot when di lookup misses alternate keys already absorbed. */
+            if (streamVal == null || !(streamVal > 0)) {
+              var food = Number(slot.food_sales) || 0;
+              var drink = Number(slot.drink_sales) || 0;
+              var sa = Number(slot.sales_a) || 0;
+              var sb = Number(slot.sales_b) || 0;
+              var stRaw = slot.store_sales;
+              var hasAny =
+                slot.store_sales != null ||
+                slot.food_sales != null ||
+                slot.drink_sales != null ||
+                slot.sales_a != null ||
+                slot.sales_b != null;
+              if (hasAny) {
+                var storeAmt =
+                  stRaw != null && Number(stRaw) > 0 ? Number(stRaw) : food + drink;
+                streamVal = Math.round(storeAmt + sa + sb);
+              }
+            }
+            var timelineVal =
+              slot.timeline != null && Number(slot.timeline) > 0
+                ? Number(slot.timeline)
+                : null;
+            var annualVal =
+              slot.annual != null && Number(slot.annual) > 0
+                ? Number(slot.annual)
+                : null;
+            if (timelineVal != null) v = timelineVal;
+            else if (annualVal != null) v = annualVal;
+            else if (streamVal != null && streamVal > 0) v = streamVal;
+          }
+          if (v == null || !Number.isFinite(v) || v === 0) return;
+          agg.totals[slot.m0] += v;
+          agg.has[slot.m0] = true;
+        });
+        return agg;
       }
 
       function plIncomeLoadStream(year, streamId) {
@@ -12855,10 +13160,21 @@
       }
 
       function refreshIncomeBlock() {
-        plIncomeLoadTotals();
-        plIncomeFillStreams();
-        plIncomeFillStore();
-        plIncomeFillTotal();
+        var y = Number(plYear);
+        function paint() {
+          plIncomeLoadTotals();
+          plIncomeFillStreams();
+          plIncomeFillStore();
+          plIncomeFillTotal();
+        }
+        paint();
+        /* KPI-PL-INCOME-INPUTS-DB: fetch inputs then repaint income only */
+        if (Number.isFinite(y)) {
+          plIncomeEnsureInputs(y).then(function () {
+            if (Number(plYear) !== y) return;
+            paint();
+          });
+        }
       }
 
       window.__plRefreshIncomeBlock = refreshIncomeBlock;
@@ -14103,6 +14419,7 @@
       window.addEventListener('storage', function (ev) {
         if (ev.key === ANNUAL_DAILY_KEY || ev.key === PL_YEAR_STORE_KEY) {
           syncPlBusinessDays();
+          plRefreshAllIncomeSurfaces();
         }
       });
       document.addEventListener('annual:businessDayMapChanged', function () {
@@ -14111,11 +14428,13 @@
       document.addEventListener('kpi:businessDayChanged', function () {
         syncPlBusinessDays();
       });
+      document.addEventListener('kpi:storeHydratedFromServer', function () {
+        syncPlBusinessDays();
+        plRefreshAllIncomeSurfaces();
+      });
       document.addEventListener('kpi:readSurfacesRefresh', function () {
         syncPlBusinessDays();
-        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAllIncomeSurfaces();
       });
 
       populateYearSelect();

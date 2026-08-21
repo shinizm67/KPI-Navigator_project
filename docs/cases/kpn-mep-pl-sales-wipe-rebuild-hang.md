@@ -1,5 +1,7 @@
 # KPN Case｜MEP・PL｜売上欠落とRebuildハング
 
+**ステータス: クローズ（2026-08-21）**
+
 管理用メモ。コード変更は合意した範囲だけ。
 
 ## 症状（記録）
@@ -14,50 +16,40 @@
 
 **Step CY:** グリッド不在日は書かない／正の売上を 0 で潰さない。
 
-マーカー: `KPI-MEP-NO-ZERO-WIPE-CY`  
-上げ表: `docs/le-filezilla-path-table.md` Step CY
+## Trace 結果（当時 2026-08-21）
 
-## Step CZ（2026-08-21）— CSV 後 Rebuilding 固まり
+| 年 | 1/6/7/12 |
+|----|----------|
+| 2024 | すべて `ok_check_PL_display` |
+| 2026 | 1・6・7 = `ok_check_PL_display`／**12 のみ `save_or_sync`（問題2・当時）** |
 
-**原因:** CX が `busy.run` を外したまま `update('rebuild')` が未 busy でも show → CSV の Import hide 後に Rebuilding が残り閉じない。
+## 問題1 — PL が DB 売上を出さない → **完了**
 
-**修正:** Busy 中だけ progress 更新／CSV・Confirm は Promise 完了まで overlay を所有。
+**Step DB（正式完了）:** 収入のみ `daily-inputs` 最優先。  
+マーカー: `KPI-PL-INCOME-INPUTS-DB`
 
-マーカー: `KPI-BUSY-CSV-HIDE-CZ`  
-上げ表: `docs/le-filezilla-path-table.md` Step CZ
+ユーザー確認: 2024 の 6・7・12、2026 の 1・6・7・12 が PL に反映。支出経路は非影響。
 
-## Step DA（2026-08-21）— EN CSV フリーズ
+## 問題2 — 2026-12 `save_or_sync` → **完了（再確認 2026-08-21）**
 
-**照合:** 本番 MEP/Annual/Monthly は3言語ともローカルとバイト一致（上げ漏れではなかった）。
+**当時:** timeline が 0（保存／同期側）。
 
-**本線:** CSV が server rebuild 完了を待ち、flushPut 無制限待ちで EN が Rebuilding 固まりに見えた。
+**現況（追加修正なし）:**
+- ユーザー: PL 上で 2026/12 収入を確認済み
+- その後の `2026年売上入力用` CSV/xlsx 再取込により、MEP 2026/12 平日に売上が入っていることを画面でも確認済み（例: 12/1 に金額あり）
+- CSV 経路は `applyDailyImportMaps` → `syncMonthlySalesToAnnualStoreForYear` → `store.timeline.dailySales` へ書くため、**timeline ゼロのままでは MEP に平日売上が出ない**
+- → 問題2の「timeline が既に 0」状態は、専用復旧タスク前に **再取込で解消済み**
 
-**修正:** Import は即閉じ／Confirm 20s／Busy 25s／flushPut 15s。
+Cursor 内蔵ブラウザは API 401 のため store.php 直読は不可。上記の PL + MEP 実画面を根拠に残件なしとする。
 
-マーカー: `KPI-BUSY-CSV-CLOSE-DA`  
-上げ表: Step DA（`js/` 2本 → MEP 日英繁）
-
-## 層別トレース（2024 vs 2026）— 進行中
-
-正本手順: [`kpn-layer-trace-2024-vs-2026.md`](./kpn-layer-trace-2024-vs-2026.md)
-
-- Cursor ブラウザは API 401 のため実測不可 → ユーザーログイン済み Console でスクリプト実行待ち
-- コード仮説: 経路差より **operatingYear=2026 だけ書き込み可能で潰された**（2024 は year-lock / canEditIso で拒否）
-
-## 検証済み（2026-08-21・ユーザー＋DevTools）
-
-CSV/Excel取込 → `daily-inputs` → `store` → `rebuild-year-facts` → `daily-facts` は **全て HTTP 200**。裏 rebuild／DB 反映は問題なし。
-
-## 進捗
+## 進捗（Case 完了）
 
 | 項目 | 状態 |
 |------|------|
-| Busy / Rebuilding ハング（入場・セル・CSV） | ✅ CU〜DA |
-| 再発防止（ゼロ潰し禁止 CY） | ✅ 実装・上げ済み想定 |
-| すでに 0 になった本番データの復旧 | ⬜ 未着手（本筋の残り） |
-| GitHub HTML 巻き戻しでデータ復旧 | ❌ やらない |
+| Busy / CSV ハング | ✅ CU〜DA |
+| ゼロ潰し禁止 CY | ✅ |
+| PL 収入 = daily-inputs（問題1） | ✅ Step DB |
+| 店休 CSV → Business Day | ✅ DC / DD |
+| 2026-12 売上復旧（問題2） | ✅ **再取込＋PL/MEP確認で解消。追加修正不要** |
 
-## まだやっていない（勝手に進めない）
-
-- **本筋の残り:** すでに 0 になった本番データの復旧手順（バックアップ／CSV再取込／サーバstore確認）
-- GitHub からの HTML 巻き戻しによるデータ復旧（不可・危険）
+**この Case は完了・クローズ（2026-08-21）。**

@@ -5788,7 +5788,11 @@
           var yf = yearFilter != null ? Number(yearFilter) : NaN;
           Object.keys(maps.salesByDate).forEach(function (iso) {
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
-            var biz = maps.businessDayByDate[iso] !== false;
+            /* KPI-BIZDAY-IMPORT-DD: never treat missing/0 as open via !== false */
+            var bizMap0 = maps.businessDayByDate || {};
+            var biz = Object.prototype.hasOwnProperty.call(bizMap0, iso)
+              ? !!bizMap0[iso]
+              : Number(maps.salesByDate[iso]) > 0;
             var sales = Number(maps.salesByDate[iso]);
             if (!biz || !Number.isFinite(sales) || sales <= 0) {
               rowStateByIso[iso] = { off: true, last: '0' };
@@ -8305,16 +8309,23 @@
         var tmap = daily.targetSalesByDate || {};
         var isoList = monthIsoList(mefYear, mefMonth0);
         isoList.forEach(function (iso) {
+          /* KPI-BIZDAY-IMPORT-DD: keep CSV/grid explicit values; only fill holes.
+             Stale store true must not overwrite import false (buildGrid race). */
+          if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) return;
           if (Object.prototype.hasOwnProperty.call(bmap, iso)) {
             bizDayByIso[iso] = !!bmap[iso];
             return;
           }
           if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
             var n = Number(tmap[iso]);
-            bizDayByIso[iso] = Number.isFinite(n) ? n !== 0 : true;
+            bizDayByIso[iso] = Number.isFinite(n) ? n !== 0 : false;
             return;
           }
-          if (bizDayByIso[iso] == null) bizDayByIso[iso] = true;
+          /* Weekend closed — same as rebuild snapshot / isCalendarBusinessDay */
+          var p = String(iso).split('-');
+          var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+          var dow = dt.getDay();
+          bizDayByIso[iso] = dow !== 0 && dow !== 6;
         });
       }
       function persistBusinessDayToAnnualStore(iso, isBusinessDay) {
@@ -8381,7 +8392,8 @@
             /* KPI-MEP-NO-ZERO-WIPE-CY: no invent for grid-absent days; never wipe positive with 0 */
             if (!hasSales && !hasBiz) return;
             var total = Math.round(aggregateValue('totalSales', iso));
-            var isBusiness = hasBiz ? !!bizDayByIso[iso] : true;
+            /* KPI-BIZDAY-IMPORT-DD: missing biz + sales 0 must stay closed (not default open) */
+            var isBusiness = hasBiz ? !!bizDayByIso[iso] : total > 0;
             bmap[iso] = !!isBusiness;
             if (!isBusiness) {
               tmap[iso] = 0;
@@ -8422,7 +8434,11 @@
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
           if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso)) return;
-          var biz = maps.businessDayByDate[iso] !== false;
+          /* KPI-BIZDAY-IMPORT-DD: !! coerce; missing key → sales>0 only (not !== false) */
+          var bizMapImp = maps.businessDayByDate || {};
+          var biz = Object.prototype.hasOwnProperty.call(bizMapImp, iso)
+            ? !!bizMapImp[iso]
+            : Number(maps.salesByDate[iso]) > 0;
           var sales = Number(maps.salesByDate[iso]);
           bizDayByIso[iso] = biz;
           if (biz && Number.isFinite(sales) && sales > 0) {
@@ -10342,7 +10358,13 @@
         syncMonthlySalesFromAnnualStoreForMonth();
         var isoList = monthIsoList(mefYear, mefMonth0);
         isoList.forEach(function (iso) {
-          if (bizDayByIso[iso] == null) bizDayByIso[iso] = true;
+          /* KPI-BIZDAY-IMPORT-DD: never invent all-open; weekend closed when still null */
+          if (bizDayByIso[iso] == null) {
+            var p = String(iso).split('-');
+            var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+            var dow = dt.getDay();
+            bizDayByIso[iso] = dow !== 0 && dow !== 6;
+          }
         });
         Object.keys(rowValueById).forEach(function (rowId) {
           var m = rowValueById[rowId] || {};
@@ -12017,11 +12039,13 @@
               if (!applied) return Promise.resolve();
               markDirty();
               syncUndoButton();
-              buildGrid();
+              /* KPI-BIZDAY-CSV-ORDER-A: persist CSV bizDay (incl. 0=closed) before buildGrid.
+                 buildGrid→syncBizDayFromAnnualStore would overwrite false with stale store true. */
               /* KPI-BUSY-CSV-CLOSE-DA: close Import overlay now; server rebuild must not block UI.
                  (EN freeze: await rebuild/flush could hang; JA/TW looked OK when rebuild finished fast.) */
               var p = syncMonthlySalesToAnnualStoreForYear(mefYear, null, { serverRebuild: true });
               Promise.resolve(p).catch(function () {});
+              buildGrid();
               return Promise.resolve();
             },
           });
@@ -13119,16 +13143,20 @@
         var bmap = (daily && daily.businessDayByDate) || {};
         var tmap = (daily && daily.targetSalesByDate) || {};
         monthIsoList(year, month0).forEach(function (iso) {
+          if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) return;
           if (Object.prototype.hasOwnProperty.call(bmap, iso)) {
             bizDayByIso[iso] = !!bmap[iso];
             return;
           }
           if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
             var n = Number(tmap[iso]);
-            bizDayByIso[iso] = Number.isFinite(n) ? n !== 0 : true;
+            bizDayByIso[iso] = Number.isFinite(n) ? n !== 0 : false;
             return;
           }
-          if (bizDayByIso[iso] == null) bizDayByIso[iso] = true;
+          var p = String(iso).split('-');
+          var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+          var dow = dt.getDay();
+          bizDayByIso[iso] = dow !== 0 && dow !== 6;
         });
       }
       function ensureMemoFloatYearData(year, month0) {
