@@ -1,7 +1,9 @@
 # 運用メモ: support@ / フィードバック窓口 / スマホ閲覧（将来）
 
-更新日: 2026-08-11  
+更新日: 2026-08-21  
 状態: §1–§2 本番通しOK（差出人名も Key Performance Navigator）／§3 スマホは将来課題  
+再スモーク: 2026-08-21 — JA `setting/feedback.html` 表示・歯車 → サポート → ご意見・リクエスト 導線 OK（送信テストは任意・未実施）  
+
 関連: [`press-release-backlog.md`](./press-release-backlog.md) · LE パス表 [`le-filezilla-path-table.md`](./le-filezilla-path-table.md)
 
 ---
@@ -37,14 +39,14 @@
 
 **本格 Survey 製品ではなく、リクエスト窓口。**
 
-### 実装（2026-08-09）／本番通し（2026-08-11）
+### 実装（2026-08-09）／本番通し（2026-08-11）／再スモーク（2026-08-21）
 
 | 要素 | パス | 本番 |
 |------|------|------|
-| 画面 JA | `setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/setting/feedback.html **OK** |
+| 画面 JA | `setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/setting/feedback.html **OK**（2026-08-21 再確認） |
 | 画面 EN / zh-tw | `en/setting/…` · `zh-tw/setting/…` | （同系統） |
-| 歯車リンク | アカウント設定 → サポート → ご意見・リクエスト | 実装済 |
-| API | `POST /api/v1/feedback.php` | **通しOK** |
+| 歯車リンク | アカウント設定 → サポート → ご意見・リクエスト | **OK**（2026-08-21 再確認） |
+| API | `POST /api/v1/feedback.php` | **通しOK**（2026-08-11） |
 | クライアント | `js/kpi-feedback-page.js` | |
 | 宛先 | `supportEmail` / `supportFrom`（既定 support@） | |
 | サーバ控え | `api/v1/data/feedback/*.json` | |
