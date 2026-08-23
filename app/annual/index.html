@@ -14699,6 +14699,7 @@
   <!-- KPI-CURRENCY-JS:START -->
   <script src="../../js/kpi-data-gateway.js"></script>
 
+  <script src="../../js/kpi-display-year-bounds.js?v=20260823-1"></script>
   <script src="../../js/kpi-currency.js"></script>
   <script src="../../js/kpi-busy-overlay.js"></script>
   <script src="../../js/kpi-daily-facts-sync.js"></script>
@@ -14957,7 +14958,7 @@
           </div>
           <div class="annual-date-control">
             <button type="button" class="annual-date-arrow annual-date-arrow--prev" id="annual-daily-date-prev-btn" aria-label="前日へ">◀︎</button>
-            <button type="button" class="annual-date-btn" id="annual-daily-date-btn" aria-label="日付を選択" aria-expanded="false">6 / 7 sat</button>
+            <button type="button" class="annual-date-btn" id="annual-daily-date-btn" aria-label="日付を選択" aria-expanded="false">—</button>
             <button type="button" class="annual-date-arrow annual-date-arrow--next" id="annual-daily-date-next-btn" aria-label="翌日へ">▶︎</button>
             <button type="button" class="annual-daily-today-btn" id="annual-daily-today-btn" aria-label="本日に移動">今日</button>
             <input type="date" class="annual-daily-kpi-date-input" id="annual-daily-date-input" aria-hidden="true" tabindex="-1">
@@ -14965,7 +14966,7 @@
         </div>
         <div class="annual-total-bd-group">
           <p class="annual-total-bd-label">年間営業日数</p>
-          <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">286</div>
+          <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">—</div>
         </div>
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">年次目標売上</p>
@@ -15041,7 +15042,7 @@
                 <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
                 <span class="annual-allocation-marker-line" aria-hidden="true"></span>
               </div>
-              <p class="annual-allocation-percent" id="annual-allocation-percent">100%</p>
+              <p class="annual-allocation-percent" id="annual-allocation-percent">—</p>
             </div>
           </div>
         </div>
@@ -15085,13 +15086,13 @@
           <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">日次</span></div>
           <div class="annual-kpi-strip">
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-group5-sales-value" data-field="daily.sales">¥101,754.41</p>
+            <p class="annual-kpi-value" id="annual-group5-sales-value" data-field="daily.sales">—</p>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">¥101,754.41</p>
+            <p class="annual-kpi-value" id="annual-current-sales-value" data-field="annual.currentSales">—</p>
           </div>
           <div class="annual-kpi-cell">
-            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">¥49,225.87</p>
+            <p class="annual-kpi-value" id="annual-difference-value" data-field="annual.difference">—</p>
           </div>
           <div class="annual-kpi-cell">
             <div class="annual-allocation-wrap">
@@ -15099,7 +15100,7 @@
                 <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
                 <span class="annual-allocation-marker-line" aria-hidden="true"></span>
               </div>
-              <p class="annual-allocation-percent" id="annual-achievement-percent">100%</p>
+              <p class="annual-allocation-percent" id="annual-achievement-percent">—</p>
             </div>
           </div>
           </div>
@@ -15108,13 +15109,13 @@
           <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">月次</span></div>
           <div class="annual-kpi-strip">
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-sales" data-field="monthly.cumulativeSales">¥701,754.41</p>
+              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-sales" data-field="monthly.cumulativeSales">—</p>
             </div>
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-target" data-field="monthly.cumulativeTarget">¥701,754.41</p>
+              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-target" data-field="monthly.cumulativeTarget">—</p>
             </div>
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-diff" data-field="monthly.cumulativeDiff">¥0.00</p>
+              <p class="annual-kpi-value" id="annual-group5-monthly-cumulative-diff" data-field="monthly.cumulativeDiff">—</p>
             </div>
             <div class="annual-kpi-cell">
               <div class="annual-allocation-wrap">
@@ -15122,7 +15123,7 @@
                   <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
                   <span class="annual-allocation-marker-line" aria-hidden="true"></span>
                 </div>
-                <p class="annual-allocation-percent" id="annual-group5-monthly-achievement-percent">108%</p>
+                <p class="annual-allocation-percent" id="annual-group5-monthly-achievement-percent">—</p>
               </div>
             </div>
           </div>
@@ -15131,13 +15132,13 @@
           <div class="annual-kpi-group5-row-label-col"><span class="annual-kpi-strip-period-label">年次</span></div>
           <div class="annual-kpi-strip">
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-sales" data-field="annual.cumulativeSales">¥701,754.41</p>
+              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-sales" data-field="annual.cumulativeSales">—</p>
             </div>
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-target" data-field="annual.cumulativeTarget">¥701,754.41</p>
+              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-target" data-field="annual.cumulativeTarget">—</p>
             </div>
             <div class="annual-kpi-cell">
-              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-diff" data-field="annual.cumulativeDiff">¥0.00</p>
+              <p class="annual-kpi-value" id="annual-group5-annual-cumulative-diff" data-field="annual.cumulativeDiff">—</p>
             </div>
             <div class="annual-kpi-cell">
               <div class="annual-allocation-wrap">
@@ -15145,7 +15146,7 @@
                   <span class="annual-allocation-marker-triangle" aria-hidden="true"></span>
                   <span class="annual-allocation-marker-line" aria-hidden="true"></span>
                 </div>
-                <p class="annual-allocation-percent" id="annual-group5-annual-achievement-percent">108%</p>
+                <p class="annual-allocation-percent" id="annual-group5-annual-achievement-percent">—</p>
               </div>
             </div>
           </div>
@@ -15189,18 +15190,18 @@
               </thead>
 
               <tbody>
-                <tr><td>1月</td><td data-field="annual.table.jan.businessDay">22</td><td data-field="annual.table.jan.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.jan.hlSeasonPct">85%</td><td data-field="annual.table.jan.monthlyTarget">¥42,665.33</td><td data-field="annual.table.jan.dailyTarget">¥1,939.33</td><td data-field="annual.table.jan.monthlyProfit">¥50,812.30</td><td data-field="annual.table.jan.monthlyKgi">¥8,206.98</td><td data-field="annual.table.jan.hlSeasonActualPct">101.35%</td><td data-field="annual.table.jan.hlPercent">119.24%</td></tr>
-                <tr><td>2月</td><td data-field="annual.table.feb.businessDay">22</td><td data-field="annual.table.feb.monthlyAverageTarget">¥50,194.50</td><td data-field="annual.table.feb.hlSeasonPct">85%</td><td data-field="annual.table.feb.monthlyTarget">¥42,665.33</td><td data-field="annual.table.feb.dailyTarget">¥1,939.33</td><td data-field="annual.table.feb.monthlyProfit">¥49,880.73</td><td data-field="annual.table.feb.monthlyKgi">¥7,215.40</td><td data-field="annual.table.feb.hlSeasonActualPct">99.37%</td><td data-field="annual.table.feb.hlPercent">116.91%</td></tr>
-                <tr><td>3月</td><td data-field="annual.table.mar.businessDay">25</td><td data-field="annual.table.mar.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.mar.hlSeasonPct">100%</td><td data-field="annual.table.mar.monthlyTarget">¥57,039.21</td><td data-field="annual.table.mar.dailyTarget">¥2,281.57</td><td data-field="annual.table.mar.monthlyProfit">¥55,683.25</td><td data-field="annual.table.mar.monthlyKgi">-¥1,355.96</td><td data-field="annual.table.mar.hlSeasonActualPct">97.62%</td><td data-field="annual.table.mar.hlPercent">97.62%</td></tr>
-                <tr><td>4月</td><td data-field="annual.table.apr.businessDay">25</td><td data-field="annual.table.apr.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.apr.hlSeasonPct">110%</td><td data-field="annual.table.apr.monthlyTarget">¥62,743.13</td><td data-field="annual.table.apr.dailyTarget">¥2,509.73</td><td data-field="annual.table.apr.monthlyProfit">¥61,294.91</td><td data-field="annual.table.apr.monthlyKgi">-¥1,448.22</td><td data-field="annual.table.apr.hlSeasonActualPct">107.46%</td><td data-field="annual.table.apr.hlPercent">97.69%</td></tr>
-                <tr><td>5月</td><td data-field="annual.table.may.businessDay">24</td><td data-field="annual.table.may.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.may.hlSeasonPct">120%</td><td data-field="annual.table.may.monthlyTarget">¥54,751.64</td><td data-field="annual.table.may.dailyTarget">¥2,281.51</td><td data-field="annual.table.may.monthlyProfit">¥65,311.03</td><td data-field="annual.table.may.monthlyKgi">¥10,559.39</td><td data-field="annual.table.may.hlSeasonActualPct">119.28%</td><td data-field="annual.table.may.hlPercent">119.28%</td></tr>
-                <tr><td>6月</td><td data-field="annual.table.jun.businessDay">25</td><td data-field="annual.table.jun.monthlyAverageTarget">¥57,039.21</td><td data-field="annual.table.jun.hlSeasonPct">85%</td><td data-field="annual.table.jun.monthlyTarget">¥48,483.33</td><td data-field="annual.table.jun.dailyTarget">¥1,939.33</td><td data-field="annual.table.jun.monthlyProfit">¥55,311.58</td><td data-field="annual.table.jun.monthlyKgi">¥6,828.39</td><td data-field="annual.table.jun.hlSeasonActualPct">96.97%</td><td data-field="annual.table.jun.hlPercent">114.08%</td></tr>
-                <tr><td>7月</td><td data-field="annual.table.jul.businessDay">26</td><td data-field="annual.table.jul.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.jul.hlSeasonPct">100%</td><td data-field="annual.table.jul.monthlyTarget">¥59,320.78</td><td data-field="annual.table.jul.dailyTarget">¥2,281.57</td><td data-field="annual.table.jul.monthlyProfit">¥59,645.82</td><td data-field="annual.table.jul.monthlyKgi">¥325.04</td><td data-field="annual.table.jul.hlSeasonActualPct">100.55%</td><td data-field="annual.table.jul.hlPercent">100.55%</td></tr>
-                <tr><td>8月</td><td data-field="annual.table.aug.businessDay">20</td><td data-field="annual.table.aug.monthlyAverageTarget">¥45,631.37</td><td data-field="annual.table.aug.hlSeasonPct">100%</td><td data-field="annual.table.aug.monthlyTarget">¥45,631.37</td><td data-field="annual.table.aug.dailyTarget">¥2,281.57</td><td data-field="annual.table.aug.monthlyProfit">¥44,020.75</td><td data-field="annual.table.aug.monthlyKgi">-¥1,610.61</td><td data-field="annual.table.aug.hlSeasonActualPct">96.47%</td><td data-field="annual.table.aug.hlPercent">96.47%</td></tr>
-                <tr><td>9月</td><td data-field="annual.table.sep.businessDay">24</td><td data-field="annual.table.sep.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.sep.hlSeasonPct">100%</td><td data-field="annual.table.sep.monthlyTarget">¥54,751.64</td><td data-field="annual.table.sep.dailyTarget">¥2,281.57</td><td data-field="annual.table.sep.monthlyProfit">¥56,435.25</td><td data-field="annual.table.sep.monthlyKgi">¥1,677.61</td><td data-field="annual.table.sep.hlSeasonActualPct">103.06%</td><td data-field="annual.table.sep.hlPercent">103.06%</td></tr>
-                <tr><td>10月</td><td data-field="annual.table.oct.businessDay">26</td><td data-field="annual.table.oct.monthlyAverageTarget">¥59,320.78</td><td data-field="annual.table.oct.hlSeasonPct">110%</td><td data-field="annual.table.oct.monthlyTarget">¥65,252.85</td><td data-field="annual.table.oct.dailyTarget">¥2,509.73</td><td data-field="annual.table.oct.monthlyProfit">¥70,728.48</td><td data-field="annual.table.oct.monthlyKgi">¥5,475.62</td><td data-field="annual.table.oct.hlSeasonActualPct">119.23%</td><td data-field="annual.table.oct.hlPercent">108.39%</td></tr>
-                <tr><td>11月</td><td data-field="annual.table.nov.businessDay">23</td><td data-field="annual.table.nov.monthlyAverageTarget">¥52,416.07</td><td data-field="annual.table.nov.hlSeasonPct">110%</td><td data-field="annual.table.nov.monthlyTarget">¥57,123.68</td><td data-field="annual.table.nov.dailyTarget">¥2,509.73</td><td data-field="annual.table.nov.monthlyProfit">¥62,272.34</td><td data-field="annual.table.nov.monthlyKgi">¥4,548.66</td><td data-field="annual.table.nov.hlSeasonActualPct">118.67%</td><td data-field="annual.table.nov.hlPercent">107.88%</td></tr>
-                <tr><td>12月</td><td data-field="annual.table.dec.businessDay">24</td><td data-field="annual.table.dec.monthlyAverageTarget">¥54,751.64</td><td data-field="annual.table.dec.hlSeasonPct">115%</td><td data-field="annual.table.dec.monthlyTarget">¥62,971.29</td><td data-field="annual.table.dec.dailyTarget">¥2,623.80</td><td data-field="annual.table.dec.monthlyProfit">¥70,291.96</td><td data-field="annual.table.dec.monthlyKgi">¥7,320.67</td><td data-field="annual.table.dec.hlSeasonActualPct">128.37%</td><td data-field="annual.table.dec.hlPercent">111.63%</td></tr>
+                <tr><td>1月</td><td data-field="annual.table.jan.businessDay">—</td><td data-field="annual.table.jan.monthlyAverageTarget">—</td><td data-field="annual.table.jan.hlSeasonPct">—</td><td data-field="annual.table.jan.monthlyTarget">—</td><td data-field="annual.table.jan.dailyTarget">—</td><td data-field="annual.table.jan.monthlyProfit">—</td><td data-field="annual.table.jan.monthlyKgi">—</td><td data-field="annual.table.jan.hlSeasonActualPct">—</td><td data-field="annual.table.jan.hlPercent">—</td></tr>
+                <tr><td>2月</td><td data-field="annual.table.feb.businessDay">—</td><td data-field="annual.table.feb.monthlyAverageTarget">—</td><td data-field="annual.table.feb.hlSeasonPct">—</td><td data-field="annual.table.feb.monthlyTarget">—</td><td data-field="annual.table.feb.dailyTarget">—</td><td data-field="annual.table.feb.monthlyProfit">—</td><td data-field="annual.table.feb.monthlyKgi">—</td><td data-field="annual.table.feb.hlSeasonActualPct">—</td><td data-field="annual.table.feb.hlPercent">—</td></tr>
+                <tr><td>3月</td><td data-field="annual.table.mar.businessDay">—</td><td data-field="annual.table.mar.monthlyAverageTarget">—</td><td data-field="annual.table.mar.hlSeasonPct">—</td><td data-field="annual.table.mar.monthlyTarget">—</td><td data-field="annual.table.mar.dailyTarget">—</td><td data-field="annual.table.mar.monthlyProfit">—</td><td data-field="annual.table.mar.monthlyKgi">—</td><td data-field="annual.table.mar.hlSeasonActualPct">—</td><td data-field="annual.table.mar.hlPercent">—</td></tr>
+                <tr><td>4月</td><td data-field="annual.table.apr.businessDay">—</td><td data-field="annual.table.apr.monthlyAverageTarget">—</td><td data-field="annual.table.apr.hlSeasonPct">—</td><td data-field="annual.table.apr.monthlyTarget">—</td><td data-field="annual.table.apr.dailyTarget">—</td><td data-field="annual.table.apr.monthlyProfit">—</td><td data-field="annual.table.apr.monthlyKgi">—</td><td data-field="annual.table.apr.hlSeasonActualPct">—</td><td data-field="annual.table.apr.hlPercent">—</td></tr>
+                <tr><td>5月</td><td data-field="annual.table.may.businessDay">—</td><td data-field="annual.table.may.monthlyAverageTarget">—</td><td data-field="annual.table.may.hlSeasonPct">—</td><td data-field="annual.table.may.monthlyTarget">—</td><td data-field="annual.table.may.dailyTarget">—</td><td data-field="annual.table.may.monthlyProfit">—</td><td data-field="annual.table.may.monthlyKgi">—</td><td data-field="annual.table.may.hlSeasonActualPct">—</td><td data-field="annual.table.may.hlPercent">—</td></tr>
+                <tr><td>6月</td><td data-field="annual.table.jun.businessDay">—</td><td data-field="annual.table.jun.monthlyAverageTarget">—</td><td data-field="annual.table.jun.hlSeasonPct">—</td><td data-field="annual.table.jun.monthlyTarget">—</td><td data-field="annual.table.jun.dailyTarget">—</td><td data-field="annual.table.jun.monthlyProfit">—</td><td data-field="annual.table.jun.monthlyKgi">—</td><td data-field="annual.table.jun.hlSeasonActualPct">—</td><td data-field="annual.table.jun.hlPercent">—</td></tr>
+                <tr><td>7月</td><td data-field="annual.table.jul.businessDay">—</td><td data-field="annual.table.jul.monthlyAverageTarget">—</td><td data-field="annual.table.jul.hlSeasonPct">—</td><td data-field="annual.table.jul.monthlyTarget">—</td><td data-field="annual.table.jul.dailyTarget">—</td><td data-field="annual.table.jul.monthlyProfit">—</td><td data-field="annual.table.jul.monthlyKgi">—</td><td data-field="annual.table.jul.hlSeasonActualPct">—</td><td data-field="annual.table.jul.hlPercent">—</td></tr>
+                <tr><td>8月</td><td data-field="annual.table.aug.businessDay">—</td><td data-field="annual.table.aug.monthlyAverageTarget">—</td><td data-field="annual.table.aug.hlSeasonPct">—</td><td data-field="annual.table.aug.monthlyTarget">—</td><td data-field="annual.table.aug.dailyTarget">—</td><td data-field="annual.table.aug.monthlyProfit">—</td><td data-field="annual.table.aug.monthlyKgi">—</td><td data-field="annual.table.aug.hlSeasonActualPct">—</td><td data-field="annual.table.aug.hlPercent">—</td></tr>
+                <tr><td>9月</td><td data-field="annual.table.sep.businessDay">—</td><td data-field="annual.table.sep.monthlyAverageTarget">—</td><td data-field="annual.table.sep.hlSeasonPct">—</td><td data-field="annual.table.sep.monthlyTarget">—</td><td data-field="annual.table.sep.dailyTarget">—</td><td data-field="annual.table.sep.monthlyProfit">—</td><td data-field="annual.table.sep.monthlyKgi">—</td><td data-field="annual.table.sep.hlSeasonActualPct">—</td><td data-field="annual.table.sep.hlPercent">—</td></tr>
+                <tr><td>10月</td><td data-field="annual.table.oct.businessDay">—</td><td data-field="annual.table.oct.monthlyAverageTarget">—</td><td data-field="annual.table.oct.hlSeasonPct">—</td><td data-field="annual.table.oct.monthlyTarget">—</td><td data-field="annual.table.oct.dailyTarget">—</td><td data-field="annual.table.oct.monthlyProfit">—</td><td data-field="annual.table.oct.monthlyKgi">—</td><td data-field="annual.table.oct.hlSeasonActualPct">—</td><td data-field="annual.table.oct.hlPercent">—</td></tr>
+                <tr><td>11月</td><td data-field="annual.table.nov.businessDay">—</td><td data-field="annual.table.nov.monthlyAverageTarget">—</td><td data-field="annual.table.nov.hlSeasonPct">—</td><td data-field="annual.table.nov.monthlyTarget">—</td><td data-field="annual.table.nov.dailyTarget">—</td><td data-field="annual.table.nov.monthlyProfit">—</td><td data-field="annual.table.nov.monthlyKgi">—</td><td data-field="annual.table.nov.hlSeasonActualPct">—</td><td data-field="annual.table.nov.hlPercent">—</td></tr>
+                <tr><td>12月</td><td data-field="annual.table.dec.businessDay">—</td><td data-field="annual.table.dec.monthlyAverageTarget">—</td><td data-field="annual.table.dec.hlSeasonPct">—</td><td data-field="annual.table.dec.monthlyTarget">—</td><td data-field="annual.table.dec.dailyTarget">—</td><td data-field="annual.table.dec.monthlyProfit">—</td><td data-field="annual.table.dec.monthlyKgi">—</td><td data-field="annual.table.dec.hlSeasonActualPct">—</td><td data-field="annual.table.dec.hlPercent">—</td></tr>
               </tbody>
             </table>
           </div>
@@ -15300,23 +15301,23 @@
               <div class="annual-daily-focus-bar-lower-scroll" id="annual-daily-focus-bar-lower-scroll">
                 <div class="annual-daily-focus-bar-lower">
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--base">
-                    <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">1/6 mon</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                    <span class="annual-daily-focus-bar-lower__cell annual-daily-focus-bar-lower__cell--date">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
                   </div>
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--monthly">
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
                   </div>
                   <div class="annual-daily-focus-bar-lower__group annual-daily-focus-bar-lower__group--annual">
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">¥123,456</span>
-                    <span class="annual-daily-focus-bar-lower__cell">100%</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
+                    <span class="annual-daily-focus-bar-lower__cell">—</span>
                   </div>
                 </div>
               </div>
@@ -22153,8 +22154,21 @@
       var currentYear = Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))
         ? Number(window.__ANNUAL_DATA.calendarYear)
         : 2026;
-      var minYear = 2000;
-      var maxYear = 2100;
+      function readDisplayYearBounds() {
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
+        }
+        if (window.KpiDisplayYearBounds && typeof window.KpiDisplayYearBounds.getBounds === 'function') {
+          return window.KpiDisplayYearBounds.getBounds();
+        }
+        return { minYear: 2000, maxYear: 2100 };
+      }
+      function getDisplayMinYear() {
+        return readDisplayYearBounds().minYear;
+      }
+      function getDisplayMaxYear() {
+        return readDisplayYearBounds().maxYear;
+      }
       var prevBtn = document.getElementById('annual-year-prev');
       var nextBtn = document.getElementById('annual-year-next');
       var yearBtn = document.getElementById('annual-year-value');
@@ -22165,7 +22179,7 @@
       function buildYearMenu() {
         menu.innerHTML = '';
         for (var y = currentYear + 3; y >= currentYear - 3; y--) {
-          if (y < minYear || y > maxYear) continue;
+          if (y < getDisplayMinYear() || y > getDisplayMaxYear()) continue;
           var li = document.createElement('li');
           var opt = document.createElement('button');
           opt.type = 'button';
@@ -22233,11 +22247,11 @@
         syncAnnualNavToStorage();
       }
       prevBtn.addEventListener('click', function () {
-        currentYear = Math.max(minYear, currentYear - 1);
+        currentYear = Math.max(getDisplayMinYear(), currentYear - 1);
         renderYear();
       });
       nextBtn.addEventListener('click', function () {
-        currentYear = Math.min(maxYear, currentYear + 1);
+        currentYear = Math.min(getDisplayMaxYear(), currentYear + 1);
         renderYear();
       });
       yearBtn.addEventListener('click', function (e) {
@@ -22259,7 +22273,7 @@
       window.__ANNUAL_UI.setCalendarYear = function (y) {
         y = Number(y);
         if (!Number.isFinite(y)) return;
-        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        y = Math.max(getDisplayMinYear(), Math.min(getDisplayMaxYear(), Math.round(y)));
         if (currentYear === y) return;
         currentYear = y;
         renderYear();
@@ -22268,7 +22282,7 @@
       window.__ANNUAL_UI.setCalendarYearDisplayOnly = function (y) {
         y = Number(y);
         if (!Number.isFinite(y)) return;
-        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        y = Math.max(getDisplayMinYear(), Math.min(getDisplayMaxYear(), Math.round(y)));
         currentYear = y;
         yearBtn.textContent = String(currentYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
@@ -28561,11 +28575,22 @@
       })();
 
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-      window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {
-        selectedDate: '2025-06-07',
-        targetSales: 357971,
-        targetSalesByDate: { '2025-06-07': 357971 }
-      };
+      /* Empty-safe seed: today + no demo targets (new users must not see 357971 / 2025-06-07). */
+      (function seedAnnualDailyEmptySafe() {
+        if (window.__ANNUAL_DATA.daily) return;
+        var d = new Date();
+        var iso =
+          d.getFullYear() +
+          '-' +
+          String(d.getMonth() + 1).padStart(2, '0') +
+          '-' +
+          String(d.getDate()).padStart(2, '0');
+        window.__ANNUAL_DATA.daily = {
+          selectedDate: iso,
+          targetSalesByDate: {},
+          businessDayByDate: {}
+        };
+      })();
       (function hydrateAnnualDailyShared() {
         var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualDailyShared');
         if (!parsed) return;
@@ -28580,6 +28605,7 @@
           daily.referenceAnnualSales = Math.round(Number(parsed.referenceAnnualSales));
         }
         window.__ANNUAL_DATA.daily = daily;
+      })();
       })();
       (function hydratePastSalesShared() {
         if (window.KpiYearStore) {
@@ -29424,7 +29450,7 @@
 
       function formatTargetSalesValue(amount) {
         var n = Number(amount);
-        if (!Number.isFinite(n)) n = 357971;
+        if (!Number.isFinite(n)) return '—';
         var rounded = Math.round(n);
         if (window.KpiCurrency) return KpiCurrency.format(rounded, { round: true });
         if (langJa) {
@@ -29483,28 +29509,17 @@
         if (map[iso] != null && Number.isFinite(Number(map[iso]))) {
           return Number(map[iso]);
         }
-        return 357971;
+        return NaN;
       }
 
       function getJumpYearBounds() {
-        var data = window.__ANNUAL_DATA || {};
-        var daily = data.daily || {};
-        var map = daily.targetSalesByDate || {};
-        var minYear = null;
-        Object.keys(map).forEach(function (k) {
-          var m = /^(\d{4})-\d{2}-\d{2}$/.exec(String(k));
-          if (!m) return;
-          var y = Number(m[1]);
-          if (!Number.isFinite(y)) return;
-          if (minYear == null || y < minYear) minYear = y;
-        });
-        if (minYear == null) {
-          var cur = parseISODateLocal(daily.selectedDate);
-          minYear = cur ? cur.getFullYear() : new Date().getFullYear();
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
         }
-        var maxYear = new Date().getFullYear() + 5;
-        if (minYear > maxYear) minYear = maxYear;
-        return { minYear: minYear, maxYear: maxYear };
+        if (window.KpiDisplayYearBounds && typeof window.KpiDisplayYearBounds.getBounds === 'function') {
+          return window.KpiDisplayYearBounds.getBounds();
+        }
+        return { minYear: 2000, maxYear: 2100 };
       }
 
       function isDateJumpAllowed(d) {
@@ -30311,30 +30326,13 @@
         });
       }
       function annualRenderableYearBounds() {
-        var systemYear = new Date().getFullYear();
-        var minY = systemYear;
-        var maxY = systemYear;
-        if (window.KpiYearStore) {
-          try {
-            if (typeof KpiYearStore.listYearsWithData === 'function') {
-              KpiYearStore.listYearsWithData().forEach(function (y) {
-                y = Number(y);
-                if (!Number.isFinite(y)) return;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-              });
-            }
-            if (typeof KpiYearStore.getOperatingYear === 'function') {
-              var oy = Number(KpiYearStore.getOperatingYear());
-              if (Number.isFinite(oy)) {
-                if (oy < minY) minY = oy;
-                if (oy > maxY) maxY = oy;
-              }
-            }
-          } catch (e) {}
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
         }
-        maxY = Math.max(maxY, systemYear + 1);
-        return { minYear: minY, maxYear: maxY };
+        if (window.KpiDisplayYearBounds && typeof window.KpiDisplayYearBounds.getBounds === 'function') {
+          return window.KpiDisplayYearBounds.getBounds();
+        }
+        return { minYear: 2000, maxYear: 2100 };
       }
       function crossYearByEdge(dir) {
         if (dir !== 1 && dir !== -1) return false;
@@ -30789,29 +30787,18 @@
       }
 
       function computeFocusTimelineBounds(anchorYear) {
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : window.KpiDisplayYearBounds && typeof window.KpiDisplayYearBounds.getBounds === 'function'
+              ? window.KpiDisplayYearBounds.getBounds()
+              : { minYear: 2000, maxYear: 2100 };
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
-        var minY = anchorYear;
-        var maxY = anchorYear;
-        var systemYear = new Date().getFullYear();
-        var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
-        var tmap = (daily && daily.targetSalesByDate) || {};
-        function considerYear(y) {
-          y = Number(y);
-          if (!Number.isFinite(y)) return;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-        if (window.KpiYearStore) {
-          KpiYearStore.listYearsWithData().forEach(considerYear);
-          considerYear(KpiYearStore.getOperatingYear());
-        }
-        Object.keys(tmap).forEach(function (iso) {
-          var m = /^(\d{4})-\d{2}-\d{2}$/.exec(String(iso));
-          if (m) considerYear(Number(m[1]));
-        });
-        minY = Math.min(minY, anchorYear - 1);
-        maxY = Math.max(maxY, anchorYear + 1, systemYear + 1);
+        if (anchorYear < b.minYear) anchorYear = b.minYear;
+        if (anchorYear > b.maxYear) anchorYear = b.maxYear;
+        var minY = Math.max(b.minYear, anchorYear - 1);
+        var maxY = Math.min(b.maxYear, anchorYear + 1);
         var rangeStart = new Date(minY, 0, 1);
         rangeStart.setDate(rangeStart.getDate() - 14);
         var rangeEnd = new Date(maxY, 11, 31);
@@ -30820,8 +30807,16 @@
       }
 
       function computeAnchorYearTimelineBounds(anchorYear) {
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : window.KpiDisplayYearBounds && typeof window.KpiDisplayYearBounds.getBounds === 'function'
+              ? window.KpiDisplayYearBounds.getBounds()
+              : { minYear: 2000, maxYear: 2100 };
         anchorYear = Number(anchorYear);
         if (!Number.isFinite(anchorYear)) anchorYear = new Date().getFullYear();
+        if (anchorYear < b.minYear) anchorYear = b.minYear;
+        if (anchorYear > b.maxYear) anchorYear = b.maxYear;
         var rangeStart = new Date(anchorYear, 0, 1);
         rangeStart.setDate(rangeStart.getDate() - 14);
         var rangeEnd = new Date(anchorYear, 11, 31);
@@ -37917,15 +37912,21 @@
       }
 
       function clampYear(yr) {
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
-        return Math.max(minY, Math.min(maxY, yr));
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        return Math.max(b.minYear, Math.min(b.maxYear, yr));
       }
 
       function ensureYearOptions() {
         if (!yearSelect) return;
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        var minY = b.minYear;
+        var maxY = b.maxYear;
         var rebuild = yearSelect.options.length === 0;
         if (!rebuild) {
           var lo = Number(yearSelect.options[0].value);
@@ -37985,10 +37986,12 @@
 
       function syncColheadDatePickerBounds() {
         if (!dateInput) return;
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
-        dateInput.min = minY + '-01-01';
-        dateInput.max = maxY + '-12-31';
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        dateInput.min = b.minYear + '-01-01';
+        dateInput.max = b.maxYear + '-12-31';
       }
 
       function syncColheadDatePickerValue() {

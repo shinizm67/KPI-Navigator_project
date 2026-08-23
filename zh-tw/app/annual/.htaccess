@@ -1,0 +1,8 @@
+# KPI Navigator — display HTML must revalidate (cache A+B)
+# Scope: this folder's index.html only (inherited by subdirs' index.html if any).
+# Do not place at app/ root — would hit booking/profit/etc.
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>

@@ -12611,6 +12611,7 @@
   <script src="../../../js/kpi-daily-facts-sync.js"></script>
   <script src="../../../js/kpi-daily-inputs-sync.js"></script>
 
+  <script src="../../../js/kpi-display-year-bounds.js?v=20260823-1"></script>
   <script src="../../../js/kpi-currency.js"></script>
   <script src="../../../js/kpi-busy-overlay.js"></script>
   <!-- KPI-CURRENCY-JS:END -->
@@ -23159,8 +23160,18 @@ Cumulative Target Annual Sales</p>
       var currentYear = Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))
         ? Number(window.__ANNUAL_DATA.calendarYear)
         : 2026;
-      var minYear = 2000;
-      var maxYear = 2100;
+      function displayYearBounds() {
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
+        }
+        return { minYear: 2000, maxYear: 2100 };
+      }
+      function getDisplayMinYear() {
+        return displayYearBounds().minYear;
+      }
+      function getDisplayMaxYear() {
+        return displayYearBounds().maxYear;
+      }
       var prevBtn = document.getElementById('annual-year-prev');
       var nextBtn = document.getElementById('annual-year-next');
       var yearBtn = document.getElementById('annual-year-value');
@@ -23171,7 +23182,7 @@ Cumulative Target Annual Sales</p>
       function buildYearMenu() {
         menu.innerHTML = '';
         for (var y = currentYear + 3; y >= currentYear - 3; y--) {
-          if (y < minYear || y > maxYear) continue;
+          if (y < getDisplayMinYear() || y > getDisplayMaxYear()) continue;
           var li = document.createElement('li');
           var opt = document.createElement('button');
           opt.type = 'button';
@@ -23200,11 +23211,11 @@ Cumulative Target Annual Sales</p>
         );
       }
       prevBtn.addEventListener('click', function () {
-        currentYear = Math.max(minYear, currentYear - 1);
+        currentYear = Math.max(getDisplayMinYear(), currentYear - 1);
         renderYear();
       });
       nextBtn.addEventListener('click', function () {
-        currentYear = Math.min(maxYear, currentYear + 1);
+        currentYear = Math.min(getDisplayMaxYear(), currentYear + 1);
         renderYear();
       });
       yearBtn.addEventListener('click', function (e) {
@@ -23225,7 +23236,7 @@ Cumulative Target Annual Sales</p>
       window.__ANNUAL_UI.setCalendarYear = function (y) {
         y = Number(y);
         if (!Number.isFinite(y)) return;
-        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        y = Math.max(getDisplayMinYear(), Math.min(getDisplayMaxYear(), Math.round(y)));
         if (currentYear === y) return;
         currentYear = y;
         renderYear();
@@ -23234,7 +23245,7 @@ Cumulative Target Annual Sales</p>
       window.__ANNUAL_UI.setCalendarYearDisplayOnly = function (y) {
         y = Number(y);
         if (!Number.isFinite(y)) return;
-        y = Math.max(minYear, Math.min(maxYear, Math.round(y)));
+        y = Math.max(getDisplayMinYear(), Math.min(getDisplayMaxYear(), Math.round(y)));
         if (currentYear === y) return;
         currentYear = y;
         yearBtn.textContent = String(currentYear);
@@ -25501,34 +25512,10 @@ Cumulative Target Annual Sales</p>
       }
 
       function getJumpYearBounds() {
-        var data = window.__ANNUAL_DATA || {};
-        var daily = data.daily || {};
-        var map = daily.targetSalesByDate || {};
-        var minYear = null;
-        var maxYear = null;
-        function considerYear(y) {
-          y = Number(y);
-          if (!Number.isFinite(y)) return;
-          if (minYear == null || y < minYear) minYear = y;
-          if (maxYear == null || y > maxYear) maxYear = y;
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
         }
-        if (window.KpiYearStore) {
-          KpiYearStore.listYearsWithData().forEach(considerYear);
-          considerYear(KpiYearStore.getOperatingYear());
-        }
-        Object.keys(map).forEach(function (k) {
-          var m = /^(\d{4})-\d{2}-\d{2}$/.exec(String(k));
-          if (!m) return;
-          considerYear(Number(m[1]));
-        });
-        if (minYear == null) {
-          var cur = parseISODateLocal(daily.selectedDate);
-          minYear = cur ? cur.getFullYear() : new Date().getFullYear();
-        }
-        if (maxYear == null) maxYear = new Date().getFullYear();
-        maxYear = Math.max(maxYear, new Date().getFullYear() + 5);
-        if (minYear > maxYear) minYear = maxYear;
-        return { minYear: minYear, maxYear: maxYear };
+        return { minYear: 2000, maxYear: 2100 };
       }
 
       function isDateJumpAllowed(d) {
@@ -29375,15 +29362,21 @@ Cumulative Target Annual Sales</p>
       }
 
       function clampYear(yr) {
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
-        return Math.max(minY, Math.min(maxY, yr));
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        return Math.max(b.minYear, Math.min(b.maxYear, yr));
       }
 
       function ensureYearOptions() {
         if (!yearSelect) return;
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        var minY = b.minYear;
+        var maxY = b.maxYear;
         var rebuild = yearSelect.options.length === 0;
         if (!rebuild) {
           var lo = Number(yearSelect.options[0].value);
@@ -29443,10 +29436,12 @@ Cumulative Target Annual Sales</p>
 
       function syncColheadDatePickerBounds() {
         if (!dateInput) return;
-        var minY = 2000;
-        var maxY = new Date().getFullYear() + 5;
-        dateInput.min = minY + '-01-01';
-        dateInput.max = maxY + '-12-31';
+        var b =
+          typeof window.__KPI_getDisplayYearBounds === 'function'
+            ? window.__KPI_getDisplayYearBounds()
+            : { minYear: 2000, maxYear: 2100 };
+        dateInput.min = b.minYear + '-01-01';
+        dateInput.max = b.maxYear + '-12-31';
       }
 
       function syncColheadDatePickerValue() {
@@ -30704,24 +30699,10 @@ Cumulative Target Annual Sales</p>
         return new Date(y, m0 + 1, 0).getDate();
       }
       function getYearBounds() {
-        var data = window.__ANNUAL_DATA || {};
-        var daily = data.daily || {};
-        var map = daily.targetSalesByDate || {};
-        var minYear = null;
-        Object.keys(map).forEach(function (k) {
-          var m = /^(\d{4})-\d{2}-\d{2}$/.exec(String(k));
-          if (!m) return;
-          var y = Number(m[1]);
-          if (!Number.isFinite(y)) return;
-          if (minYear == null || y < minYear) minYear = y;
-        });
-        if (minYear == null) {
-          var cur = parseISODateLocal(daily.selectedDate);
-          minYear = cur ? cur.getFullYear() : new Date().getFullYear();
+        if (typeof window.__KPI_getDisplayYearBounds === 'function') {
+          return window.__KPI_getDisplayYearBounds();
         }
-        var maxYear = new Date().getFullYear() + 5;
-        if (minYear > maxYear) minYear = maxYear;
-        return { minYear: minYear, maxYear: maxYear };
+        return { minYear: 2000, maxYear: 2100 };
       }
       function isDateWithinBounds(d) {
         if (!d) return false;
