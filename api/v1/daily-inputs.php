@@ -86,12 +86,28 @@ if ($method === 'PUT') {
         if ($sales === false) {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_number']);
         }
-        $biz = !empty($item['businessDay']);
-        $parsed[] = [
+        $row = [
             'iso' => (string) $item['iso'],
             'sales' => $sales,
-            'business_day' => $biz ? 1 : 0,
+            'touch_business_day' => false,
+            'business_day' => null,
         ];
+        if (array_key_exists('businessDay', $item)) {
+            $rawBiz = $item['businessDay'];
+            if ($rawBiz === null) {
+                $row['touch_business_day'] = true;
+                $row['business_day'] = null;
+            } elseif ($rawBiz === true || $rawBiz === 1 || $rawBiz === '1') {
+                $row['touch_business_day'] = true;
+                $row['business_day'] = 1;
+            } elseif ($rawBiz === false || $rawBiz === 0 || $rawBiz === '0') {
+                $row['touch_business_day'] = true;
+                $row['business_day'] = 0;
+            } else {
+                kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_business_day']);
+            }
+        }
+        $parsed[] = $row;
     }
     $written = kpi_v1_db_upsert_daily_inputs($cfg, $userId, $parsed);
     kpi_v1_json_out(200, [

@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS kpi_daily_inputs (
   user_id VARCHAR(64) NOT NULL,
   iso DATE NOT NULL,
   sales DECIMAL(15,2) NOT NULL DEFAULT 0,
-  business_day TINYINT(1) NOT NULL DEFAULT 0,
+  business_day TINYINT(1) NULL DEFAULT NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (user_id, iso),

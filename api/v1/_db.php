@@ -356,12 +356,44 @@ function kpi_v1_db_inputs_table_missing(PDOException $e)
     return $state === '42S02' || strpos($msg, 'kpi_daily_inputs') !== false;
 }
 
+/**
+ * kpi_daily_inputs.business_day → API businessDay (三値).
+ * 1 / "1" → true, 0 / "0" → false, NULL / '' → null. !empty は使わない.
+ *
+ * @param mixed $raw
+ * @return bool|null
+ */
+function kpi_v1_inputs_business_day_to_api($raw)
+{
+    if ($raw === null || $raw === '') {
+        return null;
+    }
+    if ($raw === true || $raw === 1 || $raw === '1') {
+        return true;
+    }
+    if ($raw === false || $raw === 0 || $raw === '0') {
+        return false;
+    }
+    if (is_numeric($raw)) {
+        $n = (int) $raw;
+        if ($n === 1) {
+            return true;
+        }
+        if ($n === 0) {
+            return false;
+        }
+    }
+    return null;
+}
+
 function kpi_v1_inputs_row_to_api(array $row)
 {
     return [
         'iso' => (string) $row['iso'],
         'sales' => round((float) $row['sales'], 2),
-        'businessDay' => !empty($row['business_day']),
+        'businessDay' => kpi_v1_inputs_business_day_to_api(
+            array_key_exists('business_day', $row) ? $row['business_day'] : null
+        ),
     ];
 }
 
@@ -430,34 +462,61 @@ function kpi_v1_db_read_daily_inputs_soft($cfg, $userId, $fromIso, $toIso)
 /**
  * Last-write-wins upsert for daily inputs. Does not delete other dates.
  *
- * @param array<int, array<string, mixed>> $rows each: iso, sales, business_day
+ * Each row: iso, sales, touch_business_day (bool), business_day (0|1|null when touch).
+ * touch true  → INSERT/UPDATE business_day (1/0/NULL).
+ * touch false → INSERT business_day NULL; UPDATE leaves existing business_day unchanged.
+ *
+ * @param array<int, array<string, mixed>> $rows
  * @return int written count
  */
 function kpi_v1_db_upsert_daily_inputs($cfg, $userId, array $rows)
 {
     $pdo = kpi_v1_db($cfg);
-    $sql = 'INSERT INTO kpi_daily_inputs
+    $sqlTouch = 'INSERT INTO kpi_daily_inputs
               (user_id, iso, sales, business_day, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
               sales = VALUES(sales),
               business_day = VALUES(business_day),
               updated_at = VALUES(updated_at)';
+    $sqlNoTouch = 'INSERT INTO kpi_daily_inputs
+              (user_id, iso, sales, business_day, created_at, updated_at)
+            VALUES (?, ?, ?, NULL, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              sales = VALUES(sales),
+              updated_at = VALUES(updated_at)';
     $now = gmdate('Y-m-d H:i:s');
     $uid = (string) $userId;
     try {
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare($sql);
+        $stmtTouch = $pdo->prepare($sqlTouch);
+        $stmtNoTouch = $pdo->prepare($sqlNoTouch);
         $n = 0;
         foreach ($rows as $row) {
-            $stmt->execute([
-                $uid,
-                $row['iso'],
-                $row['sales'],
-                $row['business_day'],
-                $now,
-                $now,
-            ]);
+            /* New: touch_business_day. Legacy migrate rows: business_day key only → touch. */
+            if (array_key_exists('touch_business_day', $row)) {
+                $touch = !empty($row['touch_business_day']);
+            } else {
+                $touch = array_key_exists('business_day', $row);
+            }
+            if ($touch) {
+                $stmtTouch->execute([
+                    $uid,
+                    $row['iso'],
+                    $row['sales'],
+                    array_key_exists('business_day', $row) ? $row['business_day'] : null,
+                    $now,
+                    $now,
+                ]);
+            } else {
+                $stmtNoTouch->execute([
+                    $uid,
+                    $row['iso'],
+                    $row['sales'],
+                    $now,
+                    $now,
+                ]);
+            }
             $n++;
         }
         $pdo->commit();

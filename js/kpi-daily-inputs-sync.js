@@ -105,12 +105,32 @@
       if (!row || !row.iso) return;
       var sales = Number(row.sales);
       if (!Number.isFinite(sales)) sales = 0;
-      var biz = !!row.businessDay;
       var prevS = store.timeline.dailySales[row.iso];
-      var prevB = store.timeline.businessDays[row.iso];
+      var hadPrevB = Object.prototype.hasOwnProperty.call(store.timeline.businessDays, row.iso);
+      var prevB = hadPrevB ? store.timeline.businessDays[row.iso] : undefined;
       store.timeline.dailySales[row.iso] = sales;
-      store.timeline.businessDays[row.iso] = biz;
-      if (prevS !== sales || prevB !== biz) changed = true;
+
+      var rawBiz = Object.prototype.hasOwnProperty.call(row, 'businessDay')
+        ? row.businessDay
+        : undefined;
+      var nextHadB = false;
+      var nextB;
+      if (rawBiz === true || rawBiz === 1 || rawBiz === '1') {
+        nextHadB = true;
+        nextB = true;
+        store.timeline.businessDays[row.iso] = true;
+      } else if (rawBiz === false || rawBiz === 0 || rawBiz === '0') {
+        nextHadB = true;
+        nextB = false;
+        store.timeline.businessDays[row.iso] = false;
+      } else {
+        /* null / undefined / missing key → unset (do not coerce to false) */
+        if (hadPrevB) delete store.timeline.businessDays[row.iso];
+      }
+
+      if (prevS !== sales) changed = true;
+      if (hadPrevB !== nextHadB) changed = true;
+      else if (nextHadB && prevB !== nextB) changed = true;
     });
     return changed;
   }
