@@ -41,3 +41,5 @@ assets/shot_*.png
 
 # SpecStory 履歴にトークン等が混入しうるため push 対象外（ローカルのみ）
 .specstory/history/
+
+app/monthly/edit/config.local.php
