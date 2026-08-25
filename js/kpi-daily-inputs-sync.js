@@ -201,8 +201,12 @@
       if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
       var sales = Number(salesMap[iso]);
       if (!Number.isFinite(sales)) sales = 0;
-      var biz = Object.prototype.hasOwnProperty.call(bizMap, iso) ? !!bizMap[iso] : sales > 0;
-      out.push({ iso: iso, sales: sales, businessDay: biz });
+      var row = { iso: iso, sales: sales };
+      /* Three-value: omit businessDay when unset — never infer from sales/weekday */
+      if (Object.prototype.hasOwnProperty.call(bizMap, iso)) {
+        row.businessDay = !!bizMap[iso];
+      }
+      out.push(row);
     });
     return out;
   }
