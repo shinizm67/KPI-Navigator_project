@@ -117,12 +117,21 @@ foreach ($userIds as $userId) {
         ksort($days);
         foreach ($days as $iso => $cell) {
             $sales = isset($cell['sales']) ? (float) $cell['sales'] : 0.0;
-            $biz = isset($cell['business_day']) ? (int) $cell['business_day'] : ($sales > 0 ? 1 : 0);
-            $rows[] = [
-                'iso' => $iso,
-                'sales' => $sales,
-                'business_day' => $biz,
-            ];
+            /* Three-value: explicit timeline businessDays only — never infer from sales/weekday */
+            if (array_key_exists('business_day', $cell)) {
+                $rows[] = [
+                    'iso' => $iso,
+                    'sales' => $sales,
+                    'touch_business_day' => true,
+                    'business_day' => ((int) $cell['business_day']) ? 1 : 0,
+                ];
+            } else {
+                $rows[] = [
+                    'iso' => $iso,
+                    'sales' => $sales,
+                    'touch_business_day' => false,
+                ];
+            }
         }
         if (!$rows) {
             continue;
