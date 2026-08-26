@@ -33629,12 +33629,14 @@ Cumulative Target Annual Sales</p>
       }
 
       function readPastSalesRowLastVal(inp, cb) {
-        if (!cb || !cb.checked) return '0';
+        if (!cb) return '0';
         if (inp) {
-          var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
-          if (raw !== '') {
-            var n = Number(raw);
-            if (Number.isFinite(n)) return String(Math.round(n));
+          if (cb.checked) {
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            if (raw !== '') {
+              var n = Number(raw);
+              if (Number.isFinite(n)) return String(Math.round(n));
+            }
           }
           var last = inp.getAttribute('data-last-active');
           if (last != null && last !== '') return String(last);
@@ -33659,7 +33661,17 @@ Cumulative Target Annual Sales</p>
             var tr = inp.closest('tr');
             var cb = tr && tr.querySelector('.past-sales-modal__cb');
             if (cb) {
-              if (!cb.checked) return { off: true, last: '0' };
+              if (!cb.checked) {
+                var lastOff = '0';
+                if (inp) {
+                  var laOff = inp.getAttribute('data-last-active');
+                  if (laOff != null && laOff !== '') {
+                    var lnOff = Number(laOff);
+                    if (isFinite(lnOff)) lastOff = String(Math.round(lnOff));
+                  }
+                }
+                return { off: true, last: lastOff };
+              }
               var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
               if (raw !== '') {
                 var n = Number(raw);
@@ -34392,10 +34404,10 @@ Cumulative Target Annual Sales</p>
           if (!Number.isFinite(n)) n = 0;
           inp.value = fmtSalesInput(n);
         }
-        persistRowState(tr);
+        persistRowState(tr, { bizTouched: true });
       }
 
-      function persistRowState(tr) {
+      function persistRowState(tr, opts) {
         var cb = tr.querySelector('.past-sales-modal__cb');
         var inp = tr.querySelector('.past-sales-modal__sales-input');
         if (!cb) return;
@@ -34404,10 +34416,14 @@ Cumulative Target Annual Sales</p>
         var lastVal = readPastSalesRowLastVal(inp, cb);
         var offNow = !cb.checked;
         var base = baseRowDefaults(iso, isWeekendIso(iso));
-        if (offNow === !!base.off && lastVal === String(base.last)) {
+        var prevRs = state.rowStateByIso[iso];
+        var bizTouched = !!(opts && opts.bizTouched) || !!(prevRs && prevRs.bizTouched);
+        if (offNow === !!base.off && lastVal === String(base.last) && !bizTouched) {
           delete state.rowStateByIso[iso];
         } else {
-          state.rowStateByIso[iso] = { off: offNow, last: lastVal };
+          var nextRs = { off: offNow, last: lastVal };
+          if (bizTouched) nextRs.bizTouched = true;
+          state.rowStateByIso[iso] = nextRs;
         }
         recomputeModalDirty();
       }
@@ -34475,8 +34491,12 @@ Cumulative Target Annual Sales</p>
         for (var i = 0; i < all.length; i++) {
           var item = all[i];
           var defs = getPastSalesRowDefaultsLive(item.iso, item.isWk);
-          map[item.iso] = defs.off ? 0 : Math.round(Number(defs.last));
-          bmap[item.iso] = !defs.off;
+          /* Sales independent of business_day: never force 0 from defs.off */
+          map[item.iso] = Math.round(Number(defs.last));
+          var rsBiz = state.rowStateByIso[item.iso];
+          if (rsBiz && rsBiz.bizTouched && typeof rsBiz.off === 'boolean') {
+            bmap[item.iso] = !rsBiz.off;
+          }
         }
         state.rowStateByIso = {};
         state.modalDirty = false;
@@ -35526,7 +35546,17 @@ Cumulative Target Annual Sales</p>
             var cb = tr.querySelector('.sales-data-modal__cb');
             var inp = tr.querySelector('.sales-data-modal__sales-input');
             if (cb) {
-              if (!cb.checked) return { off: true, last: '0' };
+              if (!cb.checked) {
+                var lastOff = '0';
+                if (inp) {
+                  var laOff = inp.getAttribute('data-last-active');
+                  if (laOff != null && laOff !== '') {
+                    var lnOff = Number(laOff);
+                    if (isFinite(lnOff)) lastOff = String(Math.round(lnOff));
+                  }
+                }
+                return { off: true, last: lastOff };
+              }
               var last = '0';
               if (inp) {
                 var la = inp.getAttribute('data-last-active');
@@ -36510,10 +36540,10 @@ Cumulative Target Annual Sales</p>
           if (!Number.isFinite(n) || n === 1234) n = 0;
           inp.value = fmtSalesInput(n);
         }
-        persistRowState(tr);
+        persistRowState(tr, { bizTouched: true });
       }
 
-      function persistRowState(tr) {
+      function persistRowState(tr, opts) {
         var cb = tr.querySelector('.sales-data-modal__cb');
         var inp = tr.querySelector('.sales-data-modal__sales-input');
         if (!cb) return;
@@ -36525,10 +36555,14 @@ Cumulative Target Annual Sales</p>
             : '0';
         var offNow = !cb.checked;
         var base = baseRowDefaults(iso, isWeekendIso(iso));
-        if (offNow === !!base.off && lastVal === String(base.last)) {
+        var prevRs = state.rowStateByIso[iso];
+        var bizTouched = !!(opts && opts.bizTouched) || !!(prevRs && prevRs.bizTouched);
+        if (offNow === !!base.off && lastVal === String(base.last) && !bizTouched) {
           delete state.rowStateByIso[iso];
         } else {
-          state.rowStateByIso[iso] = { off: offNow, last: lastVal };
+          var nextRs = { off: offNow, last: lastVal };
+          if (bizTouched) nextRs.bizTouched = true;
+          state.rowStateByIso[iso] = nextRs;
         }
         recomputeModalDirty();
       }
@@ -36592,8 +36626,12 @@ Cumulative Target Annual Sales</p>
         for (var i = 0; i < all.length; i++) {
           var item = all[i];
           var defs = getSalesDataRowDefaultsLive(item.iso, item.isWk);
-          map[item.iso] = defs.off ? 0 : Math.round(Number(defs.last));
-          bmap[item.iso] = !defs.off;
+          /* Sales independent of business_day: never force 0 from defs.off */
+          map[item.iso] = Math.round(Number(defs.last));
+          var rsBiz = state.rowStateByIso[item.iso];
+          if (rsBiz && rsBiz.bizTouched && typeof rsBiz.off === 'boolean') {
+            bmap[item.iso] = !rsBiz.off;
+          }
         }
         state.rowStateByIso = {};
         state.modalDirty = false;
@@ -37971,10 +38009,10 @@ Cumulative Target Annual Sales</p>
           var last = inp.getAttribute('data-last-active');
           inp.value = fmtSalesInput(last != null && last !== '' ? Number(last) : 1234);
         }
-        persistRowState(tr);
+        persistRowState(tr, { bizTouched: true });
       }
 
-      function persistRowState(tr) {
+      function persistRowState(tr, opts) {
         var cb = tr.querySelector('.annual-edit-modal__cb');
         var inp = tr.querySelector('.annual-edit-modal__sales-input');
         if (!cb) return;
@@ -37986,10 +38024,14 @@ Cumulative Target Annual Sales</p>
             : '1234';
         var offNow = !cb.checked;
         var base = baseRowDefaults(iso, isWeekendIso(iso));
-        if (offNow === !!base.off && lastVal === String(base.last)) {
+        var prevRs = state.rowStateByIso[iso];
+        var bizTouched = !!(opts && opts.bizTouched) || !!(prevRs && prevRs.bizTouched);
+        if (offNow === !!base.off && lastVal === String(base.last) && !bizTouched) {
           delete state.rowStateByIso[iso];
         } else {
-          state.rowStateByIso[iso] = { off: offNow, last: lastVal };
+          var nextRs = { off: offNow, last: lastVal };
+          if (bizTouched) nextRs.bizTouched = true;
+          state.rowStateByIso[iso] = nextRs;
         }
         recomputeModalDirty();
       }
@@ -38016,8 +38058,12 @@ Cumulative Target Annual Sales</p>
         for (var i = 0; i < all.length; i++) {
           var item = all[i];
           var defs = getRowDefaults(item.iso, item.isWk);
-          map[item.iso] = defs.off ? 0 : Math.round(Number(defs.last));
-          bmap[item.iso] = !defs.off;
+          /* Sales independent of business_day: never force 0 from defs.off */
+          map[item.iso] = Math.round(Number(defs.last));
+          var rsBiz = state.rowStateByIso[item.iso];
+          if (rsBiz && rsBiz.bizTouched && typeof rsBiz.off === 'boolean') {
+            bmap[item.iso] = !rsBiz.off;
+          }
         }
         state.rowStateByIso = {};
         state.modalDirty = false;
