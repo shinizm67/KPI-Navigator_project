@@ -134,42 +134,24 @@ function kpi_v1_rebuild_year_rec($store, $year)
 
 function kpi_v1_rebuild_is_calendar_biz($salesMap, $bizMap, $year, $m0, $day)
 {
-    $dow = kpi_v1_rebuild_dow($year, $m0, $day);
-    if ($dow === null) {
+    /* Explicit businessDay true only. No sales / weekday inference. $salesMap unused. */
+    $iso = kpi_v1_rebuild_iso($year, $m0, $day);
+    if (!kpi_v1_rebuild_map_has($bizMap, $iso)) {
         return false;
     }
-    $iso = kpi_v1_rebuild_iso($year, $m0, $day);
-    $isWk = ($dow === 0 || $dow === 6);
-    if (kpi_v1_rebuild_map_has($bizMap, $iso)) {
-        return kpi_v1_rebuild_js_truthy(kpi_v1_rebuild_map_get($bizMap, $iso));
-    }
-    if (kpi_v1_rebuild_map_has($salesMap, $iso)) {
-        $n = kpi_v1_rebuild_num(kpi_v1_rebuild_map_get($salesMap, $iso));
-        if ($n === null) {
-            return !$isWk;
-        }
-        if ($n === 0.0) {
-            return false;
-        }
-        return true;
-    }
-    return !$isWk;
+    return kpi_v1_rebuild_js_truthy(kpi_v1_rebuild_map_get($bizMap, $iso));
 }
 
 function kpi_v1_rebuild_snapshot_biz($bizMap, $iso)
 {
+    /* Explicit true → true; explicit false / missing key → false. No weekday inference. */
     if (!kpi_v1_facts_valid_iso($iso)) {
         return false;
     }
-    if (kpi_v1_rebuild_map_has($bizMap, $iso)) {
-        return kpi_v1_rebuild_js_truthy(kpi_v1_rebuild_map_get($bizMap, $iso));
-    }
-    $dt = DateTime::createFromFormat('Y-m-d', $iso);
-    if (!$dt) {
+    if (!kpi_v1_rebuild_map_has($bizMap, $iso)) {
         return false;
     }
-    $dow = (int) $dt->format('w');
-    return $dow !== 0 && $dow !== 6;
+    return kpi_v1_rebuild_js_truthy(kpi_v1_rebuild_map_get($bizMap, $iso));
 }
 
 function kpi_v1_rebuild_snapshot_sales($salesMap, $iso, $placeholder)
@@ -635,16 +617,25 @@ function kpi_v1_rebuild_resolve_input_maps($cfg, $userId, $store, $year)
         }
         $iso = (string) $row['iso'];
         $sales = isset($row['sales']) ? (float) $row['sales'] : 0.0;
-        $biz = !empty($row['businessDay']);
         if (is_array($salesOut)) {
             $salesOut[$iso] = $sales;
         } else {
             $salesOut->{$iso} = $sales;
         }
-        if (is_array($bizOut)) {
-            $bizOut[$iso] = $biz;
-        } else {
-            $bizOut->{$iso} = $biz;
+        /* Explicit true/false only. NULL must not become false key (or keep blob inference). */
+        if (array_key_exists('businessDay', $row)
+            && ($row['businessDay'] === true || $row['businessDay'] === false)) {
+            if (is_array($bizOut)) {
+                $bizOut[$iso] = $row['businessDay'];
+            } else {
+                $bizOut->{$iso} = $row['businessDay'];
+            }
+        } elseif (array_key_exists('businessDay', $row)) {
+            if (is_array($bizOut)) {
+                unset($bizOut[$iso]);
+            } elseif (is_object($bizOut)) {
+                unset($bizOut->{$iso});
+            }
         }
     }
     return [$salesOut, $bizOut, 'inputs'];
