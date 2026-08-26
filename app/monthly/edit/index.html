@@ -5343,7 +5343,7 @@
           'salesdate',
         ];
         /** Optional business-day column. Values: 1/営業/open = 営業日, 0/店休/off = 店休日.
-         *  If no column is detected, 売上>0 を営業日とみなす（一般的な CSV 向け）。 */
+         *  Missing column / empty / unparseable → unset (no key). Never infer from sales. */
         var BIZ_KEYS = [
           '営業日',
           '営業日フラグ',
@@ -5492,13 +5492,15 @@
           return Number.isFinite(n) ? n : 0;
         }
 
-        function parseBizCell(raw, salesAmount) {
-          if (raw == null || raw === '') {
-            return Number(salesAmount) > 0;
+        function parseBizCell(raw) {
+          /* Three-value: true=open, false=closed, null=unset. Never infer from sales. */
+          if (raw == null || raw === '') return null;
+          if (typeof raw === 'number') {
+            if (!Number.isFinite(raw)) return null;
+            return raw === 0 ? false : true;
           }
-          if (typeof raw === 'number') return raw !== 0;
           var s = String(raw).trim().toLowerCase();
-          if (!s) return Number(salesAmount) > 0;
+          if (!s) return null;
           if (s === '0' || s === 'false' || s === 'no' || s === 'off' || s === '休' || s === '店休' || s === '×' || s === 'x') {
             return false;
           }
@@ -5506,8 +5508,10 @@
             return true;
           }
           var n = Number(s);
-          if (Number.isFinite(n)) return n !== 0;
-          return Number(salesAmount) > 0;
+          if (Number.isFinite(n) && s !== '') {
+            return n === 0 ? false : true;
+          }
+          return null;
         }
 
         function splitCsvLine(line, delim) {
@@ -5606,26 +5610,15 @@
             var iso = parseDateCell(row[cols.dateIdx]);
             if (!iso) continue;
             var sales = parseSalesCell(row[cols.salesIdx]);
-            var biz =
-              cols.bizIdx >= 0
-                ? parseBizCell(row[cols.bizIdx], sales)
-                : sales > 0;
-            if (!biz) sales = 0;
+            var biz = cols.bizIdx >= 0 ? parseBizCell(row[cols.bizIdx]) : null;
             sales = Math.round(sales);
             salesByDate[iso] = sales;
-            businessDayByDate[iso] = !!biz;
+            if (biz !== null) businessDayByDate[iso] = !!biz;
             years[isoYear(iso)] = true;
             imported++;
 
             var hasFood = cellHasValue(row, cols.foodIdx);
             var hasDrink = cellHasValue(row, cols.drinkIdx);
-            if (!biz) {
-              if (hasFood || hasDrink || cols.foodIdx >= 0 || cols.drinkIdx >= 0) {
-                foodByDate[iso] = 0;
-                drinkByDate[iso] = 0;
-              }
-              continue;
-            }
             if (!hasFood && !hasDrink) continue;
 
             var food = hasFood ? Math.round(parseSalesCell(row[cols.foodIdx])) : null;
@@ -8361,14 +8354,12 @@
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
           if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso)) return;
-          /* KPI-BIZDAY-IMPORT-DD: !! coerce; missing key → sales>0 only (not !== false) */
           var bizMapImp = maps.businessDayByDate || {};
-          var biz = Object.prototype.hasOwnProperty.call(bizMapImp, iso)
-            ? !!bizMapImp[iso]
-            : Number(maps.salesByDate[iso]) > 0;
           var sales = Number(maps.salesByDate[iso]);
-          bizDayByIso[iso] = biz;
-          if (biz && Number.isFinite(sales) && sales > 0) {
+          if (Object.prototype.hasOwnProperty.call(bizMapImp, iso)) {
+            bizDayByIso[iso] = !!bizMapImp[iso];
+          }
+          if (Number.isFinite(sales) && sales > 0) {
             writeValue(primary.id, iso, Math.round(sales));
           } else {
             writeValue(primary.id, iso, 0);

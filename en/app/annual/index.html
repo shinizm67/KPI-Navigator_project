@@ -27778,7 +27778,7 @@ Cumulative Target Annual Sales</p>
           'salesdate',
         ];
         /** Optional business-day column. Values: 1/営業/open = 営業日, 0/店休/off = 店休日.
-         *  If no column is detected, 売上>0 を営業日とみなす（一般的な CSV 向け）。 */
+         *  Missing column / empty / unparseable → unset (no key). Never infer from sales. */
         var BIZ_KEYS = [
           '営業日',
           '営業日フラグ',
@@ -27927,12 +27927,15 @@ Cumulative Target Annual Sales</p>
           return Number.isFinite(n) ? n : 0;
         }
 
-        function parseBizCell(raw, salesAmount) {
-          /* If the business-day column exists but the cell is empty, treat as closed */
-          if (raw == null || raw === '') return false;
-          if (typeof raw === 'number') return raw !== 0;
+        function parseBizCell(raw) {
+          /* Three-value: true=open, false=closed, null=unset. Never infer from sales. */
+          if (raw == null || raw === '') return null;
+          if (typeof raw === 'number') {
+            if (!Number.isFinite(raw)) return null;
+            return raw === 0 ? false : true;
+          }
           var s = String(raw).trim().toLowerCase();
-          if (!s) return false;
+          if (!s) return null;
           if (s === '0' || s === 'false' || s === 'no' || s === 'off' || s === '休' || s === '店休' || s === '×' || s === 'x') {
             return false;
           }
@@ -27940,9 +27943,10 @@ Cumulative Target Annual Sales</p>
             return true;
           }
           var n = Number(s);
-          if (Number.isFinite(n)) return n !== 0;
-          /* Unrecognised string: fall back to sales-based heuristic */
-          return Number(salesAmount) > 0;
+          if (Number.isFinite(n) && s !== '') {
+            return n === 0 ? false : true;
+          }
+          return null;
         }
 
         function splitCsvLine(line, delim) {
@@ -28041,26 +28045,15 @@ Cumulative Target Annual Sales</p>
             var iso = parseDateCell(row[cols.dateIdx]);
             if (!iso) continue;
             var sales = parseSalesCell(row[cols.salesIdx]);
-            var biz =
-              cols.bizIdx >= 0
-                ? parseBizCell(row[cols.bizIdx], sales)
-                : sales > 0;
-            if (!biz) sales = 0;
+            var biz = cols.bizIdx >= 0 ? parseBizCell(row[cols.bizIdx]) : null;
             sales = Math.round(sales);
             salesByDate[iso] = sales;
-            businessDayByDate[iso] = !!biz;
+            if (biz !== null) businessDayByDate[iso] = !!biz;
             years[isoYear(iso)] = true;
             imported++;
 
             var hasFood = cellHasValue(row, cols.foodIdx);
             var hasDrink = cellHasValue(row, cols.drinkIdx);
-            if (!biz) {
-              if (hasFood || hasDrink || cols.foodIdx >= 0 || cols.drinkIdx >= 0) {
-                foodByDate[iso] = 0;
-                drinkByDate[iso] = 0;
-              }
-              continue;
-            }
             if (!hasFood && !hasDrink) continue;
 
             var food = hasFood ? Math.round(parseSalesCell(row[cols.foodIdx])) : null;
@@ -28225,15 +28218,16 @@ Cumulative Target Annual Sales</p>
           var yf = yearFilter != null ? Number(yearFilter) : NaN;
           Object.keys(maps.salesByDate).forEach(function (iso) {
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
-            var biz = maps.businessDayByDate[iso] !== false;
             var sales = Number(maps.salesByDate[iso]);
-            if (!biz) {
-              rowStateByIso[iso] = { off: true, last: '0' };
-            } else {
-              /* Honor business-day flag: sales ¥0 days stay checked if flagged as open */
-              var amt = Number.isFinite(sales) && sales > 0 ? String(Math.round(sales)) : '0';
-              rowStateByIso[iso] = { off: false, last: amt };
+            var amt = Number.isFinite(sales) && sales > 0 ? String(Math.round(sales)) : '0';
+            var prev = rowStateByIso[iso] || {};
+            var next = { last: amt };
+            if (Object.prototype.hasOwnProperty.call(maps.businessDayByDate || {}, iso)) {
+              next.off = !maps.businessDayByDate[iso];
+            } else if (typeof prev.off === 'boolean') {
+              next.off = prev.off;
             }
+            rowStateByIso[iso] = next;
           });
         }
 
