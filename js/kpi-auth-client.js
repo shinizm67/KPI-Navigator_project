@@ -17,6 +17,45 @@
   var REG_FLAG = 'kpiNavigator.registrationComplete';
   var AUTH_BASE_KEY = 'kpiNavigator.authBase';
   var TIER_KEY = 'kpiNavigator.subscriptionTier';
+  /** Last KPI account bound to this browser's user-scoped localStorage. Marker: KPI-LS-USER-SCOPE-7 */
+  var LAST_USER_KEY = 'kpiNavigator.lastKpiUserId';
+
+  /** Keep across user switch (browser prefs / auth plumbing — not KPI body data). */
+  var USER_SCOPE_KEEP = {
+    'kpiNavigator.lastKpiUserId': true,
+    'kpiNavigator.registrationComplete': true,
+    'kpiNavigator.authBase': true,
+    'kpiNavigator.storeSync': true,
+    'kpiNavigator.subscriptionTier': true,
+    'kpi-office-mode': true,
+    'kpi-tutorial-advanced': true,
+    'kpi-annual-focus-bar-expanded': true,
+  };
+
+  /** Exact keys that hold per-account KPI / profile payload. */
+  var USER_SCOPE_CLEAR_EXACT = [
+    'kpiNavigator.kpiYearStore',
+    'kpiNavigator.annualDailyShared',
+    'kpiNavigator.pastSalesShared',
+    'kpiNavigator.annualNav',
+    'kpiNavigator.plLineCatalog',
+    'kpiNavigator.plTargetCostRate',
+    'kpiNavigator.monthlyLast',
+    'kpi-profile-last',
+    'kpi-profile-edited',
+    'kpi-currency',
+    'kpi-auth-password',
+  ];
+
+  var USER_SCOPE_CLEAR_PREFIXES = [
+    'kpi-pl-expenses-v1:',
+    'kpi-pl-expense-adjustments-v1:',
+  ];
+
+  /** KpiYearStore not ready at bind — consumed on Annual/Monthly init (KPI-LS-USER-SCOPE-7-B). */
+  var pendingUserScopeStoreReset = false;
+  /** Skip migrateLegacy / reconcile on next KpiYearStore init after user switch. */
+  var pendingUserScopeLegacySkip = false;
 
   function resolveAppRoot() {
     var path = global.location.pathname || '';
@@ -44,6 +83,134 @@
     try {
       localStorage.setItem(REG_FLAG, '1');
     } catch (_e) {}
+  }
+
+  function readLastKpiUserId() {
+    try {
+      var v = localStorage.getItem(LAST_USER_KEY);
+      return v ? String(v) : '';
+    } catch (_e) {
+      return '';
+    }
+  }
+
+  function writeLastKpiUserId(userId) {
+    try {
+      localStorage.setItem(LAST_USER_KEY, String(userId));
+    } catch (_e) {}
+  }
+
+  function shouldClearKeyForUserScope(key) {
+    if (!key || USER_SCOPE_KEEP[key]) return false;
+    if (USER_SCOPE_CLEAR_EXACT.indexOf(key) >= 0) return true;
+    for (var i = 0; i < USER_SCOPE_CLEAR_PREFIXES.length; i++) {
+      if (String(key).indexOf(USER_SCOPE_CLEAR_PREFIXES[i]) === 0) return true;
+    }
+    /* Other kpiNavigator.* body keys (not in keep list) */
+    if (String(key).indexOf('kpiNavigator.') === 0) return true;
+    return false;
+  }
+
+  /** Clear in-memory KpiYearStore when present (KPI-LS-USER-SCOPE-7-B). */
+  function resetKpiYearStoreMemory() {
+    try {
+      if (global.KpiYearStore && typeof global.KpiYearStore.resetForUserScope === 'function') {
+        global.KpiYearStore.resetForUserScope();
+      } else {
+        pendingUserScopeStoreReset = true;
+      }
+    } catch (_eReset) {}
+  }
+
+  /**
+   * @returns {boolean} true when bind ran before KpiYearStore existed (caller should resetForUserScope).
+   */
+  function consumePendingUserScopeReset() {
+    var pending = pendingUserScopeStoreReset;
+    pendingUserScopeStoreReset = false;
+    return pending;
+  }
+
+  /**
+   * @returns {boolean} true when userId switched — caller should skip legacy timeline merge on init.
+   */
+  function consumeUserScopeLegacySkip() {
+    var skip = pendingUserScopeLegacySkip;
+    pendingUserScopeLegacySkip = false;
+    return skip;
+  }
+
+  /**
+   * Drop per-account KPI localStorage without localStorage.clear().
+   * Suppresses gateway PUT hooks when available so stale data is not uploaded.
+   */
+  function clearUserScopedLocalData() {
+    var gw = global.__KPI_DATA_GATEWAY;
+    var began = false;
+    try {
+      if (gw && typeof gw.beginLocalUserScopeReset === 'function') {
+        gw.beginLocalUserScopeReset();
+        began = true;
+      }
+    } catch (_eBegin) {}
+    try {
+      var i;
+      for (i = 0; i < USER_SCOPE_CLEAR_EXACT.length; i++) {
+        try {
+          localStorage.removeItem(USER_SCOPE_CLEAR_EXACT[i]);
+        } catch (_eRm) {}
+      }
+      var toRemove = [];
+      try {
+        for (i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (shouldClearKeyForUserScope(k)) toRemove.push(k);
+        }
+      } catch (_eScan) {}
+      for (i = 0; i < toRemove.length; i++) {
+        try {
+          localStorage.removeItem(toRemove[i]);
+        } catch (_eRm2) {}
+      }
+      resetKpiYearStoreMemory();
+    } finally {
+      if (began) {
+        try {
+          if (gw && typeof gw.endLocalUserScopeReset === 'function') {
+            gw.endLocalUserScopeReset();
+          }
+        } catch (_eEnd) {}
+      }
+    }
+  }
+
+  /**
+   * Bind this browser's KPI localStorage to userId.
+   * Different / unknown previous user → clear user-scoped keys before hydrate/PUT.
+   * Same userId → keep LS.
+   * @returns {{ switched: boolean, cleared: boolean, previousUserId: string, userId: string }}
+   */
+  function bindLocalUserId(userId) {
+    var uid = userId != null ? String(userId) : '';
+    if (!uid) {
+      return { switched: false, cleared: false, previousUserId: readLastKpiUserId(), userId: '' };
+    }
+    var prev = readLastKpiUserId();
+    var switched = !prev || prev !== uid;
+    if (switched) {
+      pendingUserScopeLegacySkip = true;
+      clearUserScopedLocalData();
+      writeLastKpiUserId(uid);
+      try {
+        global.dispatchEvent(
+          new CustomEvent('kpi:localUserScopeChanged', {
+            detail: { previousUserId: prev || null, userId: uid, cleared: true },
+          })
+        );
+      } catch (_eEv) {}
+      return { switched: true, cleared: true, previousUserId: prev, userId: uid };
+    }
+    return { switched: false, cleared: false, previousUserId: prev, userId: uid };
   }
 
   function normalizePlan(plan) {
@@ -96,6 +263,7 @@
       password: password,
     }).then(function (r) {
       if (r.status === 201 && r.data && r.data.ok) {
+        if (r.data.userId) bindLocalUserId(r.data.userId);
         setRegistrationComplete();
         if (r.data.plan) applyServerPlan(r.data.plan);
       }
@@ -109,6 +277,8 @@
       password: password,
     }).then(function (r) {
       if (r.status === 200 && r.data && r.data.ok) {
+        /* Clear other account's LS before storeSync/hydrate can PUT it. */
+        if (r.data.userId) bindLocalUserId(r.data.userId);
         setRegistrationComplete();
         if (r.data.plan) applyServerPlan(r.data.plan);
       }
@@ -122,8 +292,9 @@
 
   function me() {
     return request('GET', '/auth/me.php', null).then(function (r) {
-      if (r.status === 200 && r.data && r.data.ok && r.data.plan) {
-        applyServerPlan(r.data.plan);
+      if (r.status === 200 && r.data && r.data.ok) {
+        if (r.data.userId) bindLocalUserId(r.data.userId);
+        if (r.data.plan) applyServerPlan(r.data.plan);
       }
       return r;
     });
@@ -162,6 +333,14 @@
     return planSyncPromise;
   }
 
+  /**
+   * Resolve after /auth/me.php and bindLocalUserId for the current session user.
+   * Annual KpiYearStore.init must run only after this (KPI-LS-USER-SCOPE-7-B).
+   */
+  function ensureUserScopeBound() {
+    return syncPlanFromServer();
+  }
+
   function readStoredTier() {
     try {
       return sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '';
@@ -193,6 +372,46 @@
       return '../../setting/change_plan.html';
     }
     return '../setting/change_plan.html';
+  }
+
+  /** Locale-aware login page URL after logout. */
+  function resolveLoginHref() {
+    var root = resolveAppRoot();
+    var path = String(global.location.pathname || '');
+    if (root) {
+      if (path.indexOf('/zh-tw/') >= 0) return root + '/zh-tw/login/index.html';
+      if (path.indexOf('/en/') >= 0) return root + '/en/login/index.html';
+      return root + '/login/index.html';
+    }
+    if (
+      path.indexOf('/app/booking') >= 0 ||
+      path.indexOf('/app/profit') >= 0 ||
+      path.indexOf('/app/monthly') >= 0 ||
+      path.indexOf('/app/annual') >= 0 ||
+      path.indexOf('/en/') >= 0 ||
+      path.indexOf('/zh-tw/') >= 0
+    ) {
+      return '../../login/index.html';
+    }
+    return '../login/index.html';
+  }
+
+  /** Settings panel logout — session only; does not clear KPI localStorage. */
+  function bindAccountSettingsLogout(root) {
+    var scope = root && root.querySelector ? root : document;
+    var el = scope.getElementById ? scope.getElementById('account-settings-logout') : null;
+    if (!el || el.getAttribute('data-kpi-logout-bound') === '1') return;
+    el.setAttribute('data-kpi-logout-bound', '1');
+    el.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      function goLogin() {
+        try {
+          global.location.href = resolveLoginHref();
+        } catch (_eGo) {}
+      }
+      Promise.resolve(logout()).then(goLogin).catch(goLogin);
+    });
   }
 
   /**
@@ -307,10 +526,18 @@
     syncPlanFromServer: syncPlanFromServer,
     isBasicPlan: isBasicPlan,
     resolveChangePlanHref: resolveChangePlanHref,
+    resolveLoginHref: resolveLoginHref,
+    bindAccountSettingsLogout: bindAccountSettingsLogout,
     bindProHrefGate: bindProHrefGate,
     bindInsightNavGate: bindInsightNavGate,
     guardProPage: guardProPage,
     setRegistrationComplete: setRegistrationComplete,
+    bindLocalUserId: bindLocalUserId,
+    clearUserScopedLocalData: clearUserScopedLocalData,
+    ensureUserScopeBound: ensureUserScopeBound,
+    consumePendingUserScopeReset: consumePendingUserScopeReset,
+    consumeUserScopeLegacySkip: consumeUserScopeLegacySkip,
+    readLastKpiUserId: readLastKpiUserId,
     errorMessage: errorMessage,
   };
 

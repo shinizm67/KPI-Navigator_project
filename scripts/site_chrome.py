@@ -54,6 +54,7 @@ LABELS = {
         "change_email": "メールアドレスの変更",
         "change_password": "パスワードの変更",
         "session": "セッション管理",
+        "logout": "ログアウト",
         "subscription_heading": "サブスクリプション",
         "plan_details": "プラン詳細",
         "change_plan": "プラン変更",
@@ -104,6 +105,7 @@ LABELS = {
         "change_email": "Change Email",
         "change_password": "Change Password",
         "session": "Session Management",
+        "logout": "Log Out",
         "subscription_heading": "Subscription",
         "plan_details": "Plan Details",
         "change_plan": "Change Plan",
@@ -154,6 +156,7 @@ LABELS = {
         "change_email": "變更電子信箱",
         "change_password": "變更密碼",
         "session": "登入工作階段",
+        "logout": "登出",
         "subscription_heading": "訂閱",
         "plan_details": "方案詳情",
         "change_plan": "變更方案",
@@ -419,6 +422,7 @@ def build_header(
             {_account_link(f"{base}setting/change_email.html", L['change_email'], 'change_email', account_current)}
             {_account_link(f"{base}setting/change_password.html", L['change_password'], 'change_password', account_current)}
             {_account_link(f"{base}setting/session_management.html", L['session'], 'session', account_current)}
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">{L['logout']}</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -471,6 +475,9 @@ def build_header(
         }}
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {{
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }}
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {{
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }}
       }} catch (_e) {{}}
     }})();

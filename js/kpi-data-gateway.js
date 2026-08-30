@@ -34,6 +34,8 @@
   var putTimer = null;
   var hydrated = false;
   var hookQuiet = false;
+  /** Block PUT until KpiYearStore finishes post-bind init (KPI-LS-USER-SCOPE-7-B). */
+  var userScopePutHold = false;
   var origSetItem = Storage.prototype.setItem;
   var origRemoveItem = Storage.prototype.removeItem;
   var origGetItem = Storage.prototype.getItem;
@@ -338,6 +340,7 @@
   }
 
   function storePayloadForPut() {
+    if (userScopePutHold || hookQuiet) return null;
     var fromMem = null;
     try {
       if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
@@ -595,8 +598,9 @@
   }
 
   function doPut(cfg) {
-    if (!canSync(cfg)) return Promise.resolve();
+    if (!canSync(cfg) || userScopePutHold || hookQuiet) return Promise.resolve();
     var body = buildPutBody(cfg);
+    if (!body.store || typeof body.store !== 'object') return Promise.resolve();
     putInFlight = fetch(cfg.baseUrl, {
       method: 'PUT',
       headers: buildHeaders(cfg, true),
@@ -611,7 +615,7 @@
   }
 
   function schedulePut(cfg) {
-    if (!canSync(cfg)) return;
+    if (!canSync(cfg) || userScopePutHold || hookQuiet) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
@@ -647,6 +651,57 @@
     return withPutTimeout(doPut(cfg));
   }
 
+  /**
+   * Wait for KpiYearStore post-bind init on app pages; no-op elsewhere.
+   */
+  function waitForYearStoreUserScopeReady() {
+    return new Promise(function (resolve) {
+      try {
+        if (window.KpiYearStore && window.KpiYearStore.__userScopeReady) {
+          resolve();
+          return;
+        }
+      } catch (_eReady) {}
+      var done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        try {
+          window.removeEventListener('kpi:yearStoreUserScopeReady', onReady);
+        } catch (_eRm) {}
+        resolve();
+      }
+      function onReady() {
+        finish();
+      }
+      try {
+        window.addEventListener('kpi:yearStoreUserScopeReady', onReady);
+      } catch (_eAdd) {
+        finish();
+        return;
+      }
+      window.setTimeout(finish, 8000);
+    });
+  }
+
+  function onLocalUserScopeChanged() {
+    if (putTimer != null) {
+      window.clearTimeout(putTimer);
+      putTimer = null;
+    }
+    userScopePutHold = true;
+    hydrated = false;
+  }
+
+  function onYearStoreUserScopeReady() {
+    userScopePutHold = false;
+  }
+
+  try {
+    window.addEventListener('kpi:localUserScopeChanged', onLocalUserScopeChanged);
+    window.addEventListener('kpi:yearStoreUserScopeReady', onYearStoreUserScopeReady);
+  } catch (_eEv) {}
+
   function hydrateFromServer(cfg) {
     if (!canSync(cfg) || hydrated) return;
     hydrated = true;
@@ -661,12 +716,31 @@
       })
       .then(function (data) {
         if (!data || !data.ok) return;
+        /* Bind / clear LS for this session user before merge or PUT (KPI-LS-USER-SCOPE-7). */
+        var userScopeSwitched = false;
+        try {
+          if (
+            data.userId &&
+            window.__KPI_AUTH &&
+            typeof window.__KPI_AUTH.bindLocalUserId === 'function'
+          ) {
+            var scopeBind = window.__KPI_AUTH.bindLocalUserId(data.userId);
+            userScopeSwitched = !!(scopeBind && scopeBind.switched);
+          }
+        } catch (_eBind) {}
+        if (userScopeSwitched) {
+          try {
+            if (window.KpiYearStore && typeof window.KpiYearStore.resetForUserScope === 'function') {
+              window.KpiYearStore.resetForUserScope();
+            }
+          } catch (_eScopeReset) {}
+        }
         applyPlanFromPayload(data);
         var changed = false;
         var storeHadFacts = false;
         if (data.store && typeof data.store === 'object') {
           storeHadFacts = storeHasDailyFacts(data.store);
-          var localBeforeHydrate = localGet(STORE_KEY);
+          var localBeforeHydrate = userScopeSwitched ? null : localGet(STORE_KEY);
           var fullStore = stripDailyFactsFromStore(
             mergeStorePreservingLocalMepData(data.store, localBeforeHydrate)
           );
@@ -728,6 +802,37 @@
       .catch(function () {});
   }
 
+  /**
+   * Wait for auth client when present so bindLocalUserId runs before first merge.
+   * Login already binds; this covers Annual script order (gateway before auth).
+   */
+  function hydrateAfterAuthBind(cfg) {
+    var tries = 0;
+    function run() {
+      var auth = window.__KPI_AUTH;
+      if (auth && typeof auth.syncPlanFromServer === 'function') {
+        Promise.resolve(auth.syncPlanFromServer())
+          .catch(function () {
+            return null;
+          })
+          .then(function () {
+            return waitForYearStoreUserScopeReady();
+          })
+          .then(function () {
+            hydrateFromServer(cfg);
+          });
+        return;
+      }
+      tries += 1;
+      if (tries < 80) {
+        window.setTimeout(run, 25);
+        return;
+      }
+      hydrateFromServer(cfg);
+    }
+    run();
+  }
+
   function installLocalStorageHooks() {
     Storage.prototype.setItem = function (key, value) {
       origSetItem.apply(this, arguments);
@@ -783,6 +888,24 @@
         hasToken: !!cfg.token,
       };
     },
+    /** Suppress LS→PUT while auth clears another account's keys (KPI-LS-USER-SCOPE-7). */
+    beginLocalUserScopeReset: function () {
+      if (putTimer != null) {
+        window.clearTimeout(putTimer);
+        putTimer = null;
+      }
+      userScopePutHold = true;
+      hydrated = false;
+      hookQuiet = true;
+    },
+    endLocalUserScopeReset: function () {
+      if (putTimer != null) {
+        window.clearTimeout(putTimer);
+        putTimer = null;
+      }
+      hookQuiet = false;
+      hydrated = false;
+    },
     enableSessionSync: function (baseUrl) {
       var next = {
         enabled: true,
@@ -794,13 +917,13 @@
       } catch (_e) {}
       cfg = readSyncConfig();
       hydrated = false;
-      hydrateFromServer(cfg);
+      hydrateAfterAuthBind(cfg);
       return next;
     },
     pullFromServer: function () {
       hydrated = false;
       cfg = readSyncConfig();
-      hydrateFromServer(cfg);
+      hydrateAfterAuthBind(cfg);
     },
     pushToServerNow: function () {
       cfg = readSyncConfig();
@@ -813,10 +936,10 @@
   if (canSync(cfg)) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
-        hydrateFromServer(cfg);
+        hydrateAfterAuthBind(cfg);
       });
     } else {
-      hydrateFromServer(cfg);
+      hydrateAfterAuthBind(cfg);
     }
   }
 })();

@@ -14506,7 +14506,7 @@
 </head>
 <body class="si-fi profile-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
-  <script src="../../../js/kpi-data-gateway.js"></script>
+  <script src="../../../js/kpi-data-gateway.js?v=20260829-1"></script>
 
   <script src="../../../js/kpi-display-year-bounds.js?v=20260823-1"></script>
   <script src="../../../js/kpi-currency.js"></script>
@@ -14644,6 +14644,7 @@
             <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">Log Out</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -14673,7 +14674,7 @@
         </div>
       </div>
     </div>
-    <script src="../../../js/kpi-auth-client.js"></script>
+    <script src="../../../js/kpi-auth-client.js?v=20260829-2"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -14696,6 +14697,9 @@
         }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }
       } catch (_e) {}
     })();
@@ -24177,6 +24181,20 @@ Cumulative Target Annual Sales</p>
 
         var store = emptyStore();
 
+        function resetForUserScope() {
+          store = emptyStore();
+        }
+
+        function readStorePayloadFromLocal() {
+          try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
         function isoYear(iso) {
           if (!iso || iso.length < 4) return NaN;
           var y = Number(iso.slice(0, 4));
@@ -24207,7 +24225,7 @@ Cumulative Target Annual Sales</p>
         }
 
         function loadStore() {
-          var parsed = gw().getJson(STORE_KEY);
+          var parsed = readStorePayloadFromLocal();
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
             return;
@@ -26196,10 +26214,24 @@ Cumulative Target Annual Sales</p>
         }
 
         function init() {
+          var auth = window.__KPI_AUTH;
+          if (
+            auth &&
+            typeof auth.consumePendingUserScopeReset === 'function' &&
+            auth.consumePendingUserScopeReset()
+          ) {
+            resetForUserScope();
+          }
+          var skipLegacyMerge =
+            auth &&
+            typeof auth.consumeUserScopeLegacySkip === 'function' &&
+            auth.consumeUserScopeLegacySkip();
           loadStore();
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
-          migrateLegacy();
-          reconcileTimelineFromLegacy();
+          if (!skipLegacyMerge) {
+            migrateLegacy();
+            reconcileTimelineFromLegacy();
+          }
           enforceSubscriptionTierDefaults();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
@@ -26856,6 +26888,8 @@ Cumulative Target Annual Sales</p>
 
         window.KpiYearStore = {
           init: init,
+          resetForUserScope: resetForUserScope,
+          __userScopeReady: false,
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
@@ -26963,7 +26997,44 @@ Cumulative Target Annual Sales</p>
           releaseEditLease: releaseEditLease,
         };
 
-        init();
+        function markUserScopeReady() {
+          window.KpiYearStore.__userScopeReady = true;
+          try {
+            window.dispatchEvent(new CustomEvent('kpi:yearStoreUserScopeReady'));
+          } catch (_eReady) {}
+        }
+
+        function startInitAfterUserScopeBound() {
+          function run() {
+            init();
+            markUserScopeReady();
+          }
+          var auth = window.__KPI_AUTH;
+          if (auth && typeof auth.ensureUserScopeBound === 'function') {
+            Promise.resolve(auth.ensureUserScopeBound())
+              .then(run)
+              .catch(run);
+            return;
+          }
+          if (auth && typeof auth.syncPlanFromServer === 'function') {
+            Promise.resolve(auth.syncPlanFromServer())
+              .then(run)
+              .catch(run);
+            return;
+          }
+          run();
+        }
+
+        try {
+          window.addEventListener('kpi:localUserScopeChanged', function () {
+            window.KpiYearStore.__userScopeReady = false;
+            resetForUserScope();
+            init();
+            markUserScopeReady();
+          });
+        } catch (_eScopeEv) {}
+
+        startInitAfterUserScopeBound();
 
         window.addEventListener('storage', function (ev) {
           if (ev.key === EDIT_LEASE_KEY) {
