@@ -224,3 +224,14 @@ https://forge-laboratory.com/kpi-navigator/register/registration_si-fi_jp/regist
 ---
 
 ループでお願いします。まずは **Step 0** から。
+
+---
+
+## 後続（Phase B 以降・参照）
+
+| Step | 内容 | 正本 |
+|------|------|------|
+| 7-B | userId 切替時の Store / localStorage 汚染防止 | [`kpi-auth-user-scope-step-7.md`](./kpi-auth-user-scope-step-7.md) |
+| 7-C | 設定パネル Logout（Annual/Monthly 6 ページのみ） | 同上 |
+
+キャッシュバスター（Annual/Monthly）: `kpi-auth-client.js?v=20260829-2` / `kpi-data-gateway.js?v=20260829-1`

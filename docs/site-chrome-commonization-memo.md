@@ -52,6 +52,7 @@
 | グループ | ページ | 状態 |
 |---|---|---|
 | **app** | app/{annual,monthly,profit}/index.html ＋ en/ 版（計6） | **完了**（behavior-preserving・リンク検証green） |
+| **app（Logout 部分反映）** | app/{annual,monthly} ＋ en/ ＋ zh-tw/（計6） | **Step 7-C 済** — 設定パネル Logout のみ手動反映。[`kpi-auth-user-scope-step-7.md`](./kpi-auth-user-scope-step-7.md)。profit 3 言語・他ページは未反映 |
 | **settings** | setting/*.html, en/setting/*.html（計32） | **完了**（app と同一 canonical へ統一・リンク検証green） |
 | **public** | login/*, plan/*, legal/{terms,privacy}/*, register/*（JA/EN 計10） | **完了**（public バリアントで behavior-preserving・リンク検証green） |
 | **generated: monthly/edit** | app/monthly/edit, en/app/monthly/edit（計2） | **完了**（build_site_chrome の `generated` グループで注入・header-only・リンク検証green） |

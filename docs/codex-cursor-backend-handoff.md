@@ -141,6 +141,15 @@
 
 **次:** **B3** Entitlement ／ 本番へ api + js 配備
 
+#### Step 7-B / 7-C（user scope 隔離 + Logout smoke）— **実装済み・Smoke PASS（2026-08-30）**
+
+**正本:** [`kpi-auth-user-scope-step-7.md`](./kpi-auth-user-scope-step-7.md)
+
+- **7-B:** 別 userId 切替時に旧 `KpiYearStore` / local timeline を新 user へ PUT しない（`bindLocalUserId`, pending reset, gateway hydrate 順序, Annual/Monthly init legacy スキップ）
+- **7-C:** 設定パネル「セッション管理」直下に Logout（`bindAccountSettingsLogout`）。セッションのみ破棄・KPI LS / `lastKpiUserId` は残す。Annual/Monthly 6 ページのみ反映
+- **コミット:** `6855f91` — `Fix user scope store isolation and add logout smoke path`
+- **未実施:** `build_site_chrome.py` 75 ページ一括・PL 再ビルド
+
 ### B3. Entitlement（Basic / Pro）— **B3-T1 実装済み（2026-08-08・Cursor）**
 
 **タイトル:** サーバ plan 正本 + Store の Pro データ遮断 + クライアント同期
