@@ -490,14 +490,14 @@
         raw = localStorage.getItem('kpi-profile-last');
       }
       if (!raw) {
-        window.location.replace('index.html');
+        window.location.replace('profile_edit.html');
         return;
       }
       var data;
       try {
         data = JSON.parse(raw);
       } catch (e) {
-        window.location.replace('index.html');
+        window.location.replace('profile_edit.html');
         return;
       }
       function setText(id, value, fallback) {
