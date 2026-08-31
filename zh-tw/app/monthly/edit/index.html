@@ -3283,8 +3283,18 @@
           return changed;
         }
 
+        function readStorePayloadFromLocal() {
+          try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
         function loadStore() {
-          var parsed = gw().getJson(STORE_KEY);
+          var parsed = readStorePayloadFromLocal();
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
             return;
