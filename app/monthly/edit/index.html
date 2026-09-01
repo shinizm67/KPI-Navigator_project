@@ -2687,9 +2687,6 @@
     (function () {
       if (!window.__KPI_AUTH) return;
       try {
-        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
-          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
-        }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
         }
@@ -6581,6 +6578,7 @@
 
         window.KpiYearStore = {
           init: init,
+          __userScopeReady: false,
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
@@ -6688,7 +6686,74 @@
           releaseEditLease: releaseEditLease,
         };
 
-        init();
+        function resolveStoreSyncBaseUrl() {
+          try {
+            if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
+              return window.__KPI_AUTH.resolveAppRoot() + '/api/v1/store.php';
+            }
+          } catch (_eRoot) {}
+          return '/api/v1/store.php';
+        }
+
+        function enableSessionStoreSyncIfAuthed(meResult) {
+          var r = meResult;
+          if (!r || r.status !== 200 || !r.data || !r.data.ok) return;
+          var baseUrl = resolveStoreSyncBaseUrl();
+          try {
+            if (
+              window.__KPI_DATA_GATEWAY &&
+              typeof window.__KPI_DATA_GATEWAY.enableSessionSync === 'function'
+            ) {
+              window.__KPI_DATA_GATEWAY.enableSessionSync(baseUrl);
+            }
+          } catch (_eSync) {}
+        }
+
+        function markUserScopeReady() {
+          window.KpiYearStore.__userScopeReady = true;
+          try {
+            window.dispatchEvent(new CustomEvent('kpi:yearStoreUserScopeReady'));
+          } catch (_eReady) {}
+        }
+
+        function startInitAfterUserScopeBound() {
+          function run(meResult) {
+            enableSessionStoreSyncIfAuthed(meResult);
+            init();
+            markUserScopeReady();
+          }
+          var auth = window.__KPI_AUTH;
+          if (auth && typeof auth.ensureUserScopeBound === 'function') {
+            Promise.resolve(auth.ensureUserScopeBound())
+              .then(function (r) {
+                run(r);
+              })
+              .catch(function () {
+                run(null);
+              });
+            return;
+          }
+          if (auth && typeof auth.syncPlanFromServer === 'function') {
+            Promise.resolve(auth.syncPlanFromServer())
+              .then(function (r) {
+                run(r);
+              })
+              .catch(function () {
+                run(null);
+              });
+            return;
+          }
+          run(null);
+        }
+
+        try {
+          window.addEventListener('kpi:localUserScopeChanged', function () {
+            window.KpiYearStore.__userScopeReady = false;
+            startInitAfterUserScopeBound();
+          });
+        } catch (_eScopeEv) {}
+
+        startInitAfterUserScopeBound();
 
         window.addEventListener('storage', function (ev) {
           if (ev.key === EDIT_LEASE_KEY) {
@@ -7240,6 +7305,16 @@
         flushPendingMemoFloatTextareasFromDom();
         flushPendingMemoInputsFromDom();
       }
+      function flushPendingMoneyInputsFromDom() {
+        if (!root) return;
+        root.querySelectorAll('input[data-action="money-input"]').forEach(function (inp) {
+          var rowId = inp.getAttribute('data-row-id');
+          var iso = inp.getAttribute('data-iso');
+          if (!rowId || !iso) return;
+          if (inp.disabled || inp.readOnly) return;
+          writeValue(rowId, iso, parseMoney(inp.value));
+        });
+      }
       function buildMepPersistPayload(year) {
         var y = Number(year);
         var dailyExpenses = {};
@@ -7273,6 +7348,7 @@
       function persistMepToYearStore(year, extra) {
         if (!mepStoreReady()) return false;
         flushPendingMemoEditsFromDom();
+        flushPendingMoneyInputsFromDom();
         if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {
           source: 'monthly-edit-float',
