@@ -126,6 +126,29 @@
     return out;
   }
 
+  /** Per-lineId iso overlay: union keys; conflict winner from year mepUpdatedAt. */
+  function mergeMepDailyMapByLine(serverMap, localMap, localTs, serverTs) {
+    var sMap = serverMap && typeof serverMap === 'object' ? serverMap : {};
+    var lMap = localMap && typeof localMap === 'object' ? localMap : {};
+    var out = {};
+    var lineIds = {};
+    Object.keys(sMap).forEach(function (lineId) {
+      lineIds[lineId] = true;
+    });
+    Object.keys(lMap).forEach(function (lineId) {
+      lineIds[lineId] = true;
+    });
+    var localWinsConflict = localTs > serverTs;
+    Object.keys(lineIds).forEach(function (lineId) {
+      var sByIso = sMap[lineId] || {};
+      var lByIso = lMap[lineId] || {};
+      out[lineId] = localWinsConflict
+        ? Object.assign({}, sByIso, lByIso)
+        : Object.assign({}, lByIso, sByIso);
+    });
+    return out;
+  }
+
   /** Keep local MEP data when server hydrate would wipe unsynced MEP/PL imports. */
   function mergeStorePreservingLocalMepData(serverStore, localStore) {
     if (!serverStore || typeof serverStore !== 'object') return localStore || serverStore;
@@ -150,22 +173,26 @@
       var serverTs = Number(outRec.mepUpdatedAt) || 0;
       var localDe = localRec.dailyExpenses;
       if (dailyExpensesHasData(localDe)) {
-        var serverDe = outRec.dailyExpenses;
-        if (!dailyExpensesHasData(serverDe) || localTs >= serverTs) {
-          outRec.dailyExpenses = JSON.parse(JSON.stringify(localDe));
-          if (localTs > serverTs && localRec.mepUpdatedAt != null) {
-            outRec.mepUpdatedAt = localRec.mepUpdatedAt;
-          }
+        outRec.dailyExpenses = mergeMepDailyMapByLine(
+          outRec.dailyExpenses,
+          localDe,
+          localTs,
+          serverTs
+        );
+        if (localTs > serverTs && localRec.mepUpdatedAt != null) {
+          outRec.mepUpdatedAt = localRec.mepUpdatedAt;
         }
       }
       var localDi = localRec.dailyIncome;
       if (dailyIncomeHasData(localDi)) {
-        var serverDi = outRec.dailyIncome;
-        if (!dailyIncomeHasData(serverDi) || localTs >= serverTs) {
-          outRec.dailyIncome = JSON.parse(JSON.stringify(localDi));
-          if (localTs > serverTs && localRec.mepUpdatedAt != null) {
-            outRec.mepUpdatedAt = localRec.mepUpdatedAt;
-          }
+        outRec.dailyIncome = mergeMepDailyMapByLine(
+          outRec.dailyIncome,
+          localDi,
+          localTs,
+          serverTs
+        );
+        if (localTs > serverTs && localRec.mepUpdatedAt != null) {
+          outRec.mepUpdatedAt = localRec.mepUpdatedAt;
         }
       }
     });
