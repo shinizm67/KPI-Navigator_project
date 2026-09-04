@@ -24244,23 +24244,20 @@ Cumulative Target Annual Sales</p>
               parsed.timeline.businessDays || {}
             );
           }
-          if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {
-            persistStore();
-          }
+          var needPersist = sanitizePlaceholderSalesMap(store.timeline.dailySales);
           if (parsed.years && typeof parsed.years === 'object') {
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
-            persistStore();
+            needPersist = true;
           } else {
-            var hadFacts = false;
             Object.keys(store.years || {}).forEach(function (yk) {
-              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
+              if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
             });
-            if (hadFacts) persistStore();
           }
+          if (needPersist) persistStore();
         }
 
         function persistableStore() {

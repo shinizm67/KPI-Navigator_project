@@ -19664,23 +19664,20 @@
               parsed.timeline.businessDays || {}
             );
           }
-          if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {
-            persistStore();
-          }
+          var needPersist = sanitizePlaceholderSalesMap(store.timeline.dailySales);
           if (parsed.years && typeof parsed.years === 'object') {
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
-            persistStore();
+            needPersist = true;
           } else {
-            var hadFacts = false;
             Object.keys(store.years || {}).forEach(function (yk) {
-              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
+              if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
             });
-            if (hadFacts) persistStore();
           }
+          if (needPersist) persistStore();
         }
 
         function persistableStore() {
@@ -23129,13 +23126,13 @@
           if (window.KpiYearStore && typeof KpiYearStore.reload === 'function') {
             KpiYearStore.reload();
           }
-          invalidateMonthlyMepMetricsCache();
-          var isoKeep =
-            currentFocusIso ||
-            readDailySelectedIso() ||
-            toISODateLocal(new Date(state.year, state.month0, 1));
-          rebuildColumns();
-          scheduleScroll(isoKeep);
+          window.__MONTHLY_MEP_METRICS__ = null;
+          if (
+            window.__MONTHLY_UI &&
+            typeof window.__MONTHLY_UI.refreshAfterStoreStorage === 'function'
+          ) {
+            window.__MONTHLY_UI.refreshAfterStoreStorage();
+          }
         }
       });
       document.addEventListener('annual:salesMapChanged', function () {
@@ -32513,6 +32510,14 @@
       window.__MONTHLY_UI.rebuildDataColumns = function () {
         rebuildColumns();
         updateVerticalFocus();
+      };
+      window.__MONTHLY_UI.refreshAfterStoreStorage = function () {
+        var isoKeep =
+          currentFocusIso ||
+          readDailySelectedIso() ||
+          toISODateLocal(new Date(state.year, state.month0, 1));
+        rebuildColumns();
+        scheduleScroll(isoKeep);
       };
     })();
     (function () {

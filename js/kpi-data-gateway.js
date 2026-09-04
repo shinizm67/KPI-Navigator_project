@@ -32,7 +32,10 @@
   var PL_RATE_KEY = 'kpiNavigator.plTargetCostRate';
 
   var putTimer = null;
+  /** GET started (dedupe hydrateFromServer). */
   var hydrated = false;
+  /** First hydrate attempt finished (success or failure) — unlock store PUT when sync on. */
+  var hydrateComplete = false;
   var hookQuiet = false;
   /** Block PUT until KpiYearStore finishes post-bind init (KPI-LS-USER-SCOPE-7-B). */
   var userScopePutHold = false;
@@ -377,7 +380,8 @@
     if (fromMem && typeof fromMem === 'object') {
       return stripDailyFactsFromStore(fromMem);
     }
-    return stripDailyFactsFromStore(localGet(STORE_KEY));
+    var fromLs = localGet(STORE_KEY);
+    return stripDailyFactsFromStore(fromLs);
   }
 
   function resolveAppRoot() {
@@ -624,8 +628,19 @@
     return body;
   }
 
+  function canStorePut(cfg) {
+    if (!canSync(cfg) || userScopePutHold || hookQuiet) return false;
+    if (!hydrateComplete) return false;
+    return true;
+  }
+
+  function resetHydrateForRetry() {
+    hydrated = false;
+    hydrateComplete = false;
+  }
+
   function doPut(cfg) {
-    if (!canSync(cfg) || userScopePutHold || hookQuiet) return Promise.resolve();
+    if (!canStorePut(cfg)) return Promise.resolve();
     var body = buildPutBody(cfg);
     if (!body.store || typeof body.store !== 'object') return Promise.resolve();
     putInFlight = fetch(cfg.baseUrl, {
@@ -643,6 +658,7 @@
 
   function schedulePut(cfg) {
     if (!canSync(cfg) || userScopePutHold || hookQuiet) return;
+    if (!hydrateComplete) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
@@ -666,6 +682,9 @@
       ]);
     }
     if (!canSync(cfg)) {
+      return withPutTimeout(putInFlight || Promise.resolve());
+    }
+    if (!hydrateComplete) {
       return withPutTimeout(putInFlight || Promise.resolve());
     }
     if (putInFlight) {
@@ -718,6 +737,10 @@
     }
     userScopePutHold = true;
     hydrated = false;
+    hydrateComplete = false;
+    try {
+      if (canSync(cfg)) hydrateAfterAuthBind(cfg);
+    } catch (_eScopeHydr) {}
   }
 
   function onYearStoreUserScopeReady() {
@@ -742,7 +765,10 @@
         return res.json();
       })
       .then(function (data) {
-        if (!data || !data.ok) return;
+        if (!data || !data.ok) {
+          resetHydrateForRetry();
+          return;
+        }
         /* Bind / clear LS for this session user before merge or PUT (KPI-LS-USER-SCOPE-7). */
         var userScopeSwitched = false;
         try {
@@ -797,7 +823,6 @@
         } else if (data.pl && typeof data.pl === 'object') {
           if (applyPlToLocal(data.pl)) changed = true;
         }
-        if (storeHadFacts) schedulePut(cfg);
         if (changed) {
           try {
             document.dispatchEvent(
@@ -825,8 +850,12 @@
             console.info('[KPI Store Sync] hydrated from server', data.updatedAt || '', data.plan || '');
           } catch (_eLog) {}
         }
+        hydrateComplete = true;
+        if (storeHadFacts) schedulePut(cfg);
       })
-      .catch(function () {});
+      .catch(function () {
+        resetHydrateForRetry();
+      });
   }
 
   /**
@@ -923,6 +952,7 @@
       }
       userScopePutHold = true;
       hydrated = false;
+      hydrateComplete = false;
       hookQuiet = true;
     },
     endLocalUserScopeReset: function () {
@@ -932,6 +962,7 @@
       }
       hookQuiet = false;
       hydrated = false;
+      hydrateComplete = false;
     },
     enableSessionSync: function (baseUrl) {
       var next = {
@@ -943,12 +974,15 @@
         localSetRaw(SYNC_KEY, JSON.stringify(next));
       } catch (_e) {}
       cfg = readSyncConfig();
-      hydrated = false;
-      hydrateAfterAuthBind(cfg);
+      /* Do not reset hydrated — MEP enableSessionSync must not restart a completed/in-flight hydrate. */
+      if (!hydrated) {
+        hydrateAfterAuthBind(cfg);
+      }
       return next;
     },
     pullFromServer: function () {
       hydrated = false;
+      hydrateComplete = false;
       cfg = readSyncConfig();
       hydrateAfterAuthBind(cfg);
     },
