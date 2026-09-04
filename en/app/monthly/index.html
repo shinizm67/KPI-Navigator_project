@@ -23123,9 +23123,7 @@ Cumulative Target Annual Sales</p>
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
-        if (typeof invalidateMonthlyMepMetricsCache === 'function') {
-          invalidateMonthlyMepMetricsCache();
-        }
+        window.__MONTHLY_MEP_METRICS__ = null;
         if (
           window.__MONTHLY_UI &&
           typeof window.__MONTHLY_UI.refreshMonthlyTwCellsInPlace === 'function'
