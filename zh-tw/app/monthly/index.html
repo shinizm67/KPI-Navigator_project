@@ -26482,7 +26482,6 @@
         var iso = ev && ev.detail && ev.detail.isoDate;
         var source = ev && ev.detail && ev.detail.source;
         if (!iso) return;
-        currentFocusIso = iso;
         if (source === 'focus-sync') return;
         if (source === 'arrow') {
           var __arrowCy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
