@@ -60,33 +60,39 @@ function kpi_v1_db_json_decode_object($raw)
     return is_object($data) ? $data : null;
 }
 
-function kpi_v1_db_read_blob($cfg, $userId)
+function kpi_v1_db_row_to_blob($userId, $row)
 {
-    $pdo = kpi_v1_db($cfg);
-    $stmt = $pdo->prepare('SELECT store_json, annual_nav_json, pl_json, updated_at FROM kpi_store WHERE user_id = ? LIMIT 1');
-    $stmt->execute([(string) $userId]);
-    $row = $stmt->fetch();
-    $empty = (object) [
-        'userId' => $userId,
-        'updatedAt' => null,
-        'store' => null,
-        'annualNav' => null,
-        'pl' => null,
-    ];
-    if (!$row) {
-        return $empty;
-    }
     $updated = null;
     if (!empty($row['updated_at'])) {
         $updated = gmdate('c', strtotime($row['updated_at'] . ' UTC'));
     }
+    $revision = 0;
+    if (array_key_exists('revision', $row) && $row['revision'] !== null && $row['revision'] !== '') {
+        $revision = (int) $row['revision'];
+    }
     return (object) [
         'userId' => $userId,
         'updatedAt' => $updated,
+        'revision' => $revision,
         'store' => kpi_v1_db_json_decode_object($row['store_json']),
         'annualNav' => kpi_v1_db_json_decode_object($row['annual_nav_json']),
         'pl' => kpi_v1_db_json_decode_object($row['pl_json']),
     ];
+}
+
+function kpi_v1_db_read_blob($cfg, $userId)
+{
+    $pdo = kpi_v1_db($cfg);
+    $stmt = $pdo->prepare(
+        'SELECT store_json, annual_nav_json, pl_json, updated_at, revision
+         FROM kpi_store WHERE user_id = ? LIMIT 1'
+    );
+    $stmt->execute([(string) $userId]);
+    $row = $stmt->fetch();
+    if (!$row) {
+        return kpi_v1_empty_store_blob($userId);
+    }
+    return kpi_v1_db_row_to_blob($userId, $row);
 }
 
 function kpi_v1_db_write_blob($cfg, $userId, $blob)
@@ -110,6 +116,129 @@ function kpi_v1_db_write_blob($cfg, $userId, $blob)
         kpi_v1_db_json_encode(isset($blob->pl) ? $blob->pl : null),
         $ts,
     ]);
+}
+
+function kpi_v1_db_is_duplicate_key(PDOException $e)
+{
+    $state = (string) $e->getCode();
+    if ($state === '23000') {
+        return true;
+    }
+    $msg = $e->getMessage();
+    return strpos($msg, '1062') !== false || stripos($msg, 'Duplicate') !== false;
+}
+
+function kpi_v1_db_insert_store_row(PDO $pdo, $userId, $blob)
+{
+    $updatedAt = isset($blob->updatedAt) ? (string) $blob->updatedAt : gmdate('c');
+    $ts = gmdate('Y-m-d H:i:s', strtotime($updatedAt) ?: time());
+    $revision = isset($blob->revision) ? (int) $blob->revision : 1;
+    $stmt = $pdo->prepare(
+        'INSERT INTO kpi_store (user_id, store_json, annual_nav_json, pl_json, updated_at, revision)
+         VALUES (?, ?, ?, ?, ?, ?)'
+    );
+    $stmt->execute([
+        (string) $userId,
+        kpi_v1_db_json_encode(isset($blob->store) ? $blob->store : null),
+        kpi_v1_db_json_encode(isset($blob->annualNav) ? $blob->annualNav : null),
+        kpi_v1_db_json_encode(isset($blob->pl) ? $blob->pl : null),
+        $ts,
+        $revision,
+    ]);
+}
+
+function kpi_v1_db_update_store_row(PDO $pdo, $userId, $expectedRevision, $blob)
+{
+    $updatedAt = isset($blob->updatedAt) ? (string) $blob->updatedAt : gmdate('c');
+    $ts = gmdate('Y-m-d H:i:s', strtotime($updatedAt) ?: time());
+    $nextRevision = isset($blob->revision) ? (int) $blob->revision : ((int) $expectedRevision + 1);
+    $stmt = $pdo->prepare(
+        'UPDATE kpi_store
+         SET store_json = ?, annual_nav_json = ?, pl_json = ?, updated_at = ?, revision = ?
+         WHERE user_id = ? AND revision = ?'
+    );
+    $stmt->execute([
+        kpi_v1_db_json_encode(isset($blob->store) ? $blob->store : null),
+        kpi_v1_db_json_encode(isset($blob->annualNav) ? $blob->annualNav : null),
+        kpi_v1_db_json_encode(isset($blob->pl) ? $blob->pl : null),
+        $ts,
+        $nextRevision,
+        (string) $userId,
+        (int) $expectedRevision,
+    ]);
+    return $stmt->rowCount();
+}
+
+/**
+ * Transaction + SELECT FOR UPDATE CAS write.
+ *
+ * @param null|int $expectedRevision
+ * @param callable $buildNextBlob
+ * @return array{ok:bool,conflict?:bool,blob:object}
+ */
+function kpi_v1_db_cas_put($cfg, $userId, $expectedRevision, $buildNextBlob)
+{
+    $pdo = kpi_v1_db($cfg);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT store_json, annual_nav_json, pl_json, updated_at, revision
+             FROM kpi_store WHERE user_id = ? LIMIT 1 FOR UPDATE'
+        );
+        $stmt->execute([(string) $userId]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            if ($expectedRevision !== null) {
+                $pdo->rollBack();
+                return ['ok' => false, 'conflict' => true, 'blob' => kpi_v1_empty_store_blob($userId)];
+            }
+            $current = kpi_v1_empty_store_blob($userId);
+            $next = $buildNextBlob($current);
+            $next->userId = $userId;
+            $next->revision = 1;
+            $next->updatedAt = gmdate('c');
+            try {
+                kpi_v1_db_insert_store_row($pdo, $userId, $next);
+            } catch (PDOException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                if (kpi_v1_db_is_duplicate_key($e)) {
+                    return ['ok' => false, 'conflict' => true, 'blob' => kpi_v1_db_read_blob($cfg, $userId)];
+                }
+                throw $e;
+            }
+            $pdo->commit();
+            return ['ok' => true, 'blob' => $next];
+        }
+
+        $current = kpi_v1_db_row_to_blob($userId, $row);
+        $curRev = (int) $current->revision;
+        if ($expectedRevision === null || (int) $expectedRevision !== $curRev) {
+            $pdo->rollBack();
+            return ['ok' => false, 'conflict' => true, 'blob' => $current];
+        }
+
+        $previous = json_decode(json_encode($current));
+        $next = $buildNextBlob($current);
+        $next->userId = $userId;
+        $next->revision = $curRev + 1;
+        $next->updatedAt = gmdate('c');
+        kpi_v1_backup_blob($cfg, $userId, $previous);
+        $n = kpi_v1_db_update_store_row($pdo, $userId, $curRev, $next);
+        if ($n < 1) {
+            $pdo->rollBack();
+            return ['ok' => false, 'conflict' => true, 'blob' => $current];
+        }
+        $pdo->commit();
+        return ['ok' => true, 'blob' => $next];
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
 }
 
 function kpi_v1_db_read_user($cfg, $userId)

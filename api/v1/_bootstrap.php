@@ -74,6 +74,18 @@ function kpi_v1_json_out($code, $payload)
     exit;
 }
 
+function kpi_v1_empty_store_blob($userId)
+{
+    return (object) [
+        'userId' => $userId,
+        'updatedAt' => null,
+        'revision' => null,
+        'store' => null,
+        'annualNav' => null,
+        'pl' => null,
+    ];
+}
+
 function kpi_v1_require_token($cfg)
 {
     $hdr = '';
@@ -111,13 +123,7 @@ function kpi_v1_read_blob($path)
         return kpi_v1_db_read_blob($cfg, $userId);
     }
 
-    $empty = (object) [
-        'userId' => null,
-        'updatedAt' => null,
-        'store' => null,
-        'annualNav' => null,
-        'pl' => null,
-    ];
+    $empty = kpi_v1_empty_store_blob(null);
     if (!is_file($path)) {
         return $empty;
     }
@@ -127,9 +133,16 @@ function kpi_v1_read_blob($path)
     if (!is_object($data)) {
         return $empty;
     }
+    $revision = null;
+    if (property_exists($data, 'revision') && $data->revision !== null && $data->revision !== '') {
+        $revision = (int) $data->revision;
+    } elseif (property_exists($data, 'store') || property_exists($data, 'updatedAt')) {
+        $revision = 0;
+    }
     return (object) [
         'userId' => isset($data->userId) ? $data->userId : null,
         'updatedAt' => isset($data->updatedAt) ? $data->updatedAt : null,
+        'revision' => $revision,
         'store' => property_exists($data, 'store') ? $data->store : null,
         'annualNav' => property_exists($data, 'annualNav') ? $data->annualNav : null,
         'pl' => property_exists($data, 'pl') ? $data->pl : null,
@@ -159,6 +172,59 @@ function kpi_v1_write_blob($path, $blob)
     if (!rename($tmp, $path)) {
         @unlink($tmp);
         kpi_v1_json_out(500, ['ok' => false, 'error' => 'rename_failed']);
+    }
+}
+
+/**
+ * File-driver CAS with a sibling lock file (flock). Existing files without revision = 0.
+ *
+ * @param null|int $expectedRevision
+ * @param callable $buildNextBlob
+ * @return array{ok:bool,conflict?:bool,blob:object}
+ */
+function kpi_v1_file_cas_put($path, $userId, $expectedRevision, $buildNextBlob)
+{
+    $cfg = kpi_v1_load_config();
+    $lockPath = $path . '.lock';
+    $lf = fopen($lockPath, 'c+');
+    if ($lf === false) {
+        kpi_v1_json_out(500, ['ok' => false, 'error' => 'lock_failed']);
+    }
+    if (!flock($lf, LOCK_EX)) {
+        fclose($lf);
+        kpi_v1_json_out(500, ['ok' => false, 'error' => 'lock_failed']);
+    }
+    try {
+        $current = kpi_v1_read_blob($path);
+        $fileExists = is_file($path);
+        if (!$fileExists) {
+            $current = kpi_v1_empty_store_blob($userId);
+            if ($expectedRevision !== null) {
+                return ['ok' => false, 'conflict' => true, 'blob' => $current];
+            }
+            $next = $buildNextBlob($current);
+            $next->userId = $userId;
+            $next->revision = 1;
+            $next->updatedAt = gmdate('c');
+            kpi_v1_write_blob($path, $next);
+            return ['ok' => true, 'blob' => $next];
+        }
+        $curRev = $current->revision === null ? 0 : (int) $current->revision;
+        if ($expectedRevision === null || (int) $expectedRevision !== $curRev) {
+            $current->revision = $curRev;
+            return ['ok' => false, 'conflict' => true, 'blob' => $current];
+        }
+        $previous = json_decode(json_encode($current));
+        $next = $buildNextBlob($current);
+        $next->userId = $userId;
+        $next->revision = $curRev + 1;
+        $next->updatedAt = gmdate('c');
+        kpi_v1_backup_blob($cfg, $userId, $previous);
+        kpi_v1_write_blob($path, $next);
+        return ['ok' => true, 'blob' => $next];
+    } finally {
+        flock($lf, LOCK_UN);
+        fclose($lf);
     }
 }
 /**

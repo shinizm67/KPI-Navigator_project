@@ -39,9 +39,76 @@
   var hookQuiet = false;
   /** Block PUT until KpiYearStore finishes post-bind init (KPI-LS-USER-SCOPE-7-B). */
   var userScopePutHold = false;
+  /** Last GET revision. null = no row; 0 is a valid existing revision. undefined = not hydrated. */
+  var serverRevision = undefined;
+  /** After 409, block PUT until GET replaces dirty memory. */
+  var conflictPutHold = false;
+  /** After 409, next hydrate must not merge dirty local over server. */
+  var hydrateIgnoreLocal = false;
   var origSetItem = Storage.prototype.setItem;
   var origRemoveItem = Storage.prototype.removeItem;
   var origGetItem = Storage.prototype.getItem;
+
+  function applyServerRevision(data) {
+    if (!data || typeof data !== 'object') return;
+    if (!Object.prototype.hasOwnProperty.call(data, 'revision')) {
+      serverRevision = null;
+      return;
+    }
+    if (data.revision === null) {
+      serverRevision = null;
+      return;
+    }
+    var n = Number(data.revision);
+    serverRevision = Number.isFinite(n) ? n : null;
+  }
+
+  function storeConflictMessage() {
+    var raw = '';
+    try {
+      raw = String((document.documentElement && document.documentElement.getAttribute('lang')) || '');
+    } catch (_e) {}
+    var l = raw.toLowerCase();
+    if (l.indexOf('zh') === 0) {
+      return '其他分頁或畫面已更新資料。已載入最新資料。請確認後再輸入。';
+    }
+    if (l.indexOf('ja') === 0) {
+      return '別のタブまたは画面でデータが更新されました。最新データを読み込みました。内容を確認して再入力してください。';
+    }
+    return 'Data was updated in another tab or screen. Latest data has been loaded. Please review and re-enter if needed.';
+  }
+
+  function emitStoreConflict(detail) {
+    try {
+      document.dispatchEvent(new CustomEvent('kpi:storeConflict', { detail: detail || {} }));
+    } catch (_eEv) {}
+    /* No window.alert: 409 recovery stays; dirty-gated UI is a later batch. */
+  }
+
+  function handlePutConflict(data) {
+    conflictPutHold = true;
+    if (putTimer != null) {
+      window.clearTimeout(putTimer);
+      putTimer = null;
+    }
+    applyServerRevision(data);
+    hydrateIgnoreLocal = true;
+    var detail = {
+      revision: data && Object.prototype.hasOwnProperty.call(data, 'revision') ? data.revision : null,
+      updatedAt: data && data.updatedAt != null ? data.updatedAt : null,
+    };
+    Promise.resolve(pullFromServerNow())
+      .catch(function () {})
+      .then(function () {
+        emitStoreConflict(detail);
+      });
+    return Promise.resolve({
+      ok: false,
+      conflict: true,
+      revision: detail.revision,
+      updatedAt: detail.updatedAt,
+    });
+  }
 
   function applyPlanFromPayload(data) {
     if (!data || !data.plan) return;
@@ -619,6 +686,7 @@
     var body = {
       store: storePayload,
       annualNav: localGet(NAV_KEY),
+      expectedRevision: serverRevision === undefined ? null : serverRevision,
     };
     if (localTier() === 'basic') {
       body.store = stripProFromStore(storePayload);
@@ -629,7 +697,7 @@
   }
 
   function canStorePut(cfg) {
-    if (!canSync(cfg) || userScopePutHold || hookQuiet) return false;
+    if (!canSync(cfg) || userScopePutHold || hookQuiet || conflictPutHold) return false;
     if (!hydrateComplete) return false;
     return true;
   }
@@ -640,24 +708,58 @@
   }
 
   function doPut(cfg) {
-    if (!canStorePut(cfg)) return Promise.resolve();
+    if (!canStorePut(cfg)) return Promise.resolve({ ok: false, skipped: true });
     var body = buildPutBody(cfg);
-    if (!body.store || typeof body.store !== 'object') return Promise.resolve();
+    if (!body.store || typeof body.store !== 'object') {
+      return Promise.resolve({ ok: false, skipped: true });
+    }
     putInFlight = fetch(cfg.baseUrl, {
       method: 'PUT',
       headers: buildHeaders(cfg, true),
       body: JSON.stringify(body),
       credentials: fetchCreds(cfg),
     })
-      .catch(function () {})
-      .then(function () {
+      .then(function (res) {
+        return res
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (data) {
+            data = data && typeof data === 'object' ? data : {};
+            if (res.status === 409 || data.error === 'conflict') {
+              return handlePutConflict(data);
+            }
+            if (!res.ok) {
+              return {
+                ok: false,
+                conflict: false,
+                status: res.status,
+                error: data.error || 'http_' + res.status,
+              };
+            }
+            applyServerRevision(data);
+            return {
+              ok: true,
+              conflict: false,
+              revision: serverRevision,
+              updatedAt: data.updatedAt || null,
+            };
+          });
+      })
+      .catch(function () {
+        return { ok: false, conflict: false, error: 'network' };
+      })
+      .then(function (result) {
         putInFlight = null;
+        return result;
       });
     return putInFlight;
   }
 
   function schedulePut(cfg) {
     if (!canSync(cfg) || userScopePutHold || hookQuiet) return;
+    if (conflictPutHold) return;
     if (!hydrateComplete) return;
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
@@ -683,6 +785,13 @@
     }
     if (!canSync(cfg)) {
       return withPutTimeout(putInFlight || Promise.resolve());
+    }
+    if (conflictPutHold) {
+      return Promise.resolve({
+        ok: false,
+        conflict: true,
+        revision: serverRevision === undefined ? null : serverRevision,
+      });
     }
     if (!hydrateComplete) {
       return withPutTimeout(putInFlight || Promise.resolve());
@@ -753,9 +862,9 @@
   } catch (_eEv) {}
 
   function hydrateFromServer(cfg) {
-    if (!canSync(cfg) || hydrated) return;
+    if (!canSync(cfg) || hydrated) return Promise.resolve();
     hydrated = true;
-    fetch(cfg.baseUrl, {
+    return fetch(cfg.baseUrl, {
       method: 'GET',
       headers: buildHeaders(cfg, false),
       credentials: fetchCreds(cfg),
@@ -789,11 +898,15 @@
           } catch (_eScopeReset) {}
         }
         applyPlanFromPayload(data);
+        applyServerRevision(data);
+        conflictPutHold = false;
+        var skipLocalMerge = userScopeSwitched || hydrateIgnoreLocal;
+        hydrateIgnoreLocal = false;
         var changed = false;
         var storeHadFacts = false;
         if (data.store && typeof data.store === 'object') {
           storeHadFacts = storeHasDailyFacts(data.store);
-          var localBeforeHydrate = userScopeSwitched ? null : localGet(STORE_KEY);
+          var localBeforeHydrate = skipLocalMerge ? null : localGet(STORE_KEY);
           var fullStore = stripDailyFactsFromStore(
             mergeStorePreservingLocalMepData(data.store, localBeforeHydrate)
           );
@@ -851,7 +964,9 @@
           } catch (_eLog) {}
         }
         hydrateComplete = true;
-        if (storeHadFacts) schedulePut(cfg);
+        if (storeHadFacts) {
+          schedulePut(cfg);
+        }
       })
       .catch(function () {
         resetHydrateForRetry();
@@ -863,30 +978,42 @@
    * Login already binds; this covers Annual script order (gateway before auth).
    */
   function hydrateAfterAuthBind(cfg) {
-    var tries = 0;
-    function run() {
-      var auth = window.__KPI_AUTH;
-      if (auth && typeof auth.syncPlanFromServer === 'function') {
-        Promise.resolve(auth.syncPlanFromServer())
-          .catch(function () {
-            return null;
-          })
-          .then(function () {
-            return waitForYearStoreUserScopeReady();
-          })
-          .then(function () {
-            hydrateFromServer(cfg);
-          });
-        return;
+    return new Promise(function (resolve) {
+      var tries = 0;
+      function finish() {
+        Promise.resolve(hydrateFromServer(cfg)).then(resolve, resolve);
       }
-      tries += 1;
-      if (tries < 80) {
-        window.setTimeout(run, 25);
-        return;
+      function run() {
+        var auth = window.__KPI_AUTH;
+        if (auth && typeof auth.syncPlanFromServer === 'function') {
+          Promise.resolve(auth.syncPlanFromServer())
+            .catch(function () {
+              return null;
+            })
+            .then(function () {
+              return waitForYearStoreUserScopeReady();
+            })
+            .then(function () {
+              finish();
+            });
+          return;
+        }
+        tries += 1;
+        if (tries < 80) {
+          window.setTimeout(run, 25);
+          return;
+        }
+        finish();
       }
-      hydrateFromServer(cfg);
-    }
-    run();
+      run();
+    });
+  }
+
+  function pullFromServerNow() {
+    hydrated = false;
+    hydrateComplete = false;
+    cfg = readSyncConfig();
+    return hydrateAfterAuthBind(cfg);
   }
 
   function installLocalStorageHooks() {
@@ -981,10 +1108,7 @@
       return next;
     },
     pullFromServer: function () {
-      hydrated = false;
-      hydrateComplete = false;
-      cfg = readSyncConfig();
-      hydrateAfterAuthBind(cfg);
+      return pullFromServerNow();
     },
     pushToServerNow: function () {
       cfg = readSyncConfig();
@@ -994,7 +1118,7 @@
     collectPlFromLocal: collectPlFromLocal,
   };
 
-  if (canSync(cfg)) {
+      if (canSync(cfg)) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         hydrateAfterAuthBind(cfg);

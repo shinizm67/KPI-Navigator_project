@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS kpi_store (
   annual_nav_json LONGTEXT NULL,
   pl_json LONGTEXT NULL,
   updated_at DATETIME NULL,
+  revision BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id),
   CONSTRAINT fk_kpi_store_user
     FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
