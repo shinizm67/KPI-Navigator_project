@@ -19578,7 +19578,29 @@
       });
 
       topEditBtn.addEventListener('click', function () {
-        if (window.__MONTHLY_EDIT_NAV__) window.__MONTHLY_EDIT_NAV__.go(null);
+        if (!window.__MONTHLY_EDIT_NAV__) return;
+        var iso = null;
+        if (window.__MONTHLY_UI && typeof window.__MONTHLY_UI.getFocusedIsoDate === 'function') {
+          iso = window.__MONTHLY_UI.getFocusedIsoDate();
+        }
+        var st =
+          window.__MONTHLY_UI && typeof window.__MONTHLY_UI.getState === 'function'
+            ? window.__MONTHLY_UI.getState()
+            : null;
+        var passIso = false;
+        if (
+          iso &&
+          /^\d{4}-\d{2}-\d{2}$/.test(String(iso)) &&
+          st &&
+          Number.isFinite(st.year) &&
+          Number.isFinite(st.month0)
+        ) {
+          var parts = String(iso).split('-');
+          if (Number(parts[0]) === st.year && Number(parts[1]) - 1 === st.month0) {
+            passIso = true;
+          }
+        }
+        window.__MONTHLY_EDIT_NAV__.go(passIso ? iso : null);
       });
     })();
     (function () {

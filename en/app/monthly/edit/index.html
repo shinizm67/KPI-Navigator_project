@@ -12506,14 +12506,60 @@
             : now.getFullYear();
         return Number.isFinite(oy) ? oy : now.getFullYear();
       }
-      function applyMepDefaultMonth() {
-        var now = new Date();
+      function isValidMepCalendarIso(iso) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return false;
+        var y = Number(String(iso).slice(0, 4));
+        var mo = Number(String(iso).slice(5, 7));
+        var d = Number(String(iso).slice(8, 10));
+        if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d) || mo < 1 || mo > 12) {
+          return false;
+        }
+        if (d < 1 || d > daysInMonth(y, mo - 1)) return false;
+        return true;
+      }
+      /* KPI-MEP-OPEN-ISO: no-query fallback only. Does not write selectedDate / annualNav / dirty. */
+      function resolveMepOpenIsoFromContext() {
         var oy = mepOperatingYear();
-        mefYear = oy;
-        mefMonth0 = oy === now.getFullYear() ? now.getMonth() : 0;
-        mefPreferredIso = null;
-        if (oy === now.getFullYear()) {
+        function todayFallbackIso() {
+          var now = new Date();
+          if (now.getFullYear() === oy) {
+            return mepIsoFromParts(oy, now.getMonth(), now.getDate());
+          }
+          return mepIsoFromParts(oy, 0, 1);
+        }
+        function isValidOyIso(iso) {
+          if (!isValidMepCalendarIso(iso)) return false;
+          return Number(String(iso).slice(0, 4)) === oy;
+        }
+        var raw = '';
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            raw = String(KpiYearStore.getSelectedDate() || '');
+          }
+        } catch (_eSel) {}
+        if (!raw && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
+          raw = String(window.__ANNUAL_DATA.daily.selectedDate || '');
+        }
+        if (isValidOyIso(raw)) return raw;
+        var oyIso = '';
+        try {
+          var nav =
+            window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.getJson === 'function'
+              ? window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualNav')
+              : null;
+          if (nav && nav.operatingSelectedIso) oyIso = String(nav.operatingSelectedIso);
+        } catch (_eOyIso) {}
+        if (isValidOyIso(oyIso)) return oyIso;
+        return todayFallbackIso();
+      }
+      function applyMepYearMonthOpen(y, m1) {
+        mefYear = y;
+        mefMonth0 = m1 - 1;
+        var now = new Date();
+        if (now.getFullYear() === mefYear && now.getMonth() === mefMonth0) {
           mefPreferredIso = mepIsoFromParts(mefYear, mefMonth0, now.getDate());
+        } else {
+          mefPreferredIso = mepIsoFromParts(mefYear, mefMonth0, 1);
         }
       }
 
@@ -12572,22 +12618,16 @@
         var iso = String(params.get('iso') || '').trim();
         var line = String(params.get('line') || '').trim();
         mefPreferredLineId = line || null;
-        if (Number.isFinite(y) && m >= 1 && m <= 12) {
-          mefYear = y;
-          mefMonth0 = m - 1;
-          if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-            var parts = iso.split('-');
-            if (Number(parts[0]) === mefYear && Number(parts[1]) - 1 === mefMonth0) {
-              mefPreferredIso = iso;
-            }
-          }
+        /* D: valid ?iso= wins even if year/month also present. */
+        if (isValidMepCalendarIso(iso)) {
+          applyMepSelectedIso(iso);
           return;
         }
-        if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-          applyMepSelectedIso(iso);
-              return;
-            }
-        applyMepDefaultMonth();
+        if (Number.isFinite(y) && m >= 1 && m <= 12) {
+          applyMepYearMonthOpen(y, m);
+          return;
+        }
+        applyMepSelectedIso(resolveMepOpenIsoFromContext());
       }
       function persistMefMonth() {
         try {
@@ -12640,8 +12680,8 @@
         persistMefMonth();
         scroller.scrollTop = 0;
         applyZoom();
+        /* Open: scroll only. scrollToPreferredDayLeft writes selectedIso — do not use here. */
         if (mefPreferredIso) scrollToIsoColumn(mefPreferredIso);
-        else scrollToPreferredDayLeft();
         syncLabelScroll();
         focusPreferredLine();
         pinLabelsToRight();
