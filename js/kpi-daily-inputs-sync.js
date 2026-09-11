@@ -105,10 +105,18 @@
       if (!row || !row.iso) return;
       var sales = Number(row.sales);
       if (!Number.isFinite(sales)) sales = 0;
-      var prevS = store.timeline.dailySales[row.iso];
+      var salesMap = store.timeline.dailySales;
+      var hasPrevSales = Object.prototype.hasOwnProperty.call(salesMap, row.iso);
+      var prevS = hasPrevSales ? salesMap[row.iso] : undefined;
+      var prevN = Number(prevS);
+      /* Hydrate must not clobber canonical timeline (MEP/store.php) with stale daily-inputs. */
+      var keepCanonicalSales =
+        hasPrevSales && Number.isFinite(prevN) && prevN > 0 && prevN !== 1234;
       var hadPrevB = Object.prototype.hasOwnProperty.call(store.timeline.businessDays, row.iso);
       var prevB = hadPrevB ? store.timeline.businessDays[row.iso] : undefined;
-      store.timeline.dailySales[row.iso] = sales;
+      if (!keepCanonicalSales) {
+        salesMap[row.iso] = sales;
+      }
 
       var rawBiz = Object.prototype.hasOwnProperty.call(row, 'businessDay')
         ? row.businessDay
@@ -128,7 +136,7 @@
         if (hadPrevB) delete store.timeline.businessDays[row.iso];
       }
 
-      if (prevS !== sales) changed = true;
+      if (!keepCanonicalSales && prevS !== sales) changed = true;
       if (hadPrevB !== nextHadB) changed = true;
       else if (nextHadB && prevB !== nextB) changed = true;
     });
