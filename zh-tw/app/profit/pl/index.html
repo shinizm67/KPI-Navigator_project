@@ -10645,7 +10645,8 @@
       }
 
       function hasUnsavedChanges() {
-        return plTouched && buildSnapshot() !== confirmedSnapshot;
+        if (!confirmedSnapshot) return false;
+        return buildSnapshot() !== confirmedSnapshot;
       }
 
       function syncUndoButton() {
@@ -10770,7 +10771,6 @@
           cell.setAttribute('data-pl-bound', '1');
           cell.addEventListener('focus', function () {
             pushUndoSnapshot();
-            markTouched();
           });
           cell.addEventListener('input', function () {
             markTouched();
@@ -10808,6 +10808,13 @@
 
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
 
+      function plPutFailed(putResult) {
+        if (!putResult) return false;
+        if (putResult.conflict || putResult.status === 428) return true;
+        if (putResult.ok === false && !putResult.skipped) return true;
+        return false;
+      }
+
       function plSave(showAlert) {
         var map = {};
         try {
@@ -10827,10 +10834,6 @@
         if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
           window.__plInsight.resetCache();
         }
-        confirmedSnapshot = buildSnapshot();
-        plSaved = true;
-        undoStack = [];
-        syncUndoButton();
         try {
           if (typeof writeMonthlyExpenseAllocationToMep === 'function') {
             var mepResult = writeMonthlyExpenseAllocationToMep({ year: plYear });
@@ -10842,12 +10845,26 @@
             );
           }
         } catch (_mepErr) {}
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
-        if (showAlert !== false) window.alert(t('保存しました。', 'Saved.', '已儲存。'));
+        var gw = window.__KPI_DATA_GATEWAY;
+        var put =
+          gw && typeof gw.flushPut === 'function' ? gw.flushPut() : Promise.resolve();
+        return Promise.resolve(put).then(function (putResult) {
+          if (plPutFailed(putResult)) {
+            plSaved = false;
+            return putResult;
+          }
+          confirmedSnapshot = buildSnapshot();
+          plSaved = true;
+          undoStack = [];
+          syncUndoButton();
+          if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+          if (typeof refreshPlRatios === 'function') refreshPlRatios();
+          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+          if (showAlert !== false) window.alert(t('保存しました。', 'Saved.', '已儲存。'));
+          return putResult || { ok: true };
+        });
       }
 
 
@@ -10883,8 +10900,13 @@
       }
       if (closeChooserSave) {
         closeChooserSave.addEventListener('click', function () {
-          plSave(false);
-          finishLeaveNavigate(true);
+          Promise.resolve(plSave(false)).then(function (putResult) {
+            if (plPutFailed(putResult)) {
+              finishLeaveNavigate(false);
+              return;
+            }
+            finishLeaveNavigate(true);
+          });
         });
       }
       if (closeChooserDiscard) {
@@ -10903,7 +10925,7 @@
         });
       }
       function canLeaveWithoutChooser() {
-        return plSaved && !hasUnsavedChanges();
+        return !hasUnsavedChanges();
       }
       function requestLeaveNavigation() {
         return new Promise(function (resolve) {
