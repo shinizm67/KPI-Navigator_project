@@ -12322,6 +12322,27 @@
       font-size: 17px;
       white-space: nowrap;
     }
+    .sales-data-modal__today {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 5px 5px 0 0;
+      color: var(--sdm-cyan);
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      width: 118px;
+      height: 27px;
+      font-size: 16px;
+      line-height: 1;
+      background: rgba(88, 225, 243, 0.33);
+      box-sizing: border-box;
+    }
+    .sales-data-modal__today:hover,
+    .sales-data-modal__today:focus-visible {
+      background: var(--sdm-bg-active-55);
+      outline: 2px solid var(--sdm-cyan);
+      outline-offset: 1px;
+    }
     .sales-data-modal__body {
       margin-top: var(--sdm-body-top);
       display: flex;
@@ -14975,7 +14996,7 @@
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">年次目標売上</p>
           <div class="annual-target-sales-value" data-field="annual.targetSales">
-            <span class="annual-target-sales-amount" id="annual-target-sales-value">¥0</span>
+            <span class="annual-target-sales-amount" id="annual-target-sales-value">—</span>
           </div>
         </div>
         <button type="button" class="annual-history-btn" id="annual-history-btn" aria-haspopup="dialog" aria-controls="annual-history-panel">履歴</button>
@@ -15827,7 +15848,7 @@
             aria-selected="true"
             data-sdm-tab="input"
           >
-            Input
+            売上入力
           </button>
           <button
             type="button"
@@ -15837,9 +15858,17 @@
             aria-selected="false"
             data-sdm-tab="analyze"
           >
-            Target Sales
+            目標売上
           </button>
         </div>
+        <button
+          type="button"
+          class="sales-data-modal__today sales-data-modal__input-only"
+          id="sales-data-today-btn"
+          aria-label="今日に移動"
+        >
+          今日
+        </button>
       </div>
       <div class="sales-data-modal__body">
         <div class="sales-data-modal__input-stack">
@@ -18234,15 +18263,13 @@
       }
 
       function isBizDay(iso) {
+        if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
+          return KpiYearStore.isUiBusinessDay(iso);
+        }
         if (typeof window.__isTwBusinessDay === 'function') return !!window.__isTwBusinessDay(iso);
         var maps = annualDailyMaps();
         var bmap = maps.businessDayByDate;
-        var tmap = maps.targetSalesByDate;
         if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
-        if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
-          var n = Number(tmap[iso]);
-          return Number.isFinite(n) ? n !== 0 : true;
-        }
         return true;
       }
 
@@ -18707,7 +18734,7 @@
           if (dailyEl) dailyEl.textContent = DASH;
           return;
         }
-        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
+        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH;
         if (dailyEl) {
           dailyEl.textContent =
             m.hasPlan && m.annualDailyNeed != null
@@ -19490,7 +19517,7 @@
           m.hasPlan && Number.isFinite(m.monthlyFullTarget)
             ? m.monthlyFullTarget - m.mtdA
             : null;
-        if (bdEl) bdEl.textContent = fmtInsightCount(m.monthRemainingBD);
+        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.monthRemainingBD) : DASH;
         if (needEl) {
           needEl.textContent =
             monthlyNeed != null && Number.isFinite(monthlyNeed)
@@ -19598,7 +19625,7 @@
           if (dailyEl) dailyEl.textContent = DASH;
           return;
         }
-        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
+        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH;
         if (needEl) {
           needEl.textContent =
             m.hasPlan && m.annualRemaining != null
@@ -19634,7 +19661,7 @@
           revisionValue(groups, 0, 2),
           m.hasPlan && m.annualRemaining != null ? fmtInsightMoney(m.annualRemaining) : DASH
         );
-        setInsightRevisionValue(revisionValue(groups, 1, 0), fmtInsightCount(m.yearRemainingBD));
+        setInsightRevisionValue(revisionValue(groups, 1, 0), m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH);
         setInsightRevisionValue(
           revisionValue(groups, 1, 1),
           m.hasPlan && m.annualDailyNeed != null ? fmtInsightMoney(m.annualDailyNeed) : DASH
@@ -21656,7 +21683,7 @@
             m.hasPlan ? fmtOverlayDiff(m.mtdA, m.mtdT) : dash,
             m.hasPlan ? fmtOverlayAchPct(m.mtdA, m.mtdT) : dash,
             m.hasPlan && m.monthlyDailyNeed != null ? fmtOverlayMoney(m.monthlyDailyNeed) : dash,
-            fmtOverlayCount(m.monthRemainingBD),
+            m.hasPlan ? fmtOverlayCount(m.monthRemainingBD) : dash,
           ],
           m.hasPlan && Number.isFinite(Number(m.mtdT)) && Number(m.mtdT) > 0
             ? { idx: 2, actual: Number(m.mtdA), target: Number(m.mtdT) }
@@ -21677,7 +21704,7 @@
         setValueBoxes(annualG2, [
           m.annualTarget != null ? fmtOverlayMoney(m.annualTarget) : dash,
           m.hasPlan && m.annualRemaining != null ? fmtOverlayMoney(m.annualRemaining) : dash,
-          fmtOverlayCount(m.yearRemainingBD),
+          m.hasPlan ? fmtOverlayCount(m.yearRemainingBD) : dash,
           m.hasPlan && m.annualDailyNeed != null ? fmtOverlayMoney(m.annualDailyNeed) : dash,
         ]);
         setOverlayGraph(dailyGraph, m.dailySales, m.dailyTarget, hasDailyPlan);
@@ -21901,6 +21928,9 @@
             sessionStorage.removeItem(STORAGE_KEY);
           }
           updateModeButton(willBeOffice);
+          if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.armTwViewSyncGuard === 'function') {
+            window.__ANNUAL_UI.armTwViewSyncGuard(450);
+          }
           bodyEl.classList.add('kpi-mode-switching');
           requestAnimationFrame(function () {
             bodyEl.classList.toggle('office-mode', willBeOffice);
@@ -21908,8 +21938,16 @@
               window.__ANNUAL_UI.refreshFocusBarAsset();
             }
             requestAnimationFrame(function () {
+              if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.armTwViewSyncGuard === 'function') {
+                window.__ANNUAL_UI.armTwViewSyncGuard(450);
+              }
               bodyEl.classList.remove('kpi-mode-switching');
-              __modeToggleBusy = false;
+              requestAnimationFrame(function () {
+                if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.restoreTwViewFromSelectedIso === 'function') {
+                  window.__ANNUAL_UI.restoreTwViewFromSelectedIso();
+                }
+                __modeToggleBusy = false;
+              });
             });
           });
         });
@@ -22225,28 +22263,39 @@
           }
         }
         if (cy == null) return;
+        var prevNav = null;
+        try {
+          if (typeof readAnnualNav === 'function') prevNav = readAnnualNav();
+        } catch (_ePrevNav) {}
+        if (!prevNav || typeof prevNav !== 'object' || Array.isArray(prevNav)) prevNav = {};
+        var nextNav = Object.assign({}, prevNav, {
+          calendarYear: Number(cy),
+          selectedIso: iso || null
+        });
         var gw = window.__KPI_DATA_GATEWAY;
         if (!gw || typeof gw.setJson !== 'function') {
           try {
             localStorage.setItem(
               'kpiNavigator.annualNav',
-              JSON.stringify({ calendarYear: Number(cy), selectedIso: iso || null })
+              JSON.stringify(nextNav)
             );
           } catch (e) {}
           return;
         }
-        gw.setJson('kpiNavigator.annualNav', {
-          calendarYear: Number(cy),
-          selectedIso: iso || null
-        });
+        gw.setJson('kpiNavigator.annualNav', nextNav);
       }
-      function renderYear() {
+      function renderYear(opts) {
         yearBtn.textContent = String(currentYear);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
         window.__ANNUAL_DATA.calendarYear = currentYear;
         buildYearMenu();
         document.dispatchEvent(
-          new CustomEvent('annual:calendarYearChanged', { detail: { year: currentYear } })
+          new CustomEvent('annual:calendarYearChanged', {
+            detail: {
+              year: currentYear,
+              skipTableRender: !!(opts && opts.skipTableRender),
+            },
+          })
         );
         syncAnnualNavToStorage();
       }
@@ -22305,7 +22354,7 @@
           window.__ANNUAL_DATA.daily.selectedDate = String(nav.selectedIso);
         }
       })();
-      renderYear();
+      renderYear({ skipTableRender: true });
     })();
     (function () {
       var bdEl = document.getElementById('annual-total-bd-value');
@@ -22356,51 +22405,62 @@
         return bmap;
       }
 
-      /** Cockpit 営業日数: Sales Data の B.DAY が明示的に true の日のみ（平日フォールバックなし） */
+      function yearHasSavedAnnualPlan(y) {
+        return !!(
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          KpiYearStore.hasSavedAnnualPlanTarget(y)
+        );
+      }
+
+      /** Cockpit/planning 営業日: 明示Save目標がある年のみ. false除外, unset=営業. live bmap を優先 */
+      function isPlanningBusinessDayForCockpit(iso, bmap) {
+        if (!iso || String(iso).length < 10) return false;
+        var y = Number(String(iso).slice(0, 4));
+        if (!yearHasSavedAnnualPlan(y)) return false;
+        var map = bmap || resolveBusinessDayMapForCockpit();
+        if (map && Object.prototype.hasOwnProperty.call(map, iso)) return !!map[iso];
+        if (window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function') {
+          return KpiYearStore.isPlanningBusinessDay(iso);
+        }
+        return true;
+      }
+
       function isCalendarBusinessDay(y, m0, day, bmap) {
         var d = new Date(y, m0, day);
         if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
         var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-        var map = bmap || resolveBusinessDayMapForCockpit();
-        if (!Object.prototype.hasOwnProperty.call(map, iso)) return false;
-        return !!map[iso];
+        return isPlanningBusinessDayForCockpit(iso, bmap);
       }
 
       function computeBusinessDayCountsForYear(y, bmap) {
         y = Number(y);
+        var emptyMonthly = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         if (!isFinite(y)) {
-          return { total: 0, monthly: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] };
+          return { total: null, monthly: emptyMonthly.slice(), planningActive: false };
+        }
+        if (!yearHasSavedAnnualPlan(y)) {
+          var inactive = { total: null, monthly: emptyMonthly.slice(), planningActive: false };
+          if (!bmap) __businessDayCountsCache[y] = inactive;
+          return inactive;
         }
         if (!bmap && __businessDayCountsCache[y]) return __businessDayCountsCache[y];
         var map = bmap || resolveBusinessDayMapForCockpit();
-        var monthly = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        var monthly = emptyMonthly.slice();
         var total = 0;
-        var yearPrefix = String(y) + '-';
-        var isoKeys = Object.keys(map || {});
-        if (isoKeys.length) {
-          for (var ki = 0; ki < isoKeys.length; ki++) {
-            var iso = isoKeys[ki];
-            if (!map[iso]) continue;
-            if (String(iso).indexOf(yearPrefix) !== 0) continue;
-            var m = Number(String(iso).slice(5, 7)) - 1;
-            if (!Number.isFinite(m) || m < 0 || m > 11) continue;
-            monthly[m] += 1;
-            total += 1;
-          }
-          var result = { total: total, monthly: monthly };
-          if (!bmap) __businessDayCountsCache[y] = result;
-          return result;
-        }
         for (var m0 = 0; m0 < 12; m0++) {
           var dc = new Date(y, m0 + 1, 0).getDate();
           var mc = 0;
           for (var day = 1; day <= dc; day++) {
-            if (isCalendarBusinessDay(y, m0, day, map)) mc++;
+            var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+            if (isPlanningBusinessDayForCockpit(iso, map)) {
+              mc++;
+              total++;
+            }
           }
           monthly[m0] = mc;
-          total += mc;
         }
-        var result = { total: total, monthly: monthly };
+        var result = { total: total, monthly: monthly, planningActive: true };
         if (!bmap) __businessDayCountsCache[y] = result;
         return result;
       }
@@ -22425,13 +22485,15 @@
         var bmap = resolveBusinessDayMapForCockpit();
         var counts = computeBusinessDayCountsForYear(cy, bmap);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-        window.__ANNUAL_DATA.totalBusinessDay = counts.total;
-        bdEl.textContent = String(counts.total);
+        window.__ANNUAL_DATA.totalBusinessDay = counts.planningActive ? counts.total : null;
+        bdEl.textContent = counts.planningActive ? String(counts.total) : '—';
 
         var rows = document.querySelectorAll('.annual-open-table tbody tr');
         for (var i = 0; i < rows.length && i < 12; i++) {
           var cells = rows[i].getElementsByTagName('td');
-          if (cells.length >= 2) cells[1].textContent = String(counts.monthly[i]);
+          if (cells.length >= 2) {
+            cells[1].textContent = counts.planningActive ? String(counts.monthly[i]) : '—';
+          }
         }
       }
 
@@ -22448,6 +22510,7 @@
       window.__ANNUAL_UI.scheduleSyncBusinessDayDisplayFromDailyMap =
         scheduleSyncBusinessDayDisplayFromDailyMap;
       window.__ANNUAL_UI.resolveBusinessDayMapForCockpit = resolveBusinessDayMapForCockpit;
+      window.__ANNUAL_UI.isPlanningBusinessDayForCockpit = isPlanningBusinessDayForCockpit;
       window.__ANNUAL_UI.computeBusinessDayCountsForYear = computeBusinessDayCountsForYear;
       window.__ANNUAL_UI.invalidateCockpitBusinessDayCache = invalidateCockpitBusinessDayCache;
 
@@ -24432,9 +24495,11 @@
         }
 
         function loadStore() {
+          var preservedMepYears = snapshotMepYearRecords(store && store.years);
           var parsed = readStorePayloadFromLocal();
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
+            restoreMepYearRecords(preservedMepYears);
             return;
           }
           store = emptyStore();
@@ -24456,6 +24521,7 @@
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
+          restoreMepYearRecords(preservedMepYears);
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
             needPersist = true;
@@ -24464,7 +24530,7 @@
               if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
             });
           }
-          if (needPersist) persistStore();
+          if (needPersist) persistStoreIfYearMepSafe();
         }
 
         function persistableStore() {
@@ -24537,7 +24603,7 @@
           if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          persistStore();
+          persistStoreIfYearMepSafe();
         }
 
         /** timeline に無い ISO のみ legacy キーから補完（リセット後の CSV 再取込前の復旧用） */
@@ -24582,7 +24648,7 @@
           }
           if (changed) {
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStore();
+            persistStoreIfYearMepSafe();
           }
         }
 
@@ -24596,6 +24662,131 @@
           if (!store.years[year]) store.years[year] = { year: year, status: 'open', plan: {} };
           if (!store.years[year].plan) store.years[year].plan = {};
           return store.years[year];
+        }
+
+        function cloneMepJson(value) {
+          try {
+            return JSON.parse(JSON.stringify(value));
+          } catch (_eClone) {
+            return null;
+          }
+        }
+
+        function mepStreamMapHasData(map) {
+          if (!map || typeof map !== 'object') return false;
+          var keys = Object.keys(map);
+          for (var i = 0; i < keys.length; i++) {
+            var byIso = map[keys[i]];
+            if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+          }
+          return false;
+        }
+
+        function mepDailyMetaHasData(meta) {
+          if (!meta || typeof meta !== 'object') return false;
+          if (mepStreamMapHasData(meta.memos)) return true;
+          if (meta.weather && typeof meta.weather === 'object' && Object.keys(meta.weather).length) {
+            return true;
+          }
+          if (meta.flags && typeof meta.flags === 'object' && Object.keys(meta.flags).length) {
+            return true;
+          }
+          return false;
+        }
+
+        function mepNotesHasData(notes) {
+          if (!notes || typeof notes !== 'object') return false;
+          var keys = Object.keys(notes);
+          for (var i = 0; i < keys.length; i++) {
+            if (String(notes[keys[i]] == null ? '' : notes[keys[i]]).trim()) return true;
+          }
+          return false;
+        }
+
+        var MEP_YEAR_PRESERVE_KEYS = [
+          'dailyIncome',
+          'dailyExpenses',
+          'dailyMeta',
+          'mepMemoRows',
+          'monthlyStrategyUserNotes',
+          'mepUpdatedAt',
+        ];
+
+        function yearMepFieldHasData(rec, key) {
+          if (!rec || typeof rec !== 'object') return false;
+          if (key === 'dailyIncome' || key === 'dailyExpenses') return mepStreamMapHasData(rec[key]);
+          if (key === 'dailyMeta') return mepDailyMetaHasData(rec[key]);
+          if (key === 'monthlyStrategyUserNotes') return mepNotesHasData(rec[key]);
+          if (key === 'mepMemoRows') return Array.isArray(rec[key]) && rec[key].length > 0;
+          if (key === 'mepUpdatedAt') return rec.mepUpdatedAt != null && rec.mepUpdatedAt !== '';
+          return rec[key] != null;
+        }
+
+        function yearRecordHasMepData(rec) {
+          if (!rec || typeof rec !== 'object') return false;
+          return (
+            mepStreamMapHasData(rec.dailyIncome) ||
+            mepStreamMapHasData(rec.dailyExpenses) ||
+            mepDailyMetaHasData(rec.dailyMeta) ||
+            mepNotesHasData(rec.monthlyStrategyUserNotes) ||
+            (Array.isArray(rec.mepMemoRows) && rec.mepMemoRows.length > 0)
+          );
+        }
+
+        function snapshotMepYearRecords(years) {
+          var out = {};
+          if (!years || typeof years !== 'object') return out;
+          Object.keys(years).forEach(function (yk) {
+            var rec = years[yk];
+            if (!rec || typeof rec !== 'object') return;
+            var snap = {};
+            var has = false;
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(rec[key]);
+              if (cloned == null) return;
+              snap[key] = cloned;
+              has = true;
+            });
+            if (has) out[String(yk)] = snap;
+          });
+          return out;
+        }
+
+        function restoreMepYearRecords(preserved) {
+          if (!preserved || typeof preserved !== 'object') return;
+          if (!store.years || typeof store.years !== 'object') store.years = {};
+          Object.keys(preserved).forEach(function (yk) {
+            var src = preserved[yk];
+            if (!src || typeof src !== 'object') return;
+            var yn = Number(yk);
+            if (!Number.isFinite(yn)) return;
+            var rec = ensureYearMepData(yn);
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(src, key)) return;
+              if (yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(src[key]);
+              if (cloned == null) return;
+              rec[key] = cloned;
+            });
+          });
+        }
+
+        function storeWouldPutHollowYearMep() {
+          var years = store.years || {};
+          var yks = Object.keys(years);
+          if (!yks.length) return true;
+          for (var i = 0; i < yks.length; i++) {
+            if (!yearRecordHasMepData(years[yks[i]])) return true;
+          }
+          return false;
+        }
+
+        /** Timeline/schema persist: keep year MEP maps; never PUT empty shells. */
+        function persistStoreIfYearMepSafe() {
+          if (storeWouldPutHollowYearMep()) return false;
+          persistStore();
+          return true;
         }
 
         function ensureYearMepData(year) {
@@ -24658,6 +24849,7 @@
         }
 
         var EDIT_LEASE_KEY = 'kpiNavigator.kpiEditLeases';
+        var DAILY_SALES_INPUT_PATH_KEY = 'kpiNavigator.dailySalesInputPath';
         var TAB_ID_SESSION_KEY = 'kpiNavigator.kpiTabId';
         var SUBSCRIPTION_TIER_KEY = 'kpiNavigator.subscriptionTier';
         var EDIT_LEASE_TTL_MS = 120000;
@@ -24682,7 +24874,6 @@
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
-            persistStore();
           }
         }
 
@@ -24690,12 +24881,80 @@
           return normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual');
         }
 
+        function parseDailySalesInputPathValue(raw) {
+          if (raw == null || raw === '') return null;
+          var v = raw;
+          if (typeof raw === 'string') {
+            try {
+              v = JSON.parse(raw);
+            } catch (_eParse) {
+              v = raw;
+            }
+          }
+          if (v === 'annual' || v === 'mep') return v;
+          if (v && typeof v === 'object' && (v.path === 'annual' || v.path === 'mep')) {
+            return v.path;
+          }
+          return null;
+        }
+
+        function readDailySalesInputPathLightKey() {
+          try {
+            var fromGw = parseDailySalesInputPathValue(gw().getJson(DAILY_SALES_INPUT_PATH_KEY));
+            if (fromGw) return fromGw;
+          } catch (_eGw) {}
+          try {
+            return parseDailySalesInputPathValue(localStorage.getItem(DAILY_SALES_INPUT_PATH_KEY));
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
+        function writeDailySalesInputPathLightKey(path) {
+          try {
+            gw().setJson(DAILY_SALES_INPUT_PATH_KEY, {
+              path: path === 'mep' ? 'mep' : 'annual',
+              updatedAt: Date.now(),
+            });
+          } catch (_eWrite) {}
+        }
+
+        function applyDailySalesInputPathFromLightKey(opts) {
+          var next = readDailySalesInputPathLightKey();
+          if (!next) return false;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return false;
+          store.meta.dailySalesInputPath = next;
+          if (opts && opts.dispatch) {
+            document.dispatchEvent(
+              new CustomEvent('kpi:dailySalesInputPathChanged', {
+                detail: { path: next, source: 'storage' },
+              })
+            );
+          }
+          return true;
+        }
+
+        function applyDailySalesInputPathFromStorageRaw(raw) {
+          var next = parseDailySalesInputPathValue(raw);
+          if (raw == null || raw === '') next = 'annual';
+          if (!next) return;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return;
+          store.meta.dailySalesInputPath = next;
+          document.dispatchEvent(
+            new CustomEvent('kpi:dailySalesInputPathChanged', {
+              detail: { path: next, source: 'storage' },
+            })
+          );
+        }
+
         function setDailySalesInputPath(path) {
           if (!isProSubscription()) return;
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
-          persistStore();
+          writeDailySalesInputPathLightKey(next);
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -24815,7 +25074,6 @@
           var next = !!enabled;
           if (!!store.meta.pastSalesEditEnabled === next) return;
           store.meta.pastSalesEditEnabled = next;
-          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:pastSalesEditChanged', {
               detail: { enabled: next },
@@ -24876,25 +25134,68 @@
           return canWriteDailySalesFrom(source, iso);
         }
 
-        /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
-        function isCalendarBusinessDay(y, m0, day) {
-          var d = new Date(y, m0, day);
-          if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
-          var dow = d.getDay();
-          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+        /** Sales Data live UI / Save: Annual path + this tab holds daily-sales lease. */
+        function canEditSalesDataLive() {
+          if (getDailySalesInputPath() !== 'annual') return false;
+          return holdsEditLease('daily-sales');
+        }
+
+        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
+        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
+        var PLAN_USER_SAVED_SOURCES = {
+          'sales-data-save': true
+        };
+
+        function isUserSavedAnnualPlanSource(source) {
+          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
+        }
+
+        function hasSavedAnnualPlanTarget(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var rec = store.years[y];
+          if (!rec || !rec.plan) return false;
+          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
+          var n = Number(rec.plan.targetSales);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        function readSavedAnnualPlanTarget(year) {
+          if (!hasSavedAnnualPlanTarget(year)) return null;
+          return Number(store.years[Number(year)].plan.targetSales);
+        }
+
+        function readBusinessDayFlag(iso) {
+          if (!validIso(iso)) return null;
           var bmap = store.timeline.businessDays;
-          var smap = store.timeline.dailySales;
-          var isWk = dow === 0 || dow === 6;
           if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
             return !!bmap[iso];
           }
-          if (smap && Object.prototype.hasOwnProperty.call(smap, iso)) {
-            var n = Number(smap[iso]);
-            if (!Number.isFinite(n)) return !isWk;
-            if (n === 0) return false;
-            return true;
-          }
-          return !isWk;
+          return null;
+        }
+
+        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
+        function isUiBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
+        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
+        function isBaselineActualDay(iso) {
+          if (!validIso(iso)) return false;
+          var flag = readBusinessDayFlag(iso);
+          if (flag === false) return false;
+          if (flag === true) return true;
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
+          var n = Number(store.timeline.dailySales[iso]);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
+        function isPlanningBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
+          return readBusinessDayFlag(iso) !== false;
         }
 
         function computeObserved(year) {
@@ -24907,8 +25208,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -25038,7 +25339,8 @@
           var gwObj = window.__KPI_DATA_GATEWAY;
           var flush =
             gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
-          return Promise.resolve(flush).then(function () {
+          return Promise.resolve(flush).then(function (putResult) {
+            if (putResult && (putResult.conflict || putResult.status === 428)) return putResult;
             var total = list.length;
             var p = Promise.resolve();
             list.forEach(function (y, idx) {
@@ -25450,7 +25752,7 @@
           }
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
-            persistStore();
+            persistStoreIfYearMepSafe();
             if (window.__ANNUAL_DATA) {
               window.__ANNUAL_DATA.calendarYear = getOperatingYear();
             }
@@ -25586,13 +25888,10 @@
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
-            return !!store.timeline.businessDays[iso];
+          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
+            return isPlanningBusinessDay(iso);
           }
-          var d = new Date(iso + 'T00:00:00');
-          if (!isFinite(d.getTime())) return false;
-          var dow = d.getDay();
-          return dow !== 0 && dow !== 6;
+          return isBaselineActualDay(iso);
         }
 
         function snapshotSalesAmt(iso) {
@@ -25698,7 +25997,7 @@
             };
           }
           rec.annualFacts = {
-            annualTarget: readAnnualTarget(year),
+            annualTarget: readSavedAnnualPlanTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -26089,9 +26388,61 @@
           syncToPastSalesMemory();
         }
 
+        /** Sales Data / CSV Save: timeline総売上に合わせて dailyIncome の Store/A/B を同期 */
+        function syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix) {
+          if (!salesMap || typeof salesMap !== 'object') return;
+          Object.keys(salesMap).forEach(function (iso) {
+            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
+            if (!canEditIso(iso)) return;
+            var newTotal = Number(salesMap[iso]);
+            if (isLegacyPlaceholderSales(newTotal)) return;
+            if (!Number.isFinite(newTotal)) newTotal = 0;
+            newTotal = Math.round(newTotal);
+            var y = isoYear(iso);
+            var rec = ensureYearMepData(y);
+            var di = rec.dailyIncome;
+            function readStream(id) {
+              if (!di[id] || !Object.prototype.hasOwnProperty.call(di[id], iso)) return 0;
+              var v = Number(di[id][iso]);
+              return Number.isFinite(v) ? Math.round(v) : 0;
+            }
+            function writeStream(id, val) {
+              if (!di[id] || typeof di[id] !== 'object') di[id] = {};
+              var n = Math.round(Number(val) || 0);
+              if (!n) delete di[id][iso];
+              else di[id][iso] = n;
+            }
+            var a = readStream('sales_a');
+            var b = readStream('sales_b');
+            var streams = a + b;
+            if (streams > newTotal) {
+              try {
+                console.warn(
+                  '[kpi] annual total < A+B; clearing A/B',
+                  iso,
+                  newTotal,
+                  a,
+                  b
+                );
+              } catch (_eWarn) {}
+              writeStream('sales_a', 0);
+              writeStream('sales_b', 0);
+              writeStream('store_sales', newTotal);
+            } else {
+              writeStream('store_sales', newTotal - streams);
+            }
+            rec.mepUpdatedAt = Date.now();
+          });
+        }
+
         function persistSalesDataModalSave(daily, meta) {
-          if (!daily) return;
-          if (getDailySalesInputPath() !== 'annual') return;
+          if (!daily) return Promise.resolve({ ok: false, error: 'no_daily' });
+          if (getDailySalesInputPath() !== 'annual') {
+            return Promise.resolve({ ok: false, error: 'path_blocked' });
+          }
+          if (!holdsEditLease('daily-sales')) {
+            return Promise.resolve({ ok: false, error: 'edit_lease_lost' });
+          }
           var oy = getOperatingYear();
           var prefix = oy + '-';
           var salesMap = daily.targetSalesByDate || {};
@@ -26115,7 +26466,9 @@
             yearTouched = true;
           });
           if (!yearTouched) return Promise.resolve();
+          syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix);
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({ [String(oy)]: true });
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
@@ -26136,8 +26489,11 @@
           var m = Object.assign({ source: 'annual-daily-compat' }, meta || {});
           if (m.source === 'sales-data-save') {
             var saved = persistSalesDataModalSave(daily, m);
-            syncToAnnualDaily();
-            return saved;
+            return Promise.resolve(saved).then(function (result) {
+              if (result && result.ok === false) return result;
+              syncToAnnualDaily();
+              return result;
+            });
           }
           var merged = mergeDailyMaps(daily.targetSalesByDate, daily.businessDayByDate, m);
           syncToAnnualDaily();
@@ -26163,15 +26519,23 @@
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          persistStore();
+          var src = source || 'kpi-year-store';
+          /* Date-only nav (Annual boot / year change) must not PUT the whole store. */
+          if (src !== 'calendar-year' && src !== 'initial') {
+            persistStore();
+          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
           try {
-            gw().setJson(SELECTED_DATE_KEY, {
+            var prevNav = gw().getJson(SELECTED_DATE_KEY);
+            if (!prevNav || typeof prevNav !== 'object' || Array.isArray(prevNav)) prevNav = {};
+            var nextNav = {
               calendarYear: isoYear(iso),
               selectedIso: iso,
-            });
+            };
+            if (isoYear(iso) === getOperatingYear()) nextNav.operatingSelectedIso = iso;
+            gw().setJson(SELECTED_DATE_KEY, Object.assign({}, prevNav, nextNav));
           } catch (_e) {}
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
@@ -26437,6 +26801,7 @@
             reconcileTimelineFromLegacy();
           }
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
             var yearsAll = {};
@@ -26593,8 +26958,8 @@
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(year, month, day)) continue;
             var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isBaselineActualDay(iso)) continue;
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -26609,10 +26974,10 @@
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(year, month, day)) continue;
+            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isBaselineActualDay(iso)) continue;
             var dt = new Date(year, month, day);
             if (dt.getDay() !== weekday) continue;
-            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -26684,7 +27049,8 @@
           var dc = new Date(y, month + 1, 0).getDate();
           var count = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(y, month, day)) continue;
+            var iso = y + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isPlanningBusinessDay(iso)) continue;
             var dt = new Date(y, month, day);
             if (dt.getDay() !== weekday) continue;
             count++;
@@ -26696,7 +27062,8 @@
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
           if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
-          var annualTarget = readAnnualTarget(y);
+          if (!hasSavedAnnualPlanTarget(y)) return null;
+          var annualTarget = readSavedAnnualPlanTarget(y);
           if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
             return null;
           }
@@ -26707,7 +27074,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
+              var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isPlanningBusinessDay(iso)) continue;
               monthlyBD[m0]++;
               totalBD++;
             }
@@ -26795,7 +27163,7 @@
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isPlanningBusinessDay(iso)) return 0;
           var dt = new Date(y, m0, day);
           return computeDailyKpiByMonthDow(oy, m0, dt.getDay(), baselineYears);
         }
@@ -26886,7 +27254,7 @@
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isPlanningBusinessDay(iso)) return 0;
           var plan = computePlanMonthlyTargets(oy);
           if (!plan) return null;
           var bdCount = plan.monthlyBD[m0];
@@ -26992,8 +27360,8 @@
           var rows = [];
           var dc = new Date(oy, month + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(oy, month, day)) continue;
             var iso = oy + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isPlanningBusinessDay(iso)) continue;
             var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
             var raw = rawResult.value;
             if (raw == null || !Number.isFinite(raw)) raw = 0;
@@ -27054,7 +27422,7 @@
           var parts = iso.split('-');
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
-          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isCalendarBusinessDay(oy, m0, day)) {
+          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isPlanningBusinessDay(iso)) {
             return {
               value: rawResult.value,
               rawValue: rawResult.value,
@@ -27146,7 +27514,13 @@
           setPastSalesEditEnabled: setPastSalesEditEnabled,
           canWriteDailySalesFrom: canWriteDailySalesFrom,
           canWriteBusinessDayFrom: canWriteBusinessDayFrom,
+          canEditSalesDataLive: canEditSalesDataLive,
           salesSourceToPath: salesSourceToPath,
+          hasSavedAnnualPlanTarget: hasSavedAnnualPlanTarget,
+          readSavedAnnualPlanTarget: readSavedAnnualPlanTarget,
+          isUiBusinessDay: isUiBusinessDay,
+          isBaselineActualDay: isBaselineActualDay,
+          isPlanningBusinessDay: isPlanningBusinessDay,
           computeObserved: computeObserved,
           refreshObservedForYear: refreshObservedForYear,
           observedForPastYear: observedForPastYear,
@@ -27246,9 +27620,14 @@
             document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
             return;
           }
+          if (ev.key === DAILY_SALES_INPUT_PATH_KEY) {
+            applyDailySalesInputPathFromStorageRaw(ev.newValue);
+            return;
+          }
           if (ev.key !== STORE_KEY && ev.key !== LEGACY_DAILY_KEY && ev.key !== LEGACY_PAST_KEY) return;
           loadStore();
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey({ dispatch: true });
           maybeRolloverYear();
           syncToAnnualDaily();
           dispatchChange('dailySalesChanged', { source: 'storage' });
@@ -27288,6 +27667,23 @@
             'To edit, change the Sales Input button to Annual',
             '如要編輯，請將營業額輸入切換鈕改為年度'
           );
+        }
+        function salesDataLeaseLostBlockTitle() {
+          return t(
+            '別の画面で編集権が移動しました。閲覧のみ可能です。',
+            'Edit rights moved to another screen. This view is read-only.',
+            '編輯權已移到其他畫面。目前僅可瀏覽。'
+          );
+        }
+        function salesDataLiveBlocked() {
+          if (storeReady() && typeof KpiYearStore.canEditSalesDataLive === 'function') {
+            return !KpiYearStore.canEditSalesDataLive();
+          }
+          return mepSalesPathActive();
+        }
+        function salesDataLiveBlockTitle() {
+          if (mepSalesPathActive()) return dailySalesPathBlockTitle();
+          return salesDataLeaseLostBlockTitle();
         }
         function pastSalesViewTooltip() {
           return t(
@@ -27450,9 +27846,9 @@
           if (!modal) return;
           var pane = document.getElementById('sales-data-pane-input');
           if (!pane) return;
-          var blocked = mepSalesPathActive();
+          var blocked = salesDataLiveBlocked();
           var open = modalIsOpen(modal);
-          var blockTitle = dailySalesPathBlockTitle();
+          var blockTitle = salesDataLiveBlockTitle();
           pane.classList.toggle('sales-data-modal__pane--path-blocked', blocked);
           modal.classList.toggle('sales-data-modal--path-blocked', blocked && open);
           if (!open) return;
@@ -27467,7 +27863,12 @@
             else el.removeAttribute('data-tooltip');
           });
           setGuardButtonsDisabled(
-            ['sales-data-modal-save', 'sales-data-modal-undo', 'sales-data-modal-csv'],
+            [
+              'sales-data-modal-save',
+              'sales-data-modal-undo',
+              'sales-data-modal-csv',
+              'sales-data-select-all'
+            ],
             blocked,
             blockTitle
           );
@@ -27548,6 +27949,7 @@
           applyPastSales: applyPastSalesGuards,
           annualSalesPathActive: annualSalesPathActive,
           mepSalesPathActive: mepSalesPathActive,
+          salesDataLiveBlocked: salesDataLiveBlocked,
           pastSalesEditable: pastSalesEditable,
         };
         applyAllGuards();
@@ -27661,14 +28063,31 @@
           return (daily && daily.businessDayByDate) || {};
         }
 
-        /** Cockpit: Sales Data B.DAY が明示的に true の日のみ */
+        function yearHasSavedAnnualPlan(y) {
+          return !!(
+            window.KpiYearStore &&
+            typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+            KpiYearStore.hasSavedAnnualPlanTarget(y)
+          );
+        }
+
         function isCalendarBusinessDay(y, m0, day) {
           var d = new Date(y, m0, day);
           if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
           var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (!yearHasSavedAnnualPlan(y)) return false;
+          if (
+            window.__ANNUAL_UI &&
+            typeof window.__ANNUAL_UI.isPlanningBusinessDayForCockpit === 'function'
+          ) {
+            return window.__ANNUAL_UI.isPlanningBusinessDayForCockpit(iso);
+          }
           var bmap = resolveBusinessDayMapForCockpit();
-          if (!Object.prototype.hasOwnProperty.call(bmap, iso)) return false;
-          return !!bmap[iso];
+          if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+          if (window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function') {
+            return KpiYearStore.isPlanningBusinessDay(iso);
+          }
+          return true;
         }
 
         function countBusinessDaysInMonth(y, m0) {
@@ -27818,9 +28237,22 @@
         function syncAnnualTargetDisplay(year, annualTarget) {
           var el = document.getElementById('annual-target-sales-value');
           if (!el) return;
+          var saved =
+            window.KpiYearStore && typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function'
+              ? KpiYearStore.hasSavedAnnualPlanTarget(year)
+              : false;
+          if (!saved) {
+            el.textContent = DASH;
+            return;
+          }
           var n = annualTarget;
           if (n == null || !Number.isFinite(Number(n)) || Number(n) <= 0) {
-            n = resolveAnnualTarget(year);
+            if (
+              window.KpiYearStore &&
+              typeof KpiYearStore.readSavedAnnualPlanTarget === 'function'
+            ) {
+              n = KpiYearStore.readSavedAnnualPlanTarget(year);
+            }
           }
           if (n == null || !Number.isFinite(Number(n)) || Number(n) <= 0) {
             el.textContent = DASH;
@@ -27842,13 +28274,18 @@
             KpiYearStore.syncToAnnualDaily();
           }
 
-          var annualTarget = resolveAnnualTarget(year);
+          var annualTarget =
+            window.KpiYearStore && typeof KpiYearStore.readSavedAnnualPlanTarget === 'function'
+              ? KpiYearStore.readSavedAnnualPlanTarget(year)
+              : null;
           var weights = null;
           if (window.KpiYearStore) {
             weights = KpiYearStore.readMonthlyHlWeights(year);
           }
           var hasPlan =
-            annualTarget != null && Number.isFinite(Number(annualTarget)) && Number(annualTarget) > 0;
+            window.KpiYearStore && typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function'
+              ? KpiYearStore.hasSavedAnnualPlanTarget(year)
+              : annualTarget != null && Number.isFinite(Number(annualTarget)) && Number(annualTarget) > 0;
           if (!weights && hasPlan) weights = DEFAULT_HL_WEIGHTS.slice();
 
           syncAnnualTargetDisplay(year, hasPlan ? Number(annualTarget) : null);
@@ -27868,35 +28305,50 @@
             var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
             bmap = (daily && daily.businessDayByDate) || {};
           }
-          var yearPrefix = String(year) + '-';
-          Object.keys(bmap || {}).forEach(function (iso) {
-            if (!bmap[iso]) return;
-            if (String(iso).indexOf(yearPrefix) !== 0) return;
-            var m0 = Number(String(iso).slice(5, 7)) - 1;
-            if (!Number.isFinite(m0) || m0 < 0 || m0 > 11) return;
-            monthlyBD[m0] += 1;
-            totalBD += 1;
-            var amt = readDailySalesAmount(iso);
-            if (Number.isFinite(amt) && amt > 0) {
-              monthlySales[m0] += amt;
-              anySales = true;
+          if (hasPlan) {
+            for (var scanM = 0; scanM < 12; scanM++) {
+              var scanDc = new Date(year, scanM + 1, 0).getDate();
+              for (var scanDay = 1; scanDay <= scanDc; scanDay++) {
+                var scanIso = year + '-' + pad2(scanM + 1) + '-' + pad2(scanDay);
+                var isPlanDay = false;
+                if (
+                  window.__ANNUAL_UI &&
+                  typeof window.__ANNUAL_UI.isPlanningBusinessDayForCockpit === 'function'
+                ) {
+                  isPlanDay = window.__ANNUAL_UI.isPlanningBusinessDayForCockpit(scanIso, bmap);
+                } else {
+                  isPlanDay = isCalendarBusinessDay(year, scanM, scanDay);
+                }
+                if (!isPlanDay) continue;
+                monthlyBD[scanM] += 1;
+                totalBD += 1;
+                var amt = readDailySalesAmount(scanIso);
+                if (Number.isFinite(amt) && amt > 0) {
+                  monthlySales[scanM] += amt;
+                  anySales = true;
+                }
+              }
             }
-          });
+          }
           window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-          window.__ANNUAL_DATA.totalBusinessDay = totalBD;
+          window.__ANNUAL_DATA.totalBusinessDay = hasPlan ? totalBD : null;
           var bdEl = document.getElementById('annual-total-bd-value');
-          if (bdEl) bdEl.textContent = String(totalBD);
+          if (bdEl) bdEl.textContent = hasPlan ? String(totalBD) : DASH;
 
           for (var m0 = 0; m0 < 12; m0++) {
             var mk = MONTH_KEYS[m0];
             var bdCount = monthlyBD[m0];
-            setField(mk, 'businessDay', String(bdCount));
+            setField(mk, 'businessDay', hasPlan ? String(bdCount) : DASH);
 
             if (!hasPlan) {
               setField(mk, 'monthlyAverageTarget', DASH);
               setField(mk, 'hlSeasonPct', DASH);
               setField(mk, 'monthlyTarget', DASH);
               setField(mk, 'dailyTarget', DASH);
+              setField(mk, 'monthlyProfit', DASH);
+              setField(mk, 'monthlyKgi', DASH);
+              setField(mk, 'hlSeasonActualPct', DASH);
+              setField(mk, 'hlPercent', DASH);
             } else {
               var hl = weights && weights[m0] != null ? Number(weights[m0]) : 100;
               var monthlyAvg =
@@ -28654,6 +29106,10 @@
         };
       })();
       (function hydrateAnnualDailyShared() {
+        if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+          return;
+        }
         var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualDailyShared');
         if (!parsed) return;
         var daily = window.__ANNUAL_DATA.daily || {};
@@ -30286,8 +30742,45 @@
       /* KPI-ARP-PHASE2D */
       var lastScrollTop = tableScroll.scrollTop;
       var lastScrollDir = 0;
+      /* KPI-TW-VIEW-SYNC-GUARD: layout/content-visibility 由来 scroll が selectedIso を上書きしない */
+      var __twViewSyncGuardUntil = 0;
+      function isTwViewSyncGuarded() {
+        return Date.now() < __twViewSyncGuardUntil;
+      }
+      function clearTwViewSyncGuard() {
+        __twViewSyncGuardUntil = 0;
+      }
+      function armTwViewSyncGuard(ms) {
+        var n = Number(ms);
+        if (!Number.isFinite(n) || n <= 0) n = 450;
+        __twViewSyncGuardUntil = Date.now() + n;
+        lastScrollDir = 0;
+        edgeArmedDir = 0;
+        if (snapTimer) {
+          clearTimeout(snapTimer);
+          snapTimer = 0;
+        }
+        __geomCache = null;
+      }
+      function restoreTwViewFromSelectedIso() {
+        var iso = '';
+        try {
+          if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
+            iso = String(window.__ANNUAL_DATA.daily.selectedDate);
+          }
+        } catch (_eIso) {}
+        if (!iso && window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          try {
+            iso = String(KpiYearStore.getSelectedDate() || '');
+          } catch (_eStore) {}
+        }
+        armTwViewSyncGuard(450);
+        if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+          scrollTableToIso(iso, { lockMs: 450 });
+        }
+      }
       function enforceYearBoundaryScroll() {
-        if (snapping) return false;
+        if (snapping || isTwViewSyncGuarded()) return false;
         var range = anchorYearRowRange();
         if (range.first < 0 || range.last < 0) return false;
         var focusIdx = getNearestFocusRowIndex();
@@ -30398,6 +30891,7 @@
       }
       function crossYearByEdge(dir) {
         if (dir !== 1 && dir !== -1) return false;
+        if (isTwViewSyncGuarded()) return false;
         if (__crossYearInFlight) return false;
         /* KPI-ARP-PHASE4: Close / Open 両方で年跨ぎ */
         if (typeof window.__renderAnnualDailyTimeline !== 'function') return false;
@@ -30509,7 +31003,7 @@
         return true;
       }
       function scheduleSnap() {
-        if (snapping || isYearCrossGuardActive() || __crossYearInFlight) return;
+        if (snapping || isTwViewSyncGuarded() || isYearCrossGuardActive() || __crossYearInFlight) return;
         if (snapTimer) clearTimeout(snapTimer);
         snapTimer = setTimeout(function () {
           snapTimer = 0;
@@ -30538,6 +31032,7 @@
       function stepTableByRowsNow(step) {
         step = Number(step);
         if (!Number.isFinite(step) || step === 0) return;
+        clearTwViewSyncGuard();
         var rows = document.querySelectorAll('#annual-daily-rows .annual-daily-row');
         if (!rows || !rows.length) return;
         var range = anchorYearRowRange();
@@ -30584,10 +31079,15 @@
       window.__ANNUAL_UI.getFocusDateLockIso = function () {
         return __focusDateLockIso;
       };
+      window.__ANNUAL_UI.armTwViewSyncGuard = armTwViewSyncGuard;
+      window.__ANNUAL_UI.clearTwViewSyncGuard = clearTwViewSyncGuard;
+      window.__ANNUAL_UI.isTwViewSyncGuarded = isTwViewSyncGuarded;
+      window.__ANNUAL_UI.restoreTwViewFromSelectedIso = restoreTwViewFromSelectedIso;
 
       function scrollTableToIso(iso, opts) {
         opts = opts || {};
         if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return false;
+        armTwViewSyncGuard(450);
         if (window.__paintTwVisibleWindow) window.__paintTwVisibleWindow(String(iso));
         var row = document.querySelector(
           '#annual-daily-rows .annual-daily-row[data-iso-date="' + String(iso) + '"]'
@@ -30629,6 +31129,7 @@
         if (!row) return;
         var iso = row.getAttribute('data-iso-date');
         if (!iso) return;
+        if (isTwViewSyncGuarded()) return;
         if (__focusDateLockIso && iso !== __focusDateLockIso) return;
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
           window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
@@ -30652,14 +31153,18 @@
       }
       tableScroll.addEventListener('scroll', function () {
         var st = tableScroll.scrollTop;
-        if (st > lastScrollTop) lastScrollDir = 1;
-        else if (st < lastScrollTop) lastScrollDir = -1;
+        if (!isTwViewSyncGuarded()) {
+          if (st > lastScrollTop) lastScrollDir = 1;
+          else if (st < lastScrollTop) lastScrollDir = -1;
+        }
         lastScrollTop = st;
         if (window.__twMaybeShiftVisibleWindow) window.__twMaybeShiftVisibleWindow();
         scheduleEnforceYearBoundary();
         syncScrollLeft(tableScroll);
         scheduleSnap();
       }, { passive: true });
+      tableScroll.addEventListener('wheel', clearTwViewSyncGuard, { passive: true });
+      tableScroll.addEventListener('pointerdown', clearTwViewSyncGuard, { passive: true });
       globalScroll.addEventListener('scroll', function () { syncScrollLeft(globalScroll); }, { passive: true });
       upperScroll.addEventListener('scroll', function () { syncScrollLeft(upperScroll); }, { passive: true });
       if (lowerScroll) {
@@ -30669,6 +31174,7 @@
       var wingHitBtn = document.getElementById('annual-daily-focus-wing-hit');
       var wingHitLeft = document.getElementById('annual-daily-focus-wing-hit-left');
       function forwardWheelToHorizontalScroll(e) {
+        clearTwViewSyncGuard();
         var expandedNow = body.classList.contains('annual-focus-bar-expanded');
         var overWing =
           e.target &&
@@ -30705,6 +31211,7 @@
       }
       if (focusBarStack) {
         focusBarStack.addEventListener('wheel', forwardWheelToHorizontalScroll, { passive: false });
+        focusBarStack.addEventListener('pointerdown', clearTwViewSyncGuard, { passive: true });
       }
       if (wingHitBtn) {
         wingHitBtn.addEventListener('wheel', forwardWheelToHorizontalScroll, { passive: false });
@@ -30892,8 +31399,23 @@
       }
 
       function isTimelineBusinessDay(iso, bmap, isWeekend) {
-        if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
-        return !isWeekend;
+        if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
+          return KpiYearStore.isUiBusinessDay(iso);
+        }
+        return true;
+      }
+      function isTwPlanningBusinessDay(iso, bmap, isWeekend) {
+        var y = Number(String(iso).slice(0, 4));
+        if (!Number.isFinite(y)) return false;
+        if (
+          !window.KpiYearStore ||
+          typeof KpiYearStore.hasSavedAnnualPlanTarget !== 'function' ||
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return false;
+        }
+        return isTimelineBusinessDay(iso, bmap, isWeekend);
       }
 
 
@@ -31009,41 +31531,20 @@
       function resolveTwPlanForYear(year) {
         var y = Number(year);
         if (!Number.isFinite(y)) return null;
-        var oy = window.KpiYearStore ? KpiYearStore.getOperatingYear() : new Date().getFullYear();
-        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
-        if (!Number.isFinite(cy)) cy = oy;
         var target = null;
         var weights = null;
-        if (window.KpiYearStore) {
-          target = KpiYearStore.readAnnualTarget(y);
-          weights = KpiYearStore.readMonthlyHlWeights(y);
-          if (KpiYearStore.isYearLocked(y)) {
-            if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
-          } else if (y === oy || y === cy) {
-            if (
-              (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) &&
-              window.__ANNUAL_DATA &&
-              window.__ANNUAL_DATA.targetSales != null
-            ) {
-              target = Number(window.__ANNUAL_DATA.targetSales);
-            }
-          } else if (y < oy) {
-            /* past year: fall through to referenceAnnualSalesByYear fallback */
-          } else {
-            return null;
-          }
-        } else if (window.__ANNUAL_DATA && y === cy && window.__ANNUAL_DATA.targetSales != null) {
-          target = Number(window.__ANNUAL_DATA.targetSales);
+        if (
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return null;
         }
-        if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) {
-          var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
-          if (
-            past &&
-            past.referenceAnnualSalesByYear &&
-            past.referenceAnnualSalesByYear[y] != null
-          ) {
-            target = Number(past.referenceAnnualSalesByYear[y]);
+        if (window.KpiYearStore) {
+          if (typeof KpiYearStore.readSavedAnnualPlanTarget === 'function') {
+            target = KpiYearStore.readSavedAnnualPlanTarget(y);
           }
+          weights = KpiYearStore.readMonthlyHlWeights(y);
         }
         if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
         if (!weights || weights.length !== 12) weights = twDefaultHlWeights();
@@ -31107,7 +31608,7 @@
             var dt = new Date(y, m0, day);
             var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
             var isWk = dt.getDay() === 0 || dt.getDay() === 6;
-            if (!isTimelineBusinessDay(iso, bmap, isWk)) continue;
+            if (!isTwPlanningBusinessDay(iso, bmap, isWk)) continue;
             days.push({ iso: iso, m0: m0 });
           }
         }
@@ -31362,7 +31863,13 @@
               ? KpiYearStore.readDailyFacts(iso)
               : null;
           if (fact) {
-            salesNum = Number(fact.sales) || 0;
+            salesNum = readTwSalesAmt(iso, smap);
+            if (window.KpiYearStore && typeof KpiYearStore.readDailySales === 'function') {
+              var liveSales = KpiYearStore.readDailySales(iso);
+              if (liveSales != null && Number.isFinite(Number(liveSales))) {
+                salesNum = Number(liveSales);
+              }
+            }
             dailyTgt = fact.dailyTarget;
             if (dailyTgt != null) {
               dailyTgt = Number(dailyTgt);
@@ -32058,22 +32565,24 @@
           var dd = new Date(String(dayIso).trim() + 'T00:00:00');
           var isWk = dd.getDay() === 0 || dd.getDay() === 6;
           var biz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var planBiz = isTwPlanningBusinessDay(dayIso, bmap, isWk);
           var dayTarget = null;
-          if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+          if (planBiz && Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
             dayTarget = Number(tgtMap[dayIso]);
             if (!Number.isFinite(dayTarget)) dayTarget = null;
           }
           return {
             biz: biz,
+            planBiz: planBiz,
             sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
-            target: biz ? dayTarget : null,
+            target: planBiz ? dayTarget : null,
           };
         }
 
         if (direction > 0) {
           // leave fromIso, enter toIso
           var left = dayMeta(fromIso);
-          if (left.biz) {
+          if (left.planBiz) {
             m.yearRemainingBD = Math.max(0, Number(m.yearRemainingBD) - 1);
             m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
           }
@@ -32100,10 +32609,12 @@
           if (dropped.biz) {
             m.ytdA = Number(m.ytdA) - dropped.sales;
             m.mtdA = Number(m.mtdA) - dropped.sales;
-            if (dropped.target != null) {
-              m.ytdT = Number(m.ytdT) - dropped.target;
-              m.mtdT = Number(m.mtdT) - dropped.target;
-            }
+          }
+          if (dropped.target != null) {
+            m.ytdT = Number(m.ytdT) - dropped.target;
+            m.mtdT = Number(m.mtdT) - dropped.target;
+          }
+          if (dropped.planBiz) {
             m.yearRemainingBD = Number(m.yearRemainingBD) + 1;
             m.monthRemainingBD = Number(m.monthRemainingBD) + 1;
           }
@@ -32133,13 +32644,28 @@
             monthlyFullTarget: 0,
           };
         }
+        if (
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return {
+            monthRemainingBD: 0,
+            yearRemainingBD: 0,
+            monthlyFullTarget: 0,
+          };
+        }
         for (var m = 0; m < 12; m++) {
           var dc = new Date(y, m + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {
             var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
             var f = facts[dayIso];
-            if (!f || !f.businessDay) continue;
-            var tgt = f.dailyTarget;
+            var planBiz =
+              window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function'
+                ? KpiYearStore.isPlanningBusinessDay(dayIso)
+                : !!(f && f.businessDay);
+            if (!planBiz) continue;
+            var tgt = f && f.dailyTarget;
             if (m === m0 && tgt != null && Number.isFinite(Number(tgt))) {
               monthlyFullTarget += Number(tgt);
             }
@@ -32168,12 +32694,11 @@
             : null;
         var rest = remainingBdFromDailyFacts(rec && rec.dailyFacts, iso);
         var annualTarget =
-          typeof KpiYearStore.readAnnualTarget === 'function'
-            ? KpiYearStore.readAnnualTarget(y)
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          KpiYearStore.hasSavedAnnualPlanTarget(y) &&
+          typeof KpiYearStore.readSavedAnnualPlanTarget === 'function'
+            ? KpiYearStore.readSavedAnnualPlanTarget(y)
             : null;
-        if (!(Number(annualTarget) > 0) && typeof resolveAnnualTarget === 'function') {
-          annualTarget = resolveAnnualTarget(y);
-        }
         /* KPI-SALES-DATA-TARGET-PERSIST-CT: stale facts with $0 targets while plan exists
            must not block live recompute (Cockpit showed $0 / —). */
         if (
@@ -32185,7 +32710,9 @@
           return null;
         }
         var hasPlan =
-          fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function'
+            ? KpiYearStore.hasSavedAnnualPlanTarget(y)
+            : fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
         return finalizeTwMetricsNeeds({
           iso: iso,
           isBusinessToday: !!fact.businessDay,
@@ -32260,31 +32787,35 @@
             var dt = new Date(y, m, day);
             var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
             var isWk = dt.getDay() === 0 || dt.getDay() === 6;
-            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            var uiBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
+            var planBiz = isTwPlanningBusinessDay(dayIso, bmap, isWk);
+            if (!uiBiz && !planBiz) continue;
             var dayTarget = null;
-            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+            if (planBiz && Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
               dayTarget = Number(tgtMap[dayIso]);
               if (!Number.isFinite(dayTarget)) dayTarget = null;
             }
             if (m === m0 && dayTarget != null) monthlyFullTarget += dayTarget;
             if (dayIso <= iso) {
-              var salesAmt = readTwSalesAmt(dayIso, smap);
-              ytdA += salesAmt;
-              if (m === m0) mtdA += salesAmt;
+              if (uiBiz) {
+                var salesAmt = readTwSalesAmt(dayIso, smap);
+                ytdA += salesAmt;
+                if (m === m0) mtdA += salesAmt;
+              }
               if (dayTarget != null) {
                 ytdT += dayTarget;
                 hasPlan = true;
                 if (m === m0) mtdT += dayTarget;
               }
             }
-            if (dayIso >= iso) {
+            if (planBiz && dayIso >= iso) {
               if (m === m0) monthRemainingBD++;
               yearRemainingBD++;
             }
             if (dayIso === iso) {
-              isBusinessToday = true;
-              dailySales = readTwSalesAmt(dayIso, smap);
-              dailyTarget = dayTarget;
+              isBusinessToday = uiBiz;
+              dailySales = uiBiz ? readTwSalesAmt(dayIso, smap) : 0;
+              dailyTarget = planBiz ? dayTarget : null;
             }
           }
         }
@@ -32316,6 +32847,16 @@
         window.__TW_ANNUAL_DAILY_SYNCED = false;
       }
       window.__invalidateTwSalesThroughCache = invalidateTwSalesThroughCache;
+      function invalidatePlanningReadCaches() {
+        if (typeof window.clearTwTargetMapsByYear === 'function') window.clearTwTargetMapsByYear();
+        invalidateTwSalesThroughCache();
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.invalidateCockpitBusinessDayCache === 'function'
+        ) {
+          window.__ANNUAL_UI.invalidateCockpitBusinessDayCache();
+        }
+      }
       function ensureTwAnnualDailySynced() {
         if (window.__TW_ANNUAL_DAILY_SYNCED) return;
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
@@ -32524,6 +33065,7 @@
       /* END KPI-FOCUS-TW-METRICS */
       function refreshAnnualReadSurfaces(opts) {
         opts = opts || {};
+        if (typeof invalidatePlanningReadCaches === 'function') invalidatePlanningReadCaches();
         if (window.KpiYearStore) {
           if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
             KpiYearStore.reconcileTimelineFromLegacy();
@@ -32537,8 +33079,17 @@
         if (typeof renderAnnualDailyTimeline === 'function') {
           renderAnnualDailyTimeline(cy, { preserveScroll: !!opts.preserveScroll });
         }
+        if (
+          window.__ANNUAL_UI &&
+          typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function'
+        ) {
+          window.__ANNUAL_UI.syncCockpitForCalendarYear();
+        }
       }
       document.addEventListener('kpi:readSurfacesRefresh', function () {
+        refreshAnnualReadSurfaces({ preserveScroll: true });
+      });
+      document.addEventListener('kpi:storeHydratedFromServer', function () {
         refreshAnnualReadSurfaces({ preserveScroll: true });
       });
       /* KPI-READ-SURFACE-SYNC */
@@ -34623,10 +35174,6 @@
         return true;
       }
       function baseRowDefaults(iso, isWk) {
-        var rowY = isoYearFromIso(iso);
-        if (!pastSalesYearHasCommittedData(rowY) && !state.rowStateByIso[iso]) {
-          return { off: true, last: '0' };
-        }
         var ps = ensurePastSalesDaily();
         var bmap = ps.businessDayByDate;
         var map = ps.salesByDate;
@@ -34640,15 +35187,12 @@
           }
           return { off: false, last: '0' };
         }
+        var last = '0';
         if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
           var n = Number(map[iso]);
-          if (!isFinite(n)) n = 0;
-          if (n === 0) {
-            return { off: true, last: '0' };
-          }
-          return { off: false, last: String(Math.round(n)) };
+          if (isFinite(n)) last = String(Math.round(n));
         }
-        return { off: true, last: '0' };
+        return { off: false, last: last };
       }
       function isWeekendIso(iso) {
         var p = String(iso || '').split('-');
@@ -35781,9 +36325,13 @@
           payload.salesDataLastSession = daily.salesDataLastSession;
         }
         if (window.KpiYearStore && typeof KpiYearStore.persistFromAnnualDaily === 'function') {
-          var done = KpiYearStore.persistFromAnnualDaily(daily, { source: 'sales-data-save' });
-          window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
-          return done;
+          return Promise.resolve(
+            KpiYearStore.persistFromAnnualDaily(daily, { source: 'sales-data-save' })
+          ).then(function (result) {
+            if (result && result.ok === false) return result;
+            window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
+            return result;
+          });
         }
         window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
       }
@@ -35837,21 +36385,21 @@
                 }
                 return { off: true, last: lastOff };
               }
-              var last = '0';
+              /* ON: 表示中の入力値を正とする（data-last-active は B.DAY OFF 復元用。
+                 lease 切れ等で input ハンドラが last-active を更新できなくても Save を落とさない） */
               if (inp) {
+                var rawOn = String(inp.value || '').replace(/[^\d.-]/g, '');
+                if (rawOn !== '') {
+                  var nOn = Number(rawOn);
+                  if (isFinite(nOn)) return { off: false, last: String(Math.round(nOn)) };
+                }
                 var la = inp.getAttribute('data-last-active');
                 if (la != null && la !== '') {
                   var ln = Number(la);
-                  if (isFinite(ln)) last = String(Math.round(ln));
-                } else {
-                  var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
-                  if (raw !== '') {
-                    var n = Number(raw);
-                    if (isFinite(n)) last = String(Math.round(n));
-                  }
+                  if (isFinite(ln)) return { off: false, last: String(Math.round(ln)) };
                 }
               }
-              return { off: false, last: last };
+              return { off: false, last: '0' };
             }
           }
         }
@@ -36549,10 +37097,59 @@
         }
       }
 
-      function syncYearMonthFromApp() {
+      /* KPI-SDM-OPEN-ISO: open position only. Does not write selectedDate / annualNav / dirty. */
+      function resolveSalesDataOpenIso() {
+        var oy = getOperatingYear();
+        function todayFallbackIso() {
+          var now = new Date();
+          if (now.getFullYear() === oy) {
+            return oy + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+          }
+          return oy + '-01-01';
+        }
+        function isValidOyIso(iso) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return false;
+          var y = Number(String(iso).slice(0, 4));
+          var m = Number(String(iso).slice(5, 7));
+          var d = Number(String(iso).slice(8, 10));
+          if (y !== oy || !Number.isFinite(m) || !Number.isFinite(d) || m < 1 || m > 12) return false;
+          if (d < 1 || d > daysInMonth(oy, m - 1)) return false;
+          return true;
+        }
+        var raw = '';
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            raw = String(KpiYearStore.getSelectedDate() || '');
+          }
+        } catch (_eSel) {}
+        if (!raw && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
+          raw = String(window.__ANNUAL_DATA.daily.selectedDate || '');
+        }
+        if (isValidOyIso(raw)) return raw;
+        var oyIso = '';
+        try {
+          var nav =
+            window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.getJson === 'function'
+              ? window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualNav')
+              : null;
+          if (nav && nav.operatingSelectedIso) oyIso = String(nav.operatingSelectedIso);
+        } catch (_eOyIso) {}
+        if (isValidOyIso(oyIso)) return oyIso;
+        return todayFallbackIso();
+      }
+
+      function syncYearMonthFromApp(openIso) {
         var cy = getOperatingYear();
         state.year = cy;
         state.viewMonth = 0;
+        var iso = openIso || resolveSalesDataOpenIso();
+        if (iso && typeof iso === 'string') {
+          var p = iso.split('-');
+          if (Number(p[0]) === cy) {
+            var m = Number(p[1]);
+            if (m >= 1 && m <= 12) state.viewMonth = m - 1;
+          }
+        }
         syncSelectsFromState();
       }
 
@@ -36563,10 +37160,9 @@
         dateInput.max = cy + '-12-31';
       }
 
-      function syncColheadDatePickerValue() {
+      function syncColheadDatePickerValue(isoPick) {
         if (!dateInput) return;
         syncColheadDatePickerBounds();
-        var isoPick = null;
         if (isoPick && typeof isoPick === 'string') {
           var parts = isoPick.split('-');
           if (parts.length >= 3) {
@@ -36585,11 +37181,13 @@
       }
 
       function scrollToIsoDate(iso) {
-        if (!scrollEl || !modalTable || !iso) return;
+        if (!scrollEl || !modalTable || !iso) return false;
         var cb = modalTable.querySelector('.sales-data-modal__cb[data-iso-date="' + iso + '"]');
-        if (!cb) return;
+        if (!cb) return false;
         var tr = cb.closest('tr');
-        if (tr) tr.scrollIntoView({ block: 'start', behavior: 'auto' });
+        if (!tr) return false;
+        tr.scrollIntoView({ block: 'start', behavior: 'auto' });
+        return true;
       }
 
       function openColheadDatePicker() {
@@ -36751,10 +37349,6 @@
         return true;
       }
       function baseRowDefaults(iso, isWk) {
-        var rowY = isoYearFromIso(iso);
-        if (!salesDataYearHasCommittedData(rowY) && !state.rowStateByIso[iso]) {
-          return { off: true, last: '0' };
-        }
         var ps = ensureSalesDataDaily();
         var bmap = ps.businessDayByDate;
         var map = ps.targetSalesByDate;
@@ -36768,16 +37362,12 @@
           }
           return { off: false, last: '0' };
         }
+        var last = '0';
         if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
           var n = Number(map[iso]);
-          if (!isFinite(n)) n = 0;
-          if (n === 1234) return { off: !!isWk, last: '0' };
-          if (n === 0) {
-            return { off: true, last: '0' };
-          }
-          return { off: false, last: String(Math.round(n)) };
+          if (isFinite(n) && n !== 1234) last = String(Math.round(n));
         }
-        return { off: true, last: '0' };
+        return { off: false, last: last };
       }
       function isWeekendIso(iso) {
         var p = String(iso || '').split('-');
@@ -36879,11 +37469,37 @@
         el.textContent = String(n);
       }
 
+      function canEditSalesDataLiveNow() {
+        return !!(
+          window.KpiYearStore &&
+          typeof window.KpiYearStore.canEditSalesDataLive === 'function' &&
+          window.KpiYearStore.canEditSalesDataLive()
+        );
+      }
+      function salesDataLeaseLostSaveMessage() {
+        var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+        if (lang.indexOf('zh') === 0) {
+          return '編輯權已移到其他畫面。內容尚未儲存。';
+        }
+        if (lang.indexOf('ja') === 0) {
+          return '別の画面で編集権が移動しました。内容は保存されていません。';
+        }
+        return 'Edit rights moved to another screen. Changes were not saved.';
+      }
+      function rejectSalesDataSaveLeaseLost() {
+        window.alert(salesDataLeaseLostSaveMessage());
+        if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
+          window.__KPI_EDIT_GUARDS.applyAll();
+        }
+        return Promise.resolve({ ok: false, error: 'edit_lease_lost' });
+      }
       function saveSalesDataModal() {
+        if (!canEditSalesDataLiveNow()) {
+          return rejectSalesDataSaveLeaseLost();
+        }
         /* KPI-BUSY-OVERLAY */
         if (window.__KPI_BUSY && !window.__KPI_BUSY._inRun) {
-          window.__KPI_BUSY.run('save', function () { return saveSalesDataModal(); });
-          return;
+          return window.__KPI_BUSY.run('save', function () { return saveSalesDataModal(); });
         }
 
         var y = state.year;
@@ -36891,15 +37507,6 @@
         stashReferenceForYear(y);
         var refParsed = getReferenceFromInputEl();
         var targetToWrite = refParsed == null ? 0 : refParsed;
-        if (window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
-          KpiYearStore.writeAnnualTarget(y, targetToWrite, { source: 'sales-data-save' });
-        } else {
-          window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-          window.__ANNUAL_DATA.targetSales = targetToWrite;
-        }
-        document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
-          detail: { year: y, targetSales: targetToWrite > 0 ? targetToWrite : null, source: 'sales-data-save' }
-        }));
         var ps = ensureSalesDataDaily();
         ps.targetSalesByDate = ps.targetSalesByDate || {};
         ps.businessDayByDate = ps.businessDayByDate || {};
@@ -36916,13 +37523,28 @@
             bmap[item.iso] = !rsBiz.off;
           }
         }
-        state.rowStateByIso = {};
-        state.modalDirty = false;
-        state.referenceDirty = false;
-        undoStack = [];
-        syncUndoButton();
-        sessionSaved = true;
-        return Promise.resolve(persistSalesDataShared()).then(function () {
+        if (!canEditSalesDataLiveNow()) {
+          return rejectSalesDataSaveLeaseLost();
+        }
+        return Promise.resolve(persistSalesDataShared()).then(function (persistResult) {
+          if (persistResult && persistResult.ok === false) {
+            return rejectSalesDataSaveLeaseLost();
+          }
+          if (window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
+            KpiYearStore.writeAnnualTarget(y, targetToWrite, { source: 'sales-data-save' });
+          } else {
+            window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+            window.__ANNUAL_DATA.targetSales = targetToWrite;
+          }
+          document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
+            detail: { year: y, targetSales: targetToWrite > 0 ? targetToWrite : null, source: 'sales-data-save' }
+          }));
+          state.rowStateByIso = {};
+          state.modalDirty = false;
+          state.referenceDirty = false;
+          undoStack = [];
+          syncUndoButton();
+          sessionSaved = true;
           /* KPI-SALES-DATA-TARGET-PERSIST-CT: refresh day targets locally after Save
              (no extra __KPI_BUSY — Save overlay already covers this). */
           if (
@@ -36955,6 +37577,7 @@
           );
           refreshSalesDataTableTotals();
           updateSalesDataSummary();
+          return { ok: true };
         });
       }
 
@@ -37004,8 +37627,13 @@
       }
       if (salesDataCloseChooserSave) {
         salesDataCloseChooserSave.addEventListener('click', function () {
-          saveSalesDataModal();
-          finishSalesDataLeaveNavigate(true);
+          Promise.resolve(saveSalesDataModal()).then(function (result) {
+            if (result && result.ok === false) {
+              finishSalesDataLeaveNavigate(false);
+              return;
+            }
+            finishSalesDataLeaveNavigate(true);
+          });
         });
       }
       if (salesDataCloseChooserDiscard) {
@@ -37409,16 +38037,6 @@
           if (off) tr.classList.add('sales-data-modal__row--off');
 
           cb.addEventListener('change', function () {
-            var rowIso = item.iso;
-            if (
-              window.KpiYearStore &&
-              rowIso &&
-              !KpiYearStore.canWriteBusinessDayFrom('sales-data-modal', rowIso)
-            ) {
-              var defsCb = getRowDefaults(rowIso, isWeekendIso(rowIso));
-              cb.checked = !defsCb.off;
-              return;
-            }
             pushUndoSnapshot();
             var inpEl = tr.querySelector('.sales-data-modal__sales-input');
             if (!cb.checked && inpEl && !inpEl.readOnly) {
@@ -37437,6 +38055,11 @@
           });
           inp.addEventListener('input', function () {
             var rowIso = item.iso;
+            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
+            /* 表示値と data-last-active を常に同期（Save / B.DAY OFF 復元）。
+               canWrite 拒否時でも last-active だけは更新し、Save が旧値を拾わないようにする */
+            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
+            else inp.removeAttribute('data-last-active');
             if (
               window.KpiYearStore &&
               rowIso &&
@@ -37445,9 +38068,6 @@
               return;
             }
             state.modalDirty = true;
-            var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
-            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
-            else inp.removeAttribute('data-last-active');
             scheduleSalesDataInputRefresh();
           });
           inp.addEventListener('change', function () {
@@ -37519,8 +38139,9 @@
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
             if (!modal || modal.hasAttribute('hidden')) return;
-            syncYearMonthFromApp();
-            syncColheadDatePickerValue();
+            var openIso = resolveSalesDataOpenIso();
+            syncYearMonthFromApp(openIso);
+            syncColheadDatePickerValue(openIso);
             clearDateFilterUi();
             closeSalesSortPanel();
             setSalesDataTab('input');
@@ -37542,13 +38163,33 @@
             if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
               window.__KPI_EDIT_GUARDS.applyAll();
             }
-            scrollToViewMonth();
+            if (!scrollToIsoDate(openIso)) scrollToViewMonth();
             if (btnClose) btnClose.focus();
             /* 開くINPの後で背面365行をスキップ（閉じる用の準備） */
+            if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.armTwViewSyncGuard === 'function') {
+              window.__ANNUAL_UI.armTwViewSyncGuard(450);
+            }
             document.body.classList.add('sales-data-modal-open');
           });
         });
       }
+
+      function maybeReacquireSalesDataLease() {
+        if (!modal || modal.hasAttribute('hidden')) return;
+        if (!window.KpiYearStore || typeof KpiYearStore.getDailySalesInputPath !== 'function') return;
+        if (KpiYearStore.getDailySalesInputPath() !== 'annual') return;
+        if (typeof KpiYearStore.holdsEditLease === 'function' && KpiYearStore.holdsEditLease('daily-sales')) {
+          return;
+        }
+        if (!window.__KPI_EDIT_LEASE || typeof window.__KPI_EDIT_LEASE.tryAcquire !== 'function') return;
+        var ok = window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : 'Sales Data', {
+          silent: true,
+        });
+        if (ok && window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
+          window.__KPI_EDIT_GUARDS.applyAll();
+        }
+      }
+      document.addEventListener('kpi:editLeaseChanged', maybeReacquireSalesDataLease);
 
       /* KPI-SDM-CLOSE-INP-V3: 殻だけ先に消す → フォーカス復帰後に365行復帰（keyboard INP分離） */
       function closeModal() {
@@ -37581,7 +38222,15 @@
               window.__ANNUAL_UI.syncBusinessDayDisplayFromDailyMap();
             }
             requestAnimationFrame(function () {
+              if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.armTwViewSyncGuard === 'function') {
+                window.__ANNUAL_UI.armTwViewSyncGuard(450);
+              }
               document.body.classList.remove('sales-data-modal-open');
+              requestAnimationFrame(function () {
+                if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.restoreTwViewFromSelectedIso === 'function') {
+                  window.__ANNUAL_UI.restoreTwViewFromSelectedIso();
+                }
+              });
             });
           });
         });
@@ -37592,6 +38241,41 @@
       var tabAnalyzeBtn = document.getElementById('sales-data-tab-analyze');
       if (tabInputBtn) tabInputBtn.addEventListener('click', function () { setSalesDataTab('input'); });
       if (tabAnalyzeBtn) tabAnalyzeBtn.addEventListener('click', function () { setSalesDataTab('analyze'); });
+
+      /* KPI-SDM-TODAY: Input-tab jump only. Does not dirty / save / undo. */
+      function resolveSalesDataTodayIso() {
+        var oy = getOperatingYear();
+        var now = new Date();
+        if (now.getFullYear() === oy) {
+          return oy + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+        }
+        return oy + '-01-01';
+      }
+      function goToSalesDataToday() {
+        if (state.activeTab !== 'input') return;
+        var iso = resolveSalesDataTodayIso();
+        var p = String(iso).split('-');
+        var m = Number(p[1]);
+        var oy = getOperatingYear();
+        state.year = oy;
+        state.viewMonth = m >= 1 && m <= 12 ? m - 1 : 0;
+        if (monthSelect) monthSelect.value = String(state.viewMonth);
+        syncYearLabel();
+        syncColheadDatePickerValue(iso);
+        if (!scrollToIsoDate(iso)) scrollToViewMonth();
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          window.__ANNUAL_UI.setDailyDateByISO(iso, 'today');
+        } else if (window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
+          KpiYearStore.setSelectedDate(iso, 'today');
+        }
+      }
+      var todayBtn = document.getElementById('sales-data-today-btn');
+      if (todayBtn) {
+        todayBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          goToSalesDataToday();
+        });
+      }
 
       openBtn.addEventListener('click', function (e) {
         e.preventDefault();
@@ -37835,6 +38519,7 @@
 
       if (selectAllBtn)
         selectAllBtn.addEventListener('click', function () {
+          if (!canEditSalesDataLiveNow()) return;
           var rows = modalTable.querySelectorAll('tr');
           var allChecked = true;
           var any = false;
@@ -38255,13 +38940,11 @@
         }
         if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
           var n = Number(map[iso]);
-          if (!isFinite(n)) n = 0;
-          if (n === 0) {
-            return { off: true, last: '1234' };
+          if (isFinite(n) && n > 0) {
+            return { off: false, last: String(Math.round(n)) };
           }
-          return { off: false, last: String(Math.round(n)) };
         }
-        return { off: !!isWk, last: '1234' };
+        return { off: false, last: '1234' };
       }
       function isWeekendIso(iso) {
         var p = String(iso || '').split('-');
@@ -38373,7 +39056,7 @@
       }
 
       function requestCloseModal() {
-        if (sessionSaved && !state.modalDirty) {
+        if (!state.modalDirty) {
           closeModal();
           return;
         }
@@ -40155,7 +40838,10 @@
     var store = loadStore();
     var map = (store && store.timeline && store.timeline.businessDays) || {};
     if (Object.prototype.hasOwnProperty.call(map, iso)) return !!map[iso];
-    return readDailySales(iso) > 0;
+    if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
+      return KpiYearStore.isUiBusinessDay(iso);
+    }
+    return true;
   }
 
   function monthlyAllocForLine(year, m0, lineId) {

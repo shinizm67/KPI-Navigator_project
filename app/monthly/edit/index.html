@@ -3293,9 +3293,11 @@
         }
 
         function loadStore() {
+          var preservedMepYears = snapshotMepYearRecords(store && store.years);
           var parsed = readStorePayloadFromLocal();
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
+            restoreMepYearRecords(preservedMepYears);
             return;
           }
           store = emptyStore();
@@ -3317,6 +3319,7 @@
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
+          restoreMepYearRecords(preservedMepYears);
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
             needPersist = true;
@@ -3325,7 +3328,7 @@
               if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
             });
           }
-          if (needPersist) persistStore();
+          if (needPersist) persistStoreIfYearMepSafe();
         }
 
         function persistableStore() {
@@ -3398,7 +3401,7 @@
           if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          persistStore();
+          persistStoreIfYearMepSafe();
         }
 
         /** timeline に無い ISO のみ legacy キーから補完（リセット後の CSV 再取込前の復旧用） */
@@ -3443,7 +3446,7 @@
           }
           if (changed) {
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStore();
+            persistStoreIfYearMepSafe();
           }
         }
 
@@ -3457,6 +3460,131 @@
           if (!store.years[year]) store.years[year] = { year: year, status: 'open', plan: {} };
           if (!store.years[year].plan) store.years[year].plan = {};
           return store.years[year];
+        }
+
+        function cloneMepJson(value) {
+          try {
+            return JSON.parse(JSON.stringify(value));
+          } catch (_eClone) {
+            return null;
+          }
+        }
+
+        function mepStreamMapHasData(map) {
+          if (!map || typeof map !== 'object') return false;
+          var keys = Object.keys(map);
+          for (var i = 0; i < keys.length; i++) {
+            var byIso = map[keys[i]];
+            if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+          }
+          return false;
+        }
+
+        function mepDailyMetaHasData(meta) {
+          if (!meta || typeof meta !== 'object') return false;
+          if (mepStreamMapHasData(meta.memos)) return true;
+          if (meta.weather && typeof meta.weather === 'object' && Object.keys(meta.weather).length) {
+            return true;
+          }
+          if (meta.flags && typeof meta.flags === 'object' && Object.keys(meta.flags).length) {
+            return true;
+          }
+          return false;
+        }
+
+        function mepNotesHasData(notes) {
+          if (!notes || typeof notes !== 'object') return false;
+          var keys = Object.keys(notes);
+          for (var i = 0; i < keys.length; i++) {
+            if (String(notes[keys[i]] == null ? '' : notes[keys[i]]).trim()) return true;
+          }
+          return false;
+        }
+
+        var MEP_YEAR_PRESERVE_KEYS = [
+          'dailyIncome',
+          'dailyExpenses',
+          'dailyMeta',
+          'mepMemoRows',
+          'monthlyStrategyUserNotes',
+          'mepUpdatedAt',
+        ];
+
+        function yearMepFieldHasData(rec, key) {
+          if (!rec || typeof rec !== 'object') return false;
+          if (key === 'dailyIncome' || key === 'dailyExpenses') return mepStreamMapHasData(rec[key]);
+          if (key === 'dailyMeta') return mepDailyMetaHasData(rec[key]);
+          if (key === 'monthlyStrategyUserNotes') return mepNotesHasData(rec[key]);
+          if (key === 'mepMemoRows') return Array.isArray(rec[key]) && rec[key].length > 0;
+          if (key === 'mepUpdatedAt') return rec.mepUpdatedAt != null && rec.mepUpdatedAt !== '';
+          return rec[key] != null;
+        }
+
+        function yearRecordHasMepData(rec) {
+          if (!rec || typeof rec !== 'object') return false;
+          return (
+            mepStreamMapHasData(rec.dailyIncome) ||
+            mepStreamMapHasData(rec.dailyExpenses) ||
+            mepDailyMetaHasData(rec.dailyMeta) ||
+            mepNotesHasData(rec.monthlyStrategyUserNotes) ||
+            (Array.isArray(rec.mepMemoRows) && rec.mepMemoRows.length > 0)
+          );
+        }
+
+        function snapshotMepYearRecords(years) {
+          var out = {};
+          if (!years || typeof years !== 'object') return out;
+          Object.keys(years).forEach(function (yk) {
+            var rec = years[yk];
+            if (!rec || typeof rec !== 'object') return;
+            var snap = {};
+            var has = false;
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(rec[key]);
+              if (cloned == null) return;
+              snap[key] = cloned;
+              has = true;
+            });
+            if (has) out[String(yk)] = snap;
+          });
+          return out;
+        }
+
+        function restoreMepYearRecords(preserved) {
+          if (!preserved || typeof preserved !== 'object') return;
+          if (!store.years || typeof store.years !== 'object') store.years = {};
+          Object.keys(preserved).forEach(function (yk) {
+            var src = preserved[yk];
+            if (!src || typeof src !== 'object') return;
+            var yn = Number(yk);
+            if (!Number.isFinite(yn)) return;
+            var rec = ensureYearMepData(yn);
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(src, key)) return;
+              if (yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(src[key]);
+              if (cloned == null) return;
+              rec[key] = cloned;
+            });
+          });
+        }
+
+        function storeWouldPutHollowYearMep() {
+          var years = store.years || {};
+          var yks = Object.keys(years);
+          if (!yks.length) return true;
+          for (var i = 0; i < yks.length; i++) {
+            if (!yearRecordHasMepData(years[yks[i]])) return true;
+          }
+          return false;
+        }
+
+        /** Timeline/schema persist: keep year MEP maps; never PUT empty shells. */
+        function persistStoreIfYearMepSafe() {
+          if (storeWouldPutHollowYearMep()) return false;
+          persistStore();
+          return true;
         }
 
         function ensureYearMepData(year) {
@@ -3519,6 +3647,7 @@
         }
 
         var EDIT_LEASE_KEY = 'kpiNavigator.kpiEditLeases';
+        var DAILY_SALES_INPUT_PATH_KEY = 'kpiNavigator.dailySalesInputPath';
         var TAB_ID_SESSION_KEY = 'kpiNavigator.kpiTabId';
         var SUBSCRIPTION_TIER_KEY = 'kpiNavigator.subscriptionTier';
         var EDIT_LEASE_TTL_MS = 120000;
@@ -3543,7 +3672,6 @@
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
-            persistStore();
           }
         }
 
@@ -3551,12 +3679,80 @@
           return normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual');
         }
 
+        function parseDailySalesInputPathValue(raw) {
+          if (raw == null || raw === '') return null;
+          var v = raw;
+          if (typeof raw === 'string') {
+            try {
+              v = JSON.parse(raw);
+            } catch (_eParse) {
+              v = raw;
+            }
+          }
+          if (v === 'annual' || v === 'mep') return v;
+          if (v && typeof v === 'object' && (v.path === 'annual' || v.path === 'mep')) {
+            return v.path;
+          }
+          return null;
+        }
+
+        function readDailySalesInputPathLightKey() {
+          try {
+            var fromGw = parseDailySalesInputPathValue(gw().getJson(DAILY_SALES_INPUT_PATH_KEY));
+            if (fromGw) return fromGw;
+          } catch (_eGw) {}
+          try {
+            return parseDailySalesInputPathValue(localStorage.getItem(DAILY_SALES_INPUT_PATH_KEY));
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
+        function writeDailySalesInputPathLightKey(path) {
+          try {
+            gw().setJson(DAILY_SALES_INPUT_PATH_KEY, {
+              path: path === 'mep' ? 'mep' : 'annual',
+              updatedAt: Date.now(),
+            });
+          } catch (_eWrite) {}
+        }
+
+        function applyDailySalesInputPathFromLightKey(opts) {
+          var next = readDailySalesInputPathLightKey();
+          if (!next) return false;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return false;
+          store.meta.dailySalesInputPath = next;
+          if (opts && opts.dispatch) {
+            document.dispatchEvent(
+              new CustomEvent('kpi:dailySalesInputPathChanged', {
+                detail: { path: next, source: 'storage' },
+              })
+            );
+          }
+          return true;
+        }
+
+        function applyDailySalesInputPathFromStorageRaw(raw) {
+          var next = parseDailySalesInputPathValue(raw);
+          if (raw == null || raw === '') next = 'annual';
+          if (!next) return;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return;
+          store.meta.dailySalesInputPath = next;
+          document.dispatchEvent(
+            new CustomEvent('kpi:dailySalesInputPathChanged', {
+              detail: { path: next, source: 'storage' },
+            })
+          );
+        }
+
         function setDailySalesInputPath(path) {
           if (!isProSubscription()) return;
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
-          persistStore();
+          writeDailySalesInputPathLightKey(next);
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -3676,7 +3872,6 @@
           var next = !!enabled;
           if (!!store.meta.pastSalesEditEnabled === next) return;
           store.meta.pastSalesEditEnabled = next;
-          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:pastSalesEditChanged', {
               detail: { enabled: next },
@@ -3737,25 +3932,62 @@
           return canWriteDailySalesFrom(source, iso);
         }
 
-        /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
-        function isCalendarBusinessDay(y, m0, day) {
-          var d = new Date(y, m0, day);
-          if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
-          var dow = d.getDay();
-          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
+        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
+        var PLAN_USER_SAVED_SOURCES = {
+          'sales-data-save': true
+        };
+
+        function isUserSavedAnnualPlanSource(source) {
+          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
+        }
+
+        function hasSavedAnnualPlanTarget(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var rec = store.years[y];
+          if (!rec || !rec.plan) return false;
+          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
+          var n = Number(rec.plan.targetSales);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        function readSavedAnnualPlanTarget(year) {
+          if (!hasSavedAnnualPlanTarget(year)) return null;
+          return Number(store.years[Number(year)].plan.targetSales);
+        }
+
+        function readBusinessDayFlag(iso) {
+          if (!validIso(iso)) return null;
           var bmap = store.timeline.businessDays;
-          var smap = store.timeline.dailySales;
-          var isWk = dow === 0 || dow === 6;
           if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
             return !!bmap[iso];
           }
-          if (smap && Object.prototype.hasOwnProperty.call(smap, iso)) {
-            var n = Number(smap[iso]);
-            if (!Number.isFinite(n)) return !isWk;
-            if (n === 0) return false;
-            return true;
-          }
-          return !isWk;
+          return null;
+        }
+
+        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
+        function isUiBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
+        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
+        function isBaselineActualDay(iso) {
+          if (!validIso(iso)) return false;
+          var flag = readBusinessDayFlag(iso);
+          if (flag === false) return false;
+          if (flag === true) return true;
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
+          var n = Number(store.timeline.dailySales[iso]);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
+        function isPlanningBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
+          return readBusinessDayFlag(iso) !== false;
         }
 
         function computeObserved(year) {
@@ -3768,8 +4000,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -3899,7 +4131,8 @@
           var gwObj = window.__KPI_DATA_GATEWAY;
           var flush =
             gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
-          return Promise.resolve(flush).then(function () {
+          return Promise.resolve(flush).then(function (putResult) {
+            if (putResult && (putResult.conflict || putResult.status === 428)) return putResult;
             var total = list.length;
             var p = Promise.resolve();
             list.forEach(function (y, idx) {
@@ -4311,7 +4544,7 @@
           }
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
-            persistStore();
+            persistStoreIfYearMepSafe();
             if (window.__ANNUAL_DATA) {
               window.__ANNUAL_DATA.calendarYear = getOperatingYear();
             }
@@ -4447,13 +4680,10 @@
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
-            return !!store.timeline.businessDays[iso];
+          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
+            return isPlanningBusinessDay(iso);
           }
-          var d = new Date(iso + 'T00:00:00');
-          if (!isFinite(d.getTime())) return false;
-          var dow = d.getDay();
-          return dow !== 0 && dow !== 6;
+          return isBaselineActualDay(iso);
         }
 
         function snapshotSalesAmt(iso) {
@@ -4559,7 +4789,7 @@
             };
           }
           rec.annualFacts = {
-            annualTarget: readAnnualTarget(year),
+            annualTarget: readSavedAnnualPlanTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -4639,12 +4869,14 @@
             rec.dailyIncome[streamId][iso] = Math.round(n);
           }
           rec.mepUpdatedAt = Date.now();
-          persistStore();
-          document.dispatchEvent(
-            new CustomEvent('kpi:mepDataChanged', {
-              detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
-            })
-          );
+          if (!(meta && meta.deferPersist)) {
+            persistStore();
+            document.dispatchEvent(
+              new CustomEvent('kpi:mepDataChanged', {
+                detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
+              })
+            );
+          }
           return true;
         }
 
@@ -4943,6 +5175,53 @@
           syncToPastSalesMemory();
         }
 
+        /** Sales Data / CSV Save: timeline総売上に合わせて dailyIncome の Store/A/B を同期 */
+        function syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix) {
+          if (!salesMap || typeof salesMap !== 'object') return;
+          Object.keys(salesMap).forEach(function (iso) {
+            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
+            if (!canEditIso(iso)) return;
+            var newTotal = Number(salesMap[iso]);
+            if (isLegacyPlaceholderSales(newTotal)) return;
+            if (!Number.isFinite(newTotal)) newTotal = 0;
+            newTotal = Math.round(newTotal);
+            var y = isoYear(iso);
+            var rec = ensureYearMepData(y);
+            var di = rec.dailyIncome;
+            function readStream(id) {
+              if (!di[id] || !Object.prototype.hasOwnProperty.call(di[id], iso)) return 0;
+              var v = Number(di[id][iso]);
+              return Number.isFinite(v) ? Math.round(v) : 0;
+            }
+            function writeStream(id, val) {
+              if (!di[id] || typeof di[id] !== 'object') di[id] = {};
+              var n = Math.round(Number(val) || 0);
+              if (!n) delete di[id][iso];
+              else di[id][iso] = n;
+            }
+            var a = readStream('sales_a');
+            var b = readStream('sales_b');
+            var streams = a + b;
+            if (streams > newTotal) {
+              try {
+                console.warn(
+                  '[kpi] annual total < A+B; clearing A/B',
+                  iso,
+                  newTotal,
+                  a,
+                  b
+                );
+              } catch (_eWarn) {}
+              writeStream('sales_a', 0);
+              writeStream('sales_b', 0);
+              writeStream('store_sales', newTotal);
+            } else {
+              writeStream('store_sales', newTotal - streams);
+            }
+            rec.mepUpdatedAt = Date.now();
+          });
+        }
+
         function persistSalesDataModalSave(daily, meta) {
           if (!daily) return;
           if (getDailySalesInputPath() !== 'annual') return;
@@ -4969,7 +5248,9 @@
             yearTouched = true;
           });
           if (!yearTouched) return Promise.resolve();
+          syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix);
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({ [String(oy)]: true });
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
@@ -5017,15 +5298,23 @@
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          persistStore();
+          var src = source || 'kpi-year-store';
+          /* Date-only nav (Annual boot / year change) must not PUT the whole store. */
+          if (src !== 'calendar-year' && src !== 'initial') {
+            persistStore();
+          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
           try {
-            gw().setJson(SELECTED_DATE_KEY, {
+            var prevNav = gw().getJson(SELECTED_DATE_KEY);
+            if (!prevNav || typeof prevNav !== 'object' || Array.isArray(prevNav)) prevNav = {};
+            var nextNav = {
               calendarYear: isoYear(iso),
               selectedIso: iso,
-            });
+            };
+            if (isoYear(iso) === getOperatingYear()) nextNav.operatingSelectedIso = iso;
+            gw().setJson(SELECTED_DATE_KEY, Object.assign({}, prevNav, nextNav));
           } catch (_e) {}
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
@@ -5269,12 +5558,14 @@
           }
           rec.mepUpdatedAt = Date.now();
           store.meta.schemaVersion = SCHEMA_VERSION;
-          persistStore();
-          document.dispatchEvent(
-            new CustomEvent('kpi:mepDataChanged', {
-              detail: { year: y, source: (meta && meta.source) || 'mep' },
-            })
-          );
+          if (!(meta && meta.deferPersist)) {
+            persistStore();
+            document.dispatchEvent(
+              new CustomEvent('kpi:mepDataChanged', {
+                detail: { year: y, source: (meta && meta.source) || 'mep' },
+              })
+            );
+          }
           return true;
         }
 
@@ -5284,6 +5575,7 @@
           migrateLegacy();
           reconcileTimelineFromLegacy();
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
             var yearsAll = {};
@@ -6076,8 +6368,8 @@
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(year, month, day)) continue;
             var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isBaselineActualDay(iso)) continue;
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -6092,10 +6384,10 @@
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(year, month, day)) continue;
+            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isBaselineActualDay(iso)) continue;
             var dt = new Date(year, month, day);
             if (dt.getDay() !== weekday) continue;
-            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -6167,7 +6459,8 @@
           var dc = new Date(y, month + 1, 0).getDate();
           var count = 0;
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(y, month, day)) continue;
+            var iso = y + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isPlanningBusinessDay(iso)) continue;
             var dt = new Date(y, month, day);
             if (dt.getDay() !== weekday) continue;
             count++;
@@ -6179,7 +6472,8 @@
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
           if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
-          var annualTarget = readAnnualTarget(y);
+          if (!hasSavedAnnualPlanTarget(y)) return null;
+          var annualTarget = readSavedAnnualPlanTarget(y);
           if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
             return null;
           }
@@ -6190,7 +6484,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
+              var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isPlanningBusinessDay(iso)) continue;
               monthlyBD[m0]++;
               totalBD++;
             }
@@ -6278,7 +6573,7 @@
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isPlanningBusinessDay(iso)) return 0;
           var dt = new Date(y, m0, day);
           return computeDailyKpiByMonthDow(oy, m0, dt.getDay(), baselineYears);
         }
@@ -6369,7 +6664,7 @@
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isPlanningBusinessDay(iso)) return 0;
           var plan = computePlanMonthlyTargets(oy);
           if (!plan) return null;
           var bdCount = plan.monthlyBD[m0];
@@ -6475,8 +6770,8 @@
           var rows = [];
           var dc = new Date(oy, month + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {
-            if (!isCalendarBusinessDay(oy, month, day)) continue;
             var iso = oy + '-' + pad2(month + 1) + '-' + pad2(day);
+            if (!isPlanningBusinessDay(iso)) continue;
             var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
             var raw = rawResult.value;
             if (raw == null || !Number.isFinite(raw)) raw = 0;
@@ -6537,7 +6832,7 @@
           var parts = iso.split('-');
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
-          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isCalendarBusinessDay(oy, m0, day)) {
+          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isPlanningBusinessDay(iso)) {
             return {
               value: rawResult.value,
               rawValue: rawResult.value,
@@ -6629,6 +6924,11 @@
           canWriteDailySalesFrom: canWriteDailySalesFrom,
           canWriteBusinessDayFrom: canWriteBusinessDayFrom,
           salesSourceToPath: salesSourceToPath,
+          hasSavedAnnualPlanTarget: hasSavedAnnualPlanTarget,
+          readSavedAnnualPlanTarget: readSavedAnnualPlanTarget,
+          isUiBusinessDay: isUiBusinessDay,
+          isBaselineActualDay: isBaselineActualDay,
+          isPlanningBusinessDay: isPlanningBusinessDay,
           computeObserved: computeObserved,
           refreshObservedForYear: refreshObservedForYear,
           observedForPastYear: observedForPastYear,
@@ -6669,6 +6969,7 @@
           loadMepYearPayload: loadMepYearPayload,
           readStrategyUserNote: readStrategyUserNote,
           bulkPersistMepYear: bulkPersistMepYear,
+          persistStore: persistStore,
           canWriteMepYear: canWriteMepYear,
           canWriteMepMetaYear: canWriteMepMetaYear,
           ensureYearMepData: ensureYearMepData,
@@ -6758,9 +7059,14 @@
             document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
             return;
           }
+          if (ev.key === DAILY_SALES_INPUT_PATH_KEY) {
+            applyDailySalesInputPathFromStorageRaw(ev.newValue);
+            return;
+          }
           if (ev.key !== STORE_KEY && ev.key !== LEGACY_DAILY_KEY && ev.key !== LEGACY_PAST_KEY) return;
           loadStore();
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey({ dispatch: true });
           maybeRolloverYear();
           syncToAnnualDaily();
           dispatchChange('dailySalesChanged', { source: 'storage' });
@@ -6979,7 +7285,11 @@
           if (next === cur) return Promise.resolve(true);
           var flow = confirmPathSwitch(next).then(function (confirmed) {
             if (!confirmed) return false;
-            if (!hasUnsavedViaHooks()) return applyPathChange(next);
+            var unsaved = hasUnsavedViaHooks();
+            try {
+              console.info('[KPN_DIRTY_DIFF]', { source: 'path-toggle', next: next, unsaved: !!unsaved });
+            } catch (_ePath) {}
+            if (!unsaved) return applyPathChange(next);
             return showChooser(next).then(function (choice) {
               if (!choice.ok || choice.action === 'cancel') return false;
               if (choice.action === 'save') {
@@ -7064,12 +7374,115 @@
         });
         nextRowId = maxId;
       }
+      function mepHealIncomeLineIds() {
+        var defs = typeof catalogIncomeDefs === 'function' ? catalogIncomeDefs() : [];
+        (state.incomeItems || []).forEach(function (row) {
+          if (!row || row.lineId) return;
+          var id = String(row.id || '');
+          if (
+            id === 'store_sales' ||
+            id === 'sales_a' ||
+            id === 'sales_b' ||
+            id === 'food_sales' ||
+            id === 'drink_sales'
+          ) {
+            row.lineId = id;
+            return;
+          }
+          for (var di = 0; di < defs.length; di++) {
+            var d = defs[di];
+            if (!d) continue;
+            if (
+              (row.labelJa && d.labelJa && row.labelJa === d.labelJa) ||
+              (row.labelEn && d.labelEn && row.labelEn === d.labelEn)
+            ) {
+              row.lineId = d.lineId;
+              return;
+            }
+          }
+        });
+      }
+      function mepIncomeStreamIdFromRowId(rowId) {
+        mepHealIncomeLineIds();
+        var items = state && state.incomeItems;
+        if (items && items.length) {
+          for (var i = 0; i < items.length; i++) {
+            var row = items[i];
+            if (row && row.id === rowId) return row.lineId || row.id;
+          }
+        }
+        return rowId;
+      }
+      function mepStreamRowId(streamId) {
+        mepHealIncomeLineIds();
+        var sid = String(streamId || '');
+        var items = state && state.incomeItems;
+        if (items && items.length) {
+          for (var i = 0; i < items.length; i++) {
+            var row = items[i];
+            if (!row) continue;
+            if (row.lineId === sid || row.id === sid) return row.id;
+          }
+        }
+        return sid;
+      }
+      function mepGridMapForIncomeStream(streamId) {
+        var merged = {};
+        function add(byIso) {
+          if (!byIso || typeof byIso !== 'object') return;
+          Object.keys(byIso).forEach(function (iso) {
+            var n = Number(byIso[iso]);
+            if (!Number.isFinite(n)) return;
+            if (n > 0) merged[iso] = Math.round(n);
+            else if (!Object.prototype.hasOwnProperty.call(merged, iso)) merged[iso] = 0;
+          });
+        }
+        mepHealIncomeLineIds();
+        add(rowValueById[streamId]);
+        var rid = mepStreamRowId(streamId);
+        if (rid !== streamId) add(rowValueById[rid]);
+        (state.incomeItems || []).forEach(function (row) {
+          if (!row) return;
+          if (row.lineId === streamId || row.id === streamId) add(rowValueById[row.id]);
+        });
+        return merged;
+      }
+      var MEP_INCOME_CANONICAL_IDS = ['store_sales', 'sales_a', 'sales_b', 'food_sales', 'drink_sales'];
+      function mepIncomeReadValue(streamId, iso) {
+        var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId(streamId) : streamId;
+        return Math.round(Number(typeof readValue === 'function' ? readValue(rid, iso) : 0) || 0);
+      }
+      function mepIsIncomeCanonicalRowId(rowId) {
+        var id = String(rowId || '');
+        if (MEP_INCOME_CANONICAL_IDS.indexOf(id) >= 0) return true;
+        if (typeof mepIncomeStreamIdFromRowId === 'function') {
+          return MEP_INCOME_CANONICAL_IDS.indexOf(mepIncomeStreamIdFromRowId(id)) >= 0;
+        }
+        return false;
+      }
+      function mergeMepIncomeStreamsFromPayload(payload) {
+        var di = payload && payload.dailyIncome;
+        if (!di || typeof di !== 'object') return;
+        ['store_sales', 'sales_a', 'sales_b', 'food_sales'].forEach(function (id) {
+          var byIso = di[id];
+          if (!byIso || typeof byIso !== 'object') return;
+          var rid = mepStreamRowId(id);
+          if (!rowValueById[rid]) rowValueById[rid] = {};
+          Object.keys(byIso).forEach(function (iso) {
+            var n = Number(byIso[iso]);
+            if (!Number.isFinite(n) || n === 0) return;
+            rowValueById[rid][iso] = Math.round(n);
+          });
+        });
+      }
       function mergeMepYearPayload(payload) {
         if (!payload) return;
         Object.keys(payload.dailyExpenses || {}).forEach(function (rowId) {
           if (!rowValueById[rowId]) rowValueById[rowId] = {};
           Object.assign(rowValueById[rowId], payload.dailyExpenses[rowId]);
         });
+        /* dailyIncome を expenses より後に載せる（A/B/food/store の正本） */
+        mergeMepIncomeStreamsFromPayload(payload);
         var meta = payload.dailyMeta || {};
         /* KPI-MEP-MEMO-MERGE: do not wipe non-empty local memo with empty store string
            (CreateYear seed / partial payload used to erase typed Daily Notes). */
@@ -7104,14 +7517,60 @@
         }
         mergeMepYearPayload(KpiYearStore.loadMepYearPayload(year));
       }
-      function persistMepIncomeStreamsToStore(year) {
+      function persistMepIncomeIsoDirect(iso, extra) {
+        if (!iso) return false;
+        if (!window.KpiYearStore || typeof KpiYearStore.writeDailyIncome !== 'function') return false;
+        var defer = !!(extra && extra.deferPersist);
+        var written = {};
+        function writeStream(streamId, rowId) {
+          var rid = rowId || (typeof mepStreamRowId === 'function' ? mepStreamRowId(streamId) : streamId);
+          var byIso = rowValueById[rid];
+          var hasKey = !!(byIso && Object.prototype.hasOwnProperty.call(byIso, iso));
+          var n = Math.round(Number(typeof readValue === 'function' ? readValue(rid, iso) : 0) || 0);
+          /* grid にキーが無い 0 は未入力。writeDailyIncome(0) の delete で A/B を消さない */
+          if (!hasKey && n === 0) return;
+          KpiYearStore.writeDailyIncome(streamId, iso, n, {
+            source: 'monthly-edit-float',
+            deferPersist: true,
+          });
+          written[streamId] = true;
+        }
+        if (typeof mepHealIncomeLineIds === 'function') mepHealIncomeLineIds();
+        (state.incomeItems || []).forEach(function (row) {
+          if (!row) return;
+          var sid = row.lineId || row.id;
+          if (
+            sid !== 'store_sales' &&
+            sid !== 'sales_a' &&
+            sid !== 'sales_b' &&
+            sid !== 'food_sales'
+          ) {
+            return;
+          }
+          writeStream(sid, row.id);
+        });
+        ['store_sales', 'sales_a', 'sales_b', 'food_sales'].forEach(function (streamId) {
+          if (written[streamId]) return;
+          writeStream(streamId, null);
+        });
+        if (!defer && window.KpiYearStore && typeof KpiYearStore.persistStore === 'function') {
+          KpiYearStore.persistStore();
+        }
+        return true;
+      }
+      function persistMepIncomeStreamsToStore(year, extra) {
         var y = Number(year);
         if (!Number.isFinite(y) || !mepStoreReady()) return false;
         if (typeof collectMepIncomeStreamsPayload !== 'function') return false;
+        var payload = collectMepIncomeStreamsPayload(y);
         return KpiYearStore.bulkPersistMepYear(
           y,
-          { dailyIncome: collectMepIncomeStreamsPayload(y) },
-          { source: 'monthly-edit-float', forceIncome: true }
+          { dailyIncome: payload },
+          {
+            source: 'monthly-edit-float',
+            forceIncome: true,
+            deferPersist: !!(extra && extra.deferPersist),
+          }
         );
       }
       /* Grid may only hold the open month; never treat missing keys as ¥0 wipe. */
@@ -7119,10 +7578,10 @@
         if (!iso) return false;
         if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) return true;
         if (typeof rowValueById === 'undefined' || !rowValueById) return false;
-        var sid = typeof primarySalesRowId === 'function' ? primarySalesRowId() : 'store_sales';
-        var ids = [sid || 'store_sales', 'sales_a', 'sales_b', 'food_sales'];
+        var ids = ['store_sales', 'sales_a', 'sales_b', 'food_sales'];
         for (var i = 0; i < ids.length; i++) {
-          var byIso = rowValueById[ids[i]];
+          var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId(ids[i]) : ids[i];
+          var byIso = rowValueById[rid] || rowValueById[ids[i]];
           if (byIso && Object.prototype.hasOwnProperty.call(byIso, iso)) return true;
         }
         return false;
@@ -7208,13 +7667,102 @@
           });
         }
       }
-      function persistMepTimelineForYear(year) {
+      function mepOriginTotalSalesForIso(iso) {
+        var total = Math.round(aggregateValue('totalSales', iso));
+        if (total) return total;
+        var storeVal =
+          typeof mepIncomeReadValue === 'function'
+            ? mepIncomeReadValue('store_sales', iso)
+            : Math.round(Number(readValue('store_sales', iso)) || 0);
+        var foodVal =
+          typeof mepIncomeReadValue === 'function'
+            ? mepIncomeReadValue('food_sales', iso)
+            : Math.round(Number(readValue('food_sales', iso)) || 0);
+        var drinkVal =
+          typeof computeDrinkSalesValue === 'function'
+            ? Math.round(Number(computeDrinkSalesValue(iso)) || 0)
+            : 0;
+        if (!storeVal) storeVal = drinkVal + foodVal;
+        var saVal =
+          typeof mepIncomeReadValue === 'function'
+            ? mepIncomeReadValue('sales_a', iso)
+            : Math.round(Number(readValue('sales_a', iso)) || 0);
+        var sbVal =
+          typeof mepIncomeReadValue === 'function'
+            ? mepIncomeReadValue('sales_b', iso)
+            : Math.round(Number(readValue('sales_b', iso)) || 0);
+        return storeVal + saVal + sbVal;
+      }
+      function mepTimelineExistingSales(tmap, iso) {
+        if (!tmap || !Object.prototype.hasOwnProperty.call(tmap, iso)) return 0;
+        var n = Number(tmap[iso]);
+        return Number.isFinite(n) ? n : 0;
+      }
+      function applyMepOriginTotalToTimelineIso(store, iso, extra) {
+        if (!store || !iso) return 0;
+        if (!store.timeline) store.timeline = { dailySales: {}, businessDays: {} };
+        if (!store.timeline.dailySales) store.timeline.dailySales = {};
+        if (!store.timeline.businessDays) store.timeline.businessDays = {};
+        var tmap = store.timeline.dailySales;
+        var bmap = store.timeline.businessDays;
+        extra = extra || {};
+        var flag = null;
+        if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) {
+          flag = bizDayByIso[iso] === false ? false : true;
+        } else if (Object.prototype.hasOwnProperty.call(bmap, iso)) {
+          flag = bmap[iso] === false ? false : true;
+        }
+        if (flag === false) {
+          bmap[iso] = false;
+          return mepTimelineExistingSales(tmap, iso);
+        }
+        if (flag === true) {
+          bmap[iso] = true;
+        }
+        if (extra.writeSales !== true) {
+          return mepTimelineExistingSales(tmap, iso);
+        }
+        var total = mepOriginTotalSalesForIso(iso);
+        if (!Number.isFinite(total)) total = 0;
+        total = Math.round(total);
+        if (total > 0) {
+          tmap[iso] = total;
+          return total;
+        }
+        if (extra.allowZero === true && Object.prototype.hasOwnProperty.call(tmap, iso)) {
+          tmap[iso] = 0;
+          return 0;
+        }
+        return mepTimelineExistingSales(tmap, iso);
+      }
+      /* MEP-origin: Store/A/B 正本 → timeline total。canWrite/merge を待たず直接書く */
+      function persistMepOriginDailyTotalToStore(iso, extra) {
+        if (!iso || !window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return false;
+        var store = KpiYearStore.getStore();
+        if (!store) return false;
+        applyMepOriginTotalToTimelineIso(store, iso, { writeSales: true, allowZero: true });
+        var recY = typeof mepIsoYear === 'function' ? mepIsoYear(iso) : NaN;
+        if (Number.isFinite(recY)) {
+          if (!store.years[recY] && !store.years[String(recY)]) {
+            store.years[recY] = { year: recY, status: 'open', plan: {} };
+          }
+          var recOne = store.years[recY] || store.years[String(recY)];
+          if (recOne && typeof recOne === 'object') recOne.mepUpdatedAt = Date.now();
+        }
+        if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
+        }
+        if (extra && extra.deferPersist) return true;
+        var gwOne = window.__KPI_DATA_GATEWAY;
+        return !!(
+          gwOne &&
+          typeof gwOne.setJson === 'function' &&
+          gwOne.setJson('kpiNavigator.kpiYearStore', store)
+        );
+      }
+      function persistMepTimelineForYear(year, extra) {
         var y = Number(year);
         if (!Number.isFinite(y)) return false;
-        hydrateMepSalesPresenceFromStoreForYear(y);
-        if (typeof syncMonthlySalesToAnnualStoreForYear === 'function') {
-          syncMonthlySalesToAnnualStoreForYear(y);
-        }
         if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return false;
         var store = KpiYearStore.getStore();
         if (!store) return false;
@@ -7224,49 +7772,126 @@
         }
         var rec = store.years[y] || store.years[String(y)];
         if (rec && typeof rec === 'object') rec.mepUpdatedAt = Date.now();
-        var tmap = store.timeline.dailySales;
-        var bmap = store.timeline.businessDays;
         for (var m0 = 0; m0 < 12; m0++) {
           monthIsoList(y, m0).forEach(function (iso) {
             /* Missing grid keys must not zero-out other months' timeline sales. */
             if (!mepGridHasIsoPresence(iso)) return;
-            var total = Math.round(aggregateValue('totalSales', iso));
-            if (!total) {
-              var sid = typeof primarySalesRowId === 'function' ? primarySalesRowId() : 'store_sales';
-              var storeVal = Math.round(Number(readValue(sid || 'store_sales', iso)) || 0);
-              var foodVal = Math.round(Number(readValue('food_sales', iso)) || 0);
-              var drinkVal =
-                typeof computeDrinkSalesValue === 'function'
-                  ? Math.round(Number(computeDrinkSalesValue(iso)) || 0)
-                  : 0;
-              if (!storeVal) storeVal = drinkVal + foodVal;
-              var saVal = Math.round(Number(readValue('sales_a', iso)) || 0);
-              var sbVal = Math.round(Number(readValue('sales_b', iso)) || 0);
-              total = storeVal + saVal + sbVal;
-            }
-            var isBusiness;
-            if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) {
-              isBusiness = !!bizDayByIso[iso];
-            } else if (Object.prototype.hasOwnProperty.call(bmap, iso)) {
-              isBusiness = !!bmap[iso];
-            } else {
-              isBusiness = true;
-            }
-            bmap[iso] = !!isBusiness;
-            tmap[iso] = isBusiness ? total : 0;
+            applyMepOriginTotalToTimelineIso(store, iso);
           });
         }
-        var gw = window.__KPI_DATA_GATEWAY;
-        if (gw && typeof gw.setJson === 'function') {
-          return gw.setJson('kpiNavigator.kpiYearStore', store);
+        /* timeline を先に書いたあとで __ANNUAL_DATA を合わせる。逆順だと旧 total に戻る */
+        if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
+          KpiYearStore.syncToAnnualDaily();
         }
-        return false;
+        if (extra && extra.deferPersist) return true;
+        var gw = window.__KPI_DATA_GATEWAY;
+        var ok = false;
+        if (gw && typeof gw.setJson === 'function') {
+          ok = gw.setJson('kpiNavigator.kpiYearStore', store);
+        }
+        return ok;
+      }
+      function applyMepCanonicalToMemory(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) y = mefYear;
+        persistMepToYearStore(y, { forceExpenses: true, deferPersist: true });
+        persistMepIncomeStreamsToStore(y, { deferPersist: true });
+        persistMepTimelineForYear(y, { deferPersist: true });
+      }
+      function persistMepCanonicalOnce() {
+        if (window.KpiYearStore && typeof KpiYearStore.persistStore === 'function') {
+          KpiYearStore.persistStore();
+          return true;
+        }
+        if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return false;
+        var gw = window.__KPI_DATA_GATEWAY;
+        var store = KpiYearStore.getStore();
+        if (!gw || typeof gw.setJson !== 'function' || !store) return false;
+        return gw.setJson('kpiNavigator.kpiYearStore', store);
+      }
+      function restoreMepCanonicalIfSaveInProgress() {
+        if (!mepSaveInProgress) return;
+        mepSaveHydrateQueued = true;
+        applyMepCanonicalToMemory(mefYear);
+      }
+      function finishMepSaveTransaction() {
+        mepSaveTxActive = false;
+        mepSaveInProgress = false;
+        try {
+          console.info('[KPN_MEP_SAVE_TRACE][SAVE_END]', { tx: window.__KPN_MEP_SAVE_TX || null });
+        } catch (_eTr) {}
+        try {
+          window.__KPN_MEP_SAVE_TX = null;
+        } catch (_eTx) {}
+        if (!mepSaveHydrateQueued) return;
+        mepSaveHydrateQueued = false;
+        if (root.hidden) return;
+        onMepYearContextChanged(mefYear);
+        if (typeof buildGrid === 'function') buildGrid();
+      }
+      function rebuildMepYearAfterPut(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) return Promise.resolve();
+        var facts = window.__KPI_DAILY_FACTS_SYNC;
+        var p =
+          facts && typeof facts.rebuildYear === 'function'
+            ? facts.rebuildYear(y)
+            : Promise.resolve();
+        return Promise.resolve(p)
+          .catch(function () {})
+          .then(function () {
+            if (facts && typeof facts.hydrateWindow === 'function') {
+              return facts.hydrateWindow({
+                force: true,
+                year: y,
+                backfill: false,
+              });
+            }
+          })
+          .catch(function () {});
+      }
+      function runMepSaveTransaction() {
+        mepSaveInProgress = true;
+        mepSaveTxActive = true;
+        mepSaveHydrateQueued = false;
+        try {
+          window.__KPN_MEP_SAVE_TX = 'mep-' + Date.now();
+          console.info('[KPN_MEP_SAVE_TRACE][SAVE_BEGIN]', { tx: window.__KPN_MEP_SAVE_TX });
+        } catch (_eTr0) {}
+        try {
+          applyMepCanonicalToMemory(mefYear);
+          persistMepCanonicalOnce();
+        } catch (_eApply) {
+          finishMepSaveTransaction();
+          return Promise.resolve({ ok: false });
+        }
+        try {
+          console.info('[KPN_MEP_SAVE_TRACE][FINAL_PUT]', { tx: window.__KPN_MEP_SAVE_TX || null });
+        } catch (_eTr1) {}
+        var gw = window.__KPI_DATA_GATEWAY;
+        var put =
+          gw && typeof gw.flushPut === 'function' ? gw.flushPut() : Promise.resolve();
+        return Promise.resolve(put)
+          .then(function (putResult) {
+            if (putResult && (putResult.conflict || putResult.status === 428)) return putResult;
+            return Promise.resolve(rebuildMepYearAfterPut(mefYear)).then(function () {
+              return putResult || { ok: true };
+            });
+          })
+          .then(
+            function (putResult) {
+              finishMepSaveTransaction();
+              return putResult;
+            },
+            function () {
+              finishMepSaveTransaction();
+              return { ok: false };
+            }
+          );
       }
       function flushMepStoreToServer() {
-        hydrateMepSalesPresenceFromStoreForYear(mefYear);
-        persistMepTimelineForYear(mefYear);
-        persistMepIncomeStreamsToStore(mefYear);
-        persistMepToYearStore(mefYear, { forceExpenses: true });
+        applyMepCanonicalToMemory(mefYear);
+        persistMepCanonicalOnce();
         var gw = window.__KPI_DATA_GATEWAY;
         if (gw && typeof gw.flushPut === 'function') {
           return gw.flushPut();
@@ -7316,6 +7941,9 @@
         var y = Number(year);
         var dailyExpenses = {};
         Object.keys(rowValueById || {}).forEach(function (rowId) {
+          if (typeof mepIsIncomeCanonicalRowId === 'function' && mepIsIncomeCanonicalRowId(rowId)) {
+            return;
+          }
           var filtered = mepFilterIsoMap(rowValueById[rowId], y);
           if (Object.keys(filtered).length) dailyExpenses[rowId] = filtered;
         });
@@ -7349,41 +7977,84 @@
         if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
         return KpiYearStore.bulkPersistMepYear(year, buildMepPersistPayload(year), {
           source: 'monthly-edit-float',
-          forceExpenses: !!(extra && extra.forceExpenses)
+          forceExpenses: !!(extra && extra.forceExpenses),
+          deferPersist: !!(extra && extra.deferPersist)
         });
       }
       function onMepYearContextChanged(year) {
+        if (mepSaveInProgress) {
+          restoreMepCanonicalIfSaveInProgress();
+          return;
+        }
         createInitialRowsIfNeeded();
         loadMepFromYearStore(year);
         if (typeof hydrateMepIncomeStreamsFromStore === 'function') {
           hydrateMepIncomeStreamsFromStore(year);
         }
+        /* ページ遷移では annual:salesDataSaved が届かない。timeline 正本から Store を再分解する */
         if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
-          syncMonthlySalesFromAnnualStoreForMonth();
+          syncMonthlySalesFromAnnualStoreForMonth({ force: true });
         }
-        if (typeof syncBizDayFromAnnualStoreForMonth === 'function') {
+        if (typeof syncBizDayFromAnnualStoreForYear === 'function') {
+          syncBizDayFromAnnualStoreForYear(year);
+        } else if (typeof syncBizDayFromAnnualStoreForMonth === 'function') {
           syncBizDayFromAnnualStoreForMonth();
         }
       }
       document.addEventListener('kpi:mepDataChanged', function (ev) {
         if (root.hidden) return;
+        if (mepSaveInProgress) {
+          restoreMepCanonicalIfSaveInProgress();
+          return;
+        }
         var src = ev && ev.detail && ev.detail.source;
         if (src === 'monthly-edit-float') return;
         var y = ev && ev.detail && Number(ev.detail.year);
         if (!Number.isFinite(y) || y !== mefYear) return;
-        loadMepFromYearStore(y);
+        onMepYearContextChanged(y);
         buildGrid();
       });
+      function invalidateMepPlanningReadCaches() {
+        if (typeof window.clearTwTargetMapsByYear === 'function') window.clearTwTargetMapsByYear();
+        if (typeof window.__invalidateTwSalesThroughCache === 'function') {
+          window.__invalidateTwSalesThroughCache();
+        }
+      }
+      function refreshMepMemoPlanningSurface() {
+        var memoRoot =
+          typeof memoFloatRoot !== 'undefined' && memoFloatRoot
+            ? memoFloatRoot
+            : document.getElementById('memo-float-modal');
+        if (
+          memoRoot &&
+          !memoRoot.hasAttribute('hidden') &&
+          typeof renderMemoFloatDayPanel === 'function'
+        ) {
+          renderMemoFloatDayPanel();
+        }
+      }
       document.addEventListener('kpi:storeHydratedFromServer', function () {
+        invalidateMepPlanningReadCaches();
         if (root.hidden) return;
-        loadMepFromYearStore(mefYear);
+        if (mepSaveInProgress) {
+          restoreMepCanonicalIfSaveInProgress();
+          return;
+        }
+        onMepYearContextChanged(mefYear);
         buildGrid();
+        if (typeof renderKpiStrip === 'function') renderKpiStrip();
+        refreshMepMemoPlanningSurface();
       });
       function refreshMepSalesFromStore(ev) {
-        if (root.hidden) return;
         var src = ev && ev.detail && ev.detail.source;
         /* Confirm 自己発火の再hydrateは二重計上の原因なのでスキップ */
         if (src === 'monthly-edit-float' || src === 'mep') return;
+        invalidateMepPlanningReadCaches();
+        if (root.hidden) return;
+        if (mepSaveInProgress) {
+          restoreMepCanonicalIfSaveInProgress();
+          return;
+        }
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
@@ -7391,9 +8062,15 @@
           syncBizDayFromAnnualStoreForMonth();
         }
         if (typeof syncMonthlySalesFromAnnualStoreForMonth === 'function') {
-          syncMonthlySalesFromAnnualStoreForMonth();
+          var forceAnnual =
+            src === 'sales-data-modal' ||
+            src === 'annual-edit-modal' ||
+            String(src || '').indexOf('sales-data-save') >= 0;
+          syncMonthlySalesFromAnnualStoreForMonth(forceAnnual ? { force: true } : null);
         }
         if (typeof buildGrid === 'function') buildGrid();
+        if (typeof renderKpiStrip === 'function') renderKpiStrip();
+        refreshMepMemoPlanningSurface();
       }
       document.addEventListener('kpi:readSurfacesRefresh', refreshMepSalesFromStore);
       document.addEventListener('kpi:dailySalesChanged', refreshMepSalesFromStore);
@@ -7535,6 +8212,9 @@
       setTimeout(maybeOpenStrategyNoteFromQuery, 0);
 
       var mefYear = new Date().getFullYear();
+      var mepSaveInProgress = false;
+      var mepSaveTxActive = false;
+      var mepSaveHydrateQueued = false;
       var mefMonth0 = new Date().getMonth();
       var nextRowId = 1;
       var rowValueById = {};
@@ -8229,12 +8909,67 @@
         var lunchVal = readValue(r.autoCalcLunchId, iso);
         var parentVal = 0;
         if (r.autoCalcParent === 'salesRow') {
-          var sid = primarySalesRowId();
-          parentVal = sid ? readValue(sid, iso) : 0;
+          parentVal =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : (function () {
+                  var sid = primarySalesRowId();
+                  return sid ? readValue(sid, iso) : 0;
+                })();
         } else if (r.autoCalcParent) {
           parentVal = readValue(r.autoCalcParent, iso);
         }
         return Math.round(Number(parentVal) || 0) - Math.round(Number(lunchVal) || 0);
+      }
+      /* 客単価: Store/Lunch/Dinner ÷ 客数。Sales A/B は含めない */
+      function computeAvgSpendValue(rowId, iso) {
+        var sales = 0;
+        var cust = 0;
+        if (rowId === 'pc') {
+          sales =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          cust = Math.round(Number(readValue('cust', iso)) || 0);
+        } else if (rowId === 'pcLunch') {
+          sales = Math.round(Number(readValue('incLunch', iso)) || 0);
+          cust = Math.round(Number(readValue('custLunch', iso)) || 0);
+        } else if (rowId === 'pcDinner') {
+          var store =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          var lunch = Math.round(Number(readValue('incLunch', iso)) || 0);
+          var custAll = Math.round(Number(readValue('cust', iso)) || 0);
+          var custL = Math.round(Number(readValue('custLunch', iso)) || 0);
+          sales = store - lunch;
+          cust = custAll - custL;
+        } else {
+          return 0;
+        }
+        if (!(cust > 0) || !(sales > 0)) return 0;
+        return Math.round(sales / cust);
+      }
+      /* Target/Diff/Ach: Annual確定の日次Target + Store Salesのみ。A/B・配分再計算なし */
+      function computeMepTargetDiffAchValue(rowId, iso) {
+        if (!mepYearHasSavedPlan(mefYear)) return NaN;
+        var target = 0;
+        if (window.KpiYearStore && typeof KpiYearStore.resolveDailyTargetByIso === 'function') {
+          var resolved = KpiYearStore.resolveDailyTargetByIso(mefYear, iso);
+          var v = resolved && resolved.value;
+          if (v != null && Number.isFinite(Number(v))) target = Math.round(Number(v));
+        }
+        var store =
+          typeof mepIncomeReadValue === 'function'
+            ? mepIncomeReadValue('store_sales', iso)
+            : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+        if (rowId === 'target') return target;
+        if (rowId === 'diff') return store - target;
+        if (rowId === 'ach') {
+          if (!(target > 0)) return NaN;
+          return (store / target) * 100;
+        }
+        return 0;
       }
       function analyzeYearEndDate() {
         return new Date(mefYear, 11, 31);
@@ -8326,6 +9061,29 @@
         });
         return Promise.resolve();
       }
+      function syncBizDayFromAnnualStoreForYear(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) y = mefYear;
+        var daily = ensureAnnualDailyStore();
+        var annualBmap = (daily && daily.businessDayByDate) || {};
+        var timelineBmap = {};
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
+            var store = KpiYearStore.getStore();
+            timelineBmap = (store && store.timeline && store.timeline.businessDays) || {};
+          }
+        } catch (_eBizYear) {}
+        for (var m0 = 0; m0 < 12; m0++) {
+          monthIsoList(y, m0).forEach(function (iso) {
+            if (Object.prototype.hasOwnProperty.call(bizDayByIso, iso)) return;
+            if (Object.prototype.hasOwnProperty.call(timelineBmap, iso)) {
+              bizDayByIso[iso] = !!timelineBmap[iso];
+            } else if (Object.prototype.hasOwnProperty.call(annualBmap, iso)) {
+              bizDayByIso[iso] = !!annualBmap[iso];
+            }
+          });
+        }
+      }
       function syncBizDayFromAnnualStoreForMonth() {
         var daily = ensureAnnualDailyStore();
         var bmap = daily.businessDayByDate || {};
@@ -8349,34 +9107,93 @@
           Number.isFinite(yLimit) ? { limitToYear: yLimit } : null
         );
       }
-      function syncMonthlySalesFromAnnualStoreForMonth() {
+      function syncMonthlySalesFromAnnualStoreForMonth(opts) {
+        var force = !!(opts && opts.force);
         var rows = currentRows();
         ensureRowMap(rows);
         var daily = ensureAnnualDailyStore();
         var tmap = daily.targetSalesByDate || {};
         var primary = state.incomeItems && state.incomeItems[0];
         if (!primary) return;
+        var changed = false;
         var isoList = monthIsoList(mefYear, mefMonth0);
         isoList.forEach(function (iso) {
           if (!Object.prototype.hasOwnProperty.call(tmap, iso)) return;
           var total = Number(tmap[iso]);
           if (!Number.isFinite(total)) total = 0;
-          /* Do not clobber real grid sales with timeline 0 / placeholder. */
-          if (total === 0 || total === 1234) {
-            var existing = Math.round(Number(readValue(primary.id, iso)) || 0);
-            if (existing > 0) return;
-          }
-          var streams = 0;
+          total = Math.round(total);
+          var existing = Math.round(Number(readValue(primary.id, iso)) || 0);
+          /* Store は独立値。正の値がある日は total−A−B 逆算で上書きしない（A/B 入力で Store が動くのを防ぐ） */
+          if (!force && existing > 0) return;
+          /* Do not clobber real grid sales with timeline 0 / placeholder (non-force). */
+          if (!force && (total === 0 || total === 1234)) return;
+          if (total === 1234) return;
+          var aRow = null;
+          var bRow = null;
+          var a = 0;
+          var b = 0;
           (state.incomeItems || []).forEach(function (row) {
             if (!row) return;
             var lid = row.lineId || row.id;
-            if (lid !== 'sales_a' && lid !== 'sales_b') return;
-            streams += Number(readValue(row.id, iso)) || 0;
+            if (lid === 'sales_a') {
+              aRow = row;
+              a = Math.round(Number(readValue(row.id, iso)) || 0);
+            } else if (lid === 'sales_b') {
+              bRow = row;
+              b = Math.round(Number(readValue(row.id, iso)) || 0);
+            }
           });
+          if (force) {
+            if (!a && window.KpiYearStore && typeof KpiYearStore.readDailyIncome === 'function') {
+              var diA = KpiYearStore.readDailyIncome('sales_a', iso);
+              if (diA != null && Number(diA) > 0) {
+                a = Math.round(Number(diA));
+                if (aRow) writeValue(aRow.id, iso, a);
+              }
+            }
+            if (!b && window.KpiYearStore && typeof KpiYearStore.readDailyIncome === 'function') {
+              var diB = KpiYearStore.readDailyIncome('sales_b', iso);
+              if (diB != null && Number(diB) > 0) {
+                b = Math.round(Number(diB));
+                if (bRow) writeValue(bRow.id, iso, b);
+              }
+            }
+            /* A/B 未hydrateのまま total を Store に載せない（MEP-origin の store_sales を守る） */
+            if (!a && !b && window.KpiYearStore && typeof KpiYearStore.readDailyIncome === 'function') {
+              var diSt = KpiYearStore.readDailyIncome('store_sales', iso);
+              if (diSt != null && Number(diSt) > 0) {
+                var stKeep = Math.round(Number(diSt));
+                if (stKeep !== total) {
+                  writeValue(primary.id, iso, stKeep);
+                  changed = true;
+                  return;
+                }
+              }
+            }
+          }
+          var streams = a + b;
+          if (force && streams > total) {
+            try {
+              console.warn(
+                '[kpi] mep force sync: total < A+B; clearing A/B',
+                iso,
+                total,
+                a,
+                b
+              );
+            } catch (_eWarn) {}
+            if (aRow) writeValue(aRow.id, iso, 0);
+            if (bRow) writeValue(bRow.id, iso, 0);
+            writeValue(primary.id, iso, total);
+            changed = true;
+            return;
+          }
           var storeVal = total - streams;
           if (storeVal < 0) storeVal = 0;
           writeValue(primary.id, iso, storeVal);
+          changed = true;
         });
+        /* force 後に grid の A/B=0 を persist すると dailyIncome の A/B を消す。Save/セル確定側で persist する */
       }
       function syncMonthlySalesToAnnualStoreForMonth() {
         syncMonthlySalesToAnnualStoreForYear(mefYear, mefMonth0);
@@ -8506,6 +9323,23 @@
         if (!Number.isFinite(v)) return '0%';
         return Math.round(v * 10) / 10 + '%';
       }
+      function mepYearHasSavedPlan(year) {
+        var y = year != null ? Number(year) : mefYear;
+        if (!Number.isFinite(y)) return false;
+        return !!(
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          KpiYearStore.hasSavedAnnualPlanTarget(y)
+        );
+      }
+      function fmtMepPlanMoney(n) {
+        if (n == null || !Number.isFinite(Number(n))) return '—';
+        return fmtMoney(n);
+      }
+      function fmtMepPlanPct(n) {
+        if (n == null || !Number.isFinite(Number(n))) return '—';
+        return fmtPct(n);
+      }
       function yearCutoffDate() {
         var now = new Date();
         if (mefYear === now.getFullYear() && mefMonth0 === now.getMonth()) {
@@ -8522,8 +9356,23 @@
       }
       var isJa = useJa;
       function isTimelineBusinessDay(iso, bmap, isWeekend) {
-        if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
-        return !isWeekend;
+        if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
+          return KpiYearStore.isUiBusinessDay(iso);
+        }
+        return true;
+      }
+      function isTwPlanningBusinessDay(iso, bmap, isWeekend) {
+        var y = Number(String(iso).slice(0, 4));
+        if (!Number.isFinite(y)) return false;
+        if (
+          !window.KpiYearStore ||
+          typeof KpiYearStore.hasSavedAnnualPlanTarget !== 'function' ||
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return false;
+        }
+        return isTimelineBusinessDay(iso, bmap, isWeekend);
       }
 
                                     /* KPI-FOCUS-TW-METRICS */
@@ -8638,41 +9487,20 @@
       function resolveTwPlanForYear(year) {
         var y = Number(year);
         if (!Number.isFinite(y)) return null;
-        var oy = window.KpiYearStore ? KpiYearStore.getOperatingYear() : new Date().getFullYear();
-        var cy = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
-        if (!Number.isFinite(cy)) cy = oy;
         var target = null;
         var weights = null;
-        if (window.KpiYearStore) {
-          target = KpiYearStore.readAnnualTarget(y);
-          weights = KpiYearStore.readMonthlyHlWeights(y);
-          if (KpiYearStore.isYearLocked(y)) {
-            if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
-          } else if (y === oy || y === cy) {
-            if (
-              (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) &&
-              window.__ANNUAL_DATA &&
-              window.__ANNUAL_DATA.targetSales != null
-            ) {
-              target = Number(window.__ANNUAL_DATA.targetSales);
-            }
-          } else if (y < oy) {
-            /* past year: fall through to referenceAnnualSalesByYear fallback */
-          } else {
-            return null;
-          }
-        } else if (window.__ANNUAL_DATA && y === cy && window.__ANNUAL_DATA.targetSales != null) {
-          target = Number(window.__ANNUAL_DATA.targetSales);
+        if (
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return null;
         }
-        if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) {
-          var past = window.__ANNUAL_DATA && window.__ANNUAL_DATA.pastSales;
-          if (
-            past &&
-            past.referenceAnnualSalesByYear &&
-            past.referenceAnnualSalesByYear[y] != null
-          ) {
-            target = Number(past.referenceAnnualSalesByYear[y]);
+        if (window.KpiYearStore) {
+          if (typeof KpiYearStore.readSavedAnnualPlanTarget === 'function') {
+            target = KpiYearStore.readSavedAnnualPlanTarget(y);
           }
+          weights = KpiYearStore.readMonthlyHlWeights(y);
         }
         if (target == null || !Number.isFinite(Number(target)) || Number(target) <= 0) return null;
         if (!weights || weights.length !== 12) weights = twDefaultHlWeights();
@@ -8736,7 +9564,7 @@
             var dt = new Date(y, m0, day);
             var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
             var isWk = dt.getDay() === 0 || dt.getDay() === 6;
-            if (!isTimelineBusinessDay(iso, bmap, isWk)) continue;
+            if (!isTwPlanningBusinessDay(iso, bmap, isWk)) continue;
             days.push({ iso: iso, m0: m0 });
           }
         }
@@ -9597,22 +10425,24 @@
           var dd = new Date(String(dayIso).trim() + 'T00:00:00');
           var isWk = dd.getDay() === 0 || dd.getDay() === 6;
           var biz = isTimelineBusinessDay(dayIso, bmap, isWk);
+          var planBiz = isTwPlanningBusinessDay(dayIso, bmap, isWk);
           var dayTarget = null;
-          if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+          if (planBiz && Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
             dayTarget = Number(tgtMap[dayIso]);
             if (!Number.isFinite(dayTarget)) dayTarget = null;
           }
           return {
             biz: biz,
+            planBiz: planBiz,
             sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
-            target: biz ? dayTarget : null,
+            target: planBiz ? dayTarget : null,
           };
         }
 
         if (direction > 0) {
           // leave fromIso, enter toIso
           var left = dayMeta(fromIso);
-          if (left.biz) {
+          if (left.planBiz) {
             m.yearRemainingBD = Math.max(0, Number(m.yearRemainingBD) - 1);
             m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
           }
@@ -9639,10 +10469,12 @@
           if (dropped.biz) {
             m.ytdA = Number(m.ytdA) - dropped.sales;
             m.mtdA = Number(m.mtdA) - dropped.sales;
-            if (dropped.target != null) {
-              m.ytdT = Number(m.ytdT) - dropped.target;
-              m.mtdT = Number(m.mtdT) - dropped.target;
-            }
+          }
+          if (dropped.target != null) {
+            m.ytdT = Number(m.ytdT) - dropped.target;
+            m.mtdT = Number(m.mtdT) - dropped.target;
+          }
+          if (dropped.planBiz) {
             m.yearRemainingBD = Number(m.yearRemainingBD) + 1;
             m.monthRemainingBD = Number(m.monthRemainingBD) + 1;
           }
@@ -9672,13 +10504,28 @@
             monthlyFullTarget: 0,
           };
         }
+        if (
+          window.KpiYearStore &&
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          !KpiYearStore.hasSavedAnnualPlanTarget(y)
+        ) {
+          return {
+            monthRemainingBD: 0,
+            yearRemainingBD: 0,
+            monthlyFullTarget: 0,
+          };
+        }
         for (var m = 0; m < 12; m++) {
           var dc = new Date(y, m + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {
             var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
             var f = facts[dayIso];
-            if (!f || !f.businessDay) continue;
-            var tgt = f.dailyTarget;
+            var planBiz =
+              window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function'
+                ? KpiYearStore.isPlanningBusinessDay(dayIso)
+                : !!(f && f.businessDay);
+            if (!planBiz) continue;
+            var tgt = f && f.dailyTarget;
             if (m === m0 && tgt != null && Number.isFinite(Number(tgt))) {
               monthlyFullTarget += Number(tgt);
             }
@@ -9707,11 +10554,15 @@
             : null;
         var rest = remainingBdFromDailyFacts(rec && rec.dailyFacts, iso);
         var annualTarget =
-          typeof KpiYearStore.readAnnualTarget === 'function'
-            ? KpiYearStore.readAnnualTarget(y)
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function' &&
+          KpiYearStore.hasSavedAnnualPlanTarget(y) &&
+          typeof KpiYearStore.readSavedAnnualPlanTarget === 'function'
+            ? KpiYearStore.readSavedAnnualPlanTarget(y)
             : null;
         var hasPlan =
-          fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
+          typeof KpiYearStore.hasSavedAnnualPlanTarget === 'function'
+            ? KpiYearStore.hasSavedAnnualPlanTarget(y)
+            : fact.dailyTarget != null || fact.mtdTarget != null || fact.ytdTarget != null;
         return finalizeTwMetricsNeeds({
           iso: iso,
           isBusinessToday: !!fact.businessDay,
@@ -9786,31 +10637,35 @@
             var dt = new Date(y, m, day);
             var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
             var isWk = dt.getDay() === 0 || dt.getDay() === 6;
-            if (!isTimelineBusinessDay(dayIso, bmap, isWk)) continue;
+            var uiBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
+            var planBiz = isTwPlanningBusinessDay(dayIso, bmap, isWk);
+            if (!uiBiz && !planBiz) continue;
             var dayTarget = null;
-            if (Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
+            if (planBiz && Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
               dayTarget = Number(tgtMap[dayIso]);
               if (!Number.isFinite(dayTarget)) dayTarget = null;
             }
             if (m === m0 && dayTarget != null) monthlyFullTarget += dayTarget;
             if (dayIso <= iso) {
-              var salesAmt = readTwSalesAmt(dayIso, smap);
-              ytdA += salesAmt;
-              if (m === m0) mtdA += salesAmt;
+              if (uiBiz) {
+                var salesAmt = readTwSalesAmt(dayIso, smap);
+                ytdA += salesAmt;
+                if (m === m0) mtdA += salesAmt;
+              }
               if (dayTarget != null) {
                 ytdT += dayTarget;
                 hasPlan = true;
                 if (m === m0) mtdT += dayTarget;
               }
             }
-            if (dayIso >= iso) {
+            if (planBiz && dayIso >= iso) {
               if (m === m0) monthRemainingBD++;
               yearRemainingBD++;
             }
             if (dayIso === iso) {
-              isBusinessToday = true;
-              dailySales = readTwSalesAmt(dayIso, smap);
-              dailyTarget = dayTarget;
+              isBusinessToday = uiBiz;
+              dailySales = uiBiz ? readTwSalesAmt(dayIso, smap) : 0;
+              dailyTarget = planBiz ? dayTarget : null;
             }
           }
         }
@@ -10088,21 +10943,21 @@
         var hasPlan = !!m.hasPlan;
         var monthlyActual = Math.round(Number(m.mtdA) || 0);
         var annualActual = Math.round(Number(m.ytdA) || 0);
-        var monthlyTarget = hasPlan ? Math.round(Number(m.mtdT) || 0) : 0;
-        var annualTarget = hasPlan ? Math.round(Number(m.ytdT) || 0) : 0;
+        var monthlyTarget = hasPlan ? Math.round(Number(m.mtdT) || 0) : null;
+        var annualTarget = hasPlan ? Math.round(Number(m.ytdT) || 0) : null;
         return {
           monthly: {
             actual: monthlyActual,
             target: monthlyTarget,
-            diff: monthlyActual - monthlyTarget,
-            rate: monthlyTarget > 0 ? (monthlyActual / monthlyTarget) * 100 : 0,
+            diff: hasPlan ? monthlyActual - monthlyTarget : null,
+            rate: hasPlan && monthlyTarget > 0 ? (monthlyActual / monthlyTarget) * 100 : null,
             hasPlan: hasPlan
           },
           annual: {
             actual: annualActual,
             target: annualTarget,
-            diff: annualActual - annualTarget,
-            rate: annualTarget > 0 ? (annualActual / annualTarget) * 100 : 0,
+            diff: hasPlan ? annualActual - annualTarget : null,
+            rate: hasPlan && annualTarget > 0 ? (annualActual / annualTarget) * 100 : null,
             hasPlan: hasPlan
           }
         };
@@ -10247,13 +11102,19 @@
           };
         }
         var kpi = MEF_KPI_STRIP_USE_DUMMY ? getKpiStripDummySummary() : getKpiSummary();
+        var planDash = '—';
         function fmtKpiMoney(v) {
+          if (v == null || !Number.isFinite(Number(v))) return planDash;
           if (window.KpiCurrency) return KpiCurrency.format(Math.round(Number(v) || 0), { round: true });
           if (MEF_KPI_STRIP_USE_DUMMY) return '$' + Math.round(Number(v) || 0).toLocaleString('en-US');
           return fmtMoney(v);
         }
-        var annualProg = progressVisual(kpi.annual.rate);
-        var monthlyProg = progressVisual(kpi.monthly.rate);
+        function fmtKpiPct(v) {
+          if (v == null || !Number.isFinite(Number(v))) return planDash;
+          return fmtPct(v);
+        }
+        var annualProg = progressVisual(kpi.annual.hasPlan === false ? null : kpi.annual.rate);
+        var monthlyProg = progressVisual(kpi.monthly.hasPlan === false ? null : kpi.monthly.rate);
         kpiStrip.innerHTML =
           '<div class="monthly-edit-float__kpi-col">' +
           '<div class="monthly-edit-float__kpi-cell">' +
@@ -10263,7 +11124,7 @@
           '<span class="monthly-edit-float__kpi-progress-target"></span>' +
           '<span class="monthly-edit-float__kpi-progress-marker" style="left:' + annualProg.marker.toFixed(1) + '%;--kpi-marker-color:' + annualProg.color + ';"></span>' +
           '</div>' +
-          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtPct(kpi.annual.rate)) + '</span></div>' +
+          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtKpiPct(kpi.annual.rate)) + '</span></div>' +
           '</div>' +
           '<div class="monthly-edit-float__kpi-cell">' +
           '<div class="monthly-edit-float__kpi-cell-label">' + escapeHtml(labels.monthlyProgress) + '</div>' +
@@ -10272,7 +11133,7 @@
           '<span class="monthly-edit-float__kpi-progress-target"></span>' +
           '<span class="monthly-edit-float__kpi-progress-marker" style="left:' + monthlyProg.marker.toFixed(1) + '%;--kpi-marker-color:' + monthlyProg.color + ';"></span>' +
           '</div>' +
-          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtPct(kpi.monthly.rate)) + '</span></div>' +
+          '<div class="monthly-edit-float__kpi-progress-top"><span></span><span>' + escapeHtml(fmtKpiPct(kpi.monthly.rate)) + '</span></div>' +
           '</div>' +
           '</div>' +
           '<div class="monthly-edit-float__kpi-col">' +
@@ -10292,17 +11153,25 @@
         var monthlyDiffEl = document.getElementById('mep-kpi-monthly-diff');
         if (annualDiffEl) {
           annualDiffEl.textContent =
-            typeof window.__twFmtDiff === 'function'
+            kpi.annual.hasPlan && typeof window.__twFmtDiff === 'function'
               ? window.__twFmtDiff(kpi.annual.actual, kpi.annual.target)
-              : fmtKpiMoney(kpi.annual.diff);
-          applyTwDiffSurfaceEl(annualDiffEl, kpi.annual.actual, kpi.annual.target);
+              : kpi.annual.hasPlan
+                ? fmtKpiMoney(kpi.annual.diff)
+                : planDash;
+          if (kpi.annual.hasPlan) {
+            applyTwDiffSurfaceEl(annualDiffEl, kpi.annual.actual, kpi.annual.target);
+          }
         }
         if (monthlyDiffEl) {
           monthlyDiffEl.textContent =
-            typeof window.__twFmtDiff === 'function'
+            kpi.monthly.hasPlan && typeof window.__twFmtDiff === 'function'
               ? window.__twFmtDiff(kpi.monthly.actual, kpi.monthly.target)
-              : fmtKpiMoney(kpi.monthly.diff);
-          applyTwDiffSurfaceEl(monthlyDiffEl, kpi.monthly.actual, kpi.monthly.target);
+              : kpi.monthly.hasPlan
+                ? fmtKpiMoney(kpi.monthly.diff)
+                : planDash;
+          if (kpi.monthly.hasPlan) {
+            applyTwDiffSurfaceEl(monthlyDiffEl, kpi.monthly.actual, kpi.monthly.target);
+          }
         }
       }
       function closeMonthPicker() {
@@ -10355,7 +11224,7 @@
       }
       function ensureDefaultsForMonth() {
         syncBizDayFromAnnualStoreForMonth();
-        syncMonthlySalesFromAnnualStoreForMonth();
+        /* syncFrom は年切替・外部更新のみ。buildGrid 経由だと stale timeline で Store を A/B 分減算する */
         var isoList = monthIsoList(mefYear, mefMonth0);
         /* Do not invent bizDayByIso from weekday — unset days stay without a key */
         Object.keys(rowValueById).forEach(function (rowId) {
@@ -11122,8 +11991,11 @@
         }
         elLabels.appendChild(rowEl);
       }
+      function isMepUiBusinessDay(iso) {
+        return bizDayByIso[iso] !== false;
+      }
       function cellInactiveClass(iso) {
-        return bizDayByIso[iso] ? '' : ' mef-col-inactive';
+        return isMepUiBusinessDay(iso) ? '' : ' mef-col-inactive';
       }
       function clearKpiFill(td) {
         td.classList.remove('kpi-fill-empty', 'kpi-fill-has');
@@ -11248,7 +12120,7 @@
               var cb = document.createElement('input');
               cb.type = 'checkbox';
               cb.className = 'monthly-edit-float__cb';
-              cb.checked = !!bizDayByIso[iso];
+              cb.checked = bizDayByIso[iso] !== false;
               cb.setAttribute('data-action', 'bizday-toggle');
               cb.setAttribute('data-iso', iso);
               var mepPathBlockedForBiz = isMepDailySalesPathBlocked();
@@ -11276,7 +12148,7 @@
               td.className = cellInactiveClass(iso).trim();
               if (r.id === 'memoHead') {
                 td.classList.add('monthly-edit-float__memo-flag-cell');
-                if (bizDayByIso[iso]) {
+                if (isMepUiBusinessDay(iso)) {
                   var flagBtn = document.createElement('button');
                   flagBtn.type = 'button';
                   flagBtn.className = 'monthly-edit-float__memo-flag-btn';
@@ -11302,7 +12174,7 @@
               } else {
                 var out = document.createElement('span');
                 out.textContent = fmtMoney(aggregateValue(r.id, iso));
-                if (bizDayByIso[iso]) setKpiFill(td, 'has');
+                if (isMepUiBusinessDay(iso)) setKpiFill(td, 'has');
               td.appendChild(out);
               }
               tr.appendChild(td);
@@ -11314,7 +12186,7 @@
             isoList.forEach(function (iso) {
               var td = document.createElement('td');
               td.className = cellInactiveClass(iso).trim();
-              if (bizDayByIso[iso]) {
+              if (isMepUiBusinessDay(iso)) {
                 var rawMemo = readMemo(r.row.id, iso);
                 var btnMemo = document.createElement('button');
                 btnMemo.type = 'button';
@@ -11354,7 +12226,7 @@
               td.className = cellInactiveClass(iso).trim();
               var sel = document.createElement('select');
               sel.className = 'monthly-edit-float__select';
-              sel.disabled = !bizDayByIso[iso];
+              sel.disabled = !isMepUiBusinessDay(iso);
               sel.setAttribute('data-action', 'weather-select');
               sel.setAttribute('data-iso', iso);
               sel.setAttribute('aria-label', t('天気 ', 'Weather ') + iso);
@@ -11367,7 +12239,7 @@
               });
               sel.value = cur;
               td.appendChild(sel);
-              if (bizDayByIso[iso]) syncWeatherSelectTdFill(sel);
+              if (isMepUiBusinessDay(iso)) syncWeatherSelectTdFill(sel);
               tr.appendChild(td);
             });
           } else if (r.type === 'moneyRow' || r.type === 'moneyStatic' || r.type === 'percent') {
@@ -11419,9 +12291,13 @@
               var inp = document.createElement('input');
               inp.type = 'text';
               inp.className = 'monthly-edit-float__input';
-              inp.disabled = !bizDayByIso[iso];
+              inp.disabled = !isMepUiBusinessDay(iso);
               if (r.type === 'percent') {
-                inp.value = '0%';
+                if (r.id === 'ach') {
+                  inp.value = fmtMepPlanPct(computeMepTargetDiffAchValue('ach', iso));
+                } else {
+                  inp.value = '0%';
+                }
                 inp.disabled = true;
               } else if (r.type === 'moneyRow') {
                 if (r.row.mepAutoCalc) {
@@ -11429,8 +12305,12 @@
                     ? computeDrinkSalesValue(iso)
                     : Math.max(
                         0,
-                        Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0) -
-                          Math.round(Number(readValue('food_sales', iso)) || 0)
+                        (typeof mepIncomeReadValue === 'function'
+                          ? mepIncomeReadValue('store_sales', iso)
+                          : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0)) -
+                          (typeof mepIncomeReadValue === 'function'
+                            ? mepIncomeReadValue('food_sales', iso)
+                            : Math.round(Number(readValue('food_sales', iso)) || 0))
                       );
                   inp.value = fmtMoney(drinkVal);
                   inp.disabled = true;
@@ -11448,12 +12328,16 @@
                 inp.setAttribute('data-iso', iso);
                   if (r.row.mepEditable) {
                     inp.setAttribute('data-mep-editable', '1');
-                    if (r.section === 'income') {
+                    /* food_sales は Store 内訳。timeline 売上の sales-path / canWrite ゲート対象外 */
+                    var mepIncomeSalesPath =
+                      r.section === 'income' &&
+                      (r.row.lineId || r.row.id) !== 'food_sales';
+                    if (mepIncomeSalesPath) {
                       inp.setAttribute('data-mep-sales-path', '1');
                     }
                     var mepPathBlocked = isMepDailySalesPathBlocked();
                     var salesBlocked =
-                      r.section === 'income' &&
+                      mepIncomeSalesPath &&
                       window.KpiYearStore &&
                       iso &&
                       !KpiYearStore.canWriteDailySalesFrom('mep', iso);
@@ -11472,7 +12356,11 @@
                 }
               } else if (r.autoCalc) {
                 var autoKind = r.valueKind || 'money';
-                if (r.autoCalcLunchId) {
+                if (r.id === 'pc' || r.id === 'pcLunch' || r.id === 'pcDinner') {
+                  inp.value = fmtMoney(computeAvgSpendValue(r.id, iso));
+                } else if (r.id === 'target' || r.id === 'diff') {
+                  inp.value = fmtMepPlanMoney(computeMepTargetDiffAchValue(r.id, iso));
+                } else if (r.autoCalcLunchId) {
                   var autoVal = computeStaticAutoCalcValue(r, iso);
                   inp.value = autoKind === 'count' ? fmtCount(autoVal) : fmtMoney(autoVal);
                 } else {
@@ -11502,7 +12390,7 @@
                 }
               }
               td.appendChild(inp);
-              if (bizDayByIso[iso]) {
+              if (isMepUiBusinessDay(iso)) {
                 if (r.type === 'percent' || r.autoCalc) {
                   setKpiFill(td, 'has');
                 } else if (r.type === 'moneyRow' || r.type === 'moneyStatic') {
@@ -11631,14 +12519,60 @@
             : now.getFullYear();
         return Number.isFinite(oy) ? oy : now.getFullYear();
       }
-      function applyMepDefaultMonth() {
-        var now = new Date();
+      function isValidMepCalendarIso(iso) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return false;
+        var y = Number(String(iso).slice(0, 4));
+        var mo = Number(String(iso).slice(5, 7));
+        var d = Number(String(iso).slice(8, 10));
+        if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d) || mo < 1 || mo > 12) {
+          return false;
+        }
+        if (d < 1 || d > daysInMonth(y, mo - 1)) return false;
+        return true;
+      }
+      /* KPI-MEP-OPEN-ISO: no-query fallback only. Does not write selectedDate / annualNav / dirty. */
+      function resolveMepOpenIsoFromContext() {
         var oy = mepOperatingYear();
-        mefYear = oy;
-        mefMonth0 = oy === now.getFullYear() ? now.getMonth() : 0;
-        mefPreferredIso = null;
-        if (oy === now.getFullYear()) {
+        function todayFallbackIso() {
+          var now = new Date();
+          if (now.getFullYear() === oy) {
+            return mepIsoFromParts(oy, now.getMonth(), now.getDate());
+          }
+          return mepIsoFromParts(oy, 0, 1);
+        }
+        function isValidOyIso(iso) {
+          if (!isValidMepCalendarIso(iso)) return false;
+          return Number(String(iso).slice(0, 4)) === oy;
+        }
+        var raw = '';
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            raw = String(KpiYearStore.getSelectedDate() || '');
+          }
+        } catch (_eSel) {}
+        if (!raw && window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
+          raw = String(window.__ANNUAL_DATA.daily.selectedDate || '');
+        }
+        if (isValidOyIso(raw)) return raw;
+        var oyIso = '';
+        try {
+          var nav =
+            window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.getJson === 'function'
+              ? window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualNav')
+              : null;
+          if (nav && nav.operatingSelectedIso) oyIso = String(nav.operatingSelectedIso);
+        } catch (_eOyIso) {}
+        if (isValidOyIso(oyIso)) return oyIso;
+        return todayFallbackIso();
+      }
+      function applyMepYearMonthOpen(y, m1) {
+        mefYear = y;
+        mefMonth0 = m1 - 1;
+        var now = new Date();
+        if (now.getFullYear() === mefYear && now.getMonth() === mefMonth0) {
           mefPreferredIso = mepIsoFromParts(mefYear, mefMonth0, now.getDate());
+        } else {
+          mefPreferredIso = mepIsoFromParts(mefYear, mefMonth0, 1);
         }
       }
 
@@ -11697,22 +12631,16 @@
         var iso = String(params.get('iso') || '').trim();
         var line = String(params.get('line') || '').trim();
         mefPreferredLineId = line || null;
-        if (Number.isFinite(y) && m >= 1 && m <= 12) {
-          mefYear = y;
-          mefMonth0 = m - 1;
-          if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-            var parts = iso.split('-');
-            if (Number(parts[0]) === mefYear && Number(parts[1]) - 1 === mefMonth0) {
-              mefPreferredIso = iso;
-            }
-          }
+        /* D: valid ?iso= wins even if year/month also present. */
+        if (isValidMepCalendarIso(iso)) {
+          applyMepSelectedIso(iso);
           return;
         }
-        if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-          applyMepSelectedIso(iso);
-              return;
-            }
-        applyMepDefaultMonth();
+        if (Number.isFinite(y) && m >= 1 && m <= 12) {
+          applyMepYearMonthOpen(y, m);
+          return;
+        }
+        applyMepSelectedIso(resolveMepOpenIsoFromContext());
       }
       function persistMefMonth() {
         try {
@@ -11757,13 +12685,16 @@
           });
         }
         bindMepKpiStripRefresh();
+        if (typeof syncBizDayFromAnnualStoreForYear === 'function') {
+          syncBizDayFromAnnualStoreForYear(mefYear);
+        }
         buildGrid();
         confirmedSnapshot = buildConfirmedSnapshot();
         persistMefMonth();
         scroller.scrollTop = 0;
         applyZoom();
+        /* Open: scroll only. scrollToPreferredDayLeft writes selectedIso — do not use here. */
         if (mefPreferredIso) scrollToIsoColumn(mefPreferredIso);
-        else scrollToPreferredDayLeft();
         syncLabelScroll();
         focusPreferredLine();
         pinLabelsToRight();
@@ -11771,7 +12702,9 @@
       function jumpToToday() {
         flushStrategyNoteToCache();
         var now = new Date();
+        var todayIso = mepIsoFromParts(now.getFullYear(), now.getMonth(), now.getDate());
         var prevYear = mefYear;
+        mefPreferredIso = todayIso;
         mefYear = now.getFullYear();
         mefMonth0 = now.getMonth();
         if (prevYear !== mefYear) onMepYearContextChanged(mefYear);
@@ -11816,6 +12749,7 @@
         return (items || []).map(function (r) {
           return {
             id: r.id,
+            lineId: r.lineId || r.id,
             labelJa: r.labelJa,
             labelEn: r.labelEn,
             editableLabel: !!r.editableLabel,
@@ -11853,7 +12787,6 @@
         rowValueById = snap.rowValueById || rowValueById;
         memoValueById = snap.memoValueById || memoValueById;
         weatherByIso = snap.weatherByIso || weatherByIso;
-        if (snap.collapsed) state.collapsed = snap.collapsed;
         if (snap.incomeItems) state.incomeItems = snap.incomeItems;
         if (snap.fixedItems) state.fixedItems = snap.fixedItems;
         if (snap.variableItems) state.variableItems = snap.variableItems;
@@ -11868,16 +12801,113 @@
         syncMonthlySalesToAnnualStoreForYear(mefYear);
         buildGrid();
       }
+      function dataDirtySnapshotString(raw) {
+        var o;
+        try {
+          o = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch (_e) {
+          return '';
+        }
+        if (!o || typeof o !== 'object') return '';
+        delete o.year;
+        delete o.month0;
+        delete o.collapsed;
+        function isCanonicalEmpty(v) {
+          if (v == null) return true;
+          if (v === 0) return true;
+          if (v === '') return true;
+          if (typeof v === 'string' && !String(v).trim()) return true;
+          return false;
+        }
+        function stripIsoMap(map) {
+          if (!map || typeof map !== 'object') return;
+          Object.keys(map).forEach(function (iso) {
+            if (isCanonicalEmpty(map[iso])) delete map[iso];
+          });
+        }
+        function stripNestedIsoMaps(src) {
+          if (!src || typeof src !== 'object') return;
+          Object.keys(src).forEach(function (rowId) {
+            var inner = src[rowId];
+            if (!inner || typeof inner !== 'object') {
+              if (isCanonicalEmpty(inner)) delete src[rowId];
+              return;
+            }
+            stripIsoMap(inner);
+            if (!Object.keys(inner).length) delete src[rowId];
+          });
+        }
+        stripNestedIsoMaps(o.rowValueById);
+        stripNestedIsoMaps(o.memoValueById);
+        stripIsoMap(o.weatherByIso);
+        if (o.bizDayByIso && typeof o.bizDayByIso === 'object') {
+          Object.keys(o.bizDayByIso).forEach(function (iso) {
+            var v = o.bizDayByIso[iso];
+            if (v == null || v === 0 || v === '') delete o.bizDayByIso[iso];
+          });
+        }
+        if (o.strategyUserNotesByMonth && typeof o.strategyUserNotesByMonth === 'object') {
+          Object.keys(o.strategyUserNotesByMonth).forEach(function (mKey) {
+            var text = String(
+              o.strategyUserNotesByMonth[mKey] == null ? '' : o.strategyUserNotesByMonth[mKey]
+            ).trim();
+            if (!text) delete o.strategyUserNotesByMonth[mKey];
+          });
+        }
+        return JSON.stringify(o);
+      }
       function hasUnsavedChanges() {
-        if (hasPendingEdits) return true;
         if (
           memoFloatRoot &&
           !memoFloatRoot.hasAttribute('hidden') &&
           (!memoFloatState.sessionSaved || memoFloatState.dirty)
         ) {
+          try {
+            console.info('[KPN_DIRTY_DIFF]', { reason: 'memoFloat', paths: [{ path: 'memoFloat', confirmed: false, current: true }] });
+          } catch (_eMemo) {}
           return true;
         }
-        return buildConfirmedSnapshot() !== confirmedSnapshot;
+        if (!confirmedSnapshot) return false;
+        var confS = dataDirtySnapshotString(confirmedSnapshot);
+        var curS = dataDirtySnapshotString(buildConfirmedSnapshot());
+        if (confS === curS) return false;
+        try {
+          var diffs = [];
+          function walk(a, b, prefix) {
+            if (diffs.length >= 40) return;
+            var aObj = a && typeof a === 'object';
+            var bObj = b && typeof b === 'object';
+            var aArr = Array.isArray(a);
+            var bArr = Array.isArray(b);
+            if (aArr || bArr) {
+              if (JSON.stringify(a) !== JSON.stringify(b)) {
+                diffs.push({ path: prefix || '(root)', confirmed: a, current: b });
+              }
+              return;
+            }
+            if (!aObj && !bObj) {
+              if (a !== b) diffs.push({ path: prefix || '(root)', confirmed: a, current: b });
+              return;
+            }
+            var keys = {};
+            if (aObj) Object.keys(a).forEach(function (k) { keys[k] = 1; });
+            if (bObj) Object.keys(b).forEach(function (k) { keys[k] = 1; });
+            Object.keys(keys).sort().forEach(function (k) {
+              if (diffs.length >= 40) return;
+              var p = prefix ? prefix + '.' + k : k;
+              var av = aObj ? a[k] : undefined;
+              var bv = bObj ? b[k] : undefined;
+              if (av && bv && typeof av === 'object' && typeof bv === 'object') {
+                walk(av, bv, p);
+                return;
+              }
+              if (av !== bv) diffs.push({ path: p, confirmed: av, current: bv });
+            });
+          }
+          walk(JSON.parse(confS || '{}'), JSON.parse(curS || '{}'), '');
+          console.info('[KPN_DIRTY_DIFF]', { reason: 'snapshot', count: diffs.length, paths: diffs });
+        } catch (_eDiff) {}
+        return true;
       }
 
       var closeChooser = document.getElementById('sales-data-close-chooser');
@@ -11912,8 +12942,23 @@
       }
       if (closeChooserSave) {
         closeChooserSave.addEventListener('click', function () {
-          if (btnConfirm) btnConfirm.click();
-          finishLeaveNavigate(true);
+          var run = function () {
+            return performMepSave().then(function (putResult) {
+              if (mepPutFailed(putResult)) {
+                finishLeaveNavigate(false);
+                return putResult;
+              }
+              finishLeaveNavigate(true);
+              return putResult;
+            });
+          };
+          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
+            window.__KPI_BUSY.run('save', run).catch(function () {
+              finishLeaveNavigate(false);
+            });
+            return;
+          }
+          run();
         });
       }
       if (closeChooserDiscard) {
@@ -11933,7 +12978,34 @@
         });
       }
       function canLeaveWithoutChooser() {
-        return editSessionCommitted && !hasUnsavedChanges();
+        return !hasUnsavedChanges();
+      }
+      function mepPutFailed(putResult) {
+        if (!putResult) return false;
+        if (putResult.conflict || putResult.status === 428) return true;
+        if (putResult.ok === false && !putResult.skipped) return true;
+        return false;
+      }
+      function applyMepSaveSuccessUi() {
+        document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+        document.dispatchEvent(new CustomEvent('monthly:editFloatConfirmed', { detail: { year: mefYear, month0: mefMonth0 } }));
+        confirmedSnapshot = buildConfirmedSnapshot();
+        clearDirty();
+        undoStack = [];
+        syncUndoButton();
+        editSessionCommitted = true;
+        if (typeof buildGrid === 'function') buildGrid();
+      }
+      function performMepSave() {
+        return Promise.resolve()
+          .then(function () {
+            return runMepSaveTransaction();
+          })
+          .then(function (putResult) {
+            if (mepPutFailed(putResult)) return putResult;
+            applyMepSaveSuccessUi();
+            return putResult || { ok: true };
+          });
       }
       function requestLeaveNavigation() {
         return new Promise(function (resolve) {
@@ -12343,23 +13415,23 @@
       }
 
       if (btnConfirm) {
+        btnConfirm.addEventListener('pointerdown', function (ev) {
+          if (ev.button != null && ev.button !== 0) return;
+          mepSaveInProgress = true;
+        });
+        document.addEventListener(
+          'pointerup',
+          function (ev) {
+            if (!mepSaveInProgress || mepSaveTxActive) return;
+            if (btnConfirm.contains(ev.target)) return;
+            mepSaveInProgress = false;
+          },
+          true
+        );
         btnConfirm.addEventListener('click', function () {
           /* KPI-BUSY-CSV-CLOSE-DA: Save overlay closes within 20s even if rebuild/flush stalls */
           var doSave = function () {
-            var core = Promise.resolve(syncMonthlySalesToAnnualStoreForYear(mefYear, null, { serverRebuild: true }))
-              .then(function () {
-                persistMepToYearStore(mefYear, { forceExpenses: true });
-                return flushMepStoreToServer();
-              })
-              .then(function () {
-                document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
-                document.dispatchEvent(new CustomEvent('monthly:editFloatConfirmed', { detail: { year: mefYear, month0: mefMonth0 } }));
-                confirmedSnapshot = buildConfirmedSnapshot();
-                clearDirty();
-                undoStack = [];
-                syncUndoButton();
-                editSessionCommitted = true;
-              });
+            var core = performMepSave();
             return Promise.race([
               core.catch(function () {}),
               new Promise(function (resolve) { window.setTimeout(resolve, 20000); }),
@@ -12383,13 +13455,16 @@
       }
       function computeDrinkSalesValue(iso) {
         /* Drink = Store − Food。Store は store_sales 行（総売上 − A − B） */
-        var storeId = 'store_sales';
-        if (typeof primarySalesRowId === 'function') {
-          storeId = primarySalesRowId() || 'store_sales';
-        }
         var store = 0;
         var food = 0;
-        if (typeof readValue === 'function') {
+        if (typeof mepIncomeReadValue === 'function') {
+          store = mepIncomeReadValue('store_sales', iso);
+          food = mepIncomeReadValue('food_sales', iso);
+        } else if (typeof readValue === 'function') {
+          var storeId = 'store_sales';
+          if (typeof primarySalesRowId === 'function') {
+            storeId = primarySalesRowId() || 'store_sales';
+          }
           store = Math.round(Number(readValue(storeId, iso)) || 0);
           food = Math.round(Number(readValue('food_sales', iso)) || 0);
         }
@@ -12406,21 +13481,32 @@
         var out = {};
         if (typeof rowValueById === 'undefined' || !rowValueById) return out;
         MEP_INCOME_INPUT_STREAM_IDS.forEach(function (id) {
-          var byIso = rowValueById[id];
+          var byIso =
+            typeof mepGridMapForIncomeStream === 'function'
+              ? mepGridMapForIncomeStream(id)
+              : null;
+          if (!byIso || typeof byIso !== 'object') {
+            var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId(id) : id;
+            byIso = rowValueById[rid];
+          }
           if (!byIso || typeof byIso !== 'object') return;
           var filtered = {};
           Object.keys(byIso).forEach(function (iso) {
             if (mepIncomeStreamIsoYear(iso) !== y) return;
-            filtered[iso] = byIso[iso];
+            var n = Number(byIso[iso]);
+            if (!Number.isFinite(n) || n === 0) return;
+            filtered[iso] = Math.round(n);
           });
-          out[id] = filtered;
+          if (Object.keys(filtered).length) out[id] = filtered;
         });
         /* drink_sales = Store − Food（iso は store / food の和集合） */
         var drinkByIso = {};
         var isoSet = {};
-        var storeId = typeof primarySalesRowId === 'function' ? primarySalesRowId() : 'store_sales';
-        [storeId || 'store_sales', 'food_sales'].forEach(function (id) {
-          var byIso = rowValueById[id];
+        ['store_sales', 'food_sales'].forEach(function (id) {
+          var byIso =
+            typeof mepGridMapForIncomeStream === 'function'
+              ? mepGridMapForIncomeStream(id)
+              : rowValueById[id];
           if (!byIso || typeof byIso !== 'object') return;
           Object.keys(byIso).forEach(function (iso) {
             if (mepIncomeStreamIsoYear(iso) === y) isoSet[iso] = true;
@@ -12430,20 +13516,28 @@
           drinkByIso[iso] = computeDrinkSalesValue(iso);
         });
         out.drink_sales = drinkByIso;
-        var storeId = typeof primarySalesRowId === 'function' ? primarySalesRowId() : 'store_sales';
         var storeByIso = {};
         var storeIsoSet = {};
-        [storeId || 'store_sales', 'sales_a', 'sales_b', 'food_sales'].forEach(function (id) {
-          var byIso = rowValueById[id];
+        ['store_sales', 'sales_a', 'sales_b', 'food_sales'].forEach(function (id) {
+          var byIso =
+            typeof mepGridMapForIncomeStream === 'function'
+              ? mepGridMapForIncomeStream(id)
+              : rowValueById[id];
           if (!byIso || typeof byIso !== 'object') return;
           Object.keys(byIso).forEach(function (iso) {
             if (mepIncomeStreamIsoYear(iso) === y) storeIsoSet[iso] = true;
           });
         });
         Object.keys(storeIsoSet).forEach(function (iso) {
-          var storeVal = Math.round(Number(readValue(storeId || 'store_sales', iso)) || 0);
+          var storeVal =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : Math.round(Number(readValue('store_sales', iso)) || 0);
           if (!storeVal) {
-            var foodVal = Math.round(Number(readValue('food_sales', iso)) || 0);
+            var foodVal =
+              typeof mepIncomeReadValue === 'function'
+                ? mepIncomeReadValue('food_sales', iso)
+                : Math.round(Number(readValue('food_sales', iso)) || 0);
             var drinkVal =
               typeof computeDrinkSalesValue === 'function'
                 ? Math.round(Number(computeDrinkSalesValue(iso)) || 0)
@@ -12466,37 +13560,50 @@
         MEP_INCOME_INPUT_STREAM_IDS.forEach(function (id) {
           var byIso = di[id];
           if (!byIso || typeof byIso !== 'object') return;
-          if (!rowValueById[id]) rowValueById[id] = {};
+          var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId(id) : id;
+          if (!rowValueById[rid]) rowValueById[rid] = {};
           Object.keys(byIso).forEach(function (iso) {
             if (mepIncomeStreamIsoYear(iso) !== y) return;
             var n = Number(byIso[iso]);
             if (!Number.isFinite(n) || n === 0) {
-              delete rowValueById[id][iso];
+              delete rowValueById[rid][iso];
             } else {
-              rowValueById[id][iso] = Math.round(n);
+              rowValueById[rid][iso] = Math.round(n);
             }
           });
         });
+        /* store_sales も dailyIncome から復帰（その後 force sync が timeline 正本で上書きしうる） */
+        var storeByIso = di.store_sales;
+        if (storeByIso && typeof storeByIso === 'object') {
+          var sid =
+            typeof mepStreamRowId === 'function'
+              ? mepStreamRowId('store_sales')
+              : typeof primarySalesRowId === 'function'
+                ? primarySalesRowId() || 'store_sales'
+                : 'store_sales';
+          if (!rowValueById[sid]) rowValueById[sid] = {};
+          Object.keys(storeByIso).forEach(function (iso) {
+            if (mepIncomeStreamIsoYear(iso) !== y) return;
+            var n = Number(storeByIso[iso]);
+            if (!Number.isFinite(n) || n === 0) {
+              delete rowValueById[sid][iso];
+            } else {
+              rowValueById[sid][iso] = Math.round(n);
+            }
+          });
+        }
       }
       document.addEventListener('kpi:mepDataChanged', function (ev) {
         var d = ev && ev.detail;
         if (!d) return;
+        if (mepSaveInProgress) {
+          restoreMepCanonicalIfSaveInProgress();
+          return;
+        }
         var year = Number(d.year);
         if (!Number.isFinite(year)) return;
         if (d.source === 'monthly-edit-float') {
-          if (__mepIncomeStreamsBusy) return;
-          if (!window.KpiYearStore || typeof KpiYearStore.bulkPersistMepYear !== 'function') return;
-          var streams = collectMepIncomeStreamsPayload(year);
-          __mepIncomeStreamsBusy = true;
-          try {
-            KpiYearStore.bulkPersistMepYear(
-              year,
-              { dailyIncome: streams },
-              { source: 'monthly-edit-float' }
-            );
-          } finally {
-            __mepIncomeStreamsBusy = false;
-          }
+          /* 本体 persist 済み。grid が 0 の再 collect で A/B を消さない */
           return;
         }
         /* 外部更新時は dailyIncome → グリッドへ復帰 */
@@ -12545,13 +13652,7 @@
           '&month=' +
           encodeURIComponent(String(mefMonth0 + 1)) +
           '&from=monthly-edit';
-        flushMepStoreToServer()
-          .then(function () {
-            window.location.href = href;
-          })
-          .catch(function () {
-            window.location.href = href;
-          });
+        window.location.href = href;
         });
       }
       if (btnProfitLoss) {
@@ -12566,7 +13667,6 @@
         });
       }
       btnPrev && btnPrev.addEventListener('click', function () {
-        markDirty();
         flushStrategyNoteToCache();
         var prevYear = mefYear;
         mefMonth0 -= 1;
@@ -12580,7 +13680,6 @@
         persistMefMonth();
       });
       btnNext && btnNext.addEventListener('click', function () {
-        markDirty();
         flushStrategyNoteToCache();
         var prevYear = mefYear;
         mefMonth0 += 1;
@@ -12594,7 +13693,6 @@
         persistMefMonth();
       });
       btnToday && btnToday.addEventListener('click', function () {
-        markDirty();
         jumpToToday();
       });
       lblMonth &&
@@ -12616,7 +13714,6 @@
           if (!btn) return;
           var m = Number(btn.getAttribute('data-month0'));
           if (!Number.isInteger(m) || m < 0 || m > 11) return;
-          markDirty();
           applyMonthSelection(m);
         });
       if (btnSummaryToggle) {
@@ -12880,11 +13977,12 @@
             return;
           }
           var salesPathOnly =
-            target.getAttribute('data-mep-sales-path') === '1' ||
-            (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0 &&
-              state.incomeItems.some(function (it) {
-                return it && (it.id === rowId || it.lineId === rowId) && !!it.mepEditable && !it.mepAutoCalc;
-              }));
+            rowId !== 'food_sales' &&
+            (target.getAttribute('data-mep-sales-path') === '1' ||
+              (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0 &&
+                state.incomeItems.some(function (it) {
+                  return it && (it.id === rowId || it.lineId === rowId) && !!it.mepEditable && !it.mepAutoCalc;
+                })));
           var mepEditableInput = target.getAttribute('data-mep-editable') === '1';
           var mepPathBlockedAtEdit =
             mepEditableInput &&
@@ -12905,9 +14003,35 @@
           }
           pushUndo();
           writeValue(rowId, iso2, parseMoney(target.value));
+          var streamIdForRow =
+            typeof mepIncomeStreamIdFromRowId === 'function'
+              ? mepIncomeStreamIdFromRowId(rowId)
+              : rowId;
+          var mepOriginTotalRow =
+            streamIdForRow === 'sales_a' ||
+            streamIdForRow === 'sales_b' ||
+            streamIdForRow === 'store_sales' ||
+            rowId === 'sales_a' ||
+            rowId === 'sales_b' ||
+            rowId === 'store_sales' ||
+            (typeof primarySalesRowId === 'function' && rowId === primarySalesRowId());
+          var mepIncomeCell =
+            mepOriginTotalRow ||
+            (typeof MEP_INCOME_INPUT_STREAM_IDS !== 'undefined' &&
+              MEP_INCOME_INPUT_STREAM_IDS.indexOf(streamIdForRow) >= 0);
+          if (mepIncomeCell && typeof persistMepIncomeIsoDirect === 'function') {
+            persistMepIncomeIsoDirect(iso2, { deferPersist: true });
+          }
+          if (mepOriginTotalRow && typeof persistMepOriginDailyTotalToStore === 'function') {
+            persistMepOriginDailyTotalToStore(iso2, { deferPersist: true });
+          }
+          if (mepIncomeCell) {
+            try {
+              console.info('[KPN_MEP_SAVE_TRACE][CELL_MEMORY_ONLY]');
+            } catch (_eTrCell) {}
+          }
           if (MEF_STATIC_INPUT_IDS.indexOf(rowId) < 0) {
-          syncMonthlySalesToAnnualStoreForMonth();
-          document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
+            document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: { year: mefYear, source: 'monthly-edit-float' } }));
           }
           markDirty();
           buildGrid();
@@ -12976,7 +14100,11 @@
         if (src === 'monthly-edit-float') return;
         var y = ev && ev.detail && Number(ev.detail.year);
         if (Number.isFinite(y) && y !== mefYear) return;
-        syncMonthlySalesFromAnnualStoreForMonth();
+        var forceAnnual =
+          src === 'annual-edit-modal' ||
+          src === 'sales-data-modal' ||
+          String(src || '').indexOf('sales-data-save') >= 0;
+        syncMonthlySalesFromAnnualStoreForMonth(forceAnnual ? { force: true } : null);
         buildGrid();
       });
       window.addEventListener('beforeunload', function (ev) {
@@ -13124,12 +14252,7 @@
         var daily = ensureAnnualDailyStore();
         if (daily) {
           var bmap = daily.businessDayByDate || {};
-          var tmap = daily.targetSalesByDate || {};
-          if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
-          if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
-            var n = Number(tmap[iso]);
-            return Number.isFinite(n) ? n !== 0 : true;
-          }
+          if (Object.prototype.hasOwnProperty.call(bmap, iso)) return bmap[iso] !== false;
         }
         return true;
       }
@@ -13218,15 +14341,17 @@
       }
       function memoDayKpi(iso) {
         var sales = memoFloatBizDay(iso) ? Math.round(aggregateValue('totalSales', iso)) : 0;
-        var target = 0;
+        var y = iso ? Number(String(iso).slice(0, 4)) : mefYear;
+        var hasPlan = mepYearHasSavedPlan(y);
+        var target = null;
         var dt = isoToDate(iso);
-        if (dt) {
+        if (hasPlan && dt) {
           var res = sumTargetByDateRange(dt, dt);
           target = Math.round(res.total || 0);
         }
-        var diff = sales - target;
-        var rate = target > 0 ? (sales / target) * 100 : 0;
-        return { sales: sales, target: target, diff: diff, rate: rate };
+        var diff = hasPlan && target != null ? sales - target : null;
+        var rate = hasPlan && target > 0 ? (sales / target) * 100 : null;
+        return { sales: sales, target: target, diff: diff, rate: rate, hasPlan: hasPlan };
       }
       function ensureTwDiffExports() {
         if (typeof window.__twFmtDiff === 'function') return;
@@ -13498,7 +14623,7 @@
           memoFloatDayPanel.appendChild(row);
         }
         addReadRow(labels.todaySales, fmtMoney(kpi.sales));
-        addReadRow(labels.targetSales, fmtMoney(kpi.target));
+        addReadRow(labels.targetSales, fmtMepPlanMoney(kpi.target));
         (function () {
           var row = document.createElement('div');
           row.className = 'memo-float-modal__row';
@@ -13508,16 +14633,17 @@
           var val = document.createElement('div');
           val.className = 'memo-float-modal__row-value';
           ensureTwDiffExports();
-          val.textContent =
-            typeof window.__twFmtDiff === 'function'
+          val.textContent = kpi.hasPlan
+            ? typeof window.__twFmtDiff === 'function'
               ? window.__twFmtDiff(kpi.sales, kpi.target)
-              : fmtMoney(kpi.diff);
-          applyTwDiffSurfaceEl(val, kpi.sales, kpi.target);
+              : fmtMepPlanMoney(kpi.diff)
+            : '—';
+          if (kpi.hasPlan) applyTwDiffSurfaceEl(val, kpi.sales, kpi.target);
           row.appendChild(lbl);
           row.appendChild(val);
           memoFloatDayPanel.appendChild(row);
         })();
-        addReadRow(labels.achievement, fmtPct(kpi.rate));
+        addReadRow(labels.achievement, fmtMepPlanPct(kpi.rate));
         addReadRow(labels.weather, weatherLabelForIso(iso));
         syncWeeklyMemoItems();
         var fi;
@@ -13708,7 +14834,7 @@
       }
       function openMemoForIso(iso, allowNonBizDay, rowId) {
         if (!iso) return;
-        if (!allowNonBizDay && !bizDayByIso[iso]) return;
+        if (!allowNonBizDay && !isMepUiBusinessDay(iso)) return;
         openMemoModal(iso, rowId);
       }
       if (memoFloatDateRail) {
@@ -14219,7 +15345,10 @@
     var store = loadStore();
     var map = (store && store.timeline && store.timeline.businessDays) || {};
     if (Object.prototype.hasOwnProperty.call(map, iso)) return !!map[iso];
-    return readDailySales(iso) > 0;
+    if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
+      return KpiYearStore.isUiBusinessDay(iso);
+    }
+    return true;
   }
 
   function monthlyAllocForLine(year, m0, lineId) {

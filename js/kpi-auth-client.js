@@ -38,6 +38,7 @@
     'kpiNavigator.annualDailyShared',
     'kpiNavigator.pastSalesShared',
     'kpiNavigator.annualNav',
+    'kpiNavigator.dailySalesInputPath',
     'kpiNavigator.plLineCatalog',
     'kpiNavigator.plTargetCostRate',
     'kpiNavigator.monthlyLast',
