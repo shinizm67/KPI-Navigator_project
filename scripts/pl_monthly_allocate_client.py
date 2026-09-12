@@ -77,91 +77,31 @@ def pl_monthly_allocate_client_js() -> str:
 
       /** Floor + remainder on last biz day so monthly sum stays exact. */
       function allocateAmountAcrossBizDays(monthlyAmount, bizIsos) {
-        var amount = Math.round(Number(monthlyAmount) || 0);
-        var byDate = {};
-        if (!bizIsos || !bizIsos.length || amount === 0) {
-          return {
-            byDate: byDate,
-            perDayBase: 0,
-            remainder: 0,
-            sum: 0,
-            skipped: amount !== 0 && (!bizIsos || !bizIsos.length) ? 'no_biz_days' : null
-          };
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.allocateAmountAcrossBizDays !== 'function') {
+          return { byDate: {}, perDayBase: 0, remainder: 0, sum: 0, skipped: 'no_shared_allocate' };
         }
-        var n = bizIsos.length;
-        var base = Math.floor(amount / n);
-        var rem = amount - base * n;
-        for (var i = 0; i < n; i++) {
-          byDate[bizIsos[i]] = base + (i === n - 1 ? rem : 0);
-        }
-        return { byDate: byDate, perDayBase: base, remainder: rem, sum: amount, skipped: null };
+        return api.allocateAmountAcrossBizDays(monthlyAmount, bizIsos);
       }
 
       /**
        * Phase B preview: monthly PL → per-biz-day. Does NOT write MEP.
-       * opts: { year?, month0? (0-11, omit=all), lineId?, amountMap? }
+       * Shared helper: js/kpi-pl-monthly-allocate.js
        */
       function previewMonthlyExpenseAllocation(opts) {
         opts = opts || {};
-        var year = opts.year != null ? Number(opts.year) : plYear;
-        if (!Number.isFinite(year)) year = new Date().getFullYear();
-        var amountMap = opts.amountMap || loadPlExpenseAmountMap(year);
-        var maps = loadAnnualDailyMaps();
-        var bmap = maps.businessDayByDate;
-        var tmap = maps.targetSalesByDate;
-        var monthlyIds = loadMonthlyExpenseLineIdsFromCatalog();
-        if (opts.lineId) {
-          monthlyIds = monthlyIds.filter(function (id) {
-            return id === opts.lineId;
-          });
+        if (opts.year == null) opts = Object.assign({}, opts, { year: plYear });
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.previewMonthlyExpenseAllocation !== 'function') {
+          return {
+            year: opts.year,
+            months: [],
+            monthlyLineIds: [],
+            skippedDailyLineIds: [],
+            wroteToMep: false
+          };
         }
-        var skippedDaily = loadDailyExpenseLineIdsFromCatalog();
-        var monthIndexes = [];
-        if (opts.month0 != null && Number.isFinite(Number(opts.month0))) {
-          monthIndexes.push(Number(opts.month0));
-        } else {
-          for (var m = 0; m < 12; m++) monthIndexes.push(m);
-        }
-
-        var months = [];
-        monthIndexes.forEach(function (month0) {
-          if (month0 < 0 || month0 > 11) return;
-          var bizDays = listBizDayIsosInMonth(year, month0, bmap, tmap);
-          var lines = {};
-          monthlyIds.forEach(function (lineId) {
-            var key = lineId + ':' + month0;
-            var monthlyAmount = Object.prototype.hasOwnProperty.call(amountMap, key)
-              ? Math.round(Number(amountMap[key]) || 0)
-              : 0;
-            var alloc = allocateAmountAcrossBizDays(monthlyAmount, bizDays);
-            lines[lineId] = {
-              lineId: lineId,
-              monthlyAmount: monthlyAmount,
-              inputStyle: 'monthly',
-              perDayBase: alloc.perDayBase,
-              remainder: alloc.remainder,
-              byDate: alloc.byDate,
-              sum: alloc.sum,
-              skipped: alloc.skipped
-            };
-          });
-          months.push({
-            year: year,
-            month0: month0,
-            month: month0 + 1,
-            bizDayCount: bizDays.length,
-            bizDays: bizDays,
-            lines: lines
-          });
-        });
-
-        return {
-          year: year,
-          months: months,
-          monthlyLineIds: monthlyIds,
-          skippedDailyLineIds: skippedDaily,
-          wroteToMep: false
-        };
+        return api.previewMonthlyExpenseAllocation(opts);
       }
 
       window.__plAllocateAmountAcrossBizDays = allocateAmountAcrossBizDays;
@@ -169,116 +109,18 @@ def pl_monthly_allocate_client_js() -> str:
 
       var PL_MEP_STORE_KEY = 'kpiNavigator.kpiYearStore';
 
-      function plEmptyKpiStore() {
-        return {
-          meta: {
-            schemaVersion: 4,
-            operatingYear: new Date().getFullYear(),
-            legacyMigrated: false,
-            selectedDate: null
-          },
-          timeline: { dailySales: {}, businessDays: {} },
-          years: {}
-        };
-      }
-
       /**
        * Phase C: write monthly PL amounts (÷ biz days) into MEP dailyExpenses.
-       * Only monthly-style expense lines. Daily lines (MEP-entered) are never touched.
-       * Re-allocation: clears each monthly line's isos within the target month, then
-       * writes the fresh allocation. amount 0 / no biz days => line-month left empty.
-       * opts: { year?, month0? (0-11, omit = all 12) }
+       * Shared helper: js/kpi-pl-monthly-allocate.js
        */
       function writeMonthlyExpenseAllocationToMep(opts) {
         opts = opts || {};
-        var year = opts.year != null ? Number(opts.year) : plYear;
-        if (!Number.isFinite(year)) year = new Date().getFullYear();
-
-        var gw = window.__KPI_DATA_GATEWAY;
-        if (!gw || typeof gw.getJson !== 'function' || typeof gw.setJson !== 'function') {
-          return { ok: false, reason: 'no_gateway', wrote: false, year: year };
+        if (opts.year == null) opts = Object.assign({}, opts, { year: plYear });
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.writeMonthlyExpenseAllocationToMep !== 'function') {
+          return { ok: false, reason: 'no_shared_allocate', wrote: false, year: opts.year };
         }
-
-        var store = gw.getJson(PL_MEP_STORE_KEY);
-        if (!store || typeof store !== 'object') {
-          store = plEmptyKpiStore();
-        }
-        if (!store.meta || typeof store.meta !== 'object') {
-          store.meta = plEmptyKpiStore().meta;
-        }
-        if (!store.years || typeof store.years !== 'object') store.years = {};
-
-        var operatingYear = Number(store.meta.operatingYear);
-        if (!Number.isFinite(operatingYear)) operatingYear = new Date().getFullYear();
-
-        var rec = store.years[year];
-        if (rec && rec.status === 'locked' && year < operatingYear) {
-          return { ok: false, reason: 'year_locked', wrote: false, year: year };
-        }
-        if (!rec || typeof rec !== 'object') {
-          rec = { year: year, status: 'open', plan: {} };
-          store.years[year] = rec;
-        }
-        if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
-
-        var preview = previewMonthlyExpenseAllocation(
-          opts.month0 != null ? { year: year, month0: Number(opts.month0) } : { year: year }
-        );
-        var monthlyIds = preview.monthlyLineIds || [];
-        var changed = false;
-
-        (preview.months || []).forEach(function (block) {
-          var prefix = year + '-' + pad2(block.month0 + 1) + '-';
-          monthlyIds.forEach(function (lineId) {
-            var byRow = rec.dailyExpenses[lineId];
-            if (byRow && typeof byRow === 'object') {
-              Object.keys(byRow).forEach(function (iso) {
-                if (iso.indexOf(prefix) === 0) {
-                  delete byRow[iso];
-                  changed = true;
-                }
-              });
-            }
-            var lineAlloc = (block.lines && block.lines[lineId]) || null;
-            var byDate = lineAlloc && lineAlloc.byDate ? lineAlloc.byDate : null;
-            if (!byDate) return;
-            var isos = Object.keys(byDate);
-            if (!isos.length) return;
-            if (!rec.dailyExpenses[lineId] || typeof rec.dailyExpenses[lineId] !== 'object') {
-              rec.dailyExpenses[lineId] = {};
-            }
-            isos.forEach(function (iso) {
-              rec.dailyExpenses[lineId][iso] = Math.round(Number(byDate[iso]) || 0);
-              changed = true;
-            });
-          });
-        });
-
-        Object.keys(rec.dailyExpenses).forEach(function (lineId) {
-          var byRow = rec.dailyExpenses[lineId];
-          if (byRow && typeof byRow === 'object' && !Object.keys(byRow).length) {
-            delete rec.dailyExpenses[lineId];
-          }
-        });
-
-        rec.mepUpdatedAt = Date.now();
-        var saved = gw.setJson(PL_MEP_STORE_KEY, store);
-        if (saved) {
-          try {
-            document.dispatchEvent(
-              new CustomEvent('kpi:mepDataChanged', {
-                detail: { year: year, source: 'pl-monthly-allocate' }
-              })
-            );
-          } catch (_e) {}
-        }
-        return {
-          ok: saved,
-          wrote: changed,
-          year: year,
-          monthlyLineIds: monthlyIds,
-          skippedDailyLineIds: preview.skippedDailyLineIds || []
-        };
+        return api.writeMonthlyExpenseAllocationToMep(opts);
       }
 
       window.__plWriteMonthlyExpenseAllocationToMep = writeMonthlyExpenseAllocationToMep;

@@ -88,10 +88,15 @@ PSM_CSV_STUB_BLOCK = """      if (btnCsv) {
 
 PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
+          persistByCsvYear: true,
           getYear: function () { return state.year; },
           applyMaps: function (maps, year) {
             pushUndoSnapshot();
-            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            persistPastSalesCsvByYear(maps);
+            var yShow = Number(year);
+            var csvYears = maps.years || [];
+            if (csvYears.indexOf(yShow) < 0) return;
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, yShow);
             recomputeModalDirty();
             syncUndoButton();
             renderPastSalesTable();
@@ -129,15 +134,21 @@ MEP_CSV_OLD_EN = """      if (btnCsvUpload) {
 
 MEP_CSV_NEW = """      if (btnCsvUpload && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
+          persistByCsvYear: true,
           getYear: function () { return mefYear; },
           applyMaps: function (maps, year) {
             pushUndo();
-            var applied = applyDailyImportMapsToOpenYear(maps, year);
-            if (!applied) return;
-            syncMonthlySalesToAnnualStoreForYear(mefYear);
+            var persistP = persistMepSalesCsvByYear(maps);
+            Promise.resolve(persistP).catch(function () {});
+            var yShow = Number(mefYear);
+            var csvYears = maps.years || [];
+            if (csvYears.indexOf(yShow) < 0) return Promise.resolve();
+            var applied = applyDailyImportMapsToOpenYear(maps, yShow);
+            if (!applied) return Promise.resolve();
             markDirty();
             syncUndoButton();
             buildGrid();
+            return Promise.resolve();
           },
         });
       }"""
@@ -171,6 +182,141 @@ MEP_APPLY_IMPORT_OLD = """      function applyDailyImportMapsToOpenYear(maps, ye
         return applied;
       }"""
 
+PAST_SALES_CSV_HELPER = """      function persistPastSalesCsvByYear(maps) {
+        if (!maps) return Promise.resolve();
+        var oy =
+          window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+            ? Number(KpiYearStore.getOperatingYear())
+            : NaN;
+        var sales = {};
+        var biz = {};
+        Object.keys(maps.salesByDate || {}).forEach(function (iso) {
+          var y = typeof isoYearFromIso === 'function' ? isoYearFromIso(iso) : Number(String(iso).slice(0, 4));
+          if (!Number.isFinite(y)) return;
+          if (Number.isFinite(oy) && y >= oy) return;
+          var n = Number(maps.salesByDate[iso]);
+          sales[iso] = Number.isFinite(n) ? n : 0;
+          if (
+            maps.businessDayByDate &&
+            Object.prototype.hasOwnProperty.call(maps.businessDayByDate, iso)
+          ) {
+            biz[iso] = !!maps.businessDayByDate[iso];
+          }
+        });
+        var ps = ensurePastSalesDaily();
+        Object.keys(sales).forEach(function (iso) {
+          ps.salesByDate[iso] = sales[iso];
+        });
+        Object.keys(biz).forEach(function (iso) {
+          ps.businessDayByDate[iso] = biz[iso];
+        });
+        if (window.KpiYearStore && typeof KpiYearStore.persistFromPastSales === 'function') {
+          var done = KpiYearStore.persistFromPastSales(
+            { salesByDate: sales, businessDayByDate: biz },
+            { source: 'past-sales-csv-import' }
+          );
+          var payload = {
+            salesByDate: ps.salesByDate || {},
+            businessDayByDate: ps.businessDayByDate || {},
+            referenceAnnualSalesByYear: ps.referenceAnnualSalesByYear || {}
+          };
+          if (ps.lastSession && typeof ps.lastSession === 'object') {
+            payload.lastSession = ps.lastSession;
+          }
+          if (window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.setJson === 'function') {
+            window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.pastSalesShared', payload);
+          }
+          return done;
+        }
+        return persistPastSalesShared({ source: 'past-sales-csv-import' });
+      }"""
+
+MEP_SALES_CSV_HELPER = """      function persistMepSalesCsvByYear(maps) {
+        if (!maps) return Promise.resolve();
+        var csvSales = {};
+        var csvBiz = {};
+        var incomeByYear = {};
+        function addIncome(streamId, iso, val) {
+          var y = mepIsoYear(iso);
+          if (!Number.isFinite(y)) return;
+          if (!incomeByYear[y]) incomeByYear[y] = {};
+          if (!incomeByYear[y][streamId]) incomeByYear[y][streamId] = {};
+          var n = Number(val);
+          incomeByYear[y][streamId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
+        }
+        Object.keys(maps.salesByDate || {}).forEach(function (iso) {
+          var n = Number(maps.salesByDate[iso]);
+          csvSales[iso] = Number.isFinite(n) ? n : 0;
+          if (
+            maps.businessDayByDate &&
+            Object.prototype.hasOwnProperty.call(maps.businessDayByDate, iso)
+          ) {
+            csvBiz[iso] = !!maps.businessDayByDate[iso];
+          }
+        });
+        Object.keys(maps.foodByDate || {}).forEach(function (iso) {
+          addIncome('food_sales', iso, maps.foodByDate[iso]);
+        });
+        Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
+          addIncome('drink_sales', iso, maps.drinkByDate[iso]);
+        });
+        var daily = ensureAnnualDailyStore();
+        daily.targetSalesByDate = daily.targetSalesByDate || {};
+        daily.businessDayByDate = daily.businessDayByDate || {};
+        Object.keys(csvSales).forEach(function (iso) {
+          daily.targetSalesByDate[iso] = csvSales[iso];
+        });
+        Object.keys(csvBiz).forEach(function (iso) {
+          daily.businessDayByDate[iso] = csvBiz[iso];
+        });
+        Object.keys(incomeByYear).forEach(function (y) {
+          if (
+            window.KpiYearStore &&
+            typeof KpiYearStore.bulkPersistMepYear === 'function'
+          ) {
+            KpiYearStore.bulkPersistMepYear(
+              Number(y),
+              { dailyIncome: incomeByYear[y] },
+              {
+                source: 'mep-sales-csv-import',
+                forceIncome: true,
+                allowLockedYearImport: true,
+                deferPersist: true
+              }
+            );
+          }
+        });
+        if (window.KpiYearStore && typeof KpiYearStore.persistFromAnnualDaily === 'function') {
+          return KpiYearStore.persistFromAnnualDaily(
+            { targetSalesByDate: csvSales, businessDayByDate: csvBiz },
+            { source: 'mep-sales-csv-import', serverRebuild: true }
+          );
+        }
+        if (typeof persistAnnualDailyShared === 'function') {
+          return persistAnnualDailyShared({ serverRebuild: true });
+        }
+        return Promise.resolve();
+      }"""
+
+MEP_CSV_BIND_INNER = """window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
+            persistByCsvYear: true,
+            getYear: function () { return mefYear; },
+            applyMaps: function (maps, year) {
+              pushUndo();
+              var persistP = persistMepSalesCsvByYear(maps);
+              Promise.resolve(persistP).catch(function () {});
+              var yShow = Number(mefYear);
+              var csvYears = maps.years || [];
+              if (csvYears.indexOf(yShow) < 0) return Promise.resolve();
+              var applied = applyDailyImportMapsToOpenYear(maps, yShow);
+              if (!applied) return Promise.resolve();
+              markDirty();
+              syncUndoButton();
+              buildGrid();
+              return Promise.resolve();
+            },
+          });"""
+
 MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, year) {
         var primary = state.incomeItems && state.incomeItems[0];
         if (!primary || !maps) return 0;
@@ -179,11 +325,13 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
         var foodMap = maps.foodByDate || {};
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
-          if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep', iso)) return;
-          var biz = maps.businessDayByDate[iso] !== false;
+          if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep-sales-csv-import', iso)) return;
+          var bizMapImp = maps.businessDayByDate || {};
           var sales = Number(maps.salesByDate[iso]);
-          bizDayByIso[iso] = biz;
-          if (biz && Number.isFinite(sales) && sales > 0) {
+          if (Object.prototype.hasOwnProperty.call(bizMapImp, iso)) {
+            bizDayByIso[iso] = !!bizMapImp[iso];
+          }
+          if (Number.isFinite(sales) && sales > 0) {
             writeValue(primary.id, iso, Math.round(sales));
           } else {
             writeValue(primary.id, iso, 0);
@@ -221,6 +369,63 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     if new.split("\n")[1].strip() in text:
         return text
     raise SystemExit(f"patch miss ({label})")
+
+
+def upsert_function_before(text: str, helper: str, helper_name: str, next_fn: str) -> str:
+    helper_block = helper.rstrip() + "\n\n"
+    start_token = f"      function {helper_name}("
+    next_token = f"      function {next_fn}("
+    start = text.find(start_token)
+    nxt = text.find(next_token)
+    if start >= 0:
+        if nxt < 0 or nxt < start:
+            raise SystemExit(f"{next_fn} missing after {helper_name}")
+        return text[:start] + helper_block + text[nxt:]
+    if nxt < 0:
+        raise SystemExit(f"insert anchor missing: {next_fn}")
+    return text[:nxt] + helper_block + text[nxt:]
+
+
+def replace_function_by_signature(text: str, signature: str, new_src: str) -> str | None:
+    start = text.find(signature)
+    if start < 0:
+        return None
+    nxt = text.find("\n      function ", start + 1)
+    if nxt < 0:
+        raise SystemExit(f"next function missing after {signature}")
+    return text[:start] + new_src.rstrip() + text[nxt:]
+
+
+def replace_js_call_object(text: str, call_prefix: str, new_call: str) -> str:
+    start = text.find(call_prefix)
+    if start < 0:
+        return text
+    brace = text.find("{", start)
+    if brace < 0:
+        raise SystemExit("bindButton object missing")
+    depth = 0
+    for j in range(brace, len(text)):
+        ch = text[j]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = j + 1
+                if end < len(text) and text[end] == ")":
+                    end += 1
+                if end < len(text) and text[end] == ";":
+                    end += 1
+                return text[:start] + new_call + text[end:]
+    raise SystemExit("bindButton object unclosed")
+
+
+def ensure_mep_csv_bind(text: str) -> str:
+    return replace_js_call_object(
+        text,
+        "window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {",
+        MEP_CSV_BIND_INNER,
+    )
 
 
 PSM_CSV_STUB_RE = re.compile(
@@ -287,6 +492,12 @@ def patch_annual_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     is_ja = "/en/" not in str(path) and "/zh-tw/" not in str(path)
     text = inject_import_js(text)
+    text = upsert_function_before(
+        text,
+        PAST_SALES_CSV_HELPER,
+        "persistPastSalesCsvByYear",
+        "persistPastSalesShared",
+    )
     text = patch_tooltips(text, is_ja)
     if is_ja:
         text = replace_once(text, AEM_CSV_OLD, AEM_CSV_NEW, "annual edit csv ja")
@@ -310,8 +521,13 @@ def patch_annual_page(path: Path) -> None:
 
 
 def patch_mep_apply_food_drink(text: str) -> str:
-    if "var foodMap = maps.foodByDate || {};" in text and "writeValue('food_sales'" in text:
-        return text
+    replaced = replace_function_by_signature(
+        text,
+        "      function applyDailyImportMapsToOpenYear(maps, year) {",
+        MEP_APPLY_IMPORT_NEW,
+    )
+    if replaced is not None:
+        return replaced
     if MEP_APPLY_IMPORT_OLD in text:
         return text.replace(MEP_APPLY_IMPORT_OLD, MEP_APPLY_IMPORT_NEW, 1)
     raise SystemExit("patch miss (mep applyDailyImportMaps food/drink)")
@@ -321,8 +537,15 @@ def patch_mep_page(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     is_ja = "/en/" not in str(path) and "/zh-tw/" not in str(path)
     text = inject_import_js(text)
+    text = upsert_function_before(
+        text,
+        MEP_SALES_CSV_HELPER,
+        "persistMepSalesCsvByYear",
+        "applyDailyImportMapsToOpenYear",
+    )
     text = patch_tooltips(text, is_ja)
     text = patch_mep_apply_food_drink(text)
+    text = ensure_mep_csv_bind(text)
     if MEP_CSV_PUSH_UNDO_BUG in text:
         text = text.replace(MEP_CSV_PUSH_UNDO_BUG, MEP_CSV_PUSH_UNDO_FIX, 1)
     if is_ja:

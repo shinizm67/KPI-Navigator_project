@@ -45,6 +45,9 @@
   var conflictPutHold = false;
   /** After 409, next hydrate must not merge dirty local over server. */
   var hydrateIgnoreLocal = false;
+  /** PL years written locally (CSV import uses setJson) and not yet PUT. */
+  var plUnputExpYears = {};
+  var plUnputAdjYears = {};
   var origSetItem = Storage.prototype.setItem;
   var origRemoveItem = Storage.prototype.removeItem;
   var origGetItem = Storage.prototype.getItem;
@@ -63,6 +66,16 @@
     serverRevision = Number.isFinite(n) ? n : null;
   }
 
+  function captureOccDirty() {
+    try {
+      var fn = window.__KPI_OCC_DIRTY__;
+      if (typeof fn !== 'function') return false;
+      return !!fn();
+    } catch (_eDirty) {
+      return false;
+    }
+  }
+
   function storeConflictMessage() {
     var raw = '';
     try {
@@ -70,22 +83,23 @@
     } catch (_e) {}
     var l = raw.toLowerCase();
     if (l.indexOf('zh') === 0) {
-      return '其他分頁或畫面已更新資料。已載入最新資料。請確認後再輸入。';
+      return '其他分頁或畫面已有新的確定資料。此次變更尚未儲存。輸入內容仍留在畫面中，請確認後再儲存。';
     }
     if (l.indexOf('ja') === 0) {
-      return '別のタブまたは画面でデータが更新されました。最新データを読み込みました。内容を確認して再入力してください。';
+      return '別のタブまたは画面で新しい確定データがあります。今回の変更は保存されていません。入力内容は画面に残っています。確認してから再度保存してください。';
     }
-    return 'Data was updated in another tab or screen. Latest data has been loaded. Please review and re-enter if needed.';
+    return 'Newer data was saved in another tab or screen. Your changes were not saved. Your input is still on this screen. Review it and save again.';
   }
 
   function emitStoreConflict(detail) {
     try {
       document.dispatchEvent(new CustomEvent('kpi:storeConflict', { detail: detail || {} }));
     } catch (_eEv) {}
-    /* No window.alert: 409 recovery stays; dirty-gated UI is a later batch. */
+    /* No window.alert here: dirty-gated warning is shown by the page listener. */
   }
 
   function handlePutConflict(data) {
+    var dirty = captureOccDirty();
     conflictPutHold = true;
     if (putTimer != null) {
       window.clearTimeout(putTimer);
@@ -96,6 +110,7 @@
     var detail = {
       revision: data && Object.prototype.hasOwnProperty.call(data, 'revision') ? data.revision : null,
       updatedAt: data && data.updatedAt != null ? data.updatedAt : null,
+      dirty: dirty,
     };
     Promise.resolve(pullFromServerNow())
       .catch(function () {})
@@ -107,6 +122,7 @@
       conflict: true,
       revision: detail.revision,
       updatedAt: detail.updatedAt,
+      dirty: dirty,
     });
   }
 
@@ -640,8 +656,47 @@
     return false;
   }
 
-  function applyPlToLocal(pl) {
+  function isEmptyPlainMap(obj) {
+    return !!(
+      obj &&
+      typeof obj === 'object' &&
+      !Array.isArray(obj) &&
+      !Object.keys(obj).length
+    );
+  }
+
+  /** Years written via setJson (CSV import) and not yet PUT. Not a general nonempty-local keep. */
+  function notePlUnputKey(key) {
+    if (!key) return;
+    var k = String(key);
+    if (k.indexOf(PL_EXP_PREFIX) === 0) {
+      plUnputExpYears[k.slice(PL_EXP_PREFIX.length)] = true;
+      return;
+    }
+    if (k.indexOf(PL_ADJ_PREFIX) === 0) {
+      plUnputAdjYears[k.slice(PL_ADJ_PREFIX.length)] = true;
+    }
+  }
+
+  function clearPlUnputYears() {
+    plUnputExpYears = {};
+    plUnputAdjYears = {};
+  }
+
+  function shouldKeepUnputPlYear(serverWins, yearKey, touchedMap, existing) {
+    if (serverWins) return false;
+    if (!touchedMap[yearKey] && !touchedMap[String(yearKey)]) return false;
+    return !!(
+      existing &&
+      typeof existing === 'object' &&
+      !Array.isArray(existing) &&
+      Object.keys(existing).length
+    );
+  }
+
+  function applyPlToLocal(pl, opts) {
     if (!pl || typeof pl !== 'object') return false;
+    var serverWins = !!(opts && opts.serverWins);
     var changed = false;
     if (pl.catalog && typeof pl.catalog === 'object') {
       localSet(PL_CATALOG_KEY, pl.catalog);
@@ -649,13 +704,27 @@
     }
     if (pl.expensesByYear && typeof pl.expensesByYear === 'object') {
       Object.keys(pl.expensesByYear).forEach(function (y) {
-        localSet(PL_EXP_PREFIX + y, pl.expensesByYear[y] || {});
+        var incoming = pl.expensesByYear[y];
+        if (
+          isEmptyPlainMap(incoming) &&
+          shouldKeepUnputPlYear(serverWins, y, plUnputExpYears, localGet(PL_EXP_PREFIX + y))
+        ) {
+          return;
+        }
+        localSet(PL_EXP_PREFIX + y, incoming || {});
         changed = true;
       });
     }
     if (pl.adjustmentsByYear && typeof pl.adjustmentsByYear === 'object') {
       Object.keys(pl.adjustmentsByYear).forEach(function (y) {
-        localSet(PL_ADJ_PREFIX + y, pl.adjustmentsByYear[y] || {});
+        var incomingAdj = pl.adjustmentsByYear[y];
+        if (
+          isEmptyPlainMap(incomingAdj) &&
+          shouldKeepUnputPlYear(serverWins, y, plUnputAdjYears, localGet(PL_ADJ_PREFIX + y))
+        ) {
+          return;
+        }
+        localSet(PL_ADJ_PREFIX + y, incomingAdj || {});
         changed = true;
       });
     }
@@ -677,6 +746,7 @@
     toRemove.forEach(function (k) {
       localRemoveRaw(k);
     });
+    clearPlUnputYears();
   }
 
   var putInFlight = null;
@@ -739,6 +809,7 @@
               };
             }
             applyServerRevision(data);
+            clearPlUnputYears();
             return {
               ok: true,
               conflict: false,
@@ -934,7 +1005,8 @@
           clearLocalPlKeys();
           changed = true;
         } else if (data.pl && typeof data.pl === 'object') {
-          if (applyPlToLocal(data.pl)) changed = true;
+          if (applyPlToLocal(data.pl, { serverWins: skipLocalMerge })) changed = true;
+          if (skipLocalMerge) clearPlUnputYears();
         }
         if (changed) {
           try {
@@ -1058,10 +1130,17 @@
         toStore = slimTimelineForLocalStorage(stripDailyFactsFromStore(value));
       }
       var ok = localSet(key, toStore);
+      if (ok && isPlSyncKey(key) && (String(key).indexOf(PL_EXP_PREFIX) === 0 || String(key).indexOf(PL_ADJ_PREFIX) === 0)) {
+        notePlUnputKey(key);
+      }
       if (ok && (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key))) {
         schedulePut(cfg);
       }
       return ok;
+    },
+    /** LS only via origSetItem. Does not schedulePut. */
+    setJsonLocalOnly: function (key, value) {
+      return localSet(key, value);
     },
     syncConfig: function () {
       return {
@@ -1116,6 +1195,7 @@
     },
     flushPut: flushPut,
     collectPlFromLocal: collectPlFromLocal,
+    storeConflictMessage: storeConflictMessage,
   };
 
       if (canSync(cfg)) {

@@ -4134,6 +4134,7 @@
   <script src="../../../js/kpi-data-gateway.js"></script>
 
   <script src="../../../js/kpi-currency.js"></script>
+  <script src="../../../js/kpi-pl-monthly-allocate.js"></script>
   <!-- KPI-CURRENCY-JS:END -->
   <header class="site-header pl-site-header">
     <div class="header-inner">
@@ -10044,6 +10045,7 @@
       /* Live refresh: if the overlay is open when PL/MEP data changes, re-render. */
       function compareLiveRefresh() {
         window.__PL_COMPARE_RENDERED_ISO = null;
+        window.__PL_COMPARE_LAST_MONTH_KEY = null;
         if (root && !root.hidden) {
           renderAllCompareAreas(selectedIso || resolveIso(), { resetCache: true });
           window.__PL_COMPARE_RENDERED_ISO = selectedIso || resolveIso();
@@ -10328,11 +10330,65 @@
       var PL_RETURN_KEY = 'kpi-pl-edit-return-href';
       var FALLBACK_EDIT = '../../monthly/edit/index.html';
       var plParams = new URLSearchParams(window.location.search);
-      var plYear = Number(plParams.get('year')) || new Date().getFullYear();
-      var focusMonth = Number(plParams.get('month'));
+      function readSelectedDateIsoForPl() {
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            var s = String(KpiYearStore.getSelectedDate() || '');
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+          }
+        } catch (_ePlSel) {}
+        try {
+          var nav =
+            window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.getJson === 'function'
+              ? window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualNav')
+              : null;
+          if (nav && nav.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(nav.selectedIso))) {
+            return String(nav.selectedIso);
+          }
+        } catch (_ePlNav) {}
+        try {
+          var raw = localStorage.getItem('kpiNavigator.annualNav');
+          var o = raw ? JSON.parse(raw) : null;
+          if (o && o.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(o.selectedIso))) {
+            return String(o.selectedIso);
+          }
+        } catch (_ePlLs) {}
+        return '';
+      }
+      var plSelectedIso = readSelectedDateIsoForPl();
+      function parseValidDisplayYear(raw) {
+        if (raw == null || String(raw).trim() === '') return NaN;
+        var y = Number(raw);
+        if (!Number.isFinite(y) || y < 2000 || y > 2100) return NaN;
+        return y;
+      }
+      var plYearParam = parseValidDisplayYear(plParams.get('year'));
+      var plYear = Number.isFinite(plYearParam)
+        ? plYearParam
+        : (plSelectedIso ? Number(plSelectedIso.slice(0, 4)) : new Date().getFullYear());
+      var focusMonthParam = Number(plParams.get('month'));
+      var focusMonth = Number.isFinite(focusMonthParam)
+        ? focusMonthParam
+        : (plSelectedIso ? Number(plSelectedIso.slice(5, 7)) : NaN);
+      if (!Number.isFinite(plYearParam)) {
+        try {
+          if (history.replaceState) {
+            var plUrlParams = new URLSearchParams(window.location.search);
+            plUrlParams.set('year', String(plYear));
+            if (Number.isFinite(focusMonth) && focusMonth >= 1 && focusMonth <= 12) {
+              plUrlParams.set('month', String(focusMonth));
+            }
+            if (plSelectedIso) plUrlParams.set('iso', plSelectedIso);
+            var plQs = plUrlParams.toString();
+            history.replaceState(history.state, '', window.location.pathname + (plQs ? '?' + plQs : '') + window.location.hash);
+          }
+        } catch (_ePlUrl) {}
+      }
       var plTouched = false;
       var plSaved = true;
       var confirmedSnapshot = '';
+      var plLocalEditedKeys = {};
+      var plInitialExpenseHydratePending = true;
       var undoStack = [];
       var yearSelect = document.getElementById('pl-year-select');
       var btnSave = document.getElementById('pl-save');
@@ -10412,9 +10468,30 @@
       }
 
       function hasUnsavedChanges() {
+        if (plLocalEditedKeys && Object.keys(plLocalEditedKeys).length) return true;
         if (!confirmedSnapshot) return false;
         return buildSnapshot() !== confirmedSnapshot;
       }
+      window.__KPI_OCC_DIRTY__ = function () {
+        return hasUnsavedChanges();
+      };
+      var plOccAlertArmed = false;
+      document.addEventListener('kpi:storeConflict', function (ev) {
+        if (!plOccAlertArmed) return;
+        plOccAlertArmed = false;
+        var detail = (ev && ev.detail) || {};
+        if (!detail.dirty) return;
+        var msg = '';
+        try {
+          if (
+            window.__KPI_DATA_GATEWAY &&
+            typeof window.__KPI_DATA_GATEWAY.storeConflictMessage === 'function'
+          ) {
+            msg = window.__KPI_DATA_GATEWAY.storeConflictMessage();
+          }
+        } catch (_eMsg) {}
+        if (msg) window.alert(msg);
+      });
 
       function syncUndoButton() {
         if (btnUndo) btnUndo.disabled = undoStack.length === 0;
@@ -10423,6 +10500,15 @@
       function markTouched() {
         plTouched = true;
         plSaved = false;
+      }
+
+      function plExpenseCellKey(row, month) {
+        return String(row) + ':' + String(month);
+      }
+
+      function markPlLocalEdited(row, month) {
+        if (row == null || month == null || row === '') return;
+        plLocalEditedKeys[plExpenseCellKey(row, month)] = true;
       }
 
       function applyColumnFocus() {
@@ -10453,52 +10539,27 @@
         } catch (_e) {}
       }
 
-      function isFixedExpenseEditableCell(cell) {
-        var tr = cell.closest && cell.closest('tr[data-pl-section="expense-detail"]');
-        return !!(tr && tr.getAttribute('data-bucket') === 'fixed');
+      function collectPlTouchedExpenseCells() {
+        var touched = [];
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
+          var row = cell.getAttribute('data-row');
+          var month = cell.getAttribute('data-month');
+          if (row == null || month == null) return;
+          var key = plExpenseCellKey(row, month);
+          if (!plLocalEditedKeys[key]) return;
+          touched.push({
+            key: key,
+            row: row,
+            month: month,
+            amount: parseMoney(cell.textContent)
+          });
+        });
+        return touched;
       }
 
-      function applyAmountToAllMonthsForRow(rowId, amount) {
-        document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]').forEach(function (c) {
-          c.textContent = formatMoney(amount);
-        });
-        markTouched();
-      }
-
-      function maybePropagateFixedMonthly(sourceCell, amount) {
-        if (!isFixedExpenseEditableCell(sourceCell)) return;
-        if (amount === 0) return;
-        var rowId = sourceCell.getAttribute('data-row');
-        var month = sourceCell.getAttribute('data-month');
-        var cells = Array.prototype.slice.call(
-          document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]')
-        );
-        if (!cells.length) return;
-        var allSame = cells.every(function (c) {
-          return parseMoney(c.textContent) === amount;
-        });
-        if (allSame) return;
-        var othersEmpty = cells.every(function (c) {
-          if (c.getAttribute('data-month') === month) return true;
-          return parseMoney(c.textContent) === 0;
-        });
-        if (othersEmpty) {
-          pushUndoSnapshot();
-          applyAmountToAllMonthsForRow(rowId, amount);
-          return;
-        }
-        var msg = t(
-          'この固定費を全ての月に同じ金額で反映しますか？',
-          'Apply this fixed cost amount to all months?'
-        );
-        if (window.confirm(msg)) {
-          pushUndoSnapshot();
-          applyAmountToAllMonthsForRow(rowId, amount);
-        }
-      }
-
-      /* Persist monthly editable cells so Insight / reload match the DOM. */
+      /* Merge locally edited cells onto hydrate LS without auto-PUT. */
       function persistExpenseMapFromDom() {
+        var touched = collectPlTouchedExpenseCells();
         var map = {};
         try {
           var raw = localStorage.getItem(storageKey());
@@ -10507,19 +10568,36 @@
             if (prev && typeof prev === 'object') map = prev;
           }
         } catch (_e) {}
-        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
-          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
-          map[key] = parseMoney(cell.textContent);
-        });
-        try {
-          localStorage.setItem(storageKey(), JSON.stringify(map));
-        } catch (_e2) {}
+        var persisted = true;
+        if (touched.length) {
+          touched.forEach(function (item) {
+            map[item.key] = item.amount;
+          });
+          var key = storageKey();
+          var json = JSON.stringify(map);
+          var gwWrite = window.__KPI_DATA_GATEWAY;
+          var wrote = !!(
+            gwWrite &&
+            typeof gwWrite.setJsonLocalOnly === 'function' &&
+            gwWrite.setJsonLocalOnly(key, map)
+          );
+          var rawAfter = null;
+          try {
+            rawAfter = localStorage.getItem(key);
+          } catch (_eRead) {}
+          persisted = !!(wrote && rawAfter === json);
+        }
         if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
           window.__plInsight.resetCache();
         }
+        window.__PL_COMPARE_RENDERED_ISO = null;
+        window.__PL_COMPARE_LAST_MONTH_KEY = null;
+        return { map: map, touched: touched, persisted: persisted };
       }
 
       var plExpenseLiveRefreshTimer = null;
+      var plSkipBlurCommit = false;
+      var plPointerSelecting = false;
       function schedulePlExpenseLiveRefresh() {
         if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
         plExpenseLiveRefreshTimer = setTimeout(function () {
@@ -10531,39 +10609,171 @@
         }, 120);
       }
 
+      function refreshPlExpenseLiveSurfaces() {
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+      }
+
+      function commitPlEditableCell(cell) {
+        if (!cell) return;
+        var n = parseMoney(cell.textContent);
+        cell.textContent = formatMoney(n);
+        persistExpenseMapFromDom();
+        refreshPlExpenseLiveSurfaces();
+      }
+
+      function isPlEditableNumericCellOpen(el) {
+        if (!el || el.nodeType !== 1) return false;
+        if (el.getAttribute('data-pl-editable') !== '1') return false;
+        if (el.getAttribute('contenteditable') !== 'true') return false;
+        if (el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true') return false;
+        var field = el.getAttribute('data-pl-field');
+        if (field && field !== 'amount') return false;
+        var host = el;
+        while (host && host !== document.documentElement) {
+          if (host.hidden || host.getAttribute('hidden') != null) return false;
+          if (host.getAttribute('aria-hidden') === 'true') return false;
+          host = host.parentElement;
+        }
+        if (!el.getClientRects().length) return false;
+        var cs = window.getComputedStyle(el);
+        if (!cs || cs.display === 'none' || cs.visibility === 'hidden') return false;
+        return true;
+      }
+
+      function findNextPlEditableInSameMonth(cell) {
+        if (!cell) return null;
+        var month = cell.getAttribute('data-month');
+        if (month == null || month === '') return null;
+        var nodes = document.querySelectorAll(
+          '[data-pl-editable="1"][data-month="' + month + '"]'
+        );
+        var seen = false;
+        for (var i = 0; i < nodes.length; i++) {
+          var el = nodes[i];
+          if (!isPlEditableNumericCellOpen(el)) continue;
+          if (seen) return el;
+          if (el === cell) seen = true;
+        }
+        return null;
+      }
+
+      function findFirstPlEditableInMonth(month) {
+        var nodes = document.querySelectorAll(
+          '[data-pl-editable="1"][data-month="' + month + '"]'
+        );
+        for (var i = 0; i < nodes.length; i++) {
+          if (isPlEditableNumericCellOpen(nodes[i])) return nodes[i];
+        }
+        return null;
+      }
+
+      function findNextPlEditableVerticalLoop(cell) {
+        var next = findNextPlEditableInSameMonth(cell);
+        if (next) return next;
+        var month = Number(cell && cell.getAttribute('data-month'));
+        if (!Number.isFinite(month)) return null;
+        for (var step = 1; step <= 12; step++) {
+          var first = findFirstPlEditableInMonth(String((month + step) % 12));
+          if (first) return first;
+        }
+        return null;
+      }
+
+      function selectPlEditableContents(cell) {
+        if (!cell || document.activeElement !== cell) return;
+        try {
+          var range = document.createRange();
+          range.selectNodeContents(cell);
+          var sel = window.getSelection();
+          if (!sel) return;
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (_eSel) {}
+      }
+
+      function schedulePlSelectAll(cell, viaPointer) {
+        var run = function () {
+          selectPlEditableContents(cell);
+        };
+        if (viaPointer) {
+          window.setTimeout(run, 0);
+          return;
+        }
+        run();
+      }
+
       function bindPlEditableCells() {
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           if (cell.getAttribute('data-pl-bound') === '1') return;
           cell.setAttribute('data-pl-bound', '1');
+          cell.addEventListener('mousedown', function () {
+            plPointerSelecting = true;
+          });
           cell.addEventListener('focus', function () {
+            var viaPointer = plPointerSelecting;
+            plPointerSelecting = false;
             pushUndoSnapshot();
+            if (viaPointer && parseMoney(cell.textContent) !== 0) return;
+            schedulePlSelectAll(cell, viaPointer);
           });
           cell.addEventListener('input', function () {
             markTouched();
+            markPlLocalEdited(cell.getAttribute('data-row'), cell.getAttribute('data-month'));
             schedulePlExpenseLiveRefresh();
           });
+          cell.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            if (e.isComposing || e.keyCode === 229) return;
+            e.preventDefault();
+            commitPlEditableCell(cell);
+            if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
+            var next = findNextPlEditableVerticalLoop(cell);
+            if (!next || next === cell) return;
+            plSkipBlurCommit = true;
+            try {
+              next.focus();
+            } finally {
+              plSkipBlurCommit = false;
+            }
+          });
           cell.addEventListener('blur', function () {
-            var n = parseMoney(cell.textContent);
-            cell.textContent = formatMoney(n);
-            maybePropagateFixedMonthly(cell, n);
-            persistExpenseMapFromDom();
-            if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-            if (typeof refreshPlRatios === 'function') refreshPlRatios();
-            if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-            if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-            if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+            if (plSkipBlurCommit) return;
+            commitPlEditableCell(cell);
           });
         });
       }
 
-      function refreshPlExpenseAmountsFromStorage() {
-        loadSavedExpenses();
+      function refreshPlExpenseAmountsFromStorage(opts) {
+        var force = !!(opts && opts.force);
+        if (force || !hasUnsavedChanges()) {
+          loadSavedExpenses();
+        }
         bindPlEditableCells();
         applyColumnFocus();
-        if (!plTouched) {
+        if (!hasUnsavedChanges()) {
           confirmedSnapshot = buildSnapshot();
           plSaved = true;
         }
+        syncUndoButton();
+        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
+        if (typeof refreshPlRatios === 'function') refreshPlRatios();
+        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
+        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
+        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+      }
+
+      function applyCleanInitialHydrateExpenseAmounts() {
+        if (plOccAlertArmed) return;
+        if (plLocalEditedKeys && Object.keys(plLocalEditedKeys).length) return;
+        loadSavedExpenses();
+        bindPlEditableCells();
+        applyColumnFocus();
+        confirmedSnapshot = buildSnapshot();
+        plSaved = true;
         syncUndoButton();
         if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
         if (typeof refreshPlRatios === 'function') refreshPlRatios();
@@ -10582,27 +10792,17 @@
       }
 
       function plSave(showAlert) {
-        var map = {};
-        try {
-          var rawSave = localStorage.getItem(storageKey());
-          if (rawSave) {
-            var prevSave = JSON.parse(rawSave);
-            if (prevSave && typeof prevSave === 'object') map = prevSave;
-          }
-        } catch (_prevErr) {}
-        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
-          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
-          map[key] = parseMoney(cell.textContent);
-        });
-        try {
-          localStorage.setItem(storageKey(), JSON.stringify(map));
-        } catch (_e) {}
-        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
-          window.__plInsight.resetCache();
+        var persist = persistExpenseMapFromDom();
+        if (persist && persist.touched && persist.touched.length && persist.persisted === false) {
+          plSaved = false;
+          return Promise.resolve({ ok: false, error: 'local_persist_failed' });
         }
         try {
           if (typeof writeMonthlyExpenseAllocationToMep === 'function') {
-            var mepResult = writeMonthlyExpenseAllocationToMep({ year: plYear });
+            var mepResult = writeMonthlyExpenseAllocationToMep({
+              year: plYear,
+              touchedKeys: persist && persist.touched
+            });
             console.debug('[PL Phase C] monthly→MEP dailyExpenses write', mepResult);
           } else if (typeof previewMonthlyExpenseAllocation === 'function') {
             console.debug(
@@ -10611,14 +10811,18 @@
             );
           }
         } catch (_mepErr) {}
+        plOccAlertArmed = true;
         var gw = window.__KPI_DATA_GATEWAY;
         var put =
           gw && typeof gw.flushPut === 'function' ? gw.flushPut() : Promise.resolve();
         return Promise.resolve(put).then(function (putResult) {
           if (plPutFailed(putResult)) {
             plSaved = false;
+            if (!(putResult && putResult.conflict)) plOccAlertArmed = false;
             return putResult;
           }
+          plOccAlertArmed = false;
+          plLocalEditedKeys = {};
           confirmedSnapshot = buildSnapshot();
           plSaved = true;
           undoStack = [];
@@ -10628,7 +10832,6 @@
           if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
           if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
           if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
-          if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
           return putResult || { ok: true };
         });
       }
@@ -11135,91 +11338,31 @@
 
       /** Floor + remainder on last biz day so monthly sum stays exact. */
       function allocateAmountAcrossBizDays(monthlyAmount, bizIsos) {
-        var amount = Math.round(Number(monthlyAmount) || 0);
-        var byDate = {};
-        if (!bizIsos || !bizIsos.length || amount === 0) {
-          return {
-            byDate: byDate,
-            perDayBase: 0,
-            remainder: 0,
-            sum: 0,
-            skipped: amount !== 0 && (!bizIsos || !bizIsos.length) ? 'no_biz_days' : null
-          };
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.allocateAmountAcrossBizDays !== 'function') {
+          return { byDate: {}, perDayBase: 0, remainder: 0, sum: 0, skipped: 'no_shared_allocate' };
         }
-        var n = bizIsos.length;
-        var base = Math.floor(amount / n);
-        var rem = amount - base * n;
-        for (var i = 0; i < n; i++) {
-          byDate[bizIsos[i]] = base + (i === n - 1 ? rem : 0);
-        }
-        return { byDate: byDate, perDayBase: base, remainder: rem, sum: amount, skipped: null };
+        return api.allocateAmountAcrossBizDays(monthlyAmount, bizIsos);
       }
 
       /**
        * Phase B preview: monthly PL → per-biz-day. Does NOT write MEP.
-       * opts: { year?, month0? (0-11, omit=all), lineId?, amountMap? }
+       * Shared helper: js/kpi-pl-monthly-allocate.js
        */
       function previewMonthlyExpenseAllocation(opts) {
         opts = opts || {};
-        var year = opts.year != null ? Number(opts.year) : plYear;
-        if (!Number.isFinite(year)) year = new Date().getFullYear();
-        var amountMap = opts.amountMap || loadPlExpenseAmountMap(year);
-        var maps = loadAnnualDailyMaps();
-        var bmap = maps.businessDayByDate;
-        var tmap = maps.targetSalesByDate;
-        var monthlyIds = loadMonthlyExpenseLineIdsFromCatalog();
-        if (opts.lineId) {
-          monthlyIds = monthlyIds.filter(function (id) {
-            return id === opts.lineId;
-          });
+        if (opts.year == null) opts = Object.assign({}, opts, { year: plYear });
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.previewMonthlyExpenseAllocation !== 'function') {
+          return {
+            year: opts.year,
+            months: [],
+            monthlyLineIds: [],
+            skippedDailyLineIds: [],
+            wroteToMep: false
+          };
         }
-        var skippedDaily = loadDailyExpenseLineIdsFromCatalog();
-        var monthIndexes = [];
-        if (opts.month0 != null && Number.isFinite(Number(opts.month0))) {
-          monthIndexes.push(Number(opts.month0));
-        } else {
-          for (var m = 0; m < 12; m++) monthIndexes.push(m);
-        }
-
-        var months = [];
-        monthIndexes.forEach(function (month0) {
-          if (month0 < 0 || month0 > 11) return;
-          var bizDays = listBizDayIsosInMonth(year, month0, bmap, tmap);
-          var lines = {};
-          monthlyIds.forEach(function (lineId) {
-            var key = lineId + ':' + month0;
-            var monthlyAmount = Object.prototype.hasOwnProperty.call(amountMap, key)
-              ? Math.round(Number(amountMap[key]) || 0)
-              : 0;
-            var alloc = allocateAmountAcrossBizDays(monthlyAmount, bizDays);
-            lines[lineId] = {
-              lineId: lineId,
-              monthlyAmount: monthlyAmount,
-              inputStyle: 'monthly',
-              perDayBase: alloc.perDayBase,
-              remainder: alloc.remainder,
-              byDate: alloc.byDate,
-              sum: alloc.sum,
-              skipped: alloc.skipped
-            };
-          });
-          months.push({
-            year: year,
-            month0: month0,
-            month: month0 + 1,
-            bizDayCount: bizDays.length,
-            bizDays: bizDays,
-            lines: lines
-          });
-        });
-
-        return {
-          year: year,
-          months: months,
-          monthlyLineIds: monthlyIds,
-          skippedDailyLineIds: skippedDaily,
-          wroteToMep: false
-        };
+        return api.previewMonthlyExpenseAllocation(opts);
       }
 
       window.__plAllocateAmountAcrossBizDays = allocateAmountAcrossBizDays;
@@ -11227,116 +11370,18 @@
 
       var PL_MEP_STORE_KEY = 'kpiNavigator.kpiYearStore';
 
-      function plEmptyKpiStore() {
-        return {
-          meta: {
-            schemaVersion: 4,
-            operatingYear: new Date().getFullYear(),
-            legacyMigrated: false,
-            selectedDate: null
-          },
-          timeline: { dailySales: {}, businessDays: {} },
-          years: {}
-        };
-      }
-
       /**
        * Phase C: write monthly PL amounts (÷ biz days) into MEP dailyExpenses.
-       * Only monthly-style expense lines. Daily lines (MEP-entered) are never touched.
-       * Re-allocation: clears each monthly line's isos within the target month, then
-       * writes the fresh allocation. amount 0 / no biz days => line-month left empty.
-       * opts: { year?, month0? (0-11, omit = all 12) }
+       * Shared helper: js/kpi-pl-monthly-allocate.js
        */
       function writeMonthlyExpenseAllocationToMep(opts) {
         opts = opts || {};
-        var year = opts.year != null ? Number(opts.year) : plYear;
-        if (!Number.isFinite(year)) year = new Date().getFullYear();
-
-        var gw = window.__KPI_DATA_GATEWAY;
-        if (!gw || typeof gw.getJson !== 'function' || typeof gw.setJson !== 'function') {
-          return { ok: false, reason: 'no_gateway', wrote: false, year: year };
+        if (opts.year == null) opts = Object.assign({}, opts, { year: plYear });
+        var api = window.KpiPlMonthlyAllocate;
+        if (!api || typeof api.writeMonthlyExpenseAllocationToMep !== 'function') {
+          return { ok: false, reason: 'no_shared_allocate', wrote: false, year: opts.year };
         }
-
-        var store = gw.getJson(PL_MEP_STORE_KEY);
-        if (!store || typeof store !== 'object') {
-          store = plEmptyKpiStore();
-        }
-        if (!store.meta || typeof store.meta !== 'object') {
-          store.meta = plEmptyKpiStore().meta;
-        }
-        if (!store.years || typeof store.years !== 'object') store.years = {};
-
-        var operatingYear = Number(store.meta.operatingYear);
-        if (!Number.isFinite(operatingYear)) operatingYear = new Date().getFullYear();
-
-        var rec = store.years[year];
-        if (rec && rec.status === 'locked' && year < operatingYear) {
-          return { ok: false, reason: 'year_locked', wrote: false, year: year };
-        }
-        if (!rec || typeof rec !== 'object') {
-          rec = { year: year, status: 'open', plan: {} };
-          store.years[year] = rec;
-        }
-        if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
-
-        var preview = previewMonthlyExpenseAllocation(
-          opts.month0 != null ? { year: year, month0: Number(opts.month0) } : { year: year }
-        );
-        var monthlyIds = preview.monthlyLineIds || [];
-        var changed = false;
-
-        (preview.months || []).forEach(function (block) {
-          var prefix = year + '-' + pad2(block.month0 + 1) + '-';
-          monthlyIds.forEach(function (lineId) {
-            var byRow = rec.dailyExpenses[lineId];
-            if (byRow && typeof byRow === 'object') {
-              Object.keys(byRow).forEach(function (iso) {
-                if (iso.indexOf(prefix) === 0) {
-                  delete byRow[iso];
-                  changed = true;
-                }
-              });
-            }
-            var lineAlloc = (block.lines && block.lines[lineId]) || null;
-            var byDate = lineAlloc && lineAlloc.byDate ? lineAlloc.byDate : null;
-            if (!byDate) return;
-            var isos = Object.keys(byDate);
-            if (!isos.length) return;
-            if (!rec.dailyExpenses[lineId] || typeof rec.dailyExpenses[lineId] !== 'object') {
-              rec.dailyExpenses[lineId] = {};
-            }
-            isos.forEach(function (iso) {
-              rec.dailyExpenses[lineId][iso] = Math.round(Number(byDate[iso]) || 0);
-              changed = true;
-            });
-          });
-        });
-
-        Object.keys(rec.dailyExpenses).forEach(function (lineId) {
-          var byRow = rec.dailyExpenses[lineId];
-          if (byRow && typeof byRow === 'object' && !Object.keys(byRow).length) {
-            delete rec.dailyExpenses[lineId];
-          }
-        });
-
-        rec.mepUpdatedAt = Date.now();
-        var saved = gw.setJson(PL_MEP_STORE_KEY, store);
-        if (saved) {
-          try {
-            document.dispatchEvent(
-              new CustomEvent('kpi:mepDataChanged', {
-                detail: { year: year, source: 'pl-monthly-allocate' }
-              })
-            );
-          } catch (_e) {}
-        }
-        return {
-          ok: saved,
-          wrote: changed,
-          year: year,
-          monthlyLineIds: monthlyIds,
-          skippedDailyLineIds: preview.skippedDailyLineIds || []
-        };
+        return api.writeMonthlyExpenseAllocationToMep(opts);
       }
 
       window.__plWriteMonthlyExpenseAllocationToMep = writeMonthlyExpenseAllocationToMep;
@@ -12110,7 +12155,7 @@
             } catch (_e2) {}
           });
           if (affected[plYear]) {
-            if (typeof window.__plRefreshExpenseAmounts === 'function') window.__plRefreshExpenseAmounts();
+            if (typeof window.__plRefreshExpenseAmounts === 'function') window.__plRefreshExpenseAmounts({ force: true });
             if (typeof window.__plFillDailyExpenseRowsFromMep === 'function') window.__plFillDailyExpenseRowsFromMep();
           }
         }
@@ -14206,6 +14251,9 @@
       document.addEventListener('kpi:storeHydratedFromServer', function () {
         syncPlBusinessDays();
         plRefreshAllIncomeSurfaces();
+        if (!plInitialExpenseHydratePending) return;
+        plInitialExpenseHydratePending = false;
+        applyCleanInitialHydrateExpenseAmounts();
       });
       document.addEventListener('kpi:readSurfacesRefresh', function () {
         syncPlBusinessDays();

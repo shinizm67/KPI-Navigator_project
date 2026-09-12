@@ -8766,6 +8766,7 @@ def render_page(lang: str, lang_switch: str) -> str:
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
   <script src="{"../../../js/kpi-currency.js" if lang == "ja" else "../../../../js/kpi-currency.js"}"></script>
+  <script src="{"../../../js/kpi-pl-monthly-allocate.js" if lang == "ja" else "../../../../js/kpi-pl-monthly-allocate.js"}"></script>
   <!-- KPI-CURRENCY-JS:END -->
 {header}
   <div class="page-wrap profile-wrap">

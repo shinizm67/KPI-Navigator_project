@@ -430,7 +430,9 @@ def daily_sales_import_js() -> str:
           }});
         }}
 
-        function confirmImport(maps, targetYear) {{
+        function confirmImport(maps, targetYear, opts) {{
+          opts = opts || {{}};
+          var persistByCsvYear = !!opts.persistByCsvYear;
           var years = maps.years || [];
           var yearLine =
             years.length === 1
@@ -479,7 +481,18 @@ def daily_sales_import_js() -> str:
                   ' day(s). MEP recomputes Drink as Store − Food.'
               );
           }}
-          if (targetYear != null && years.indexOf(Number(targetYear)) < 0) {{
+          if (persistByCsvYear) {{
+            msg +=
+              '\\n\\n' +
+              t(
+                'CSVの日付年ごとに保存します（' +
+                  yearLine +
+                  '）。表示年へ移動する必要はありません。',
+                'Each CSV date year will be saved (' +
+                  yearLine +
+                  '). You do not need to change the displayed year.'
+              );
+          }} else if (targetYear != null && years.indexOf(Number(targetYear)) < 0) {{
             msg +=
               '\\n\\n' +
               t(
@@ -560,8 +573,13 @@ def daily_sales_import_js() -> str:
                     options && typeof options.getYear === 'function'
                       ? options.getYear()
                       : null;
-                  if (!confirmImport(maps, targetYear)) return;
-                  if (targetYear != null && countForYear(maps, Number(targetYear)) === 0) {{
+                  var persistByCsvYear = !!(options && options.persistByCsvYear);
+                  if (!confirmImport(maps, targetYear, {{ persistByCsvYear: persistByCsvYear }})) return;
+                  if (
+                    !persistByCsvYear &&
+                    targetYear != null &&
+                    countForYear(maps, Number(targetYear)) === 0
+                  ) {{
                     window.alert(
                       t(
                         'このファイルに表示中の年（' + targetYear + '）の日付がありません。',

@@ -506,6 +506,12 @@ def kpi_year_store_js() -> str:
         function canWriteDailySalesFrom(source, iso) {{
           if (!validIso(iso)) return false;
           var src = String(source || '');
+          if (String(src).toLowerCase().indexOf('csv-import') >= 0) {{
+            if (isPastSalesSource(src)) {{
+              return isoYear(iso) < getOperatingYear();
+            }}
+            return true;
+          }}
           if (isPastSalesSource(src)) {{
             if (
               isoYear(iso) < getOperatingYear() &&
@@ -516,10 +522,19 @@ def kpi_year_store_js() -> str:
             /* Past Sales modal — path / lease / year-lock とは独立（§15 データ正本） */
             return true;
           }}
-          if (!canEditIso(iso)) return false;
           var path = salesSourceToPath(src);
+          var y = isoYear(iso);
+          /* KPI-MEP-PAST-YEAR-CE: 過去年の売上・営業日は Monthly 経路 + lease なら year-lock を越える */
+          if (path === 'mep' && Number.isFinite(y) && y < getOperatingYear()) {{
+            if (getDailySalesInputPath() !== 'mep') return false;
+            return holdsEditLease('daily-sales');
+          }}
+          if (!canEditIso(iso)) return false;
           if (!path) return true;
-          if (path !== getDailySalesInputPath()) return false;
+          if (path !== getDailySalesInputPath()) {{
+            /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP は同一 sales キー。lease 中は経路トグルに関わらず書く */
+            if (path !== 'mep' || !holdsEditLease('daily-sales')) return false;
+          }}
           /* Sales Data モーダル Save は path 一致時に timeline へ反映（lease 未取得だと sync で巻き戻る） */
           if (src.indexOf('sales-data-save') >= 0) return true;
           return holdsEditLease('daily-sales');
@@ -1090,16 +1105,6 @@ def kpi_year_store_js() -> str:
           if (changed) {{
             store.meta.lastRolloverAt = new Date().toISOString();
             persistStore();
-            if (window.__ANNUAL_DATA) {{
-              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
-            }}
-            try {{
-              document.dispatchEvent(
-                new CustomEvent('annual:calendarYearChanged', {{
-                  detail: {{ year: getOperatingYear(), source: 'kpi-year-rollover' }},
-                }})
-              );
-            }} catch (_e) {{}}
             try {{
               document.dispatchEvent(
                 new CustomEvent('kpi:yearRolloverCompleted', {{
@@ -1484,6 +1489,7 @@ def kpi_year_store_js() -> str:
           var yearsBiz = {{}};
           function matchesLimit(iso) {{
             if (!validIso(iso)) return false;
+            if (isoYear(iso) >= getOperatingYear()) return false;
             if (limitY == null || !Number.isFinite(limitY)) return true;
             return isoYear(iso) === limitY;
           }}
@@ -1514,6 +1520,7 @@ def kpi_year_store_js() -> str:
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -1910,7 +1917,8 @@ def kpi_year_store_js() -> str:
         function bulkPersistMepYear(year, payload, meta) {{
           var y = Number(year);
           if (!Number.isFinite(y)) return false;
-          var allowFull = canWriteMepYear(y);
+          var csvImport = !!(meta && meta.allowLockedYearImport === true);
+          var allowFull = canWriteMepYear(y) || csvImport;
           var allowMeta = canWriteMepMetaYear(y);
           if (!allowFull && !allowMeta) return false;
           var rec = ensureYearMepData(y);
@@ -1918,29 +1926,31 @@ def kpi_year_store_js() -> str:
             if (!validIso(iso) || isoYear(iso) !== y) return false;
             return allowFull ? canEditIso(iso) : true;
           }}
+          var forceExp = !!(meta && meta.forceExpenses);
+          var forceInc = !!(meta && meta.forceIncome);
           var srcExp = payload && payload.dailyExpenses;
-          if (allowFull && srcExp && typeof srcExp === 'object') {{
+          if ((allowFull || forceExp) && srcExp && typeof srcExp === 'object') {{
             Object.keys(srcExp).forEach(function (lineId) {{
               if (!rec.dailyExpenses[lineId]) rec.dailyExpenses[lineId] = {{}};
               var byIso = srcExp[lineId];
               if (!byIso || typeof byIso !== 'object') return;
               Object.keys(byIso).forEach(function (iso) {{
                 if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!csvImport && !forceExp && !canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 rec.dailyExpenses[lineId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
               }});
             }});
           }}
           var srcInc = payload && payload.dailyIncome;
-          if (allowFull && srcInc && typeof srcInc === 'object') {{
+          if ((allowFull || forceInc) && srcInc && typeof srcInc === 'object') {{
             Object.keys(srcInc).forEach(function (streamId) {{
               if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {{}};
               var byIso = srcInc[streamId];
               if (!byIso || typeof byIso !== 'object') return;
               Object.keys(byIso).forEach(function (iso) {{
                 if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!csvImport && !forceInc && !canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 if (!Number.isFinite(n) || n === 0) {{
                   delete rec.dailyIncome[streamId][iso];
@@ -1949,6 +1959,18 @@ def kpi_year_store_js() -> str:
                 }}
               }});
             }});
+            /* Scrub stale 0 keys left by older saves (block PL drink+food fallback). */
+            if (forceInc) {{
+              Object.keys(rec.dailyIncome).forEach(function (streamId) {{
+                var map = rec.dailyIncome[streamId];
+                if (!map || typeof map !== 'object') return;
+                Object.keys(map).forEach(function (iso) {{
+                  if (!validIso(iso) || isoYear(iso) !== y) return;
+                  var n = Number(map[iso]);
+                  if (!Number.isFinite(n) || n <= 0) delete map[iso];
+                }});
+              }});
+            }}
           }}
           var srcMeta = payload && payload.dailyMeta;
           if (allowMeta && srcMeta && typeof srcMeta === 'object') {{
@@ -2011,12 +2033,14 @@ def kpi_year_store_js() -> str:
           }}
           rec.mepUpdatedAt = Date.now();
           store.meta.schemaVersion = SCHEMA_VERSION;
-          persistStore();
-          document.dispatchEvent(
-            new CustomEvent('kpi:mepDataChanged', {{
-              detail: {{ year: y, source: (meta && meta.source) || 'mep' }},
-            }})
-          );
+          if (!(meta && meta.deferPersist)) {{
+            persistStore();
+            document.dispatchEvent(
+              new CustomEvent('kpi:mepDataChanged', {{
+                detail: {{ year: y, source: (meta && meta.source) || 'mep' }},
+              }})
+            );
+          }}
           return true;
         }}
 
@@ -2039,12 +2063,14 @@ def kpi_year_store_js() -> str:
           hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {{
             var navCy = gw().getJson(SELECTED_DATE_KEY);
-            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {{
-              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
-            }} else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {{
+            if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {{
               window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            }} else if (navCy && navCy.selectedIso && validIso(navCy.selectedIso)) {{
+              window.__ANNUAL_DATA.calendarYear = isoYear(navCy.selectedIso);
+            }} else if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {{
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
             }} else {{
-              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+              window.__ANNUAL_DATA.calendarYear = new Date().getFullYear();
             }}
           }}
           ensureOperatingYearPlanDefaults();

@@ -20865,16 +20865,6 @@ Cumulative Target Annual Sales</p>
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
             persistStoreIfYearMepSafe();
-            if (window.__ANNUAL_DATA) {
-              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
-            }
-            try {
-              document.dispatchEvent(
-                new CustomEvent('annual:calendarYearChanged', {
-                  detail: { year: getOperatingYear(), source: 'kpi-year-rollover' },
-                })
-              );
-            } catch (_e) {}
             try {
               document.dispatchEvent(
                 new CustomEvent('kpi:yearRolloverCompleted', {
@@ -21869,12 +21859,14 @@ Cumulative Target Annual Sales</p>
           hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
             var navCy = gw().getJson(SELECTED_DATE_KEY);
-            if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
-              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
-            } else if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+            if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
               window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            } else if (navCy && navCy.selectedIso && validIso(navCy.selectedIso)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(navCy.selectedIso);
+            } else if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
             } else {
-              window.__ANNUAL_DATA.calendarYear = getOperatingYear();
+              window.__ANNUAL_DATA.calendarYear = new Date().getFullYear();
             }
           }
           ensureOperatingYearPlanDefaults();
@@ -23484,7 +23476,15 @@ Cumulative Target Annual Sales</p>
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
       var currentYear = Number.isFinite(Number(window.__ANNUAL_DATA.calendarYear))
         ? Number(window.__ANNUAL_DATA.calendarYear)
-        : 2026;
+        : (function () {
+            try {
+              if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+                var sCy = String(KpiYearStore.getSelectedDate() || '');
+                if (/^\d{4}-\d{2}-\d{2}$/.test(sCy)) return Number(sCy.slice(0, 4));
+              }
+            } catch (_eCyFb) {}
+            return new Date().getFullYear();
+          })();
       function displayYearBounds() {
         if (typeof window.__KPI_getDisplayYearBounds === 'function') {
           return window.__KPI_getDisplayYearBounds();
@@ -23579,6 +23579,49 @@ Cumulative Target Annual Sales</p>
         buildYearMenu();
       };
       window.__ANNUAL_UI.setCalendarYearSilent = window.__ANNUAL_UI.setCalendarYearDisplayOnly;
+      (function hydrateYearFromSelectedDate() {
+        try {
+          var hp = new URLSearchParams(window.location.search);
+          var hIso = String(hp.get('iso') || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(hIso)) {
+            var isoY = Number(hIso.slice(0, 4));
+            if (isoY >= 2000 && isoY <= 2100) {
+              currentYear = isoY;
+              return;
+            }
+          }
+          var hyRaw = hp.get('year');
+          if (hyRaw != null && String(hyRaw).trim() !== '') {
+            var hy = Number(hyRaw);
+            if (Number.isFinite(hy) && hy >= 2000 && hy <= 2100) {
+              currentYear = hy;
+              return;
+            }
+          }
+        } catch (_eH) {}
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            var sIso = String(KpiYearStore.getSelectedDate() || '');
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sIso)) {
+              currentYear = Number(sIso.slice(0, 4));
+              return;
+            }
+          }
+        } catch (_eSel) {}
+        try {
+          var nav = null;
+          var gwNav = window.__KPI_DATA_GATEWAY;
+          if (gwNav && typeof gwNav.getJson === 'function') nav = gwNav.getJson('kpiNavigator.annualNav');
+          if (nav && nav.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(nav.selectedIso))) {
+            currentYear = Number(String(nav.selectedIso).slice(0, 4));
+            return;
+          }
+          if (nav && Number.isFinite(Number(nav.calendarYear))) {
+            var navY = Number(nav.calendarYear);
+            if (navY >= 2000 && navY <= 2100) currentYear = navY;
+          }
+        } catch (_eN) {}
+      })();
       renderYear();
     })();
     (function () {
@@ -25876,6 +25919,39 @@ Cumulative Target Annual Sales</p>
         window.alert('Jump is allowed only from ' + b.minYear + ' to ' + b.maxYear + '. Selected year ' + y + ' is out of range.');
       }
 
+      function replaceDisplayContextUrl(iso) {
+        if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+        try {
+          if (!history.replaceState) return;
+          var dUrl = parseISODateLocal(iso);
+          if (!dUrl) return;
+          var urlParams = new URLSearchParams(window.location.search);
+          urlParams.set('year', String(dUrl.getFullYear()));
+          urlParams.set('month', String(dUrl.getMonth() + 1));
+          urlParams.set('iso', iso);
+          var qs = urlParams.toString();
+          history.replaceState(history.state, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        } catch (_eDispUrl) {}
+      }
+      function syncDisplayContextAfterDailySelection(d, iso, source) {
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYearDisplayOnly === 'function') {
+          window.__ANNUAL_UI.setCalendarYearDisplayOnly(d.getFullYear());
+        } else if (window.__ANNUAL_DATA) {
+          window.__ANNUAL_DATA.calendarYear = d.getFullYear();
+        }
+        var navSrcUrl = source || 'selection';
+        if (navSrcUrl === 'focus-sync') {
+          if (window.__displayUrlPersistTimer != null) {
+            window.clearTimeout(window.__displayUrlPersistTimer);
+          }
+          window.__displayUrlPersistTimer = window.setTimeout(function () {
+            window.__displayUrlPersistTimer = null;
+            replaceDisplayContextUrl(iso);
+          }, 500);
+        } else {
+          replaceDisplayContextUrl(iso);
+        }
+      }
       function applyDailySelection(d, source, opts) {
         opts = opts || {};
         if (!opts.skipJumpGuard && !isDateJumpAllowed(d)) {
@@ -25906,6 +25982,7 @@ Cumulative Target Annual Sales</p>
         if (window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
           KpiYearStore.setSelectedDate(iso, source || 'annual-ui');
         }
+        syncDisplayContextAfterDailySelection(d, iso, source);
         return true;
       }
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};
@@ -25954,7 +26031,35 @@ Cumulative Target Annual Sales</p>
 
       var nowInit = new Date();
       var initialDate = new Date(nowInit.getFullYear(), nowInit.getMonth(), nowInit.getDate());
-      if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+      function readDisplayIsoFromUrl() {
+        try {
+          var p = new URLSearchParams(window.location.search);
+          var rawIso = String(p.get('iso') || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(rawIso)) {
+            var dIso = parseISODateLocal(rawIso);
+            if (dIso) return rawIso;
+          }
+          var yRaw = p.get('year');
+          var mRaw = p.get('month');
+          var y = yRaw != null && String(yRaw).trim() !== '' ? Number(yRaw) : NaN;
+          var m = mRaw != null && String(mRaw).trim() !== '' ? Number(mRaw) : NaN;
+          if (Number.isFinite(y) && y >= 2000 && y <= 2100 && m >= 1 && m <= 12) {
+            var sel = '';
+            if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+              sel = String(KpiYearStore.getSelectedDate() || '');
+            }
+            var sd = sel ? parseISODateLocal(sel) : null;
+            if (sd && sd.getFullYear() === y && sd.getMonth() === m - 1) return sel;
+            return y + '-' + String(m).padStart(2, '0') + '-01';
+          }
+        } catch (_eUrlIso) {}
+        return null;
+      }
+      var urlIso = readDisplayIsoFromUrl();
+      if (urlIso) {
+        var urlDate = parseISODateLocal(urlIso);
+        if (urlDate) initialDate = urlDate;
+      } else if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
         var storeIso = KpiYearStore.getSelectedDate();
         var storeDate = storeIso ? parseISODateLocal(storeIso) : null;
         if (storeDate) initialDate = storeDate;
@@ -26651,7 +26756,14 @@ Cumulative Target Annual Sales</p>
     (function () {
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
       if (window.__ANNUAL_DATA.calendarYear == null) {
-        window.__ANNUAL_DATA.calendarYear = 2026;
+        var cyFb = NaN;
+        try {
+          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+            var sTl = String(KpiYearStore.getSelectedDate() || '');
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sTl)) cyFb = Number(sTl.slice(0, 4));
+          }
+        } catch (_eTlCy) {}
+        window.__ANNUAL_DATA.calendarYear = Number.isFinite(cyFb) ? cyFb : new Date().getFullYear();
       }
 
       function pad2(n) {
@@ -31137,7 +31249,7 @@ Cumulative Target Annual Sales</p>
         ) {
           window.__ANNUAL_UI.syncCockpitForCalendarYear(Number(y));
         }
-        /* KPI-ARP-YEAR-NAV-PERSIST: calendarYear のみ軽量永続（selectedIso は維持） */
+        /* calendarYear follows selectedDate year. Do not keep a mismatched selectedIso. */
         try {
           var gwNav = window.__KPI_DATA_GATEWAY;
           if (gwNav && typeof gwNav.getJson === 'function' && typeof gwNav.setJson === 'function') {
@@ -31149,10 +31261,15 @@ Cumulative Target Annual Sales</p>
                 window.__ANNUAL_DATA.daily.selectedDate) ||
               prevNav.selectedIso ||
               null;
-            gwNav.setJson('kpiNavigator.annualNav', Object.assign({}, prevNav, {
-              calendarYear: Number(y),
-              selectedIso: keepIso,
-            }));
+            if (keepIso && Number(String(keepIso).slice(0, 4)) !== Number(y)) {
+              keepIso =
+                prevNav.selectedIso && Number(String(prevNav.selectedIso).slice(0, 4)) === Number(y)
+                  ? prevNav.selectedIso
+                  : null;
+            }
+            var nextNav = Object.assign({}, prevNav, { calendarYear: Number(y) });
+            if (keepIso) nextNav.selectedIso = keepIso;
+            gwNav.setJson('kpiNavigator.annualNav', nextNav);
           }
         } catch (_eNavPersist) {}
         syncMonthlyVfocusYearBadge(Number(y));
@@ -31195,6 +31312,25 @@ Cumulative Target Annual Sales</p>
         if (!d) return null;
         return toISODateLocal(d);
       }
+      function persistMonthlyDisplayUrl(iso) {
+        try {
+          if (!history.replaceState) return;
+          var useIso = iso;
+          if (!useIso || !/^\d{4}-\d{2}-\d{2}$/.test(String(useIso))) {
+            useIso = readDailySelectedIso();
+          }
+          var ud = useIso ? parseISODateLocal(useIso) : null;
+          if (!ud || ud.getFullYear() !== state.year || ud.getMonth() !== state.month0) {
+            useIso = toISODateLocal(new Date(state.year, state.month0, 1));
+          }
+          var urlParams = new URLSearchParams(window.location.search);
+          urlParams.set('year', String(state.year));
+          urlParams.set('month', String(state.month0 + 1));
+          urlParams.set('iso', useIso);
+          var qs = urlParams.toString();
+          history.replaceState(history.state, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        } catch (_eUrl) {}
+      }
       function persistMonthlyLast() {
         try {
           sessionStorage.setItem(
@@ -31202,6 +31338,7 @@ Cumulative Target Annual Sales</p>
             JSON.stringify({ year: state.year, month0: state.month0 })
           );
         } catch (e3) {}
+        persistMonthlyDisplayUrl();
       }
       function isBusinessDayByIso(iso, d) {
         var daily = window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily;
@@ -32485,44 +32622,61 @@ Cumulative Target Annual Sales</p>
       function readUrlYearMonth() {
         try {
           var p = new URLSearchParams(window.location.search);
-          var y = Number(p.get('year'));
-          var m = Number(p.get('month'));
-          if (Number.isFinite(y) && m >= 1 && m <= 12) {
+          var yRaw = p.get('year');
+          var mRaw = p.get('month');
+          var y = yRaw != null && String(yRaw).trim() !== '' ? Number(yRaw) : NaN;
+          var m = mRaw != null && String(mRaw).trim() !== '' ? Number(mRaw) : NaN;
+          if (Number.isFinite(y) && y >= 2000 && y <= 2100 && m >= 1 && m <= 12) {
             return { year: y, month0: m - 1 };
           }
         } catch (_e) {}
         return null;
       }
+      function readUrlIso() {
+        try {
+          var p = new URLSearchParams(window.location.search);
+          var iso = String(p.get('iso') || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+            var d = parseISODateLocal(iso);
+            if (d) return toISODateLocal(d);
+          }
+        } catch (_eIso) {}
+        return null;
+      }
       function pickInitialYearMonth() {
-        var urlYm = readUrlYearMonth();
-        if (urlYm) {
-          return {
-            year: urlYm.year,
-            month0: urlYm.month0,
-            nav: readAnnualNav(),
-            dailyIso: readDailySelectedIso()
-          };
-        }
-        var nav = readAnnualNav();
         var now = new Date();
+        var nav = readAnnualNav();
         var dailyIso = readDailySelectedIso();
-        var dailyDate = dailyIso ? parseISODateLocal(dailyIso) : null;
-        var year =
-          dailyDate ? dailyDate.getFullYear() : (nav && Number.isFinite(nav.calendarYear) ? nav.calendarYear : now.getFullYear());
-        var last = readMonthlyLast();
+        var urlIso = readUrlIso();
+        var urlYm = readUrlYearMonth();
+        var year;
         var month0;
-        if (dailyDate && dailyDate.getFullYear() === year) {
-          month0 = dailyDate.getMonth();
-        } else if (last && last.year === year && last.month0 >= 0 && last.month0 <= 11) {
-          month0 = last.month0;
-        } else if (nav && nav.selectedIso) {
-          var pd = parseISODateLocal(nav.selectedIso);
-          if (pd && pd.getFullYear() === year) month0 = pd.getMonth();
-          else month0 = year === now.getFullYear() ? now.getMonth() : 0;
+        var chosenIso = null;
+        if (urlIso) {
+          var ud = parseISODateLocal(urlIso);
+          year = ud.getFullYear();
+          month0 = ud.getMonth();
+          chosenIso = urlIso;
+        } else if (urlYm) {
+          year = urlYm.year;
+          month0 = urlYm.month0;
+          var dd = dailyIso ? parseISODateLocal(dailyIso) : null;
+          if (dd && dd.getFullYear() === year && dd.getMonth() === month0) {
+            chosenIso = dailyIso;
+          } else {
+            chosenIso = toISODateLocal(new Date(year, month0, 1));
+          }
+        } else if (dailyIso) {
+          var d2 = parseISODateLocal(dailyIso);
+          year = d2.getFullYear();
+          month0 = d2.getMonth();
+          chosenIso = dailyIso;
         } else {
-          month0 = year === now.getFullYear() ? now.getMonth() : 0;
+          year = now.getFullYear();
+          month0 = now.getMonth();
+          chosenIso = toISODateLocal(now);
         }
-        return { year: year, month0: month0, nav: nav, dailyIso: dailyIso };
+        return { year: year, month0: month0, nav: nav, dailyIso: chosenIso || dailyIso };
       }
       function focusIsoForNav(nav, preferredIso) {
         if (preferredIso) {
@@ -32930,7 +33084,7 @@ Cumulative Target Annual Sales</p>
           if (!p.get('open')) return;
           p.delete('open');
           var qs = p.toString();
-          history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          history.replaceState(history.state, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
         }
         function triggerOpen() {
           var api = window.__KPI_MONTHLY_OVERLAYS__;
