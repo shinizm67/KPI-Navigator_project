@@ -1,43 +1,35 @@
       /* KPI-EDIT-GUARDS */
       (function () {
-        function isJa() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
-        }
-        function tryMepLeaseForPath() {
-          if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
-          if (KpiYearStore.getDailySalesInputPath() === 'mep') {
-            if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit', {
-                steal: true,
-              });
-            }
-          } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
-            window.__KPI_EDIT_LEASE.release();
-          }
-        }
         function mepDailySalesPathBlocked() {
-          return !!(
-            window.KpiYearStore &&
-            KpiYearStore.getDailySalesInputPath &&
-            KpiYearStore.getDailySalesInputPath() === 'annual'
-          );
+          if (!window.KpiYearStore || !KpiYearStore.getDailySalesInputPath) return false;
+          if (KpiYearStore.getDailySalesInputPath() !== 'mep') return true;
+          if (typeof KpiYearStore.holdsEditLease === 'function') {
+            return !KpiYearStore.holdsEditLease('daily-sales');
+          }
+          return false;
         }
         function applyMepDailySalesPathGuards() {
-          var root = document.getElementById('monthly-edit-float');
-          if (root) {
-            root.classList.toggle('monthly-edit-float--daily-sales-path-blocked', mepDailySalesPathBlocked());
+          var mepRoot = document.getElementById('monthly-edit-float');
+          if (mepRoot) {
+            mepRoot.classList.toggle('monthly-edit-float--daily-sales-path-blocked', mepDailySalesPathBlocked());
           }
         }
         function refreshMepSalesGuards() {
+          var mepRoot = document.getElementById('monthly-edit-float');
+          if (mepRoot && mepRoot.hidden) return;
           applyMepDailySalesPathGuards();
           if (typeof buildGrid === 'function') buildGrid();
+          if (typeof syncMepScreenEditToolbar === 'function') syncMepScreenEditToolbar();
+          var memoRoot = document.getElementById('memo-float-modal');
+          if (
+            typeof renderMemoFloatDayPanel === 'function' &&
+            memoRoot &&
+            !memoRoot.hasAttribute('hidden')
+          ) {
+            renderMemoFloatDayPanel();
+          }
         }
         document.addEventListener('kpi:dailySalesInputPathChanged', function () {
-          tryMepLeaseForPath();
           refreshMepSalesGuards();
         });
         document.addEventListener('kpi:editGuardsApplied', refreshMepSalesGuards);

@@ -113,9 +113,6 @@ HYDRATE_PAST_OLD = """      (function hydratePastSalesShared() {
 
 HYDRATE_PAST_NEW = """      (function hydratePastSalesShared() {
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           KpiYearStore.syncToAnnualDaily();
           var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');
           window.__ANNUAL_DATA.pastSales = window.__ANNUAL_DATA.pastSales || {

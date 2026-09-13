@@ -1,14 +1,18 @@
-"""Phase 5 — daily sales input path toggle (Figma) + edit lease hooks.
+"""Phase 5 — View/Edit toggle HTML/CSS + edit lease hooks.
 
-Toggle UI: Sales Data modal + MEP only (Pro). Mirrors tutorial-toggle pill switch.
+Path UI behavior lives in `_kpi_sales_input_path_ui.js` (View / Edit, lease-based).
+Do not regenerate `data-kpi-path-side` Annual/Monthly labels.
 """
 
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
-KPI_SALES_INPUT_PATH_MARKER = "/* KPI-SALES-INPUT-PATH */"
+KPI_SALES_INPUT_PATH_MARKER = "/* KPI-SALES-INPUT-PATH-UI */"
+KPI_SALES_INPUT_PATH_MARKER_LEGACY = "/* KPI-SALES-INPUT-PATH */"
 KPI_EDIT_LEASE_HOOKS_MARKER = "/* KPI-EDIT-LEASE-HOOKS */"
+_SCRIPTS_DIR = Path(__file__).resolve().parent
 
 TOGGLE_DIV_BY_ID_RE = re.compile(
     r'\n        <div\n          class="kpi-daily-input-path[^\n]*\n          id="(?P<id>[^"]+)"[\s\S]*?\n        </div>',
@@ -54,6 +58,7 @@ PHASE5_TOGGLE_CSS = """
       color: #0db13a;
       text-align: center;
       white-space: nowrap;
+      cursor: pointer;
     }
     .kpi-daily-input-path__side.is-active {
       opacity: 1;
@@ -86,6 +91,7 @@ PHASE5_TOGGLE_CSS = """
       box-shadow: 0 0 8px rgba(13, 177, 58, 0.35);
       transition: transform 0.2s ease;
     }
+    .kpi-daily-input-path.is-edit .kpi-daily-input-path__knob,
     .kpi-daily-input-path.is-mep .kpi-daily-input-path__knob {
       transform: translateX(31px);
     }
@@ -136,36 +142,37 @@ def toggle_element_id(variant: str) -> str:
 
 def sales_input_path_toggle_html(variant: str, lang: str) -> str:
     is_ja = lang == "ja"
+    is_zh = str(lang).lower().startswith("zh")
     if variant == "mep":
         cls = "kpi-daily-input-path kpi-daily-input-path--mep"
     else:
         cls = "kpi-daily-input-path kpi-daily-input-path--sales-data"
     el_id = toggle_element_id(variant)
-    title = "売上入力" if is_ja else "Sales Input"
-    aria = (
-        "売上入力の経路（Annual / Monthly）"
-        if is_ja
-        else "Sales input path (Annual / Monthly)"
-    )
+    if variant == "mep":
+        title = "売上編集" if is_ja else ("營業額編輯" if is_zh else "Sales Edit")
+        aria = "売上の閲覧と編集" if is_ja else ("營業額的檢視與編輯" if is_zh else "Sales view and edit")
+    else:
+        title = "売上データ編集" if is_ja else ("營業額資料編輯" if is_zh else "Sales Data Edit")
+        aria = "売上データの閲覧と編集" if is_ja else ("營業額資料的檢視與編輯" if is_zh else "Sales Data view and edit")
     switch_aria = (
-        "売上入力を Annual と Monthly で切り替え"
-        if is_ja
-        else "Switch sales input between Annual and Monthly"
+        "閲覧と編集を切り替え" if is_ja else ("在檢視與編輯之間切換" if is_zh else "Switch between view and edit")
     )
+    view_label = "閲覧" if is_ja else ("檢視" if is_zh else "View")
+    edit_label = "編集" if is_ja else ("編輯" if is_zh else "Edit")
     return f"""        <div
           class="{cls}"
           id="{el_id}"
           data-kpi-sales-input-path
-          hidden
           aria-label="{aria}"
         >
           <p class="kpi-daily-input-path__title">{title}</p>
           <div class="kpi-daily-input-path__row">
-            <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
+            <span class="kpi-daily-input-path__side is-active" data-kpi-edit-side="view">{view_label}</span>
             <button
               type="button"
               class="kpi-daily-input-path__switch"
               data-kpi-path-switch
+              data-kpi-edit-switch
               role="switch"
               aria-checked="false"
               aria-label="{switch_aria}"
@@ -173,7 +180,7 @@ def sales_input_path_toggle_html(variant: str, lang: str) -> str:
             >
               <span class="kpi-daily-input-path__knob" aria-hidden="true"></span>
             </button>
-            <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>
+            <span class="kpi-daily-input-path__side is-inactive" data-kpi-edit-side="edit">{edit_label}</span>
           </div>
         </div>"""
 
@@ -192,6 +199,9 @@ def replace_or_insert_toggle(
     def repl(match: re.Match[str]) -> str:
         if match.group("id") != el_id:
             return match.group(0)
+        current = match.group(0)
+        if 'data-kpi-edit-side="view"' in current and "data-kpi-path-side" not in current:
+            return current
         return "\n" + snippet.rstrip()
 
     updated, n = TOGGLE_DIV_BY_ID_RE.subn(repl, text, count=1)
@@ -205,83 +215,9 @@ def replace_or_insert_toggle(
 
 
 def sales_input_path_client_js() -> str:
-    return f"""      {KPI_SALES_INPUT_PATH_MARKER}
-      (function () {{
-        function storeReady() {{
-          return !!(window.KpiYearStore && KpiYearStore.getDailySalesInputPath);
-        }}
-        function isJa() {{
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
-        }}
-        function isPro() {{
-          return !storeReady() || KpiYearStore.isProSubscription();
-        }}
-        function pathLabel(path) {{
-          if (path === 'mep') return isJa() ? 'Monthly (MEP)' : 'Monthly (MEP)';
-          return isJa() ? 'Annual / Sales Data' : 'Annual / Sales Data';
-        }}
-        function applyWrapState(wrap, path) {{
-          var isMep = path === 'mep';
-          wrap.classList.toggle('is-mep', isMep);
-          var sw = wrap.querySelector('[data-kpi-path-switch]');
-          if (sw) {{
-            sw.setAttribute('aria-checked', isMep ? 'true' : 'false');
-          }}
-          wrap.querySelectorAll('[data-kpi-path-side]').forEach(function (el) {{
-            var side = el.getAttribute('data-kpi-path-side');
-            var active = side === 'mep' ? isMep : !isMep;
-            el.classList.toggle('is-active', active);
-            el.classList.toggle('is-inactive', !active);
-          }});
-        }}
-        function syncToggleUi() {{
-          var path = storeReady() ? KpiYearStore.getDailySalesInputPath() : 'annual';
-          var pro = isPro();
-          document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {{
-            wrap.hidden = !pro;
-            applyWrapState(wrap, path);
-          }});
-        }}
-        function requestPathChange(next) {{
-          if (!storeReady() || !isPro()) return;
-          var cur = KpiYearStore.getDailySalesInputPath();
-          if (next === cur) return;
-          var msg = isJa()
-            ? '日次売上の入力を「' +
-              pathLabel(next) +
-              '」に切り替えます。もう一方は閲覧のみ（Read-Only）になります。'
-            : 'Switch daily sales input to "' +
-              pathLabel(next) +
-              '". The other surface becomes read-only.';
-          if (!window.confirm(msg)) return;
-          KpiYearStore.setDailySalesInputPath(next);
-          syncToggleUi();
-          document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
-        }}
-        function bindToggles() {{
-          document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {{
-            if (wrap.getAttribute('data-kpi-path-bound') === '1') return;
-            wrap.setAttribute('data-kpi-path-bound', '1');
-            var sw = wrap.querySelector('[data-kpi-path-switch]');
-            if (!sw) return;
-            sw.addEventListener('click', function (ev) {{
-              ev.preventDefault();
-              if (!storeReady() || !isPro()) return;
-              var cur = KpiYearStore.getDailySalesInputPath();
-              requestPathChange(cur === 'mep' ? 'annual' : 'mep');
-            }});
-          }});
-        }}
-        bindToggles();
-        syncToggleUi();
-        document.addEventListener('kpi:dailySalesInputPathChanged', syncToggleUi);
-        window.__KPI_SALES_INPUT_PATH_UI = {{ sync: syncToggleUi }};
-      }})();
-"""
+    """View/Edit lease UI. Source of truth: `_kpi_sales_input_path_ui.js`."""
+    js = (_SCRIPTS_DIR / "_kpi_sales_input_path_ui.js").read_text(encoding="utf-8")
+    return js if js.endswith("\n") else js + "\n"
 
 
 def edit_lease_hooks_js() -> str:

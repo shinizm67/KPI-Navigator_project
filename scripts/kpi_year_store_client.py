@@ -217,8 +217,8 @@ def kpi_year_store_js() -> str:
               }}
               if (!Number.isFinite(n)) return;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {{
-                var cur = Number(store.timeline.dailySales[iso]);
-                if (Number.isFinite(cur) && cur > 0) return;
+                var cur = store.timeline.dailySales[iso];
+                if (cur !== undefined && cur !== null) return;
               }}
               store.timeline.dailySales[iso] = n;
               changed = true;
@@ -245,7 +245,6 @@ def kpi_year_store_js() -> str:
           }}
           if (changed) {{
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStore();
           }}
         }}
 
@@ -1733,6 +1732,7 @@ def kpi_year_store_js() -> str:
           }});
           if (!yearTouched) return Promise.resolve();
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({{ [String(oy)]: true }});
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
@@ -1780,7 +1780,6 @@ def kpi_year_store_js() -> str:
         function setSelectedDate(iso, source) {{
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          persistStore();
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {{
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }}
@@ -2048,7 +2047,6 @@ def kpi_year_store_js() -> str:
           loadStore();
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
           migrateLegacy();
-          reconcileTimelineFromLegacy();
           enforceSubscriptionTierDefaults();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {{
@@ -2088,7 +2086,6 @@ def kpi_year_store_js() -> str:
           reload: function () {{
             loadStore();
             hydrateNavFromStorage();
-            reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
             syncToAnnualDaily();

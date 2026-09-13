@@ -43,13 +43,21 @@ REPLACEMENTS = [
     ('aria-label="Jump to today"', 'aria-label="跳至今天"'),
     (">\n        Today\n      </button>", ">\n        今天\n      </button>"),
     (
-        'aria-label="Sales input path (Annual / Monthly)"',
-        'aria-label="銷售輸入路徑（年度 / 月度）"',
+        'aria-label="Sales view and edit"',
+        'aria-label="營業額的檢視與編輯"',
     ),
-    (">Sales Input</p>", ">銷售輸入</p>"),
+    (">Sales Edit</p>", ">營業額編輯</p>"),
     (
-        'aria-label="Switch sales input between Annual and Monthly"',
-        'aria-label="在年度與月度之間切換銷售輸入"',
+        'aria-label="Switch between view and edit"',
+        'aria-label="在檢視與編輯之間切換"',
+    ),
+    (
+        'data-kpi-edit-side="view">View</span>',
+        'data-kpi-edit-side="view">檢視</span>',
+    ),
+    (
+        'data-kpi-edit-side="edit">Edit</span>',
+        'data-kpi-edit-side="edit">編輯</span>',
     ),
     ('aria-label="Undo last change"', 'aria-label="復原上一步"'),
     (">\n        Undo\n      </button>", ">\n        復原\n      </button>"),

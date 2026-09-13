@@ -39,14 +39,6 @@ HYDRATE_NEW = """          var ps = window.__ANNUAL_DATA.pastSales;
             );
           }
           if (parsed && parsed.lastSession) ps.lastSession = parsed.lastSession;
-          if (
-            parsed &&
-            (parsed.salesByDate || parsed.businessDayByDate) &&
-            typeof KpiYearStore.reconcileTimelineFromLegacy === 'function'
-          ) {
-            KpiYearStore.reconcileTimelineFromLegacy();
-            KpiYearStore.syncToAnnualDaily();
-          }
           return;"""
 
 

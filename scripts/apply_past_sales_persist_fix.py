@@ -24,14 +24,14 @@ ALL = ANNUAL + [
 
 HYDRATE_OLD = """      (function hydratePastSalesShared() {
         if (window.KpiYearStore) {
+          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
+            KpiYearStore.reconcileTimelineFromLegacy();
+          }
           KpiYearStore.syncToAnnualDaily();
           var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');"""
 
 HYDRATE_NEW = """      (function hydratePastSalesShared() {
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           KpiYearStore.syncToAnnualDaily();
           var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');"""
 

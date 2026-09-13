@@ -11944,6 +11944,7 @@
       color: #0db13a;
       text-align: center;
       white-space: nowrap;
+      cursor: pointer;
     }
     .kpi-daily-input-path__side.is-active {
       opacity: 1;
@@ -11976,6 +11977,7 @@
       box-shadow: 0 0 8px rgba(13, 177, 58, 0.35);
       transition: transform 0.2s ease;
     }
+    .kpi-daily-input-path.is-edit .kpi-daily-input-path__knob,
     .kpi-daily-input-path.is-mep .kpi-daily-input-path__knob {
       transform: translateX(31px);
     }
@@ -12469,7 +12471,8 @@
     .sales-data-modal__colhead {
       display: grid;
       grid-template-columns:
-        minmax(0, 190fr)
+        minmax(0, 40fr)
+        minmax(0, 150fr)
         minmax(0, 90fr)
         minmax(0, 215fr)
         minmax(0, 215fr)
@@ -13171,7 +13174,8 @@
     }
 
     /* Sales Data modal (current year) — table & colhead detail (PS-1 supplement) */
-    .sales-data-modal__colhead-date-merged {
+    .sales-data-modal__colhead-date-merged,
+    .sales-data-modal__colhead-date {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -13182,6 +13186,26 @@
       max-width: 100%;
       position: relative;
       font-size: var(--sdm-fs-colhead);
+    }
+    .sales-data-modal__colhead-month {
+      position: relative;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .sales-data-modal__colhead--no-month {
+      grid-template-columns:
+        minmax(0, 190fr)
+        minmax(0, 90fr)
+        minmax(0, 215fr)
+        minmax(0, 215fr)
+        minmax(0, 219fr);
+    }
+    .sales-data-modal__colhead--no-month .sales-data-modal__colhead-month {
+      display: none;
+    }
+    .sales-data-modal__colhead-month .sales-data-modal__date-filter-panel {
+      left: 0;
+      transform: none;
     }
     .sales-data-modal__colhead-date-btn {
       display: inline-flex;
@@ -13393,6 +13417,8 @@
     }
     /* SDM-PSM-DATE-FILTER-OVERFLOW */
     .sales-data-modal__colhead > .sales-data-modal__colhead-date-merged,
+    .sales-data-modal__colhead > .sales-data-modal__colhead-month,
+    .sales-data-modal__colhead > .sales-data-modal__colhead-date,
     .sales-data-modal__colhead > .sales-data-modal__colhead-sales {
       overflow: visible;
     }
@@ -15727,24 +15753,24 @@
           class="kpi-daily-input-path kpi-daily-input-path--sales-data"
           id="sales-data-input-path"
           data-kpi-sales-input-path
-          hidden
-          aria-label="每日營業額輸入路徑"
+          aria-label="營業額資料的檢視與編輯"
         >
-          <p class="kpi-daily-input-path__title">編輯</p>
+          <p class="kpi-daily-input-path__title">營業額資料編輯</p>
           <div class="kpi-daily-input-path__row">
-            <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年度</span>
+            <span class="kpi-daily-input-path__side is-active" data-kpi-edit-side="view">檢視</span>
             <button
               type="button"
               class="kpi-daily-input-path__switch"
               data-kpi-path-switch
+              data-kpi-edit-switch
               role="switch"
               aria-checked="false"
-              aria-label="在年度與月度之間切換每日營業額"
+              aria-label="在檢視與編輯之間切換"
               data-kpi-guard-ignore
             >
               <span class="kpi-daily-input-path__knob" aria-hidden="true"></span>
             </button>
-            <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">月度</span>
+            <span class="kpi-daily-input-path__side is-inactive" data-kpi-edit-side="edit">編輯</span>
           </div>
         </div>
       <div class="sales-data-modal__tab-bar">
@@ -15855,7 +15881,45 @@
           </div>
         </div>
         <div class="sales-data-modal__colhead sales-data-modal__input-only" aria-hidden="false">
-          <div class="sales-data-modal__colhead-date-merged">
+          <div class="sales-data-modal__colhead-month">
+            <div class="sales-data-modal__date-filter" id="sales-data-month-filter-wrap">
+              <button
+                type="button"
+                class="sales-data-modal__date-filter-toggle"
+                id="sales-data-month-filter-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="sales-data-month-filter-panel"
+                aria-label="依月份篩選"
+              >
+                <span class="sales-data-modal__sort-icon" aria-hidden="true">▼</span>
+              </button>
+              <div
+                id="sales-data-month-filter-panel"
+                class="sales-data-modal__date-filter-panel"
+                role="group"
+                aria-label="要顯示的月份"
+                hidden
+              >
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="0" /> 1月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="1" /> 2月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="2" /> 3月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="3" /> 4月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="4" /> 5月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="5" /> 6月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="6" /> 7月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="7" /> 8月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="8" /> 9月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="9" /> 10月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="10" /> 11月</label>
+                <label class="sales-data-modal__filter-row"><input type="checkbox" class="sales-data-modal__filter-month" value="11" /> 12月</label>
+                <button type="button" class="sales-data-modal__filter-clear" id="sales-data-month-filter-clear">
+                  清除篩選
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="sales-data-modal__colhead-date">
             <button type="button" class="sales-data-modal__colhead-date-btn" id="sales-data-date-header-btn">日期</button>
             <div class="sales-data-modal__date-filter" id="sales-data-date-filter-wrap">
               <button
@@ -24598,8 +24662,8 @@
               }
               if (!Number.isFinite(n)) return;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
-                var cur = Number(store.timeline.dailySales[iso]);
-                if (Number.isFinite(cur) && cur > 0) return;
+                var cur = store.timeline.dailySales[iso];
+                if (cur !== undefined && cur !== null) return;
               }
               store.timeline.dailySales[iso] = n;
               changed = true;
@@ -24626,7 +24690,6 @@
           }
           if (changed) {
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStoreIfYearMepSafe();
           }
         }
 
@@ -26502,11 +26565,6 @@
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          var src = source || 'kpi-year-store';
-          /* Date-only nav (Annual boot / year change) must not PUT the whole store. */
-          if (src !== 'calendar-year' && src !== 'initial') {
-            persistStore();
-          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -26782,7 +26840,6 @@
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
           if (!skipLegacyMerge) {
             migrateLegacy();
-            reconcileTimelineFromLegacy();
           }
           enforceSubscriptionTierDefaults();
           applyDailySalesInputPathFromLightKey();
@@ -27451,7 +27508,6 @@
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
-            reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
             syncToAnnualDaily();
@@ -27649,9 +27705,9 @@
         }
         function dailySalesPathBlockTitle() {
           return t(
-            '編集するには売上入力ボタンを年次に変更してください',
-            'To edit, change the Sales Input button to Annual',
-            '如要編輯，請將營業額輸入切換鈕改為年度'
+            '閲覧モードです。編集するには「編集」を押してください。',
+            'View mode. Press Edit to change values.',
+            '檢視模式。若要編輯，請按下「編輯」。'
           );
         }
         function salesDataLeaseLostBlockTitle() {
@@ -27668,8 +27724,17 @@
           return mepSalesPathActive();
         }
         function salesDataLiveBlockTitle() {
-          if (mepSalesPathActive()) return dailySalesPathBlockTitle();
-          return salesDataLeaseLostBlockTitle();
+          if (
+            storeReady() &&
+            typeof KpiYearStore.getEditLease === 'function' &&
+            typeof KpiYearStore.holdsEditLease === 'function'
+          ) {
+            var rec = KpiYearStore.getEditLease('daily-sales');
+            if (rec && !KpiYearStore.holdsEditLease('daily-sales')) {
+              return salesDataLeaseLostBlockTitle();
+            }
+          }
+          return dailySalesPathBlockTitle();
         }
         function pastSalesViewTooltip() {
           return t(
@@ -29135,9 +29200,6 @@
       })();
       (function hydratePastSalesShared() {
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           KpiYearStore.syncToAnnualDaily();
           var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');
           window.__ANNUAL_DATA.pastSales = window.__ANNUAL_DATA.pastSales || {
@@ -29160,14 +29222,6 @@
             );
           }
           if (parsed && parsed.lastSession) ps.lastSession = parsed.lastSession;
-          if (
-            parsed &&
-            (parsed.salesByDate || parsed.businessDayByDate) &&
-            typeof KpiYearStore.reconcileTimelineFromLegacy === 'function'
-          ) {
-            KpiYearStore.reconcileTimelineFromLegacy();
-            KpiYearStore.syncToAnnualDaily();
-          }
           return;
         }
         var parsed = window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.pastSalesShared');
@@ -29738,194 +29792,133 @@
         function storeReady() {
           return !!(window.KpiYearStore && KpiYearStore.getDailySalesInputPath);
         }
-        function isJa() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
-        }
         function t(ja, en, zh) {
-          var lang = String(document.documentElement.getAttribute('lang') || '')
-            .toLowerCase();
+          var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+          if (lang.indexOf('zh') === 0) return zh || en;
           if (lang.indexOf('ja') === 0) return ja;
-          if (lang.indexOf('zh') === 0) return zh != null && zh !== '' ? zh : ja;
           return en;
         }
-        function isPro() {
-          return !storeReady() || KpiYearStore.isProSubscription();
+        function holdsDailySalesLease() {
+          return !!(
+            window.KpiYearStore &&
+            typeof KpiYearStore.holdsEditLease === 'function' &&
+            KpiYearStore.holdsEditLease('daily-sales')
+          );
         }
-        function pathLabel(path) {
-          if (path === 'mep') return t('月次', 'Monthly', '月度');
-          return t('年次', 'Annual', '年度');
-        }
-        function applyWrapState(wrap, path) {
-          var isMep = path === 'mep';
-          wrap.classList.toggle('is-mep', isMep);
-          var sw = wrap.querySelector('[data-kpi-path-switch]');
-          if (sw) {
-            sw.setAttribute('aria-checked', isMep ? 'true' : 'false');
+        function editPathForWrap(wrap) {
+          if (wrap && wrap.classList && wrap.classList.contains('kpi-daily-input-path--mep')) {
+            return 'mep';
           }
-          wrap.querySelectorAll('[data-kpi-path-side]').forEach(function (el) {
-            var side = el.getAttribute('data-kpi-path-side');
-            var active = side === 'mep' ? isMep : !isMep;
+          return 'annual';
+        }
+        function leaseLabelForPath(path) {
+          if (path === 'mep') return 'Monthly Edit';
+          return t('売上データ', 'Sales Data', '營業額資料');
+        }
+        function tryAcquireForPath(path) {
+          if (!window.__KPI_EDIT_LEASE || typeof window.__KPI_EDIT_LEASE.tryAcquire !== 'function') {
+            return true;
+          }
+          return !!window.__KPI_EDIT_LEASE.tryAcquire(leaseLabelForPath(path));
+        }
+        function releaseOwnLease() {
+          if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
+            window.__KPI_EDIT_LEASE.release();
+          }
+        }
+        function applyWrapState(wrap) {
+          var holds = holdsDailySalesLease();
+          wrap.classList.toggle('is-edit', holds);
+          wrap.classList.toggle('is-mep', holds);
+          var sw = wrap.querySelector('[data-kpi-path-switch], [data-kpi-edit-switch]');
+          if (sw) {
+            sw.setAttribute('aria-checked', holds ? 'true' : 'false');
+          }
+          wrap.querySelectorAll('[data-kpi-edit-side], [data-kpi-path-side]').forEach(function (el) {
+            var side = el.getAttribute('data-kpi-edit-side') || el.getAttribute('data-kpi-path-side');
+            var isEditSide = side === 'edit' || side === 'mep';
+            var active = isEditSide ? holds : !holds;
             el.classList.toggle('is-active', active);
             el.classList.toggle('is-inactive', !active);
           });
         }
         function syncToggleUi() {
-          var path = storeReady() ? KpiYearStore.getDailySalesInputPath() : 'annual';
-          var pro = isPro();
           document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {
-            wrap.hidden = !pro;
-            applyWrapState(wrap, path);
+            wrap.hidden = false;
+            applyWrapState(wrap);
           });
         }
-        var chooser = document.getElementById('kpi-path-change-chooser');
-        var chooserScrim = document.getElementById('kpi-path-change-chooser-scrim');
-        var chooserSave = document.getElementById('kpi-path-change-save');
-        var chooserDiscard = document.getElementById('kpi-path-change-discard');
-        var chooserCancel = document.getElementById('kpi-path-change-cancel');
-        var chooserReturnFocus = null;
-        var chooserResolve = null;
-        var pendingPath = null;
-
-        function hideChooser() {
-          if (!chooser || chooser.hasAttribute('hidden')) return;
-          chooser.setAttribute('hidden', '');
-          var el = chooserReturnFocus;
-          chooserReturnFocus = null;
-          if (el && typeof el.focus === 'function') el.focus();
-        }
-        function finishChooser(ok, action) {
-          var next = pendingPath;
-          var resolve = chooserResolve;
-          pendingPath = null;
-          chooserResolve = null;
-          hideChooser();
-          if (!resolve) return;
-          resolve({ ok: !!ok, action: action || null, next: next });
-        }
-        function showChooser(next) {
-          return new Promise(function (resolve) {
-            pendingPath = next;
-            chooserResolve = resolve;
-            if (!chooser) {
-              resolve({ ok: false, action: 'cancel', next: next });
-              return;
-            }
-            chooserReturnFocus = document.activeElement;
-            chooser.removeAttribute('hidden');
-            if (chooserCancel) chooserCancel.focus();
-          });
-        }
-        if (chooserSave) {
-          chooserSave.addEventListener('click', function () {
-            finishChooser(true, 'save');
-          });
-        }
-        if (chooserDiscard) {
-          chooserDiscard.addEventListener('click', function () {
-            finishChooser(true, 'discard');
-          });
-        }
-        if (chooserCancel) {
-          chooserCancel.addEventListener('click', function () {
-            finishChooser(false, 'cancel');
-          });
-        }
-        if (chooserScrim) {
-          chooserScrim.addEventListener('click', function () {
-            finishChooser(false, 'cancel');
-          });
-        }
-
-        function hooks() {
-          return window.__KPI_PATH_CHANGE_HOOKS__ || {};
-        }
-        function hasUnsavedViaHooks() {
-          var h = hooks();
-          if (typeof h.hasUnsaved === 'function') return !!h.hasUnsaved();
-          return false;
-        }
-        function runHook(name) {
-          var h = hooks();
-          if (typeof h[name] !== 'function') return Promise.resolve(true);
-          try {
-            var result = h[name]();
-            if (result && typeof result.then === 'function') return result;
-            return Promise.resolve(result !== false);
-          } catch (_e) {
-            return Promise.resolve(false);
-          }
-        }
-        function confirmPathSwitch(next) {
-          var msg = t(
-            '売上入力を「' +
-              pathLabel(next) +
-              '」に切り替えます。\nもう一方では売上・営業日を編集できなくなります。',
-            'Switch Sales Input to "' +
-              pathLabel(next) +
-              '".\nThe other side will not allow editing sales or business days.',
-            '將營業額輸入切換為「' +
-              pathLabel(next) +
-              '」。\n另一側將無法編輯營業額與營業日。'
-          );
-          return Promise.resolve(window.confirm(msg));
-        }
-        function applyPathChange(next) {
-          if (!storeReady() || !isPro()) return Promise.resolve(false);
-          var cur = KpiYearStore.getDailySalesInputPath();
-          if (next === cur) return Promise.resolve(true);
-          KpiYearStore.setDailySalesInputPath(next);
+        function refreshGuards() {
           syncToggleUi();
           document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
+        }
+        function enterEdit(wrap) {
+          if (!storeReady()) return Promise.resolve(false);
+          if (holdsDailySalesLease()) {
+            refreshGuards();
+            return Promise.resolve(true);
+          }
+          var next = editPathForWrap(wrap);
+          if (!tryAcquireForPath(next)) {
+            refreshGuards();
+            return Promise.resolve(false);
+          }
+          if (typeof KpiYearStore.setDailySalesInputPath === 'function') {
+            KpiYearStore.setDailySalesInputPath(next);
+          }
+          refreshGuards();
           return Promise.resolve(true);
         }
-        function requestPathChange(next) {
-          if (!storeReady() || !isPro()) return Promise.resolve(false);
-          var cur = KpiYearStore.getDailySalesInputPath();
-          if (next === cur) return Promise.resolve(true);
-          var flow = confirmPathSwitch(next).then(function (confirmed) {
-            if (!confirmed) return false;
-            if (!hasUnsavedViaHooks()) return applyPathChange(next);
-            return showChooser(next).then(function (choice) {
-              if (!choice.ok || choice.action === 'cancel') return false;
-              if (choice.action === 'save') {
-                return runHook('save').then(function (ok) {
-                  if (!ok) return false;
-                  return applyPathChange(next);
-                });
-              }
-              if (choice.action === 'discard') {
-                return runHook('discard').then(function (ok) {
-                  if (!ok) return false;
-                  return applyPathChange(next);
-                });
-              }
-              return false;
-            });
-          });
-          return flow;
+        function enterView() {
+          releaseOwnLease();
+          refreshGuards();
+          return Promise.resolve(true);
+        }
+        function requestEditMode(wantEdit, wrap) {
+          if (wantEdit) return enterEdit(wrap);
+          return enterView();
         }
         function bindToggles() {
           document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {
             if (wrap.getAttribute('data-kpi-path-bound') === '1') return;
             wrap.setAttribute('data-kpi-path-bound', '1');
-            var sw = wrap.querySelector('[data-kpi-path-switch]');
-            if (!sw) return;
-            sw.addEventListener('click', function (ev) {
+            wrap.addEventListener('click', function (ev) {
+              var tgt = ev.target;
+              var sideEl =
+                tgt && tgt.closest
+                  ? tgt.closest('[data-kpi-edit-side], [data-kpi-path-side]')
+                  : null;
+              var swEl =
+                tgt && tgt.closest
+                  ? tgt.closest('[data-kpi-path-switch], [data-kpi-edit-switch]')
+                  : null;
+              if (!sideEl && !swEl) return;
+              if (sideEl && !wrap.contains(sideEl)) return;
+              if (swEl && !wrap.contains(swEl)) return;
               ev.preventDefault();
-              if (!storeReady() || !isPro()) return;
-              var cur = KpiYearStore.getDailySalesInputPath();
-              requestPathChange(cur === 'mep' ? 'annual' : 'mep');
+              var wantEdit;
+              if (sideEl) {
+                var side = sideEl.getAttribute('data-kpi-edit-side') || sideEl.getAttribute('data-kpi-path-side');
+                wantEdit = side === 'edit' || side === 'mep';
+              } else {
+                wantEdit = !holdsDailySalesLease();
+              }
+              requestEditMode(wantEdit, wrap);
             });
           });
         }
         bindToggles();
         syncToggleUi();
         document.addEventListener('kpi:dailySalesInputPathChanged', syncToggleUi);
-        window.__KPI_SALES_INPUT_PATH_UI = { sync: syncToggleUi, requestPathChange: requestPathChange };
+        document.addEventListener('kpi:editLeaseChanged', syncToggleUi);
+        window.__KPI_SALES_INPUT_PATH_UI = {
+          sync: syncToggleUi,
+          requestPathChange: function (next) {
+            var wrap = document.querySelector('[data-kpi-sales-input-path]');
+            if (next === 'view') return enterView();
+            return requestEditMode(true, wrap);
+          },
+        };
       })();
 
     (function () {
@@ -33185,9 +33178,6 @@
         opts = opts || {};
         if (typeof invalidatePlanningReadCaches === 'function') invalidatePlanningReadCaches();
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
             KpiYearStore.syncToAnnualDaily();
           }
@@ -36460,6 +36450,10 @@
       var dateFilterWrap = document.getElementById('sales-data-date-filter-wrap');
       var dateFilterToggle = document.getElementById('sales-data-date-filter-toggle');
       var dateFilterPanel = document.getElementById('sales-data-date-filter-panel');
+      var monthFilterWrap = document.getElementById('sales-data-month-filter-wrap');
+      var monthFilterToggle = document.getElementById('sales-data-month-filter-toggle');
+      var monthFilterPanel = document.getElementById('sales-data-month-filter-panel');
+      var monthFilterClearBtn = document.getElementById('sales-data-month-filter-clear');
       var filterHolidayCb = document.getElementById('sales-data-filter-holiday');
       var filterClearBtn = document.getElementById('sales-data-filter-clear');
       var salesSortWrap = document.getElementById('sales-data-sales-sort-wrap');
@@ -36540,26 +36534,36 @@
       }
       function persistSalesDataShared() {
         var daily = ensureSalesDataDaily();
-        var payload = {
-          targetSalesByDate: daily.targetSalesByDate || {},
-          businessDayByDate: daily.businessDayByDate || {}
-        };
-        if (daily.referenceAnnualSales != null && isFinite(Number(daily.referenceAnnualSales))) {
-          payload.referenceAnnualSales = Math.round(Number(daily.referenceAnnualSales));
-        }
-        if (daily.salesDataLastSession && typeof daily.salesDataLastSession === 'object') {
-          payload.salesDataLastSession = daily.salesDataLastSession;
+        function snapshotAnnualDailySharedPayload() {
+          var d = ensureSalesDataDaily();
+          var payload = {
+            targetSalesByDate: Object.assign({}, d.targetSalesByDate || {}),
+            businessDayByDate: Object.assign({}, d.businessDayByDate || {})
+          };
+          if (d.referenceAnnualSales != null && isFinite(Number(d.referenceAnnualSales))) {
+            payload.referenceAnnualSales = Math.round(Number(d.referenceAnnualSales));
+          }
+          if (d.salesDataLastSession && typeof d.salesDataLastSession === 'object') {
+            payload.salesDataLastSession = d.salesDataLastSession;
+          }
+          return payload;
         }
         if (window.KpiYearStore && typeof KpiYearStore.persistFromAnnualDaily === 'function') {
           return Promise.resolve(
             KpiYearStore.persistFromAnnualDaily(daily, { source: 'sales-data-save' })
           ).then(function (result) {
             if (result && result.ok === false) return result;
-            window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
+            window.__KPI_DATA_GATEWAY.setJson(
+              'kpiNavigator.annualDailyShared',
+              snapshotAnnualDailySharedPayload()
+            );
             return result;
           });
         }
-        window.__KPI_DATA_GATEWAY.setJson('kpiNavigator.annualDailyShared', payload);
+        window.__KPI_DATA_GATEWAY.setJson(
+          'kpiNavigator.annualDailyShared',
+          snapshotAnnualDailySharedPayload()
+        );
       }
 
       
@@ -37943,6 +37947,30 @@
         return { dow: dow, holiday: !!(filterHolidayCb && filterHolidayCb.checked) };
       }
 
+      function readMonthFilterFromUi() {
+        var months = {};
+        var n = 0;
+        var els = modal.querySelectorAll('.sales-data-modal__filter-month');
+        for (var i = 0; i < els.length; i++) {
+          if (els[i].checked) {
+            months[els[i].value] = true;
+            n++;
+          }
+        }
+        return { months: months, active: n > 0 };
+      }
+
+      function isMonthFilterActive(optFilter) {
+        var f = optFilter || readMonthFilterFromUi();
+        return !!f.active;
+      }
+
+      function dayPassesMonthFilter(item, optFilter) {
+        var f = optFilter || readMonthFilterFromUi();
+        if (!f.active) return true;
+        return !!f.months[String(item.m0)];
+      }
+
       function isDateFilterActive(optFilter) {
         var f = optFilter || readDateFilterFromUi();
         if (f.holiday) return true;
@@ -37975,6 +38003,20 @@
         return list;
       }
 
+      function closeMonthFilterPanel() {
+        if (!monthFilterPanel) return;
+        monthFilterPanel.hidden = true;
+        if (monthFilterToggle) monthFilterToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openMonthFilterPanel() {
+        if (!monthFilterPanel) return;
+        closeDateFilterPanel();
+        closeSalesSortPanel();
+        monthFilterPanel.hidden = false;
+        if (monthFilterToggle) monthFilterToggle.setAttribute('aria-expanded', 'true');
+      }
+
       function closeDateFilterPanel() {
         if (!dateFilterPanel) return;
         dateFilterPanel.hidden = true;
@@ -37983,14 +38025,22 @@
 
       function openDateFilterPanel() {
         if (!dateFilterPanel) return;
+        closeMonthFilterPanel();
         closeSalesSortPanel();
         dateFilterPanel.hidden = false;
         if (dateFilterToggle) dateFilterToggle.setAttribute('aria-expanded', 'true');
       }
 
       function updateFilterToggleActive() {
-        if (!dateFilterToggle) return;
-        dateFilterToggle.classList.toggle('is-active', isDateFilterActive());
+        if (dateFilterToggle) dateFilterToggle.classList.toggle('is-active', isDateFilterActive());
+        if (monthFilterToggle) monthFilterToggle.classList.toggle('is-active', isMonthFilterActive());
+      }
+
+      function clearMonthFilterUi() {
+        var els = modal.querySelectorAll('.sales-data-modal__filter-month');
+        for (var i = 0; i < els.length; i++) els[i].checked = false;
+        closeMonthFilterPanel();
+        updateFilterToggleActive();
       }
 
       function clearDateFilterUi() {
@@ -38014,10 +38064,12 @@
 
       function getDateFilteredRowItems() {
         var y = state.year;
+        var monthSnapshot = readMonthFilterFromUi();
         var filterSnapshot = readDateFilterFromUi();
         var all = gatherYearDays(y);
         var rows = [];
         for (var a = 0; a < all.length; a++) {
+          if (!dayPassesMonthFilter(all[a], monthSnapshot)) continue;
           if (dayPassesFilter(all[a], filterSnapshot)) rows.push(all[a]);
         }
         return rows;
@@ -38113,6 +38165,7 @@
       function openSalesSortPanel() {
         if (!salesSortPanel) return;
         closeDateFilterPanel();
+        closeMonthFilterPanel();
         var rowItems = getDateFilteredRowItems();
         syncSalesPinnedAmountValid(rowItems);
         refreshSalesSortAmountButtons(collectUniqueSalesAmountsDesc(rowItems));
@@ -38190,6 +38243,10 @@
         var tableEl = document.getElementById('sales-data-modal-table');
         if (tableEl) {
           tableEl.classList.toggle('sales-data-modal__table--no-month', !showMonthCol);
+        }
+        var colheadEl = modal.querySelector('.sales-data-modal__colhead');
+        if (colheadEl) {
+          colheadEl.classList.toggle('sales-data-modal__colhead--no-month', !showMonthCol);
         }
 
         syncSalesDataTableColgroup(showMonthCol);
@@ -38365,17 +38422,8 @@
       /* KPI-SDM-OPEN-INP-V2: 殻を即表示 → 次ペイント後に重い準備・年次テーブル構築 */
       function openModal() {
         lastFocusEl = document.activeElement;
-        var sdmPath =
-          window.KpiYearStore && typeof window.KpiYearStore.getDailySalesInputPath === 'function'
-            ? window.KpiYearStore.getDailySalesInputPath()
-            : 'annual';
-        /* KPI-MEP-LEASE-CF: Monthly 経路中は Sales Data は閲覧のみ。編集権を奪わない */
-        if (sdmPath !== 'mep') {
-          if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-            if (!window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : (String(document.documentElement.getAttribute('lang')||'').indexOf('zh')===0 ? '營業額資料' : 'Sales Data'))) {
-              return;
-            }
-          }
+        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
+          window.__KPI_EDIT_LEASE.release();
         }
         state.rowStateByIso = {};
         state.salesPinnedAmount = null;
@@ -38402,6 +38450,7 @@
             syncYearMonthFromApp(openIso);
             syncColheadDatePickerValue(openIso);
             clearDateFilterUi();
+            clearMonthFilterUi();
             closeSalesSortPanel();
             setSalesDataTab('input');
             /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP 保存後の timeline を Sales Data 表に載せる */
@@ -38435,16 +38484,10 @@
 
       function maybeReacquireSalesDataLease() {
         if (!modal || modal.hasAttribute('hidden')) return;
-        if (!window.KpiYearStore || typeof KpiYearStore.getDailySalesInputPath !== 'function') return;
-        if (KpiYearStore.getDailySalesInputPath() !== 'annual') return;
-        if (typeof KpiYearStore.holdsEditLease === 'function' && KpiYearStore.holdsEditLease('daily-sales')) {
-          return;
+        if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
+          window.__KPI_SALES_INPUT_PATH_UI.sync();
         }
-        if (!window.__KPI_EDIT_LEASE || typeof window.__KPI_EDIT_LEASE.tryAcquire !== 'function') return;
-        var ok = window.__KPI_EDIT_LEASE.tryAcquire(isJa ? '売上データ' : (String(document.documentElement.getAttribute('lang')||'').indexOf('zh')===0 ? '營業額資料' : 'Sales Data'), {
-          silent: true,
-        });
-        if (ok && window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
+        if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
           window.__KPI_EDIT_GUARDS.applyAll();
         }
       }
@@ -38612,6 +38655,11 @@
             closeDateFilterPanel();
             return;
           }
+          if (monthFilterPanel && !monthFilterPanel.hidden) {
+            e.preventDefault();
+            closeMonthFilterPanel();
+            return;
+          }
           e.preventDefault();
           requestCloseModal();
         }
@@ -38621,6 +38669,9 @@
         if (!modal || modal.hasAttribute('hidden')) return;
         if (dateFilterPanel && !dateFilterPanel.hidden) {
           if (!dateFilterWrap || !dateFilterWrap.contains(e.target)) closeDateFilterPanel();
+        }
+        if (monthFilterPanel && !monthFilterPanel.hidden) {
+          if (!monthFilterWrap || !monthFilterWrap.contains(e.target)) closeMonthFilterPanel();
         }
         if (salesSortPanel && !salesSortPanel.hidden) {
           if (!salesSortWrap || !salesSortWrap.contains(e.target)) closeSalesSortPanel();
@@ -38632,6 +38683,14 @@
           e.stopPropagation();
           if (dateFilterPanel.hidden) openDateFilterPanel();
           else closeDateFilterPanel();
+        });
+      }
+
+      if (monthFilterToggle) {
+        monthFilterToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (monthFilterPanel.hidden) openMonthFilterPanel();
+          else closeMonthFilterPanel();
         });
       }
 
@@ -38709,10 +38768,21 @@
       for (var di = 0; di < dowEls.length; di++) {
         dowEls[di].addEventListener('change', onDateFilterOptionChange);
       }
+      var monthEls = modal.querySelectorAll('.sales-data-modal__filter-month');
+      for (var mi = 0; mi < monthEls.length; mi++) {
+        monthEls[mi].addEventListener('change', onDateFilterOptionChange);
+      }
       if (filterHolidayCb) filterHolidayCb.addEventListener('change', onDateFilterOptionChange);
       if (filterClearBtn) {
         filterClearBtn.addEventListener('click', function () {
           clearDateFilterUi();
+          renderSalesDataTable();
+          scrollToViewMonth();
+        });
+      }
+      if (monthFilterClearBtn) {
+        monthFilterClearBtn.addEventListener('click', function () {
+          clearMonthFilterUi();
           renderSalesDataTable();
           scrollToViewMonth();
         });

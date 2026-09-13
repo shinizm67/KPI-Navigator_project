@@ -678,6 +678,7 @@
       color: #0db13a;
       text-align: center;
       white-space: nowrap;
+      cursor: pointer;
     }
     .kpi-daily-input-path__side.is-active {
       opacity: 1;
@@ -687,8 +688,12 @@
       opacity: 0.34;
       font-weight: 500;
     }
-    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table tr.mef-row--sales-path td .monthly-edit-float__input,
-    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__cb[data-action='bizday-toggle'] {
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__input,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__cb,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__table .monthly-edit-float__select,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__label-edit,
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__mini-btn[data-action='add-row'],
+    .monthly-edit-float--daily-sales-path-blocked .monthly-edit-float__mini-btn[data-action='remove-row'] {
       opacity: 0.72;
     }
     .kpi-daily-input-path__switch {
@@ -714,6 +719,7 @@
       box-shadow: 0 0 8px rgba(13, 177, 58, 0.35);
       transition: transform 0.2s ease;
     }
+    .kpi-daily-input-path.is-edit .kpi-daily-input-path__knob,
     .kpi-daily-input-path.is-mep .kpi-daily-input-path__knob {
       transform: translateX(31px);
     }
@@ -2711,24 +2717,24 @@
           class="kpi-daily-input-path kpi-daily-input-path--mep"
           id="mep-sales-input-path"
           data-kpi-sales-input-path
-          hidden
-          aria-label="營業額輸入路徑（年度 / 月度）"
+          aria-label="營業額的檢視與編輯"
         >
-          <p class="kpi-daily-input-path__title">營業額輸入</p>
+          <p class="kpi-daily-input-path__title">營業額編輯</p>
           <div class="kpi-daily-input-path__row">
-            <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年度</span>
+            <span class="kpi-daily-input-path__side is-active" data-kpi-edit-side="view">檢視</span>
             <button
               type="button"
               class="kpi-daily-input-path__switch"
               data-kpi-path-switch
+              data-kpi-edit-switch
               role="switch"
               aria-checked="false"
-              aria-label="在年度與月度之間切換營業額輸入"
+              aria-label="在檢視與編輯之間切換"
               data-kpi-guard-ignore
             >
               <span class="kpi-daily-input-path__knob" aria-hidden="true"></span>
             </button>
-            <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">月度</span>
+            <span class="kpi-daily-input-path__side is-inactive" data-kpi-edit-side="edit">編輯</span>
           </div>
         </div>
       <button type="button" class="monthly-edit-float__undo" id="monthly-edit-float-undo" aria-label="復原上一步" disabled>
@@ -3417,8 +3423,8 @@
               }
               if (!Number.isFinite(n)) return;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
-                var cur = Number(store.timeline.dailySales[iso]);
-                if (Number.isFinite(cur) && cur > 0) return;
+                var cur = store.timeline.dailySales[iso];
+                if (cur !== undefined && cur !== null) return;
               }
               store.timeline.dailySales[iso] = n;
               changed = true;
@@ -3445,7 +3451,6 @@
           }
           if (changed) {
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStoreIfYearMepSafe();
           }
         }
 
@@ -5294,11 +5299,6 @@
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          var src = source || 'kpi-year-store';
-          /* Date-only nav (Annual boot / year change) must not PUT the whole store. */
-          if (src !== 'calendar-year' && src !== 'initial') {
-            persistStore();
-          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -5570,7 +5570,6 @@
           loadStore();
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
           migrateLegacy();
-          reconcileTimelineFromLegacy();
           enforceSubscriptionTierDefaults();
           applyDailySalesInputPathFromLightKey();
           maybeRolloverYear();
@@ -6891,7 +6890,6 @@
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
-            reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
             syncToAnnualDaily();
@@ -7171,202 +7169,133 @@
         function storeReady() {
           return !!(window.KpiYearStore && KpiYearStore.getDailySalesInputPath);
         }
-        function isZh() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('zh') === 0
-          );
-        }
-        function isJa() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
-        }
         function t(ja, en, zh) {
-          if (isZh()) return zh != null && zh !== '' ? zh : ja;
-          return isJa() ? ja : en;
+          var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+          if (lang.indexOf('zh') === 0) return zh || en;
+          if (lang.indexOf('ja') === 0) return ja;
+          return en;
         }
-        function isPro() {
-          return !storeReady() || KpiYearStore.isProSubscription();
+        function holdsDailySalesLease() {
+          return !!(
+            window.KpiYearStore &&
+            typeof KpiYearStore.holdsEditLease === 'function' &&
+            KpiYearStore.holdsEditLease('daily-sales')
+          );
         }
-        function pathLabel(path) {
-          if (path === 'mep') return t('月次', 'Monthly', '月度');
-          return t('年次', 'Annual', '年度');
-        }
-        function applyWrapState(wrap, path) {
-          var isMep = path === 'mep';
-          wrap.classList.toggle('is-mep', isMep);
-          var sw = wrap.querySelector('[data-kpi-path-switch]');
-          if (sw) {
-            sw.setAttribute('aria-checked', isMep ? 'true' : 'false');
+        function editPathForWrap(wrap) {
+          if (wrap && wrap.classList && wrap.classList.contains('kpi-daily-input-path--mep')) {
+            return 'mep';
           }
-          wrap.querySelectorAll('[data-kpi-path-side]').forEach(function (el) {
-            var side = el.getAttribute('data-kpi-path-side');
-            var active = side === 'mep' ? isMep : !isMep;
+          return 'annual';
+        }
+        function leaseLabelForPath(path) {
+          if (path === 'mep') return 'Monthly Edit';
+          return t('売上データ', 'Sales Data', '營業額資料');
+        }
+        function tryAcquireForPath(path) {
+          if (!window.__KPI_EDIT_LEASE || typeof window.__KPI_EDIT_LEASE.tryAcquire !== 'function') {
+            return true;
+          }
+          return !!window.__KPI_EDIT_LEASE.tryAcquire(leaseLabelForPath(path));
+        }
+        function releaseOwnLease() {
+          if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
+            window.__KPI_EDIT_LEASE.release();
+          }
+        }
+        function applyWrapState(wrap) {
+          var holds = holdsDailySalesLease();
+          wrap.classList.toggle('is-edit', holds);
+          wrap.classList.toggle('is-mep', holds);
+          var sw = wrap.querySelector('[data-kpi-path-switch], [data-kpi-edit-switch]');
+          if (sw) {
+            sw.setAttribute('aria-checked', holds ? 'true' : 'false');
+          }
+          wrap.querySelectorAll('[data-kpi-edit-side], [data-kpi-path-side]').forEach(function (el) {
+            var side = el.getAttribute('data-kpi-edit-side') || el.getAttribute('data-kpi-path-side');
+            var isEditSide = side === 'edit' || side === 'mep';
+            var active = isEditSide ? holds : !holds;
             el.classList.toggle('is-active', active);
             el.classList.toggle('is-inactive', !active);
           });
         }
         function syncToggleUi() {
-          var path = storeReady() ? KpiYearStore.getDailySalesInputPath() : 'annual';
-          var pro = isPro();
           document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {
-            wrap.hidden = !pro;
-            applyWrapState(wrap, path);
+            wrap.hidden = false;
+            applyWrapState(wrap);
           });
         }
-        var chooser = document.getElementById('kpi-path-change-chooser');
-        var chooserScrim = document.getElementById('kpi-path-change-chooser-scrim');
-        var chooserSave = document.getElementById('kpi-path-change-save');
-        var chooserDiscard = document.getElementById('kpi-path-change-discard');
-        var chooserCancel = document.getElementById('kpi-path-change-cancel');
-        var chooserReturnFocus = null;
-        var chooserResolve = null;
-        var pendingPath = null;
-
-        function hideChooser() {
-          if (!chooser || chooser.hasAttribute('hidden')) return;
-          chooser.setAttribute('hidden', '');
-          var el = chooserReturnFocus;
-          chooserReturnFocus = null;
-          if (el && typeof el.focus === 'function') el.focus();
-        }
-        function finishChooser(ok, action) {
-          var next = pendingPath;
-          var resolve = chooserResolve;
-          pendingPath = null;
-          chooserResolve = null;
-          hideChooser();
-          if (!resolve) return;
-          resolve({ ok: !!ok, action: action || null, next: next });
-        }
-        function showChooser(next) {
-          return new Promise(function (resolve) {
-            pendingPath = next;
-            chooserResolve = resolve;
-            if (!chooser) {
-              resolve({ ok: false, action: 'cancel', next: next });
-              return;
-            }
-            chooserReturnFocus = document.activeElement;
-            chooser.removeAttribute('hidden');
-            if (chooserCancel) chooserCancel.focus();
-          });
-        }
-        if (chooserSave) {
-          chooserSave.addEventListener('click', function () {
-            finishChooser(true, 'save');
-          });
-        }
-        if (chooserDiscard) {
-          chooserDiscard.addEventListener('click', function () {
-            finishChooser(true, 'discard');
-          });
-        }
-        if (chooserCancel) {
-          chooserCancel.addEventListener('click', function () {
-            finishChooser(false, 'cancel');
-          });
-        }
-        if (chooserScrim) {
-          chooserScrim.addEventListener('click', function () {
-            finishChooser(false, 'cancel');
-          });
-        }
-
-        function hooks() {
-          return window.__KPI_PATH_CHANGE_HOOKS__ || {};
-        }
-        function hasUnsavedViaHooks() {
-          var h = hooks();
-          if (typeof h.hasUnsaved === 'function') return !!h.hasUnsaved();
-          return false;
-        }
-        function runHook(name) {
-          var h = hooks();
-          if (typeof h[name] !== 'function') return Promise.resolve(true);
-          try {
-            var result = h[name]();
-            if (result && typeof result.then === 'function') return result;
-            return Promise.resolve(result !== false);
-          } catch (_e) {
-            return Promise.resolve(false);
-          }
-        }
-        function confirmPathSwitch(next) {
-          var msg = t(
-            '売上入力を「' +
-              pathLabel(next) +
-              '」に切り替えます。\nもう一方では売上・営業日を編集できなくなります。',
-            'Switch Sales Input to "' +
-              pathLabel(next) +
-              '".\nThe other side will not allow editing sales or business days.',
-            '將營業額輸入切換為「' +
-              pathLabel(next) +
-              '」。\n另一側將無法編輯營業額與營業日。'
-          );
-          return Promise.resolve(window.confirm(msg));
-        }
-        function applyPathChange(next) {
-          if (!storeReady() || !isPro()) return Promise.resolve(false);
-          var cur = KpiYearStore.getDailySalesInputPath();
-          if (next === cur) return Promise.resolve(true);
-          KpiYearStore.setDailySalesInputPath(next);
+        function refreshGuards() {
           syncToggleUi();
           document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
+        }
+        function enterEdit(wrap) {
+          if (!storeReady()) return Promise.resolve(false);
+          if (holdsDailySalesLease()) {
+            refreshGuards();
+            return Promise.resolve(true);
+          }
+          var next = editPathForWrap(wrap);
+          if (!tryAcquireForPath(next)) {
+            refreshGuards();
+            return Promise.resolve(false);
+          }
+          if (typeof KpiYearStore.setDailySalesInputPath === 'function') {
+            KpiYearStore.setDailySalesInputPath(next);
+          }
+          refreshGuards();
           return Promise.resolve(true);
         }
-        function requestPathChange(next) {
-          if (!storeReady() || !isPro()) return Promise.resolve(false);
-          var cur = KpiYearStore.getDailySalesInputPath();
-          if (next === cur) return Promise.resolve(true);
-          var flow = confirmPathSwitch(next).then(function (confirmed) {
-            if (!confirmed) return false;
-            var unsaved = hasUnsavedViaHooks();
-            try {
-              console.info('[KPN_DIRTY_DIFF]', { source: 'path-toggle', next: next, unsaved: !!unsaved });
-            } catch (_ePath) {}
-            if (!unsaved) return applyPathChange(next);
-            return showChooser(next).then(function (choice) {
-              if (!choice.ok || choice.action === 'cancel') return false;
-              if (choice.action === 'save') {
-                return runHook('save').then(function (ok) {
-                  if (!ok) return false;
-                  return applyPathChange(next);
-                });
-              }
-              if (choice.action === 'discard') {
-                return runHook('discard').then(function (ok) {
-                  if (!ok) return false;
-                  return applyPathChange(next);
-                });
-              }
-              return false;
-            });
-          });
-          return flow;
+        function enterView() {
+          releaseOwnLease();
+          refreshGuards();
+          return Promise.resolve(true);
+        }
+        function requestEditMode(wantEdit, wrap) {
+          if (wantEdit) return enterEdit(wrap);
+          return enterView();
         }
         function bindToggles() {
           document.querySelectorAll('[data-kpi-sales-input-path]').forEach(function (wrap) {
             if (wrap.getAttribute('data-kpi-path-bound') === '1') return;
             wrap.setAttribute('data-kpi-path-bound', '1');
-            var sw = wrap.querySelector('[data-kpi-path-switch]');
-            if (!sw) return;
-            sw.addEventListener('click', function (ev) {
+            wrap.addEventListener('click', function (ev) {
+              var tgt = ev.target;
+              var sideEl =
+                tgt && tgt.closest
+                  ? tgt.closest('[data-kpi-edit-side], [data-kpi-path-side]')
+                  : null;
+              var swEl =
+                tgt && tgt.closest
+                  ? tgt.closest('[data-kpi-path-switch], [data-kpi-edit-switch]')
+                  : null;
+              if (!sideEl && !swEl) return;
+              if (sideEl && !wrap.contains(sideEl)) return;
+              if (swEl && !wrap.contains(swEl)) return;
               ev.preventDefault();
-              if (!storeReady() || !isPro()) return;
-              var cur = KpiYearStore.getDailySalesInputPath();
-              requestPathChange(cur === 'mep' ? 'annual' : 'mep');
+              var wantEdit;
+              if (sideEl) {
+                var side = sideEl.getAttribute('data-kpi-edit-side') || sideEl.getAttribute('data-kpi-path-side');
+                wantEdit = side === 'edit' || side === 'mep';
+              } else {
+                wantEdit = !holdsDailySalesLease();
+              }
+              requestEditMode(wantEdit, wrap);
             });
           });
         }
         bindToggles();
         syncToggleUi();
         document.addEventListener('kpi:dailySalesInputPathChanged', syncToggleUi);
-        window.__KPI_SALES_INPUT_PATH_UI = { sync: syncToggleUi, requestPathChange: requestPathChange };
+        document.addEventListener('kpi:editLeaseChanged', syncToggleUi);
+        window.__KPI_SALES_INPUT_PATH_UI = {
+          sync: syncToggleUi,
+          requestPathChange: function (next) {
+            var wrap = document.querySelector('[data-kpi-sales-input-path]');
+            if (next === 'view') return enterView();
+            return requestEditMode(true, wrap);
+          },
+        };
       })();
 
 
@@ -8545,6 +8474,7 @@
 
       if (strategyNoteInput) {
         strategyNoteInput.addEventListener('input', function () {
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
           syncStrategyCharCounter();
           markDirty();
         });
@@ -9303,17 +9233,84 @@
           KpiYearStore.getDailySalesInputPath() !== 'mep'
         );
       }
-      function mepPathSwitchHint() {
-        return t(
-          '編集するには売上入力ボタンを月次に変更してください',
-          'To edit, change the Sales Input button to Monthly',
-          '如要編輯，請將營業額輸入切換鈕改為月度'
+      function isMepDailySalesEditBlocked() {
+        if (isMepDailySalesPathBlocked()) return true;
+        return !!(
+          window.KpiYearStore &&
+          typeof KpiYearStore.holdsEditLease === 'function' &&
+          !KpiYearStore.holdsEditLease('daily-sales')
         );
       }
-      function manualInputHint() {
-        if (isMepDailySalesPathBlocked()) {
-          return mepPathSwitchHint();
+      function isMepScreenEditBlocked() {
+        return isMepDailySalesEditBlocked();
+      }
+      function mepPathSwitchHint() {
+        return t(
+          '閲覧モードです。編集するには「編集」を押してください。',
+          'View mode. Press Edit to make changes.',
+          '檢視模式。若要編輯，請按下「編輯」。'
+        );
+      }
+      function syncMepScreenEditToolbar() {
+        var blocked = isMepScreenEditBlocked();
+        var hint = mepPathSwitchHint();
+        if (typeof syncUndoButton === 'function') syncUndoButton();
+        if (btnConfirm) {
+          btnConfirm.disabled = blocked;
+          if (blocked) btnConfirm.setAttribute('title', hint);
+          else btnConfirm.removeAttribute('title');
         }
+        if (btnExpenseCsvUpload) {
+          if (!btnExpenseCsvUpload.getAttribute('data-kpi-edit-title-saved')) {
+            btnExpenseCsvUpload.setAttribute(
+              'data-kpi-edit-title-saved',
+              btnExpenseCsvUpload.getAttribute('title') || ''
+            );
+            btnExpenseCsvUpload.setAttribute(
+              'data-kpi-edit-tooltip-saved',
+              btnExpenseCsvUpload.getAttribute('data-tooltip') || ''
+            );
+          }
+          btnExpenseCsvUpload.disabled = blocked;
+          if (blocked) {
+            btnExpenseCsvUpload.setAttribute('title', hint);
+            btnExpenseCsvUpload.setAttribute('data-tooltip', hint);
+          } else {
+            btnExpenseCsvUpload.setAttribute(
+              'title',
+              btnExpenseCsvUpload.getAttribute('data-kpi-edit-title-saved') || ''
+            );
+            btnExpenseCsvUpload.setAttribute(
+              'data-tooltip',
+              btnExpenseCsvUpload.getAttribute('data-kpi-edit-tooltip-saved') || ''
+            );
+          }
+        }
+        if (typeof syncCsvUploadTooltip === 'function') {
+          syncCsvUploadTooltip();
+        } else if (btnCsvUpload) {
+          btnCsvUpload.disabled = blocked;
+          if (blocked) {
+            btnCsvUpload.setAttribute('title', hint);
+            btnCsvUpload.setAttribute('data-tooltip', hint);
+          }
+        }
+        if (strategyNoteInput) {
+          strategyNoteInput.readOnly = blocked;
+          strategyNoteInput.disabled = blocked;
+        }
+        var memoSave = document.getElementById('memo-float-save');
+        if (memoSave) {
+          memoSave.disabled = blocked;
+          if (blocked) memoSave.setAttribute('title', hint);
+          else memoSave.removeAttribute('title');
+        }
+        var memoUndo = document.getElementById('memo-float-undo');
+        if (memoUndo && blocked) memoUndo.disabled = true;
+        var memoCloseSave = document.getElementById('memo-float-close-save');
+        if (memoCloseSave) memoCloseSave.disabled = blocked;
+      }
+      function manualInputHint() {
         return t(
           'セルに入力してください',
           'Type values in the cells',
@@ -12227,7 +12224,12 @@
         }
       }
       function syncUndoButton() {
-        if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+        if (!btnUndo) return;
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+          btnUndo.disabled = true;
+          return;
+        }
+        btnUndo.disabled = undoStack.length === 0;
       }
       function snapshotState() {
         var daily = ensureAnnualDailyStore();
@@ -12385,6 +12387,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12395,6 +12401,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12405,6 +12415,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12415,6 +12429,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12425,6 +12443,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12435,6 +12457,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12445,6 +12471,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.rowRef && item.rowRef.editableLabel) {
@@ -12455,6 +12485,10 @@
           btnEdit.setAttribute('data-action', 'edit-label');
           btnEdit.setAttribute('data-row-id', item.rowRef.id);
           btnEdit.setAttribute('aria-label', t('費目名を編集', 'Edit label', '編輯科目名稱'));
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            btnEdit.disabled = true;
+            btnEdit.setAttribute('title', mepPathSwitchHint());
+          }
           main.appendChild(btnEdit);
         }
         if (item.dailyInput) {
@@ -12502,6 +12536,10 @@
                 ? freeMemoCount()
                 : state.variableItems.length;
             minus.disabled = len <= 1;
+            if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+              plus.disabled = true;
+              minus.disabled = true;
+            }
             actions.appendChild(minus);
           }
           rowEl.appendChild(actions);
@@ -12640,7 +12678,7 @@
               cb.checked = bizDayByIso[iso] !== false;
               cb.setAttribute('data-action', 'bizday-toggle');
               cb.setAttribute('data-iso', iso);
-              var mepPathBlockedForBiz = isMepDailySalesPathBlocked();
+              var mepPathBlockedForBiz = isMepScreenEditBlocked();
               if (mepPathBlockedForBiz || (window.KpiYearStore && !KpiYearStore.canWriteBusinessDayFrom('mep', iso))) {
                 cb.disabled = true;
                 cb.title = mepPathSwitchHint();
@@ -12740,10 +12778,11 @@
               td.className = cellInactiveClass(iso).trim();
               var sel = document.createElement('select');
               sel.className = 'monthly-edit-float__select';
-              sel.disabled = !isMepUiBusinessDay(iso);
+              sel.disabled = !isMepUiBusinessDay(iso) || isMepScreenEditBlocked();
               sel.setAttribute('data-action', 'weather-select');
               sel.setAttribute('data-iso', iso);
               sel.setAttribute('aria-label', t('天気 ', 'Weather ', '天氣 ') + iso);
+              if (isMepScreenEditBlocked()) sel.setAttribute('title', mepPathSwitchHint());
               var cur = readWeather(iso);
               MEF_WEATHER_PRESETS.forEach(function (preset) {
                 var opt = document.createElement('option');
@@ -12849,7 +12888,7 @@
                     if (mepIncomeSalesPath) {
                       inp.setAttribute('data-mep-sales-path', '1');
                     }
-                    var mepPathBlocked = isMepDailySalesPathBlocked();
+                    var mepPathBlocked = isMepScreenEditBlocked();
                     var salesBlocked =
                       mepIncomeSalesPath &&
                       window.KpiYearStore &&
@@ -12884,7 +12923,7 @@
                 inp.readOnly = true;
               } else {
                 var kind = r.valueKind || 'money';
-                var pathBlockedStatic = isMepDailySalesPathBlocked();
+                var pathBlockedStatic = isMepScreenEditBlocked();
                 if (kind === 'count') {
                   inp.value = fmtCount(readValue(r.id, iso));
                   inp.setAttribute('data-action', 'count-input');
@@ -12956,31 +12995,13 @@
       }
       /* KPI-EDIT-GUARDS */
       (function () {
-        function isJa() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
-        }
-        function tryMepLeaseForPath() {
-          if (!window.KpiYearStore || !window.__KPI_EDIT_LEASE) return;
-          if (KpiYearStore.getDailySalesInputPath() === 'mep') {
-            if (typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {
-              window.__KPI_EDIT_LEASE.tryAcquire(isJa() ? 'Monthly Edit' : 'Monthly Edit', {
-                steal: true,
-              });
-            }
-          } else if (typeof window.__KPI_EDIT_LEASE.release === 'function') {
-            window.__KPI_EDIT_LEASE.release();
-          }
-        }
         function mepDailySalesPathBlocked() {
-          return !!(
-            window.KpiYearStore &&
-            KpiYearStore.getDailySalesInputPath &&
-            KpiYearStore.getDailySalesInputPath() === 'annual'
-          );
+          if (!window.KpiYearStore || !KpiYearStore.getDailySalesInputPath) return false;
+          if (KpiYearStore.getDailySalesInputPath() !== 'mep') return true;
+          if (typeof KpiYearStore.holdsEditLease === 'function') {
+            return !KpiYearStore.holdsEditLease('daily-sales');
+          }
+          return false;
         }
         function applyMepDailySalesPathGuards() {
           var mepRoot = document.getElementById('monthly-edit-float');
@@ -12993,9 +13014,17 @@
           if (mepRoot && mepRoot.hidden) return;
           applyMepDailySalesPathGuards();
           if (typeof buildGrid === 'function') buildGrid();
+          if (typeof syncMepScreenEditToolbar === 'function') syncMepScreenEditToolbar();
+          var memoRoot = document.getElementById('memo-float-modal');
+          if (
+            typeof renderMemoFloatDayPanel === 'function' &&
+            memoRoot &&
+            !memoRoot.hasAttribute('hidden')
+          ) {
+            renderMemoFloatDayPanel();
+          }
         }
         document.addEventListener('kpi:dailySalesInputPathChanged', function () {
-          tryMepLeaseForPath();
           refreshMepSalesGuards();
         });
         document.addEventListener('kpi:editGuardsApplied', refreshMepSalesGuards);
@@ -13224,6 +13253,9 @@
         scroller.scrollLeft = left;
       }
       function initEditPage() {
+        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
+          window.__KPI_EDIT_LEASE.release();
+        }
         syncFromPage();
         undoStack = [];
         syncUndoButton();
@@ -13234,21 +13266,12 @@
         if (window.__KPI_SALES_INPUT_PATH_UI && typeof window.__KPI_SALES_INPUT_PATH_UI.sync === 'function') {
           window.__KPI_SALES_INPUT_PATH_UI.sync();
         }
-        if (
-          window.KpiYearStore &&
-          KpiYearStore.getDailySalesInputPath() === 'mep' &&
-          window.__KPI_EDIT_LEASE &&
-          typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function'
-        ) {
-          window.__KPI_EDIT_LEASE.tryAcquire(useJa ? 'Monthly Edit' : 'Monthly Edit', {
-            steal: true,
-          });
-        }
         bindMepKpiStripRefresh();
         if (typeof syncBizDayFromAnnualStoreForYear === 'function') {
           syncBizDayFromAnnualStoreForYear(mefYear);
         }
         buildGrid();
+        if (typeof syncMepScreenEditToolbar === 'function') syncMepScreenEditToolbar();
         confirmedSnapshot = buildConfirmedSnapshot();
         mepBootSalesResyncPending = true;
         persistMefMonth();
@@ -13505,6 +13528,10 @@
       }
       if (closeChooserSave) {
         closeChooserSave.addEventListener('click', function () {
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+            window.alert(mepPathSwitchHint());
+            return;
+          }
           var run = function () {
             return performMepSave().then(function (putResult) {
               if (mepPutFailed(putResult)) {
@@ -13617,6 +13644,7 @@
 
       if (btnUndo) {
         btnUndo.addEventListener('click', function () {
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
           if (!popUndo()) return;
           markDirty();
           syncMonthlySalesToAnnualStoreForMonth();
@@ -13632,11 +13660,7 @@
           return en;
         }
         function isMepSalesPathActive() {
-          return !!(
-            window.KpiYearStore &&
-            typeof KpiYearStore.getDailySalesInputPath === 'function' &&
-            KpiYearStore.getDailySalesInputPath() === 'mep'
-          );
+          return typeof isMepScreenEditBlocked === 'function' && !isMepScreenEditBlocked();
         }
         function syncCsvUploadTooltip() {
           var active = isMepSalesPathActive();
@@ -13646,11 +13670,7 @@
                 'Upload a CSV file. For expenses, use Expense CSV Import on the P&L page.',
                 '請上傳 CSV 檔。支出請使用損益表的「支出CSV匯入」。'
               )
-            : mepCsvText(
-                '編集するには売上入力ボタンを月次に変更してください',
-                'To edit, change the Sales Input button to Monthly',
-                '如要編輯，請將營業額輸入切換鈕改為月度'
-              );
+            : mepPathSwitchHint();
           btnCsvUpload.disabled = !active;
           btnCsvUpload.setAttribute('title', msg);
           btnCsvUpload.setAttribute('data-tooltip', msg);
@@ -13659,6 +13679,7 @@
 
         syncCsvUploadTooltip();
         document.addEventListener('kpi:dailySalesInputPathChanged', syncCsvUploadTooltip);
+        document.addEventListener('kpi:editLeaseChanged', syncCsvUploadTooltip);
 
         if (window.__KPI_DAILY_IMPORT) {
           window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
@@ -14014,6 +14035,7 @@
           return expenseFileInput;
         }
         btnExpenseCsvUpload.addEventListener('click', function () {
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
           var input = ensureExpenseInput();
           input.value = '';
           input.onchange = function () {
@@ -14047,6 +14069,7 @@
       if (btnConfirm) {
         btnConfirm.addEventListener('pointerdown', function (ev) {
           if (ev.button != null && ev.button !== 0) return;
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
           mepSaveInProgress = true;
         });
         document.addEventListener(
@@ -14059,6 +14082,7 @@
           true
         );
         btnConfirm.addEventListener('click', function () {
+          if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
           /* KPI-BUSY-CSV-CLOSE-DA: Save overlay closes within 20s even if rebuild/flush stalls */
           var doSave = function () {
             var core = performMepSave();
@@ -14506,6 +14530,7 @@
             btn.getAttribute('data-row-id')
           );
         } else if (action === 'add-row') {
+          if (isMepScreenEditBlocked()) return;
           pushUndo();
           addRow(btn.getAttribute('data-section'));
           syncMonthlySalesToAnnualStoreForMonth();
@@ -14513,6 +14538,7 @@
           markDirty();
           buildGrid();
         } else if (action === 'remove-row') {
+          if (isMepScreenEditBlocked()) return;
           var sec2 = btn.getAttribute('data-section');
           var arr = rowsBySection(sec2);
           if (sec2 === 'memo') {
@@ -14552,6 +14578,7 @@
           markDirty();
           buildGrid();
         } else if (action === 'edit-label') {
+          if (isMepScreenEditBlocked()) return;
           var rowId = btn.getAttribute('data-row-id');
           var row = rowById[rowId];
           if (!row) return;
@@ -14592,7 +14619,7 @@
         var action = target.getAttribute('data-action');
         if (action === 'bizday-toggle') {
           var iso = target.getAttribute('data-iso');
-          if (window.KpiYearStore && !KpiYearStore.canWriteBusinessDayFrom('mep', iso)) {
+          if (isMepScreenEditBlocked() || (window.KpiYearStore && !KpiYearStore.canWriteBusinessDayFrom('mep', iso))) {
             target.checked = bizDayByIso[iso] !== false;
             return;
           }
@@ -14619,11 +14646,7 @@
         } else if (action === 'money-input') {
           var rowId = target.getAttribute('data-row-id');
           var iso2 = target.getAttribute('data-iso');
-          if (
-            isMepDailySalesPathBlocked() &&
-            (target.getAttribute('data-mep-daily-input') === '1' ||
-              target.getAttribute('data-mep-editable') === '1')
-          ) {
+          if (isMepScreenEditBlocked()) {
             buildGrid();
             return;
           }
@@ -14634,9 +14657,9 @@
                 state.incomeItems.some(function (it) {
                   return it && (it.id === rowId || it.lineId === rowId) && !!it.mepEditable && !it.mepAutoCalc;
                 })));
-          var mepEditableInput = target.getAttribute('data-mep-editable') === '1';
+          var mepSalesPathInput = target.getAttribute('data-mep-sales-path') === '1';
           var mepPathBlockedAtEdit =
-            mepEditableInput &&
+            mepSalesPathInput &&
             window.KpiYearStore &&
             typeof KpiYearStore.getDailySalesInputPath === 'function' &&
             KpiYearStore.getDailySalesInputPath() !== 'mep';
@@ -14693,7 +14716,7 @@
           markDirty();
           buildGrid();
         } else if (action === 'count-input') {
-          if (isMepDailySalesPathBlocked()) {
+          if (isMepScreenEditBlocked()) {
             buildGrid();
             return;
           }
@@ -14704,6 +14727,10 @@
           markDirty();
           buildGrid();
         } else if (action === 'memo-input') {
+          if (isMepScreenEditBlocked()) {
+            buildGrid();
+            return;
+          }
           var rowIdM = target.getAttribute('data-row-id');
           var isoM = target.getAttribute('data-iso');
           pushUndo();
@@ -14711,6 +14738,10 @@
           markDirty();
           buildGrid();
         } else if (action === 'weather-select') {
+          if (isMepScreenEditBlocked()) {
+            buildGrid();
+            return;
+          }
           var isoW = target.getAttribute('data-iso');
           pushUndo();
           writeWeather(isoW, target.value);
@@ -14721,6 +14752,7 @@
       root.addEventListener('input', function (ev) {
         var target = ev.target;
         if (!target) return;
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
         if (target.getAttribute('data-action') === 'money-input') {
           markDirty();
         }
@@ -15101,6 +15133,8 @@
         counter.textContent = len + '/' + activeTier;
       }
       function startMemoLabelEdit(host, row) {
+        if (!host || !row) return;
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
         if (!host || !row || row.weeklyFixed) return;
         var old = rowLabel(row);
         host.innerHTML = '';
@@ -15141,7 +15175,11 @@
       function mountMemoHeadLabel(host, row) {
         if (!host || !row) return;
         host.innerHTML = '';
-        if (row.editableLabel !== false && !row.weeklyFixed) {
+        if (
+          row.editableLabel !== false &&
+          !row.weeklyFixed &&
+          !(typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked())
+        ) {
           var labelBtn = document.createElement('button');
           labelBtn.type = 'button';
           labelBtn.className = 'memo-float-modal__memo-head-label is-editable';
@@ -15159,6 +15197,7 @@
         }
       }
       function memoFloatAddRow(afterIdx) {
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
         pushMemoFloatUndo();
         addFreeMemoRow(afterIdx);
         memoFloatState.dirty = true;
@@ -15167,6 +15206,7 @@
         renderMemoFloatDayPanel();
       }
       function memoFloatRemoveRow(removeIdx) {
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) return;
         if (isWeeklyFixedMemoIndex(removeIdx)) return;
         pushMemoFloatUndo();
         if (!removeFreeMemoRowAt(removeIdx)) return;
@@ -15222,7 +15262,10 @@
         ta.setAttribute('data-row-id', row.id);
         ta.setAttribute('data-iso', iso);
         ta.setAttribute('aria-label', rowLabel(row));
-        if (!memoFloatBizDay(iso)) ta.disabled = true;
+        if (!memoFloatBizDay(iso) || (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked())) {
+          ta.disabled = true;
+          ta.readOnly = true;
+        }
         updateMemoCharCount(ta, counter);
         ta.addEventListener('input', function () {
           updateMemoCharCount(ta, counter);
@@ -15343,7 +15386,7 @@
         }
         freeSection.appendChild(freeHead);
         for (fi = WEEKLY_MEMO_FIXED_COUNT; fi < state.memoItems.length; fi++) {
-          appendMemoFloatBlock(freeSection, state.memoItems[fi], fi, iso, true);
+          appendMemoFloatBlock(freeSection, state.memoItems[fi], fi, iso, !isMepScreenEditBlocked());
         }
         memoFloatDayPanel.appendChild(freeSection);
         if (memoFloatState.focusRowId) {
@@ -15419,6 +15462,10 @@
         }
       }
       function saveMemoFloatModal() {
+        if (typeof isMepScreenEditBlocked === 'function' && isMepScreenEditBlocked()) {
+          window.alert(mepPathSwitchHint());
+          return Promise.resolve(false);
+        }
         flushPendingMemoEditsFromDom();
         var y = memoFloatState.year;
         var m0 = memoFloatState.month0;

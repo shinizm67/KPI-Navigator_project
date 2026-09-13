@@ -138,12 +138,11 @@ INIT_CAL_NEW = """          hydrateNavFromStorage();
 
 RELOAD_OLD = """          reload: function () {
             loadStore();
-            reconcileTimelineFromLegacy();"""
+            hydrateNavFromStorage();"""
 
 RELOAD_NEW = """          reload: function () {
             loadStore();
-            hydrateNavFromStorage();
-            reconcileTimelineFromLegacy();"""
+            hydrateNavFromStorage();"""
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:

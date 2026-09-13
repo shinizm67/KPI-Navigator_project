@@ -1196,3 +1196,18 @@ if __name__ == "__main__":
         cwd=str(ROOT),
         check=False,
     )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "apply_kpi_sales_input_path_ui.py")],
+        cwd=str(ROOT),
+        check=False,
+    )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "apply_mep_edit_guards_refresh.py")],
+        cwd=str(ROOT),
+        check=False,
+    )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "apply_mep_screen_edit.py")],
+        cwd=str(ROOT),
+        check=False,
+    )

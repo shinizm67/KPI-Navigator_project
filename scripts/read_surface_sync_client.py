@@ -7,9 +7,6 @@ READ_SURFACE_MARKER = "/* KPI-READ-SURFACE-SYNC */"
 READ_SURFACE_TW_REFRESH = """      function refreshAnnualReadSurfaces(opts) {
         opts = opts || {};
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
             KpiYearStore.syncToAnnualDaily();
           }
@@ -85,9 +82,6 @@ PAST_SALES_OPEN_OLD = """      function openModal() {
 PAST_SALES_OPEN_NEW = """      function openModal() {
         lastFocus = document.activeElement;
         if (window.KpiYearStore) {
-          if (typeof KpiYearStore.reconcileTimelineFromLegacy === 'function') {
-            KpiYearStore.reconcileTimelineFromLegacy();
-          }
           if (typeof KpiYearStore.syncToAnnualDaily === 'function') {
             KpiYearStore.syncToAnnualDaily();
           }

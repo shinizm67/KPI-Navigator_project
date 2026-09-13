@@ -192,22 +192,25 @@
     });
   }
 
+  function hasCanonicalSalesValue(map, iso) {
+    if (!map || typeof map !== 'object') return false;
+    if (!Object.prototype.hasOwnProperty.call(map, iso)) return false;
+    var v = map[iso];
+    return v !== undefined && v !== null;
+  }
+
   function mergeIsoTimelineMap(serverMap, localMap) {
     var out = {};
     if (serverMap && typeof serverMap === 'object') {
       Object.keys(serverMap).forEach(function (iso) {
-        out[iso] = serverMap[iso];
+        if (hasCanonicalSalesValue(serverMap, iso)) out[iso] = serverMap[iso];
       });
     }
     if (!localMap || typeof localMap !== 'object') return out;
     Object.keys(localMap).forEach(function (iso) {
-      var lv = Number(localMap[iso]);
-      if (!Number.isFinite(lv)) return;
-      var hasServer = Object.prototype.hasOwnProperty.call(out, iso);
-      var sv = hasServer ? Number(out[iso]) : NaN;
-      if (!hasServer || (!Number.isFinite(sv) && lv !== 0) || (lv !== 0 && sv === 0)) {
-        out[iso] = localMap[iso];
-      }
+      if (!hasCanonicalSalesValue(localMap, iso)) return;
+      if (hasCanonicalSalesValue(out, iso)) return;
+      out[iso] = localMap[iso];
     });
     return out;
   }
@@ -282,19 +285,7 @@
         }
       }
     });
-    if (localStore.timeline && typeof localStore.timeline === 'object') {
-      if (!out.timeline || typeof out.timeline !== 'object') {
-        out.timeline = { dailySales: {}, businessDays: {} };
-      }
-      out.timeline.dailySales = mergeIsoTimelineMap(
-        out.timeline.dailySales,
-        localStore.timeline.dailySales
-      );
-      out.timeline.businessDays = mergeIsoTimelineMap(
-        out.timeline.businessDays,
-        localStore.timeline.businessDays
-      );
-    }
+    /* Timeline is server-canonical. Missing ISOs are not filled from localStorage. */
     return out;
   }
 
@@ -750,13 +741,22 @@
   }
 
   var putInFlight = null;
+  /** 'full' sends store+nav(+pl). 'nav' omits store so date moves do not rewrite canonical sales. */
+  var pendingPutKind = 'full';
 
   function buildPutBody(cfg) {
+    var expected = serverRevision === undefined ? null : serverRevision;
+    if (pendingPutKind === 'nav') {
+      return {
+        annualNav: localGet(NAV_KEY),
+        expectedRevision: expected,
+      };
+    }
     var storePayload = storePayloadForPut();
     var body = {
       store: storePayload,
       annualNav: localGet(NAV_KEY),
-      expectedRevision: serverRevision === undefined ? null : serverRevision,
+      expectedRevision: expected,
     };
     if (localTier() === 'basic') {
       body.store = stripProFromStore(storePayload);
@@ -780,7 +780,11 @@
   function doPut(cfg) {
     if (!canStorePut(cfg)) return Promise.resolve({ ok: false, skipped: true });
     var body = buildPutBody(cfg);
-    if (!body.store || typeof body.store !== 'object') {
+    pendingPutKind = 'full';
+    var hasStore = body.store && typeof body.store === 'object';
+    var hasNav = Object.prototype.hasOwnProperty.call(body, 'annualNav');
+    var hasPl = Object.prototype.hasOwnProperty.call(body, 'pl');
+    if (!hasStore && !hasNav && !hasPl) {
       return Promise.resolve({ ok: false, skipped: true });
     }
     putInFlight = fetch(cfg.baseUrl, {
@@ -828,10 +832,15 @@
     return putInFlight;
   }
 
-  function schedulePut(cfg) {
+  function schedulePut(cfg, kind) {
     if (!canSync(cfg) || userScopePutHold || hookQuiet) return;
     if (conflictPutHold) return;
     if (!hydrateComplete) return;
+    if (kind === 'nav') {
+      if (pendingPutKind !== 'full') pendingPutKind = 'nav';
+    } else {
+      pendingPutKind = 'full';
+    }
     if (putTimer != null) window.clearTimeout(putTimer);
     putTimer = window.setTimeout(function () {
       putTimer = null;
@@ -974,15 +983,16 @@
         var skipLocalMerge = userScopeSwitched || hydrateIgnoreLocal;
         hydrateIgnoreLocal = false;
         var changed = false;
-        var storeHadFacts = false;
+        /* GET store is canonical at this revision. Do not fill missing ISOs from
+           localStorage. Explicit unsaved dirty lives in OCC / rowState overlay. */
         if (data.store && typeof data.store === 'object') {
-          storeHadFacts = storeHasDailyFacts(data.store);
-          var localBeforeHydrate = skipLocalMerge ? null : localGet(STORE_KEY);
-          var fullStore = stripDailyFactsFromStore(
-            mergeStorePreservingLocalMepData(data.store, localBeforeHydrate)
-          );
-          /* Load full into LS briefly so KpiYearStore.reload sees full timeline, then slim LS. */
-          localSet(STORE_KEY, fullStore);
+          var fullStore = stripDailyFactsFromStore(data.store);
+          hookQuiet = true;
+          try {
+            localSet(STORE_KEY, fullStore);
+          } finally {
+            hookQuiet = false;
+          }
           changed = true;
           try {
             if (window.KpiYearStore && typeof window.KpiYearStore.reload === 'function') {
@@ -1036,9 +1046,6 @@
           } catch (_eLog) {}
         }
         hydrateComplete = true;
-        if (storeHadFacts) {
-          schedulePut(cfg);
-        }
       })
       .catch(function () {
         resetHydrateForRetry();
@@ -1093,16 +1100,20 @@
       origSetItem.apply(this, arguments);
       if (hookQuiet || this !== localStorage) return;
       if (!canSync(cfg)) return;
-      if (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key)) {
-        schedulePut(cfg);
+      if (key === STORE_KEY || isPlSyncKey(key)) {
+        schedulePut(cfg, 'full');
+      } else if (key === NAV_KEY) {
+        schedulePut(cfg, 'nav');
       }
     };
     Storage.prototype.removeItem = function (key) {
       origRemoveItem.apply(this, arguments);
       if (hookQuiet || this !== localStorage) return;
       if (!canSync(cfg)) return;
-      if (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key)) {
-        schedulePut(cfg);
+      if (key === STORE_KEY || isPlSyncKey(key)) {
+        schedulePut(cfg, 'full');
+      } else if (key === NAV_KEY) {
+        schedulePut(cfg, 'nav');
       }
     };
   }
@@ -1133,8 +1144,10 @@
       if (ok && isPlSyncKey(key) && (String(key).indexOf(PL_EXP_PREFIX) === 0 || String(key).indexOf(PL_ADJ_PREFIX) === 0)) {
         notePlUnputKey(key);
       }
-      if (ok && (key === STORE_KEY || key === NAV_KEY || isPlSyncKey(key))) {
-        schedulePut(cfg);
+      if (ok && (key === STORE_KEY || isPlSyncKey(key))) {
+        schedulePut(cfg, 'full');
+      } else if (ok && key === NAV_KEY) {
+        schedulePut(cfg, 'nav');
       }
       return ok;
     },

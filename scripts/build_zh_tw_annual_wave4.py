@@ -154,22 +154,25 @@ MODAL_REPLACEMENTS = [
         'data-dtm-mode="weekday-weighted"\n            data-kpi-guard-ignore\n          >Weekday</button>',
         'data-dtm-mode="weekday-weighted"\n            data-kpi-guard-ignore\n          >曜日加重</button>',
     ),
-    ('aria-label="Daily sales input path"', 'aria-label="每日銷售輸入路徑"'),
     (
-        'kpi-daily-input-path__title">Edit</p>',
-        'kpi-daily-input-path__title">編輯</p>',
+        'aria-label="Sales Data view and edit"',
+        'aria-label="營業額資料的檢視與編輯"',
     ),
     (
-        'data-kpi-path-side="annual">Annual</span>',
-        'data-kpi-path-side="annual">年度</span>',
+        'kpi-daily-input-path__title">Sales Data Edit</p>',
+        'kpi-daily-input-path__title">營業額資料編輯</p>',
     ),
     (
-        'aria-label="Switch daily sales between Annual and Monthly"',
-        'aria-label="在年度與月度之間切換每日銷售"',
+        'data-kpi-edit-side="view">View</span>',
+        'data-kpi-edit-side="view">檢視</span>',
     ),
     (
-        'data-kpi-path-side="mep">Monthly</span>',
-        'data-kpi-path-side="mep">月度</span>',
+        'aria-label="Switch between view and edit"',
+        'aria-label="在檢視與編輯之間切換"',
+    ),
+    (
+        'data-kpi-edit-side="edit">Edit</span>',
+        'data-kpi-edit-side="edit">編輯</span>',
     ),
     ('aria-label="Sales data views"', 'aria-label="銷售資料檢視"'),
     (
@@ -344,20 +347,28 @@ def main() -> None:
     missing = []
     for a, b in sorted(MODAL_REPLACEMENTS, key=lambda ab: -len(ab[0])):
         if a not in mid:
+            if b in mid or b in text:
+                continue
             missing.append(a[:90])
             continue
         mid = mid.replace(a, b)
 
     text2 = head + mid + tail
     for a, b in JS_PATCHES:
+        if "売上データ" in a and "KPI-SDM-OPEN-INP-V2" in text2:
+            continue
         if a not in text2:
+            if b in text2:
+                continue
             missing.append("js:" + a[:80])
-        else:
-            text2 = text2.replace(a, b, 1)
+            continue
+        text2 = text2.replace(a, b, 1)
 
-    # Fallback: Edit side may already be 編輯 from earlier waves
-    mid_check = text2[root:j] if False else None  # noqa: keep simple
-    DST.write_text(text2, encoding="utf-8")
+    original = text
+    if text2 == original:
+        print("unchanged:", DST.relative_to(ROOT))
+    else:
+        DST.write_text(text2, encoding="utf-8")
 
     if missing:
         print(f"WARN missing {len(missing)} (showing 20):")
@@ -366,20 +377,20 @@ def main() -> None:
 
     t = DST.read_text(encoding="utf-8")
     must = [
-        "過去銷售資料",
-        "銷售資料",
+        "過去營業額資料",
         "過去資料編輯",
-        "累計輸入銷售",
-        "剩餘／輸入進度",
+        "累計輸入營業額",
         "總營業日數",
-        "關閉過去銷售資料",
-        "關閉銷售資料",
+        "關閉過去營業額資料",
+        "關閉營業額資料",
         "儲存並關閉",
-        "曜日加重",
         "月內均等",
         "每日批次編輯",
-        "旺淡期%設定",
+        'data-kpi-edit-side="view">檢視</span>',
+        'data-kpi-edit-side="edit">編輯</span>',
     ]
+    if 'data-kpi-path-side="annual">' in t or 'data-kpi-path-side="mep">' in t:
+        raise SystemExit("legacy Annual/Monthly path sides revived")
     for s in must:
         if s not in t:
             raise SystemExit(f"missing after wave4: {s}")

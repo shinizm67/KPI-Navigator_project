@@ -13,6 +13,7 @@ MARKER = "/* KPI-EDIT-GUARDS */"
 TARGETS = [
     ROOT / "app/monthly/edit/index.html",
     ROOT / "en/app/monthly/edit/index.html",
+    ROOT / "zh-tw/app/monthly/edit/index.html",
 ]
 
 
@@ -21,13 +22,16 @@ def patch_file(path: Path) -> None:
     if MARKER not in text:
         raise SystemExit(f"{MARKER} not found in {path}")
     guards_re = re.compile(
-        r"/\* KPI-EDIT-GUARDS \*/\n\s*\(function \(\) \{[\s\S]*?\n\s*\}\)\(\);",
+        r"[ \t]*/\* KPI-EDIT-GUARDS \*/\n[ \t]*\(function \(\) \{[\s\S]*?\n[ \t]*\}\)\(\);",
         re.MULTILINE,
     )
     if not guards_re.search(text):
         raise SystemExit(f"{MARKER} IIFE not found in {path}")
-    text = guards_re.sub(JS.rstrip(), text, count=1)
-    path.write_text(text, encoding="utf-8")
+    new = guards_re.sub(JS.rstrip(), text, count=1)
+    if new == text:
+        print(f"unchanged: {path.relative_to(ROOT)}")
+        return
+    path.write_text(new, encoding="utf-8", newline="\n")
     print(f"patched: {path}")
 
 

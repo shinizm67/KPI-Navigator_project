@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""zh-tw Monthly Edit Wave 3: path sides, UNDO, Daily Notes float labels.
+"""zh-tw Monthly Edit Wave 3: View/Edit sides, UNDO, Daily Notes float labels.
 
 Focus Bar / KPI strip English product labels stay English (docs/font-locale-policy.md).
 This wave localizes remaining MEP chrome and the memo float panel.
@@ -15,21 +15,20 @@ MARKER = "/* KPI-MEP-ZH-TW-WAVE3 */"
 
 STATIC: list[tuple[str, str]] = [
     (
-        '<span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>',
-        '<span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年度</span>',
+        '<span class="kpi-daily-input-path__side is-active" data-kpi-edit-side="view">View</span>',
+        '<span class="kpi-daily-input-path__side is-active" data-kpi-edit-side="view">檢視</span>',
     ),
     (
-        '<span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>',
-        '<span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">月度</span>',
-    ),
-    # inactive/active may swap at runtime; cover both static texts
-    (
-        'data-kpi-path-side="annual">Annual</span>',
-        'data-kpi-path-side="annual">年度</span>',
+        '<span class="kpi-daily-input-path__side is-inactive" data-kpi-edit-side="edit">Edit</span>',
+        '<span class="kpi-daily-input-path__side is-inactive" data-kpi-edit-side="edit">編輯</span>',
     ),
     (
-        'data-kpi-path-side="mep">Monthly</span>',
-        'data-kpi-path-side="mep">月度</span>',
+        'data-kpi-edit-side="view">View</span>',
+        'data-kpi-edit-side="view">檢視</span>',
+    ),
+    (
+        'data-kpi-edit-side="edit">Edit</span>',
+        'data-kpi-edit-side="edit">編輯</span>',
     ),
     (
         'id="memo-float-undo" disabled>UNDO</button>',
@@ -142,25 +141,21 @@ def main() -> None:
             1,
         )
 
-    DST.write_text(text, encoding="utf-8")
+    original = DST.read_text(encoding="utf-8")
+    if text == original:
+        print("unchanged:", DST.relative_to(ROOT))
+    else:
+        DST.write_text(text, encoding="utf-8")
 
-    checks = [
-        ("wave3 marker", MARKER in DST.read_text(encoding="utf-8")),
-        ("path 年度", 'data-kpi-path-side="annual">年度</span>' in DST.read_text(encoding="utf-8")),
-        ("path 月度", 'data-kpi-path-side="mep">月度</span>' in DST.read_text(encoding="utf-8")),
-        ("UNDO→復原", ">復原</button>" in DST.read_text(encoding="utf-8")),
-        ("memo zh", "windowTitle: '每日備註'" in DST.read_text(encoding="utf-8")),
-        ("no Annual path", 'data-kpi-path-side="annual">Annual</span>' not in DST.read_text(encoding="utf-8")),
-        ("Focus Bar EN kept", "Annual Progress" in DST.read_text(encoding="utf-8")),
-    ]
     t = DST.read_text(encoding="utf-8")
     checks = [
         ("wave3 marker", MARKER in t),
-        ("path 年度", 'data-kpi-path-side="annual">年度</span>' in t),
-        ("path 月度", 'data-kpi-path-side="mep">月度</span>' in t),
+        ("path 檢視", 'data-kpi-edit-side="view">檢視</span>' in t),
+        ("path 編輯", 'data-kpi-edit-side="edit">編輯</span>' in t),
         ("UNDO→復原", 'id="memo-float-undo" disabled>復原</button>' in t),
         ("memo zh", "windowTitle: '每日備註'" in t),
-        ("no Annual path", 'data-kpi-path-side="annual">Annual</span>' not in t),
+        ("no Annual path", 'data-kpi-path-side="annual">' not in t),
+        ("no Monthly path", 'data-kpi-path-side="mep">' not in t),
         ("Focus Bar EN kept", "annualProgress: 'Annual Progress'" in t),
     ]
     for name, ok in checks:

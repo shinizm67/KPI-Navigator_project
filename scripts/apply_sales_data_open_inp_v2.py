@@ -75,10 +75,8 @@ def build_open(lease_call: str) -> str:
     return f"""/* KPI-SDM-OPEN-INP-V2: 殻を即表示 → 次ペイント後に重い準備・年次テーブル構築 */
       function openModal() {{
         lastFocusEl = document.activeElement;
-        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.tryAcquire === 'function') {{
-          if (!window.__KPI_EDIT_LEASE.tryAcquire({lease_call})) {{
-            return;
-          }}
+        if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {{
+          window.__KPI_EDIT_LEASE.release();
         }}
         state.rowStateByIso = {{}};
         state.salesPinnedAmount = null;

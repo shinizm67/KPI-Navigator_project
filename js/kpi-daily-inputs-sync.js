@@ -19,6 +19,36 @@
     return n < 10 ? '0' + n : String(n);
   }
 
+  /* Same sentinel as KpiYearStore LEGACY_PLACEHOLDER_SALES / isLegacyPlaceholderSales. */
+  var LEGACY_PLACEHOLDER_SALES = 1234;
+
+  function isLegacyPlaceholderSales(n) {
+    return Number(n) === LEGACY_PLACEHOLDER_SALES;
+  }
+
+  function isoYear(iso) {
+    if (!iso || String(iso).length < 4) return NaN;
+    var y = Number(String(iso).slice(0, 4));
+    return Number.isFinite(y) ? y : NaN;
+  }
+
+  function getOperatingYear() {
+    try {
+      if (window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+        var oy = Number(KpiYearStore.getOperatingYear());
+        if (Number.isFinite(oy)) return oy;
+      }
+    } catch (_eOy) {}
+    return new Date().getFullYear();
+  }
+
+  /* 0 and normal positives are canonical. Operating-year 1234 is empty sentinel. Past-year 1234 can be real. */
+  function isProtectedCanonicalSales(iso, value) {
+    if (value === undefined || value === null) return false;
+    if (isLegacyPlaceholderSales(value) && !(isoYear(iso) < getOperatingYear())) return false;
+    return true;
+  }
+
   function resolveAppRoot() {
     try {
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
@@ -108,10 +138,8 @@
       var salesMap = store.timeline.dailySales;
       var hasPrevSales = Object.prototype.hasOwnProperty.call(salesMap, row.iso);
       var prevS = hasPrevSales ? salesMap[row.iso] : undefined;
-      var prevN = Number(prevS);
-      /* Hydrate must not clobber canonical timeline (MEP/store.php) with stale daily-inputs. */
-      var keepCanonicalSales =
-        hasPrevSales && Number.isFinite(prevN) && prevN > 0 && prevN !== 1234;
+      /* 0 is canonical. Operating-year 1234 is sentinel, not protected. */
+      var keepCanonicalSales = hasPrevSales && isProtectedCanonicalSales(row.iso, prevS);
       var hadPrevB = Object.prototype.hasOwnProperty.call(store.timeline.businessDays, row.iso);
       var prevB = hadPrevB ? store.timeline.businessDays[row.iso] : undefined;
       if (!keepCanonicalSales) {

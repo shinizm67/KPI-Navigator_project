@@ -19984,8 +19984,8 @@
               }
               if (!Number.isFinite(n)) return;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
-                var cur = Number(store.timeline.dailySales[iso]);
-                if (Number.isFinite(cur) && cur > 0) return;
+                var cur = store.timeline.dailySales[iso];
+                if (cur !== undefined && cur !== null) return;
               }
               store.timeline.dailySales[iso] = n;
               changed = true;
@@ -20012,7 +20012,6 @@
           }
           if (changed) {
             sanitizePlaceholderSalesMap(store.timeline.dailySales);
-            persistStoreIfYearMepSafe();
           }
         }
 
@@ -21693,6 +21692,7 @@
           });
           if (!yearTouched) return Promise.resolve();
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          persistStore();
           syncLegacyKeys();
           maybeRefreshObservedAfterTimelineChange({ [String(oy)]: true });
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
@@ -21740,11 +21740,6 @@
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
           store.meta.selectedDate = iso;
-          var src = source || 'kpi-year-store';
-          /* Date-only nav (Annual boot / year change) must not PUT the whole store. */
-          if (src !== 'calendar-year' && src !== 'initial') {
-            persistStore();
-          }
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -22019,7 +22014,6 @@
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
           if (!skipLegacyMerge) {
             migrateLegacy();
-            reconcileTimelineFromLegacy();
           }
           enforceSubscriptionTierDefaults();
           maybeRolloverYear();
@@ -22687,7 +22681,6 @@
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
-            reconcileTimelineFromLegacy();
             enforceSubscriptionTierDefaults();
             maybeRolloverYear();
             syncToAnnualDaily();
