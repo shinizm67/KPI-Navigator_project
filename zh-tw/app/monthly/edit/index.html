@@ -3591,10 +3591,66 @@
           return true;
         }
 
+        var DAILY_MEAL_FIELDS = [
+          'lunch_sales',
+          'dinner_sales',
+          'total_customers',
+          'lunch_customers',
+          'dinner_customers',
+          'total_groups',
+          'lunch_groups',
+          'dinner_groups',
+        ];
+
+        function isDailyMealField(field) {
+          return DAILY_MEAL_FIELDS.indexOf(String(field || '')) >= 0;
+        }
+
+        function ensureDailyMealMaps(rec) {
+          if (!rec || typeof rec !== 'object') return null;
+          if (!rec.dailyMeal || typeof rec.dailyMeal !== 'object' || Array.isArray(rec.dailyMeal)) {
+            rec.dailyMeal = {};
+          }
+          DAILY_MEAL_FIELDS.forEach(function (field) {
+            var map = rec.dailyMeal[field];
+            if (!map || typeof map !== 'object' || Array.isArray(map)) {
+              rec.dailyMeal[field] = {};
+            }
+          });
+          return rec.dailyMeal;
+        }
+
+        function readDailyMeal(field, iso) {
+          if (!isDailyMealField(field) || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyMeal || typeof rec.dailyMeal !== 'object') return null;
+          var map = rec.dailyMeal[field];
+          if (!map || typeof map !== 'object') return null;
+          if (!Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          var n = Number(map[iso]);
+          if (!Number.isFinite(n)) return null;
+          return n;
+        }
+
+        /* Memory only. Callers persist via existing persistStore() full PUT. */
+        function writeDailyMeal(field, iso, value) {
+          if (!isDailyMealField(field) || !validIso(iso)) return false;
+          var rec = ensureYearMepData(isoYear(iso));
+          var map = rec.dailyMeal[field];
+          if (value === undefined || value === null) {
+            if (Object.prototype.hasOwnProperty.call(map, iso)) delete map[iso];
+            return true;
+          }
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return false;
+          map[iso] = Math.round(value);
+          return true;
+        }
+
         function ensureYearMepData(year) {
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
           if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {};
+          ensureDailyMealMaps(rec);
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {
             rec.dailyMeta = { memos: {}, flags: {}, weather: {} };
           }
@@ -5417,6 +5473,7 @@
           return {
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {})),
             dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {})),
+            dailyMeal: JSON.parse(JSON.stringify(ensureDailyMealMaps(rec) || {})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || { memos: {}, flags: {}, weather: {} })
             ),
@@ -6912,6 +6969,8 @@
           readAnnualFacts: readAnnualFacts,
           writeDailyIncome: writeDailyIncome,
           readDailyIncome: readDailyIncome,
+          readDailyMeal: readDailyMeal,
+          writeDailyMeal: writeDailyMeal,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,
@@ -7427,6 +7486,123 @@
         }
         return false;
       }
+      /* KPI-MEP-DAILY-MEAL */
+      var MEP_MEAL_ROW_TO_FIELD = {
+        incLunch: 'lunch_sales',
+        cust: 'total_customers',
+        custLunch: 'lunch_customers',
+        groupCnt: 'total_groups',
+        groupCntLunch: 'lunch_groups'
+      };
+      var MEP_MEAL_PERSIST_ROW_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];
+      var MEP_MEAL_SKIP_EXPENSE_ROW_IDS = [
+        'incLunch',
+        'incDinner',
+        'cust',
+        'custLunch',
+        'custDinner',
+        'groupCnt',
+        'groupCntLunch',
+        'groupCntDinner'
+      ];
+      function mepIsMealRowId(rowId) {
+        return MEP_MEAL_SKIP_EXPENSE_ROW_IDS.indexOf(String(rowId || '')) >= 0;
+      }
+      function mepIsMealPersistRowId(rowId) {
+        return MEP_MEAL_PERSIST_ROW_IDS.indexOf(String(rowId || '')) >= 0;
+      }
+      function mepNormMealPersistValue(v) {
+        var n = Number(v);
+        if (!Number.isFinite(n) || n < 0) return null;
+        return Math.round(n);
+      }
+      function mepMealHasGridValue(rowId, iso) {
+        var byIso = rowValueById[rowId];
+        return !!(byIso && Object.prototype.hasOwnProperty.call(byIso, iso));
+      }
+      function mepMealRawIsBlank(text) {
+        return String(text == null ? '' : text).replace(/[^\d.-]/g, '') === '';
+      }
+      function mepWriteMealFromRawInput(rowId, iso, rawText) {
+        if (mepMealRawIsBlank(rawText)) {
+          writeValue(rowId, iso, null);
+          return;
+        }
+        if (rowId === 'incLunch') writeValue(rowId, iso, parseMoney(rawText));
+        else writeValue(rowId, iso, parseCount(rawText));
+      }
+      function mepTouchedDailyMealHasValues(touched) {
+        var meal = touched && touched.dailyMeal;
+        if (!meal || typeof meal !== 'object') return false;
+        var fields = Object.keys(meal);
+        for (var i = 0; i < fields.length; i++) {
+          var byIso = meal[fields[i]];
+          if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+        }
+        return false;
+      }
+      function mepCollectMealTouchedIso(out, rowId, iso, curMap, baseMap) {
+        if (!mepIsMealRowId(rowId)) return false;
+        if (!mepIsMealPersistRowId(rowId)) return true;
+        var curHas = Object.prototype.hasOwnProperty.call(curMap, iso);
+        var baseHas = Object.prototype.hasOwnProperty.call(baseMap, iso);
+        var curVal = curHas ? mepNormMealPersistValue(curMap[iso]) : null;
+        var baseVal = baseHas ? mepNormMealPersistValue(baseMap[iso]) : null;
+        if (curHas === baseHas && curVal === baseVal) return true;
+        var field = MEP_MEAL_ROW_TO_FIELD[rowId];
+        if (!field) return true;
+        if (!out.dailyMeal) out.dailyMeal = {};
+        if (!out.dailyMeal[field]) out.dailyMeal[field] = {};
+        out.dailyMeal[field][iso] = curHas ? curVal : null;
+        return true;
+      }
+      function mergeMepDailyMealFromPayload(payload, year) {
+        var y = Number(year);
+        if (!Number.isFinite(y) && typeof mefYear !== 'undefined') y = Number(mefYear);
+        MEP_MEAL_SKIP_EXPENSE_ROW_IDS.forEach(function (rowId) {
+          if (!mepIsMealPersistRowId(rowId)) {
+            if (rowValueById[rowId] && Number.isFinite(y)) {
+              Object.keys(rowValueById[rowId]).forEach(function (iso) {
+                if (typeof mepIsoYear === 'function' && mepIsoYear(iso) === y) {
+                  delete rowValueById[rowId][iso];
+                }
+              });
+            }
+            return;
+          }
+          if (!rowValueById[rowId]) rowValueById[rowId] = {};
+          var dest = rowValueById[rowId];
+          if (Number.isFinite(y)) {
+            Object.keys(dest).forEach(function (iso) {
+              if (typeof mepIsoYear === 'function' && mepIsoYear(iso) === y) delete dest[iso];
+            });
+          }
+          var field = MEP_MEAL_ROW_TO_FIELD[rowId];
+          var src = payload && payload.dailyMeal && payload.dailyMeal[field];
+          if (!src || typeof src !== 'object') return;
+          Object.keys(src).forEach(function (iso) {
+            if (!Object.prototype.hasOwnProperty.call(src, iso)) return;
+            if (Number.isFinite(y) && typeof mepIsoYear === 'function' && mepIsoYear(iso) !== y) return;
+            var n = Number(src[iso]);
+            if (!Number.isFinite(n)) return;
+            dest[iso] = Math.round(n);
+          });
+        });
+      }
+      function persistMepMealToYearStore(touched) {
+        var meal = touched && touched.dailyMeal;
+        if (!meal || typeof meal !== 'object') return true;
+        if (!window.KpiYearStore || typeof KpiYearStore.writeDailyMeal !== 'function') return false;
+        Object.keys(meal).forEach(function (field) {
+          var byIso = meal[field];
+          if (!byIso || typeof byIso !== 'object') return;
+          Object.keys(byIso).forEach(function (iso) {
+            KpiYearStore.writeDailyMeal(field, iso, byIso[iso]);
+          });
+        });
+        return true;
+      }
+      /* /KPI-MEP-DAILY-MEAL */
       function mergeMepIncomeStreamsFromPayload(payload) {
         var di = payload && payload.dailyIncome;
         if (!di || typeof di !== 'object') return;
@@ -7442,12 +7618,16 @@
           });
         });
       }
-      function mergeMepYearPayload(payload) {
+      function mergeMepYearPayload(payload, year) {
         if (!payload) return;
         Object.keys(payload.dailyExpenses || {}).forEach(function (rowId) {
+          if (typeof mepIsMealRowId === 'function' && mepIsMealRowId(rowId)) return;
           if (!rowValueById[rowId]) rowValueById[rowId] = {};
           Object.assign(rowValueById[rowId], payload.dailyExpenses[rowId]);
         });
+        if (typeof mergeMepDailyMealFromPayload === 'function') {
+          mergeMepDailyMealFromPayload(payload, year);
+        }
         /* dailyIncome を expenses より後に載せる（A/B/food/store の正本） */
         mergeMepIncomeStreamsFromPayload(payload);
         var meta = payload.dailyMeta || {};
@@ -7482,7 +7662,7 @@
         if (typeof KpiYearStore.reload === 'function') {
           KpiYearStore.reload();
         }
-        mergeMepYearPayload(KpiYearStore.loadMepYearPayload(year));
+        mergeMepYearPayload(KpiYearStore.loadMepYearPayload(year), year);
       }
       function replaceMepDailyExpensesForTouchedLineMonths(year, replacedKeys) {
         if (!replacedKeys || !replacedKeys.length) return;
@@ -7971,11 +8151,16 @@
       }
       function flushPendingMoneyInputsFromDom() {
         if (!root) return;
-        root.querySelectorAll('input[data-action="money-input"]').forEach(function (inp) {
+        root.querySelectorAll('input[data-action="money-input"], input[data-action="count-input"]').forEach(function (inp) {
           var rowId = inp.getAttribute('data-row-id');
           var iso = inp.getAttribute('data-iso');
           if (!rowId || !iso) return;
           if (inp.disabled || inp.readOnly) return;
+          if (typeof mepIsMealPersistRowId === 'function' && mepIsMealPersistRowId(rowId)) {
+            mepWriteMealFromRawInput(rowId, iso, inp.value);
+            return;
+          }
+          if (inp.getAttribute('data-action') === 'count-input') return;
           writeValue(rowId, iso, parseMoney(inp.value));
         });
       }
@@ -7984,6 +8169,9 @@
         var dailyExpenses = {};
         Object.keys(rowValueById || {}).forEach(function (rowId) {
           if (typeof mepIsIncomeCanonicalRowId === 'function' && mepIsIncomeCanonicalRowId(rowId)) {
+            return;
+          }
+          if (typeof mepIsMealRowId === 'function' && mepIsMealRowId(rowId)) {
             return;
           }
           var filtered = mepFilterIsoMap(rowValueById[rowId], y);
@@ -8069,6 +8257,7 @@
         var out = {
           dailyExpenses: {},
           dailyIncome: {},
+          dailyMeal: {},
           memos: {},
           weather: {},
           flags: {},
@@ -8110,6 +8299,9 @@
             : rowId;
           Object.keys(isos).forEach(function (iso) {
             if (Number.isFinite(y) && mepIsoYear(iso) !== y) return;
+            if (typeof mepCollectMealTouchedIso === 'function' && mepCollectMealTouchedIso(out, rowId, iso, curMap, baseMap)) {
+              return;
+            }
             if (mepNormMoney(curMap[iso]) === mepNormMoney(baseMap[iso])) return;
             var n = mepNormMoney(curMap[iso]);
             if (isIncome) {
@@ -8228,8 +8420,15 @@
           flushPendingMoneyInputsFromDom();
           if (typeof flushStrategyNoteToCache === 'function') flushStrategyNoteToCache();
         }
+        if (typeof persistMepMealToYearStore === 'function') persistMepMealToYearStore(touched);
+        var rawExp = touched.dailyExpenses || {};
+        var dailyExpenses = {};
+        Object.keys(rawExp).forEach(function (rowId) {
+          if (typeof mepIsMealRowId === 'function' && mepIsMealRowId(rowId)) return;
+          dailyExpenses[rowId] = rawExp[rowId];
+        });
         var payload = {
-          dailyExpenses: touched.dailyExpenses || {},
+          dailyExpenses: dailyExpenses,
           dailyMeta: {
             memos: touched.memos || {},
             weather: touched.weather || {},
@@ -8247,7 +8446,18 @@
           Object.keys(payload.dailyMeta.flags).length > 0 ||
           !!payload.mepMemoRows ||
           !!payload.monthlyStrategyUserNotes;
-        if (!hasExp && !hasMeta) return true;
+        var hasMeal = typeof mepTouchedDailyMealHasValues === 'function' && mepTouchedDailyMealHasValues(touched);
+        if (!hasExp && !hasMeta) {
+          if (
+            hasMeal &&
+            !(extra && extra.deferPersist) &&
+            window.KpiYearStore &&
+            typeof KpiYearStore.persistStore === 'function'
+          ) {
+            KpiYearStore.persistStore();
+          }
+          return true;
+        }
         return KpiYearStore.bulkPersistMepYear(year, payload, {
           source: 'monthly-edit-float',
           forceExpenses: !!(extra && extra.forceExpenses),
@@ -11742,6 +11952,7 @@
         var isoList = monthIsoList(mefYear, mefMonth0);
         /* Do not invent bizDayByIso from weekday — unset days stay without a key */
         Object.keys(rowValueById).forEach(function (rowId) {
+          if (typeof mepIsMealRowId === 'function' && mepIsMealRowId(rowId)) return;
           var m = rowValueById[rowId] || {};
           isoList.forEach(function (iso) {
             if (m[iso] == null) m[iso] = 0;
@@ -11761,11 +11972,6 @@
         });
         MEF_STATIC_INPUT_IDS.forEach(function (sid) {
           if (!rowValueById[sid]) rowValueById[sid] = {};
-          var sm = rowValueById[sid];
-          isoList.forEach(function (iso) {
-            if (sm[iso] == null) sm[iso] = 0;
-          });
-          rowValueById[sid] = sm;
         });
       }
       /* MEP-WEEKLY-MEMO-ROWS */
@@ -12285,6 +12491,17 @@
         return Number(byIso[iso] || 0);
       }
       function writeValue(rowId, iso, v) {
+        if (typeof mepIsMealPersistRowId === 'function' && mepIsMealPersistRowId(rowId)) {
+          if (!rowValueById[rowId]) rowValueById[rowId] = {};
+          if (v === undefined || v === null) {
+            delete rowValueById[rowId][iso];
+            return;
+          }
+          var mealN = Number(v);
+          if (!Number.isFinite(mealN) || mealN < 0) return;
+          rowValueById[rowId][iso] = Math.round(mealN);
+          return;
+        }
         if (!rowValueById[rowId]) rowValueById[rowId] = {};
         rowValueById[rowId][iso] = Number(v) || 0;
       }
@@ -12925,10 +13142,22 @@
                 var kind = r.valueKind || 'money';
                 var pathBlockedStatic = isMepScreenEditBlocked();
                 if (kind === 'count') {
-                  inp.value = fmtCount(readValue(r.id, iso));
+                  inp.value =
+                    typeof mepIsMealPersistRowId === 'function' &&
+                    mepIsMealPersistRowId(r.id) &&
+                    typeof mepMealHasGridValue === 'function' &&
+                    !mepMealHasGridValue(r.id, iso)
+                      ? ''
+                      : fmtCount(readValue(r.id, iso));
                   inp.setAttribute('data-action', 'count-input');
                 } else {
-                  inp.value = fmtMoney(readValue(r.id, iso));
+                  inp.value =
+                    typeof mepIsMealPersistRowId === 'function' &&
+                    mepIsMealPersistRowId(r.id) &&
+                    typeof mepMealHasGridValue === 'function' &&
+                    !mepMealHasGridValue(r.id, iso)
+                      ? ''
+                      : fmtMoney(readValue(r.id, iso));
                   inp.setAttribute('data-action', 'money-input');
                 }
                 inp.setAttribute('data-row-id', r.id);
@@ -14676,7 +14905,11 @@
             return;
           }
           pushUndo();
-          writeValue(rowId, iso2, parseMoney(target.value));
+          if (typeof mepIsMealPersistRowId === 'function' && mepIsMealPersistRowId(rowId)) {
+            mepWriteMealFromRawInput(rowId, iso2, target.value);
+          } else {
+            writeValue(rowId, iso2, parseMoney(target.value));
+          }
           var streamIdForRow =
             typeof mepIncomeStreamIdFromRowId === 'function'
               ? mepIncomeStreamIdFromRowId(rowId)
@@ -14723,7 +14956,11 @@
           var rowIdC = target.getAttribute('data-row-id');
           var isoC = target.getAttribute('data-iso');
           pushUndo();
-          writeValue(rowIdC, isoC, parseCount(target.value));
+          if (typeof mepIsMealPersistRowId === 'function' && mepIsMealPersistRowId(rowIdC)) {
+            mepWriteMealFromRawInput(rowIdC, isoC, target.value);
+          } else {
+            writeValue(rowIdC, isoC, parseCount(target.value));
+          }
           markDirty();
           buildGrid();
         } else if (action === 'memo-input') {

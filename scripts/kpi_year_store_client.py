@@ -260,10 +260,66 @@ def kpi_year_store_js() -> str:
           return store.years[year];
         }}
 
+        var DAILY_MEAL_FIELDS = [
+          'lunch_sales',
+          'dinner_sales',
+          'total_customers',
+          'lunch_customers',
+          'dinner_customers',
+          'total_groups',
+          'lunch_groups',
+          'dinner_groups',
+        ];
+
+        function isDailyMealField(field) {{
+          return DAILY_MEAL_FIELDS.indexOf(String(field || '')) >= 0;
+        }}
+
+        function ensureDailyMealMaps(rec) {{
+          if (!rec || typeof rec !== 'object') return null;
+          if (!rec.dailyMeal || typeof rec.dailyMeal !== 'object' || Array.isArray(rec.dailyMeal)) {{
+            rec.dailyMeal = {{}};
+          }}
+          DAILY_MEAL_FIELDS.forEach(function (field) {{
+            var map = rec.dailyMeal[field];
+            if (!map || typeof map !== 'object' || Array.isArray(map)) {{
+              rec.dailyMeal[field] = {{}};
+            }}
+          }});
+          return rec.dailyMeal;
+        }}
+
+        function readDailyMeal(field, iso) {{
+          if (!isDailyMealField(field) || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyMeal || typeof rec.dailyMeal !== 'object') return null;
+          var map = rec.dailyMeal[field];
+          if (!map || typeof map !== 'object') return null;
+          if (!Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          var n = Number(map[iso]);
+          if (!Number.isFinite(n)) return null;
+          return n;
+        }}
+
+        /* Memory only. Callers persist via existing persistStore() full PUT. */
+        function writeDailyMeal(field, iso, value) {{
+          if (!isDailyMealField(field) || !validIso(iso)) return false;
+          var rec = ensureYearMepData(isoYear(iso));
+          var map = rec.dailyMeal[field];
+          if (value === undefined || value === null) {{
+            if (Object.prototype.hasOwnProperty.call(map, iso)) delete map[iso];
+            return true;
+          }}
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return false;
+          map[iso] = Math.round(value);
+          return true;
+        }}
+
         function ensureYearMepData(year) {{
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {{}};
           if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {{}};
+          ensureDailyMealMaps(rec);
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {{
             rec.dailyMeta = {{ memos: {{}}, flags: {{}}, weather: {{}} }};
           }}
@@ -1894,6 +1950,7 @@ def kpi_year_store_js() -> str:
           return {{
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {{}})),
             dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {{}})),
+            dailyMeal: JSON.parse(JSON.stringify(ensureDailyMealMaps(rec) || {{}})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || {{ memos: {{}}, flags: {{}}, weather: {{}} }})
             ),
@@ -2108,6 +2165,8 @@ def kpi_year_store_js() -> str:
           readAnnualFacts: readAnnualFacts,
           writeDailyIncome: writeDailyIncome,
           readDailyIncome: readDailyIncome,
+          readDailyMeal: readDailyMeal,
+          writeDailyMeal: writeDailyMeal,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,
