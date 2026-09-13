@@ -41,14 +41,19 @@ MEAL_SKIP_IDS = (
     "groupCntLunch",
     "groupCntDinner",
 )
-MEAL_PERSIST = {
-    "incLunch": "lunch_sales",
+MEAL_WRITE_PERSIST = {
+    "incDinner": "dinner_sales",
     "cust": "total_customers",
-    "custLunch": "lunch_customers",
+    "custDinner": "dinner_customers",
     "groupCnt": "total_groups",
+    "groupCntDinner": "dinner_groups",
+}
+MEAL_HYDRATE = {
+    **MEAL_WRITE_PERSIST,
+    "incLunch": "lunch_sales",
+    "custLunch": "lunch_customers",
     "groupCntLunch": "lunch_groups",
 }
-MEAL_AUTOCALC = ("incDinner", "custDinner", "groupCntDinner")
 ISO = "2026-03-02"
 
 
@@ -150,6 +155,7 @@ def test_merge_skips_old_expense_keys() -> None:
         "dailyMeal": {
             "lunch_sales": {ISO: 0},
             "total_customers": {ISO: 8},
+            "dinner_sales": {ISO: 400},
         },
     }
     year = 2026
@@ -166,7 +172,7 @@ def test_merge_skips_old_expense_keys() -> None:
             continue
         row_value.setdefault(row_id, {}).update(by_iso)
     for row_id in MEAL_SKIP_IDS:
-        if row_id not in MEAL_PERSIST:
+        if row_id not in MEAL_HYDRATE:
             mp = row_value.get(row_id) or {}
             for iso in list(mp):
                 if mep_iso_year(iso) == year:
@@ -176,7 +182,7 @@ def test_merge_skips_old_expense_keys() -> None:
         for iso in list(dest):
             if mep_iso_year(iso) == year:
                 del dest[iso]
-        field = MEAL_PERSIST[row_id]
+        field = MEAL_HYDRATE[row_id]
         src = (payload.get("dailyMeal") or {}).get(field) or {}
         for iso, raw in src.items():
             n = int(round(float(raw)))
@@ -186,7 +192,7 @@ def test_merge_skips_old_expense_keys() -> None:
     assert_true(ISO not in row_value.get("custLunch", {}), "missing lunch customers stays missing")
     assert_true(row_value["cust"].get(ISO) == 8, "customers hydrate from dailyMeal")
     assert_true(row_value["rent"].get(ISO) == 5000, "expense rows still hydrate from dailyExpenses")
-    assert_true(ISO not in (row_value.get("incDinner") or {}), "old incDinner expense key not read")
+    assert_true(row_value["incDinner"].get(ISO) == 400, "dinner hydrates from dailyMeal not expenses")
 
 
 def test_collect_payload_python() -> None:
@@ -211,7 +217,7 @@ def test_collect_payload_python() -> None:
         isos = set(cur_map) | set(base_map)
         for iso in isos:
             if row_id in MEAL_SKIP_IDS:
-                if row_id not in MEAL_PERSIST:
+                if row_id not in MEAL_WRITE_PERSIST:
                     continue
                 cur_has = iso in cur_map
                 base_has = iso in base_map
@@ -219,16 +225,16 @@ def test_collect_payload_python() -> None:
                 base_val = int(base_map[iso]) if base_has else None
                 if cur_has == base_has and cur_val == base_val:
                     continue
-                field = MEAL_PERSIST[row_id]
+                field = MEAL_WRITE_PERSIST[row_id]
                 daily_meal.setdefault(field, {})[iso] = cur_val if cur_has else None
                 continue
             if int(cur_map.get(iso) or 0) == int(base_map.get(iso) or 0):
                 continue
             daily_expenses.setdefault(row_id, {})[iso] = int(cur_map.get(iso) or 0)
     assert_true("incLunch" not in daily_expenses, "incLunch must not fall into dailyExpenses")
-    assert_true("incDinner" not in daily_expenses, "incDinner must not persist")
-    assert_true("dinner_sales" not in daily_meal, "autoCalc dinner must not write dailyMeal")
-    assert_true(daily_meal.get("lunch_sales", {}).get(ISO) == 0, "explicit 0 lunch_sales is dirty")
+    assert_true("incDinner" not in daily_expenses, "incDinner must not fall into dailyExpenses")
+    assert_true(daily_meal.get("dinner_sales", {}).get(ISO) == 900, "dirty dinner_sales writes dailyMeal")
+    assert_true("lunch_sales" not in daily_meal, "derived lunch_sales must not be collected")
     assert_true("total_customers" not in daily_meal, "unchanged cust is not dirty")
     assert_true(daily_expenses.get("rent", {}).get(ISO) == 100, "expense dirty still goes to dailyExpenses")
 
@@ -239,16 +245,19 @@ def test_forbidden_files_unmodified() -> None:
     year_store = (SCRIPTS / "kpi_year_store_client.py").read_text(encoding="utf-8")
     assert_true("function writeDailyMeal" in year_store, "Unit 1 writeDailyMeal remains in year-store client")
     helper = mep_daily_meal_runtime_js()
-    for dinner in MEAL_AUTOCALC:
-        field = {
-            "incDinner": "dinner_sales",
-            "custDinner": "dinner_customers",
-            "groupCntDinner": "dinner_groups",
-        }[dinner]
-        assert_true(dinner not in helper.split("MEP_MEAL_ROW_TO_FIELD")[1].split("MEP_MEAL_PERSIST_ROW_IDS")[0] or True, "guard")
-        mapping = helper.split("var MEP_MEAL_ROW_TO_FIELD")[1].split("var MEP_MEAL_PERSIST_ROW_IDS")[0]
-        assert_true(field not in mapping, f"{field} must not be in persist mapping")
-        assert_true(dinner not in mapping, f"{dinner} must not persist")
+    mapping = helper.split("var MEP_MEAL_ROW_TO_FIELD")[1].split("var MEP_MEAL_PERSIST_ROW_IDS")[0]
+    for dinner, field in (
+        ("incDinner", "dinner_sales"),
+        ("custDinner", "dinner_customers"),
+        ("groupCntDinner", "dinner_groups"),
+    ):
+        assert_true(dinner in mapping, f"{dinner} must persist")
+        assert_true(field in mapping, f"{field} must be in persist mapping")
+    persist_ids = helper.split("var MEP_MEAL_PERSIST_ROW_IDS")[1].split("var MEP_MEAL_LUNCH_ROW_IDS")[0]
+    assert_true("'incDinner'" in persist_ids, "incDinner is a persist row")
+    assert_true("'incLunch'" not in persist_ids, "derived lunch is not a persist row")
+    assert_true("'custLunch'" not in persist_ids, "derived lunch customers are not persist")
+    assert_true("'groupCntLunch'" not in persist_ids, "derived lunch groups are not persist")
 
 
 def main() -> int:

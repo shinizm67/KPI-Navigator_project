@@ -428,6 +428,361 @@ def patch_input_handlers(text: str) -> str:
     return text
 
 
+def patch_dinner_row_defs(text: str) -> str:
+    replacements = [
+        (
+            "            autoCalc: true,\n"
+            "            autoCalcParent: 'salesRow',\n"
+            "            autoCalcLunchId: 'incLunch',\n"
+            "            valueKind: 'money',\n"
+            "            autoCalcTitle: dinnerAutoCalcHint()",
+            "            valueKind: 'money'",
+            "incDinner autoCalc off",
+        ),
+        (
+            "            autoCalc: true,\n"
+            "            autoCalcParent: 'cust',\n"
+            "            autoCalcLunchId: 'custLunch',\n"
+            "            valueKind: 'count',\n"
+            "            autoCalcTitle: dinnerAutoCalcHint()",
+            "            valueKind: 'count'",
+            "custDinner autoCalc off",
+        ),
+        (
+            "            autoCalc: true,\n"
+            "            autoCalcParent: 'groupCnt',\n"
+            "            autoCalcLunchId: 'groupCntLunch',\n"
+            "            valueKind: 'count',\n"
+            "            autoCalcTitle: dinnerAutoCalcHint()",
+            "            valueKind: 'count'",
+            "groupCntDinner autoCalc off",
+        ),
+        (
+            "            autoCalc: true,\n"
+            "            autoCalcParent: 'pc',\n"
+            "            autoCalcLunchId: 'pcLunch',\n"
+            "            valueKind: 'money',\n"
+            "            autoCalcTitle: dinnerAutoCalcHint()",
+            "            autoCalc: true,\n"
+            "            valueKind: 'money'",
+            "pcDinner keep autoCalc drop parent-lunch",
+        ),
+    ]
+    for old, new, label in replacements:
+        if old not in text:
+            continue
+        text = replace_once(text, old, new, label)
+    return text
+
+
+def patch_lunch_row_defs(text: str) -> str:
+    specs = [
+        ("incLunch", "salesRow", "incDinner", "money"),
+        ("custLunch", "cust", "custDinner", "count"),
+        ("groupCntLunch", "groupCnt", "groupCntDinner", "count"),
+    ]
+    for row_id, parent, dinner_id, kind in specs:
+        if f"autoCalcLunchId: '{dinner_id}'" in text and f"id: '{row_id}'" in text:
+            block = text.split(f"id: '{row_id}'", 1)[1].split("rows.push({", 1)[0]
+            if f"autoCalcLunchId: '{dinner_id}'" in block:
+                continue
+        pattern = re.compile(
+            rf"(id: '{row_id}',(?:(?!rows\.push).)*?sub: true,\n)(            valueKind: '{kind}')",
+            re.DOTALL,
+        )
+        repl = (
+            rf"\1            autoCalc: true,\n"
+            rf"            autoCalcParent: '{parent}',\n"
+            rf"            autoCalcLunchId: '{dinner_id}',\n"
+            rf"\2"
+        )
+        new_text, n = pattern.subn(repl, text, count=1)
+        if n != 1:
+            raise ValueError(f"patch miss ({row_id} derived autoCalc)")
+        text = new_text
+    return text
+
+
+def patch_mef_static_input_ids(text: str) -> str:
+    target = (
+        "      var MEF_STATIC_INPUT_IDS = ['incDinner', 'cust', 'custDinner',"
+        " 'groupCnt', 'groupCntDinner'];"
+    )
+    if target in text:
+        return text
+    candidates = [
+        "      var MEF_STATIC_INPUT_IDS = ['incLunch', 'incDinner', 'cust', 'custLunch',"
+        " 'custDinner', 'groupCnt', 'groupCntLunch', 'groupCntDinner'];",
+        "      var MEF_STATIC_INPUT_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];",
+    ]
+    for old in candidates:
+        if old in text:
+            return replace_once(text, old, target, "MEF_STATIC_INPUT_IDS dinner hand input")
+    raise ValueError("patch miss (MEF_STATIC_INPUT_IDS dinner hand input)")
+
+
+def patch_pc_total_and_lunch_calc(text: str) -> str:
+    old = """        if (rowId === 'pc') {
+          sales =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          cust = Math.round(Number(readValue('cust', iso)) || 0);
+        } else if (rowId === 'pcLunch') {
+          sales = Math.round(Number(readValue('incLunch', iso)) || 0);
+          cust = Math.round(Number(readValue('custLunch', iso)) || 0);
+        } else if (rowId === 'pcDinner') {"""
+    new = """        if (rowId === 'pc') {
+          if (
+            typeof mepHasExplicitMealOrIncome !== 'function' ||
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepHasExplicitMealOrIncome('store_sales', iso) ||
+            !mepMealHasGridValue('cust', iso)
+          ) {
+            return null;
+          }
+          sales =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          cust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('cust', iso)
+              : Math.round(Number(readValue('cust', iso)) || 0);
+          if (sales == null || cust == null) return null;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
+        } else if (rowId === 'pcLunch') {
+          if (
+            typeof mepHasExplicitMealOrIncome !== 'function' ||
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepHasExplicitMealOrIncome('store_sales', iso) ||
+            !mepMealHasGridValue('cust', iso) ||
+            !mepMealHasGridValue('incDinner', iso) ||
+            !mepMealHasGridValue('custDinner', iso)
+          ) {
+            return null;
+          }
+          var totalSales =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          var totalCust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('cust', iso)
+              : Math.round(Number(readValue('cust', iso)) || 0);
+          var dinnerSales =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('incDinner', iso)
+              : Math.round(Number(readValue('incDinner', iso)) || 0);
+          var dinnerCust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('custDinner', iso)
+              : Math.round(Number(readValue('custDinner', iso)) || 0);
+          if (totalSales == null || totalCust == null || dinnerSales == null || dinnerCust == null) {
+            return null;
+          }
+          sales = totalSales - dinnerSales;
+          cust = totalCust - dinnerCust;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
+        } else if (rowId === 'pcDinner') {"""
+    if new in text and old not in text:
+        return text
+    return replace_once(text, old, new, "computeAvgSpendValue pc and pcLunch")
+
+
+def patch_compute_static_auto_calc(text: str) -> str:
+    old = """      function computeStaticAutoCalcValue(r, iso) {
+        if (!r || !r.autoCalcLunchId) return 0;
+        var lunchVal = readValue(r.autoCalcLunchId, iso);
+        var parentVal = 0;
+        if (r.autoCalcParent === 'salesRow') {
+          parentVal =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : (function () {
+                  var sid = primarySalesRowId();
+                  return sid ? readValue(sid, iso) : 0;
+                })();
+        } else if (r.autoCalcParent) {
+          parentVal = readValue(r.autoCalcParent, iso);
+        }
+        return Math.round(Number(parentVal) || 0) - Math.round(Number(lunchVal) || 0);
+      }"""
+    new = """      function computeStaticAutoCalcValue(r, iso) {
+        if (!r || !r.autoCalcLunchId) return 0;
+        if (typeof mepComputeDerivedLunchValue === 'function') {
+          return mepComputeDerivedLunchValue(r, iso);
+        }
+        var lunchVal = readValue(r.autoCalcLunchId, iso);
+        var parentVal = 0;
+        if (r.autoCalcParent === 'salesRow') {
+          parentVal =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : (function () {
+                  var sid = primarySalesRowId();
+                  return sid ? readValue(sid, iso) : 0;
+                })();
+        } else if (r.autoCalcParent) {
+          parentVal = readValue(r.autoCalcParent, iso);
+        }
+        return Math.round(Number(parentVal) || 0) - Math.round(Number(lunchVal) || 0);
+      }"""
+    if new in text and old not in text:
+        return text
+    return replace_once(text, old, new, "computeStaticAutoCalcValue derived lunch")
+
+
+def patch_grid_autocalc_empty(text: str) -> str:
+    old = """                } else if (r.autoCalcLunchId) {
+                  var autoVal = computeStaticAutoCalcValue(r, iso);
+                  inp.value = autoKind === 'count' ? fmtCount(autoVal) : fmtMoney(autoVal);"""
+    new = """                } else if (r.autoCalcLunchId) {
+                  var autoVal = computeStaticAutoCalcValue(r, iso);
+                  inp.value =
+                    autoVal == null
+                      ? ''
+                      : autoKind === 'count'
+                        ? fmtCount(autoVal)
+                        : fmtMoney(autoVal);"""
+    if new in text and old not in text:
+        return text
+    return replace_once(text, old, new, "autoCalc lunch empty when dinner missing")
+
+
+def patch_pc_dinner_calc(text: str) -> str:
+    old = """        } else if (rowId === 'pcDinner') {
+          var store =
+            typeof mepIncomeReadValue === 'function'
+              ? mepIncomeReadValue('store_sales', iso)
+              : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
+          var lunch = Math.round(Number(readValue('incLunch', iso)) || 0);
+          var custAll = Math.round(Number(readValue('cust', iso)) || 0);
+          var custL = Math.round(Number(readValue('custLunch', iso)) || 0);
+          sales = store - lunch;
+          cust = custAll - custL;
+        } else {
+          return 0;
+        }
+        if (!(cust > 0) || !(sales > 0)) return 0;
+        return Math.round(sales / cust);"""
+    new = """        } else if (rowId === 'pcDinner') {
+          if (
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepMealHasGridValue('incDinner', iso) ||
+            !mepMealHasGridValue('custDinner', iso)
+          ) {
+            return null;
+          }
+          var dinnerSalesMap = rowValueById.incDinner || {};
+          var dinnerCustMap = rowValueById.custDinner || {};
+          sales =
+            typeof mepNormMealPersistValue === 'function'
+              ? mepNormMealPersistValue(dinnerSalesMap[iso])
+              : Math.round(Number(dinnerSalesMap[iso]));
+          cust =
+            typeof mepNormMealPersistValue === 'function'
+              ? mepNormMealPersistValue(dinnerCustMap[iso])
+              : Math.round(Number(dinnerCustMap[iso]));
+          if (sales == null || cust == null) return null;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
+        } else {
+          return 0;
+        }
+        if (!(cust > 0) || !(sales > 0)) return 0;
+        return Math.round(sales / cust);"""
+    return replace_once(text, old, new, "computeAvgSpendValue pcDinner")
+
+
+def patch_pc_dinner_display(text: str) -> str:
+    old = """                if (r.id === 'pc' || r.id === 'pcLunch' || r.id === 'pcDinner') {
+                  inp.value = fmtMoney(computeAvgSpendValue(r.id, iso));"""
+    new = """                if (r.id === 'pc' || r.id === 'pcLunch' || r.id === 'pcDinner') {
+                  var pcVal = computeAvgSpendValue(r.id, iso);
+                  inp.value = pcVal == null ? '' : fmtMoney(pcVal);"""
+    return replace_once(text, old, new, "pcDinner empty vs explicit 0")
+
+
+MEP_MEAL_REF_CSS_BEGIN = "    /* KPI-MEP-MEAL-REF */"
+MEP_MEAL_REF_CSS_END = "    /* /KPI-MEP-MEAL-REF */"
+
+
+def patch_meal_ref_css(text: str) -> str:
+    if MEP_MEAL_REF_CSS_BEGIN not in text:
+        return text
+    pattern = re.compile(
+        re.escape(MEP_MEAL_REF_CSS_BEGIN)
+        + r"[\s\S]*?"
+        + re.escape(MEP_MEAL_REF_CSS_END)
+        + r"\n"
+    )
+    if not pattern.search(text):
+        raise ValueError("KPI-MEP-MEAL-REF BEGIN present but block not matched")
+    return pattern.sub("", text, count=1)
+
+
+def patch_dinner_ref_hint(text: str) -> str:
+    injected = """              td.appendChild(inp);
+              if (
+                typeof mepIsDinnerPersistRowId === 'function' &&
+                mepIsDinnerPersistRowId(r.id) &&
+                typeof mepAppendDinnerRefHint === 'function'
+              ) {
+                mepAppendDinnerRefHint(td, r.id, iso);
+              }
+              if (isMepUiBusinessDay(iso)) {"""
+    original = """              td.appendChild(inp);
+              if (isMepUiBusinessDay(iso)) {"""
+    if injected not in text:
+        return text
+    return replace_once(text, injected, original, "remove dinner ref hint")
+
+
+def patch_unused_dinner_auto_calc_hint(text: str) -> str:
+    pattern = re.compile(
+        r"      function dinnerAutoCalcHint\(\) \{\n"
+        r"        return t\([^)]+\);\n"
+        r"      \}\n"
+    )
+    if not pattern.search(text):
+        return text
+    return pattern.sub("", text, count=1)
+
+
+def patch_perform_mep_save_validation(text: str) -> str:
+    old = """      function performMepSave() {
+        return Promise.resolve()
+          .then(function () {
+            return runMepSaveTransaction();
+          })"""
+    new = """      function performMepSave() {
+        return Promise.resolve()
+          .then(function () {
+            try {
+              if (typeof flushPendingMoneyInputsFromDom === 'function') flushPendingMoneyInputsFromDom();
+              if (typeof flushPendingMemoEditsFromDom === 'function') flushPendingMemoEditsFromDom();
+              var mealErr =
+                typeof mepValidateMealBreakdown === 'function' ? mepValidateMealBreakdown(mefYear) : null;
+              if (mealErr) {
+                mepSaveInProgress = false;
+                window.alert(mealErr);
+                return { ok: false };
+              }
+            } catch (_mealVal) {
+              mepSaveInProgress = false;
+              throw _mealVal;
+            }
+            return runMepSaveTransaction();
+          })"""
+    return replace_once(text, old, new, "performMepSave meal validation")
+
+
 def patch_grid_display(text: str) -> str:
     old = """                if (kind === 'count') {
                   inp.value = fmtCount(readValue(r.id, iso));
@@ -473,6 +828,18 @@ def patch_one(text: str) -> str:
     text = patch_flush_inputs(text)
     text = patch_input_handlers(text)
     text = patch_grid_display(text)
+    text = patch_grid_autocalc_empty(text)
+    text = patch_dinner_row_defs(text)
+    text = patch_lunch_row_defs(text)
+    text = patch_mef_static_input_ids(text)
+    text = patch_pc_dinner_calc(text)
+    text = patch_pc_total_and_lunch_calc(text)
+    text = patch_pc_dinner_display(text)
+    text = patch_compute_static_auto_calc(text)
+    text = patch_dinner_ref_hint(text)
+    text = patch_meal_ref_css(text)
+    text = patch_unused_dinner_auto_calc_hint(text)
+    text = patch_perform_mep_save_validation(text)
     return text
 
 

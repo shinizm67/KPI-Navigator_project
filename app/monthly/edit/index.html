@@ -7481,12 +7481,28 @@
       /* KPI-MEP-DAILY-MEAL */
       var MEP_MEAL_ROW_TO_FIELD = {
         incLunch: 'lunch_sales',
+        incDinner: 'dinner_sales',
         cust: 'total_customers',
         custLunch: 'lunch_customers',
+        custDinner: 'dinner_customers',
         groupCnt: 'total_groups',
-        groupCntLunch: 'lunch_groups'
+        groupCntLunch: 'lunch_groups',
+        groupCntDinner: 'dinner_groups'
       };
-      var MEP_MEAL_PERSIST_ROW_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];
+      var MEP_MEAL_PERSIST_ROW_IDS = [
+        'incDinner',
+        'cust',
+        'custDinner',
+        'groupCnt',
+        'groupCntDinner'
+      ];
+      var MEP_MEAL_LUNCH_ROW_IDS = ['incLunch', 'custLunch', 'groupCntLunch'];
+      var MEP_MEAL_DINNER_ROW_IDS = ['incDinner', 'custDinner', 'groupCntDinner'];
+      var MEP_MEAL_BREAKDOWN_TRIPLES = [
+        { total: 'store_sales', lunch: 'incLunch', dinner: 'incDinner', kind: 'money' },
+        { total: 'cust', lunch: 'custLunch', dinner: 'custDinner', kind: 'count' },
+        { total: 'groupCnt', lunch: 'groupCntLunch', dinner: 'groupCntDinner', kind: 'count' }
+      ];
       var MEP_MEAL_SKIP_EXPENSE_ROW_IDS = [
         'incLunch',
         'incDinner',
@@ -7516,12 +7532,112 @@
         return String(text == null ? '' : text).replace(/[^\d.-]/g, '') === '';
       }
       function mepWriteMealFromRawInput(rowId, iso, rawText) {
+        if (!mepIsMealPersistRowId(rowId)) return;
         if (mepMealRawIsBlank(rawText)) {
           writeValue(rowId, iso, null);
           return;
         }
-        if (rowId === 'incLunch') writeValue(rowId, iso, parseMoney(rawText));
+        if (rowId === 'incDinner') writeValue(rowId, iso, parseMoney(rawText));
         else writeValue(rowId, iso, parseCount(rawText));
+      }
+      function mepIsLunchDerivedRowId(rowId) {
+        return MEP_MEAL_LUNCH_ROW_IDS.indexOf(String(rowId || '')) >= 0;
+      }
+      function mepIsMealHydrateRowId(rowId) {
+        return Object.prototype.hasOwnProperty.call(MEP_MEAL_ROW_TO_FIELD, String(rowId || ''));
+      }
+      function mepComputeDerivedLunchValue(r, iso) {
+        if (!r || !r.autoCalcLunchId) return null;
+        var dinnerId = r.autoCalcLunchId;
+        var hasD = mepMealHasGridValue(dinnerId, iso);
+        var hasT =
+          r.autoCalcParent === 'salesRow'
+            ? mepHasExplicitMealOrIncome('store_sales', iso)
+            : mepMealHasGridValue(r.autoCalcParent, iso);
+        if (!hasT || !hasD) return null;
+        var tVal =
+          r.autoCalcParent === 'salesRow'
+            ? mepExplicitRoundedValue('store_sales', iso)
+            : mepExplicitRoundedValue(r.autoCalcParent, iso);
+        var dVal = mepExplicitRoundedValue(dinnerId, iso);
+        if (tVal == null || dVal == null) return null;
+        return tVal - dVal;
+      }
+      function mepHasExplicitMealOrIncome(rowId, iso) {
+        if (rowId === 'store_sales') {
+          var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId('store_sales') : 'store_sales';
+          var byIso = rowValueById[rid] || rowValueById.store_sales;
+          if (byIso && Object.prototype.hasOwnProperty.call(byIso, iso)) return true;
+          try {
+            if (window.KpiYearStore && typeof KpiYearStore.readDailyIncome === 'function') {
+              return KpiYearStore.readDailyIncome('store_sales', iso) != null;
+            }
+          } catch (_eInc) {}
+          return false;
+        }
+        return mepMealHasGridValue(rowId, iso);
+      }
+      function mepExplicitRoundedValue(rowId, iso) {
+        if (rowId === 'store_sales') {
+          if (typeof mepIncomeReadValue === 'function') {
+            return Math.round(Number(mepIncomeReadValue('store_sales', iso)) || 0);
+          }
+          return Math.round(Number(typeof readValue === 'function' ? readValue('store_sales', iso) : 0) || 0);
+        }
+        var map = rowValueById[rowId] || {};
+        return mepNormMealPersistValue(map[iso]);
+      }
+      function mepMealBreakdownErrorMessage() {
+        return t(
+          '合計と内訳が一致しません。値は自動修正しません。',
+          'Total and breakdown do not match. Values are not auto-corrected.',
+          '合計與明細不一致。不會自動修正。'
+        );
+      }
+      function mepMealExceedsTotalMessage() {
+        return t(
+          '内訳が合計を超えています。',
+          'Breakdown exceeds total.',
+          '明細超過合計。'
+        );
+      }
+      function mepValidateMealTripleIso(triple, iso) {
+        var hasT = mepHasExplicitMealOrIncome(triple.total, iso);
+        var hasL = mepHasExplicitMealOrIncome(triple.lunch, iso);
+        var hasD = mepHasExplicitMealOrIncome(triple.dinner, iso);
+        var tVal = hasT ? mepExplicitRoundedValue(triple.total, iso) : null;
+        var lVal = hasL ? mepExplicitRoundedValue(triple.lunch, iso) : null;
+        var dVal = hasD ? mepExplicitRoundedValue(triple.dinner, iso) : null;
+        if (hasT && hasL && lVal != null && tVal != null && lVal > tVal) return mepMealExceedsTotalMessage();
+        if (hasT && hasD && dVal != null && tVal != null && dVal > tVal) return mepMealExceedsTotalMessage();
+        if (
+          hasT &&
+          hasL &&
+          hasD &&
+          tVal != null &&
+          lVal != null &&
+          dVal != null &&
+          lVal + dVal !== tVal
+        ) {
+          return mepMealBreakdownErrorMessage();
+        }
+        return null;
+      }
+      function mepValidateMealBreakdown(year) {
+        var y = Number(year);
+        if (!Number.isFinite(y)) y = typeof mefYear !== 'undefined' ? Number(mefYear) : NaN;
+        if (!Number.isFinite(y) || typeof monthIsoList !== 'function') return null;
+        for (var m0 = 0; m0 < 12; m0++) {
+          var isos = monthIsoList(y, m0);
+          for (var i = 0; i < isos.length; i++) {
+            var iso = isos[i];
+            for (var ti = 0; ti < MEP_MEAL_BREAKDOWN_TRIPLES.length; ti++) {
+              var err = mepValidateMealTripleIso(MEP_MEAL_BREAKDOWN_TRIPLES[ti], iso);
+              if (err) return iso + ' — ' + err;
+            }
+          }
+        }
+        return null;
       }
       function mepTouchedDailyMealHasValues(touched) {
         var meal = touched && touched.dailyMeal;
@@ -7552,7 +7668,7 @@
         var y = Number(year);
         if (!Number.isFinite(y) && typeof mefYear !== 'undefined') y = Number(mefYear);
         MEP_MEAL_SKIP_EXPENSE_ROW_IDS.forEach(function (rowId) {
-          if (!mepIsMealPersistRowId(rowId)) {
+          if (!mepIsMealHydrateRowId(rowId)) {
             if (rowValueById[rowId] && Number.isFinite(y)) {
               Object.keys(rowValueById[rowId]).forEach(function (iso) {
                 if (typeof mepIsoYear === 'function' && mepIsoYear(iso) === y) {
@@ -9406,7 +9522,7 @@
         if (!d || !isFinite(d.getTime())) return '';
         return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
       }
-      var MEF_STATIC_INPUT_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];
+      var MEF_STATIC_INPUT_IDS = ['incDinner', 'cust', 'custDinner', 'groupCnt', 'groupCntDinner'];
       function isMepDailySalesPathBlocked() {
         return !!(
           window.KpiYearStore &&
@@ -9510,9 +9626,6 @@
       function autoCalcHint() {
         return t('自動計算されます', 'Calculated automatically');
       }
-      function dinnerAutoCalcHint() {
-        return t('親行 − ランチ行で自動計算', 'Parent minus lunch (auto)');
-      }
       function primarySalesRowId() {
         createInitialRowsIfNeeded();
         if (PL_CATALOG_BY_ID.store_sales) return 'store_sales';
@@ -9522,6 +9635,9 @@
       }
       function computeStaticAutoCalcValue(r, iso) {
         if (!r || !r.autoCalcLunchId) return 0;
+        if (typeof mepComputeDerivedLunchValue === 'function') {
+          return mepComputeDerivedLunchValue(r, iso);
+        }
         var lunchVal = readValue(r.autoCalcLunchId, iso);
         var parentVal = 0;
         if (r.autoCalcParent === 'salesRow') {
@@ -9542,24 +9658,83 @@
         var sales = 0;
         var cust = 0;
         if (rowId === 'pc') {
+          if (
+            typeof mepHasExplicitMealOrIncome !== 'function' ||
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepHasExplicitMealOrIncome('store_sales', iso) ||
+            !mepMealHasGridValue('cust', iso)
+          ) {
+            return null;
+          }
           sales =
-            typeof mepIncomeReadValue === 'function'
-              ? mepIncomeReadValue('store_sales', iso)
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('store_sales', iso)
               : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
-          cust = Math.round(Number(readValue('cust', iso)) || 0);
+          cust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('cust', iso)
+              : Math.round(Number(readValue('cust', iso)) || 0);
+          if (sales == null || cust == null) return null;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
         } else if (rowId === 'pcLunch') {
-          sales = Math.round(Number(readValue('incLunch', iso)) || 0);
-          cust = Math.round(Number(readValue('custLunch', iso)) || 0);
-        } else if (rowId === 'pcDinner') {
-          var store =
-            typeof mepIncomeReadValue === 'function'
-              ? mepIncomeReadValue('store_sales', iso)
+          if (
+            typeof mepHasExplicitMealOrIncome !== 'function' ||
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepHasExplicitMealOrIncome('store_sales', iso) ||
+            !mepMealHasGridValue('cust', iso) ||
+            !mepMealHasGridValue('incDinner', iso) ||
+            !mepMealHasGridValue('custDinner', iso)
+          ) {
+            return null;
+          }
+          var totalSales =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('store_sales', iso)
               : Math.round(Number(readValue(primarySalesRowId() || 'store_sales', iso)) || 0);
-          var lunch = Math.round(Number(readValue('incLunch', iso)) || 0);
-          var custAll = Math.round(Number(readValue('cust', iso)) || 0);
-          var custL = Math.round(Number(readValue('custLunch', iso)) || 0);
-          sales = store - lunch;
-          cust = custAll - custL;
+          var totalCust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('cust', iso)
+              : Math.round(Number(readValue('cust', iso)) || 0);
+          var dinnerSales =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('incDinner', iso)
+              : Math.round(Number(readValue('incDinner', iso)) || 0);
+          var dinnerCust =
+            typeof mepExplicitRoundedValue === 'function'
+              ? mepExplicitRoundedValue('custDinner', iso)
+              : Math.round(Number(readValue('custDinner', iso)) || 0);
+          if (totalSales == null || totalCust == null || dinnerSales == null || dinnerCust == null) {
+            return null;
+          }
+          sales = totalSales - dinnerSales;
+          cust = totalCust - dinnerCust;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
+        } else if (rowId === 'pcDinner') {
+          if (
+            typeof mepMealHasGridValue !== 'function' ||
+            !mepMealHasGridValue('incDinner', iso) ||
+            !mepMealHasGridValue('custDinner', iso)
+          ) {
+            return null;
+          }
+          var dinnerSalesMap = rowValueById.incDinner || {};
+          var dinnerCustMap = rowValueById.custDinner || {};
+          sales =
+            typeof mepNormMealPersistValue === 'function'
+              ? mepNormMealPersistValue(dinnerSalesMap[iso])
+              : Math.round(Number(dinnerSalesMap[iso]));
+          cust =
+            typeof mepNormMealPersistValue === 'function'
+              ? mepNormMealPersistValue(dinnerCustMap[iso])
+              : Math.round(Number(dinnerCustMap[iso]));
+          if (sales == null || cust == null) return null;
+          if (!(cust > 0)) return null;
+          if (!(sales > 0)) return 0;
+          return Math.round(sales / cust);
         } else {
           return 0;
         }
@@ -12059,6 +12234,9 @@
             labelEn: 'Lunch Sales',
             section: 'income',
             sub: true,
+            autoCalc: true,
+            autoCalcParent: 'salesRow',
+            autoCalcLunchId: 'incDinner',
             valueKind: 'money'
           });
           rows.push({
@@ -12068,11 +12246,7 @@
             labelEn: 'Dinner Sales',
             section: 'income',
             sub: true,
-            autoCalc: true,
-            autoCalcParent: 'salesRow',
-            autoCalcLunchId: 'incLunch',
-            valueKind: 'money',
-            autoCalcTitle: dinnerAutoCalcHint()
+            valueKind: 'money'
           });
           rows.push({
             type: 'moneyStatic',
@@ -12113,6 +12287,9 @@
             labelEn: 'Lunch Customers',
             section: 'income',
             sub: true,
+            autoCalc: true,
+            autoCalcParent: 'cust',
+            autoCalcLunchId: 'custDinner',
             valueKind: 'count'
           });
           rows.push({
@@ -12122,11 +12299,7 @@
             labelEn: 'Dinner Customers',
             section: 'income',
             sub: true,
-            autoCalc: true,
-            autoCalcParent: 'cust',
-            autoCalcLunchId: 'custLunch',
-            valueKind: 'count',
-            autoCalcTitle: dinnerAutoCalcHint()
+            valueKind: 'count'
           });
           rows.push({
             type: 'moneyStatic',
@@ -12153,10 +12326,7 @@
             section: 'income',
             sub: true,
             autoCalc: true,
-            autoCalcParent: 'pc',
-            autoCalcLunchId: 'pcLunch',
-            valueKind: 'money',
-            autoCalcTitle: dinnerAutoCalcHint()
+            valueKind: 'money'
           });
           rows.push({
             type: 'moneyStatic',
@@ -12173,6 +12343,9 @@
             labelEn: 'Lunch Groups',
             section: 'income',
             sub: true,
+            autoCalc: true,
+            autoCalcParent: 'groupCnt',
+            autoCalcLunchId: 'groupCntDinner',
             valueKind: 'count'
           });
           rows.push({
@@ -12182,11 +12355,7 @@
             labelEn: 'Dinner Groups',
             section: 'income',
             sub: true,
-            autoCalc: true,
-            autoCalcParent: 'groupCnt',
-            autoCalcLunchId: 'groupCntLunch',
-            valueKind: 'count',
-            autoCalcTitle: dinnerAutoCalcHint()
+            valueKind: 'count'
           });
         }
         rows.push({ type: 'group', id: 'g-exp', labelJa: '支出', labelEn: 'EXPENSES' });
@@ -13100,12 +13269,18 @@
               } else if (r.autoCalc) {
                 var autoKind = r.valueKind || 'money';
                 if (r.id === 'pc' || r.id === 'pcLunch' || r.id === 'pcDinner') {
-                  inp.value = fmtMoney(computeAvgSpendValue(r.id, iso));
+                  var pcVal = computeAvgSpendValue(r.id, iso);
+                  inp.value = pcVal == null ? '' : fmtMoney(pcVal);
                 } else if (r.id === 'target' || r.id === 'diff') {
                   inp.value = fmtMepPlanMoney(computeMepTargetDiffAchValue(r.id, iso));
                 } else if (r.autoCalcLunchId) {
                   var autoVal = computeStaticAutoCalcValue(r, iso);
-                  inp.value = autoKind === 'count' ? fmtCount(autoVal) : fmtMoney(autoVal);
+                  inp.value =
+                    autoVal == null
+                      ? ''
+                      : autoKind === 'count'
+                        ? fmtCount(autoVal)
+                        : fmtMoney(autoVal);
                 } else {
                   inp.value = autoKind === 'count' ? fmtCount(0) : fmtMoney(0);
                 }
@@ -13791,6 +13966,20 @@
       function performMepSave() {
         return Promise.resolve()
           .then(function () {
+            try {
+              if (typeof flushPendingMoneyInputsFromDom === 'function') flushPendingMoneyInputsFromDom();
+              if (typeof flushPendingMemoEditsFromDom === 'function') flushPendingMemoEditsFromDom();
+              var mealErr =
+                typeof mepValidateMealBreakdown === 'function' ? mepValidateMealBreakdown(mefYear) : null;
+              if (mealErr) {
+                mepSaveInProgress = false;
+                window.alert(mealErr);
+                return { ok: false };
+              }
+            } catch (_mealVal) {
+              mepSaveInProgress = false;
+              throw _mealVal;
+            }
             return runMepSaveTransaction();
           })
           .then(function (putResult) {
