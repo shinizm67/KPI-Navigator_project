@@ -67,12 +67,28 @@ def mep_daily_meal_runtime_js() -> str:
     return f"""      {MEP_DAILY_MEAL_BEGIN}
       var MEP_MEAL_ROW_TO_FIELD = {{
         incLunch: 'lunch_sales',
+        incDinner: 'dinner_sales',
         cust: 'total_customers',
         custLunch: 'lunch_customers',
+        custDinner: 'dinner_customers',
         groupCnt: 'total_groups',
-        groupCntLunch: 'lunch_groups'
+        groupCntLunch: 'lunch_groups',
+        groupCntDinner: 'dinner_groups'
       }};
-      var MEP_MEAL_PERSIST_ROW_IDS = ['incLunch', 'cust', 'custLunch', 'groupCnt', 'groupCntLunch'];
+      var MEP_MEAL_PERSIST_ROW_IDS = [
+        'incDinner',
+        'cust',
+        'custDinner',
+        'groupCnt',
+        'groupCntDinner'
+      ];
+      var MEP_MEAL_LUNCH_ROW_IDS = ['incLunch', 'custLunch', 'groupCntLunch'];
+      var MEP_MEAL_DINNER_ROW_IDS = ['incDinner', 'custDinner', 'groupCntDinner'];
+      var MEP_MEAL_BREAKDOWN_TRIPLES = [
+        {{ total: 'store_sales', lunch: 'incLunch', dinner: 'incDinner', kind: 'money' }},
+        {{ total: 'cust', lunch: 'custLunch', dinner: 'custDinner', kind: 'count' }},
+        {{ total: 'groupCnt', lunch: 'groupCntLunch', dinner: 'groupCntDinner', kind: 'count' }}
+      ];
       var MEP_MEAL_SKIP_EXPENSE_ROW_IDS = [
         'incLunch',
         'incDinner',
@@ -102,12 +118,112 @@ def mep_daily_meal_runtime_js() -> str:
         return String(text == null ? '' : text).replace(/[^\\d.-]/g, '') === '';
       }}
       function mepWriteMealFromRawInput(rowId, iso, rawText) {{
+        if (!mepIsMealPersistRowId(rowId)) return;
         if (mepMealRawIsBlank(rawText)) {{
           writeValue(rowId, iso, null);
           return;
         }}
-        if (rowId === 'incLunch') writeValue(rowId, iso, parseMoney(rawText));
+        if (rowId === 'incDinner') writeValue(rowId, iso, parseMoney(rawText));
         else writeValue(rowId, iso, parseCount(rawText));
+      }}
+      function mepIsLunchDerivedRowId(rowId) {{
+        return MEP_MEAL_LUNCH_ROW_IDS.indexOf(String(rowId || '')) >= 0;
+      }}
+      function mepIsMealHydrateRowId(rowId) {{
+        return Object.prototype.hasOwnProperty.call(MEP_MEAL_ROW_TO_FIELD, String(rowId || ''));
+      }}
+      function mepComputeDerivedLunchValue(r, iso) {{
+        if (!r || !r.autoCalcLunchId) return null;
+        var dinnerId = r.autoCalcLunchId;
+        var hasD = mepMealHasGridValue(dinnerId, iso);
+        var hasT =
+          r.autoCalcParent === 'salesRow'
+            ? mepHasExplicitMealOrIncome('store_sales', iso)
+            : mepMealHasGridValue(r.autoCalcParent, iso);
+        if (!hasT || !hasD) return null;
+        var tVal =
+          r.autoCalcParent === 'salesRow'
+            ? mepExplicitRoundedValue('store_sales', iso)
+            : mepExplicitRoundedValue(r.autoCalcParent, iso);
+        var dVal = mepExplicitRoundedValue(dinnerId, iso);
+        if (tVal == null || dVal == null) return null;
+        return tVal - dVal;
+      }}
+      function mepHasExplicitMealOrIncome(rowId, iso) {{
+        if (rowId === 'store_sales') {{
+          var rid = typeof mepStreamRowId === 'function' ? mepStreamRowId('store_sales') : 'store_sales';
+          var byIso = rowValueById[rid] || rowValueById.store_sales;
+          if (byIso && Object.prototype.hasOwnProperty.call(byIso, iso)) return true;
+          try {{
+            if (window.KpiYearStore && typeof KpiYearStore.readDailyIncome === 'function') {{
+              return KpiYearStore.readDailyIncome('store_sales', iso) != null;
+            }}
+          }} catch (_eInc) {{}}
+          return false;
+        }}
+        return mepMealHasGridValue(rowId, iso);
+      }}
+      function mepExplicitRoundedValue(rowId, iso) {{
+        if (rowId === 'store_sales') {{
+          if (typeof mepIncomeReadValue === 'function') {{
+            return Math.round(Number(mepIncomeReadValue('store_sales', iso)) || 0);
+          }}
+          return Math.round(Number(typeof readValue === 'function' ? readValue('store_sales', iso) : 0) || 0);
+        }}
+        var map = rowValueById[rowId] || {{}};
+        return mepNormMealPersistValue(map[iso]);
+      }}
+      function mepMealBreakdownErrorMessage() {{
+        return t(
+          '合計と内訳が一致しません。値は自動修正しません。',
+          'Total and breakdown do not match. Values are not auto-corrected.',
+          '合計與明細不一致。不會自動修正。'
+        );
+      }}
+      function mepMealExceedsTotalMessage() {{
+        return t(
+          '内訳が合計を超えています。',
+          'Breakdown exceeds total.',
+          '明細超過合計。'
+        );
+      }}
+      function mepValidateMealTripleIso(triple, iso) {{
+        var hasT = mepHasExplicitMealOrIncome(triple.total, iso);
+        var hasL = mepHasExplicitMealOrIncome(triple.lunch, iso);
+        var hasD = mepHasExplicitMealOrIncome(triple.dinner, iso);
+        var tVal = hasT ? mepExplicitRoundedValue(triple.total, iso) : null;
+        var lVal = hasL ? mepExplicitRoundedValue(triple.lunch, iso) : null;
+        var dVal = hasD ? mepExplicitRoundedValue(triple.dinner, iso) : null;
+        if (hasT && hasL && lVal != null && tVal != null && lVal > tVal) return mepMealExceedsTotalMessage();
+        if (hasT && hasD && dVal != null && tVal != null && dVal > tVal) return mepMealExceedsTotalMessage();
+        if (
+          hasT &&
+          hasL &&
+          hasD &&
+          tVal != null &&
+          lVal != null &&
+          dVal != null &&
+          lVal + dVal !== tVal
+        ) {{
+          return mepMealBreakdownErrorMessage();
+        }}
+        return null;
+      }}
+      function mepValidateMealBreakdown(year) {{
+        var y = Number(year);
+        if (!Number.isFinite(y)) y = typeof mefYear !== 'undefined' ? Number(mefYear) : NaN;
+        if (!Number.isFinite(y) || typeof monthIsoList !== 'function') return null;
+        for (var m0 = 0; m0 < 12; m0++) {{
+          var isos = monthIsoList(y, m0);
+          for (var i = 0; i < isos.length; i++) {{
+            var iso = isos[i];
+            for (var ti = 0; ti < MEP_MEAL_BREAKDOWN_TRIPLES.length; ti++) {{
+              var err = mepValidateMealTripleIso(MEP_MEAL_BREAKDOWN_TRIPLES[ti], iso);
+              if (err) return iso + ' — ' + err;
+            }}
+          }}
+        }}
+        return null;
       }}
       function mepTouchedDailyMealHasValues(touched) {{
         var meal = touched && touched.dailyMeal;
@@ -138,7 +254,7 @@ def mep_daily_meal_runtime_js() -> str:
         var y = Number(year);
         if (!Number.isFinite(y) && typeof mefYear !== 'undefined') y = Number(mefYear);
         MEP_MEAL_SKIP_EXPENSE_ROW_IDS.forEach(function (rowId) {{
-          if (!mepIsMealPersistRowId(rowId)) {{
+          if (!mepIsMealHydrateRowId(rowId)) {{
             if (rowValueById[rowId] && Number.isFinite(y)) {{
               Object.keys(rowValueById[rowId]).forEach(function (iso) {{
                 if (typeof mepIsoYear === 'function' && mepIsoYear(iso) === y) {{
