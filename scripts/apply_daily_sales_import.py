@@ -60,17 +60,79 @@ AEM_CSV_OLD = """      if (btnCsv) {
         });
       }"""
 
-AEM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
-        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
-          getYear: function () { return state.year; },
-          applyMaps: function (maps, year) {
+AEM_APPLY_OLD = """          applyMaps: function (maps, year) {
             pushUndoSnapshot();
             window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
             recomputeModalDirty();
             syncUndoButton();
             renderTable();
             scrollToViewMonth();
-          },
+          },"""
+
+AEM_APPLY_MEAL_STORE = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var mealWrote = 0;
+            if (window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              mealWrote = window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            if (mealWrote && window.KpiYearStore && typeof KpiYearStore.persistStore === 'function') {
+              KpiYearStore.persistStore();
+            }
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderTable();
+            scrollToViewMonth();
+          },"""
+
+AEM_APPLY_NEW = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            if (!window.KpiYearStore || typeof KpiYearStore.persistFromAnnualDaily !== 'function') {
+              var missingPersist = new Error('persist-unavailable');
+              missingPersist.userMessage = 'Import stopped. Persist API is unavailable.';
+              return Promise.reject(missingPersist);
+            }
+            if (window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            var persistP = KpiYearStore.persistFromAnnualDaily(
+              { targetSalesByDate: maps.salesByDate || {}, businessDayByDate: maps.businessDayByDate || {} },
+              { source: 'annual-edit-csv-import' }
+            );
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderTable();
+            scrollToViewMonth();
+            return persistP;
+          },"""
+
+AEM_APPLY_UNCHECKED = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            if (window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            if (!window.KpiYearStore || typeof KpiYearStore.persistFromAnnualDaily !== 'function') {
+              var missingPersist = new Error('persist-unavailable');
+              missingPersist.userMessage = 'Import stopped. Persist API is unavailable.';
+              return Promise.reject(missingPersist);
+            }
+            var persistP = KpiYearStore.persistFromAnnualDaily(
+              { targetSalesByDate: maps.salesByDate || {}, businessDayByDate: maps.businessDayByDate || {} },
+              { source: 'annual-edit-csv-import' }
+            );
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderTable();
+            scrollToViewMonth();
+            return persistP;
+          },"""
+
+AEM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
+          getYear: function () { return state.year; },
+""" + AEM_APPLY_NEW + """
         });
       }"""
 
@@ -80,17 +142,7 @@ AEM_CSV_OLD_EN = """      if (btnCsv) {
         });
       }"""
 
-PSM_CSV_STUB_BLOCK = """      if (btnCsv) {
-        btnCsv.addEventListener('click', function () {
-          window.alert(MSG_CSV_STUB);
-        });
-      }"""
-
-PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
-        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
-          persistByCsvYear: true,
-          getYear: function () { return state.year; },
-          applyMaps: function (maps, year) {
+PSM_APPLY_OLD = """          applyMaps: function (maps, year) {
             pushUndoSnapshot();
             persistPastSalesCsvByYear(maps);
             var yShow = Number(year);
@@ -102,21 +154,121 @@ PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
             renderPastSalesTable();
             updatePastSalesSummary();
             refreshPastSalesTableTotals();
+          },"""
+
+PSM_APPLY_NEW = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var persistP = persistPastSalesCsvByYear(maps);
+            var yShow = Number(year);
+            var csvYears = maps.years || [];
+            if (csvYears.indexOf(yShow) < 0) return persistP;
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, yShow);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderPastSalesTable();
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+            return persistP;
+          },"""
+
+PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
+          persistByCsvYear: true,
+          getYear: function () { return state.year; },
+          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var persistP = persistPastSalesCsvByYear(maps);
+            var yShow = Number(year);
+            var csvYears = maps.years || [];
+            if (csvYears.indexOf(yShow) < 0) return persistP;
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, yShow);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderPastSalesTable();
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+            return persistP;
           },
         });
       }"""
 
-SDM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
-        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
-          getYear: function () { return state.year; },
-          applyMaps: function (maps, year) {
+SDM_APPLY_OLD = """          applyMaps: function (maps, year) {
             pushUndoSnapshot();
             window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
             recomputeModalDirty();
             syncUndoButton();
             renderSalesDataTable();
             updateSalesDataSummary();
-          },
+            refreshSalesDataTableTotals();
+          },"""
+
+SDM_APPLY_MEAL_STORE = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var mealWrote = 0;
+            if (window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              mealWrote = window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            if (mealWrote && window.KpiYearStore && typeof KpiYearStore.persistStore === 'function') {
+              KpiYearStore.persistStore();
+            }
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderSalesDataTable();
+            updateSalesDataSummary();
+            refreshSalesDataTableTotals();
+          },"""
+
+SDM_APPLY_NEW = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            if (!window.KpiYearStore || typeof KpiYearStore.persistFromAnnualDaily !== 'function') {
+              var missingPersist = new Error('persist-unavailable');
+              missingPersist.userMessage = 'Import stopped. Persist API is unavailable.';
+              return Promise.reject(missingPersist);
+            }
+            if (window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            var persistP = KpiYearStore.persistFromAnnualDaily(
+              { targetSalesByDate: maps.salesByDate || {}, businessDayByDate: maps.businessDayByDate || {} },
+              { source: 'sales-data-csv-import' }
+            );
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderSalesDataTable();
+            updateSalesDataSummary();
+            refreshSalesDataTableTotals();
+            return persistP;
+          },"""
+
+SDM_APPLY_UNCHECKED = """          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            if (window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
+              window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+            }
+            if (!window.KpiYearStore || typeof KpiYearStore.persistFromAnnualDaily !== 'function') {
+              var missingPersist = new Error('persist-unavailable');
+              missingPersist.userMessage = 'Import stopped. Persist API is unavailable.';
+              return Promise.reject(missingPersist);
+            }
+            var persistP = KpiYearStore.persistFromAnnualDaily(
+              { targetSalesByDate: maps.salesByDate || {}, businessDayByDate: maps.businessDayByDate || {} },
+              { source: 'sales-data-csv-import' }
+            );
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderSalesDataTable();
+            updateSalesDataSummary();
+            refreshSalesDataTableTotals();
+            return persistP;
+          },"""
+
+SDM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+        window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
+          getYear: function () { return state.year; },
+""" + SDM_APPLY_NEW + """
         });
       }"""
 
@@ -210,6 +362,23 @@ PAST_SALES_CSV_HELPER = """      function persistPastSalesCsvByYear(maps) {
         Object.keys(biz).forEach(function (iso) {
           ps.businessDayByDate[iso] = biz[iso];
         });
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps === 'function') {
+          var mealMaps = {
+            dinnerSalesByDate: {},
+            totalCustomersByDate: {},
+            dinnerCustomersByDate: {},
+            totalGroupsByDate: {},
+            dinnerGroupsByDate: {}
+          };
+          Object.keys(sales).forEach(function (iso) {
+            ['dinnerSalesByDate', 'totalCustomersByDate', 'dinnerCustomersByDate', 'totalGroupsByDate', 'dinnerGroupsByDate'].forEach(function (k) {
+              if (maps[k] && Object.prototype.hasOwnProperty.call(maps[k], iso)) {
+                mealMaps[k][iso] = maps[k][iso];
+              }
+            });
+          });
+          window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(mealMaps);
+        }
         if (window.KpiYearStore && typeof KpiYearStore.persistFromPastSales === 'function') {
           var done = KpiYearStore.persistFromPastSales(
             { salesByDate: sales, businessDayByDate: biz },
@@ -260,6 +429,9 @@ MEP_SALES_CSV_HELPER = """      function persistMepSalesCsvByYear(maps) {
         Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
           addIncome('drink_sales', iso, maps.drinkByDate[iso]);
         });
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps === 'function') {
+          window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+        }
         var daily = ensureAnnualDailyStore();
         daily.targetSalesByDate = daily.targetSalesByDate || {};
         daily.businessDayByDate = daily.businessDayByDate || {};
@@ -304,16 +476,15 @@ MEP_CSV_BIND_INNER = """window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
             applyMaps: function (maps, year) {
               pushUndo();
               var persistP = persistMepSalesCsvByYear(maps);
-              Promise.resolve(persistP).catch(function () {});
               var yShow = Number(mefYear);
               var csvYears = maps.years || [];
-              if (csvYears.indexOf(yShow) < 0) return Promise.resolve();
+              if (csvYears.indexOf(yShow) < 0) return persistP;
               var applied = applyDailyImportMapsToOpenYear(maps, yShow);
-              if (!applied) return Promise.resolve();
+              if (!applied) return persistP;
               markDirty();
               syncUndoButton();
               buildGrid();
-              return Promise.resolve();
+              return persistP;
             },
           });"""
 
@@ -340,6 +511,18 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
             var food = Number(foodMap[iso]);
             writeValue('food_sales', iso, Number.isFinite(food) ? Math.round(food) : 0);
           }
+          function writeMealGrid(rowId, map) {
+            if (!map || !Object.prototype.hasOwnProperty.call(map, iso)) return;
+            if (typeof writeValue !== 'function') return;
+            var mealN = Number(map[iso]);
+            if (!Number.isFinite(mealN) || mealN < 0) return;
+            writeValue(rowId, iso, Math.round(mealN));
+          }
+          writeMealGrid('incDinner', maps.dinnerSalesByDate);
+          writeMealGrid('cust', maps.totalCustomersByDate);
+          writeMealGrid('custDinner', maps.dinnerCustomersByDate);
+          writeMealGrid('groupCnt', maps.totalGroupsByDate);
+          writeMealGrid('groupCntDinner', maps.dinnerGroupsByDate);
           applied++;
         });
         return applied;
@@ -349,7 +532,7 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
 def inject_import_js(text: str) -> str:
     block = daily_sales_import_js().rstrip() + "\n"
     if DAILY_SALES_IMPORT_MARKER in text:
-        pattern = re.escape(DAILY_SALES_IMPORT_MARKER) + r"[\s\S]*?\}\)\(\);\n"
+        pattern = r"[ \t]*" + re.escape(DAILY_SALES_IMPORT_MARKER) + r"[\s\S]*?\}\)\(\);\n"
         if re.search(pattern, text):
             return re.sub(pattern, lambda _m: block.rstrip() + "\n", text, count=1)
         raise SystemExit("daily sales import marker found but block boundary missing")
@@ -449,6 +632,8 @@ def replace_modal_csv_stub(text: str, btn_anchor: str, new: str, label: str, *, 
     if not m:
         if new.split("\n")[1].strip() in tail[:80000]:
             return text
+        if optional:
+            return text
         raise SystemExit(f"patch miss ({label})")
     start = idx + m.start()
     end = idx + m.end()
@@ -516,8 +701,26 @@ def patch_annual_page(path: Path) -> None:
         "sales data csv",
         optional=True,
     )
+    if AEM_APPLY_OLD in text:
+        text = text.replace(AEM_APPLY_OLD, AEM_APPLY_NEW, 1)
+    if AEM_APPLY_MEAL_STORE in text:
+        text = text.replace(AEM_APPLY_MEAL_STORE, AEM_APPLY_NEW, 1)
+    if AEM_APPLY_UNCHECKED in text:
+        text = text.replace(AEM_APPLY_UNCHECKED, AEM_APPLY_NEW, 1)
+    if PSM_APPLY_OLD in text:
+        text = text.replace(PSM_APPLY_OLD, PSM_APPLY_NEW, 1)
+    if SDM_APPLY_OLD in text:
+        text = text.replace(SDM_APPLY_OLD, SDM_APPLY_NEW, 1)
+    if SDM_APPLY_MEAL_STORE in text:
+        text = text.replace(SDM_APPLY_MEAL_STORE, SDM_APPLY_NEW, 1)
+    if SDM_APPLY_UNCHECKED in text:
+        text = text.replace(SDM_APPLY_UNCHECKED, SDM_APPLY_NEW, 1)
     path.write_text(text, encoding="utf-8")
-    print(f"wrote {path.relative_to(ROOT)}")
+    try:
+        rel = path.relative_to(ROOT)
+    except ValueError:
+        rel = path
+    print(f"wrote {rel}")
 
 
 def patch_mep_apply_food_drink(text: str) -> str:
@@ -559,7 +762,11 @@ def patch_mep_page(path: Path) -> None:
             text = text.replace(MEP_CSV_TITLE_EN_OLD_AND, MEP_CSV_TITLE_EN_NEW, 1)
         text = replace_once(text, MEP_CSV_OLD_EN, MEP_CSV_NEW, "mep csv en")
     path.write_text(text, encoding="utf-8")
-    print(f"wrote {path.relative_to(ROOT)}")
+    try:
+        rel = path.relative_to(ROOT)
+    except ValueError:
+        rel = path
+    print(f"wrote {rel}")
 
 
 def main() -> int:
@@ -571,13 +778,6 @@ def main() -> int:
         patch_annual_page(path)
     for path in MEP_PAGES:
         patch_mep_page(path)
-    import subprocess
-
-    subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "apply_csv_upload_tooltip_css.py")],
-        cwd=str(ROOT),
-        check=False,
-    )
     return 0
 
 
