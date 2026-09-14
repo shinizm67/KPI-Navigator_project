@@ -871,26 +871,49 @@ def daily_sales_import_js() -> str:
           return fileInput;
         }}
 
-        function bindButton(btn, options) {{
-          if (!btn || btn.getAttribute('data-kpi-import-bound') === '1') return;
-          btn.setAttribute('data-kpi-import-bound', '1');
-          var tip = t(
-            'CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。',
-            'Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK).'
-          );
-          btn.setAttribute('data-tooltip', tip);
-          btn.removeAttribute('title');
+        function getDailyImportApi() {{
+          var api = window.__KPI_DAILY_IMPORT;
+          if (
+            !api ||
+            typeof api.parseFile !== 'function' ||
+            typeof api.rowsToMaps !== 'function' ||
+            typeof api.applyToRowState !== 'function'
+          ) {{
+            return null;
+          }}
+          return api;
+        }}
 
-          btn.addEventListener('click', function () {{
-            if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
-            var input = ensureFileInput();
-            input.value = '';
-            input.onchange = function () {{
-              var file = input.files && input.files[0];
-              if (!file) return;
-              var busy = window.__KPI_BUSY;
-              if (busy && typeof busy.show === 'function') busy.show('parse');
-              parseFile(file)
+        function alertEngineMissing() {{
+          window.alert(
+            t(
+              'CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。',
+              'CSV import engine failed to load. Please reload the page.',
+              'CSV 匯入引擎載入失敗，請重新整理頁面。'
+            )
+          );
+        }}
+
+        function beginImport(options) {{
+          var api = getDailyImportApi();
+          if (!api) {{
+            alertEngineMissing();
+            return;
+          }}
+          if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
+          var input = ensureFileInput();
+          input.value = '';
+          input.onchange = function () {{
+            var file = input.files && input.files[0];
+            if (!file) return;
+            var live = getDailyImportApi();
+            if (!live) {{
+              alertEngineMissing();
+              return;
+            }}
+            var busy = window.__KPI_BUSY;
+            if (busy && typeof busy.show === 'function') busy.show('parse');
+            live.parseFile(file)
                 .then(function (maps) {{
                   if (busy && typeof busy.hide === 'function') busy.hide();
                   var targetYear =
@@ -975,8 +998,22 @@ def daily_sales_import_js() -> str:
                     )
                   );
                 }});
-            }};
-            input.click();
+          }};
+          input.click();
+        }}
+
+        function bindButton(btn, options) {{
+          if (!btn || btn.getAttribute('data-kpi-import-bound') === '1') return;
+          btn.setAttribute('data-kpi-import-bound', '1');
+          var tip = t(
+            'CSVで日次売上を取り込めます。Excel（.xlsx）も可。任意でフード/ドリンク列（どちらか一方でも可）。',
+            'Import daily sales from CSV or Excel (.xlsx). Optional Food/Drink columns (either side OK).'
+          );
+          btn.setAttribute('data-tooltip', tip);
+          btn.removeAttribute('title');
+
+          btn.addEventListener('click', function () {{
+            beginImport(options);
           }});
         }}
 
@@ -988,6 +1025,8 @@ def daily_sales_import_js() -> str:
           parseBizCell: parseBizCell,
           persistDailyMealFromMaps: persistDailyMealFromMaps,
           applyToRowState: applyToRowState,
+          getDailyImportApi: getDailyImportApi,
+          beginImport: beginImport,
           bindButton: bindButton,
           tooltip: function () {{
             return t(

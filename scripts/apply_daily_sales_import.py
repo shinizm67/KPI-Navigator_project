@@ -129,12 +129,62 @@ AEM_APPLY_UNCHECKED = """          applyMaps: function (maps, year) {
             return persistP;
           },"""
 
-AEM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+AEM_CSV_IF_API = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
           getYear: function () { return state.year; },
 """ + AEM_APPLY_NEW + """
         });
       }"""
+
+ANNUAL_CSV_ENGINE_FAIL = """            window.alert(
+              (function () {
+                var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+                if (lang.indexOf('zh') === 0) return 'CSV 匯入引擎載入失敗，請重新整理頁面。';
+                if (lang.indexOf('ja') === 0) return 'CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。';
+                return 'CSV import engine failed to load. Please reload the page.';
+              })()
+            );"""
+
+MEP_CSV_ENGINE_FAIL = """            window.alert(
+              mepCsvText(
+                'CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。',
+                'CSV import engine failed to load. Please reload the page.',
+                'CSV 匯入引擎載入失敗，請重新整理頁面。'
+              )
+            );"""
+
+
+def csv_click_time_listeners(btn_var: str, opts_var: str, fail_body: str) -> str:
+    return (
+        f"        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.bindButton === 'function') {{\n"
+        f"          window.__KPI_DAILY_IMPORT.bindButton({btn_var}, {opts_var});\n"
+        f"        }}\n"
+        f"        {btn_var}.addEventListener('click', function () {{\n"
+        f"          var api = window.__KPI_DAILY_IMPORT;\n"
+        f"          if ({btn_var}.getAttribute('data-kpi-import-bound') === '1') return;\n"
+        f"          if (!api || typeof api.parseFile !== 'function' || typeof api.beginImport !== 'function') {{\n"
+        f"{fail_body}\n"
+        f"            return;\n"
+        f"          }}\n"
+        f"          api.bindButton({btn_var}, {opts_var});\n"
+        f"          api.beginImport({opts_var});\n"
+        f"        }});"
+    )
+
+
+AEM_CSV_NEW = (
+    """      if (btnCsv) {
+        var csvImportOpts = {
+          getYear: function () { return state.year; },
+"""
+    + AEM_APPLY_NEW
+    + """
+        };
+"""
+    + csv_click_time_listeners("btnCsv", "csvImportOpts", ANNUAL_CSV_ENGINE_FAIL)
+    + """
+      }"""
+)
 
 AEM_CSV_OLD_EN = """      if (btnCsv) {
         btnCsv.addEventListener('click', function () {
@@ -171,7 +221,7 @@ PSM_APPLY_NEW = """          applyMaps: function (maps, year) {
             return persistP;
           },"""
 
-PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+PSM_CSV_IF_API = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
           persistByCsvYear: true,
           getYear: function () { return state.year; },
@@ -191,6 +241,32 @@ PSM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
           },
         });
       }"""
+
+PSM_CSV_NEW = (
+    """      if (btnCsv) {
+        var csvImportOpts = {
+          persistByCsvYear: true,
+          getYear: function () { return state.year; },
+          applyMaps: function (maps, year) {
+            pushUndoSnapshot();
+            var persistP = persistPastSalesCsvByYear(maps);
+            var yShow = Number(year);
+            var csvYears = maps.years || [];
+            if (csvYears.indexOf(yShow) < 0) return persistP;
+            window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, yShow);
+            recomputeModalDirty();
+            syncUndoButton();
+            renderPastSalesTable();
+            updatePastSalesSummary();
+            refreshPastSalesTableTotals();
+            return persistP;
+          },
+        };
+"""
+    + csv_click_time_listeners("btnCsv", "csvImportOpts", ANNUAL_CSV_ENGINE_FAIL)
+    + """
+      }"""
+)
 
 SDM_APPLY_OLD = """          applyMaps: function (maps, year) {
             pushUndoSnapshot();
@@ -265,12 +341,26 @@ SDM_APPLY_UNCHECKED = """          applyMaps: function (maps, year) {
             return persistP;
           },"""
 
-SDM_CSV_NEW = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
+SDM_CSV_IF_API = """      if (btnCsv && window.__KPI_DAILY_IMPORT) {
         window.__KPI_DAILY_IMPORT.bindButton(btnCsv, {
           getYear: function () { return state.year; },
 """ + SDM_APPLY_NEW + """
         });
       }"""
+
+SDM_CSV_NEW = (
+    """      if (btnCsv) {
+        var csvImportOpts = {
+          getYear: function () { return state.year; },
+"""
+    + SDM_APPLY_NEW
+    + """
+        };
+"""
+    + csv_click_time_listeners("btnCsv", "csvImportOpts", ANNUAL_CSV_ENGINE_FAIL)
+    + """
+      }"""
+)
 
 MEP_CSV_OLD_JA = """      if (btnCsvUpload) {
         btnCsvUpload.addEventListener('click', function () {
@@ -284,26 +374,72 @@ MEP_CSV_OLD_EN = """      if (btnCsvUpload) {
         });
       }"""
 
-MEP_CSV_NEW = """      if (btnCsvUpload && window.__KPI_DAILY_IMPORT) {
-        window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
+MEP_CSV_IF_API = """        if (window.__KPI_DAILY_IMPORT) {
+          window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {
+            persistByCsvYear: true,
+            getYear: function () { return mefYear; },
+            applyMaps: function (maps, year) {
+              pushUndo();
+              var persistP = persistMepSalesCsvByYear(maps);
+              var yShow = Number(mefYear);
+              var csvYears = maps.years || [];
+              if (csvYears.indexOf(yShow) < 0) return persistP;
+              var applied = applyDailyImportMapsToOpenYear(maps, yShow);
+              if (!applied) return persistP;
+              markDirty();
+              syncUndoButton();
+              buildGrid();
+              return persistP;
+            },
+          });
+        } else {
+          btnCsvUpload.addEventListener('click', function () {
+            window.alert(
+              mepCsvText(
+                'CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。',
+                'CSV import engine failed to load. Please reload the page.',
+                'CSV 匯入引擎載入失敗，請重新整理頁面。'
+              )
+            );
+          });
+        }"""
+
+MEP_CSV_OPTS = """var mepCsvImportOpts = {
           persistByCsvYear: true,
           getYear: function () { return mefYear; },
           applyMaps: function (maps, year) {
             pushUndo();
             var persistP = persistMepSalesCsvByYear(maps);
-            Promise.resolve(persistP).catch(function () {});
             var yShow = Number(mefYear);
             var csvYears = maps.years || [];
-            if (csvYears.indexOf(yShow) < 0) return Promise.resolve();
+            if (csvYears.indexOf(yShow) < 0) return persistP;
             var applied = applyDailyImportMapsToOpenYear(maps, yShow);
-            if (!applied) return Promise.resolve();
+            if (!applied) return persistP;
             markDirty();
             syncUndoButton();
             buildGrid();
-            return Promise.resolve();
+            return persistP;
           },
-        });
+        };"""
+
+MEP_CSV_NEW = (
+    """      if (btnCsvUpload) {
+        """
+    + MEP_CSV_OPTS
+    + """
+"""
+    + csv_click_time_listeners("btnCsvUpload", "mepCsvImportOpts", MEP_CSV_ENGINE_FAIL)
+    + """
       }"""
+)
+
+MEP_CSV_INNER_NEW = (
+    "        "
+    + MEP_CSV_OPTS
+    + """
+"""
+    + csv_click_time_listeners("btnCsvUpload", "mepCsvImportOpts", MEP_CSV_ENGINE_FAIL)
+)
 
 MEP_CSV_PUSH_UNDO_BUG = """          applyMaps: function (maps, year) {
             pushUndoSnapshot();
@@ -604,6 +740,10 @@ def replace_js_call_object(text: str, call_prefix: str, new_call: str) -> str:
 
 
 def ensure_mep_csv_bind(text: str) -> str:
+    if MEP_CSV_IF_API in text:
+        text = text.replace(MEP_CSV_IF_API, MEP_CSV_INNER_NEW, 1)
+    if "var mepCsvImportOpts = {" in text:
+        return replace_js_call_object(text, "var mepCsvImportOpts = {", MEP_CSV_OPTS)
     return replace_js_call_object(
         text,
         "window.__KPI_DAILY_IMPORT.bindButton(btnCsvUpload, {",
@@ -684,6 +824,12 @@ def patch_annual_page(path: Path) -> None:
         "persistPastSalesShared",
     )
     text = patch_tooltips(text, is_ja)
+    if AEM_CSV_IF_API in text:
+        text = text.replace(AEM_CSV_IF_API, AEM_CSV_NEW, 1)
+    if PSM_CSV_IF_API in text:
+        text = text.replace(PSM_CSV_IF_API, PSM_CSV_NEW, 1)
+    if SDM_CSV_IF_API in text:
+        text = text.replace(SDM_CSV_IF_API, SDM_CSV_NEW, 1)
     if is_ja:
         text = replace_once(text, AEM_CSV_OLD, AEM_CSV_NEW, "annual edit csv ja")
     else:

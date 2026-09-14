@@ -981,6 +981,151 @@ def test_generator_main_scope() -> None:
     assert_true(css_call not in after_main, "tooltip css script not invoked after main")
 
 
+def test_click_time_api_lookup() -> None:
+    js = src_js()
+    begin = js.split("function beginImport(options)", 1)[1].split("function bindButton", 1)[0]
+    assert_true("function getDailyImportApi()" in js, "getDailyImportApi exists")
+    assert_true("var api = window.__KPI_DAILY_IMPORT;" in js, "getDailyImportApi reads window")
+    assert_true("function beginImport(options)" in js, "beginImport exists")
+    assert_true("var live = getDailyImportApi();" in begin, "beginImport re-gets API on file select")
+    assert_true("live.parseFile(file)" in begin, "beginImport uses live.parseFile")
+    assert_true(
+        "parseFile(file)" not in begin.replace("live.parseFile(file)", ""),
+        "beginImport does not close over parseFile",
+    )
+    assert_true(
+        "CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。" in js,
+        "existing JA engine-fail copy",
+    )
+    assert_true("CSV import engine failed to load. Please reload the page." in js, "existing EN engine-fail copy")
+    assert_true("CSV 匯入引擎載入失敗，請重新整理頁面。" in js, "existing ZH engine-fail copy")
+    bind = js.split("function bindButton(btn, options)", 1)[1].split("window.__KPI_DAILY_IMPORT =", 1)[0]
+    assert_true("beginImport(options);" in bind, "bindButton click calls beginImport")
+    helper = helper_src()
+    for name, block in (
+        ("Annual Edit", helper.AEM_CSV_NEW),
+        ("Past Sales", helper.PSM_CSV_NEW),
+        ("Sales Data", helper.SDM_CSV_NEW),
+        ("MEP", helper.MEP_CSV_INNER_NEW),
+    ):
+        assert_true("var api = window.__KPI_DAILY_IMPORT;" in block, f"{name} click re-reads API")
+        assert_true("typeof api.parseFile !== 'function'" in block, f"{name} requires parseFile at click")
+        assert_true("api.beginImport(" in block, f"{name} click uses beginImport")
+        assert_true("data-kpi-import-bound" in block, f"{name} avoids double picker")
+        assert_true(
+            "if (btnCsv && window.__KPI_DAILY_IMPORT)" not in block,
+            f"{name} does not skip bind when API missing",
+        )
+    assert_true("} else {" not in helper.MEP_CSV_INNER_NEW, "MEP has no bind-time else fail handler")
+
+    alerts = []
+    parse_used = []
+
+    class FakeBtn:
+        def __init__(self):
+            self.attrs = {}
+            self.listeners = []
+
+        def getAttribute(self, key):
+            return self.attrs.get(key)
+
+        def setAttribute(self, key, value):
+            self.attrs[key] = value
+
+        def addEventListener(self, _ev, fn):
+            self.listeners.append(fn)
+
+        def click(self):
+            for fn in list(self.listeners):
+                fn()
+
+    def attach_wrapper(btn, opts, window_obj):
+        def on_click():
+            api = window_obj.get("__KPI_DAILY_IMPORT")
+            if btn.getAttribute("data-kpi-import-bound") == "1":
+                return
+            if not api or not callable(api.get("parseFile")) or not callable(api.get("beginImport")):
+                alerts.append("engine-missing")
+                return
+            api["bindButton"](btn, opts)
+            api["beginImport"](opts)
+
+        btn.addEventListener("click", on_click)
+
+    def make_api(window_obj, tag):
+        def get_daily():
+            api = window_obj.get("__KPI_DAILY_IMPORT")
+            if (
+                not api
+                or not callable(api.get("parseFile"))
+                or not callable(api.get("rowsToMaps"))
+                or not callable(api.get("applyToRowState"))
+            ):
+                return None
+            return api
+
+        def begin_import(_opts):
+            live = get_daily()
+            if not live:
+                alerts.append("engine-missing")
+                return
+            parse_used.append(live["parseFile"]())
+
+        def bind_button(btn, opts):
+            if btn.getAttribute("data-kpi-import-bound") == "1":
+                return
+            btn.setAttribute("data-kpi-import-bound", "1")
+            btn.addEventListener("click", lambda: begin_import(opts))
+
+        return {
+            "parseFile": lambda: tag,
+            "rowsToMaps": lambda: None,
+            "applyToRowState": lambda: None,
+            "beginImport": begin_import,
+            "bindButton": bind_button,
+        }
+
+    for entry in ("MEP", "Annual Edit", "Sales Data", "Past Sales"):
+        alerts.clear()
+        parse_used.clear()
+        window_obj = {}
+        btn = FakeBtn()
+        attach_wrapper(btn, {"entry": entry}, window_obj)
+        btn.click()
+        assert_true(alerts == ["engine-missing"], f"{entry} 1: empty API warns")
+        assert_true(parse_used == [], f"{entry} 1: no parseFile")
+        window_obj["__KPI_DAILY_IMPORT"] = make_api(window_obj, "v1")
+        btn.click()
+        assert_true(parse_used == ["v1"], f"{entry} 2-3: click uses installed parseFile")
+        assert_true("engine-missing" not in alerts[1:], f"{entry} 2-3: no false warn")
+        window_obj["__KPI_DAILY_IMPORT"] = make_api(window_obj, "v2")
+        btn.click()
+        assert_true(parse_used == ["v1", "v2"], f"{entry} 5: replaced API parseFile used")
+        window_obj["__KPI_DAILY_IMPORT"] = None
+        before = len(alerts)
+        btn.click()
+        assert_true(alerts[before:] == ["engine-missing"], f"{entry} 4: truly missing warns")
+
+
+def test_runtime_bind_sites() -> None:
+    helper = helper_src()
+    for path in ANNUAL_HTML:
+        html = path.read_text(encoding="utf-8")
+        assert_true(html.count("var csvImportOpts = {") >= 3, f"{path} 3 annual csvImportOpts")
+        assert_true(html.count("api.beginImport(csvImportOpts)") >= 3, f"{path} 3 annual beginImport")
+        assert_true("if (btnCsv && window.__KPI_DAILY_IMPORT)" not in html, f"{path} no bind-time API gate")
+    for path in MEP_HTML:
+        html = path.read_text(encoding="utf-8")
+        assert_true("var mepCsvImportOpts = {" in html, f"{path} mepCsvImportOpts")
+        assert_true("api.beginImport(mepCsvImportOpts)" in html, f"{path} MEP beginImport")
+        mep_bind = html.split("var mepCsvImportOpts = {", 1)[1].split("if (btnExpenseCsvUpload)", 1)[0]
+        assert_true("} else {" not in mep_bind, f"{path} no MEP else fail")
+        assert_true(
+            "CSV取込エンジンの読み込みに失敗しました。ページを再読み込みしてください。" in html,
+            f"{path} existing fail copy",
+        )
+
+
 def test_generator_idempotent_and_locale() -> None:
     helper = helper_src()
     import hashlib
@@ -1039,8 +1184,12 @@ def main() -> int:
     test_persist_fields_match_across_entries()
     print("--- generator main scope ---")
     test_generator_main_scope()
+    print("--- click-time API lookup ---")
+    test_click_time_api_lookup()
     print("--- runtime html ---")
     test_runtime_html()
+    print("--- runtime bind sites ---")
+    test_runtime_bind_sites()
     print("--- generator idempotent + locale ---")
     test_generator_idempotent_and_locale()
     print(f"passed={PASSED} failed={FAILED}")
