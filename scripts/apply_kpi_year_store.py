@@ -464,6 +464,12 @@ UNIT4_YEAR_STORE_PAGES = [
 ]
 
 UNIT4_SYNC_FN_NAMES = (
+    "rebuildOneYearFromServer",
+    "flushThenRebuildYears",
+    "writeMonthlyHlWeights",
+    "applyObservedBaselineToPlan",
+    "invalidateDailyFactsForTouchedYears",
+    "rebuildTouchedYearsOnServer",
     "maybeRefreshObservedAfterTimelineChange",
     "mergePastSalesMaps",
     "mergeDailyMaps",

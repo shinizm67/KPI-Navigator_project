@@ -6,7 +6,11 @@ from __future__ import annotations
 import csv
 import importlib.util
 import io
+import json
+import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -1062,9 +1066,11 @@ class MepCsvMergeSim:
         for iso, val in (maps.get("salesByDate") or {}).items():
             self.timeline[iso] = val
         years_list = [2026]
-        if years_list:
+        if years_list and src == "monthly-edit-float" and not server_rebuild:
             self.persist_store()
         self.dual_writes += 1
+        if server_rebuild:
+            self.gw.fire_timeout()  # dual-write can exceed the 400ms debounce
         if src == "monthly-edit-float" and not server_rebuild:
             self.maybe_refresh_observed(skip_persist=False)
             self.gw.fire_timeout()
@@ -1164,13 +1170,17 @@ def test_mep_valid_import_single_full_put() -> None:
     past_js = year_mod.extract_year_store_function(js, "mergePastSalesMaps")
     assert_true("opts.skipPersist" in refresh_js, "canonical maybeRefresh skipPersist")
     assert_true(
-        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in merge_js,
+        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true, deferRebuild: true })" in merge_js,
         "canonical CSV observed before rebuild",
     )
     assert_true(
-        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in past_js,
+        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true, deferRebuild: true })"
+        in past_js,
         "canonical Past Sales observed before rebuild",
     )
+    assert_true("setJsonLocalOnly" in merge_js, "CSV uses setJsonLocalOnly before dual-write")
+    assert_true("setJsonLocalOnly" in past_js, "Past Sales uses setJsonLocalOnly before dual-write")
+    assert_true("ok: true, skipped: true" in merge_js, "missing dual-write API is skipped not failed")
     assert_true("KPI-MEP-CELL-QUIET-CU" in merge_js, "canonical keeps MEP cell-quiet")
     assert_true(
         "if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {\n"
@@ -1184,7 +1194,7 @@ def test_mep_valid_import_single_full_put() -> None:
     )[0]
     assert_true("dailyFacts" not in obs_fn, "computeObserved does not read dailyFacts")
     assert_true("store.timeline.dailySales" in obs_fn, "computeObserved reads timeline sales")
-    rebuild_fn = client_py.split("function rebuildOneYearFromServer(year, reason)", 1)[1].split(
+    rebuild_fn = client_py.split("function rebuildOneYearFromServer(year, reason, opts)", 1)[1].split(
         "function flushThenRebuildYears", 1
     )[0]
     assert_true("rebuildYear" in rebuild_fn, "rebuild uses dailyFacts sync")
@@ -1202,7 +1212,7 @@ def test_mep_valid_import_single_full_put() -> None:
         html = path.read_text(encoding="utf-8")
         assert_true("opts.skipPersist" in html, f"{path} maybeRefresh skipPersist")
         assert_true(
-            "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in html,
+            "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true, deferRebuild: true })" in html,
             f"{path} observed before rebuild",
         )
         assert_true("KPI-DAILY-INPUTS-DUAL-WRITE-AN" in html, f"{path} dual-write kept")
@@ -1243,6 +1253,223 @@ def test_mep_valid_import_single_full_put() -> None:
         "Annual JP/EN/ZH-TW mergeDailyMaps identical",
     )
     assert_true(skip_mep[0] == skip_annual[0], "Annual and MEP mergeDailyMaps share canonical body")
+
+
+def test_real_js_put_timer() -> None:
+    """Execute production merge + gateway timer/flush/PUT in Node, with fake I/O.
+
+    Only clock, browser storage, and network responses are faked. In particular,
+    schedulePut's real 400ms delay and flushPut's in-flight logic are not ported
+    to Python. Node receives all source through stdin; it creates no files.
+    """
+    node = os.environ.get("KPI_TEST_NODE") or shutil.which("node")
+    extras = [
+        Path(sys.executable).parent.parent / "node" / "bin" / "node.exe",
+        Path(os.environ.get("LOCALAPPDATA") or "")
+        / "Programs"
+        / "cursor"
+        / "resources"
+        / "app"
+        / "resources"
+        / "helpers"
+        / "node.exe",
+    ]
+    if not node:
+        for extra in extras:
+            if extra.is_file():
+                node = str(extra)
+                break
+    assert_true(bool(node), "Node runtime available for production JS timer regression")
+    if not node:
+        return
+    mod = year_store_mod()
+    js = mod.kpi_year_store_js()
+    names = (
+        "persistableStore", "persistStore", "syncLegacyKeys", "mergeDailyMaps",
+        "maybeRefreshObservedAfterTimelineChange", "applyObservedBaselineToPlan",
+        "writeMonthlyHlWeights", "flushThenRebuildYears", "rebuildOneYearFromServer",
+        "invalidateDailyFactsForTouchedYears", "rebuildTouchedYearsOnServer",
+    )
+    canonical = "\n".join(mod.extract_year_store_function(js, n) for n in names)
+    gateway = (ROOT / "js/kpi-data-gateway.js").read_text(encoding="utf-8")
+    gateway_functions = "\n".join(
+        mod.extract_year_store_function(gateway, n)
+        for n in ("doPut", "schedulePut", "flushPut")
+    )
+    set_json = gateway.split("    setJson: function", 1)[1].split("    /** LS only", 1)[0]
+    # Keep the actual setJson implementation, including localSet and scheduling.
+    gateway_functions += "\nvar gatewaySetJson = ({setJson: function" + set_json + "}).setJson;"
+    old_py = subprocess.run(
+        ["git", "show", "1376af5819279347738df46b49c9cda21b2812bd:scripts/kpi_year_store_client.py"],
+        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout
+    old_scope = {"__name__": "unit4_previous_client"}
+    exec(compile(old_py, "<1376af5 client>", "exec"), old_scope)
+    old_merge = mod.extract_year_store_function(old_scope["kpi_year_store_js"](), "mergeDailyMaps")
+    payload = {"canonical": canonical, "gateway": gateway_functions, "oldMerge": old_merge,
+               "importer": daily_sales_import_js()}
+    driver = r"""
+const fs = require('node:fs'), vm = require('node:vm');
+const source = JSON.parse(fs.readFileSync(0, 'utf8'));
+const checks = [];
+function check(value, label) { checks.push({ok: !!value, label}); }
+async function scenario(options = {}) {
+  let now = 0, seq = 0;
+  const timers = new Map(), puts = [], storage = {}, dualRows = [], rebuilds = [];
+  const clone = x => JSON.parse(JSON.stringify(x));
+  function setTimeout(fn, ms) { const id = ++seq; timers.set(id, {at: now + ms, fn}); return id; }
+  function clearTimeout(id) { timers.delete(id); }
+  async function drain() { for (let i = 0; i < 80; i++) await Promise.resolve(); }
+  async function advance(to) {
+    await drain();
+    while (true) {
+      const next = [...timers].filter(([,t]) => t.at <= to).sort((a,b) => a[1].at-b[1].at)[0];
+      if (!next) break;
+      now = next[1].at; timers.delete(next[0]); next[1].fn(); await drain();
+    }
+    now = to; await drain();
+  }
+  const later = (mode, ms) => new Promise((resolve, reject) => setTimeout(() => {
+    if (mode === 'reject') reject(new Error('network'));
+    else resolve({ok: mode !== 'false'});
+  }, ms));
+  const year = options.past ? 2025 : 2026, iso = year + '-01-01';
+  const store = {meta: {}, timeline: {dailySales: {}, businessDays: {}}, years: {}};
+  const ctx = {
+    Promise, Date, JSON, Object, Number, Error, console, store, STORE_KEY: 'store',
+    LEGACY_DAILY_KEY: 'daily', LEGACY_PAST_KEY: 'past',
+    setTimeout, clearTimeout, cfg: {}, putTimer: null, putInFlight: null,
+    pendingPutKind: 'full', userScopePutHold: false, hookQuiet: false,
+    conflictPutHold: false, hydrateComplete: true, serverRevision: 10,
+    document: {dispatchEvent() {}, documentElement: {getAttribute: () => 'en'}},
+    CustomEvent: function(name, data) {},
+    readSyncConfig: () => ({}), canSync: () => true, canStorePut: () => true,
+    buildHeaders: () => ({}), fetchCreds: () => 'omit', clearPlUnputYears() {},
+    buildPutBody: () => ({store: clone(store)}),
+    handlePutConflict: () => ({ok:false, conflict:true}),
+    applyServerRevision: data => { ctx.serverRevision = data.revision; },
+    localSet: (key, value) => {
+      if (options.localFail) return false;
+      storage[key] = clone(value); return true;
+    },
+    slimTimelineForLocalStorage: x => x, stripDailyFactsFromStore: x => x,
+    isPlSyncKey: () => false, NAV_KEY: 'nav',
+    fetch: (_url, req) => {
+      if (req.method !== 'PUT') throw new Error('unexpected method');
+      puts.push({at: now, body: JSON.parse(req.body)});
+      if (options.put === 'timeout') return new Promise(() => {});
+      return Promise.resolve({ok: options.put !== 'false', status: options.put === 'false' ? 500 : 200,
+        json: () => Promise.resolve({revision: ctx.serverRevision + 1})});
+    },
+    validIso: iso => /^\d{4}-\d{2}-\d{2}$/.test(iso),
+    isoYear: iso => Number(iso.slice(0,4)), isLegacyPlaceholderSales: n => n === 1234,
+    canWriteDailySalesFrom: () => true, canWriteBusinessDayFrom: () => true,
+    getOperatingYear: () => 2026, yearStartIso: y => y+'-01-01',
+    dispatchChange() {}, isYearLocked: () => false,
+    ensureYearRecord: y => store.years[y] || (store.years[y] = {plan:{}}),
+    normalizeHlWeights: x => x, isPlanHlAutoSource: () => true,
+    computeBaselineHlWeights: () => Array(12).fill(100), baselineYearsUsed: () => [2025],
+    scheduleServerYearRebuild: () => { throw new Error('unexpected separate plan timer'); },
+    refreshObservedForYear: y => {
+      const rec = ctx.ensureYearRecord(y);
+      rec.observed = {annualSales: Object.entries(store.timeline.dailySales)
+        .filter(([iso]) => iso.startsWith(String(y))).reduce((sum,[,v]) => sum+v,0)};
+      return rec.observed;
+    },
+    invalidateDailyFacts: ({year}) => { ctx.ensureYearRecord(year).dailyFacts = {fallback:true}; },
+  };
+  ctx.window = ctx;
+  ctx.__KPI_BUSY = {isBusy: () => false, run: (_name, work) => Promise.resolve().then(work), update() {}};
+  ctx.__KPI_DAILY_INPUTS_SYNC = {putYearsMap: years => {
+    dualRows.push(clone(store.timeline));
+    if (options.dual === 'throw') throw new Error('dual-sync-throw');
+    return options.cell ? Promise.resolve({ok:true}) : later(options.dual, 900);
+  }};
+  ctx.__KPI_DAILY_FACTS_SYNC = {rebuildYear: y => {
+    rebuilds.push(y);
+    if (options.rebuild === 'throw') throw new Error('rebuild-sync-throw');
+    return later(options.rebuild, 900);
+  }, hydrateWindow: () => Promise.resolve()};
+  if (options.rebuild === 'missing') delete ctx.__KPI_DAILY_FACTS_SYNC;
+  vm.createContext(ctx);
+  vm.runInContext(source.gateway + '\n' + source.canonical + (options.old ? '\n'+source.oldMerge : ''), ctx);
+  ctx.__KPI_DATA_GATEWAY = {getJson: key => storage[key], setJson: ctx.gatewaySetJson,
+    setJsonLocalOnly: ctx.localSet, flushPut: ctx.flushPut};
+  ctx.gw = () => ctx.__KPI_DATA_GATEWAY;
+  ctx.KpiYearStore = {getStore: () => store};
+  vm.runInContext(source.importer, ctx);
+  let error = null, done = false;
+  const before = JSON.stringify(store);
+  try {
+      const maps = ctx.__KPI_DAILY_IMPORT.rowsToMaps([
+        ['Date','Store Sales','Dinner Sales','Total Customers','Dinner Customers'],
+        [iso,'132000','100000','33', options.invalid ? '34' : '12']
+      ]);
+      ctx.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
+      Promise.resolve(ctx.mergeDailyMaps(maps.salesByDate, maps.businessDayByDate,
+        {source: options.cell ? 'monthly-edit-float' : 'mep-sales-csv-import', serverRebuild: !options.cell}))
+        .then(() => {done = true;}, err => {error = String(err.message); done = true;});
+  } catch (err) { error = String(err.message); done = true; }
+  await advance(500);
+  const early = puts.length, savedEarly = storage.store && clone(storage.store);
+  await advance(20000);
+  return {early, puts, storage, savedEarly, store, revision:ctx.serverRevision, dualRows,
+    rebuilds, error, done, unchanged: before === JSON.stringify(store), pending:ctx.putTimer};
+}
+(async () => {
+  const old = await scenario({old:true});
+  check(old.early === 1 && old.puts.length === 2, '1376af5: 400ms timer fires before 900ms dual-write, reproducing 2 PUTs');
+  const good = await scenario();
+  check(good.early === 0, 'CSV early PUT 0 while dual-write is pending');
+  check(good.savedEarly.timeline.dailySales['2026-01-01'] === 132000, 'local recovery copy exists before slow dual-write');
+  check(good.puts.length === 1 && good.puts[0].at === 900, 'flushPut sends the only PUT after dual-write');
+  check(good.puts[0].body.store.years[2026].observed.annualSales === 132000, 'observed included in sole real JS payload');
+  check(good.puts[0].body.store.years[2026].dailyMeal.dinner_sales['2026-01-01'] === 100000, 'meal included in sole payload');
+  check(good.revision === 11, 'real gateway revision advances once');
+  check(good.dualRows.length === 1 && good.dualRows[0].dailySales['2026-01-01'] === 132000, 'dual-write sees memory without early setJson');
+  check(good.rebuilds.length === 1 && good.rebuilds[0] === 2026, 'server rebuild once');
+  check(good.done && !good.error && good.pending === null, 'no leftover PUT after slow rebuild');
+  for (const dual of ['false', 'reject', 'throw']) {
+    const r = await scenario({dual});
+    check((dual === 'throw' || r.early === 0) && r.puts.length === 1 && r.revision === 11, 'dual '+dual+': canonical save still once');
+    check(r.error && r.rebuilds.length === 1 && r.storage.store.years[2026].observed, 'dual '+dual+': retained locally, rebuild attempted, error propagated');
+  }
+  for (const rebuild of ['false', 'reject', 'throw', 'missing']) {
+    const r = await scenario({rebuild});
+    check(r.puts.length === 1 && r.revision === 11 && r.error, 'rebuild '+rebuild+': no second PUT, error propagated');
+    check(r.store.years[2026].dailyFacts.fallback && r.storage.store.timeline.dailySales['2026-01-01'] === 132000,
+      'rebuild '+rebuild+': local fallback and saved input retained');
+  }
+  for (const put of ['false', 'timeout']) {
+    const r = await scenario({put});
+    check(r.puts.length === 1 && r.error && r.rebuilds.length === 0 && r.revision === 10,
+      'store '+put+': no success/rebuild/retry after failed sole PUT');
+    check(r.storage.store.years[2026].observed.annualSales === 132000, 'store '+put+': complete local snapshot retained');
+  }
+  const local = await scenario({localFail:true});
+  check(local.error && local.puts.length === 0 && local.dualRows.length === 0, 'local save failure is explicit before network work');
+  const cell = await scenario({cell:true});
+  check(cell.puts.length === 1 && cell.rebuilds.length === 0 && !cell.error, 'ordinary non-serverRebuild MEP edit saves once');
+  const bad = await scenario({invalid:true});
+  check(bad.error === 'meal-invalid' && bad.unchanged && bad.puts.length === 0 && bad.dualRows.length === 0,
+    'actual JS invalid parser: no store change or PUT');
+  const past = await scenario({past:true});
+  check(past.early === 0 && past.puts.length === 1 && !past.error, 'past CSV baseline does not arm an extra plan rebuild timer');
+  check(past.rebuilds.join(',') === '2025,2026' && past.puts[0].body.store.years[2026].plan.hlSource === 'observed-baseline',
+    'past CSV baseline is included in sole PUT, each affected year rebuilt once');
+  process.stdout.write(JSON.stringify(checks));
+})().catch(err => { console.error(err.stack); process.exitCode = 1; });
+"""
+    result = subprocess.run(
+        [node, "-e", driver], input=json.dumps(payload), capture_output=True,
+        text=True, encoding="utf-8", timeout=30, cwd=ROOT,
+    )
+    assert_true(result.returncode == 0, "Node timer harness completed: " + result.stderr)
+    if result.returncode == 0:
+        checks = json.loads(result.stdout)
+        for item in checks:
+            assert_true(item["ok"], "JS: " + item["label"])
+        print(f"JS timer checks: {sum(c['ok'] for c in checks)}/{len(checks)}")
 
 
 def test_generator_main_scope() -> None:
@@ -1513,6 +1740,8 @@ def main() -> int:
     test_persist_fields_match_across_entries()
     print("--- MEP valid import single full PUT ---")
     test_mep_valid_import_single_full_put()
+    print("--- actual JS 400ms timer / slow I/O / failure regression ---")
+    test_real_js_put_timer()
     print("--- generator main scope ---")
     test_generator_main_scope()
     print("--- click-time API lookup ---")

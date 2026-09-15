@@ -725,7 +725,7 @@ def kpi_year_store_js() -> str:
           document.dispatchEvent(new CustomEvent('kpi:annualPlanChanged', {{ detail: extra }}));
         }}
 
-        function rebuildOneYearFromServer(year, reason) {{
+        function rebuildOneYearFromServer(year, reason, opts) {{
           var y = Number(year);
           if (!Number.isFinite(y)) return Promise.resolve();
           function fallbackJs() {{
@@ -734,7 +734,8 @@ def kpi_year_store_js() -> str:
               planChanged: true,
               reason: reason || 'plan-rebuild-fallback',
             }});
-            persistStore();
+            if (!(opts && opts.singlePut)) persistStore();
+            if (opts && opts.singlePut) throw new Error('daily-facts-rebuild-failed');
           }}
           if (
             !window.__KPI_DAILY_FACTS_SYNC ||
@@ -743,16 +744,17 @@ def kpi_year_store_js() -> str:
             fallbackJs();
             return Promise.resolve();
           }}
-          return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y)
+          return Promise.resolve().then(function () {{
+            return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y);
+          }})
             .then(function (data) {{
               if (!data || !data.ok) fallbackJs();
-            }})
-            .catch(function () {{
+            }}, function () {{
               fallbackJs();
             }});
         }}
 
-        function flushThenRebuildYears(years, reason) {{
+        function flushThenRebuildYears(years, reason, opts) {{
           var list = (years || [])
             .map(Number)
             .filter(Number.isFinite)
@@ -761,7 +763,10 @@ def kpi_year_store_js() -> str:
           var gwObj = window.__KPI_DATA_GATEWAY;
           var flush =
             gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
-          return Promise.resolve(flush).then(function () {{
+          return Promise.resolve(flush).then(function (result) {{
+            if (opts && opts.singlePut && !(result && result.ok)) {{
+              throw new Error('store-save-failed');
+            }}
             var total = list.length;
             var p = Promise.resolve();
             list.forEach(function (y, idx) {{
@@ -774,7 +779,7 @@ def kpi_year_store_js() -> str:
                     total: total,
                   }});
                 }}
-                return rebuildOneYearFromServer(y, reason);
+                return rebuildOneYearFromServer(y, reason, opts);
               }});
             }});
             return p;
@@ -847,7 +852,7 @@ def kpi_year_store_js() -> str:
           if (meta && meta.hlBaselineYears && meta.hlBaselineYears.length) {{
             rec.plan.hlBaselineYears = meta.hlBaselineYears.slice();
           }}
-          scheduleServerYearRebuild(y, 'hl-weights', {{
+          if (!(meta && meta.deferRebuild)) scheduleServerYearRebuild(y, 'hl-weights', {{
             monthlyHlWeights: normalized.slice(),
             source: (meta && meta.source) || 'kpi-year-store',
           }});
@@ -927,7 +932,10 @@ def kpi_year_store_js() -> str:
             if (obs) affected.push(y);
           }});
           if (affected.some(function (y) {{ return y < oy; }})) {{
-            applyObservedBaselineToPlan(oy, {{ force: false, maxYears: 2 }});
+            var baseline = applyObservedBaselineToPlan(oy, {{
+              force: false, maxYears: 2, deferRebuild: !!(opts && opts.deferRebuild),
+            }});
+            if (opts && opts.deferRebuild && baseline && baseline.ok) yearsAll[oy] = true;
           }}
           if (affected.length) {{
             if (!(opts && opts.skipPersist)) persistStore();
@@ -1051,6 +1059,7 @@ def kpi_year_store_js() -> str:
           var written = writeMonthlyHlWeights(y, baseline, {{
             source: 'observed-baseline',
             hlBaselineYears: yearsUsed,
+            deferRebuild: !!opts.deferRebuild,
           }});
           return {{
             ok: written,
@@ -1420,13 +1429,13 @@ def kpi_year_store_js() -> str:
           }};
         }}
 
-        function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged) {{
-          return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year');
+        function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged, opts) {{
+          return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year', opts);
         }}
 
         /* KPI-BULK-YEAR-REBUILD-AK */
 
-        function rebuildTouchedYearsOnServer(yearsMap, reason) {{
+        function rebuildTouchedYearsOnServer(yearsMap, reason, opts) {{
           var years = Object.keys(yearsMap || {{}})
             .map(Number)
             .filter(Number.isFinite)
@@ -1440,7 +1449,7 @@ def kpi_year_store_js() -> str:
                 total: years.length,
               }});
             }}
-            return flushThenRebuildYears(years, reason).then(function () {{
+            return flushThenRebuildYears(years, reason, opts).then(function () {{
               var focus = getOperatingYear();
               var hyd =
                 window.__KPI_DAILY_FACTS_SYNC &&
@@ -1460,7 +1469,7 @@ def kpi_year_store_js() -> str:
           if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {{
             return window.__KPI_BUSY
               .run('rebuild', work, {{ yearCount: years.length, year: years[0], index: 1, total: years.length }})
-              .catch(function () {{}});
+              .catch(function (err) {{ if (opts && opts.singlePut) throw err; }});
           }}
           return work();
         }}
@@ -1575,18 +1584,32 @@ def kpi_year_store_js() -> str:
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
-          if (yearsList.length) persistStore();
+          var dualError = null;
+          if (yearsList.length) {{
+            var pastGateway = gw();
+            if (typeof pastGateway.setJsonLocalOnly !== 'function' ||
+                !pastGateway.setJsonLocalOnly(STORE_KEY, persistableStore())) {{
+              throw new Error('store-local-save-failed');
+            }}
+          }}
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
-          var dual =
-            window.__KPI_DAILY_INPUTS_SYNC &&
-            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
-              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
-              : Promise.resolve();
+          var dual = Promise.resolve().then(function () {{
+            return window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+                ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+                : {{ ok: true, skipped: true }};
+          }});
           return Promise.resolve(dual)
-            .catch(function () {{}})
+            .then(function (result) {{
+              if (yearsList.length && !(result && result.ok)) {{
+                dualError = new Error('daily-inputs-save-failed');
+              }}
+            }}, function (err) {{
+              dualError = err || new Error('daily-inputs-save-failed');
+            }})
             .then(function () {{
-              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true }});
-              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
+              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true, deferRebuild: true }});
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales', false, {{ singlePut: true }});
             }})
             .then(function () {{
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
@@ -1607,6 +1630,7 @@ def kpi_year_store_js() -> str:
                 }});
               }}
             }}
+            if (dualError) throw dualError;
           }});
         }}
 
@@ -1654,15 +1678,36 @@ def kpi_year_store_js() -> str:
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
-          if (yearsList.length) persistStore();
+          var singlePut = !(src === 'monthly-edit-float' && !(meta && meta.serverRebuild));
+          var dualError = null;
+          if (yearsList.length) {{
+            if (singlePut) {{
+              /* Keep a recovery copy without arming the gateway's 400ms PUT timer.
+                 The full save belongs to flushThenRebuildYears, after observed. */
+              var gateway = gw();
+              if (typeof gateway.setJsonLocalOnly !== 'function' ||
+                  !gateway.setJsonLocalOnly(STORE_KEY, persistableStore())) {{
+                throw new Error('store-local-save-failed');
+              }}
+            }} else {{
+              persistStore();
+            }}
+          }}
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
-          var dual =
-            window.__KPI_DAILY_INPUTS_SYNC &&
-            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
-              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
-              : Promise.resolve();
+          var dual = Promise.resolve().then(function () {{
+            return window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+                ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+                : {{ ok: true, skipped: true }};
+          }});
           return Promise.resolve(dual)
-            .catch(function () {{}})
+            .then(function (result) {{
+              if (singlePut && yearsList.length && !(result && result.ok)) {{
+                dualError = new Error('daily-inputs-save-failed');
+              }}
+            }}, function (err) {{
+              if (singlePut) dualError = err || new Error('daily-inputs-save-failed');
+            }})
             .then(function () {{
               /* KPI-MEP-CELL-QUIET-CU: cell edits keep local facts only — no busy rebuild.
                  Confirm / CSV pass meta.serverRebuild to rebuild once with overlay. */
@@ -1676,8 +1721,8 @@ def kpi_year_store_js() -> str:
                 }});
                 return Promise.resolve();
               }}
-              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true }});
-              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
+              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true, deferRebuild: true }});
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily', false, {{ singlePut: true }});
             }})
             .then(function () {{
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
@@ -1701,6 +1746,7 @@ def kpi_year_store_js() -> str:
             if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {{
               maybeRefreshObservedAfterTimelineChange(yearsAll);
             }}
+            if (dualError) throw dualError;
           }});
         }}
 
