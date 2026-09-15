@@ -454,6 +454,85 @@ def patch_mep(path: Path) -> None:
     print(f"wrote {path.relative_to(ROOT)}")
 
 
+UNIT4_YEAR_STORE_PAGES = [
+    ROOT / "app/annual/index.html",
+    ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
+    ROOT / "app/monthly/edit/index.html",
+    ROOT / "en/app/monthly/edit/index.html",
+    ROOT / "zh-tw/app/monthly/edit/index.html",
+]
+
+UNIT4_SYNC_FN_NAMES = (
+    "maybeRefreshObservedAfterTimelineChange",
+    "mergePastSalesMaps",
+    "mergeDailyMaps",
+)
+
+
+def extract_year_store_function(js: str, name: str) -> str:
+    needle = f"function {name}("
+    start = js.find(needle)
+    if start < 0:
+        raise SystemExit(f"year-store js missing {name}")
+    line_start = js.rfind("\n", 0, start) + 1
+    indent = start - line_start
+    nxt = js.find("\n" + (" " * indent) + "function ", start + 1)
+    if nxt < 0:
+        raise SystemExit(f"next function after {name} missing")
+    return js[line_start:nxt].rstrip() + "\n"
+
+
+def replace_year_store_function(text: str, name: str, new_src: str) -> str:
+    needle = f"function {name}("
+    start = text.find(needle)
+    if start < 0:
+        raise SystemExit(f"HTML missing {name}")
+    line_start = text.rfind("\n", 0, start) + 1
+    indent = start - line_start
+    nxt = text.find("\n" + (" " * indent) + "function ", start + 1)
+    if nxt < 0:
+        raise SystemExit(f"HTML next function after {name} missing")
+    return text[:line_start] + new_src.rstrip() + text[nxt:]
+
+
+def apply_single_put_year_store_patch(text: str) -> str:
+    js = kpi_year_store_js()
+    for name in UNIT4_SYNC_FN_NAMES:
+        text = replace_year_store_function(text, name, extract_year_store_function(js, name))
+    return text
+
+
+def audit_unit4_year_store_targets() -> None:
+    allowed = {p.resolve() for p in UNIT4_YEAR_STORE_PAGES}
+    main_targets = ANNUAL_TARGETS + MONTHLY_TARGETS + MEP_TARGETS
+    extra = [p for p in main_targets if p.resolve() not in allowed]
+    monthly = [p for p in extra if "monthly/index.html" in str(p).replace("\\", "/")]
+    if not monthly:
+        raise SystemExit("expected monthly/index.html to remain outside unit4 targets")
+    for path in UNIT4_YEAR_STORE_PAGES:
+        if not path.is_file():
+            raise SystemExit(f"missing {path}")
+        raw = path.read_text(encoding="utf-8")
+        if KPI_YEAR_STORE_MARKER not in raw:
+            raise SystemExit(f"KPI-YEAR-STORE missing in {path}")
+        apply_single_put_year_store_patch(raw)
+
+
+def patch_unit4_year_store_pages() -> None:
+    audit_unit4_year_store_targets()
+    for path in UNIT4_YEAR_STORE_PAGES:
+        old = path.read_text(encoding="utf-8")
+        new = apply_single_put_year_store_patch(old)
+        if new != old:
+            path.write_text(new, encoding="utf-8")
+            try:
+                rel = path.relative_to(ROOT)
+            except ValueError:
+                rel = path
+            print(f"wrote {rel}")
+
+
 def main() -> None:
     for t in ANNUAL_TARGETS:
         patch_annual(t)

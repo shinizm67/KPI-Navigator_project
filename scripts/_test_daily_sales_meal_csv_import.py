@@ -68,6 +68,16 @@ def helper_src() -> str:
     return mod
 
 
+def year_store_mod():
+    spec = importlib.util.spec_from_file_location(
+        "apply_kpi_year_store", SCRIPTS / "apply_kpi_year_store.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def normalize_header(raw) -> str:
     s = str(raw or "").replace("\ufeff", "").strip().lower()
     return re.sub(r"[\s_]+", "", s)
@@ -557,7 +567,6 @@ def test_source_tristate() -> None:
         < helper.SDM_APPLY_NEW.find("persistDailyMealFromMaps"),
         "Sales Data persist API checked before meal writes",
     )
-    _ = helper
 
 
 def test_headers_and_order() -> None:
@@ -963,6 +972,279 @@ def test_persist_fields_match_across_entries() -> None:
         assert_true(f"writeMealGrid('{lunch_row}'" not in helper.MEP_APPLY_IMPORT_NEW, f"no {lunch_row}")
 
 
+class FakeStoreGateway:
+    """Mirrors kpi-data-gateway setJson → schedulePut(400ms) vs flushPut → doPut."""
+
+    def __init__(self):
+        self.store = None
+        self.put_timer = False
+        self.puts = []
+        self.revision = 10
+
+    def set_json(self, value):
+        self.store = {
+            "timeline": dict(value.get("timeline") or {}),
+            "years": {
+                yk: dict(rec) for yk, rec in (value.get("years") or {}).items()
+            },
+        }
+        self.put_timer = True
+
+    def do_put(self):
+        self.revision += 1
+        self.puts.append(
+            {
+                "store": {
+                    "timeline": dict(self.store["timeline"]),
+                    "years": {yk: dict(rec) for yk, rec in self.store["years"].items()},
+                },
+                "revision": self.revision,
+                "status": 200,
+            }
+        )
+        return {"ok": True, "status": 200, "revision": self.revision}
+
+    def flush_put(self):
+        self.put_timer = False
+        return self.do_put()
+
+    def fire_timeout(self):
+        if not self.put_timer:
+            return None
+        self.put_timer = False
+        return self.do_put()
+
+
+class MepCsvMergeSim:
+    """CSV mergeDailyMaps: observed skipPersist then one flushPut rebuild."""
+
+    def __init__(self):
+        self.gw = FakeStoreGateway()
+        self.timeline = {}
+        self.meal = {}
+        self.observed = None
+        self.rebuilds = 0
+        self.dual_writes = 0
+        self.observed_events = 0
+
+    def persistable(self):
+        return {
+            "timeline": dict(self.timeline),
+            "years": {
+                2026: {
+                    "dailyMeal": dict(self.meal),
+                    "observed": None if self.observed is None else dict(self.observed),
+                }
+            },
+        }
+
+    def persist_store(self):
+        self.gw.set_json(self.persistable())
+
+    def persist_daily_meal_from_maps(self, maps):
+        for map_key, field in MEAL_PERSIST_PAIRS:
+            src = maps.get(map_key) or {}
+            if not src:
+                continue
+            self.meal[field] = dict(src)
+
+    def maybe_refresh_observed(self, skip_persist=False):
+        total = self.timeline.get("2026-01-01")
+        if total is None:
+            return
+        self.observed = {"dailySales": total}
+        self.observed_events += 1
+        if not skip_persist:
+            self.persist_store()
+
+    def merge_daily_maps_csv(self, maps, src="mep-sales-csv-import", server_rebuild=True):
+        self.persist_daily_meal_from_maps(maps)
+        for iso, val in (maps.get("salesByDate") or {}).items():
+            self.timeline[iso] = val
+        years_list = [2026]
+        if years_list:
+            self.persist_store()
+        self.dual_writes += 1
+        if src == "monthly-edit-float" and not server_rebuild:
+            self.maybe_refresh_observed(skip_persist=False)
+            self.gw.fire_timeout()
+            return
+        self.maybe_refresh_observed(skip_persist=True)
+        self.rebuilds += 1
+        self.persist_store()
+        self.gw.flush_put()
+        self.gw.fire_timeout()
+
+    def persist_mep_sales_csv(self, maps):
+        return self.merge_daily_maps_csv(
+            maps, src="mep-sales-csv-import", server_rebuild=True
+        )
+
+
+def test_mep_valid_import_single_full_put() -> None:
+    maps = rows_to_maps(
+        csv_rows(
+            [
+                "年月日",
+                "日次売上",
+                "ディナー売上",
+                "トータル客数",
+                "ディナー客数",
+                "トータル組数",
+                "ディナー組数",
+            ],
+            [["2026-01-01", "132000", "100000", "33", "12", "16", "6"]],
+        )
+    )
+    sim = MepCsvMergeSim()
+    sim.persist_mep_sales_csv(maps)
+    assert_true(len(sim.gw.puts) == 1, f"MEP valid import full store PUT == 1, got {len(sim.gw.puts)}")
+    assert_true(sim.rebuilds == 1, "server rebuild once")
+    assert_true(sim.dual_writes == 1, "daily-inputs dual-write kept")
+    assert_true(sim.observed_events == 1, "observed recompute kept")
+    put = sim.gw.puts[0]
+    rec = put["store"]["years"][2026]
+    assert_true(put["store"]["timeline"]["2026-01-01"] == 132000, "PUT dailySales")
+    assert_true(rec["dailyMeal"]["dinner_sales"]["2026-01-01"] == 100000, "PUT dinner_sales")
+    assert_true(rec["dailyMeal"]["total_customers"]["2026-01-01"] == 33, "PUT total_customers")
+    assert_true(rec["dailyMeal"]["dinner_customers"]["2026-01-01"] == 12, "PUT dinner_customers")
+    assert_true(rec["dailyMeal"]["total_groups"]["2026-01-01"] == 16, "PUT total_groups")
+    assert_true(rec["dailyMeal"]["dinner_groups"]["2026-01-01"] == 6, "PUT dinner_groups")
+    assert_true("lunch_sales" not in rec["dailyMeal"], "lunch_sales unsaved")
+    assert_true(rec["observed"] == {"dailySales": 132000}, "observed in same PUT")
+    assert_true(put["revision"] == 11, "revision advanced once")
+    assert_true(sim.gw.put_timer is False, "no leftover schedulePut")
+
+    old = MepCsvMergeSim()
+    old.persist_daily_meal_from_maps(maps)
+    for iso, val in (maps.get("salesByDate") or {}).items():
+        old.timeline[iso] = val
+    old.persist_store()
+    old.dual_writes += 1
+    old.rebuilds += 1
+    old.persist_store()
+    old.gw.flush_put()
+    old.maybe_refresh_observed(skip_persist=False)
+    old.gw.fire_timeout()
+    assert_true(len(old.gw.puts) == 2, "pre-fix path had 2 PUTs")
+    assert_true(sim.observed == old.observed, "observed matches pre-fix final value")
+    assert_true(
+        sim.gw.puts[0]["store"]["years"][2026]["observed"] == old.observed,
+        "PUT observed equals pre-fix final observed",
+    )
+
+    cell = MepCsvMergeSim()
+    cell.merge_daily_maps_csv(maps, src="monthly-edit-float", server_rebuild=False)
+    assert_true(len(cell.gw.puts) == 1, "cell-edit still one coalesced PUT")
+    assert_true(cell.rebuilds == 0, "cell-edit does not server rebuild")
+    assert_true(cell.observed_events == 1, "cell-edit observed persist path kept")
+
+    bad = MepCsvMergeSim()
+    caught = None
+    try:
+        rows_to_maps(
+            csv_rows(
+                ["年月日", "日次売上", "ディナー客数", "トータル客数"],
+                [["2026-01-02", "100", "11", "10"]],
+            )
+        )
+        bad.persist_mep_sales_csv({})
+    except MealInvalid as err:
+        caught = err
+    assert_true(caught is not None and caught.reason == "dinner-gt-total", "invalid stops before persist")
+    assert_true(len(bad.gw.puts) == 0, "invalid import PUT 0")
+    assert_true(bad.rebuilds == 0, "invalid import rebuild 0")
+    assert_true(bad.observed_events == 0, "invalid import observed 0")
+    assert_true(bad.dual_writes == 0, "invalid import dual-write 0")
+
+    year_mod = year_store_mod()
+    js = year_mod.kpi_year_store_js()
+    merge_js = year_mod.extract_year_store_function(js, "mergeDailyMaps")
+    refresh_js = year_mod.extract_year_store_function(js, "maybeRefreshObservedAfterTimelineChange")
+    past_js = year_mod.extract_year_store_function(js, "mergePastSalesMaps")
+    assert_true("opts.skipPersist" in refresh_js, "canonical maybeRefresh skipPersist")
+    assert_true(
+        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in merge_js,
+        "canonical CSV observed before rebuild",
+    )
+    assert_true(
+        "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in past_js,
+        "canonical Past Sales observed before rebuild",
+    )
+    assert_true("KPI-MEP-CELL-QUIET-CU" in merge_js, "canonical keeps MEP cell-quiet")
+    assert_true(
+        "if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {\n"
+        "              maybeRefreshObservedAfterTimelineChange(yearsAll);"
+        in merge_js,
+        "canonical cell-edit keeps persist observed",
+    )
+    client_py = (SCRIPTS / "kpi_year_store_client.py").read_text(encoding="utf-8")
+    obs_fn = client_py.split("function computeObserved(year)", 1)[1].split(
+        "function snapshotPlanBeforeLock", 1
+    )[0]
+    assert_true("dailyFacts" not in obs_fn, "computeObserved does not read dailyFacts")
+    assert_true("store.timeline.dailySales" in obs_fn, "computeObserved reads timeline sales")
+    rebuild_fn = client_py.split("function rebuildOneYearFromServer(year, reason)", 1)[1].split(
+        "function flushThenRebuildYears", 1
+    )[0]
+    assert_true("rebuildYear" in rebuild_fn, "rebuild uses dailyFacts sync")
+    assert_true("timeline.dailySales" not in rebuild_fn, "rebuild does not rewrite timeline sales")
+    csv_src = (SCRIPTS / "apply_daily_sales_import.py").read_text(encoding="utf-8")
+    assert_true("skipPersist" not in csv_src, "csv generator does not patch skipPersist")
+    assert_true(
+        "maybeRefreshObservedAfterTimelineChange" not in csv_src,
+        "csv generator does not patch KpiYearStore observed",
+    )
+    assert_true("mergeDailyMaps" not in csv_src, "csv generator does not patch mergeDailyMaps")
+    skip_mep = []
+    skip_annual = []
+    for path in MEP_HTML:
+        html = path.read_text(encoding="utf-8")
+        assert_true("opts.skipPersist" in html, f"{path} maybeRefresh skipPersist")
+        assert_true(
+            "maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true })" in html,
+            f"{path} observed before rebuild",
+        )
+        assert_true("KPI-DAILY-INPUTS-DUAL-WRITE-AN" in html, f"{path} dual-write kept")
+        assert_true("putYearsMap(yearsAll)" in html, f"{path} putYearsMap kept")
+        assert_true("flushThenRebuildYears" in html, f"{path} flushThenRebuildYears kept")
+        persist_mep = html.split("function persistMepSalesCsvByYear(maps)", 1)[1].split(
+            "function applyDailyImportMapsToOpenYear", 1
+        )[0]
+        assert_true("persistFromAnnualDaily" in persist_mep, f"{path} MEP CSV persistFromAnnualDaily")
+        assert_true("persistStore()" not in persist_mep, f"{path} MEP CSV helper no extra persistStore")
+        merge = html.split("function mergeDailyMaps(salesMap, bizMap, meta)", 1)[1].split(
+            "function syncLegacyKeys()", 1
+        )[0]
+        assert_true("skipPersist: true" in merge, f"{path} mergeDailyMaps skipPersist")
+        assert_true(
+            merge.count("maybeRefreshObservedAfterTimelineChange(yearsAll);") == 1,
+            f"{path} cell path one persist observed",
+        )
+        skip_mep.append(merge)
+    assert_true(skip_mep[0] == skip_mep[1] == skip_mep[2], "MEP JP/EN/ZH-TW mergeDailyMaps identical")
+    for path in ANNUAL_HTML:
+        html = path.read_text(encoding="utf-8")
+        assert_true("opts.skipPersist" in html, f"{path} maybeRefresh skipPersist")
+        merge = html.split("function mergeDailyMaps(salesMap, bizMap, meta)", 1)[1].split(
+            "function syncLegacyKeys()", 1
+        )[0]
+        assert_true("skipPersist: true" in merge, f"{path} annual mergeDailyMaps skipPersist")
+        assert_true(
+            merge.count("maybeRefreshObservedAfterTimelineChange(yearsAll);") == 1,
+            f"{path} annual cell-quiet persist observed only",
+        )
+        assert_true("persistFromAnnualDaily" in html, f"{path} persistFromAnnualDaily kept")
+        assert_true("persistFromPastSales" in html, f"{path} persistFromPastSales kept")
+        assert_true("function persistSalesDataModalSave" in html, f"{path} Sales Data save kept")
+        skip_annual.append(merge)
+    assert_true(
+        skip_annual[0] == skip_annual[1] == skip_annual[2],
+        "Annual JP/EN/ZH-TW mergeDailyMaps identical",
+    )
+    assert_true(skip_mep[0] == skip_annual[0], "Annual and MEP mergeDailyMaps share canonical body")
+
+
 def test_generator_main_scope() -> None:
     helper = helper_src()
     src = (SCRIPTS / "apply_daily_sales_import.py").read_text(encoding="utf-8")
@@ -1126,8 +1408,52 @@ def test_runtime_bind_sites() -> None:
         )
 
 
+def test_generator_order_no_drift() -> None:
+    helper = helper_src()
+    year_mod = year_store_mod()
+    year_mod.audit_unit4_year_store_targets()
+    monthly = [p for p in year_mod.MONTHLY_TARGETS]
+    for p in monthly:
+        assert_true(p not in year_mod.UNIT4_YEAR_STORE_PAGES, f"{p} stays outside unit4 targeted sync")
+    import tempfile
+
+    samples = [
+        (ANNUAL_HTML[0], helper.patch_annual_page),
+        (MEP_HTML[0], helper.patch_mep_page),
+    ]
+    for src_path, patch_csv in samples:
+        raw = src_path.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as td:
+            year_then_csv = Path(td) / "year_then_csv.html"
+            csv_then_year = Path(td) / "csv_then_year.html"
+            year_then_csv.write_text(raw, encoding="utf-8")
+            csv_then_year.write_text(raw, encoding="utf-8")
+            year_then_csv.write_text(
+                year_mod.apply_single_put_year_store_patch(year_then_csv.read_text(encoding="utf-8")),
+                encoding="utf-8",
+            )
+            patch_csv(year_then_csv)
+            a = year_then_csv.read_text(encoding="utf-8")
+            patch_csv(csv_then_year)
+            csv_then_year.write_text(
+                year_mod.apply_single_put_year_store_patch(csv_then_year.read_text(encoding="utf-8")),
+                encoding="utf-8",
+            )
+            b = csv_then_year.read_text(encoding="utf-8")
+            assert_true(a == b, f"{src_path.name} year-store then csv == csv then year-store")
+            year_then_csv.write_text(
+                year_mod.apply_single_put_year_store_patch(a), encoding="utf-8"
+            )
+            patch_csv(year_then_csv)
+            assert_true(
+                year_then_csv.read_text(encoding="utf-8") == a,
+                f"{src_path.name} combined generators idempotent",
+            )
+
+
 def test_generator_idempotent_and_locale() -> None:
     helper = helper_src()
+    year_mod = year_store_mod()
     import hashlib
     import tempfile
 
@@ -1144,7 +1470,10 @@ def test_generator_idempotent_and_locale() -> None:
             once = copy_path.read_text(encoding="utf-8")
             patch_fn(copy_path)
             twice = copy_path.read_text(encoding="utf-8")
-            assert_true(once == twice, f"{src_path.name} patch idempotent")
+            assert_true(once == twice, f"{src_path.name} csv patch idempotent")
+            year_once = year_mod.apply_single_put_year_store_patch(once)
+            year_twice = year_mod.apply_single_put_year_store_patch(year_once)
+            assert_true(year_once == year_twice, f"{src_path.name} year-store targeted idempotent")
             assert_true("apply_csv_upload_tooltip_css" not in twice, f"{src_path.name} no tooltip CSS script")
             new_tooltip = "/* KPI-CSV-UPLOAD-TOOLTIP */" in twice and "/* KPI-CSV-UPLOAD-TOOLTIP */" not in raw
             assert_true(not new_tooltip, f"{src_path.name} does not inject tooltip CSS")
@@ -1182,6 +1511,8 @@ def main() -> int:
     test_annual_persist_path()
     print("--- persist fields across entries ---")
     test_persist_fields_match_across_entries()
+    print("--- MEP valid import single full PUT ---")
+    test_mep_valid_import_single_full_put()
     print("--- generator main scope ---")
     test_generator_main_scope()
     print("--- click-time API lookup ---")
@@ -1190,6 +1521,8 @@ def main() -> int:
     test_runtime_html()
     print("--- runtime bind sites ---")
     test_runtime_bind_sites()
+    print("--- generator order no drift ---")
+    test_generator_order_no_drift()
     print("--- generator idempotent + locale ---")
     test_generator_idempotent_and_locale()
     print(f"passed={PASSED} failed={FAILED}")

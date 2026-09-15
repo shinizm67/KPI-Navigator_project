@@ -4369,7 +4369,7 @@
           return obs;
         }
 
-        function maybeRefreshObservedAfterTimelineChange(yearsAll) {
+        function maybeRefreshObservedAfterTimelineChange(yearsAll, opts) {
           if (!yearsAll || typeof yearsAll !== 'object') return;
           var oy = getOperatingYear();
           var affected = [];
@@ -4383,7 +4383,7 @@
             applyObservedBaselineToPlan(oy, { force: false, maxYears: 2 });
           }
           if (affected.length) {
-            persistStore();
+            if (!(opts && opts.skipPersist)) persistStore();
             document.dispatchEvent(
               new CustomEvent('kpi:observedChanged', {
                 detail: { years: affected, operatingYear: oy },
@@ -4391,7 +4391,6 @@
             );
           }
         }
-
         function listEligiblePastYearsForBaseline(operatingYear, maxYears) {
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
@@ -5031,6 +5030,7 @@
           return Promise.resolve(dual)
             .catch(function () {})
             .then(function () {
+              maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true });
               return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
             })
             .then(function () {
@@ -5052,10 +5052,8 @@
                 });
               }
             }
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
           });
         }
-
         function mergeDailyMaps(salesMap, bizMap, meta) {
           var src = (meta && meta.source) || 'kpi-year-store';
           var limitY =
@@ -5122,6 +5120,7 @@
                 });
                 return Promise.resolve();
               }
+              maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true });
               return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
             })
             .then(function () {
@@ -5143,10 +5142,11 @@
                 });
               }
             }
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
+            if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {
+              maybeRefreshObservedAfterTimelineChange(yearsAll);
+            }
           });
         }
-
         function syncLegacyKeys() {
           var oy = getOperatingYear();
           var annualSales = {};

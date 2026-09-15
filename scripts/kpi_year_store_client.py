@@ -916,7 +916,7 @@ def kpi_year_store_js() -> str:
           return obs;
         }}
 
-        function maybeRefreshObservedAfterTimelineChange(yearsAll) {{
+        function maybeRefreshObservedAfterTimelineChange(yearsAll, opts) {{
           if (!yearsAll || typeof yearsAll !== 'object') return;
           var oy = getOperatingYear();
           var affected = [];
@@ -930,7 +930,7 @@ def kpi_year_store_js() -> str:
             applyObservedBaselineToPlan(oy, {{ force: false, maxYears: 2 }});
           }}
           if (affected.length) {{
-            persistStore();
+            if (!(opts && opts.skipPersist)) persistStore();
             document.dispatchEvent(
               new CustomEvent('kpi:observedChanged', {{
                 detail: {{ years: affected, operatingYear: oy }},
@@ -1585,6 +1585,7 @@ def kpi_year_store_js() -> str:
           return Promise.resolve(dual)
             .catch(function () {{}})
             .then(function () {{
+              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true }});
               return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
             }})
             .then(function () {{
@@ -1606,17 +1607,23 @@ def kpi_year_store_js() -> str:
                 }});
               }}
             }}
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
           }});
         }}
 
         function mergeDailyMaps(salesMap, bizMap, meta) {{
           var src = (meta && meta.source) || 'kpi-year-store';
+          var limitY =
+            meta && meta.limitToYear != null ? Number(meta.limitToYear) : null;
           var yearsSales = {{}};
           var yearsBiz = {{}};
+          function matchesLimit(iso) {{
+            if (!validIso(iso)) return false;
+            if (limitY == null || !Number.isFinite(limitY)) return true;
+            return isoYear(iso) === limitY;
+          }}
           if (salesMap && typeof salesMap === 'object') {{
             Object.keys(salesMap).forEach(function (iso) {{
-              if (!validIso(iso) || !canWriteDailySalesFrom(src, iso)) return;
+              if (!matchesLimit(iso) || !canWriteDailySalesFrom(src, iso)) return;
               var n = Number(salesMap[iso]);
               if (isLegacyPlaceholderSales(n)) {{
                 delete store.timeline.dailySales[iso];
@@ -1628,18 +1635,26 @@ def kpi_year_store_js() -> str:
           }}
           if (bizMap && typeof bizMap === 'object') {{
             Object.keys(bizMap).forEach(function (iso) {{
-              if (!validIso(iso) || !canWriteBusinessDayFrom(src, iso)) return;
+              if (!matchesLimit(iso) || !canWriteBusinessDayFrom(src, iso)) return;
               store.timeline.businessDays[iso] = !!bizMap[iso];
               yearsBiz[isoYear(iso)] = true;
             }});
           }}
           var yearsAll = {{}};
-          Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
-          Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
+          if (limitY != null && Number.isFinite(limitY)) {{
+            if (yearsSales[limitY] || yearsSales[String(limitY)] ||
+                yearsBiz[limitY] || yearsBiz[String(limitY)]) {{
+              yearsAll[String(limitY)] = true;
+            }}
+          }} else {{
+            Object.keys(yearsSales).forEach(function (y) {{ yearsAll[y] = true; }});
+            Object.keys(yearsBiz).forEach(function (y) {{ yearsAll[y] = true; }});
+          }}
           var yearsList = Object.keys(yearsAll)
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) {{ return a - b; }});
+          if (yearsList.length) persistStore();
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
           var dual =
             window.__KPI_DAILY_INPUTS_SYNC &&
@@ -1649,6 +1664,19 @@ def kpi_year_store_js() -> str:
           return Promise.resolve(dual)
             .catch(function () {{}})
             .then(function () {{
+              /* KPI-MEP-CELL-QUIET-CU: cell edits keep local facts only — no busy rebuild.
+                 Confirm / CSV pass meta.serverRebuild to rebuild once with overlay. */
+              if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {{
+                yearsList.forEach(function (y) {{
+                  invalidateDailyFacts({{
+                    year: y,
+                    fromIso: yearStartIso(y),
+                    reason: 'merge-daily-mep-cell',
+                  }});
+                }});
+                return Promise.resolve();
+              }}
+              maybeRefreshObservedAfterTimelineChange(yearsAll, {{ skipPersist: true }});
               return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
             }})
             .then(function () {{
@@ -1670,7 +1698,9 @@ def kpi_year_store_js() -> str:
                 }});
               }}
             }}
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
+            if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {{
+              maybeRefreshObservedAfterTimelineChange(yearsAll);
+            }}
           }});
         }}
 
