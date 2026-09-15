@@ -627,6 +627,11 @@ def build_register() -> None:
             "<label for=\"company\">公司名稱 / 店名 :</label>",
         ),
         (
+            "<label for=\"business-type\">Business Type :</label>",
+            "<label for=\"business-type\">產業 :</label>",
+        ),
+        ('aria-label="Select business type"', 'aria-label="選擇產業"'),
+        (
             "<label for=\"email\">Email Address :</label>",
             "<label for=\"email\">電子郵件地址 :</label>",
         ),
@@ -718,6 +723,10 @@ def build_register() -> None:
     js = js.replace(
         "alert(pageLang === 'ja' ? 'パスワードが一致しません。' : 'Passwords do not match.');",
         "alert(pageLang === 'ja' ? 'パスワードが一致しません。' : pageLang === 'zh' ? '密碼不一致。' : 'Passwords do not match.');",
+    )
+    js = js.replace(
+        "alert(pageLang === 'ja' ? '業種を選択してください。' : 'Please select a Business Type.');",
+        "alert(pageLang === 'ja' ? '業種を選択してください。' : pageLang === 'zh' ? '請選擇業種。' : 'Please select a Business Type.');",
     )
     js = js.replace(
         "btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');\n"

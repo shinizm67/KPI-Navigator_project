@@ -453,6 +453,7 @@ def build_header(
       </div>
     </div>
     <script src="{img}js/kpi-auth-client.js"></script>
+    <script src="{img}js/kpi-business-type.js"></script>
     <script>
     (function () {{
       if (window.__headerDlBound) return;

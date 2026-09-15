@@ -149,6 +149,7 @@
             <a href="../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">Log Out</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -179,6 +180,7 @@
       </div>
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
+    <script src="../../js/kpi-business-type.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -201,6 +203,9 @@
         }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }
       } catch (_e) {}
     })();
@@ -510,7 +515,14 @@
       setText('fixed-email', data.email, 's.matsushita@forge-laboratory.com');
       setText('fixed-business-name', data.businessName);
       setText('fixed-company', data.company);
-      setText('fixed-industry', data.industry);
+      var industryValue = data.businessType || data.industry;
+      var industryLabel = industryValue;
+      if (window.KpiBusinessType) {
+        var canonical = window.KpiBusinessType.normalizeBusinessType(industryValue) ||
+          window.KpiBusinessType.getBusinessType();
+        industryLabel = window.KpiBusinessType.label(canonical);
+      }
+      setText('fixed-industry', industryLabel);
       setText('fixed-genre', data.genre);
       setText('fixed-country', data.country);
       setText('fixed-state', data.state);

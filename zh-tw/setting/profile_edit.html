@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>個人資料 | Key Performance Navigator | FORGE LABORATORY</title>
+  <title>個人資料（編輯） | KPI Pilot | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
   <link rel="stylesheet" href="../../en/setting/style.css">
   <style id="kpi-lang-switcher-locale">
@@ -152,6 +152,7 @@
             <a href="../setting/change_email.html" class="account-settings-item" role="menuitem">變更電子信箱</a>
             <a href="../setting/change_password.html" class="account-settings-item" role="menuitem">變更密碼</a>
             <a href="../setting/session_management.html" class="account-settings-item" role="menuitem">登入工作階段</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">登出</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -182,6 +183,7 @@
       </div>
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
+    <script src="../../js/kpi-business-type.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -205,6 +207,9 @@
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
         }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
+        }
       } catch (_e) {}
     })();
     </script>
@@ -218,11 +223,11 @@
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
-          <span class="profile-workspace-label">工作區：個人</span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
         </button>
         <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="工作區清單" hidden>
           <div class="workspace-popup-inner">
-            <div class="workspace-popup-item is-current">工作區：個人</div>
+            <div class="workspace-popup-item is-current">Workspace : Personal</div>
           </div>
         </div>
       </div>
@@ -236,7 +241,7 @@
             <p class="profile-user-id-value" id="profile-user-id" aria-live="polite">KPI-000000</p>
           </div>
           <div class="form-group form-group-email-display">
-            <label>電子信箱 :</label>
+            <label>電子郵件地址 :</label>
             <p class="profile-email-value" id="profile-email-display" aria-live="polite">s.matsushita@forge-laboratory.com</p>
           </div>
         </div>
@@ -254,12 +259,8 @@
 
         <div class="form-group">
           <label for="profile-industry">產業 :</label>
-          <select id="profile-industry" name="industry" class="profile-select" aria-label="選擇產業">
+          <select id="profile-industry" name="industry" class="profile-select" required aria-label="選擇產業">
             <option value="">— 請選擇 —</option>
-            <option value="restaurant">餐廳</option>
-            <option value="wear_shop">服飾店</option>
-            <option value="retail">零售</option>
-            <option value="cafe">咖啡廳</option>
           </select>
         </div>
 
@@ -474,6 +475,7 @@
         if (currencyElInit && curSaved) currencyElInit.value = curSaved;
       } catch (_e) {}
 
+      var profileSaveConfirmed = false;
       form.addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -496,12 +498,42 @@
           return opt ? opt.textContent : '';
         }
 
+        var canonicalType = window.KpiBusinessType
+          ? window.KpiBusinessType.normalizeBusinessType(industryEl ? industryEl.value : '')
+          : (industryEl ? industryEl.value : '');
+        if (!canonicalType) return;
+
+        var persistedType = window.KpiBusinessType
+          ? window.KpiBusinessType.readPersistedBusinessType()
+          : null;
+        if (
+          persistedType &&
+          persistedType !== canonicalType &&
+          !profileSaveConfirmed &&
+          window.KpiBusinessType &&
+          typeof window.KpiBusinessType.confirmChange === 'function'
+        ) {
+          window.KpiBusinessType.confirmChange(function () {
+            profileSaveConfirmed = true;
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          }, function () {
+            profileSaveConfirmed = false;
+          });
+          return;
+        }
+        profileSaveConfirmed = false;
+        if (window.KpiBusinessType) {
+          window.KpiBusinessType.setBusinessType(canonicalType);
+        }
+
         var data = {
           userId: userIdEl ? userIdEl.textContent.trim() : '',
           email: emailEl ? emailEl.textContent.trim() : '',
           businessName: businessNameEl ? businessNameEl.value : '',
           company: companyEl ? companyEl.value : '',
-          industry: getSelectText(industryEl),
+          industry: canonicalType,
+          businessType: canonicalType,
           genre: getSelectText(genreEl),
           country: getSelectText(countryEl),
           state: getSelectText(stateEl),
@@ -537,9 +569,7 @@
 
       var genresByIndustry = {
         restaurant: [{ v: 'italian', l: 'Italian' }, { v: 'french', l: 'French' }, { v: 'indian', l: 'Indian' }, { v: 'thai', l: 'Thai' }, { v: 'spain', l: 'Spain' }, { v: 'japanese', l: 'Japanese' }],
-        wear_shop: [{ v: 'mens', l: "Men's" }, { v: 'womens', l: "Women's" }, { v: 'unisex', l: 'Unisex' }],
-        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }],
-        cafe: [{ v: 'coffee', l: 'Coffee' }, { v: 'tea', l: 'Tea' }]
+        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }]
       };
 
       var statesByCountry = {
@@ -608,7 +638,7 @@
         industrySelect.addEventListener('change', function () {
           var v = industrySelect.value;
           genreSelect.disabled = !v;
-          fillSelect(genreSelect, genresByIndustry[v], '— 請選擇 —');
+          fillSelect(genreSelect, genresByIndustry[v], '— Select —');
         });
       }
 
@@ -618,7 +648,7 @@
           stateSelect.disabled = !v;
           citySelect.disabled = true;
           fillSelect(citySelect, [], '— Select State first —');
-          fillSelect(stateSelect, statesByCountry[v], '— 請選擇 —');
+          fillSelect(stateSelect, statesByCountry[v], '— Select —');
           if (timezoneInput) timezoneInput.value = '';
         });
       }
@@ -627,7 +657,7 @@
         stateSelect.addEventListener('change', function () {
           var v = stateSelect.value;
           citySelect.disabled = !v;
-          fillSelect(citySelect, citiesByState[v] || [], '— 請選擇 —');
+          fillSelect(citySelect, citiesByState[v] || [], '— Select —');
           if (timezoneInput && timezoneByState[v]) timezoneInput.value = timezoneByState[v];
           else if (timezoneInput && !v) timezoneInput.value = '';
         });
@@ -641,6 +671,32 @@
             if (stateVal && timezoneByState[stateVal]) timezoneInput.value = timezoneByState[stateVal];
           }
         });
+      }
+
+      if (window.KpiBusinessType && industrySelect) {
+        window.KpiBusinessType.populateSelect(industrySelect);
+        var hydratedType = window.KpiBusinessType.getBusinessType();
+        industrySelect.value = hydratedType;
+        if (genreSelect) {
+          var genreOpts = genresByIndustry[hydratedType] || [];
+          genreSelect.disabled = !genreOpts.length;
+          fillSelect(
+            genreSelect,
+            genreOpts,
+            genreOpts.length ? '— Select —' : '— Select Industry first —'
+          );
+          try {
+            var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
+            var savedGenre = lastProfile && lastProfile.genre;
+            if (savedGenre) {
+              Array.prototype.forEach.call(genreSelect.options, function (opt) {
+                if (opt.value === savedGenre || opt.textContent === savedGenre) {
+                  genreSelect.value = opt.value;
+                }
+              });
+            }
+          } catch (_eGenre) {}
+        }
       }
     })();
     (function () {
@@ -713,7 +769,7 @@
   var MONTHLY_LAST_KEY = 'kpiNavigator.monthlyLast';
   var MARKER = 'KPI-PL-MEP-EXPORT';
   /* Same defaults as PL (bucket=fixed|variable; no section field). */
-  var DEFAULT_EXPENSE_LINES = [{"lineId":"exp_rent","labelJa":"家賃","labelEn":"Rent","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":0,"labelZhTw":"租金"},{"lineId":"exp_fixed_asset_tax","labelJa":"固定資産税","labelEn":"Fixed asset tax","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":1,"labelZhTw":"固定資產稅"},{"lineId":"exp_fixed_labor","labelJa":"固定人件費","labelEn":"Fixed Labor","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":2,"labelZhTw":"固定人事費用"},{"lineId":"exp_lease","labelJa":"リース料","labelEn":"Lease","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":3,"labelZhTw":"租賃費"},{"lineId":"exp_depreciable_asset_tax","labelJa":"償却資産税","labelEn":"Depreciable asset tax","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":4,"labelZhTw":"折舊資產稅"},{"lineId":"exp_depreciation","labelJa":"減価償却費","labelEn":"Depreciation expenses","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":5,"labelZhTw":"折舊費用"},{"lineId":"exp_non_life_insurance","labelJa":"損害保険","labelEn":"Non-life insurance","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":6,"labelZhTw":"產物保險"},{"lineId":"exp_social_insurance","labelJa":"社会保険","labelEn":"social insurance","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":7,"labelZhTw":"社會保險"},{"lineId":"exp_food_cost","labelJa":"食材仕入れ費","labelEn":"Food cost","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":0,"labelZhTw":"食材進貨成本"},{"lineId":"exp_drink_cost","labelJa":"ドリンク仕入れ費","labelEn":"Drink Cost","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":1,"labelZhTw":"飲料進貨成本"},{"lineId":"exp_supplies","labelJa":"備品・消耗品仕入費","labelEn":"Supplies & Consumables","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":2,"labelZhTw":"備品／消耗品進貨"},{"lineId":"exp_misc","labelJa":"雑費・小口精算費","labelEn":"Miscellaneous Expense","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":3,"labelZhTw":"雜費／零用金"},{"lineId":"exp_electric","labelJa":"電気代","labelEn":"Electricity Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":4,"labelZhTw":"電費"},{"lineId":"exp_gas","labelJa":"ガス代","labelEn":"Gas Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":5,"labelZhTw":"瓦斯費"},{"lineId":"exp_water","labelJa":"水道代","labelEn":"Water Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":6,"labelZhTw":"水費"},{"lineId":"exp_variable_labor","labelJa":"アルバイト人件費","labelEn":"Variable Labor","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":7,"labelZhTw":"工讀／臨時人事費用"},{"lineId":"exp_telecom","labelJa":"通信費","labelEn":"Communication","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":8,"labelZhTw":"通訊費"},{"lineId":"exp_advertising","labelJa":"広告宣伝費","labelEn":"Advertising","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":9,"labelZhTw":"廣告宣傳費"},{"lineId":"exp_uniforms","labelJa":"被服費","labelEn":"Uniforms & Workwear","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":10,"labelZhTw":"制服／工作服"},{"lineId":"exp_payment_fees","labelJa":"クレジットカード手数料","labelEn":"Payment Processing Fees","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":11,"labelZhTw":"信用卡手續費"},{"lineId":"exp_employment_insurance","labelJa":"雇用保険","labelEn":"employment insurance","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":12,"labelZhTw":"就業保險"},{"lineId":"exp_workers_comp","labelJa":"労災保険","labelEn":"Worker's compensation insurance","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":13,"labelZhTw":"職災保險"},{"lineId":"exp_consumption_tax","labelJa":"消費税","labelEn":"consumption tax","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":14,"labelZhTw":"消費稅"}];
+  var DEFAULT_EXPENSE_LINES = [{"lineId":"exp_rent","labelJa":"家賃","labelEn":"Rent","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":0},{"lineId":"exp_fixed_asset_tax","labelJa":"固定資産税","labelEn":"Fixed asset tax","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":1},{"lineId":"exp_fixed_labor","labelJa":"固定人件費","labelEn":"Fixed Labor","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":2},{"lineId":"exp_lease","labelJa":"リース料","labelEn":"Lease","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":3},{"lineId":"exp_depreciable_asset_tax","labelJa":"償却資産税","labelEn":"Depreciable asset tax","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":4},{"lineId":"exp_depreciation","labelJa":"減価償却費","labelEn":"Depreciation expenses","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":5},{"lineId":"exp_non_life_insurance","labelJa":"損害保険","labelEn":"Non-life insurance","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":6},{"lineId":"exp_social_insurance","labelJa":"社会保険","labelEn":"social insurance","bucket":"fixed","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":7},{"lineId":"exp_food_cost","labelJa":"食材仕入れ費","labelEn":"Food cost","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":0},{"lineId":"exp_drink_cost","labelJa":"ドリンク仕入れ費","labelEn":"Drink Cost","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":1},{"lineId":"exp_supplies","labelJa":"備品・消耗品仕入費","labelEn":"Supplies & Consumables","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":2},{"lineId":"exp_misc","labelJa":"雑費・小口精算費","labelEn":"Miscellaneous Expense","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":3},{"lineId":"exp_electric","labelJa":"電気代","labelEn":"Electricity Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":4},{"lineId":"exp_gas","labelJa":"ガス代","labelEn":"Gas Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":5},{"lineId":"exp_water","labelJa":"水道代","labelEn":"Water Cost","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":6},{"lineId":"exp_variable_labor","labelJa":"アルバイト人件費","labelEn":"Variable Labor","bucket":"variable","inputStyle":"daily","resolvedInputStyle":"daily","active":true,"sortOrder":7},{"lineId":"exp_telecom","labelJa":"通信費","labelEn":"Communication","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":8},{"lineId":"exp_advertising","labelJa":"広告宣伝費","labelEn":"Advertising","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":9},{"lineId":"exp_uniforms","labelJa":"被服費","labelEn":"Uniforms & Workwear","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":10},{"lineId":"exp_payment_fees","labelJa":"クレジットカード手数料","labelEn":"Payment Processing Fees","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":true,"sortOrder":11},{"lineId":"exp_employment_insurance","labelJa":"雇用保険","labelEn":"employment insurance","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":12},{"lineId":"exp_workers_comp","labelJa":"労災保険","labelEn":"Worker's compensation insurance","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":13},{"lineId":"exp_consumption_tax","labelJa":"消費税","labelEn":"consumption tax","bucket":"variable","inputStyle":"monthly","resolvedInputStyle":"monthly","active":false,"sortOrder":14}];
 
   function useJa() {
     return exportLang() === 'ja';
@@ -1499,7 +1555,7 @@
     el.querySelector('#kpi-pl-mep-export-hint').textContent = t(
       'デフォルトは選択月のMEPのみです。必要なら複数月・全月、またはPL（年次）を同じファイルに含められます。',
       'Default is MEP for the selected month. Optionally add multiple/all months, and/or include the yearly PL sheet.',
-      '預設僅匯出所選月份的 MEP。可再選擇多月／全年，或把年度 PL 併入同一個檔案。'
+      '預設僅輸出所選月份的 MEP。可再選擇多月／全年，或把年度 PL 併入同一個檔案。'
     );
     el.querySelector('label[for="kpi-pl-mep-export-year"]').textContent = t('年', 'Year', '年');
     el.querySelector('#kpi-pl-mep-export-month-legend').textContent = t('MEPの月', 'MEP months', 'MEP 月份');
@@ -1680,7 +1736,7 @@
 
     return loadXlsx()
       .then(function (XLSX) {
-        return tick(t('ライブラリを読み込みました', 'Library loaded', '已載入匯出元件')).then(function () {
+        return tick(t('ライブラリを読み込みました', 'Library loaded', '已載入函式庫')).then(function () {
           return XLSX;
         });
       })

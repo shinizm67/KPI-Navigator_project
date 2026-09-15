@@ -124,9 +124,29 @@
   var btnRegister = document.getElementById('btn-register');
   var nameInput = document.getElementById('name');
   var companyInput = document.getElementById('company');
+  var businessTypeInput = document.getElementById('business-type');
+  var businessTypeHint = document.getElementById('business-type-hint');
   var emailInput = document.getElementById('email');
   var passwordInput = document.getElementById('password');
   var passwordConfirmInput = document.getElementById('password-confirm');
+  var registrationConfirmed = false;
+
+  function currentRegistrationPlan() {
+    var params = new URLSearchParams(window.location.search);
+    return (params.get('plan') || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
+  }
+
+  function isBusinessTypeOk() {
+    if (!window.KpiBusinessType) return !!(businessTypeInput && businessTypeInput.value);
+    return !!window.KpiBusinessType.normalizeBusinessType(
+      businessTypeInput ? businessTypeInput.value : ''
+    );
+  }
+
+  if (window.KpiBusinessType) {
+    window.KpiBusinessType.populateSelect(businessTypeInput);
+    window.KpiBusinessType.applyHint(businessTypeHint, currentRegistrationPlan());
+  }
 
   function isPasswordValid(pw) {
     if (!pw || pw.length < 8) return false;
@@ -146,13 +166,21 @@
     var passwordOk = isPasswordValid(pw);
     var confirmOk = pw.length > 0 && pwConfirm.length > 0 && pw === pwConfirm;
     var agreed = agreeTerms && agreeTerms.checked;
-    btnRegister.disabled = !(nameOk && companyOk && emailOk && passwordOk && confirmOk && agreed);
+    btnRegister.disabled = !(
+      nameOk &&
+      companyOk &&
+      isBusinessTypeOk() &&
+      emailOk &&
+      passwordOk &&
+      confirmOk &&
+      agreed
+    );
   }
 
   if (btnRegister) {
     setRegisterButtonState();
     if (agreeTerms) agreeTerms.addEventListener('change', setRegisterButtonState);
-    [nameInput, companyInput, emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
+    [nameInput, companyInput, businessTypeInput, emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
       if (el) {
         el.addEventListener('input', setRegisterButtonState);
         el.addEventListener('change', setRegisterButtonState);
@@ -208,13 +236,35 @@
         alert('Auth module failed to load.');
         return;
       }
+      if (!isBusinessTypeOk()) {
+        alert(pageLang === 'ja' ? '業種を選択してください。' : 'Please select a Business Type.');
+        return;
+      }
+      if (!registrationConfirmed) {
+        if (window.KpiBusinessType && typeof window.KpiBusinessType.confirmRegistration === 'function') {
+          window.KpiBusinessType.confirmRegistration(function () {
+            registrationConfirmed = true;
+            if (typeof regForm.requestSubmit === 'function') regForm.requestSubmit();
+            else regForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          }, function () {
+            registrationConfirmed = false;
+            setRegisterButtonState();
+          });
+          return;
+        }
+      }
+      registrationConfirmed = false;
       var email = emailEl ? emailEl.value.trim() : '';
       var pw = password ? password.value : '';
+      var selectedType = businessTypeInput ? businessTypeInput.value : '';
       if (btnRegister) btnRegister.disabled = true;
       window.__KPI_AUTH
         .register(email, pw)
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
+            if (window.KpiBusinessType) {
+              window.KpiBusinessType.setBusinessType(selectedType);
+            }
             alert('Registration complete. Proceeding to login.');
             window.location.href = '../login/index.html';
             return;

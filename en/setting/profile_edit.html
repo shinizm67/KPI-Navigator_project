@@ -152,6 +152,7 @@
             <a href="../setting/change_email.html" class="account-settings-item" role="menuitem">Change Email</a>
             <a href="../setting/change_password.html" class="account-settings-item" role="menuitem">Change Password</a>
             <a href="../setting/session_management.html" class="account-settings-item" role="menuitem">Session Management</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">Log Out</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -182,6 +183,7 @@
       </div>
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
+    <script src="../../js/kpi-business-type.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -204,6 +206,9 @@
         }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }
       } catch (_e) {}
     })();
@@ -254,12 +259,8 @@
 
         <div class="form-group">
           <label for="profile-industry">Industry :</label>
-          <select id="profile-industry" name="industry" class="profile-select" aria-label="Select industry">
+          <select id="profile-industry" name="industry" class="profile-select" required aria-label="Select industry">
             <option value="">— Select —</option>
-            <option value="restaurant">Restaurant</option>
-            <option value="wear_shop">Wear Shop</option>
-            <option value="retail">Retail</option>
-            <option value="cafe">Cafe</option>
           </select>
         </div>
 
@@ -474,6 +475,7 @@
         if (currencyElInit && curSaved) currencyElInit.value = curSaved;
       } catch (_e) {}
 
+      var profileSaveConfirmed = false;
       form.addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -496,12 +498,42 @@
           return opt ? opt.textContent : '';
         }
 
+        var canonicalType = window.KpiBusinessType
+          ? window.KpiBusinessType.normalizeBusinessType(industryEl ? industryEl.value : '')
+          : (industryEl ? industryEl.value : '');
+        if (!canonicalType) return;
+
+        var persistedType = window.KpiBusinessType
+          ? window.KpiBusinessType.readPersistedBusinessType()
+          : null;
+        if (
+          persistedType &&
+          persistedType !== canonicalType &&
+          !profileSaveConfirmed &&
+          window.KpiBusinessType &&
+          typeof window.KpiBusinessType.confirmChange === 'function'
+        ) {
+          window.KpiBusinessType.confirmChange(function () {
+            profileSaveConfirmed = true;
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          }, function () {
+            profileSaveConfirmed = false;
+          });
+          return;
+        }
+        profileSaveConfirmed = false;
+        if (window.KpiBusinessType) {
+          window.KpiBusinessType.setBusinessType(canonicalType);
+        }
+
         var data = {
           userId: userIdEl ? userIdEl.textContent.trim() : '',
           email: emailEl ? emailEl.textContent.trim() : '',
           businessName: businessNameEl ? businessNameEl.value : '',
           company: companyEl ? companyEl.value : '',
-          industry: getSelectText(industryEl),
+          industry: canonicalType,
+          businessType: canonicalType,
           genre: getSelectText(genreEl),
           country: getSelectText(countryEl),
           state: getSelectText(stateEl),
@@ -537,9 +569,7 @@
 
       var genresByIndustry = {
         restaurant: [{ v: 'italian', l: 'Italian' }, { v: 'french', l: 'French' }, { v: 'indian', l: 'Indian' }, { v: 'thai', l: 'Thai' }, { v: 'spain', l: 'Spain' }, { v: 'japanese', l: 'Japanese' }],
-        wear_shop: [{ v: 'mens', l: "Men's" }, { v: 'womens', l: "Women's" }, { v: 'unisex', l: 'Unisex' }],
-        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }],
-        cafe: [{ v: 'coffee', l: 'Coffee' }, { v: 'tea', l: 'Tea' }]
+        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }]
       };
 
       var statesByCountry = {
@@ -641,6 +671,32 @@
             if (stateVal && timezoneByState[stateVal]) timezoneInput.value = timezoneByState[stateVal];
           }
         });
+      }
+
+      if (window.KpiBusinessType && industrySelect) {
+        window.KpiBusinessType.populateSelect(industrySelect);
+        var hydratedType = window.KpiBusinessType.getBusinessType();
+        industrySelect.value = hydratedType;
+        if (genreSelect) {
+          var genreOpts = genresByIndustry[hydratedType] || [];
+          genreSelect.disabled = !genreOpts.length;
+          fillSelect(
+            genreSelect,
+            genreOpts,
+            genreOpts.length ? '— Select —' : '— Select Industry first —'
+          );
+          try {
+            var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
+            var savedGenre = lastProfile && lastProfile.genre;
+            if (savedGenre) {
+              Array.prototype.forEach.call(genreSelect.options, function (opt) {
+                if (opt.value === savedGenre || opt.textContent === savedGenre) {
+                  genreSelect.value = opt.value;
+                }
+              });
+            }
+          } catch (_eGenre) {}
+        }
       }
     })();
     (function () {

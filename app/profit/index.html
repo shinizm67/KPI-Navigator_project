@@ -238,6 +238,7 @@
             <a href="../../setting/change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
             <a href="../../setting/change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
             <a href="../../setting/session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">ログアウト</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -268,6 +269,7 @@
       </div>
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
+    <script src="../../js/kpi-business-type.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -290,6 +292,9 @@
         }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }
       } catch (_e) {}
     })();

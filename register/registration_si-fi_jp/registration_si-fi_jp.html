@@ -64,6 +64,13 @@
           <input type="text" id="company" name="company" autocomplete="organization">
         </div>
         <div class="form-group">
+          <label for="business-type">業種 :</label>
+          <select id="business-type" name="business_type" required aria-label="業種を選択">
+            <option value="">— 選択 —</option>
+          </select>
+          <p class="form-hint" id="business-type-hint"></p>
+        </div>
+        <div class="form-group">
           <label for="email">Eメールアドレス :</label>
           <input type="email" id="email" name="email" required autocomplete="email">
         </div>
@@ -142,6 +149,7 @@
   </div>
 
   <script src="../../js/kpi-auth-client.js"></script>
+  <script src="../../js/kpi-business-type.js"></script>
   <script src="../script.js"></script>
 </body>
 </html>
