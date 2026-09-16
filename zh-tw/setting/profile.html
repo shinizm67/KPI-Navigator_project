@@ -258,8 +258,8 @@
           <p class="profile-fixed-value" id="fixed-industry">—</p>
         </div>
 
-        <div class="form-group form-group-genre">
-          <label>類型 :</label>
+        <div class="form-group form-group-genre" id="profile-genre-group" hidden>
+          <label>料理類型（選填） :</label>
           <p class="profile-fixed-value" id="fixed-genre">—</p>
         </div>
 
@@ -524,6 +524,14 @@
       }
       setText('fixed-industry', industryLabel);
       setText('fixed-genre', data.genre);
+      var genreGroup = document.getElementById('profile-genre-group');
+      if (genreGroup) {
+        var viewType = window.KpiBusinessType
+          ? (window.KpiBusinessType.normalizeBusinessType(industryValue) ||
+            window.KpiBusinessType.getBusinessType())
+          : (industryValue || '');
+        genreGroup.hidden = viewType !== 'restaurant';
+      }
       setText('fixed-country', data.country);
       setText('fixed-state', data.state);
       setText('fixed-city', data.city);

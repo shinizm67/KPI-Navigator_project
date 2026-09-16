@@ -223,7 +223,7 @@ def test_surfaces() -> None:
         assert_true("confirmChange" in html, f"{label} profile change warning")
         assert_true("profileSaveConfirmed" in html, f"{label} profile does not save change immediately")
         assert_true("setBusinessType" in html, f"{label} profile writes store.meta")
-        assert_true("wear_shop" not in html.split("genresByIndustry", 1)[-1][:400], f"{label} old wear_shop genre gone")
+        assert_true("wear_shop" not in html, f"{label} old wear_shop genre gone")
         assert_true("kpi-business-type.js" in html, f"{label} profile edit includes helper")
 
     jp_view = (ROOT / "setting" / "profile.html").read_text(encoding="utf-8")

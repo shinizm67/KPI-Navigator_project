@@ -264,11 +264,19 @@
           </select>
         </div>
 
-          <div class="form-group form-group-genre">
-            <label for="profile-genre">ジャンル :</label>
-            <select id="profile-genre" name="genre" class="profile-select" aria-label="ジャンルを選択" disabled>
-              <option value="">— Select Industry first —</option>
-            </select>
+          <div class="form-group form-group-genre" id="profile-genre-group" hidden>
+            <label for="profile-genre">料理ジャンル（任意）:</label>
+            <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="料理ジャンル（任意）">
+            <datalist id="profile-genre-suggestions">
+              <option value="Italian"></option>
+              <option value="French"></option>
+              <option value="Japanese"></option>
+              <option value="Indian"></option>
+              <option value="Thai"></option>
+              <option value="Cafe"></option>
+              <option value="Bar"></option>
+              <option value="Izakaya"></option>
+            </datalist>
           </div>
 
           <div class="form-group">
@@ -513,7 +521,7 @@
           company: companyEl ? companyEl.value : '',
           industry: canonicalType,
           businessType: canonicalType,
-          genre: getSelectText(genreEl),
+          genre: genreEl ? String(genreEl.value || '').trim() : '',
           country: getSelectText(countryEl),
           state: getSelectText(stateEl),
           city: getSelectText(cityEl),
@@ -561,16 +569,12 @@
     })();
     (function () {
       var industrySelect = document.getElementById('profile-industry');
-      var genreSelect = document.getElementById('profile-genre');
+      var genreInput = document.getElementById('profile-genre');
+      var genreGroup = document.getElementById('profile-genre-group');
       var countrySelect = document.getElementById('profile-country');
       var stateSelect = document.getElementById('profile-state');
       var citySelect = document.getElementById('profile-city');
       var timezoneInput = document.getElementById('profile-timezone');
-
-      var genresByIndustry = {
-        restaurant: [{ v: 'italian', l: 'Italian' }, { v: 'french', l: 'French' }, { v: 'indian', l: 'Indian' }, { v: 'thai', l: 'Thai' }, { v: 'spain', l: 'Spain' }, { v: 'japanese', l: 'Japanese' }],
-        retail: [{ v: 'general', l: 'General' }, { v: 'electronics', l: 'Electronics' }]
-      };
 
       var statesByCountry = {
         JP: [{ v: 'tokyo', l: 'Tokyo' }, { v: 'osaka', l: 'Osaka' }, { v: 'kyoto', l: 'Kyoto' }, { v: 'fukuoka', l: 'Fukuoka' }],
@@ -633,12 +637,21 @@
         });
       }
 
-      if (industrySelect && genreSelect) {
-        industrySelect.addEventListener('change', function () {
-          var v = industrySelect.value;
-          genreSelect.disabled = !v;
-          fillSelect(genreSelect, genresByIndustry[v], '— Select —');
-        });
+      function isRestaurantIndustry(code) {
+        if (window.KpiBusinessType && typeof window.KpiBusinessType.normalizeBusinessType === 'function') {
+          return window.KpiBusinessType.normalizeBusinessType(code) === 'restaurant';
+        }
+        return String(code || '') === 'restaurant';
+      }
+
+      function syncGenreVisibility() {
+        if (!genreGroup) return;
+        var raw = industrySelect ? industrySelect.value : '';
+        genreGroup.hidden = !isRestaurantIndustry(raw);
+      }
+
+      if (industrySelect) {
+        industrySelect.addEventListener('change', syncGenreVisibility);
       }
 
       if (countrySelect && stateSelect) {
@@ -676,26 +689,14 @@
         window.KpiBusinessType.populateSelect(industrySelect);
         var hydratedType = window.KpiBusinessType.getBusinessType();
         industrySelect.value = hydratedType;
-        if (genreSelect) {
-          var genreOpts = genresByIndustry[hydratedType] || [];
-          genreSelect.disabled = !genreOpts.length;
-          fillSelect(
-            genreSelect,
-            genreOpts,
-            genreOpts.length ? '— Select —' : '— Select Industry first —'
-          );
+        if (genreInput) {
           try {
             var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
             var savedGenre = lastProfile && lastProfile.genre;
-            if (savedGenre) {
-              Array.prototype.forEach.call(genreSelect.options, function (opt) {
-                if (opt.value === savedGenre || opt.textContent === savedGenre) {
-                  genreSelect.value = opt.value;
-                }
-              });
-            }
+            if (savedGenre) genreInput.value = savedGenre;
           } catch (_eGenre) {}
         }
+        syncGenreVisibility();
       }
     })();
     (function () {

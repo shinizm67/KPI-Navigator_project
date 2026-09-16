@@ -612,8 +612,16 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-select {
   margin-left: 24px;
   width: calc(100% - 24px);
 }
-.si-fi.profile-page .profile-form .form-group-genre .profile-select {
+.si-fi.profile-page .profile-form .form-group-genre .profile-select,
+.si-fi.profile-page .profile-form .form-group-genre .profile-genre-input {
   width: 100%;
+}
+.si-fi.profile-page .profile-form .form-group-genre[hidden] {
+  display: none !important;
+  margin: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 /* Time Zone 自動入力用の読み取り専用スタイル */
