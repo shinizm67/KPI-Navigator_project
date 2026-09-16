@@ -220,6 +220,9 @@ def test_surfaces() -> None:
     zh_edit = (ROOT / "zh-tw" / "setting" / "profile_edit.html").read_text(encoding="utf-8")
     for label, html in (("jp", jp_edit), ("en", en_edit), ("zh", zh_edit)):
         assert_true("getBusinessType()" in html, f"{label} profile hydrates from helper")
+        assert_true("initialBusinessType" in html, f"{label} profile snapshots loaded BT")
+        assert_true("currentType !== canonicalType" in html, f"{label} warning compares effective type")
+        assert_true("readPersistedBusinessType()" not in html, f"{label} warning not skipped when persisted is null")
         assert_true("confirmChange" in html, f"{label} profile change warning")
         assert_true("profileSaveConfirmed" in html, f"{label} profile does not save change immediately")
         assert_true("setBusinessType" in html, f"{label} profile writes store.meta")

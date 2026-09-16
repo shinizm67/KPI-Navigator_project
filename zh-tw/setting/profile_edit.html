@@ -479,6 +479,9 @@
       } catch (_e) {}
 
       var profileSaveConfirmed = false;
+      var initialBusinessType = window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function'
+        ? window.KpiBusinessType.getBusinessType()
+        : 'restaurant';
       form.addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -506,12 +509,13 @@
           : (industryEl ? industryEl.value : '');
         if (!canonicalType) return;
 
-        var persistedType = window.KpiBusinessType
-          ? window.KpiBusinessType.readPersistedBusinessType()
-          : null;
+        var currentType = initialBusinessType
+          || (window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function'
+            ? window.KpiBusinessType.getBusinessType()
+            : 'restaurant');
         if (
-          persistedType &&
-          persistedType !== canonicalType &&
+          currentType &&
+          currentType !== canonicalType &&
           !profileSaveConfirmed &&
           window.KpiBusinessType &&
           typeof window.KpiBusinessType.confirmChange === 'function'
@@ -715,6 +719,7 @@
         window.KpiBusinessType.populateSelect(industrySelect);
         var hydratedType = window.KpiBusinessType.getBusinessType();
         industrySelect.value = hydratedType;
+        initialBusinessType = hydratedType;
         if (genreInput) {
           try {
             var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');

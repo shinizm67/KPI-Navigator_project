@@ -362,7 +362,7 @@ MEP_EMBED_NEW = """      function catalogExpenseDefsFromEmbedded(bucket) {
         if (window.KpiPlExpensePresets) {
           if (!window.KpiPlExpensePresets.hasDefinedPreset()) return [];
           var bt = window.KpiPlExpensePresets.resolveBusinessType();
-          if (bt && bt !== 'restaurant') {
+          if (bt) {
             return window.KpiPlExpensePresets.getDefaultExpenseLines(bt)
               .filter(function (line) {
                 return line && line.bucket === bucket && line.active !== false;
@@ -424,7 +424,7 @@ def patch_pl(path: Path) -> None:
 
 def patch_mep(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    if "bt !== 'restaurant'" not in text:
+    if "KpiPlExpensePresets.resolveBusinessType" not in text:
         text = replace_once(text, MEP_EMBED_OLD, MEP_EMBED_NEW, "MEP embed", path)
     if "labelZh: line.labelZh" not in text:
         text = replace_once(text, MEP_PLINE_OLD, MEP_PLINE_NEW, "plLineToMepDef zh", path)

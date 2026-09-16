@@ -116,7 +116,17 @@ MEP_LOAD_OLD = """      function loadPlCatalogLines() {
         }
       }"""
 
-MEP_LOAD_NEW = """      function loadPlCatalogLines() {
+MEP_LOAD_NEW = """      function reconcileStoredPlCatalogLines(lines) {
+        if (
+          window.KpiPlExpensePresets &&
+          typeof window.KpiPlExpensePresets.reconcileCatalogLines === 'function' &&
+          Array.isArray(lines)
+        ) {
+          return window.KpiPlExpensePresets.reconcileCatalogLines(lines);
+        }
+        return lines;
+      }
+      function loadAllPlCatalogLines() {
         try {
           var raw = localStorage.getItem(PL_CATALOG_STORAGE_KEY);
           if (!raw) return null;
@@ -128,12 +138,17 @@ MEP_LOAD_NEW = """      function loadPlCatalogLines() {
             }
             return null;
           }
-          return parsed.lines.filter(function (line) {
-            return line && line.active !== false;
-          });
+          return reconcileStoredPlCatalogLines(parsed.lines);
         } catch (_e) {
           return null;
         }
+      }
+      function loadPlCatalogLines() {
+        var lines = loadAllPlCatalogLines();
+        if (!lines) return null;
+        return lines.filter(function (line) {
+          return line && line.active !== false;
+        });
       }"""
 
 MEP_EMBED_OLD = """      function catalogExpenseDefsFromEmbedded(bucket) {
@@ -200,7 +215,7 @@ def patch_mep(path: Path, js_prefix: str) -> None:
         text = text.replace(MEP_LOAD_OLD, MEP_LOAD_NEW, 1)
     if MEP_EMBED_OLD not in text:
         if (
-            "bt !== 'restaurant'" not in text
+            "resolveBusinessType()" not in text
             and "hasDefinedPreset()) {\n          return [];" not in text
         ):
             raise ValueError(f"MEP catalogExpenseDefsFromEmbedded pattern missing in {path}")

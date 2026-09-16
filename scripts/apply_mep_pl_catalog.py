@@ -30,7 +30,17 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
         PL_CATALOG_BY_ID[entry.lineId] = entry;
       }});
       var PL_CATALOG_STORAGE_KEY = 'kpiNavigator.plLineCatalog';
-      function loadPlCatalogLines() {{
+      function reconcileStoredPlCatalogLines(lines) {{
+        if (
+          window.KpiPlExpensePresets &&
+          typeof window.KpiPlExpensePresets.reconcileCatalogLines === 'function' &&
+          Array.isArray(lines)
+        ) {{
+          return window.KpiPlExpensePresets.reconcileCatalogLines(lines);
+        }}
+        return lines;
+      }}
+      function loadAllPlCatalogLines() {{
         try {{
           var raw = localStorage.getItem(PL_CATALOG_STORAGE_KEY);
           if (!raw) return null;
@@ -42,12 +52,17 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
             }}
             return null;
           }}
-          return parsed.lines.filter(function (line) {{
-            return line && line.active !== false;
-          }});
+          return reconcileStoredPlCatalogLines(parsed.lines);
         }} catch (_e) {{
           return null;
         }}
+      }}
+      function loadPlCatalogLines() {{
+        var lines = loadAllPlCatalogLines();
+        if (!lines) return null;
+        return lines.filter(function (line) {{
+          return line && line.active !== false;
+        }});
       }}
       function loadPlExpenseCatalogLines() {{
         var lines = loadPlCatalogLines();
@@ -87,7 +102,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
         if (window.KpiPlExpensePresets) {{
           if (!window.KpiPlExpensePresets.hasDefinedPreset()) return [];
           var bt = window.KpiPlExpensePresets.resolveBusinessType();
-          if (bt && bt !== 'restaurant') {{
+          if (bt) {{
             return window.KpiPlExpensePresets.getDefaultExpenseLines(bt)
               .filter(function (line) {{
                 return line && line.bucket === bucket && line.active !== false;
@@ -182,7 +197,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
         }});
       }}
       function upsertPlIncomeLabelsFromState() {{
-        var lines = loadPlCatalogLines();
+        var lines = loadAllPlCatalogLines();
         if (!lines) {{
           lines = JSON.parse(JSON.stringify(PL_LINE_CATALOG));
         }}

@@ -221,6 +221,26 @@ def test_custom_and_saved_amounts_kept() -> None:
     assert_true(amounts == snapshot_amounts, "amounts still untouched after round-trip")
 
 
+def test_mep_follows_stale_restaurant_catalog() -> None:
+    restaurant = expense_detail_default_catalog("restaurant")
+    retail = reconcile_catalog_lines(restaurant, "retail")
+    retail_active = [row["labelJa"] for row in retail if row.get("active") is not False]
+    retail_hidden = [row["labelJa"] for row in retail if row.get("active") is False]
+    assert_true("商品仕入" in retail_active, "retail MEP/PL active includes merchandise")
+    assert_true("包装・梱包資材" in retail_active, "retail packaging is active")
+    assert_true("食材仕入れ費" in retail_hidden, "food stays as orphan, not deleted")
+    assert_true("食材仕入れ費" not in retail_active, "food is not shown on retail")
+    salon = reconcile_catalog_lines(retail, "hair_salon")
+    salon_active = [row["labelJa"] for row in salon if row.get("active") is not False]
+    assert_true("薬剤・施術材料費" in salon_active, "hair salon treatment materials active")
+    assert_true("商品仕入" not in salon_active, "retail merchandise hidden on hair salon")
+    back = reconcile_catalog_lines(salon, "restaurant")
+    back_active = [row["labelJa"] for row in back if row.get("active") is not False]
+    assert_true("食材仕入れ費" in back_active, "returning to restaurant restores food")
+    apply = (ROOT / "scripts" / "apply_mep_pl_catalog.py").read_text(encoding="utf-8")
+    assert_true("reconcileCatalogLines" in apply, "MEP apply script uses PL reconcile")
+
+
 def test_runtime_files_and_pages() -> None:
     js = (ROOT / "js" / "kpi-pl-expense-presets.js").read_text(encoding="utf-8")
     assert_true("getDefaultExpenseLines" in js, "runtime exposes getDefaultExpenseLines")
@@ -251,6 +271,9 @@ def test_runtime_files_and_pages() -> None:
         assert_true("kpi-business-type.js" in html, f"{rel} loads BT helper")
         assert_true("kpi-pl-expense-presets.js" in html, f"{rel} loads preset engine")
         assert_true("hasDefinedPreset" in html, f"{rel} does not fall back to restaurant embed when unset")
+        assert_true("reconcileCatalogLines" in html, f"{rel} applies PL parent reconcile")
+        assert_true("loadAllPlCatalogLines" in html, f"{rel} keeps full catalog for writes")
+        assert_true("if (bt && bt !== 'restaurant')" not in html, f"{rel} does not skip presets for restaurant-only")
         assert_true("PL-MEP-LINE-CATALOG" in html, f"{rel} still has PL→MEP catalog marker")
 
 
@@ -275,6 +298,7 @@ def main() -> int:
     test_unknown_fallback_restaurant()
     test_mep_mirrors_pl_parent()
     test_custom_and_saved_amounts_kept()
+    test_mep_follows_stale_restaurant_catalog()
     test_runtime_files_and_pages()
     test_did_not_touch_forbidden_surfaces()
     print(f"passed={PASSED} failed={FAILED}")
