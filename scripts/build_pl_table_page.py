@@ -393,6 +393,8 @@ LABELS_JA = {
     "expense_attr_edit_toggle_aria": "固定費・変動費の属性編集ボタンを表示",
     "expense_attr_edit_on": "ON",
     "expense_attr_edit_off": "OFF",
+    "unclassified_warn_aria": "分析カテゴリが未設定です",
+    "unclassified_warn_tooltip": "この費目は分析カテゴリが未設定です。支出合計・利益計算にはすでに反映されていますが、カテゴリ別分析の精度を高めるため、属性を設定してください。",
     "graph_band": "グラフ",
     "graph_monthly_sales": "月次売上",
     "graph_expenses": "支出",
@@ -553,6 +555,8 @@ LABELS_EN = {
     "expense_attr_edit_toggle_aria": "Show attribute edit buttons for fixed and variable expenses",
     "expense_attr_edit_on": "ON",
     "expense_attr_edit_off": "OFF",
+    "unclassified_warn_aria": "Analysis category is not set",
+    "unclassified_warn_tooltip": "This line has no analysis category yet. It is already included in expense totals and profit, but setting an attribute will improve category analysis.",
     "graph_band": "Graph",
     "graph_monthly_sales": "Monthly Sales",
     "graph_expenses": "Expenses",
@@ -4102,7 +4106,8 @@ def pl_expense_adj_modal_html(L: dict) -> str:
 def pl_expense_attribute_modal_html(L: dict, lang: str) -> str:
     def choice_rows(attrs: list[tuple[str, str, str]]) -> str:
         parts: list[str] = []
-        for attr_id, ja, en in attrs:
+        for row in attrs:
+            attr_id, ja, en = row[0], row[1], row[2]
             label = ja if lang == "ja" else en
             parts.append(
                 f'<label class="pl-input-source-modal__choice">'
@@ -4736,6 +4741,8 @@ def render_page(lang: str, lang_switch: str) -> str:
         occupancy_aria=L["occupancy_aria"],
         occupancy_rent_option=L["occupancy_rent"],
         occupancy_owned_option=L["occupancy_owned"],
+        unclassified_warn_aria=L["unclassified_warn_aria"],
+        unclassified_warn_tooltip=L["unclassified_warn_tooltip"],
     )
     graph_months_json = json.dumps(
         MONTHS_EN if lang == "en" else MONTHS_JA, ensure_ascii=False
@@ -6800,6 +6807,30 @@ def render_page(lang: str, lang_switch: str) -> str:
       border-color: #999;
       background: #f5f5f5;
       color: #111;
+    }}
+    .pl-table--v1 .pl-row-unclassified {{
+      display: inline-flex;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }}
+    .pl-table--v1 .pl-row-unclassified__btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 14px;
+      height: 13px;
+      margin: 0;
+      padding: 0 2px;
+      border: 0;
+      border-radius: 2px;
+      background: transparent;
+      color: #e0b84a;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+    }}
+    body.office-mode .pl-table--v1 .pl-row-unclassified__btn {{
+      color: #b8860b;
     }}
     .pl-table--v1 .pl-v-mid--expense-detail {{
       background: #1f1e1e !important;

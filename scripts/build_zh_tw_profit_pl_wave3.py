@@ -174,6 +174,10 @@ ATTR_LABELS: dict[str, str] = {
     "payment_fees": "信用卡手續費",
     "taxes": "稅金",
     "subscription": "訂閱費",
+    "inventory": "進貨／庫存",
+    "outsourcing": "外包費",
+    "maintenance": "修繕／維護",
+    "logistics": "配送／物流",
 }
 
 

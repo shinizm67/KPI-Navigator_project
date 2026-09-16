@@ -199,7 +199,10 @@ def patch_mep(path: Path, js_prefix: str) -> None:
     else:
         text = text.replace(MEP_LOAD_OLD, MEP_LOAD_NEW, 1)
     if MEP_EMBED_OLD not in text:
-        if "hasDefinedPreset()) {\n          return [];" not in text:
+        if (
+            "bt !== 'restaurant'" not in text
+            and "hasDefinedPreset()) {\n          return [];" not in text
+        ):
             raise ValueError(f"MEP catalogExpenseDefsFromEmbedded pattern missing in {path}")
     else:
         text = text.replace(MEP_EMBED_OLD, MEP_EMBED_NEW, 1)

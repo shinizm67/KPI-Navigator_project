@@ -65,6 +65,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           bucket: line.bucket,
           labelJa: line.labelJa,
           labelEn: line.labelEn,
+          labelZh: line.labelZh,
           editableLabel: false,
           inputStyle: line.inputStyle || style,
           resolvedInputStyle: style,
@@ -83,8 +84,16 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           .map(plLineToMepDef);
       }}
       function catalogExpenseDefsFromEmbedded(bucket) {{
-        if (window.KpiPlExpensePresets && !window.KpiPlExpensePresets.hasDefinedPreset()) {{
-          return [];
+        if (window.KpiPlExpensePresets) {{
+          if (!window.KpiPlExpensePresets.hasDefinedPreset()) return [];
+          var bt = window.KpiPlExpensePresets.resolveBusinessType();
+          if (bt && bt !== 'restaurant') {{
+            return window.KpiPlExpensePresets.getDefaultExpenseLines(bt)
+              .filter(function (line) {{
+                return line && line.bucket === bucket && line.active !== false;
+              }})
+              .map(plLineToMepDef);
+          }}
         }}
         return PL_LINE_CATALOG.filter(function (e) {{
           return e.bucket === bucket && e.active !== false;
@@ -134,6 +143,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           kind: 'money',
           labelJa: def.labelJa,
           labelEn: def.labelEn,
+          labelZh: def.labelZh,
           editableLabel: !!def.editableLabel,
           deletable: false,
           sub: def.section === 'expense',
@@ -158,6 +168,7 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           if (prev) {{
             prev.labelJa = d.labelJa;
             prev.labelEn = d.labelEn;
+            if (d.labelZh) prev.labelZh = d.labelZh;
             prev.mepEditable = !!d.mepEditable;
             prev.mepAutoCalc = !!d.mepAutoCalc;
             prev.resolvedInputStyle = d.resolvedInputStyle || 'monthly';

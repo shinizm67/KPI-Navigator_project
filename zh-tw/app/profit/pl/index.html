@@ -2032,6 +2032,30 @@
       background: #f5f5f5;
       color: #111;
     }
+    .pl-table--v1 .pl-row-unclassified {
+      display: inline-flex;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .pl-table--v1 .pl-row-unclassified__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 14px;
+      height: 13px;
+      margin: 0;
+      padding: 0 2px;
+      border: 0;
+      border-radius: 2px;
+      background: transparent;
+      color: #e0b84a;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    body.office-mode .pl-table--v1 .pl-row-unclassified__btn {
+      color: #b8860b;
+    }
     .pl-table--v1 .pl-v-mid--expense-detail {
       background: #1f1e1e !important;
     }
@@ -5611,6 +5635,9 @@
       var occupancyAria = "物件形態";
       var occupancyRentOption = "租賃";
       var occupancyOwnedOption = "自有";
+      var unclassifiedWarnAria = '尚未設定分析類別';
+      var unclassifiedWarnTooltip = '此科目尚未設定分析類別。金額已計入支出合計與利益，但設定屬性可提高類別分析的精確度。';
+      var UNCLASSIFIED_ATTR = 'unclassified';
       var block = document.getElementById('pl-expense-detail-block');
       var attrToggle = document.getElementById('pl-expense-attr-toggle');
       var modal = document.getElementById('pl-input-source-modal');
@@ -6151,9 +6178,70 @@
         commitLabelEdit();
       }
 
+      function restaurantLikeNow() {
+        if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {
+          try {
+            return window.KpiBusinessType.isRestaurantLike();
+          } catch (_eLike) {}
+        }
+        return true;
+      }
+
+      function attributeLabel(attr) {
+        if (!attr) return '';
+        var lang = '';
+        try {
+          lang = String(document.documentElement.lang || '').toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return attr.labelZh || attr.labelJa || attr.labelEn || attr.id;
+        if (lang.indexOf('ja') === 0) return attr.labelJa || attr.labelEn || attr.id;
+        return attr.labelEn || attr.labelJa || attr.id;
+      }
+
+      function allowAttributeId(attrId, bucket) {
+        var id = String(attrId || '');
+        if (!id || id === UNCLASSIFIED_ATTR) return false;
+        var restaurant = restaurantLikeNow();
+        var api = window.KpiPlExpensePresets || {};
+        var restOnly = api.RESTAURANT_ONLY_ATTRIBUTES || ['food_cost', 'drink_cost'];
+        var nonRestOnly = api.NON_RESTAURANT_ONLY_ATTRIBUTES || [];
+        if (!restaurant && restOnly.indexOf(id) >= 0) return false;
+        if (restaurant && nonRestOnly.indexOf(id) >= 0) return false;
+        if (restaurant && bucket === 'variable' && id === 'occupancy') return false;
+        return true;
+      }
+
+      function rebuildAttributeChoices(bucket) {
+        if (!attributeModal) return;
+        var api = window.KpiPlExpensePresets;
+        var list = bucket === 'variable'
+          ? (api && api.VARIABLE_ATTRIBUTES) || []
+          : (api && api.FIXED_ATTRIBUTES) || [];
+        if (!list.length) return;
+        var fs = attributeModal.querySelector(
+          '.pl-expense-attribute-choices[data-pl-expense-attribute-bucket="' + bucket + '"]'
+        );
+        if (!fs) return;
+        var legend = fs.querySelector('legend');
+        var legendHtml = legend ? legend.outerHTML : '';
+        var html = legendHtml;
+        list.forEach(function (attr) {
+          if (!allowAttributeId(attr.id, bucket)) return;
+          html +=
+            '<label class="pl-input-source-modal__choice">' +
+            '<input type="radio" name="pl-expense-attribute" value="' +
+            escapeHtml(attr.id) +
+            '"><span>' +
+            escapeHtml(attributeLabel(attr)) +
+            '</span></label>';
+        });
+        fs.innerHTML = html;
+      }
+
       function showAttributeChoicesForBucket(bucket) {
         if (!attributeModal) return;
         var target = bucket === 'variable' ? 'variable' : 'fixed';
+        rebuildAttributeChoices(target);
         attributeModal.querySelectorAll('.pl-expense-attribute-choices').forEach(function (fs) {
           var show = fs.getAttribute('data-pl-expense-attribute-bucket') === target;
           fs.hidden = !show;
@@ -6162,6 +6250,75 @@
           });
         });
       }
+
+      function isUnclassifiedCustom(line) {
+        if (!line || String(line.lineId || '').indexOf('exp_custom_') !== 0) return false;
+        var a = line.expenseAttribute;
+        return !a || a === UNCLASSIFIED_ATTR;
+      }
+
+      function rowUnclassifiedWarn(line) {
+        if (!isUnclassifiedCustom(line)) return '';
+        return (
+          '<span class="pl-row-unclassified">' +
+          '<button type="button" class="pl-row-unclassified__btn" data-action="unclassified-warn" data-line-id="' +
+          line.lineId +
+          '" title="' +
+          escapeHtml(unclassifiedWarnTooltip) +
+          '" aria-label="' +
+          escapeHtml(unclassifiedWarnAria) +
+          '">⚠</button></span>'
+        );
+      }
+
+      function openCreateLineLabelModal(bucket) {
+        if (!labelEditModal || !labelEditInput) {
+          addLine(bucket, 'monthly', UNCLASSIFIED_ATTR);
+          return;
+        }
+        pendingLabelEdit = { createBucket: bucket };
+        labelEditInput.value = '';
+        var showSource = bucket === 'variable';
+        if (labelEditSource) {
+          labelEditSource.hidden = !showSource;
+          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {
+            inp.disabled = !showSource;
+          });
+          if (showSource) setLabelEditSourceStyle('monthly');
+        }
+        labelEditModal.hidden = false;
+        document.body.classList.add('pl-expense-label-edit-modal-open');
+        labelEditInput.focus();
+      }
+
+      function commitCreateLineFromLabel() {
+        if (!pendingLabelEdit || !pendingLabelEdit.createBucket || !labelEditInput) return false;
+        var next = String(labelEditInput.value || '').replace(/\s+/g, ' ').trim();
+        if (!next) {
+          labelEditInput.focus();
+          return false;
+        }
+        var bucket = pendingLabelEdit.createBucket;
+        var style = 'monthly';
+        if (bucket === 'variable') {
+          var picked = getLabelEditSourceStyle();
+          if (picked === 'daily' || picked === 'monthly') style = picked;
+        }
+        closeLabelEditModal();
+        var lineId = addLine(bucket, style, UNCLASSIFIED_ATTR);
+        var lines = loadLines();
+        var line = lines.find(function (l) { return l.lineId === lineId; });
+        if (line) {
+          line.labelJa = next;
+          line.labelEn = next;
+          line.labelZh = next;
+          saveLines(lines);
+          renderExpenseDetail();
+        }
+        return true;
+      }
+
+
 
       function attributeTitleForBucket(bucket, mode) {
         if (mode === 'edit') return attributeEditTitle;
@@ -6545,11 +6702,10 @@
           active: true,
           sortOrder: maxOrder + 1,
         };
-        if (bucket === 'fixed' && expenseAttribute) {
+        if (expenseAttribute) {
           entry.expenseAttribute = expenseAttribute;
-        }
-        if (bucket === 'variable' && expenseAttribute) {
-          entry.expenseAttribute = expenseAttribute;
+        } else {
+          entry.expenseAttribute = UNCLASSIFIED_ATTR;
         }
         lines.push(entry);
         saveLines(lines);
@@ -6807,27 +6963,8 @@
       }
 
       function promptAddLine(bucket) {
-        if (bucket === 'fixed') {
-          openExpenseAttributeModal({
-            bucket: 'fixed',
-            title: attributeAddTitle,
-            mode: 'add',
-          }).then(function (attrId) {
-            if (!attrId) return;
-            addLine(bucket, 'monthly', attrId);
-          });
-          return;
-        }
-        if (bucket !== 'variable') return;
-        openExpenseAttributeModal({
-          bucket: 'variable',
-          title: attributeVariableAddTitle,
-          mode: 'add',
-        }).then(function (attrId) {
-          if (!attrId) return;
-          /* 入力元は続く統合モーダル（ラベル編集）で選ぶ */
-          addLine(bucket, 'monthly', attrId);
-        });
+        if (bucket !== 'fixed' && bucket !== 'variable') return;
+        openCreateLineLabelModal(bucket);
       }
 
       function moveLine(lineId, dir) {
@@ -6862,6 +6999,10 @@
           return;
         }
         if (action === 'edit-attribute') {
+          editLineAttribute(btn.getAttribute('data-line-id'));
+          return;
+        }
+        if (action === 'unclassified-warn') {
           editLineAttribute(btn.getAttribute('data-line-id'));
           return;
         }
@@ -7095,6 +7236,7 @@
           isDefault: false,
           active: true,
           sortOrder: maxOrder + 1,
+          expenseAttribute: UNCLASSIFIED_ATTR,
         });
         saveLines(lines);
         renderExpenseDetail();

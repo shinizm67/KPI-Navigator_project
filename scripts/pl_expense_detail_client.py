@@ -41,6 +41,12 @@ def expense_detail_client_js(
     occupancy_aria: str = "Occupancy",
     occupancy_rent_option: str = "Rented",
     occupancy_owned_option: str = "Owned",
+    unclassified_warn_aria: str = "Unclassified expense attribute",
+    unclassified_warn_tooltip: str = (
+        "This line has no analysis category yet. "
+        "It is already included in expense totals and profit, "
+        "but setting an attribute will improve category analysis."
+    ),
 ) -> str:
     return f"""
     (function () {{
@@ -82,6 +88,9 @@ def expense_detail_client_js(
       var occupancyAria = {json.dumps(occupancy_aria, ensure_ascii=False)};
       var occupancyRentOption = {json.dumps(occupancy_rent_option, ensure_ascii=False)};
       var occupancyOwnedOption = {json.dumps(occupancy_owned_option, ensure_ascii=False)};
+      var unclassifiedWarnAria = {json.dumps(unclassified_warn_aria, ensure_ascii=False)};
+      var unclassifiedWarnTooltip = {json.dumps(unclassified_warn_tooltip, ensure_ascii=False)};
+      var UNCLASSIFIED_ATTR = 'unclassified';
       var block = document.getElementById('pl-expense-detail-block');
       var attrToggle = document.getElementById('pl-expense-attr-toggle');
       var modal = document.getElementById('pl-input-source-modal');
@@ -578,8 +587,58 @@ def expense_detail_client_js(
         labelEditInput.select();
       }}
 
+      function openCreateLineLabelModal(bucket) {{
+        if (!labelEditModal || !labelEditInput) {{
+          addLine(bucket, 'monthly', UNCLASSIFIED_ATTR);
+          return;
+        }}
+        pendingLabelEdit = {{ createBucket: bucket }};
+        labelEditInput.value = '';
+        var showSource = bucket === 'variable';
+        if (labelEditSource) {{
+          labelEditSource.hidden = !showSource;
+          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {{
+            inp.disabled = !showSource;
+          }});
+          if (showSource) setLabelEditSourceStyle('monthly');
+        }}
+        labelEditModal.hidden = false;
+        document.body.classList.add('pl-expense-label-edit-modal-open');
+        labelEditInput.focus();
+      }}
+
+      function commitCreateLineFromLabel() {{
+        if (!pendingLabelEdit || !pendingLabelEdit.createBucket || !labelEditInput) return false;
+        var next = String(labelEditInput.value || '').replace(/\\s+/g, ' ').trim();
+        if (!next) {{
+          labelEditInput.focus();
+          return false;
+        }}
+        var bucket = pendingLabelEdit.createBucket;
+        var style = 'monthly';
+        if (bucket === 'variable') {{
+          var picked = getLabelEditSourceStyle();
+          if (picked === 'daily' || picked === 'monthly') style = picked;
+        }}
+        closeLabelEditModal();
+        var lineId = addLine(bucket, style, UNCLASSIFIED_ATTR);
+        var lines = loadLines();
+        var line = lines.find(function (l) {{ return l.lineId === lineId; }});
+        if (line) {{
+          line.labelJa = next;
+          line.labelEn = next;
+          line.labelZh = next;
+          saveLines(lines);
+          renderExpenseDetail();
+        }}
+        return true;
+      }}
+
       function commitLabelEdit() {{
         if (!pendingLabelEdit || !labelEditInput) return false;
+        if (pendingLabelEdit.createBucket) {{
+          return commitCreateLineFromLabel();
+        }}
         var lineId = pendingLabelEdit.lineId;
         var next = String(labelEditInput.value || '').replace(/\\s+/g, ' ').trim();
         if (!next) {{
@@ -634,6 +693,7 @@ def expense_detail_client_js(
       function showAttributeChoicesForBucket(bucket) {{
         if (!attributeModal) return;
         var target = bucket === 'variable' ? 'variable' : 'fixed';
+        rebuildAttributeChoices(target);
         attributeModal.querySelectorAll('.pl-expense-attribute-choices').forEach(function (fs) {{
           var show = fs.getAttribute('data-pl-expense-attribute-bucket') === target;
           fs.hidden = !show;
@@ -641,6 +701,66 @@ def expense_detail_client_js(
             inp.disabled = !show;
           }});
         }});
+      }}
+
+      function restaurantLikeNow() {{
+        if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {{
+          try {{
+            return window.KpiBusinessType.isRestaurantLike();
+          }} catch (_eLike) {{}}
+        }}
+        return true;
+      }}
+
+      function attributeLabel(attr) {{
+        if (!attr) return '';
+        var lang = '';
+        try {{
+          lang = String(document.documentElement.lang || '').toLowerCase();
+        }} catch (_eLang) {{}}
+        if (lang.indexOf('zh') === 0) return attr.labelZh || attr.labelJa || attr.labelEn || attr.id;
+        if (lang.indexOf('ja') === 0) return attr.labelJa || attr.labelEn || attr.id;
+        return attr.labelEn || attr.labelJa || attr.id;
+      }}
+
+      function allowAttributeId(attrId, bucket) {{
+        var id = String(attrId || '');
+        if (!id || id === UNCLASSIFIED_ATTR) return false;
+        var restaurant = restaurantLikeNow();
+        var api = window.KpiPlExpensePresets || {{}};
+        var restOnly = api.RESTAURANT_ONLY_ATTRIBUTES || ['food_cost', 'drink_cost'];
+        var nonRestOnly = api.NON_RESTAURANT_ONLY_ATTRIBUTES || [];
+        if (!restaurant && restOnly.indexOf(id) >= 0) return false;
+        if (restaurant && nonRestOnly.indexOf(id) >= 0) return false;
+        if (restaurant && bucket === 'variable' && id === 'occupancy') return false;
+        return true;
+      }}
+
+      function rebuildAttributeChoices(bucket) {{
+        if (!attributeModal) return;
+        var api = window.KpiPlExpensePresets;
+        var list = bucket === 'variable'
+          ? (api && api.VARIABLE_ATTRIBUTES) || []
+          : (api && api.FIXED_ATTRIBUTES) || [];
+        if (!list.length) return;
+        var fs = attributeModal.querySelector(
+          '.pl-expense-attribute-choices[data-pl-expense-attribute-bucket="' + bucket + '"]'
+        );
+        if (!fs) return;
+        var legend = fs.querySelector('legend');
+        var legendHtml = legend ? legend.outerHTML : '';
+        var html = legendHtml;
+        list.forEach(function (attr) {{
+          if (!allowAttributeId(attr.id, bucket)) return;
+          html +=
+            '<label class="pl-input-source-modal__choice">' +
+            '<input type="radio" name="pl-expense-attribute" value="' +
+            escapeHtml(attr.id) +
+            '"><span>' +
+            escapeHtml(attributeLabel(attr)) +
+            '</span></label>';
+        }});
+        fs.innerHTML = html;
       }}
 
       function attributeTitleForBucket(bucket, mode) {{
@@ -876,6 +996,26 @@ def expense_detail_client_js(
         );
       }}
 
+      function isUnclassifiedCustom(line) {{
+        if (!line || String(line.lineId || '').indexOf('exp_custom_') !== 0) return false;
+        var a = line.expenseAttribute;
+        return !a || a === UNCLASSIFIED_ATTR;
+      }}
+
+      function rowUnclassifiedWarn(line) {{
+        if (!isUnclassifiedCustom(line)) return '';
+        return (
+          '<span class="pl-row-unclassified">' +
+          '<button type="button" class="pl-row-unclassified__btn" data-action="unclassified-warn" data-line-id="' +
+          line.lineId +
+          '" title="' +
+          escapeHtml(unclassifiedWarnTooltip) +
+          '" aria-label="' +
+          escapeHtml(unclassifiedWarnAria) +
+          '">⚠</button></span>'
+        );
+      }}
+
       function labelCell(line, idx, bucketLines) {{
         var occSelect = isOccupancyLineId(line.lineId) ? occupancySelectHtml() : '';
         return (
@@ -884,6 +1024,7 @@ def expense_detail_client_js(
           '"><span class="pl-h-label__row">' +
           occSelect +
           editableLabelSpan(line.lineId, labelText(line)) +
+          rowUnclassifiedWarn(line) +
           rowAttributeBtn(line) +
           rowHideBtn(line) +
           orderBtns(line, idx, bucketLines) +
@@ -1024,11 +1165,10 @@ def expense_detail_client_js(
           active: true,
           sortOrder: maxOrder + 1,
         }};
-        if (bucket === 'fixed' && expenseAttribute) {{
+        if (expenseAttribute) {{
           entry.expenseAttribute = expenseAttribute;
-        }}
-        if (bucket === 'variable' && expenseAttribute) {{
-          entry.expenseAttribute = expenseAttribute;
+        }} else {{
+          entry.expenseAttribute = UNCLASSIFIED_ATTR;
         }}
         lines.push(entry);
         saveLines(lines);
@@ -1286,27 +1426,8 @@ def expense_detail_client_js(
       }}
 
       function promptAddLine(bucket) {{
-        if (bucket === 'fixed') {{
-          openExpenseAttributeModal({{
-            bucket: 'fixed',
-            title: attributeAddTitle,
-            mode: 'add',
-          }}).then(function (attrId) {{
-            if (!attrId) return;
-            addLine(bucket, 'monthly', attrId);
-          }});
-          return;
-        }}
-        if (bucket !== 'variable') return;
-        openExpenseAttributeModal({{
-          bucket: 'variable',
-          title: attributeVariableAddTitle,
-          mode: 'add',
-        }}).then(function (attrId) {{
-          if (!attrId) return;
-          /* 入力元は続く統合モーダル（ラベル編集）で選ぶ */
-          addLine(bucket, 'monthly', attrId);
-        }});
+        if (bucket !== 'fixed' && bucket !== 'variable') return;
+        openCreateLineLabelModal(bucket);
       }}
 
       function moveLine(lineId, dir) {{
@@ -1341,6 +1462,10 @@ def expense_detail_client_js(
           return;
         }}
         if (action === 'edit-attribute') {{
+          editLineAttribute(btn.getAttribute('data-line-id'));
+          return;
+        }}
+        if (action === 'unclassified-warn') {{
           editLineAttribute(btn.getAttribute('data-line-id'));
           return;
         }}
@@ -1574,6 +1699,7 @@ def expense_detail_client_js(
           isDefault: false,
           active: true,
           sortOrder: maxOrder + 1,
+          expenseAttribute: UNCLASSIFIED_ATTR,
         }});
         saveLines(lines);
         renderExpenseDetail();

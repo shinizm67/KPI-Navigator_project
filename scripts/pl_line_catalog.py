@@ -4,9 +4,8 @@ PL is the parent expense master. MEP mirrors the selected PL catalog.
 Business Type selects a PL default-expense *preset*; it does not create a
 second MEP master.
 
-Unit 5B-1: restaurant preset is the current production set. Other canonical
-types are registered as unset so 5B-2 can drop in real titles later without
-inventing placeholder names in the UI.
+Restaurant keeps EXPENSE_DETAIL_LINES_V1. Non-restaurant canonical types have
+defined presets. Staff labor reuses restaurant variable_labor (variable / daily).
 """
 
 from __future__ import annotations
@@ -36,32 +35,48 @@ BUSINESS_TYPE_LEGACY: dict[str, str] = {
     "fitness": "fitness",
 }
 
-# (attrId, labelJa, labelEn) — fixed expense attributes for FL / KPI grouping
-FIXED_EXPENSE_ATTRIBUTES: list[tuple[str, str, str]] = [
-    ("occupancy", "店舗物件費", "Occupancy"),
-    ("property_tax", "資産税", "Property Tax"),
-    ("salaries_wages", "給与・賃金", "Salaries & Wages"),
-    ("lease", "リース料", "Lease"),
-    ("depreciation", "減価償却費", "Depreciation"),
-    ("insurance", "保険料", "Insurance"),
-    ("labor_related", "人件費関連費", "Labor-Related Costs"),
+# (attrId, labelJa, labelEn, labelZh)
+FIXED_EXPENSE_ATTRIBUTES: list[tuple[str, str, str, str]] = [
+    ("occupancy", "店舗物件費", "Occupancy", "店面物件費"),
+    ("property_tax", "資産税", "Property Tax", "資產稅"),
+    ("salaries_wages", "給与・賃金", "Salaries & Wages", "薪資／工資"),
+    ("lease", "リース料", "Lease", "租賃費"),
+    ("depreciation", "減価償却費", "Depreciation", "折舊費用"),
+    ("insurance", "保険料", "Insurance", "保險費"),
+    ("labor_related", "人件費関連費", "Labor-Related Costs", "人事相關費用"),
+    ("utilities", "光熱水道費", "Utilities", "水電瓦斯費"),
+    ("communication", "通信費", "Communication", "通訊費"),
 ]
 
-# (attrId, labelJa, labelEn) — variable expense attributes (UI edit: next phase)
-VARIABLE_EXPENSE_ATTRIBUTES: list[tuple[str, str, str]] = [
-    ("food_cost", "食材仕入費", "Food Cost"),
-    ("drink_cost", "ドリンク仕入費", "Drink Cost"),
-    ("supplies", "備品・消耗品費", "Supplies & Consumables"),
-    ("miscellaneous", "雑費", "Miscellaneous Expenses"),
-    ("utilities", "光熱水道費", "Utilities"),
-    ("variable_labor", "変動人件費", "Variable Labor"),
-    ("communication", "通信費", "Communication"),
-    ("advertising", "広告・マーケティング費", "Advertising"),
-    ("uniforms", "制服・業務用被服費", "Uniforms & Workwear"),
-    ("payment_fees", "決済手数料", "Payment Processing Fees"),
-    ("labor_related", "人件費関連費", "Labor-Related Costs"),
-    ("taxes", "税金", "Taxes"),
+# (attrId, labelJa, labelEn, labelZh)
+VARIABLE_EXPENSE_ATTRIBUTES: list[tuple[str, str, str, str]] = [
+    ("food_cost", "食材仕入費", "Food Cost", "餐點進貨成本"),
+    ("drink_cost", "ドリンク仕入費", "Drink Cost", "飲料進貨成本"),
+    ("supplies", "備品・消耗品費", "Supplies & Consumables", "備品／消耗品"),
+    ("inventory", "仕入・在庫", "Inventory / COGS", "進貨／庫存"),
+    ("miscellaneous", "雑費", "Miscellaneous Expenses", "雜費"),
+    ("utilities", "光熱水道費", "Utilities", "水電瓦斯費"),
+    ("variable_labor", "変動人件費", "Variable Labor", "工讀／臨時人事費用"),
+    ("communication", "通信費", "Communication", "通訊費"),
+    ("advertising", "広告・マーケティング費", "Advertising", "廣告宣傳費"),
+    ("uniforms", "制服・業務用被服費", "Uniforms & Workwear", "制服／工作服"),
+    ("payment_fees", "決済手数料", "Payment Processing Fees", "信用卡手續費"),
+    ("labor_related", "人件費関連費", "Labor-Related Costs", "人事相關費用"),
+    ("taxes", "税金", "Taxes", "稅金"),
+    ("outsourcing", "外注費", "Outsourcing", "外包費"),
+    ("maintenance", "修繕・メンテナンス", "Maintenance & Repairs", "修繕／維護"),
+    ("logistics", "配送・物流費", "Shipping & Logistics", "配送／物流"),
+    ("occupancy", "店舗物件費", "Occupancy", "店面物件費"),
 ]
+
+UNCLASSIFIED_ATTRIBUTE = "unclassified"
+RESTAURANT_ONLY_ATTRIBUTES: tuple[str, ...] = ("food_cost", "drink_cost")
+NON_RESTAURANT_ONLY_ATTRIBUTES: tuple[str, ...] = (
+    "inventory",
+    "outsourcing",
+    "maintenance",
+    "logistics",
+)
 
 # (lineId, labelJa, labelEn, editableLabel, isTotal)
 INCOME_ROWS_V1: list[tuple[str, str, str, bool, bool]] = [
@@ -122,15 +137,94 @@ EXPENSE_DETAIL_LINES_V1: list[tuple[str, str, str, str, str, bool, str | None]] 
 # Restaurant alias — existing call sites and generators keep using EXPENSE_DETAIL_LINES_V1.
 RESTAURANT_EXPENSE_DETAIL_LINES = EXPENSE_DETAIL_LINES_V1
 
-# Unit 5B-2: replace None with a tuple list of the same 7-field contract.
-# None means "preset unset" — do not invent UI titles, do not copy restaurant Food/Drink.
-EXPENSE_PRESET_LINES: dict[str, list[tuple[str, str, str, str, str, bool, str | None]] | None] = {
+# Optional 8th field is labelZh. Restaurant stays 7-field (unchanged contract).
+# Staff labor reuses exp_variable_labor (restaurant アルバイト = variable / daily).
+RETAIL_EXPENSE_DETAIL_LINES: list[tuple] = [
+    ("exp_rent", "家賃", "Rent", "fixed", "monthly", True, "occupancy", "租金"),
+    ("exp_electric", "電気代", "Electricity Cost", "fixed", "monthly", True, "utilities", "電費"),
+    ("exp_water", "水道代", "Water Cost", "fixed", "monthly", True, "utilities", "水費"),
+    ("exp_telecom", "通信費", "Communication", "fixed", "monthly", True, "communication", "通訊費"),
+    ("exp_non_life_insurance", "保険料", "Insurance", "fixed", "monthly", True, "insurance", "保險費"),
+    ("exp_inventory_cogs", "商品仕入", "Merchandise purchases", "variable", "monthly", True, "inventory", "商品進貨"),
+    ("exp_packaging", "包装・梱包資材", "Packaging materials", "variable", "monthly", True, "supplies", "包裝資材"),
+    ("exp_shipping", "配送・発送費", "Shipping & delivery", "variable", "monthly", True, "logistics", "配送／出貨費"),
+    ("exp_variable_labor", "スタッフ人件費", "Staff labor", "variable", "daily", True, "variable_labor", "員工人事費用"),
+    ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising", "廣告宣傳費"),
+    ("exp_payment_fees", "決済手数料", "Payment Processing Fees", "variable", "monthly", True, "payment_fees", "刷卡／支付手續費"),
+    ("exp_supplies", "消耗品費", "Supplies & Consumables", "variable", "monthly", True, "supplies", "消耗品費"),
+]
+
+HAIR_SALON_EXPENSE_DETAIL_LINES: list[tuple] = [
+    ("exp_rent", "家賃", "Rent", "fixed", "monthly", True, "occupancy", "租金"),
+    ("exp_electric", "電気代", "Electricity Cost", "fixed", "monthly", True, "utilities", "電費"),
+    ("exp_water", "水道代", "Water Cost", "fixed", "monthly", True, "utilities", "水費"),
+    ("exp_gas", "ガス代", "Gas Cost", "fixed", "monthly", True, "utilities", "瓦斯費"),
+    ("exp_telecom", "通信費", "Communication", "fixed", "monthly", True, "communication", "通訊費"),
+    ("exp_treatment_materials", "薬剤・施術材料費", "Treatment materials", "variable", "monthly", True, "supplies", "藥劑／施術材料費"),
+    ("exp_retail_product_cogs", "店販商品仕入", "Retail product purchases", "variable", "monthly", True, "inventory", "店販商品進貨"),
+    ("exp_linen", "タオル・リネン費", "Towels & linen", "variable", "monthly", True, "supplies", "毛巾／布巾費"),
+    ("exp_variable_labor", "スタッフ人件費", "Staff labor", "variable", "daily", True, "variable_labor", "員工人事費用"),
+    ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising", "廣告宣傳費"),
+    ("exp_payment_fees", "決済手数料", "Payment Processing Fees", "variable", "monthly", True, "payment_fees", "刷卡／支付手續費"),
+    ("exp_supplies", "消耗品費", "Supplies & Consumables", "variable", "monthly", True, "supplies", "消耗品費"),
+    ("exp_equipment_maintenance", "設備・美容機器メンテナンス", "Equipment maintenance", "variable", "monthly", True, "maintenance", "設備／美容儀器維護"),
+]
+
+FITNESS_EXPENSE_DETAIL_LINES: list[tuple] = [
+    ("exp_rent", "家賃", "Rent", "fixed", "monthly", True, "occupancy", "租金"),
+    ("exp_electric", "電気代", "Electricity Cost", "fixed", "monthly", True, "utilities", "電費"),
+    ("exp_water", "水道代", "Water Cost", "fixed", "monthly", True, "utilities", "水費"),
+    ("exp_telecom", "通信費", "Communication", "fixed", "monthly", True, "communication", "通訊費"),
+    ("exp_non_life_insurance", "保険料", "Insurance", "fixed", "monthly", True, "insurance", "保險費"),
+    ("exp_training_equipment", "トレーニング機器購入・リース", "Training equipment purchase / lease", "fixed", "monthly", True, "lease", "訓練器材購置／租賃"),
+    ("exp_facility_fee", "ジム・施設利用料", "Gym / facility usage fees", "variable", "monthly", True, "occupancy", "健身房／場地使用費"),
+    ("exp_variable_labor", "スタッフ人件費", "Staff labor", "variable", "daily", True, "variable_labor", "員工人事費用"),
+    ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising", "廣告宣傳費"),
+    ("exp_payment_fees", "決済手数料", "Payment Processing Fees", "variable", "monthly", True, "payment_fees", "刷卡／支付手續費"),
+    ("exp_supplies", "衛生・消耗品費", "Hygiene supplies", "variable", "monthly", True, "supplies", "衛生／消耗品費"),
+    ("exp_equipment_maintenance", "機器メンテナンス", "Equipment maintenance", "variable", "monthly", True, "maintenance", "器材維護"),
+]
+
+HOTEL_EXPENSE_DETAIL_LINES: list[tuple] = [
+    ("exp_rent", "家賃・賃借料", "Rent / lease", "fixed", "monthly", True, "occupancy", "租金／賃借費"),
+    ("exp_electric", "電気代", "Electricity Cost", "fixed", "monthly", True, "utilities", "電費"),
+    ("exp_water", "水道代", "Water Cost", "fixed", "monthly", True, "utilities", "水費"),
+    ("exp_gas", "ガス代", "Gas Cost", "fixed", "monthly", True, "utilities", "瓦斯費"),
+    ("exp_telecom", "通信費", "Communication", "fixed", "monthly", True, "communication", "通訊費"),
+    ("exp_non_life_insurance", "保険料", "Insurance", "fixed", "monthly", True, "insurance", "保險費"),
+    ("exp_linen_cleaning", "リネン・クリーニング費", "Linen & cleaning", "variable", "monthly", True, "supplies", "布巾／清潔費"),
+    ("exp_amenities", "アメニティ費", "Amenities", "variable", "monthly", True, "supplies", "備品／盥洗用品費"),
+    ("exp_cleaning_supplies", "清掃用品費", "Cleaning supplies", "variable", "monthly", True, "supplies", "清潔用品費"),
+    ("exp_cleaning_outsource", "清掃外注費", "Contracted cleaning", "variable", "monthly", True, "outsourcing", "清潔外包費"),
+    ("exp_ota_fees", "OTA・予約手数料", "OTA / booking commissions", "variable", "monthly", True, "payment_fees", "OTA／訂房手續費"),
+    ("exp_variable_labor", "スタッフ人件費", "Staff labor", "variable", "daily", True, "variable_labor", "員工人事費用"),
+    ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising", "廣告宣傳費"),
+    ("exp_payment_fees", "決済手数料", "Payment Processing Fees", "variable", "monthly", True, "payment_fees", "刷卡／支付手續費"),
+    ("exp_equipment_maintenance", "設備修繕・メンテナンス", "Repairs & maintenance", "variable", "monthly", True, "maintenance", "設備修繕／維護"),
+]
+
+OTHER_EXPENSE_DETAIL_LINES: list[tuple] = [
+    ("exp_rent", "家賃", "Rent", "fixed", "monthly", True, "occupancy", "租金"),
+    ("exp_electric", "電気代", "Electricity Cost", "fixed", "monthly", True, "utilities", "電費"),
+    ("exp_water", "水道代", "Water Cost", "fixed", "monthly", True, "utilities", "水費"),
+    ("exp_gas", "ガス代", "Gas Cost", "fixed", "monthly", True, "utilities", "瓦斯費"),
+    ("exp_telecom", "通信費", "Communication", "fixed", "monthly", True, "communication", "通訊費"),
+    ("exp_non_life_insurance", "保険料", "Insurance", "fixed", "monthly", True, "insurance", "保險費"),
+    ("exp_materials", "材料・仕入費", "Materials / purchases", "variable", "monthly", True, "inventory", "材料／進貨費"),
+    ("exp_outsourcing", "外注費", "Outsourcing", "variable", "monthly", True, "outsourcing", "外包費"),
+    ("exp_variable_labor", "スタッフ人件費", "Staff labor", "variable", "daily", True, "variable_labor", "員工人事費用"),
+    ("exp_advertising", "広告宣伝費", "Advertising", "variable", "monthly", True, "advertising", "廣告宣傳費"),
+    ("exp_payment_fees", "決済手数料", "Payment Processing Fees", "variable", "monthly", True, "payment_fees", "刷卡／支付手續費"),
+    ("exp_supplies", "消耗品費", "Supplies & Consumables", "variable", "monthly", True, "supplies", "消耗品費"),
+]
+
+EXPENSE_PRESET_LINES: dict[str, list[tuple] | None] = {
     "restaurant": EXPENSE_DETAIL_LINES_V1,
-    "retail": None,
-    "hair_salon": None,
-    "fitness": None,
-    "hotel": None,
-    "other": None,
+    "retail": RETAIL_EXPENSE_DETAIL_LINES,
+    "hair_salon": HAIR_SALON_EXPENSE_DETAIL_LINES,
+    "fitness": FITNESS_EXPENSE_DETAIL_LINES,
+    "hotel": HOTEL_EXPENSE_DETAIL_LINES,
+    "other": OTHER_EXPENSE_DETAIL_LINES,
 }
 
 
@@ -162,7 +256,7 @@ def get_default_expense_lines(
     """Return the default expense *tuples* for a Business Type.
 
     restaurant / unknown → current restaurant set (full backward compatibility).
-    canonical with unset preset → empty list (no placeholder names).
+    other canonical types → their defined preset tuples.
     """
     key = normalize_business_type_for_preset(business_type)
     preset = EXPENSE_PRESET_LINES.get(key)
@@ -172,12 +266,14 @@ def get_default_expense_lines(
 
 
 def catalog_from_expense_tuples(
-    rows: list[tuple[str, str, str, str, str, bool, str | None]],
+    rows: list[tuple],
 ) -> list[dict[str, Any]]:
     fixed_i = 0
     var_i = 0
     out: list[dict[str, Any]] = []
-    for lid, ja, en, bucket, input_style, is_default, expense_attr in rows:
+    for row in rows:
+        lid, ja, en, bucket, input_style, is_default, expense_attr = row[:7]
+        zh = row[7] if len(row) > 7 else None
         if bucket == "fixed":
             order = fixed_i
             fixed_i += 1
@@ -196,6 +292,8 @@ def catalog_from_expense_tuples(
             "active": is_default,
             "sortOrder": order,
         }
+        if zh:
+            entry["labelZh"] = zh
         if expense_attr is not None:
             entry["expenseAttribute"] = expense_attr
         out.append(entry)
@@ -209,7 +307,7 @@ def expense_detail_default_catalog(
 
 
 def expense_presets_payload() -> dict[str, Any]:
-    """JSON-serializable preset map for the runtime selector (5B-2 fills unset)."""
+    """JSON-serializable preset map for the runtime selector."""
     out: dict[str, Any] = {}
     for code in BUSINESS_TYPE_CANONICAL:
         preset = EXPENSE_PRESET_LINES.get(code)
@@ -322,21 +420,41 @@ def mep_catalog_entries(
             }
         )
     for item in expense_detail_default_catalog(business_type):
-        rows.append(
-            {
-                "lineId": item["lineId"],
-                "section": "expense",
-                "bucket": item["bucket"],
-                "labelJa": item["labelJa"],
-                "labelEn": item["labelEn"],
-                "editableLabel": False,
-                "inputStyle": item["inputStyle"],
-                "resolvedInputStyle": item["resolvedInputStyle"],
-                "mepEditable": item["resolvedInputStyle"] == "daily",
-                "active": item.get("active", True),
-            }
-        )
+        row = {
+            "lineId": item["lineId"],
+            "section": "expense",
+            "bucket": item["bucket"],
+            "labelJa": item["labelJa"],
+            "labelEn": item["labelEn"],
+            "editableLabel": False,
+            "inputStyle": item["inputStyle"],
+            "resolvedInputStyle": item["resolvedInputStyle"],
+            "mepEditable": item["resolvedInputStyle"] == "daily",
+            "active": item.get("active", True),
+        }
+        if item.get("labelZh"):
+            row["labelZh"] = item["labelZh"]
+        rows.append(row)
     return rows
+
+
+def attribute_runtime_payload() -> dict[str, Any]:
+    def pack(rows: list[tuple]) -> list[dict[str, str]]:
+        out: list[dict[str, str]] = []
+        for row in rows:
+            item = {"id": row[0], "labelJa": row[1], "labelEn": row[2]}
+            if len(row) > 3 and row[3]:
+                item["labelZh"] = str(row[3])
+            out.append(item)
+        return out
+
+    return {
+        "unclassified": UNCLASSIFIED_ATTRIBUTE,
+        "fixed": pack(FIXED_EXPENSE_ATTRIBUTES),
+        "variable": pack(VARIABLE_EXPENSE_ATTRIBUTES),
+        "restaurantOnly": list(RESTAURANT_ONLY_ATTRIBUTES),
+        "nonRestaurantOnly": list(NON_RESTAURANT_ONLY_ATTRIBUTES),
+    }
 
 
 def mep_catalog_js() -> str:
@@ -346,6 +464,7 @@ def mep_catalog_js() -> str:
 def presets_runtime_js() -> str:
     """Runtime selector consumed by PL / MEP. 5B-2 only needs to fill EXPENSE_PRESET_LINES."""
     payload = json.dumps(expense_presets_payload(), ensure_ascii=False)
+    attributes = json.dumps(attribute_runtime_payload(), ensure_ascii=False)
     canonical = json.dumps(list(BUSINESS_TYPE_CANONICAL), ensure_ascii=False)
     fallback = json.dumps(FALLBACK_BUSINESS_TYPE)
     legacy = json.dumps(BUSINESS_TYPE_LEGACY, ensure_ascii=False)
@@ -354,8 +473,7 @@ def presets_runtime_js() -> str:
  * Source of truth: scripts/pl_line_catalog.py — regenerate with
  * scripts/build_kpi_pl_expense_presets.py (this file only).
  *
- * Restaurant lines match EXPENSE_DETAIL_LINES_V1. Non-restaurant presets
- * are status=unset until Unit 5B-2 fills titles. Do not invent names here.
+ * Non-restaurant presets are defined. Restaurant remains EXPENSE_DETAIL_LINES_V1.
  */
 (function (global) {{
   'use strict';
@@ -368,6 +486,7 @@ def presets_runtime_js() -> str:
   var FALLBACK = {fallback};
   var LEGACY = {legacy};
   var PRESETS = {payload};
+  var ATTRIBUTES = {attributes};
 
   function resolveBusinessType() {{
     if (global.KpiBusinessType && typeof global.KpiBusinessType.getBusinessType === 'function') {{
@@ -503,6 +622,12 @@ def presets_runtime_js() -> str:
     CANONICAL: CANONICAL.slice(),
     FALLBACK: FALLBACK,
     PRESETS: PRESETS,
+    ATTRIBUTES: ATTRIBUTES,
+    UNCLASSIFIED: ATTRIBUTES.unclassified,
+    FIXED_ATTRIBUTES: ATTRIBUTES.fixed,
+    VARIABLE_ATTRIBUTES: ATTRIBUTES.variable,
+    RESTAURANT_ONLY_ATTRIBUTES: ATTRIBUTES.restaurantOnly,
+    NON_RESTAURANT_ONLY_ATTRIBUTES: ATTRIBUTES.nonRestaurantOnly,
     resolveBusinessType: resolveBusinessType,
     hasDefinedPreset: hasDefinedPreset,
     getDefaultExpenseLines: getDefaultExpenseLines,

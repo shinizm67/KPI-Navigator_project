@@ -40,6 +40,22 @@ CATALOG_ZH: dict[str, str] = {
     "exp_employment_insurance": "就業保險",
     "exp_workers_comp": "職災保險",
     "exp_consumption_tax": "消費稅",
+    "exp_inventory_cogs": "商品進貨",
+    "exp_packaging": "包裝資材",
+    "exp_shipping": "配送／出貨費",
+    "exp_treatment_materials": "藥劑／施術材料費",
+    "exp_retail_product_cogs": "店販商品進貨",
+    "exp_linen": "毛巾／布巾費",
+    "exp_equipment_maintenance": "設備／儀器維護",
+    "exp_training_equipment": "訓練器材購置／租賃",
+    "exp_facility_fee": "健身房／場地使用費",
+    "exp_linen_cleaning": "布巾／清潔費",
+    "exp_amenities": "備品／盥洗用品費",
+    "exp_cleaning_supplies": "清潔用品費",
+    "exp_cleaning_outsource": "清潔外包費",
+    "exp_ota_fees": "OTA／訂房手續費",
+    "exp_materials": "材料／進貨費",
+    "exp_outsourcing": "外包費",
 }
 
 # data-label-id / static row text replacements (exact visible text)

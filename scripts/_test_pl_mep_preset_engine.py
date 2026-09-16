@@ -55,7 +55,8 @@ FROZEN_RESTAURANT = [
     ("exp_consumption_tax", "消費税", "consumption tax", "variable", "monthly", False, "taxes"),
 ]
 
-UNSET_TYPES = ("retail", "hair_salon", "fitness", "hotel", "other")
+
+NON_RESTAURANT_TYPES = ("retail", "hair_salon", "fitness", "hotel", "other")
 
 PL_PAGES = [
     ROOT / "app/profit/pl/index.html",
@@ -110,13 +111,15 @@ def test_selector_six_canonical() -> None:
         assert_true(code in EXPENSE_PRESET_LINES, f"preset map has {code}")
         assert_true(normalize_business_type_for_preset(code) == code, f"{code} stays itself")
     assert_true(has_defined_expense_preset("restaurant") is True, "restaurant preset defined")
-    for code in UNSET_TYPES:
-        assert_true(has_defined_expense_preset(code) is False, f"{code} preset unset")
+    for code in NON_RESTAURANT_TYPES:
+        assert_true(has_defined_expense_preset(code) is True, f"{code} preset defined")
         lines = get_default_expense_lines(code)
-        assert_true(lines == [], f"{code} does not invent default titles")
+        assert_true(len(lines) > 0, f"{code} has default lines")
         ids = {row[0] for row in lines}
         assert_true("exp_food_cost" not in ids, f"{code} does not spawn restaurant food")
         assert_true("exp_drink_cost" not in ids, f"{code} does not spawn restaurant drink")
+        for row in lines:
+            assert_true(row[3] in ("fixed", "variable"), f"{code} {row[0]} has bucket")
     assert_true(
         normalize_business_type_for_preset("personal_trainer") == "fitness",
         "preset selector maps personal_trainer -> fitness",
@@ -125,7 +128,7 @@ def test_selector_six_canonical() -> None:
         get_default_expense_lines("personal_trainer") == get_default_expense_lines("fitness"),
         "legacy personal_trainer uses fitness preset slot",
     )
-    assert_true(has_defined_expense_preset("personal_trainer") is False, "legacy trainer still unset until 5B-2")
+    assert_true(has_defined_expense_preset("personal_trainer") is True, "legacy trainer uses defined fitness preset")
 
 
 def test_unknown_fallback_restaurant() -> None:
@@ -152,8 +155,9 @@ def test_mep_mirrors_pl_parent() -> None:
     retail_mep = mep_catalog_entries("retail")
     retail_exp = [r for r in retail_mep if r["section"] == "expense"]
     retail_inc = [r for r in retail_mep if r["section"] == "income"]
-    assert_true(retail_exp == [], "unset preset does not embed restaurant expenses on MEP")
-    assert_true(len(retail_inc) == 5, "MEP income still present for unset types")
+    assert_true(len(retail_exp) > 0, "retail MEP mirrors PL retail preset")
+    assert_true(all(r["lineId"] != "exp_food_cost" for r in retail_exp), "retail MEP has no restaurant food")
+    assert_true(len(retail_inc) == 5, "MEP income still present for retail")
     src = (ROOT / "scripts" / "pl_line_catalog.py").read_text(encoding="utf-8")
     assert_true("MEP is the parent" not in src, "comment does not invert parent/child")
     assert_true("PL is the parent expense master" in src, "PL remains parent")
@@ -222,7 +226,7 @@ def test_runtime_files_and_pages() -> None:
     assert_true("getDefaultExpenseLines" in js, "runtime exposes getDefaultExpenseLines")
     assert_true("hasDefinedPreset" in js, "runtime exposes hasDefinedPreset")
     assert_true("reconcileCatalogLines" in js, "runtime exposes reconcile")
-    assert_true('"status": "unset"' in js, "non-restaurant presets are unset")
+    assert_true('"status": "defined"' in js, "non-restaurant presets are defined")
     assert_true("exp_food_cost" in js, "restaurant food remains in restaurant preset")
     bt = (ROOT / "js" / "kpi-business-type.js").read_text(encoding="utf-8")
     for code in BUSINESS_TYPE_CANONICAL:
