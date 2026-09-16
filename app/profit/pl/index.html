@@ -10775,19 +10775,15 @@
         if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
         plExpenseLiveRefreshTimer = setTimeout(function () {
           plExpenseLiveRefreshTimer = null;
-          if (typeof refreshPlRatios === 'function') refreshPlRatios();
-          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+          plSafeRefresh(refreshPlRatios);
+          plSafeRefresh(refreshPlYearTotals);
+          plSafeRefresh(refreshPlReferenceBudget);
+          plSafeRefresh(refreshPlBottomGraph);
         }, 120);
       }
 
       function refreshPlExpenseLiveSurfaces() {
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }
 
       function commitPlEditableCell(cell) {
@@ -10932,11 +10928,7 @@
           plSaved = true;
         }
         syncUndoButton();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }
 
       function applyCleanInitialHydrateExpenseAmounts() {
@@ -10948,11 +10940,7 @@
         confirmedSnapshot = buildSnapshot();
         plSaved = true;
         syncUndoButton();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }
 
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
@@ -11000,11 +10988,11 @@
           plSaved = true;
           undoStack = [];
           syncUndoButton();
-          if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-          if (typeof refreshPlRatios === 'function') refreshPlRatios();
-          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+          plSafeRefresh(refreshAnalyzeBlock);
+          plSafeRefresh(refreshPlRatios);
+          plSafeRefresh(refreshPlYearTotals);
+          plSafeRefresh(refreshPlReferenceBudget);
+          plSafeRefresh(refreshPlBottomGraph);
           return putResult || { ok: true };
         });
       }
@@ -11163,11 +11151,7 @@
         if (typeof fillDailyExpenseRowsFromMep === 'function') {
           fillDailyExpenseRowsFromMep();
         }
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       });
       document.addEventListener('kpi:mepDataChanged', function (ev) {
         var evYear = ev && ev.detail && Number(ev.detail.year);
@@ -11178,11 +11162,7 @@
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
         }
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       });
       document.addEventListener('kpi:dailySalesChanged', function (ev) {
         var years = ev && ev.detail && ev.detail.years;
@@ -11197,11 +11177,7 @@
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
         }
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       });
 
       if (btnUndo) {
@@ -12772,13 +12748,13 @@
       }
 
       function plRefreshAllIncomeSurfaces() {
-        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof fillDailyExpenseRowsFromMep === 'function') fillDailyExpenseRowsFromMep();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plSafeRefresh(refreshIncomeBlock);
+        plSafeRefresh(refreshAnalyzeBlock);
+        plSafeRefresh(fillDailyExpenseRowsFromMep);
+        plSafeRefresh(refreshPlRatios);
+        plSafeRefresh(refreshPlYearTotals);
+        plSafeRefresh(refreshPlReferenceBudget);
+        plSafeRefresh(refreshPlBottomGraph);
       }
 
       function plIncomeEmptyMonthAgg() {
@@ -13690,13 +13666,17 @@
         }
 
         refreshAnalyzeBlock = function () {
-          var mode = plAnalyzeEnsureLayout();
-          if (mode === 'restaurant_fl') {
-            restaurantRefresh();
-            return;
-          }
-          plAnalyzeFillKeyLayout();
-          if (typeof refreshPlRatios === 'function') refreshPlRatios();
+          try {
+            var mode = plAnalyzeEnsureLayout();
+            if (mode === 'restaurant_fl') {
+              restaurantRefresh();
+              return;
+            }
+            plAnalyzeFillKeyLayout();
+            try {
+              if (typeof refreshPlRatios === 'function') refreshPlRatios();
+            } catch (_plAnalyzeRatioErr) {}
+          } catch (_plAnalyzeErr) {}
         };
         window.__plRefreshAnalyzeBlock = refreshAnalyzeBlock;
       })();
@@ -14019,15 +13999,35 @@
         plGraphApplyExpensesSummary(plGraphCollectMonths());
       }
 
-      function refreshPlBottomGraph() {
-        var months = plGraphCollectMonths();
-        plGraphApplyExpensesSummary(months);
-        if (typeof window.plGraphRender !== 'function') return;
-        if (!months) return;
-        window.plGraphRender(months);
+      /* === UNIT-5B-GRAPH-REFRESH-GUARD-BEGIN === */
+      function plSafeRefresh(fn) {
+        try {
+          if (typeof fn === 'function') fn();
+        } catch (_plSafeErr) {}
       }
 
+      function plRefreshAnalyzeAndGraph() {
+        plSafeRefresh(refreshAnalyzeBlock);
+        plSafeRefresh(refreshPlRatios);
+        plSafeRefresh(refreshPlYearTotals);
+        plSafeRefresh(refreshPlReferenceBudget);
+        plSafeRefresh(refreshPlBottomGraph);
+      }
+
+      function refreshPlBottomGraph() {
+        try {
+          var months = plGraphCollectMonths();
+          plGraphApplyExpensesSummary(months);
+          if (typeof window.plGraphRender !== 'function') return;
+          if (!months) return;
+          window.plGraphRender(months);
+        } catch (_plGraphErr) {}
+      }
+
+      window.__plSafeRefresh = plSafeRefresh;
+      window.__plRefreshAnalyzeAndGraph = plRefreshAnalyzeAndGraph;
       window.__plRefreshBottomGraph = refreshPlBottomGraph;
+      /* === UNIT-5B-GRAPH-REFRESH-GUARD-END === */
       window.__plRefreshExpensesSummary = refreshExpensesSummaryBlock;
       window.__plApplyProfitSeverityEl = plApplyProfitSeverityEl;
       window.__plProfitSeverityClass = plProfitSeverityClass;
@@ -14772,24 +14772,8 @@
       if (typeof fillDailyExpenseRowsFromMep === 'function') {
         fillDailyExpenseRowsFromMep();
       }
-      if (typeof refreshIncomeBlock === 'function') {
-        refreshIncomeBlock();
-      }
-      if (typeof refreshAnalyzeBlock === 'function') {
-        refreshAnalyzeBlock();
-      }
-      if (typeof refreshPlRatios === 'function') {
-        refreshPlRatios();
-      }
-      if (typeof refreshPlYearTotals === 'function') {
-        refreshPlYearTotals();
-      }
-      if (typeof refreshPlReferenceBudget === 'function') {
-        refreshPlReferenceBudget();
-      }
-      if (typeof refreshPlBottomGraph === 'function') {
-        refreshPlBottomGraph();
-      }
+      plSafeRefresh(refreshIncomeBlock);
+      plRefreshAnalyzeAndGraph();
       applyColumnFocus();
       var insightBtnInit = document.getElementById('global-nav-index-btn');
       if (insightBtnInit) {

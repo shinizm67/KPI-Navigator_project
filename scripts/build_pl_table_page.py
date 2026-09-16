@@ -9666,10 +9666,10 @@ def render_page(lang: str, lang_switch: str) -> str:
         if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
         plExpenseLiveRefreshTimer = setTimeout(function () {{
           plExpenseLiveRefreshTimer = null;
-          if (typeof refreshPlRatios === 'function') refreshPlRatios();
-          if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-          if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-          if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+          plSafeRefresh(refreshPlRatios);
+          plSafeRefresh(refreshPlYearTotals);
+          plSafeRefresh(refreshPlReferenceBudget);
+          plSafeRefresh(refreshPlBottomGraph);
         }}, 120);
       }}
 
@@ -9690,11 +9690,7 @@ def render_page(lang: str, lang_switch: str) -> str:
             cell.textContent = formatMoney(n);
             maybePropagateFixedMonthly(cell, n);
             persistExpenseMapFromDom();
-            if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-            if (typeof refreshPlRatios === 'function') refreshPlRatios();
-            if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-            if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-            if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+            plRefreshAnalyzeAndGraph();
           }});
         }});
       }}
@@ -9708,11 +9704,7 @@ def render_page(lang: str, lang_switch: str) -> str:
           plSaved = true;
         }}
         syncUndoButton();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }}
 
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
@@ -9751,11 +9743,7 @@ def render_page(lang: str, lang_switch: str) -> str:
             );
           }}
         }} catch (_mepErr) {{}}
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
         if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
       }}
 
@@ -9838,11 +9826,7 @@ def render_page(lang: str, lang_switch: str) -> str:
         if (typeof fillDailyExpenseRowsFromMep === 'function') {{
           fillDailyExpenseRowsFromMep();
         }}
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }});
       document.addEventListener('kpi:mepDataChanged', function (ev) {{
         var evYear = ev && ev.detail && Number(ev.detail.year);
@@ -9853,22 +9837,14 @@ def render_page(lang: str, lang_switch: str) -> str:
         if (typeof refreshIncomeBlock === 'function') {{
           refreshIncomeBlock();
         }}
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }});
       document.addEventListener('kpi:dailySalesChanged', function () {{
         syncPlBusinessDays();
         if (typeof refreshIncomeBlock === 'function') {{
           refreshIncomeBlock();
         }}
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlRatios === 'function') refreshPlRatios();
-        if (typeof refreshPlYearTotals === 'function') refreshPlYearTotals();
-        if (typeof refreshPlReferenceBudget === 'function') refreshPlReferenceBudget();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plRefreshAnalyzeAndGraph();
       }});
 
       if (btnUndo) {{
@@ -10130,9 +10106,8 @@ def render_page(lang: str, lang_switch: str) -> str:
       }});
       document.addEventListener('kpi:readSurfacesRefresh', function () {{
         syncPlBusinessDays();
-        if (typeof refreshIncomeBlock === 'function') refreshIncomeBlock();
-        if (typeof refreshAnalyzeBlock === 'function') refreshAnalyzeBlock();
-        if (typeof refreshPlBottomGraph === 'function') refreshPlBottomGraph();
+        plSafeRefresh(refreshIncomeBlock);
+        plRefreshAnalyzeAndGraph();
       }});
 
       populateYearSelect();
@@ -10144,24 +10119,8 @@ def render_page(lang: str, lang_switch: str) -> str:
       if (typeof fillDailyExpenseRowsFromMep === 'function') {{
         fillDailyExpenseRowsFromMep();
       }}
-      if (typeof refreshIncomeBlock === 'function') {{
-        refreshIncomeBlock();
-      }}
-      if (typeof refreshAnalyzeBlock === 'function') {{
-        refreshAnalyzeBlock();
-      }}
-      if (typeof refreshPlRatios === 'function') {{
-        refreshPlRatios();
-      }}
-      if (typeof refreshPlYearTotals === 'function') {{
-        refreshPlYearTotals();
-      }}
-      if (typeof refreshPlReferenceBudget === 'function') {{
-        refreshPlReferenceBudget();
-      }}
-      if (typeof refreshPlBottomGraph === 'function') {{
-        refreshPlBottomGraph();
-      }}
+      plSafeRefresh(refreshIncomeBlock);
+      plRefreshAnalyzeAndGraph();
       applyColumnFocus();
       var insightBtnInit = document.getElementById('global-nav-index-btn');
       if (insightBtnInit) {{

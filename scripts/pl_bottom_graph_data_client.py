@@ -246,15 +246,35 @@ def pl_bottom_graph_data_client_js() -> str:
         plGraphApplyExpensesSummary(plGraphCollectMonths());
       }
 
-      function refreshPlBottomGraph() {
-        var months = plGraphCollectMonths();
-        plGraphApplyExpensesSummary(months);
-        if (typeof window.plGraphRender !== 'function') return;
-        if (!months) return;
-        window.plGraphRender(months);
+      /* === UNIT-5B-GRAPH-REFRESH-GUARD-BEGIN === */
+      function plSafeRefresh(fn) {
+        try {
+          if (typeof fn === 'function') fn();
+        } catch (_plSafeErr) {}
       }
 
+      function plRefreshAnalyzeAndGraph() {
+        plSafeRefresh(refreshAnalyzeBlock);
+        plSafeRefresh(refreshPlRatios);
+        plSafeRefresh(refreshPlYearTotals);
+        plSafeRefresh(refreshPlReferenceBudget);
+        plSafeRefresh(refreshPlBottomGraph);
+      }
+
+      function refreshPlBottomGraph() {
+        try {
+          var months = plGraphCollectMonths();
+          plGraphApplyExpensesSummary(months);
+          if (typeof window.plGraphRender !== 'function') return;
+          if (!months) return;
+          window.plGraphRender(months);
+        } catch (_plGraphErr) {}
+      }
+
+      window.__plSafeRefresh = plSafeRefresh;
+      window.__plRefreshAnalyzeAndGraph = plRefreshAnalyzeAndGraph;
       window.__plRefreshBottomGraph = refreshPlBottomGraph;
+      /* === UNIT-5B-GRAPH-REFRESH-GUARD-END === */
       window.__plRefreshExpensesSummary = refreshExpensesSummaryBlock;
       window.__plApplyProfitSeverityEl = plApplyProfitSeverityEl;
       window.__plProfitSeverityClass = plProfitSeverityClass;

@@ -345,13 +345,17 @@ def pl_analyze_business_type_client_js() -> str:
         }}
 
         refreshAnalyzeBlock = function () {{
-          var mode = plAnalyzeEnsureLayout();
-          if (mode === 'restaurant_fl') {{
-            restaurantRefresh();
-            return;
-          }}
-          plAnalyzeFillKeyLayout();
-          if (typeof refreshPlRatios === 'function') refreshPlRatios();
+          try {{
+            var mode = plAnalyzeEnsureLayout();
+            if (mode === 'restaurant_fl') {{
+              restaurantRefresh();
+              return;
+            }}
+            plAnalyzeFillKeyLayout();
+            try {{
+              if (typeof refreshPlRatios === 'function') refreshPlRatios();
+            }} catch (_plAnalyzeRatioErr) {{}}
+          }} catch (_plAnalyzeErr) {{}}
         }};
         window.__plRefreshAnalyzeBlock = refreshAnalyzeBlock;
       }})();
