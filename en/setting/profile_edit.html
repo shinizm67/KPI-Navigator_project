@@ -264,19 +264,14 @@
           </select>
         </div>
 
-        <div class="form-group form-group-genre" id="profile-genre-group" hidden>
-          <label for="profile-genre">Cuisine / Genre (Optional) :</label>
-          <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="Cuisine / Genre (Optional)">
-          <datalist id="profile-genre-suggestions">
-            <option value="Italian"></option>
-            <option value="French"></option>
-            <option value="Japanese"></option>
-            <option value="Indian"></option>
-            <option value="Thai"></option>
-            <option value="Cafe"></option>
-            <option value="Bar"></option>
-            <option value="Izakaya"></option>
-          </datalist>
+        <div class="form-group form-group-genre" id="profile-genre-group">
+          <label for="profile-genre" class="profile-genre-label-row">
+            <span id="profile-genre-label-text">Cuisine / Genre (Optional)</span>
+            <button type="button" class="profile-genre-tip-btn" id="profile-genre-tip-btn" aria-expanded="false" aria-controls="profile-genre-tip-panel" aria-label="Input hint">ⓘ</button>
+          </label>
+          <p class="profile-genre-tip-panel" id="profile-genre-tip-panel">Choose a suggestion, or type your own category / genre.</p>
+          <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="Cuisine / Genre (Optional)" aria-describedby="profile-genre-tip-panel">
+          <datalist id="profile-genre-suggestions"></datalist>
         </div>
 
         <div class="form-group">
@@ -638,21 +633,51 @@
         });
       }
 
-      function isRestaurantIndustry(code) {
+      function normalizeIndustry(code) {
         if (window.KpiBusinessType && typeof window.KpiBusinessType.normalizeBusinessType === 'function') {
-          return window.KpiBusinessType.normalizeBusinessType(code) === 'restaurant';
+          var n = window.KpiBusinessType.normalizeBusinessType(code);
+          if (n) return n;
         }
-        return String(code || '') === 'restaurant';
+        return String(code || '') || 'other';
       }
 
-      function syncGenreVisibility() {
-        if (!genreGroup) return;
-        var raw = industrySelect ? industrySelect.value : '';
-        genreGroup.hidden = !isRestaurantIndustry(raw);
+      var GENRE_BY_TYPE = {
+        restaurant: { label: 'Cuisine / Genre (Optional)', suggestions: ['Italian', 'Japanese', 'Cafe', 'Bar', 'Izakaya', 'Yakiniku', 'Sushi'] },
+        retail: { label: 'Retail Genre (Optional)', suggestions: ['Apparel', 'Food', 'Musical instruments', 'Variety goods', 'Souvenirs', 'Bookstore', 'Household goods'] },
+        hair_salon: { label: 'Salon Type (Optional)', suggestions: ['Hair salon', 'Barber', 'Color specialist', 'Head spa', 'Nail salon combo'] },
+        fitness: { label: 'Fitness Type (Optional)', suggestions: ['Gym', 'Personal training', 'Yoga', 'Pilates', 'Studio'] },
+        hotel: { label: 'Lodging Type (Optional)', suggestions: ['Hotel', 'Ryokan', 'Guesthouse', 'Business hotel', 'Resort'] },
+        other: { label: 'Business details (Optional)', suggestions: ['Consulting', 'Education', 'Other services'] }
+      };
+
+      function syncGenreField() {
+        if (genreGroup) genreGroup.hidden = false;
+        var type = normalizeIndustry(industrySelect ? industrySelect.value : '');
+        var rec = GENRE_BY_TYPE[type] || GENRE_BY_TYPE.other;
+        var labelText = document.getElementById('profile-genre-label-text');
+        if (labelText) labelText.textContent = rec.label;
+        if (genreInput) genreInput.setAttribute('aria-label', rec.label);
+        var list = document.getElementById('profile-genre-suggestions');
+        if (list) {
+          list.innerHTML = '';
+          (rec.suggestions || []).forEach(function (s) {
+            var opt = document.createElement('option');
+            opt.value = s;
+            list.appendChild(opt);
+          });
+        }
       }
 
       if (industrySelect) {
-        industrySelect.addEventListener('change', syncGenreVisibility);
+        industrySelect.addEventListener('change', syncGenreField);
+      }
+
+      var genreTipBtn = document.getElementById('profile-genre-tip-btn');
+      if (genreTipBtn && genreGroup) {
+        genreTipBtn.addEventListener('click', function () {
+          var open = genreGroup.classList.toggle('is-tip-open');
+          genreTipBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
       }
 
       if (countrySelect && stateSelect) {
@@ -697,8 +722,8 @@
             if (savedGenre) genreInput.value = savedGenre;
           } catch (_eGenre) {}
         }
-        syncGenreVisibility();
       }
+      syncGenreField();
     })();
     (function () {
       var langBtn = document.getElementById('lang-select-btn');

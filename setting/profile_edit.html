@@ -264,19 +264,14 @@
           </select>
         </div>
 
-          <div class="form-group form-group-genre" id="profile-genre-group" hidden>
-            <label for="profile-genre">料理ジャンル（任意）:</label>
-            <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="料理ジャンル（任意）">
-            <datalist id="profile-genre-suggestions">
-              <option value="Italian"></option>
-              <option value="French"></option>
-              <option value="Japanese"></option>
-              <option value="Indian"></option>
-              <option value="Thai"></option>
-              <option value="Cafe"></option>
-              <option value="Bar"></option>
-              <option value="Izakaya"></option>
-            </datalist>
+          <div class="form-group form-group-genre" id="profile-genre-group">
+            <label for="profile-genre" class="profile-genre-label-row">
+              <span id="profile-genre-label-text">料理ジャンル（任意）</span>
+              <button type="button" class="profile-genre-tip-btn" id="profile-genre-tip-btn" aria-expanded="false" aria-controls="profile-genre-tip-panel" aria-label="入力のヒント">ⓘ</button>
+            </label>
+            <p class="profile-genre-tip-panel" id="profile-genre-tip-panel">候補から選択するか、ご自身の業態・ジャンルを自由に入力してください。</p>
+            <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="料理ジャンル（任意）" aria-describedby="profile-genre-tip-panel">
+            <datalist id="profile-genre-suggestions"></datalist>
           </div>
 
           <div class="form-group">
@@ -637,21 +632,51 @@
         });
       }
 
-      function isRestaurantIndustry(code) {
+      function normalizeIndustry(code) {
         if (window.KpiBusinessType && typeof window.KpiBusinessType.normalizeBusinessType === 'function') {
-          return window.KpiBusinessType.normalizeBusinessType(code) === 'restaurant';
+          var n = window.KpiBusinessType.normalizeBusinessType(code);
+          if (n) return n;
         }
-        return String(code || '') === 'restaurant';
+        return String(code || '') || 'other';
       }
 
-      function syncGenreVisibility() {
-        if (!genreGroup) return;
-        var raw = industrySelect ? industrySelect.value : '';
-        genreGroup.hidden = !isRestaurantIndustry(raw);
+      var GENRE_BY_TYPE = {
+        restaurant: { label: '料理ジャンル（任意）', suggestions: ['イタリアン', '和食', 'カフェ', 'バー', '居酒屋', '焼肉', '寿司'] },
+        retail: { label: '小売ジャンル（任意）', suggestions: ['アパレル', '食品', '楽器', '雑貨', 'お土産', '書店', '生活用品'] },
+        hair_salon: { label: 'サロンタイプ（任意）', suggestions: ['美容室', '理容室', 'カラー専門', 'ヘッドスパ', 'ネイル併設'] },
+        fitness: { label: 'フィットネスタイプ（任意）', suggestions: ['ジム', 'パーソナルトレーニング', 'ヨガ', 'ピラティス', 'スタジオ'] },
+        hotel: { label: '宿泊施設タイプ（任意）', suggestions: ['ホテル', '旅館', 'ゲストハウス', 'ビジネスホテル', 'リゾート'] },
+        other: { label: '業種詳細（任意）', suggestions: ['コンサル', '教育', 'その他サービス'] }
+      };
+
+      function syncGenreField() {
+        if (genreGroup) genreGroup.hidden = false;
+        var type = normalizeIndustry(industrySelect ? industrySelect.value : '');
+        var rec = GENRE_BY_TYPE[type] || GENRE_BY_TYPE.other;
+        var labelText = document.getElementById('profile-genre-label-text');
+        if (labelText) labelText.textContent = rec.label;
+        if (genreInput) genreInput.setAttribute('aria-label', rec.label);
+        var list = document.getElementById('profile-genre-suggestions');
+        if (list) {
+          list.innerHTML = '';
+          (rec.suggestions || []).forEach(function (s) {
+            var opt = document.createElement('option');
+            opt.value = s;
+            list.appendChild(opt);
+          });
+        }
       }
 
       if (industrySelect) {
-        industrySelect.addEventListener('change', syncGenreVisibility);
+        industrySelect.addEventListener('change', syncGenreField);
+      }
+
+      var genreTipBtn = document.getElementById('profile-genre-tip-btn');
+      if (genreTipBtn && genreGroup) {
+        genreTipBtn.addEventListener('click', function () {
+          var open = genreGroup.classList.toggle('is-tip-open');
+          genreTipBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
       }
 
       if (countrySelect && stateSelect) {
@@ -696,8 +721,8 @@
             if (savedGenre) genreInput.value = savedGenre;
           } catch (_eGenre) {}
         }
-        syncGenreVisibility();
       }
+      syncGenreField();
     })();
     (function () {
       var langBtn = document.getElementById('lang-select-btn');

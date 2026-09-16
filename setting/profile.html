@@ -258,8 +258,8 @@
           <p class="profile-fixed-value" id="fixed-industry">—</p>
         </div>
 
-        <div class="form-group form-group-genre" id="profile-genre-group" hidden>
-          <label>料理ジャンル（任意）:</label>
+        <div class="form-group form-group-genre" id="profile-genre-group">
+          <label id="profile-genre-view-label">料理ジャンル（任意）:</label>
           <p class="profile-fixed-value" id="fixed-genre">—</p>
         </div>
 
@@ -524,13 +524,23 @@
       }
       setText('fixed-industry', industryLabel);
       setText('fixed-genre', data.genre);
+      var GENRE_VIEW_LABELS = {
+        restaurant: '料理ジャンル（任意）:',
+        retail: '小売ジャンル（任意）:',
+        hair_salon: 'サロンタイプ（任意）:',
+        fitness: 'フィットネスタイプ（任意）:',
+        hotel: '宿泊施設タイプ（任意）:',
+        other: '業種詳細（任意）:'
+      };
       var genreGroup = document.getElementById('profile-genre-group');
-      if (genreGroup) {
-        var viewType = window.KpiBusinessType
-          ? (window.KpiBusinessType.normalizeBusinessType(industryValue) ||
-            window.KpiBusinessType.getBusinessType())
-          : (industryValue || '');
-        genreGroup.hidden = viewType !== 'restaurant';
+      var genreViewLabel = document.getElementById('profile-genre-view-label');
+      var viewType = window.KpiBusinessType
+        ? (window.KpiBusinessType.normalizeBusinessType(industryValue) ||
+          window.KpiBusinessType.getBusinessType())
+        : (industryValue || 'other');
+      if (genreGroup) genreGroup.hidden = false;
+      if (genreViewLabel) {
+        genreViewLabel.textContent = GENRE_VIEW_LABELS[viewType] || GENRE_VIEW_LABELS.other;
       }
       setText('fixed-country', data.country);
       setText('fixed-state', data.state);
