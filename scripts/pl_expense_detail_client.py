@@ -116,28 +116,50 @@ def expense_detail_client_js(
           .replace(/"/g, '&quot;');
       }}
 
+      function currentPresetLines() {{
+        if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.hasDefinedPreset === 'function') {{
+          if (!window.KpiPlExpensePresets.hasDefinedPreset()) {{
+            return [];
+          }}
+          var bt = window.KpiPlExpensePresets.resolveBusinessType();
+          if (bt === 'restaurant') {{
+            return DEFAULT_LINES;
+          }}
+          return window.KpiPlExpensePresets.getDefaultExpenseLines(bt);
+        }}
+        return DEFAULT_LINES;
+      }}
+
       function defaultById() {{
         var map = {{}};
-        DEFAULT_LINES.forEach(function (line) {{
+        currentPresetLines().forEach(function (line) {{
           map[line.lineId] = line;
         }});
         return map;
       }}
 
       function reconcileCatalogLines(oldLines) {{
+        var presetLines = currentPresetLines();
+        if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.reconcileCatalogLines === 'function') {{
+          return window.KpiPlExpensePresets.reconcileCatalogLines(oldLines, null, presetLines);
+        }}
         var defs = defaultById();
         var defaultLabelKeys = {{}};
-        DEFAULT_LINES.forEach(function (d) {{
+        presetLines.forEach(function (d) {{
           defaultLabelKeys[d.bucket + '\\0' + String(d.labelEn || '').toLowerCase()] = true;
           defaultLabelKeys[d.bucket + '\\0' + String(d.labelJa || '')] = true;
         }});
         var out = [];
         var seenIds = {{}};
-        DEFAULT_LINES.forEach(function (def) {{
+        presetLines.forEach(function (def) {{
           var prev = (oldLines || []).find(function (l) {{ return l.lineId === def.lineId; }});
           var line = JSON.parse(JSON.stringify(def));
           if (prev) {{
-            if (typeof prev.active === 'boolean') line.active = prev.active;
+            if (prev.presetOrphan) {{
+              line.active = def.active;
+            }} else if (typeof prev.active === 'boolean') {{
+              line.active = prev.active;
+            }}
             if (typeof prev.sortOrder === 'number') line.sortOrder = prev.sortOrder;
             if (prev.labelJa) line.labelJa = prev.labelJa;
             if (prev.labelEn) line.labelEn = prev.labelEn;
@@ -155,21 +177,32 @@ def expense_detail_client_js(
           if (line.expenseAttribute == null) {{
             delete line.expenseAttribute;
           }}
+          delete line.presetOrphan;
           out.push(line);
           seenIds[line.lineId] = true;
         }});
         (oldLines || []).forEach(function (line) {{
-          if (String(line.lineId || '').indexOf('exp_custom_') !== 0) return;
-          if (seenIds[line.lineId]) return;
-          var keyEn = line.bucket + '\\0' + String(line.labelEn || '').toLowerCase();
-          var keyJa = line.bucket + '\\0' + String(line.labelJa || '');
-          if (defaultLabelKeys[keyEn] || defaultLabelKeys[keyJa]) return;
-          line.isDefault = false;
-          if (!line.resolvedInputStyle) {{
-            line.resolvedInputStyle = line.inputStyle === 'daily' ? 'daily' : 'monthly';
+          if (!line || !line.lineId || seenIds[line.lineId]) return;
+          if (String(line.lineId || '').indexOf('exp_custom_') === 0) {{
+            var keyEn = line.bucket + '\\0' + String(line.labelEn || '').toLowerCase();
+            var keyJa = line.bucket + '\\0' + String(line.labelJa || '');
+            if (defaultLabelKeys[keyEn] || defaultLabelKeys[keyJa]) return;
+            line.isDefault = false;
+            if (!line.resolvedInputStyle) {{
+              line.resolvedInputStyle = line.inputStyle === 'daily' ? 'daily' : 'monthly';
+            }}
+            out.push(line);
+            seenIds[line.lineId] = true;
+            return;
           }}
-          out.push(line);
-          seenIds[line.lineId] = true;
+          var kept = JSON.parse(JSON.stringify(line));
+          kept.active = false;
+          kept.presetOrphan = true;
+          if (!kept.resolvedInputStyle) {{
+            kept.resolvedInputStyle = kept.inputStyle === 'daily' ? 'daily' : 'monthly';
+          }}
+          out.push(kept);
+          seenIds[kept.lineId] = true;
         }});
         return out;
       }}
@@ -286,15 +319,20 @@ def expense_detail_client_js(
           var raw = localStorage.getItem(CATALOG_KEY);
           if (raw) {{
             var parsed = JSON.parse(raw);
-            if (parsed && Array.isArray(parsed.lines) && parsed.lines.length) {{
-              if (parsed.schemaVersion !== CATALOG_SCHEMA_VERSION) {{
-                return mergeCatalogFromDefaults(parsed.lines);
+            if (parsed && Array.isArray(parsed.lines)) {{
+              if (parsed.lines.length) {{
+                if (parsed.schemaVersion !== CATALOG_SCHEMA_VERSION) {{
+                  return mergeCatalogFromDefaults(parsed.lines);
+                }}
+                return migrateLines(parsed.lines);
               }}
-              return migrateLines(parsed.lines);
+              if (window.KpiPlExpensePresets && !window.KpiPlExpensePresets.hasDefinedPreset()) {{
+                return parsed.lines;
+              }}
             }}
           }}
         }} catch (_e) {{}}
-        var fresh = JSON.parse(JSON.stringify(DEFAULT_LINES));
+        var fresh = JSON.parse(JSON.stringify(currentPresetLines()));
         syncOccupancyActiveFlags(fresh);
         saveLines(fresh);
         return fresh;

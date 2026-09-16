@@ -4135,6 +4135,8 @@
 
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-pl-monthly-allocate.js"></script>
+  <script src="../../../../js/kpi-business-type.js"></script>
+  <script src="../../../../js/kpi-pl-expense-presets.js"></script>
   <!-- KPI-CURRENCY-JS:END -->
   <header class="site-header pl-site-header">
     <div class="header-inner">
@@ -5428,15 +5430,32 @@
           .replace(/"/g, '&quot;');
       }
 
+      function currentPresetLines() {
+        if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.hasDefinedPreset === 'function') {
+          if (!window.KpiPlExpensePresets.hasDefinedPreset()) {
+            return [];
+          }
+          var bt = window.KpiPlExpensePresets.resolveBusinessType();
+          if (bt === 'restaurant') {
+            return DEFAULT_LINES;
+          }
+          return window.KpiPlExpensePresets.getDefaultExpenseLines(bt);
+        }
+        return DEFAULT_LINES;
+      }
+
       function defaultById() {
         var map = {};
-        DEFAULT_LINES.forEach(function (line) {
+        currentPresetLines().forEach(function (line) {
           map[line.lineId] = line;
         });
         return map;
       }
 
       function reconcileCatalogLines(oldLines) {
+        if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.reconcileCatalogLines === 'function') {
+          return window.KpiPlExpensePresets.reconcileCatalogLines(oldLines, null, currentPresetLines());
+        }
         var defs = defaultById();
         var defaultLabelKeys = {};
         DEFAULT_LINES.forEach(function (d) {
@@ -5598,15 +5617,20 @@
           var raw = localStorage.getItem(CATALOG_KEY);
           if (raw) {
             var parsed = JSON.parse(raw);
-            if (parsed && Array.isArray(parsed.lines) && parsed.lines.length) {
-              if (parsed.schemaVersion !== CATALOG_SCHEMA_VERSION) {
-                return mergeCatalogFromDefaults(parsed.lines);
+            if (parsed && Array.isArray(parsed.lines)) {
+              if (parsed.lines.length) {
+                if (parsed.schemaVersion !== CATALOG_SCHEMA_VERSION) {
+                  return mergeCatalogFromDefaults(parsed.lines);
+                }
+                return migrateLines(parsed.lines);
               }
-              return migrateLines(parsed.lines);
+              if (window.KpiPlExpensePresets && !window.KpiPlExpensePresets.hasDefinedPreset()) {
+                return parsed.lines;
+              }
             }
           }
         } catch (_e) {}
-        var fresh = JSON.parse(JSON.stringify(DEFAULT_LINES));
+        var fresh = JSON.parse(JSON.stringify(currentPresetLines()));
         syncOccupancyActiveFlags(fresh);
         saveLines(fresh);
         return fresh;

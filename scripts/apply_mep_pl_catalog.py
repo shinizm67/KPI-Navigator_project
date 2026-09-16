@@ -35,7 +35,13 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           var raw = localStorage.getItem(PL_CATALOG_STORAGE_KEY);
           if (!raw) return null;
           var parsed = JSON.parse(raw);
-          if (!parsed || !Array.isArray(parsed.lines) || !parsed.lines.length) return null;
+          if (!parsed || !Array.isArray(parsed.lines)) return null;
+          if (!parsed.lines.length) {{
+            if (window.KpiPlExpensePresets && !window.KpiPlExpensePresets.hasDefinedPreset()) {{
+              return parsed.lines;
+            }}
+            return null;
+          }}
           return parsed.lines.filter(function (line) {{
             return line && line.active !== false;
           }});
@@ -77,6 +83,9 @@ CATALOG_BLOCK = f"""      {CATALOG_MARKER}
           .map(plLineToMepDef);
       }}
       function catalogExpenseDefsFromEmbedded(bucket) {{
+        if (window.KpiPlExpensePresets && !window.KpiPlExpensePresets.hasDefinedPreset()) {{
+          return [];
+        }}
         return PL_LINE_CATALOG.filter(function (e) {{
           return e.bucket === bucket && e.active !== false;
         }});

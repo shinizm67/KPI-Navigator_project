@@ -8767,6 +8767,8 @@ def render_page(lang: str, lang_switch: str) -> str:
   <!-- KPI-CURRENCY-JS:START -->
   <script src="{"../../../js/kpi-currency.js" if lang == "ja" else "../../../../js/kpi-currency.js"}"></script>
   <script src="{"../../../js/kpi-pl-monthly-allocate.js" if lang == "ja" else "../../../../js/kpi-pl-monthly-allocate.js"}"></script>
+  <script src="{"../../../js/kpi-business-type.js" if lang == "ja" else "../../../../js/kpi-business-type.js"}"></script>
+  <script src="{"../../../js/kpi-pl-expense-presets.js" if lang == "ja" else "../../../../js/kpi-pl-expense-presets.js"}"></script>
   <!-- KPI-CURRENCY-JS:END -->
 {header}
   <div class="page-wrap profile-wrap">
