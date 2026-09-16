@@ -430,6 +430,9 @@ LABELS_JA = {
     "compare_area1_title": "Area 1. 当日の FL スナップショット",
     "compare_area2_title": "Area 2. 前年同月の FL スナップショット",
     "compare_area3_title": "Area 3. 年初来（YTD）の FL スナップショット",
+    "compare_area1_title_key": "Area 1. 当日のコストスナップショット",
+    "compare_area2_title_key": "Area 2. 前年同月のコストスナップショット",
+    "compare_area3_title_key": "Area 3. 年初来（YTD）のコストスナップショット",
     "compare_food_labor": "Food & Labor",
     "compare_food_slash_labor": "Food / Labor",
     "compare_same_weekday_of": "同曜日 ",
@@ -592,6 +595,9 @@ LABELS_EN = {
     "compare_area1_title": "Area 1. Current FL Snapshot",
     "compare_area2_title": "Area 2. Last Year Same Month FL Snapshot",
     "compare_area3_title": "Area 3. Year-to-Date FL Snapshot",
+    "compare_area1_title_key": "Area 1. Current Cost Snapshot",
+    "compare_area2_title_key": "Area 2. Last Year Same Month Cost Snapshot",
+    "compare_area3_title_key": "Area 3. Year-to-Date Cost Snapshot",
     "compare_food_labor": "Food & Labor",
     "compare_food_slash_labor": "Food / Labor",
     "compare_same_weekday_of": "Same Weekday of ",
@@ -1380,7 +1386,46 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
       }}
 
       function pct1(n) {{
-        return (Math.round(Number(n) * 10) / 10) + '%';
+        var v = Number(n);
+        if (!Number.isFinite(v)) return '—';
+        return (Math.round(v * 10) / 10) + '%';
+      }}
+
+      function snapshotBarLabels() {{
+        var pack = {{
+          foodLabor: L.compare_food_labor,
+          foodSlashLabor: L.compare_food_slash_labor,
+          area1: L.compare_area1_title,
+          area2: L.compare_area2_title,
+          area3: L.compare_area3_title,
+          area1Key: L.compare_area1_title_key,
+          area2Key: L.compare_area2_title_key,
+          area3Key: L.compare_area3_title_key
+        }};
+        if (window.__plInsight && typeof window.__plInsight.snapshotCopy === 'function') {{
+          try {{ return window.__plInsight.snapshotCopy(pack); }} catch (_eCopy) {{}}
+        }}
+        return {{
+          restaurant: true,
+          combined: L.compare_food_labor,
+          split: L.compare_food_slash_labor,
+          area1: L.compare_area1_title,
+          area2: L.compare_area2_title,
+          area3: L.compare_area3_title
+        }};
+      }}
+
+      function applySnapshotAreaTitles() {{
+        var copy = snapshotBarLabels();
+        var map = {{
+          1: copy.area1,
+          2: copy.area2,
+          3: copy.area3
+        }};
+        [1, 2, 3].forEach(function (n) {{
+          var el = document.querySelector('#pl-compare-area-' + n + ' > .pl-compare-area-title');
+          if (el && map[n]) el.textContent = map[n];
+        }});
       }}
 
       function fetchCurrentFlSnapshot(iso) {{
@@ -1426,16 +1471,18 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
 
       function renderHsnapBlock(caption, metrics, maxIncome, blockIndex, allowNoData) {{
         var noData = !metrics;
-        /* データ無しでもラベル 3 行（Income / Food & Labor / Food / Labor）は残し、
+        var labels = snapshotBarLabels();
+        /* データ無しでもラベル 3 行は残し、
            空バー＋「—」で描画する。ブロックを消すと下段が跳ね上がり目がバグるため。 */
         if (noData && !allowNoData) return '';
         if (!maxIncome) maxIncome = (metrics && metrics.income) || 1;
         var dash = '—';
+        var hasIncome = !noData && Number(metrics.income) > 0;
         var incomeW = noData ? 0 : Math.max(0, Math.min(100, (metrics.income / maxIncome) * 100));
-        var expensePct = (!noData && metrics.income) ? (metrics.expenses / metrics.income) * 100 : 0;
+        var expensePct = hasIncome ? (metrics.expenses / metrics.income) * 100 : 0;
         var expenseW = noData ? 0 : expenseVisualWidth(incomeW, expensePct, blockIndex || 0);
-        var variablePct = (!noData && metrics.income) ? (metrics.variable / metrics.income) * 100 : 0;
-        var fixedPct = (!noData && metrics.income) ? (metrics.fixed / metrics.income) * 100 : 0;
+        var variablePct = hasIncome ? (metrics.variable / metrics.income) * 100 : 0;
+        var fixedPct = hasIncome ? (metrics.fixed / metrics.income) * 100 : 0;
         var splitOrangeW = (!noData && metrics.expenses) ? (metrics.variable / metrics.expenses) * 100 : 0;
         var splitYellowW = (!noData && metrics.expenses) ? (metrics.fixed / metrics.expenses) * 100 : 0;
         var incomeBar = noData
@@ -1460,16 +1507,18 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
             splitYellowW.toFixed(4) +
             '%"></span></span>';
         var incomeMeta = noData ? dash : money(metrics.income);
-        var expenseMeta = noData ? dash : money(metrics.expenses) + ' : ' + pct1(expensePct);
+        var expenseMeta = noData
+          ? dash
+          : money(metrics.expenses) + ' : ' + (hasIncome ? pct1(expensePct) : dash);
         var splitMeta = noData
           ? dash
           : money(metrics.variable) +
             ' : ' +
-            pct1(variablePct) +
+            (hasIncome ? pct1(variablePct) : dash) +
             ' : ' +
             money(metrics.fixed) +
             ' : ' +
-            pct1(fixedPct);
+            (hasIncome ? pct1(fixedPct) : dash);
         return (
           '<section class="pl-compare-hsnap' + (noData ? ' pl-compare-hsnap--empty' : '') + '">' +
           '<h4 class="pl-compare-hsnap__date">' +
@@ -1477,8 +1526,8 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
           '</h4>' +
           '<div class="pl-compare-hsnap__rows">' +
           renderHsnapRow(L.compare_income, incomeBar, incomeMeta) +
-          renderHsnapRow(L.compare_food_labor, expenseBar, expenseMeta) +
-          renderHsnapRow(L.compare_food_slash_labor, splitBar, splitMeta) +
+          renderHsnapRow(labels.combined, expenseBar, expenseMeta) +
+          renderHsnapRow(labels.split, splitBar, splitMeta) +
           '</div></section>'
         );
       }}
@@ -2904,6 +2953,7 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
       }}
 
       function renderCompareFl(areaId, iso) {{
+        applySnapshotAreaTitles();
         var mount = document.getElementById('pl-compare-area-' + areaId + '-fl');
         if (!mount) return;
         iso = iso || selectedIso || resolveIso();
@@ -4784,6 +4834,9 @@ def render_page(lang: str, lang_switch: str) -> str:
         "compare_area1_title": L["compare_area1_title"],
         "compare_area2_title": L["compare_area2_title"],
         "compare_area3_title": L["compare_area3_title"],
+        "compare_area1_title_key": L["compare_area1_title_key"],
+        "compare_area2_title_key": L["compare_area2_title_key"],
+        "compare_area3_title_key": L["compare_area3_title_key"],
         "compare_food_labor": L["compare_food_labor"],
         "compare_food_slash_labor": L["compare_food_slash_labor"],
         "compare_same_weekday_of": L["compare_same_weekday_of"],

@@ -11,8 +11,15 @@ PL table itself uses, so the PL Insight overlay's numbers match the PL table
                             (+ kpi-pl-expense-adjustments-v1:{year}[lineId:month0] to match display)
 - Fixed   = bucket==='fixed' lines ; Expected = variable (= expenses - fixed)
 - Profit  = income - expenses
-- FL snapshot: Food = expenseAttribute food_cost/drink_cost ; Labor = salaries_wages/
-  variable_labor/labor_related (fallback to well-known default lineIds).
+- FL snapshot (Unit 5C-0/5C-1): restaurant canonical is
+    F = (food_cost + drink_cost) / income
+    L = labor / income
+    FL = (food_cost + drink_cost + labor) / income
+    using expenseAttribute food_cost/drink_cost and labor attrs
+    (fallback to well-known default lineIds).
+  Non-restaurant: no F/FL names. Left bar = ANALYSIS key-expense lineIds
+  via KpiPlExpensePresets.getAnalysisMetrics(); right bar = labor.
+  Chart METRICS/SERIES and long-press paths stay unchanged.
 
 Per-day expense for monthly-style lines uses the shared allocation engine
 (window.__plPreviewMonthlyExpenseAllocation) so daily cumulative lines end at the
@@ -51,8 +58,9 @@ def pl_insight_data_client_js() -> str:
       var area3ChartCache = {}; // 'year|month|by' -> chart (day-independent within month)
       var bestYearCache = {}; // selYear -> year|null
       var annualIncomeCache = {}; // year -> number
-      var flYtdCache = {}; // 'year|month0|day' -> snapshot
-      var flYtdPrefixCache = {}; // year -> { income, food, labor } cumulative through each month-day
+      var flYtdCache = {}; // 'year|month0|day|bt' -> snapshot
+      var flYtdPrefixCache = {}; // 'year|bt' -> { income, food, labor } cumulative through each month-day
+      var keyExpenseIdCache = null;
 
       function resetCache() {
         allocCache = {};
@@ -67,6 +75,7 @@ def pl_insight_data_client_js() -> str:
         annualIncomeCache = {};
         flYtdCache = {};
         flYtdPrefixCache = {};
+        keyExpenseIdCache = null;
       }
 
       function getJson(key) {
@@ -129,9 +138,155 @@ def pl_insight_data_client_js() -> str:
       }
       function isLabor(line) {
         var a = line.expenseAttribute;
-        if (a === 'salaries_wages' || a === 'variable_labor' || a === 'labor_related') return true;
-        return line.lineId === 'exp_fixed_labor' || line.lineId === 'exp_variable_labor';
+        var attrs;
+        var extraIds;
+        var api = window.KpiPlExpensePresets;
+        if (api && api.LABOR_ANALYSIS_ATTRIBUTES && api.LABOR_ANALYSIS_ATTRIBUTES.length) {
+          attrs = api.LABOR_ANALYSIS_ATTRIBUTES;
+        } else {
+          attrs = ['salaries_wages', 'variable_labor', 'labor_related'];
+        }
+        if (a && attrs.indexOf(a) >= 0) return true;
+        extraIds = (api && api.LABOR_ANALYSIS_LINE_IDS && api.LABOR_ANALYSIS_LINE_IDS.length)
+          ? api.LABOR_ANALYSIS_LINE_IDS
+          : ['exp_fixed_labor', 'exp_variable_labor'];
+        return extraIds.indexOf(line.lineId) >= 0;
       }
+
+      /* === UNIT-5C-1-PL-INSIGHT-BT-BEGIN === */
+      function plInsightPageLang() {
+        var lang = '';
+        try {
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }
+      function plInsightReadMetrics() {
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try { return api.getAnalysisMetrics(); } catch (_eM) {}
+        }
+        return { mode: 'restaurant_fl', groups: [] };
+      }
+      function plInsightIsRestaurantFl() {
+        var rec = plInsightReadMetrics();
+        return !rec || rec.mode !== 'key_expenses';
+      }
+      function plInsightKeyExpenseIdSet() {
+        if (keyExpenseIdCache) return keyExpenseIdCache;
+        var ids = {};
+        var rec = plInsightReadMetrics();
+        (rec.groups || []).forEach(function (group) {
+          (group.rows || []).forEach(function (row) {
+            if (!row || row.source === 'labor') return;
+            (row.lineIds || []).forEach(function (id) {
+              if (id) ids[id] = true;
+            });
+          });
+        });
+        keyExpenseIdCache = ids;
+        return ids;
+      }
+      function plInsightClassifyLine(line) {
+        if (!line || !line.lineId) return 'ignore';
+        if (plInsightIsRestaurantFl()) {
+          if (isFood(line)) return 'left';
+          if (isLabor(line)) return 'labor';
+          return 'ignore';
+        }
+        if (isLabor(line)) return 'labor';
+        if (plInsightKeyExpenseIdSet()[line.lineId]) return 'left';
+        return 'ignore';
+      }
+      function plInsightPickLabel(row, lang) {
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }
+      function plInsightJoinMajor(group, lang) {
+        var lines =
+          lang === 'zh'
+            ? (group && (group.majorZh || group.majorJa))
+            : lang === 'en'
+              ? (group && (group.majorEn || group.majorJa))
+              : (group && (group.majorJa || group.majorEn));
+        if (!Array.isArray(lines) || !lines.length) return '';
+        return lines.join('');
+      }
+      function plInsightLaborShort(lang) {
+        if (lang === 'zh') return '人事費用';
+        if (lang === 'en') return 'Labor';
+        return '人件費';
+      }
+      function plInsightKeyAreaTitles(lang, pack) {
+        pack = pack || {};
+        if (lang === 'zh') {
+          return {
+            area1: pack.area1Key || '區域 1. 當日成本快照',
+            area2: pack.area2Key || '區域 2. 去年同月成本快照',
+            area3: pack.area3Key || '區域 3. 年初至今成本快照'
+          };
+        }
+        if (lang === 'en') {
+          return {
+            area1: pack.area1Key || 'Area 1. Current Cost Snapshot',
+            area2: pack.area2Key || 'Area 2. Last Year Same Month Cost Snapshot',
+            area3: pack.area3Key || 'Area 3. Year-to-Date Cost Snapshot'
+          };
+        }
+        return {
+          area1: pack.area1Key || 'Area 1. 当日のコストスナップショット',
+          area2: pack.area2Key || 'Area 2. 前年同月のコストスナップショット',
+          area3: pack.area3Key || 'Area 3. 年初来（YTD）のコストスナップショット'
+        };
+      }
+      function plInsightSnapshotCopy(pack) {
+        pack = pack || {};
+        var lang = plInsightPageLang();
+        if (plInsightIsRestaurantFl()) {
+          return {
+            restaurant: true,
+            combined: pack.foodLabor || 'Food & Labor',
+            split: pack.foodSlashLabor || 'Food / Labor',
+            area1: pack.area1 || '',
+            area2: pack.area2 || '',
+            area3: pack.area3 || ''
+          };
+        }
+        var rec = plInsightReadMetrics();
+        var keyGroup = null;
+        (rec.groups || []).forEach(function (group) {
+          var hasKey = (group.rows || []).some(function (row) {
+            return row && row.source !== 'labor';
+          });
+          if (hasKey && !keyGroup) keyGroup = group;
+        });
+        var left = keyGroup ? plInsightJoinMajor(keyGroup, lang) : '';
+        if (!left && keyGroup) {
+          left = (keyGroup.rows || [])
+            .filter(function (row) { return row && row.source !== 'labor'; })
+            .map(function (row) { return plInsightPickLabel(row, lang); })
+            .filter(Boolean)
+            .join(' / ');
+        }
+        if (!left) left = lang === 'en' ? 'Key costs' : '主要費目';
+        var right = plInsightLaborShort(lang);
+        var titles = plInsightKeyAreaTitles(lang, pack);
+        return {
+          restaurant: false,
+          combined: left + ' & ' + right,
+          split: left + ' / ' + right,
+          area1: titles.area1,
+          area2: titles.area2,
+          area3: titles.area3
+        };
+      }
+      /* === UNIT-5C-1-PL-INSIGHT-BT-END === */
 
       function dailySales(s, isoStr) {
         var ds = s && s.timeline && s.timeline.dailySales;
@@ -383,23 +538,40 @@ def pl_insight_data_client_js() -> str:
         return chart;
       }
 
-      /* ---- FL snapshots ---- */
+      /* ---- FL snapshots (5C-0 restaurant: left=food+drink, labor=labor, total=FL) ---- */
+      function flBtCacheKey() {
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {
+            return String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          }
+        } catch (_eBt) {}
+        return 'restaurant';
+      }
+      function flAccumulateLine(line, amt, acc) {
+        var side = plInsightClassifyLine(line);
+        if (side === 'left') acc.food += amt;
+        else if (side === 'labor') acc.labor += amt;
+      }
+      function flSnapFromParts(income, left, labor) {
+        if (!income && !left && !labor) return null;
+        return { income: income, expenses: left + labor, variable: left, fixed: labor };
+      }
       function flDay(year, month0, day) {
         var s = store();
         var alloc = allocForMonth(year, month0);
         var isoStr = iso(year, month0, day);
         var income = dailySales(s, isoStr);
-        var food = 0, labor = 0;
+        var acc = { food: 0, labor: 0 };
         catalog().forEach(function (line) {
           var amt = lineDayAmount(s, year, month0, isoStr, line, alloc);
           if (!amt) return;
-          if (isFood(line)) food += amt; else if (isLabor(line)) labor += amt;
+          flAccumulateLine(line, amt, acc);
         });
-        if (!income && !food && !labor) return null;
-        return { income: income, expenses: food + labor, variable: food, fixed: labor };
+        return flSnapFromParts(income, acc.food, acc.labor);
       }
       function flYtdPrefix(year) {
-        if (flYtdPrefixCache[year]) return flYtdPrefixCache[year];
+        var pk = year + '|' + flBtCacheKey();
+        if (flYtdPrefixCache[pk]) return flYtdPrefixCache[pk];
         var s = store();
         var lines = catalog();
         var months = [];
@@ -415,32 +587,26 @@ def pl_insight_data_client_js() -> str:
               var line = lines[i];
               var amt = lineDayAmount(s, year, mo, isoStr, line, alloc);
               if (!amt) continue;
-              if (isFood(line)) run.food += amt;
-              else if (isLabor(line)) run.labor += amt;
+              flAccumulateLine(line, amt, run);
             }
             days.push({ income: run.income, food: run.food, labor: run.labor });
           }
           months.push(days);
         }
-        flYtdPrefixCache[year] = months;
+        flYtdPrefixCache[pk] = months;
         return months;
       }
       function flYtd(year, month0, day) {
-        var ck = year + '|' + month0 + '|' + day;
+        var ck = year + '|' + month0 + '|' + day + '|' + flBtCacheKey();
         if (Object.prototype.hasOwnProperty.call(flYtdCache, ck)) return flYtdCache[ck];
         var months = flYtdPrefix(year);
         var days = months[month0];
         var snap = days && days[day] ? days[day] : null;
-        if (!snap || (!snap.income && !snap.food && !snap.labor)) {
+        if (!snap) {
           flYtdCache[ck] = null;
           return null;
         }
-        var out = {
-          income: snap.income,
-          expenses: snap.food + snap.labor,
-          variable: snap.food,
-          fixed: snap.labor
-        };
+        var out = flSnapFromParts(snap.income, snap.food, snap.labor);
         flYtdCache[ck] = out;
         return out;
       }
@@ -484,6 +650,9 @@ def pl_insight_data_client_js() -> str:
         buildArea3: buildArea3,
         flDay: flDay,
         flYtd: flYtd,
+        snapshotCopy: plInsightSnapshotCopy,
+        isRestaurantFl: plInsightIsRestaurantFl,
+        classifyLine: plInsightClassifyLine,
         bestYear: bestYear,
         bestYearNumber: bestYearNumber,
         canShowBestYear: canShowBestYear,

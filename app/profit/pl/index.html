@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>損益表（PL） | Key Performance Navigator</title>
+  <title>損益表（PL） | KPI Pilot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -216,7 +216,7 @@
       letter-spacing: 0.04em;
       background: rgba(88, 225, 243, 0.35);
     }
-        /* KPI-CSV-UPLOAD-TOOLTIP */
+    /* KPI-CSV-UPLOAD-TOOLTIP */
     #pl-csv-upload[data-tooltip] {
       z-index: 2;
     }
@@ -2975,6 +2975,7 @@
       max-height: calc(var(--pl-row-label-h) * 2);
     }
     /* === UNIT-5B-3-ANALYZE-R2-END === */
+
     body.office-mode .pl-analyze-band {
       /* Opaque wash: translucent cyan over dark panes looked charcoal + killed contrast. */
       background: #dff5f8 !important;
@@ -3124,24 +3125,6 @@
     html[lang='ja'] .pl-table--v1 .pl-v-major__text {
       font-family: 'BIZ UDPGothic', sans-serif;
     }
-    /* PL-INCOME-EXPENSE-MAJOR-TONE */
-    body:not(.office-mode) .pl-table--labels .pl-v-major[data-pl-section="income"],
-    body:not(.office-mode) .pl-table--labels .pl-data-row--income > .pl-h-label {
-      background: rgba(18, 68, 96, 0.72);
-    }
-    body:not(.office-mode) .pl-table--labels .pl-v-major[data-pl-section="expenses"],
-    body:not(.office-mode) .pl-table--labels .pl-data-row--expenses > .pl-h-label {
-      background: rgba(20, 72, 52, 0.72);
-    }
-    body.office-mode .pl-table--labels .pl-v-major[data-pl-section="income"],
-    body.office-mode .pl-table--labels .pl-data-row--income > .pl-h-label {
-      background: rgba(170, 210, 230, 0.55);
-    }
-    body.office-mode .pl-table--labels .pl-v-major[data-pl-section="expenses"],
-    body.office-mode .pl-table--labels .pl-data-row--expenses > .pl-h-label {
-      background: rgba(180, 220, 200, 0.55);
-    }
-
     .pl-table--v1 .pl-v-major--expenses {
       height: calc(var(--pl-row-label-h) * 3);
       min-height: calc(var(--pl-row-label-h) * 3);
@@ -4149,21 +4132,9 @@
     }
 
   </style>
-  <style id="kpi-lang-switcher-locale">
-    /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
-    html[lang='ja'] .lang-option-zh-tw {
-      display: none !important;
-    }
-    html[lang='zh-TW'] .lang-option-ja,
-    html[lang^='zh'] .lang-option-ja {
-      display: none !important;
-    }
-  </style>
 </head>
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
-  <script src="../../../js/kpi-data-gateway.js"></script>
-
   <script src="../../../js/kpi-currency.js"></script>
   <script src="../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../js/kpi-business-type.js"></script>
@@ -4227,24 +4198,66 @@
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
+        <a
+          href="../../../app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="../../../app/booking/index.html"
+          data-href-basic="../../../setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="予約台帳を開く（プロプラン）。ベーシックの場合はプラン変更へ"
+          data-kpi-tutorial-tip
+          data-tooltip="予約"
+        >
+          <img
+            src="../../../images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="../../../images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="雛形・収支データのダウンロード">DL</summary>
-                    <div class="template-dl-menu" role="menu" aria-label="ダウンロードメニュー">
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="雛形・収支データのダウンロード"
+            data-kpi-tutorial-tip
+            data-tooltip="ダウンロード"
+          >DL</summary>
+          <div class="template-dl-menu" role="menu" aria-label="ダウンロードメニュー">
             <p class="template-dl-heading">雛形</p>
             <a href="../../../excel/支出入力_日次_雛形.csv" download class="template-dl-item" role="menuitem">支出雛形をダウンロード（日次）</a>
             <a href="../../../excel/支出入力_月次_雛形.csv" download class="template-dl-item" role="menuitem">支出雛形をダウンロード（月次）</a>
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">データ出力</p>
             <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../../setting/change_plan.html" aria-label="MEPとPLの収支データをExcelでダウンロード（Pro）">収支データ（MEP＋PL）</button>
-      </div>
+          </div>
         </details>
         <button type="button" class="icon-button icon-button-menu" aria-label="ナビゲーションメニューを開く">
           <img src="../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="アカウント設定" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="アカウント設定"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="設定"
+        >
           <img src="../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-    </div>
+      </div>
       <div class="account-settings-popup" id="account-settings-popup" role="menu" aria-label="アカウント設定" hidden>
         <h3 class="account-settings-popup-title">アカウント設定</h3>
         <section class="account-settings-section">
@@ -4255,6 +4268,7 @@
             <a href="../../../setting/change_email.html" class="account-settings-item" role="menuitem">メールアドレスの変更</a>
             <a href="../../../setting/change_password.html" class="account-settings-item" role="menuitem">パスワードの変更</a>
             <a href="../../../setting/session_management.html" class="account-settings-item" role="menuitem">セッション管理</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">ログアウト</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -4262,12 +4276,6 @@
           <nav class="account-settings-nav">
             <a href="../../../setting/plan_details.html" class="account-settings-item" role="menuitem">プラン詳細</a>
             <a href="../../../setting/change_plan.html" class="account-settings-item" role="menuitem">プラン変更</a>
-          </nav>
-        </section>
-        <section class="account-settings-section" data-kpi-feedback-nav="1">
-          <h4 class="account-settings-heading">サポート</h4>
-          <nav class="account-settings-nav">
-            <a href="../../../setting/feedback.html" class="account-settings-item" role="menuitem">ご意見・リクエスト</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
@@ -4290,6 +4298,8 @@
         </div>
       </div>
     </div>
+    <script src="../../../js/kpi-auth-client.js"></script>
+    <script src="../../../js/kpi-business-type.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -4304,6 +4314,20 @@
         if (dl && dl.open) dl.removeAttribute('open');
       });
     })();
+    (function () {
+      if (!window.__KPI_AUTH) return;
+      try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
+        }
+      } catch (_e) {}
+    })();
     </script>
   </header>
   <div class="page-wrap profile-wrap">
@@ -4314,25 +4338,25 @@
             <div class="pl-toolbar__left">
               <label class="pl-year-label" for="pl-year-select">年度</label>
               <select id="pl-year-select" class="pl-year-select" aria-label="表示する会計年度を選択"></select>
+
               <!-- PL-SALES-INPUT-PATH-INDICATOR: disabled. Restore: docs/pl-edit-status-and-workspace-memo.md §8 -->
               <div
                 class="kpi-daily-input-path kpi-daily-input-path--pl-readonly"
                 id="pl-sales-input-path"
-                data-kpi-sales-input-path-readonly
-                data-pl-sales-path-indicator-disabled="1"
+                data-kpi-sales-input-path-readonly data-pl-sales-path-indicator-disabled="1"
                 hidden
-                aria-label="売上入力の場所（表示のみ）"
-                data-tooltip="表示のみです。切替は月次編集ページ、または年次の売上画面で行います。"
-                title="表示のみです。切替は月次編集ページ、または年次の売上画面で行います。"
+                aria-label="日次売上の入力経路（表示のみ）"
+                data-tooltip="日次売上の入力経路（表示のみ）。切替は MEP または Sales Data で行います。"
+                title="日次売上の入力経路（表示のみ）。切替は MEP または Sales Data で行います。"
               >
-                <p class="kpi-daily-input-path__title">売上入力</p>
+                <p class="kpi-daily-input-path__title">編集</p>
                 <div class="kpi-daily-input-path__row">
-                  <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">年次</span>
+                  <span class="kpi-daily-input-path__side is-active" data-kpi-path-side="annual">Annual</span>
                   <span class="kpi-daily-input-path__switch kpi-daily-input-path__switch--readonly" aria-hidden="true">
                     <span class="kpi-daily-input-path__knob"></span>
                   </span>
-                  <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">月次</span>
-        </div>
+                  <span class="kpi-daily-input-path__side is-inactive" data-kpi-path-side="mep">Monthly</span>
+                </div>
               </div>
               <a class="pl-toolbar__back" id="pl-back-edit" href="../../monthly/edit/index.html" hidden data-pl-nav="1" aria-label="月次編集ページへ戻る">← 月次編集へ</a>
               <button type="button" class="pl-toolbar__btn" id="pl-line-manage-open"
@@ -4376,7 +4400,7 @@
               <div class="pl-label-pane">
                 <table class="pl-table pl-table--v1 pl-table--labels pl-table--labels-frozen" id="pl-table-labels-frozen">
                   <colgroup><col class="pl-col-v-major"><col class="pl-col-h-label"></colgroup>
-            <thead>
+                  <thead>
                     <tr class="pl-head-months">
                       <th class="pl-label-corner" scope="colgroup" colspan="2" id="pl-label-corner" rowspan="2">
                         <span class="pl-label-corner__text">損益表</span>
@@ -4386,7 +4410,7 @@
                       </th>
                     </tr>
                     <tr class="pl-head-sub pl-head-sub--label-gap" aria-hidden="true"></tr>
-            </thead>
+                  </thead>
                   <tbody id="pl-table-label-frozen-body">
                     <tr class="pl-data-row pl-data-row--bizdays" data-row="bizdays"><th class="pl-row-label" scope="row" id="pl-row-bizdays" colspan="2"><span class="pl-row-label__text">営業日</span></th></tr>
                   </tbody>
@@ -4493,12 +4517,12 @@
                   <table class="pl-table pl-table--v1 pl-table--labels pl-table--labels-graph"
                     id="pl-table-labels-graph">
                     <colgroup><col class="pl-col-v-mid"><col class="pl-col-h-label-detail"></colgroup>
-            <tbody>
+                    <tbody>
                       <tr class="pl-graph-label-row" data-pl-section="graph">
                         <th colspan="2" scope="row" class="pl-graph-band-label">グラフ</th>
                       </tr>
-            </tbody>
-          </table>
+                    </tbody>
+                  </table>
                 </div>
                 <div class="pl-data-pane pl-data-pane--graph" id="pl-data-pane-graph">
                   <table class="pl-table pl-table--v1 pl-table--data pl-table--data-graph"
@@ -4537,8 +4561,8 @@
           data-pl-input-source-action="cancel">キャンセル</button>
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--primary"
           data-pl-input-source-action="confirm">決定</button>
+      </div>
     </div>
-  </div>
   </div>
 
   <div class="pl-input-source-modal pl-expense-label-edit-modal" id="pl-expense-label-edit-modal" hidden role="dialog"
@@ -4615,12 +4639,15 @@
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="depreciation"><span>減価償却費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="insurance"><span>保険料</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="labor_related"><span>人件費関連費</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="utilities"><span>光熱水道費</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="communication"><span>通信費</span></label>
       </fieldset>
       <fieldset class="pl-input-source-modal__choices pl-expense-attribute-choices pl-expense-attribute-choices--variable" data-pl-expense-attribute-bucket="variable" hidden>
         <legend class="pl-input-source-modal__legend">この変動費科目の属性を選択してください</legend>
         <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="food_cost"><span>食材仕入費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="drink_cost"><span>ドリンク仕入費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="supplies"><span>備品・消耗品費</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="inventory"><span>仕入・在庫</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="miscellaneous"><span>雑費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="utilities"><span>光熱水道費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="variable_labor"><span>変動人件費</span></label>
@@ -4630,6 +4657,10 @@
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="payment_fees"><span>決済手数料</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="labor_related"><span>人件費関連費</span></label>
 <label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="taxes"><span>税金</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="outsourcing"><span>外注費</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="maintenance"><span>修繕・メンテナンス</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="logistics"><span>配送・物流費</span></label>
+<label class="pl-input-source-modal__choice"><input type="radio" name="pl-expense-attribute" value="occupancy"><span>店舗物件費</span></label>
       </fieldset>
       <div class="pl-input-source-modal__actions">
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--ghost"
@@ -4765,16 +4796,15 @@
     </div>
   </div>
 
-  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../../en/app/profit/pl/index.html" data-url-ja="index.html" data-url-zh-tw="../../../zh-tw/app/profit/pl/index.html">
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../../../en/app/profit/pl/index.html" data-url-ja="index.html">
     <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
       <span class="lang-code" aria-hidden="true">JP</span>
       <span class="lang-name">Japanese</span>
       <span class="lang-chevron" aria-hidden="true"></span>
     </button>
-    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" aria-label="言語オプション" hidden>
-      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" hidden>
+      <button type="button" class="lang-option lang-option-ja" role="option" data-lang="ja">JP - Japanese</button>
       <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
-      <button type="button" class="lang-option lang-option-zh-tw" role="option" data-lang="zh-tw">TW - Traditional Chinese</button>
     </div>
   </div>
 
@@ -4860,14 +4890,13 @@
       });
       var urlEn = langWrap.getAttribute('data-url-en');
       var urlJa = langWrap.getAttribute('data-url-ja');
-      var urlZhTw = langWrap.getAttribute('data-url-zh-tw');
       langOptions.forEach(function (opt) {
         opt.addEventListener('click', function (e) {
           e.stopPropagation();
           var bodyEl = document.getElementById('body-el');
           if (bodyEl && bodyEl.classList.contains('office-mode')) sessionStorage.setItem('kpi-office-mode', '1');
           var lang = this.getAttribute('data-lang');
-          var href = lang === 'ja' && urlJa ? urlJa : lang === 'en' && urlEn ? urlEn : (lang === 'zh-tw' || lang === 'zh-TW') && urlZhTw ? urlZhTw : null;
+          var href = lang === 'ja' && urlJa ? urlJa : lang === 'en' && urlEn ? urlEn : null;
           if (!href) return;
           var qs = window.location.search;
           if (qs) href += (href.indexOf('?') >= 0 ? '&' : '?') + qs.slice(1);
@@ -5427,8 +5456,8 @@
       var occupancyAria = "物件形態";
       var occupancyRentOption = "賃貸";
       var occupancyOwnedOption = "自持";
-      var unclassifiedWarnAria = '分析カテゴリが未設定です';
-      var unclassifiedWarnTooltip = 'この費目は分析カテゴリが未設定です。支出合計・利益計算にはすでに反映されていますが、カテゴリ別分析の精度を高めるため、属性を設定してください。';
+      var unclassifiedWarnAria = "分析カテゴリが未設定です";
+      var unclassifiedWarnTooltip = "この費目は分析カテゴリが未設定です。支出合計・利益計算にはすでに反映されていますが、カテゴリ別分析の精度を高めるため、属性を設定してください。";
       var UNCLASSIFIED_ATTR = 'unclassified';
       var block = document.getElementById('pl-expense-detail-block');
       var attrToggle = document.getElementById('pl-expense-attr-toggle');
@@ -5487,22 +5516,27 @@
       }
 
       function reconcileCatalogLines(oldLines) {
+        var presetLines = currentPresetLines();
         if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.reconcileCatalogLines === 'function') {
-          return window.KpiPlExpensePresets.reconcileCatalogLines(oldLines, null, currentPresetLines());
+          return window.KpiPlExpensePresets.reconcileCatalogLines(oldLines, null, presetLines);
         }
         var defs = defaultById();
         var defaultLabelKeys = {};
-        DEFAULT_LINES.forEach(function (d) {
+        presetLines.forEach(function (d) {
           defaultLabelKeys[d.bucket + '\0' + String(d.labelEn || '').toLowerCase()] = true;
           defaultLabelKeys[d.bucket + '\0' + String(d.labelJa || '')] = true;
         });
         var out = [];
         var seenIds = {};
-        DEFAULT_LINES.forEach(function (def) {
+        presetLines.forEach(function (def) {
           var prev = (oldLines || []).find(function (l) { return l.lineId === def.lineId; });
           var line = JSON.parse(JSON.stringify(def));
           if (prev) {
-            if (typeof prev.active === 'boolean') line.active = prev.active;
+            if (prev.presetOrphan) {
+              line.active = def.active;
+            } else if (typeof prev.active === 'boolean') {
+              line.active = prev.active;
+            }
             if (typeof prev.sortOrder === 'number') line.sortOrder = prev.sortOrder;
             if (prev.labelJa) line.labelJa = prev.labelJa;
             if (prev.labelEn) line.labelEn = prev.labelEn;
@@ -5520,21 +5554,32 @@
           if (line.expenseAttribute == null) {
             delete line.expenseAttribute;
           }
+          delete line.presetOrphan;
           out.push(line);
           seenIds[line.lineId] = true;
         });
         (oldLines || []).forEach(function (line) {
-          if (String(line.lineId || '').indexOf('exp_custom_') !== 0) return;
-          if (seenIds[line.lineId]) return;
-          var keyEn = line.bucket + '\0' + String(line.labelEn || '').toLowerCase();
-          var keyJa = line.bucket + '\0' + String(line.labelJa || '');
-          if (defaultLabelKeys[keyEn] || defaultLabelKeys[keyJa]) return;
-          line.isDefault = false;
-          if (!line.resolvedInputStyle) {
-            line.resolvedInputStyle = line.inputStyle === 'daily' ? 'daily' : 'monthly';
+          if (!line || !line.lineId || seenIds[line.lineId]) return;
+          if (String(line.lineId || '').indexOf('exp_custom_') === 0) {
+            var keyEn = line.bucket + '\0' + String(line.labelEn || '').toLowerCase();
+            var keyJa = line.bucket + '\0' + String(line.labelJa || '');
+            if (defaultLabelKeys[keyEn] || defaultLabelKeys[keyJa]) return;
+            line.isDefault = false;
+            if (!line.resolvedInputStyle) {
+              line.resolvedInputStyle = line.inputStyle === 'daily' ? 'daily' : 'monthly';
+            }
+            out.push(line);
+            seenIds[line.lineId] = true;
+            return;
           }
-          out.push(line);
-          seenIds[line.lineId] = true;
+          var kept = JSON.parse(JSON.stringify(line));
+          kept.active = false;
+          kept.presetOrphan = true;
+          if (!kept.resolvedInputStyle) {
+            kept.resolvedInputStyle = kept.inputStyle === 'daily' ? 'daily' : 'monthly';
+          }
+          out.push(kept);
+          seenIds[kept.lineId] = true;
         });
         return out;
       }
@@ -5910,8 +5955,58 @@
         labelEditInput.select();
       }
 
+      function openCreateLineLabelModal(bucket) {
+        if (!labelEditModal || !labelEditInput) {
+          addLine(bucket, 'monthly', UNCLASSIFIED_ATTR);
+          return;
+        }
+        pendingLabelEdit = { createBucket: bucket };
+        labelEditInput.value = '';
+        var showSource = bucket === 'variable';
+        if (labelEditSource) {
+          labelEditSource.hidden = !showSource;
+          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {
+            inp.disabled = !showSource;
+          });
+          if (showSource) setLabelEditSourceStyle('monthly');
+        }
+        labelEditModal.hidden = false;
+        document.body.classList.add('pl-expense-label-edit-modal-open');
+        labelEditInput.focus();
+      }
+
+      function commitCreateLineFromLabel() {
+        if (!pendingLabelEdit || !pendingLabelEdit.createBucket || !labelEditInput) return false;
+        var next = String(labelEditInput.value || '').replace(/\s+/g, ' ').trim();
+        if (!next) {
+          labelEditInput.focus();
+          return false;
+        }
+        var bucket = pendingLabelEdit.createBucket;
+        var style = 'monthly';
+        if (bucket === 'variable') {
+          var picked = getLabelEditSourceStyle();
+          if (picked === 'daily' || picked === 'monthly') style = picked;
+        }
+        closeLabelEditModal();
+        var lineId = addLine(bucket, style, UNCLASSIFIED_ATTR);
+        var lines = loadLines();
+        var line = lines.find(function (l) { return l.lineId === lineId; });
+        if (line) {
+          line.labelJa = next;
+          line.labelEn = next;
+          line.labelZh = next;
+          saveLines(lines);
+          renderExpenseDetail();
+        }
+        return true;
+      }
+
       function commitLabelEdit() {
         if (!pendingLabelEdit || !labelEditInput) return false;
+        if (pendingLabelEdit.createBucket) {
+          return commitCreateLineFromLabel();
+        }
         var lineId = pendingLabelEdit.lineId;
         var next = String(labelEditInput.value || '').replace(/\s+/g, ' ').trim();
         if (!next) {
@@ -5961,6 +6056,19 @@
           return;
         }
         commitLabelEdit();
+      }
+
+      function showAttributeChoicesForBucket(bucket) {
+        if (!attributeModal) return;
+        var target = bucket === 'variable' ? 'variable' : 'fixed';
+        rebuildAttributeChoices(target);
+        attributeModal.querySelectorAll('.pl-expense-attribute-choices').forEach(function (fs) {
+          var show = fs.getAttribute('data-pl-expense-attribute-bucket') === target;
+          fs.hidden = !show;
+          fs.querySelectorAll('input[type="radio"]').forEach(function (inp) {
+            inp.disabled = !show;
+          });
+        });
       }
 
       function restaurantLikeNow() {
@@ -6022,88 +6130,6 @@
         });
         fs.innerHTML = html;
       }
-
-      function showAttributeChoicesForBucket(bucket) {
-        if (!attributeModal) return;
-        var target = bucket === 'variable' ? 'variable' : 'fixed';
-        rebuildAttributeChoices(target);
-        attributeModal.querySelectorAll('.pl-expense-attribute-choices').forEach(function (fs) {
-          var show = fs.getAttribute('data-pl-expense-attribute-bucket') === target;
-          fs.hidden = !show;
-          fs.querySelectorAll('input[type="radio"]').forEach(function (inp) {
-            inp.disabled = !show;
-          });
-        });
-      }
-
-      function isUnclassifiedCustom(line) {
-        if (!line || String(line.lineId || '').indexOf('exp_custom_') !== 0) return false;
-        var a = line.expenseAttribute;
-        return !a || a === UNCLASSIFIED_ATTR;
-      }
-
-      function rowUnclassifiedWarn(line) {
-        if (!isUnclassifiedCustom(line)) return '';
-        return (
-          '<span class="pl-row-unclassified">' +
-          '<button type="button" class="pl-row-unclassified__btn" data-action="unclassified-warn" data-line-id="' +
-          line.lineId +
-          '" title="' +
-          escapeHtml(unclassifiedWarnTooltip) +
-          '" aria-label="' +
-          escapeHtml(unclassifiedWarnAria) +
-          '">⚠</button></span>'
-        );
-      }
-
-      function openCreateLineLabelModal(bucket) {
-        if (!labelEditModal || !labelEditInput) {
-          addLine(bucket, 'monthly', UNCLASSIFIED_ATTR);
-          return;
-        }
-        pendingLabelEdit = { createBucket: bucket };
-        labelEditInput.value = '';
-        var showSource = bucket === 'variable';
-        if (labelEditSource) {
-          labelEditSource.hidden = !showSource;
-          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {
-            inp.disabled = !showSource;
-          });
-          if (showSource) setLabelEditSourceStyle('monthly');
-        }
-        labelEditModal.hidden = false;
-        document.body.classList.add('pl-expense-label-edit-modal-open');
-        labelEditInput.focus();
-      }
-
-      function commitCreateLineFromLabel() {
-        if (!pendingLabelEdit || !pendingLabelEdit.createBucket || !labelEditInput) return false;
-        var next = String(labelEditInput.value || '').replace(/\s+/g, ' ').trim();
-        if (!next) {
-          labelEditInput.focus();
-          return false;
-        }
-        var bucket = pendingLabelEdit.createBucket;
-        var style = 'monthly';
-        if (bucket === 'variable') {
-          var picked = getLabelEditSourceStyle();
-          if (picked === 'daily' || picked === 'monthly') style = picked;
-        }
-        closeLabelEditModal();
-        var lineId = addLine(bucket, style, UNCLASSIFIED_ATTR);
-        var lines = loadLines();
-        var line = lines.find(function (l) { return l.lineId === lineId; });
-        if (line) {
-          line.labelJa = next;
-          line.labelEn = next;
-          line.labelZh = next;
-          saveLines(lines);
-          renderExpenseDetail();
-        }
-        return true;
-      }
-
-
 
       function attributeTitleForBucket(bucket, mode) {
         if (mode === 'edit') return attributeEditTitle;
@@ -6338,6 +6364,26 @@
         );
       }
 
+      function isUnclassifiedCustom(line) {
+        if (!line || String(line.lineId || '').indexOf('exp_custom_') !== 0) return false;
+        var a = line.expenseAttribute;
+        return !a || a === UNCLASSIFIED_ATTR;
+      }
+
+      function rowUnclassifiedWarn(line) {
+        if (!isUnclassifiedCustom(line)) return '';
+        return (
+          '<span class="pl-row-unclassified">' +
+          '<button type="button" class="pl-row-unclassified__btn" data-action="unclassified-warn" data-line-id="' +
+          line.lineId +
+          '" title="' +
+          escapeHtml(unclassifiedWarnTooltip) +
+          '" aria-label="' +
+          escapeHtml(unclassifiedWarnAria) +
+          '">⚠</button></span>'
+        );
+      }
+
       function labelCell(line, idx, bucketLines) {
         var occSelect = isOccupancyLineId(line.lineId) ? occupancySelectHtml() : '';
         return (
@@ -6346,6 +6392,7 @@
           '"><span class="pl-h-label__row">' +
           occSelect +
           editableLabelSpan(line.lineId, labelText(line)) +
+          rowUnclassifiedWarn(line) +
           rowAttributeBtn(line) +
           rowHideBtn(line) +
           orderBtns(line, idx, bucketLines) +
@@ -7390,8 +7437,9 @@
       var area3ChartCache = {}; // 'year|month|by' -> chart (day-independent within month)
       var bestYearCache = {}; // selYear -> year|null
       var annualIncomeCache = {}; // year -> number
-      var flYtdCache = {}; // 'year|month0|day' -> snapshot
-      var flYtdPrefixCache = {}; // year -> { income, food, labor } cumulative through each month-day
+      var flYtdCache = {}; // 'year|month0|day|bt' -> snapshot
+      var flYtdPrefixCache = {}; // 'year|bt' -> { income, food, labor } cumulative through each month-day
+      var keyExpenseIdCache = null;
 
       function resetCache() {
         allocCache = {};
@@ -7406,6 +7454,7 @@
         annualIncomeCache = {};
         flYtdCache = {};
         flYtdPrefixCache = {};
+        keyExpenseIdCache = null;
       }
 
       function getJson(key) {
@@ -7468,9 +7517,155 @@
       }
       function isLabor(line) {
         var a = line.expenseAttribute;
-        if (a === 'salaries_wages' || a === 'variable_labor' || a === 'labor_related') return true;
-        return line.lineId === 'exp_fixed_labor' || line.lineId === 'exp_variable_labor';
+        var attrs;
+        var extraIds;
+        var api = window.KpiPlExpensePresets;
+        if (api && api.LABOR_ANALYSIS_ATTRIBUTES && api.LABOR_ANALYSIS_ATTRIBUTES.length) {
+          attrs = api.LABOR_ANALYSIS_ATTRIBUTES;
+        } else {
+          attrs = ['salaries_wages', 'variable_labor', 'labor_related'];
+        }
+        if (a && attrs.indexOf(a) >= 0) return true;
+        extraIds = (api && api.LABOR_ANALYSIS_LINE_IDS && api.LABOR_ANALYSIS_LINE_IDS.length)
+          ? api.LABOR_ANALYSIS_LINE_IDS
+          : ['exp_fixed_labor', 'exp_variable_labor'];
+        return extraIds.indexOf(line.lineId) >= 0;
       }
+
+      /* === UNIT-5C-1-PL-INSIGHT-BT-BEGIN === */
+      function plInsightPageLang() {
+        var lang = '';
+        try {
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }
+      function plInsightReadMetrics() {
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try { return api.getAnalysisMetrics(); } catch (_eM) {}
+        }
+        return { mode: 'restaurant_fl', groups: [] };
+      }
+      function plInsightIsRestaurantFl() {
+        var rec = plInsightReadMetrics();
+        return !rec || rec.mode !== 'key_expenses';
+      }
+      function plInsightKeyExpenseIdSet() {
+        if (keyExpenseIdCache) return keyExpenseIdCache;
+        var ids = {};
+        var rec = plInsightReadMetrics();
+        (rec.groups || []).forEach(function (group) {
+          (group.rows || []).forEach(function (row) {
+            if (!row || row.source === 'labor') return;
+            (row.lineIds || []).forEach(function (id) {
+              if (id) ids[id] = true;
+            });
+          });
+        });
+        keyExpenseIdCache = ids;
+        return ids;
+      }
+      function plInsightClassifyLine(line) {
+        if (!line || !line.lineId) return 'ignore';
+        if (plInsightIsRestaurantFl()) {
+          if (isFood(line)) return 'left';
+          if (isLabor(line)) return 'labor';
+          return 'ignore';
+        }
+        if (isLabor(line)) return 'labor';
+        if (plInsightKeyExpenseIdSet()[line.lineId]) return 'left';
+        return 'ignore';
+      }
+      function plInsightPickLabel(row, lang) {
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }
+      function plInsightJoinMajor(group, lang) {
+        var lines =
+          lang === 'zh'
+            ? (group && (group.majorZh || group.majorJa))
+            : lang === 'en'
+              ? (group && (group.majorEn || group.majorJa))
+              : (group && (group.majorJa || group.majorEn));
+        if (!Array.isArray(lines) || !lines.length) return '';
+        return lines.join('');
+      }
+      function plInsightLaborShort(lang) {
+        if (lang === 'zh') return '人事費用';
+        if (lang === 'en') return 'Labor';
+        return '人件費';
+      }
+      function plInsightKeyAreaTitles(lang, pack) {
+        pack = pack || {};
+        if (lang === 'zh') {
+          return {
+            area1: pack.area1Key || '區域 1. 當日成本快照',
+            area2: pack.area2Key || '區域 2. 去年同月成本快照',
+            area3: pack.area3Key || '區域 3. 年初至今成本快照'
+          };
+        }
+        if (lang === 'en') {
+          return {
+            area1: pack.area1Key || 'Area 1. Current Cost Snapshot',
+            area2: pack.area2Key || 'Area 2. Last Year Same Month Cost Snapshot',
+            area3: pack.area3Key || 'Area 3. Year-to-Date Cost Snapshot'
+          };
+        }
+        return {
+          area1: pack.area1Key || 'Area 1. 当日のコストスナップショット',
+          area2: pack.area2Key || 'Area 2. 前年同月のコストスナップショット',
+          area3: pack.area3Key || 'Area 3. 年初来（YTD）のコストスナップショット'
+        };
+      }
+      function plInsightSnapshotCopy(pack) {
+        pack = pack || {};
+        var lang = plInsightPageLang();
+        if (plInsightIsRestaurantFl()) {
+          return {
+            restaurant: true,
+            combined: pack.foodLabor || 'Food & Labor',
+            split: pack.foodSlashLabor || 'Food / Labor',
+            area1: pack.area1 || '',
+            area2: pack.area2 || '',
+            area3: pack.area3 || ''
+          };
+        }
+        var rec = plInsightReadMetrics();
+        var keyGroup = null;
+        (rec.groups || []).forEach(function (group) {
+          var hasKey = (group.rows || []).some(function (row) {
+            return row && row.source !== 'labor';
+          });
+          if (hasKey && !keyGroup) keyGroup = group;
+        });
+        var left = keyGroup ? plInsightJoinMajor(keyGroup, lang) : '';
+        if (!left && keyGroup) {
+          left = (keyGroup.rows || [])
+            .filter(function (row) { return row && row.source !== 'labor'; })
+            .map(function (row) { return plInsightPickLabel(row, lang); })
+            .filter(Boolean)
+            .join(' / ');
+        }
+        if (!left) left = lang === 'en' ? 'Key costs' : '主要費目';
+        var right = plInsightLaborShort(lang);
+        var titles = plInsightKeyAreaTitles(lang, pack);
+        return {
+          restaurant: false,
+          combined: left + ' & ' + right,
+          split: left + ' / ' + right,
+          area1: titles.area1,
+          area2: titles.area2,
+          area3: titles.area3
+        };
+      }
+      /* === UNIT-5C-1-PL-INSIGHT-BT-END === */
 
       function dailySales(s, isoStr) {
         var ds = s && s.timeline && s.timeline.dailySales;
@@ -7722,23 +7917,40 @@
         return chart;
       }
 
-      /* ---- FL snapshots ---- */
+      /* ---- FL snapshots (5C-0 restaurant: left=food+drink, labor=labor, total=FL) ---- */
+      function flBtCacheKey() {
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {
+            return String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          }
+        } catch (_eBt) {}
+        return 'restaurant';
+      }
+      function flAccumulateLine(line, amt, acc) {
+        var side = plInsightClassifyLine(line);
+        if (side === 'left') acc.food += amt;
+        else if (side === 'labor') acc.labor += amt;
+      }
+      function flSnapFromParts(income, left, labor) {
+        if (!income && !left && !labor) return null;
+        return { income: income, expenses: left + labor, variable: left, fixed: labor };
+      }
       function flDay(year, month0, day) {
         var s = store();
         var alloc = allocForMonth(year, month0);
         var isoStr = iso(year, month0, day);
         var income = dailySales(s, isoStr);
-        var food = 0, labor = 0;
+        var acc = { food: 0, labor: 0 };
         catalog().forEach(function (line) {
           var amt = lineDayAmount(s, year, month0, isoStr, line, alloc);
           if (!amt) return;
-          if (isFood(line)) food += amt; else if (isLabor(line)) labor += amt;
+          flAccumulateLine(line, amt, acc);
         });
-        if (!income && !food && !labor) return null;
-        return { income: income, expenses: food + labor, variable: food, fixed: labor };
+        return flSnapFromParts(income, acc.food, acc.labor);
       }
       function flYtdPrefix(year) {
-        if (flYtdPrefixCache[year]) return flYtdPrefixCache[year];
+        var pk = year + '|' + flBtCacheKey();
+        if (flYtdPrefixCache[pk]) return flYtdPrefixCache[pk];
         var s = store();
         var lines = catalog();
         var months = [];
@@ -7754,32 +7966,26 @@
               var line = lines[i];
               var amt = lineDayAmount(s, year, mo, isoStr, line, alloc);
               if (!amt) continue;
-              if (isFood(line)) run.food += amt;
-              else if (isLabor(line)) run.labor += amt;
+              flAccumulateLine(line, amt, run);
             }
             days.push({ income: run.income, food: run.food, labor: run.labor });
           }
           months.push(days);
         }
-        flYtdPrefixCache[year] = months;
+        flYtdPrefixCache[pk] = months;
         return months;
       }
       function flYtd(year, month0, day) {
-        var ck = year + '|' + month0 + '|' + day;
+        var ck = year + '|' + month0 + '|' + day + '|' + flBtCacheKey();
         if (Object.prototype.hasOwnProperty.call(flYtdCache, ck)) return flYtdCache[ck];
         var months = flYtdPrefix(year);
         var days = months[month0];
         var snap = days && days[day] ? days[day] : null;
-        if (!snap || (!snap.income && !snap.food && !snap.labor)) {
+        if (!snap) {
           flYtdCache[ck] = null;
           return null;
         }
-        var out = {
-          income: snap.income,
-          expenses: snap.food + snap.labor,
-          variable: snap.food,
-          fixed: snap.labor
-        };
+        var out = flSnapFromParts(snap.income, snap.food, snap.labor);
         flYtdCache[ck] = out;
         return out;
       }
@@ -7823,6 +8029,9 @@
         buildArea3: buildArea3,
         flDay: flDay,
         flYtd: flYtd,
+        snapshotCopy: plInsightSnapshotCopy,
+        isRestaurantFl: plInsightIsRestaurantFl,
+        classifyLine: plInsightClassifyLine,
         bestYear: bestYear,
         bestYearNumber: bestYearNumber,
         canShowBestYear: canShowBestYear,
@@ -7832,7 +8041,7 @@
     
     
     (function () {
-      var L = {"compare_prev_day_aria": "前日", "compare_next_day_aria": "翌日", "compare_date_pick_aria": "日付を選択", "compare_today": "本日", "compare_income": "収入", "compare_expenses": "支出", "compare_profit": "利益", "compare_area1_title": "Area 1. 当日の FL スナップショット", "compare_area2_title": "Area 2. 前年同月の FL スナップショット", "compare_area3_title": "Area 3. 年初来（YTD）の FL スナップショット", "compare_food_labor": "Food & Labor", "compare_food_slash_labor": "Food / Labor", "compare_same_weekday_of": "同曜日 ", "compare_area2_hsnap_primary": "前年同月 ", "compare_area2_hsnap_secondary": "前々年同月 ", "compare_area3_hsnap_primary": "年初来 ", "compare_area3_hsnap_secondary": "前年 年初来 ", "compare_no_data": "データなし", "compare_line_title": "前年同曜日との累積ペース比較", "compare_area2_line_title": "前年同月の累積ペース比較", "compare_area3_line_title": "年初来の累積ペース比較", "compare_this_year": "今年", "compare_last_year": "前年", "compare_best_year": "ベスト年", "compare_fixed": "固定費", "compare_expected": "変動費", "compare_daily_title": "日次パフォーマンス", "compare_area2_daily_title": "日次パフォーマンス", "compare_area3_daily_title": "月次パフォーマンス", "compare_breakdown_toggle": "費目内訳", "compare_breakdown_fixed": "固定費", "compare_breakdown_variable": "変動費", "compare_breakdown_total": "総支出", "compare_breakdown_none": "この月の費目データはありません", "compare_breakdown_jump_daily": "Monthly Edit でこの費目を開く", "compare_breakdown_jump_monthly": "PL 表でこの費目を開く", "compare_plan_lock_cta": "この項目は Pro プラン限定です。クリックしてプランを変更。"};
+      var L = {"compare_prev_day_aria": "前日", "compare_next_day_aria": "翌日", "compare_date_pick_aria": "日付を選択", "compare_today": "本日", "compare_income": "収入", "compare_expenses": "支出", "compare_profit": "利益", "compare_area1_title": "Area 1. 当日の FL スナップショット", "compare_area2_title": "Area 2. 前年同月の FL スナップショット", "compare_area3_title": "Area 3. 年初来（YTD）の FL スナップショット", "compare_area1_title_key": "Area 1. 当日のコストスナップショット", "compare_area2_title_key": "Area 2. 前年同月のコストスナップショット", "compare_area3_title_key": "Area 3. 年初来（YTD）のコストスナップショット", "compare_food_labor": "Food & Labor", "compare_food_slash_labor": "Food / Labor", "compare_same_weekday_of": "同曜日 ", "compare_area2_hsnap_primary": "前年同月 ", "compare_area2_hsnap_secondary": "前々年同月 ", "compare_area3_hsnap_primary": "年初来 ", "compare_area3_hsnap_secondary": "前年 年初来 ", "compare_no_data": "データなし", "compare_line_title": "前年同曜日との累積ペース比較", "compare_area2_line_title": "前年同月の累積ペース比較", "compare_area3_line_title": "年初来の累積ペース比較", "compare_this_year": "今年", "compare_last_year": "前年", "compare_best_year": "ベスト年", "compare_fixed": "固定費", "compare_expected": "変動費", "compare_daily_title": "日次パフォーマンス", "compare_area2_daily_title": "日次パフォーマンス", "compare_area3_daily_title": "月次パフォーマンス", "compare_breakdown_toggle": "費目内訳", "compare_breakdown_fixed": "固定費", "compare_breakdown_variable": "変動費", "compare_breakdown_total": "総支出", "compare_breakdown_none": "この月の費目データはありません", "compare_breakdown_jump_daily": "Monthly Edit でこの費目を開く", "compare_breakdown_jump_monthly": "PL 表でこの費目を開く", "compare_plan_lock_cta": "この項目は Pro プラン限定です。クリックしてプランを変更。"};
       var MONTHLY_EDIT = "../../monthly/edit/index.html";
       var CHANGE_PLAN_HREF = "../../../setting/change_plan.html";
       var TIER_KEY = 'kpiNavigator.subscriptionTier';
@@ -7914,7 +8123,46 @@
       }
 
       function pct1(n) {
-        return (Math.round(Number(n) * 10) / 10) + '%';
+        var v = Number(n);
+        if (!Number.isFinite(v)) return '—';
+        return (Math.round(v * 10) / 10) + '%';
+      }
+
+      function snapshotBarLabels() {
+        var pack = {
+          foodLabor: L.compare_food_labor,
+          foodSlashLabor: L.compare_food_slash_labor,
+          area1: L.compare_area1_title,
+          area2: L.compare_area2_title,
+          area3: L.compare_area3_title,
+          area1Key: L.compare_area1_title_key,
+          area2Key: L.compare_area2_title_key,
+          area3Key: L.compare_area3_title_key
+        };
+        if (window.__plInsight && typeof window.__plInsight.snapshotCopy === 'function') {
+          try { return window.__plInsight.snapshotCopy(pack); } catch (_eCopy) {}
+        }
+        return {
+          restaurant: true,
+          combined: L.compare_food_labor,
+          split: L.compare_food_slash_labor,
+          area1: L.compare_area1_title,
+          area2: L.compare_area2_title,
+          area3: L.compare_area3_title
+        };
+      }
+
+      function applySnapshotAreaTitles() {
+        var copy = snapshotBarLabels();
+        var map = {
+          1: copy.area1,
+          2: copy.area2,
+          3: copy.area3
+        };
+        [1, 2, 3].forEach(function (n) {
+          var el = document.querySelector('#pl-compare-area-' + n + ' > .pl-compare-area-title');
+          if (el && map[n]) el.textContent = map[n];
+        });
       }
 
       function fetchCurrentFlSnapshot(iso) {
@@ -7960,16 +8208,18 @@
 
       function renderHsnapBlock(caption, metrics, maxIncome, blockIndex, allowNoData) {
         var noData = !metrics;
-        /* データ無しでもラベル 3 行（Income / Food & Labor / Food / Labor）は残し、
+        var labels = snapshotBarLabels();
+        /* データ無しでもラベル 3 行は残し、
            空バー＋「—」で描画する。ブロックを消すと下段が跳ね上がり目がバグるため。 */
         if (noData && !allowNoData) return '';
         if (!maxIncome) maxIncome = (metrics && metrics.income) || 1;
         var dash = '—';
+        var hasIncome = !noData && Number(metrics.income) > 0;
         var incomeW = noData ? 0 : Math.max(0, Math.min(100, (metrics.income / maxIncome) * 100));
-        var expensePct = (!noData && metrics.income) ? (metrics.expenses / metrics.income) * 100 : 0;
+        var expensePct = hasIncome ? (metrics.expenses / metrics.income) * 100 : 0;
         var expenseW = noData ? 0 : expenseVisualWidth(incomeW, expensePct, blockIndex || 0);
-        var variablePct = (!noData && metrics.income) ? (metrics.variable / metrics.income) * 100 : 0;
-        var fixedPct = (!noData && metrics.income) ? (metrics.fixed / metrics.income) * 100 : 0;
+        var variablePct = hasIncome ? (metrics.variable / metrics.income) * 100 : 0;
+        var fixedPct = hasIncome ? (metrics.fixed / metrics.income) * 100 : 0;
         var splitOrangeW = (!noData && metrics.expenses) ? (metrics.variable / metrics.expenses) * 100 : 0;
         var splitYellowW = (!noData && metrics.expenses) ? (metrics.fixed / metrics.expenses) * 100 : 0;
         var incomeBar = noData
@@ -7994,16 +8244,18 @@
             splitYellowW.toFixed(4) +
             '%"></span></span>';
         var incomeMeta = noData ? dash : money(metrics.income);
-        var expenseMeta = noData ? dash : money(metrics.expenses) + ' : ' + pct1(expensePct);
+        var expenseMeta = noData
+          ? dash
+          : money(metrics.expenses) + ' : ' + (hasIncome ? pct1(expensePct) : dash);
         var splitMeta = noData
           ? dash
           : money(metrics.variable) +
             ' : ' +
-            pct1(variablePct) +
+            (hasIncome ? pct1(variablePct) : dash) +
             ' : ' +
             money(metrics.fixed) +
             ' : ' +
-            pct1(fixedPct);
+            (hasIncome ? pct1(fixedPct) : dash);
         return (
           '<section class="pl-compare-hsnap' + (noData ? ' pl-compare-hsnap--empty' : '') + '">' +
           '<h4 class="pl-compare-hsnap__date">' +
@@ -8011,8 +8263,8 @@
           '</h4>' +
           '<div class="pl-compare-hsnap__rows">' +
           renderHsnapRow(L.compare_income, incomeBar, incomeMeta) +
-          renderHsnapRow(L.compare_food_labor, expenseBar, expenseMeta) +
-          renderHsnapRow(L.compare_food_slash_labor, splitBar, splitMeta) +
+          renderHsnapRow(labels.combined, expenseBar, expenseMeta) +
+          renderHsnapRow(labels.split, splitBar, splitMeta) +
           '</div></section>'
         );
       }
@@ -9438,6 +9690,7 @@
       }
 
       function renderCompareFl(areaId, iso) {
+        applySnapshotAreaTitles();
         var mount = document.getElementById('pl-compare-area-' + areaId + '-fl');
         if (!mount) return;
         iso = iso || selectedIso || resolveIso();
@@ -10218,7 +10471,6 @@
       /* Live refresh: if the overlay is open when PL/MEP data changes, re-render. */
       function compareLiveRefresh() {
         window.__PL_COMPARE_RENDERED_ISO = null;
-        window.__PL_COMPARE_LAST_MONTH_KEY = null;
         if (root && !root.hidden) {
           renderAllCompareAreas(selectedIso || resolveIso(), { resetCache: true });
           window.__PL_COMPARE_RENDERED_ISO = selectedIso || resolveIso();
@@ -10503,65 +10755,11 @@
       var PL_RETURN_KEY = 'kpi-pl-edit-return-href';
       var FALLBACK_EDIT = '../../monthly/edit/index.html';
       var plParams = new URLSearchParams(window.location.search);
-      function readSelectedDateIsoForPl() {
-        try {
-          if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
-            var s = String(KpiYearStore.getSelectedDate() || '');
-            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-          }
-        } catch (_ePlSel) {}
-        try {
-          var nav =
-            window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.getJson === 'function'
-              ? window.__KPI_DATA_GATEWAY.getJson('kpiNavigator.annualNav')
-              : null;
-          if (nav && nav.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(nav.selectedIso))) {
-            return String(nav.selectedIso);
-          }
-        } catch (_ePlNav) {}
-        try {
-          var raw = localStorage.getItem('kpiNavigator.annualNav');
-          var o = raw ? JSON.parse(raw) : null;
-          if (o && o.selectedIso && /^\d{4}-\d{2}-\d{2}$/.test(String(o.selectedIso))) {
-            return String(o.selectedIso);
-          }
-        } catch (_ePlLs) {}
-        return '';
-      }
-      var plSelectedIso = readSelectedDateIsoForPl();
-      function parseValidDisplayYear(raw) {
-        if (raw == null || String(raw).trim() === '') return NaN;
-        var y = Number(raw);
-        if (!Number.isFinite(y) || y < 2000 || y > 2100) return NaN;
-        return y;
-      }
-      var plYearParam = parseValidDisplayYear(plParams.get('year'));
-      var plYear = Number.isFinite(plYearParam)
-        ? plYearParam
-        : (plSelectedIso ? Number(plSelectedIso.slice(0, 4)) : new Date().getFullYear());
-      var focusMonthParam = Number(plParams.get('month'));
-      var focusMonth = Number.isFinite(focusMonthParam)
-        ? focusMonthParam
-        : (plSelectedIso ? Number(plSelectedIso.slice(5, 7)) : NaN);
-      if (!Number.isFinite(plYearParam)) {
-        try {
-          if (history.replaceState) {
-            var plUrlParams = new URLSearchParams(window.location.search);
-            plUrlParams.set('year', String(plYear));
-            if (Number.isFinite(focusMonth) && focusMonth >= 1 && focusMonth <= 12) {
-              plUrlParams.set('month', String(focusMonth));
-            }
-            if (plSelectedIso) plUrlParams.set('iso', plSelectedIso);
-            var plQs = plUrlParams.toString();
-            history.replaceState(history.state, '', window.location.pathname + (plQs ? '?' + plQs : '') + window.location.hash);
-          }
-        } catch (_ePlUrl) {}
-      }
+      var plYear = Number(plParams.get('year')) || new Date().getFullYear();
+      var focusMonth = Number(plParams.get('month'));
       var plTouched = false;
       var plSaved = true;
       var confirmedSnapshot = '';
-      var plLocalEditedKeys = {};
-      var plInitialExpenseHydratePending = true;
       var undoStack = [];
       var yearSelect = document.getElementById('pl-year-select');
       var btnSave = document.getElementById('pl-save');
@@ -10641,30 +10839,8 @@
       }
 
       function hasUnsavedChanges() {
-        if (plLocalEditedKeys && Object.keys(plLocalEditedKeys).length) return true;
-        if (!confirmedSnapshot) return false;
-        return buildSnapshot() !== confirmedSnapshot;
+        return plTouched && buildSnapshot() !== confirmedSnapshot;
       }
-      window.__KPI_OCC_DIRTY__ = function () {
-        return hasUnsavedChanges();
-      };
-      var plOccAlertArmed = false;
-      document.addEventListener('kpi:storeConflict', function (ev) {
-        if (!plOccAlertArmed) return;
-        plOccAlertArmed = false;
-        var detail = (ev && ev.detail) || {};
-        if (!detail.dirty) return;
-        var msg = '';
-        try {
-          if (
-            window.__KPI_DATA_GATEWAY &&
-            typeof window.__KPI_DATA_GATEWAY.storeConflictMessage === 'function'
-          ) {
-            msg = window.__KPI_DATA_GATEWAY.storeConflictMessage();
-          }
-        } catch (_eMsg) {}
-        if (msg) window.alert(msg);
-      });
 
       function syncUndoButton() {
         if (btnUndo) btnUndo.disabled = undoStack.length === 0;
@@ -10673,15 +10849,6 @@
       function markTouched() {
         plTouched = true;
         plSaved = false;
-      }
-
-      function plExpenseCellKey(row, month) {
-        return String(row) + ':' + String(month);
-      }
-
-      function markPlLocalEdited(row, month) {
-        if (row == null || month == null || row === '') return;
-        plLocalEditedKeys[plExpenseCellKey(row, month)] = true;
       }
 
       function applyColumnFocus() {
@@ -10712,27 +10879,52 @@
         } catch (_e) {}
       }
 
-      function collectPlTouchedExpenseCells() {
-        var touched = [];
-        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
-          var row = cell.getAttribute('data-row');
-          var month = cell.getAttribute('data-month');
-          if (row == null || month == null) return;
-          var key = plExpenseCellKey(row, month);
-          if (!plLocalEditedKeys[key]) return;
-          touched.push({
-            key: key,
-            row: row,
-            month: month,
-            amount: parseMoney(cell.textContent)
-          });
-        });
-        return touched;
+      function isFixedExpenseEditableCell(cell) {
+        var tr = cell.closest && cell.closest('tr[data-pl-section="expense-detail"]');
+        return !!(tr && tr.getAttribute('data-bucket') === 'fixed');
       }
 
-      /* Merge locally edited cells onto hydrate LS without auto-PUT. */
+      function applyAmountToAllMonthsForRow(rowId, amount) {
+        document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]').forEach(function (c) {
+          c.textContent = formatMoney(amount);
+        });
+        markTouched();
+      }
+
+      function maybePropagateFixedMonthly(sourceCell, amount) {
+        if (!isFixedExpenseEditableCell(sourceCell)) return;
+        if (amount === 0) return;
+        var rowId = sourceCell.getAttribute('data-row');
+        var month = sourceCell.getAttribute('data-month');
+        var cells = Array.prototype.slice.call(
+          document.querySelectorAll('[data-pl-editable="1"][data-row="' + rowId + '"]')
+        );
+        if (!cells.length) return;
+        var allSame = cells.every(function (c) {
+          return parseMoney(c.textContent) === amount;
+        });
+        if (allSame) return;
+        var othersEmpty = cells.every(function (c) {
+          if (c.getAttribute('data-month') === month) return true;
+          return parseMoney(c.textContent) === 0;
+        });
+        if (othersEmpty) {
+          pushUndoSnapshot();
+          applyAmountToAllMonthsForRow(rowId, amount);
+          return;
+        }
+        var msg = t(
+          'この固定費を全ての月に同じ金額で反映しますか？',
+          'Apply this fixed cost amount to all months?'
+        );
+        if (window.confirm(msg)) {
+          pushUndoSnapshot();
+          applyAmountToAllMonthsForRow(rowId, amount);
+        }
+      }
+
+      /* Persist monthly editable cells so Insight / reload match the DOM. */
       function persistExpenseMapFromDom() {
-        var touched = collectPlTouchedExpenseCells();
         var map = {};
         try {
           var raw = localStorage.getItem(storageKey());
@@ -10741,36 +10933,19 @@
             if (prev && typeof prev === 'object') map = prev;
           }
         } catch (_e) {}
-        var persisted = true;
-        if (touched.length) {
-          touched.forEach(function (item) {
-            map[item.key] = item.amount;
-          });
-          var key = storageKey();
-          var json = JSON.stringify(map);
-          var gwWrite = window.__KPI_DATA_GATEWAY;
-          var wrote = !!(
-            gwWrite &&
-            typeof gwWrite.setJsonLocalOnly === 'function' &&
-            gwWrite.setJsonLocalOnly(key, map)
-          );
-          var rawAfter = null;
-          try {
-            rawAfter = localStorage.getItem(key);
-          } catch (_eRead) {}
-          persisted = !!(wrote && rawAfter === json);
-        }
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
+          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
+          map[key] = parseMoney(cell.textContent);
+        });
+        try {
+          localStorage.setItem(storageKey(), JSON.stringify(map));
+        } catch (_e2) {}
         if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
           window.__plInsight.resetCache();
         }
-        window.__PL_COMPARE_RENDERED_ISO = null;
-        window.__PL_COMPARE_LAST_MONTH_KEY = null;
-        return { map: map, touched: touched, persisted: persisted };
       }
 
       var plExpenseLiveRefreshTimer = null;
-      var plSkipBlurCommit = false;
-      var plPointerSelecting = false;
       function schedulePlExpenseLiveRefresh() {
         if (plExpenseLiveRefreshTimer) clearTimeout(plExpenseLiveRefreshTimer);
         plExpenseLiveRefreshTimer = setTimeout(function () {
@@ -10782,148 +10957,33 @@
         }, 120);
       }
 
-      function refreshPlExpenseLiveSurfaces() {
-        plRefreshAnalyzeAndGraph();
-      }
-
-      function commitPlEditableCell(cell) {
-        if (!cell) return;
-        var n = parseMoney(cell.textContent);
-        cell.textContent = formatMoney(n);
-        persistExpenseMapFromDom();
-        refreshPlExpenseLiveSurfaces();
-      }
-
-      function isPlEditableNumericCellOpen(el) {
-        if (!el || el.nodeType !== 1) return false;
-        if (el.getAttribute('data-pl-editable') !== '1') return false;
-        if (el.getAttribute('contenteditable') !== 'true') return false;
-        if (el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true') return false;
-        var field = el.getAttribute('data-pl-field');
-        if (field && field !== 'amount') return false;
-        var host = el;
-        while (host && host !== document.documentElement) {
-          if (host.hidden || host.getAttribute('hidden') != null) return false;
-          if (host.getAttribute('aria-hidden') === 'true') return false;
-          host = host.parentElement;
-        }
-        if (!el.getClientRects().length) return false;
-        var cs = window.getComputedStyle(el);
-        if (!cs || cs.display === 'none' || cs.visibility === 'hidden') return false;
-        return true;
-      }
-
-      function findNextPlEditableInSameMonth(cell) {
-        if (!cell) return null;
-        var month = cell.getAttribute('data-month');
-        if (month == null || month === '') return null;
-        var nodes = document.querySelectorAll(
-          '[data-pl-editable="1"][data-month="' + month + '"]'
-        );
-        var seen = false;
-        for (var i = 0; i < nodes.length; i++) {
-          var el = nodes[i];
-          if (!isPlEditableNumericCellOpen(el)) continue;
-          if (seen) return el;
-          if (el === cell) seen = true;
-        }
-        return null;
-      }
-
-      function findFirstPlEditableInMonth(month) {
-        var nodes = document.querySelectorAll(
-          '[data-pl-editable="1"][data-month="' + month + '"]'
-        );
-        for (var i = 0; i < nodes.length; i++) {
-          if (isPlEditableNumericCellOpen(nodes[i])) return nodes[i];
-        }
-        return null;
-      }
-
-      function findNextPlEditableVerticalLoop(cell) {
-        var next = findNextPlEditableInSameMonth(cell);
-        if (next) return next;
-        var month = Number(cell && cell.getAttribute('data-month'));
-        if (!Number.isFinite(month)) return null;
-        for (var step = 1; step <= 12; step++) {
-          var first = findFirstPlEditableInMonth(String((month + step) % 12));
-          if (first) return first;
-        }
-        return null;
-      }
-
-      function selectPlEditableContents(cell) {
-        if (!cell || document.activeElement !== cell) return;
-        try {
-          var range = document.createRange();
-          range.selectNodeContents(cell);
-          var sel = window.getSelection();
-          if (!sel) return;
-          sel.removeAllRanges();
-          sel.addRange(range);
-        } catch (_eSel) {}
-      }
-
-      function schedulePlSelectAll(cell, viaPointer) {
-        var run = function () {
-          selectPlEditableContents(cell);
-        };
-        if (viaPointer) {
-          window.setTimeout(run, 0);
-          return;
-        }
-        run();
-      }
-
       function bindPlEditableCells() {
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           if (cell.getAttribute('data-pl-bound') === '1') return;
           cell.setAttribute('data-pl-bound', '1');
-          cell.addEventListener('mousedown', function () {
-            plPointerSelecting = true;
-          });
           cell.addEventListener('focus', function () {
-            var viaPointer = plPointerSelecting;
-            plPointerSelecting = false;
             pushUndoSnapshot();
-            if (viaPointer && parseMoney(cell.textContent) !== 0) return;
-            schedulePlSelectAll(cell, viaPointer);
+            markTouched();
           });
           cell.addEventListener('input', function () {
             markTouched();
-            markPlLocalEdited(cell.getAttribute('data-row'), cell.getAttribute('data-month'));
             schedulePlExpenseLiveRefresh();
           });
-          cell.addEventListener('keydown', function (e) {
-            if (e.key !== 'Enter') return;
-            if (e.isComposing || e.keyCode === 229) return;
-            e.preventDefault();
-            commitPlEditableCell(cell);
-            if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
-            var next = findNextPlEditableVerticalLoop(cell);
-            if (!next || next === cell) return;
-            plSkipBlurCommit = true;
-            try {
-              next.focus();
-            } finally {
-              plSkipBlurCommit = false;
-            }
-          });
           cell.addEventListener('blur', function () {
-            if (plSkipBlurCommit) return;
-            commitPlEditableCell(cell);
+            var n = parseMoney(cell.textContent);
+            cell.textContent = formatMoney(n);
+            maybePropagateFixedMonthly(cell, n);
+            persistExpenseMapFromDom();
+            plRefreshAnalyzeAndGraph();
           });
         });
       }
 
-      function refreshPlExpenseAmountsFromStorage(opts) {
-        var force = !!(opts && opts.force);
-        if (force || !hasUnsavedChanges()) {
-          loadSavedExpenses();
-        }
+      function refreshPlExpenseAmountsFromStorage() {
+        loadSavedExpenses();
         bindPlEditableCells();
         applyColumnFocus();
-        if (!hasUnsavedChanges()) {
+        if (!plTouched) {
           confirmedSnapshot = buildSnapshot();
           plSaved = true;
         }
@@ -10931,39 +10991,34 @@
         plRefreshAnalyzeAndGraph();
       }
 
-      function applyCleanInitialHydrateExpenseAmounts() {
-        if (plOccAlertArmed) return;
-        if (plLocalEditedKeys && Object.keys(plLocalEditedKeys).length) return;
-        loadSavedExpenses();
-        bindPlEditableCells();
-        applyColumnFocus();
-        confirmedSnapshot = buildSnapshot();
-        plSaved = true;
-        syncUndoButton();
-        plRefreshAnalyzeAndGraph();
-      }
-
       window.__plRefreshExpenseAmounts = refreshPlExpenseAmountsFromStorage;
 
-      function plPutFailed(putResult) {
-        if (!putResult) return false;
-        if (putResult.conflict || putResult.status === 428) return true;
-        if (putResult.ok === false && !putResult.skipped) return true;
-        return false;
-      }
-
       function plSave(showAlert) {
-        var persist = persistExpenseMapFromDom();
-        if (persist && persist.touched && persist.touched.length && persist.persisted === false) {
-          plSaved = false;
-          return Promise.resolve({ ok: false, error: 'local_persist_failed' });
+        var map = {};
+        try {
+          var rawSave = localStorage.getItem(storageKey());
+          if (rawSave) {
+            var prevSave = JSON.parse(rawSave);
+            if (prevSave && typeof prevSave === 'object') map = prevSave;
+          }
+        } catch (_prevErr) {}
+        document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
+          var key = cell.getAttribute('data-row') + ':' + cell.getAttribute('data-month');
+          map[key] = parseMoney(cell.textContent);
+        });
+        try {
+          localStorage.setItem(storageKey(), JSON.stringify(map));
+        } catch (_e) {}
+        if (window.__plInsight && typeof window.__plInsight.resetCache === 'function') {
+          window.__plInsight.resetCache();
         }
+        confirmedSnapshot = buildSnapshot();
+        plSaved = true;
+        undoStack = [];
+        syncUndoButton();
         try {
           if (typeof writeMonthlyExpenseAllocationToMep === 'function') {
-            var mepResult = writeMonthlyExpenseAllocationToMep({
-              year: plYear,
-              touchedKeys: persist && persist.touched
-            });
+            var mepResult = writeMonthlyExpenseAllocationToMep({ year: plYear });
             console.debug('[PL Phase C] monthly→MEP dailyExpenses write', mepResult);
           } else if (typeof previewMonthlyExpenseAllocation === 'function') {
             console.debug(
@@ -10972,29 +11027,8 @@
             );
           }
         } catch (_mepErr) {}
-        plOccAlertArmed = true;
-        var gw = window.__KPI_DATA_GATEWAY;
-        var put =
-          gw && typeof gw.flushPut === 'function' ? gw.flushPut() : Promise.resolve();
-        return Promise.resolve(put).then(function (putResult) {
-          if (plPutFailed(putResult)) {
-            plSaved = false;
-            if (!(putResult && putResult.conflict)) plOccAlertArmed = false;
-            return putResult;
-          }
-          plOccAlertArmed = false;
-          plLocalEditedKeys = {};
-          confirmedSnapshot = buildSnapshot();
-          plSaved = true;
-          undoStack = [];
-          syncUndoButton();
-          plSafeRefresh(refreshAnalyzeBlock);
-          plSafeRefresh(refreshPlRatios);
-          plSafeRefresh(refreshPlYearTotals);
-          plSafeRefresh(refreshPlReferenceBudget);
-          plSafeRefresh(refreshPlBottomGraph);
-          return putResult || { ok: true };
-        });
+        plRefreshAnalyzeAndGraph();
+        if (showAlert !== false) window.alert(t('保存しました。', 'Saved.'));
       }
 
 
@@ -11030,13 +11064,8 @@
       }
       if (closeChooserSave) {
         closeChooserSave.addEventListener('click', function () {
-          Promise.resolve(plSave(false)).then(function (putResult) {
-            if (plPutFailed(putResult)) {
-              finishLeaveNavigate(false);
-              return;
-            }
-            finishLeaveNavigate(true);
-          });
+          plSave(false);
+          finishLeaveNavigate(true);
         });
       }
       if (closeChooserDiscard) {
@@ -11055,7 +11084,7 @@
         });
       }
       function canLeaveWithoutChooser() {
-        return !hasUnsavedChanges();
+        return plSaved && !hasUnsavedChanges();
       }
       function requestLeaveNavigation() {
         return new Promise(function (resolve) {
@@ -11114,7 +11143,7 @@
           function (e) {
             var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
             if (!isInternalLeaveLink(a)) return;
-        e.preventDefault();
+            e.preventDefault();
             e.stopPropagation();
             var targetHref = resolveLeaveHref(a);
             requestLeaveNavigation().then(function (ok) {
@@ -11164,15 +11193,7 @@
         }
         plRefreshAnalyzeAndGraph();
       });
-      document.addEventListener('kpi:dailySalesChanged', function (ev) {
-        var years = ev && ev.detail && ev.detail.years;
-        if (years && years.length) {
-          years.forEach(function (yy) {
-            plIncomeInvalidateInputsCache(yy);
-          });
-        } else {
-          plIncomeInvalidateInputsCache();
-        }
+      document.addEventListener('kpi:dailySalesChanged', function () {
         syncPlBusinessDays();
         if (typeof refreshIncomeBlock === 'function') {
           refreshIncomeBlock();
@@ -12304,7 +12325,7 @@
             } catch (_e2) {}
           });
           if (affected[plYear]) {
-            if (typeof window.__plRefreshExpenseAmounts === 'function') window.__plRefreshExpenseAmounts({ force: true });
+            if (typeof window.__plRefreshExpenseAmounts === 'function') window.__plRefreshExpenseAmounts();
             if (typeof window.__plFillDailyExpenseRowsFromMep === 'function') window.__plFillDailyExpenseRowsFromMep();
           }
         }
@@ -12725,36 +12746,13 @@
       ];
 
       function plIncomeReadStore() {
-        try {
-          if (window.KpiYearStore && typeof KpiYearStore.getStore === 'function') {
-            var mem = KpiYearStore.getStore();
-            if (mem && typeof mem === 'object') return mem;
-          }
-        } catch (_eMem) {}
         var gw = window.__KPI_DATA_GATEWAY;
-        if (gw && typeof gw.getJson === 'function') {
-          try {
-            return gw.getJson(PL_INCOME_STORE_KEY);
-          } catch (_e) {
-            return null;
-          }
-        }
+        if (!gw || typeof gw.getJson !== 'function') return null;
         try {
-          var raw = localStorage.getItem(PL_INCOME_STORE_KEY);
-          return raw ? JSON.parse(raw) : null;
-        } catch (_e2) {
+          return gw.getJson(PL_INCOME_STORE_KEY);
+        } catch (_e) {
           return null;
         }
-      }
-
-      function plRefreshAllIncomeSurfaces() {
-        plSafeRefresh(refreshIncomeBlock);
-        plSafeRefresh(refreshAnalyzeBlock);
-        plSafeRefresh(fillDailyExpenseRowsFromMep);
-        plSafeRefresh(refreshPlRatios);
-        plSafeRefresh(refreshPlYearTotals);
-        plSafeRefresh(refreshPlReferenceBudget);
-        plSafeRefresh(refreshPlBottomGraph);
       }
 
       function plIncomeEmptyMonthAgg() {
@@ -12766,302 +12764,28 @@
         };
       }
 
-      function plIncomePad2(n) {
-        var s = String(Number(n) || 0);
-        return s.length >= 2 ? s : '0' + s;
-      }
-
-      /** Accept 2024-6-1 / 2024-06-01 / etc. */
-      function plIncomeParseIso(iso) {
-        var m = String(iso || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-        if (!m) return null;
-        var y = Number(m[1]);
-        var mo = Number(m[2]);
-        var d = Number(m[3]);
-        if (!Number.isFinite(y) || !(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null;
-        return {
-          y: y,
-          m0: mo - 1,
-          d: d,
-          norm: m[1] + '-' + plIncomePad2(mo) + '-' + plIncomePad2(d)
-        };
-      }
-
       function plIncomeSumIsoMap(map, year, excludePlaceholder) {
         var agg = plIncomeEmptyMonthAgg();
         if (!map || typeof map !== 'object') return agg;
-        var yNum = Number(year);
+        var yStr = String(year);
         Object.keys(map).forEach(function (iso) {
-          var p = plIncomeParseIso(iso);
-          if (!p || p.y !== yNum) return;
+          if (!iso || iso.length < 7) return;
+          if (iso.slice(0, 4) !== yStr) return;
+          var mo = parseInt(iso.slice(5, 7), 10);
+          if (!(mo >= 1 && mo <= 12)) return;
           var v = Number(map[iso]);
           if (!Number.isFinite(v)) return;
           if (excludePlaceholder && v === PL_INCOME_PLACEHOLDER) return;
-          agg.totals[p.m0] += v;
-          agg.has[p.m0] = true;
+          agg.totals[mo - 1] += v;
+          agg.has[mo - 1] = true;
         });
         return agg;
-      }
-
-      function plIncomeCollectYearIsos(store, year) {
-        var isoSet = {};
-        var yNum = Number(year);
-        function markMap(map) {
-          if (!map || typeof map !== 'object') return;
-          Object.keys(map).forEach(function (iso) {
-            var p = plIncomeParseIso(iso);
-            if (p && p.y === yNum) isoSet[p.norm] = true;
-          });
-        }
-        markMap(store && store.timeline && store.timeline.dailySales);
-        var rec = store && store.years && (store.years[year] || store.years[String(year)]);
-        var di = rec && rec.dailyIncome;
-        if (di) {
-          ['sales_a', 'sales_b', 'food_sales', 'drink_sales', 'store_sales'].forEach(function (sid) {
-            markMap(di[sid]);
-          });
-        }
-        return isoSet;
-      }
-
-      function plIncomeStreamVal(map, normIso) {
-        if (!map || typeof map !== 'object') return { has: false, v: 0 };
-        if (Object.prototype.hasOwnProperty.call(map, normIso)) {
-          var n0 = Number(map[normIso]);
-          return { has: true, v: Number.isFinite(n0) ? n0 : 0 };
-        }
-        /* Rare unpadded keys */
-        var p = plIncomeParseIso(normIso);
-        if (!p) return { has: false, v: 0 };
-        var alt =
-          p.y +
-          '-' +
-          String(p.m0 + 1) +
-          '-' +
-          String(p.d);
-        if (Object.prototype.hasOwnProperty.call(map, alt)) {
-          var n1 = Number(map[alt]);
-          return { has: true, v: Number.isFinite(n1) ? n1 : 0 };
-        }
-        return { has: false, v: 0 };
-      }
-
-      function plIncomeDailyTotalFromStreams(di, normIso) {
-        if (!di || typeof di !== 'object') return null;
-        var food = plIncomeStreamVal(di.food_sales, normIso);
-        var drink = plIncomeStreamVal(di.drink_sales, normIso);
-        var sa = plIncomeStreamVal(di.sales_a, normIso);
-        var sb = plIncomeStreamVal(di.sales_b, normIso);
-        var st = plIncomeStreamVal(di.store_sales, normIso);
-        if (!(st.has || food.has || drink.has || sa.has || sb.has)) return null;
-        /* Stale store_sales=0 must not block drink+food (Analyze still shows those). */
-        var store = st.has && st.v > 0 ? st.v : food.v + drink.v;
-        return Math.round(store + sa.v + sb.v);
-      }
-
-      /* KPI-PL-INCOME-INPUTS-DB: daily-inputs is sales/income truth for PL (not slim LS / facts). */
-      var __plIncomeInputsCache = {};
-      var __plIncomeInputsInflight = {};
-
-      function plIncomeResolveAppRoot() {
-        try {
-          if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
-            return window.__KPI_AUTH.resolveAppRoot();
-          }
-        } catch (_e) {}
-        var path = window.location.pathname || '';
-        var m = path.match(/^(.*?\/kpi-navigator)(?:\/|$)/);
-        return m ? m[1] : '';
-      }
-
-      function plIncomeInputsHeaders() {
-        var headers = { 'Content-Type': 'application/json' };
-        try {
-          var raw = localStorage.getItem('kpiNavigator.storeSync');
-          var o = raw ? JSON.parse(raw) : null;
-          if (o && o.token) headers['X-KPI-Store-Token'] = String(o.token);
-        } catch (_e) {}
-        return headers;
-      }
-
-      function plIncomeInvalidateInputsCache(year) {
-        var y = Number(year);
-        if (Number.isFinite(y)) {
-          delete __plIncomeInputsCache[y];
-          delete __plIncomeInputsInflight[y];
-          return;
-        }
-        __plIncomeInputsCache = {};
-        __plIncomeInputsInflight = {};
-      }
-
-      function plIncomeEnsureInputs(year) {
-        var y = Number(year);
-        if (!Number.isFinite(y)) return Promise.resolve(null);
-        if (__plIncomeInputsCache[y] && typeof __plIncomeInputsCache[y] === 'object') {
-          return Promise.resolve(__plIncomeInputsCache[y]);
-        }
-        if (__plIncomeInputsInflight[y]) return __plIncomeInputsInflight[y];
-        var from = y + '-01-01';
-        var to = y + '-12-31';
-        var url =
-          plIncomeResolveAppRoot() +
-          '/api/v1/daily-inputs.php?from=' +
-          encodeURIComponent(from) +
-          '&to=' +
-          encodeURIComponent(to);
-        var req = fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          headers: plIncomeInputsHeaders(),
-        })
-          .then(function (res) {
-            return res.json().then(
-              function (data) {
-                return { ok: !!(res.ok && data && data.ok), rows: (data && data.rows) || [] };
-              },
-              function () {
-                return { ok: false, rows: [] };
-              }
-            );
-          })
-          .catch(function () {
-            return { ok: false, rows: [] };
-          })
-          .then(function (pack) {
-            var map = {};
-            if (pack && pack.ok && pack.rows && pack.rows.length) {
-              pack.rows.forEach(function (row) {
-                if (!row) return;
-                var iso = row.iso || row.date;
-                if (!iso) return;
-                var n = Number(row.sales != null ? row.sales : row.store_sales);
-                if (!Number.isFinite(n)) n = 0;
-                map[String(iso)] = n;
-              });
-            }
-            __plIncomeInputsCache[y] = map;
-            delete __plIncomeInputsInflight[y];
-            return map;
-          });
-        __plIncomeInputsInflight[y] = req;
-        return req;
       }
 
       function plIncomeLoadStore(year) {
         var store = plIncomeReadStore();
         var ds = store && store.timeline && store.timeline.dailySales;
-        var rec = store && store.years && (store.years[year] || store.years[String(year)]);
-        var di = (rec && rec.dailyIncome) || {};
-        var annualMap = {};
-        try {
-          var gwA = window.__KPI_DATA_GATEWAY;
-          var annual =
-            gwA && typeof gwA.getJson === 'function'
-              ? gwA.getJson('kpiNavigator.annualDailyShared')
-              : null;
-          if (!annual) {
-            var rawA = localStorage.getItem('kpiNavigator.annualDailyShared');
-            annual = rawA ? JSON.parse(rawA) : null;
-          }
-          if (annual && annual.targetSalesByDate && typeof annual.targetSalesByDate === 'object') {
-            annualMap = annual.targetSalesByDate;
-          }
-        } catch (_eA) {}
-        var agg = plIncomeEmptyMonthAgg();
-        var y = Number(year);
-        if (!Number.isFinite(y)) return agg;
-        var inputsMap =
-          __plIncomeInputsCache[y] && typeof __plIncomeInputsCache[y] === 'object'
-            ? __plIncomeInputsCache[y]
-            : null;
-
-        /* Build normIso -> values by scanning ALL keys (same as Analyze), not only padded calendar. */
-        var slotByNorm = {};
-        function absorbNumMap(map, field) {
-          if (!map || typeof map !== 'object') return;
-          Object.keys(map).forEach(function (iso) {
-            var p = plIncomeParseIso(iso);
-            if (!p || p.y !== y) return;
-            var n = Number(map[iso]);
-            if (!Number.isFinite(n)) return;
-            if (!slotByNorm[p.norm]) slotByNorm[p.norm] = { m0: p.m0 };
-            var slot = slotByNorm[p.norm];
-            if (field === 'inputs') {
-              slot.inputs = n;
-              slot.hasInputs = true;
-            } else if (field === 'timeline' || field === 'annual') {
-              if (n !== PL_INCOME_PLACEHOLDER) slot[field] = n;
-            } else {
-              slot[field] = n;
-            }
-          });
-        }
-        /* KPI-PL-INCOME-INPUTS-DB: inputs first, then legacy fallbacks */
-        absorbNumMap(inputsMap, 'inputs');
-        absorbNumMap(ds, 'timeline');
-        absorbNumMap(annualMap, 'annual');
-        absorbNumMap(di.store_sales, 'store_sales');
-        absorbNumMap(di.food_sales, 'food_sales');
-        absorbNumMap(di.drink_sales, 'drink_sales');
-        absorbNumMap(di.sales_a, 'sales_a');
-        absorbNumMap(di.sales_b, 'sales_b');
-
-        /* Also walk calendar so padded days with only memory-side maps still count. */
-        for (var m0c = 0; m0c < 12; m0c++) {
-          var dim = new Date(y, m0c + 1, 0).getDate();
-          for (var d = 1; d <= dim; d++) {
-            var norm =
-              String(y) + '-' + plIncomePad2(m0c + 1) + '-' + plIncomePad2(d);
-            if (!slotByNorm[norm]) slotByNorm[norm] = { m0: m0c };
-          }
-        }
-
-        Object.keys(slotByNorm).forEach(function (norm) {
-          var slot = slotByNorm[norm];
-          var v = null;
-          if (slot.hasInputs) {
-            var iv = Number(slot.inputs);
-            if (Number.isFinite(iv) && iv > 0 && iv !== PL_INCOME_PLACEHOLDER) v = iv;
-            else return;
-          } else {
-            var streamVal = plIncomeDailyTotalFromStreams(di, norm);
-            /* Prefer composed slot when di lookup misses alternate keys already absorbed. */
-            if (streamVal == null || !(streamVal > 0)) {
-              var food = Number(slot.food_sales) || 0;
-              var drink = Number(slot.drink_sales) || 0;
-              var sa = Number(slot.sales_a) || 0;
-              var sb = Number(slot.sales_b) || 0;
-              var stRaw = slot.store_sales;
-              var hasAny =
-                slot.store_sales != null ||
-                slot.food_sales != null ||
-                slot.drink_sales != null ||
-                slot.sales_a != null ||
-                slot.sales_b != null;
-              if (hasAny) {
-                var storeAmt =
-                  stRaw != null && Number(stRaw) > 0 ? Number(stRaw) : food + drink;
-                streamVal = Math.round(storeAmt + sa + sb);
-              }
-            }
-            var timelineVal =
-              slot.timeline != null && Number(slot.timeline) > 0
-                ? Number(slot.timeline)
-                : null;
-            var annualVal =
-              slot.annual != null && Number(slot.annual) > 0
-                ? Number(slot.annual)
-                : null;
-            if (timelineVal != null) v = timelineVal;
-            else if (annualVal != null) v = annualVal;
-            else if (streamVal != null && streamVal > 0) v = streamVal;
-          }
-          if (v == null || !Number.isFinite(v) || v === 0) return;
-          agg.totals[slot.m0] += v;
-          agg.has[slot.m0] = true;
-        });
-        return agg;
+        return plIncomeSumIsoMap(ds, year, true);
       }
 
       function plIncomeLoadStream(year, streamId) {
@@ -13141,21 +12865,10 @@
       }
 
       function refreshIncomeBlock() {
-        var y = Number(plYear);
-        function paint() {
-          plIncomeLoadTotals();
-          plIncomeFillStreams();
-          plIncomeFillStore();
-          plIncomeFillTotal();
-        }
-        paint();
-        /* KPI-PL-INCOME-INPUTS-DB: fetch inputs then repaint income only */
-        if (Number.isFinite(y)) {
-          plIncomeEnsureInputs(y).then(function () {
-            if (Number(plYear) !== y) return;
-            paint();
-          });
-        }
+        plIncomeLoadTotals();
+        plIncomeFillStreams();
+        plIncomeFillStore();
+        plIncomeFillTotal();
       }
 
       window.__plRefreshIncomeBlock = refreshIncomeBlock;
@@ -13347,6 +13060,7 @@
       }
 
       window.__plRefreshAnalyzeBlock = refreshAnalyzeBlock;
+
 
       /* === UNIT-5B-3-ANALYZE-BT-BEGIN === */
       (function () {
@@ -13735,19 +13449,13 @@
             el.classList.toggle('is-active', active);
             el.classList.toggle('is-inactive', !active);
           });
-          var tip = t(
-            '表示のみです。切替は月次編集ページ、または年次の売上画面で行います。',
-            'Display only. Switch this on the Monthly Edit page or the Annual sales screen.'
-          );
           wrap.setAttribute(
             'aria-label',
             t(
-              '売上入力の場所: ' + (isMep ? '月次' : '年次') + '（表示のみ）',
-              'Sales input location: ' + (isMep ? 'Monthly' : 'Annual') + ' (display only)'
+              '日次売上の入力経路: ' + (isMep ? 'Monthly（MEP）' : 'Annual / Sales Data') + '（表示のみ）',
+              'Daily sales input path: ' + (isMep ? 'Monthly (MEP)' : 'Annual / Sales Data') + ' (read-only)'
             )
           );
-          wrap.setAttribute('title', tip);
-          wrap.setAttribute('data-tooltip', tip);
         }
         function syncIndicator() {
           if (!PL_SALES_INPUT_PATH_INDICATOR_ENABLED) {
@@ -14742,7 +14450,6 @@
       window.addEventListener('storage', function (ev) {
         if (ev.key === ANNUAL_DAILY_KEY || ev.key === PL_YEAR_STORE_KEY) {
           syncPlBusinessDays();
-          plRefreshAllIncomeSurfaces();
         }
       });
       document.addEventListener('annual:businessDayMapChanged', function () {
@@ -14751,16 +14458,10 @@
       document.addEventListener('kpi:businessDayChanged', function () {
         syncPlBusinessDays();
       });
-      document.addEventListener('kpi:storeHydratedFromServer', function () {
-        syncPlBusinessDays();
-        plRefreshAllIncomeSurfaces();
-        if (!plInitialExpenseHydratePending) return;
-        plInitialExpenseHydratePending = false;
-        applyCleanInitialHydrateExpenseAmounts();
-      });
       document.addEventListener('kpi:readSurfacesRefresh', function () {
         syncPlBusinessDays();
-        plRefreshAllIncomeSurfaces();
+        plSafeRefresh(refreshIncomeBlock);
+        plRefreshAnalyzeAndGraph();
       });
 
       populateYearSelect();
@@ -15847,7 +15548,7 @@
     bind();
   }
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
-    })();
+})();
   </script>
 </body>
 </html>
