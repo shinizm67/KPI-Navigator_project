@@ -10,6 +10,7 @@ defined presets. Staff labor reuses restaurant variable_labor (variable / daily)
 
 from __future__ import annotations
 
+import copy
 import json
 from typing import Any
 
@@ -227,6 +228,228 @@ EXPENSE_PRESET_LINES: dict[str, list[tuple] | None] = {
     "other": OTHER_EXPENSE_DETAIL_LINES,
 }
 
+# PL Analyze metadata. Does not change expense tuples / preset line content.
+# Restaurant keeps the existing Food/Drink/Labor/FL HTML + fill client.
+LABOR_ANALYSIS_ATTRIBUTES: tuple[str, ...] = (
+    "salaries_wages",
+    "variable_labor",
+    "labor_related",
+)
+LABOR_ANALYSIS_LINE_IDS: tuple[str, ...] = (
+    "exp_variable_labor",
+    "exp_fixed_labor",
+)
+
+RESTAURANT_ANALYZE_MODE = "restaurant_fl"
+KEY_EXPENSE_ANALYZE_MODE = "key_expenses"
+
+
+def _analysis_row(
+    rid: str,
+    *,
+    label_ja: str,
+    label_en: str,
+    label_zh: str,
+    line_ids: list[str] | None = None,
+    source: str = "lines",
+    is_total: bool = False,
+) -> dict[str, Any]:
+    row: dict[str, Any] = {
+        "id": rid,
+        "labelJa": label_ja,
+        "labelEn": label_en,
+        "labelZh": label_zh,
+        "source": source,
+        "isTotal": is_total,
+    }
+    if line_ids is not None:
+        row["lineIds"] = list(line_ids)
+    return row
+
+
+def _analysis_group(
+    gid: str,
+    major_ja: tuple[str, str],
+    major_en: tuple[str, str],
+    major_zh: tuple[str, str],
+    rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "id": gid,
+        "majorJa": list(major_ja),
+        "majorEn": list(major_en),
+        "majorZh": list(major_zh),
+        "rows": rows,
+    }
+
+
+def _labor_l_rate_group() -> dict[str, Any]:
+    return _analysis_group(
+        "labor_l_rate",
+        ("労働", "分配率"),
+        ("Labor", "share"),
+        ("勞動", "分配率"),
+        [
+            _analysis_row(
+                "analyze_monthly_labor",
+                label_ja="月次人件費",
+                label_en="Monthly personnel costs",
+                label_zh="月次人事費用",
+                source="labor",
+            ),
+            _analysis_row(
+                "analyze_l_rate",
+                label_ja="L率",
+                label_en="L rate",
+                label_zh="L率",
+                source="labor",
+                is_total=True,
+            ),
+        ],
+    )
+
+
+def _key_expense_group(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    return _analysis_group(
+        "key_expenses",
+        ("主要", "費目"),
+        ("Key", "costs"),
+        ("主要", "費目"),
+        rows,
+    )
+
+
+ANALYSIS_METRICS_V1: dict[str, dict[str, Any]] = {
+    "restaurant": {
+        "mode": RESTAURANT_ANALYZE_MODE,
+        "groups": [],
+    },
+    "retail": {
+        "mode": KEY_EXPENSE_ANALYZE_MODE,
+        "groups": [
+            _key_expense_group(
+                [
+                    _analysis_row(
+                        "analyze_inventory_cogs",
+                        label_ja="商品仕入額",
+                        label_en="Merchandise purchases",
+                        label_zh="商品進貨額",
+                        line_ids=["exp_inventory_cogs"],
+                    ),
+                    _analysis_row(
+                        "analyze_packaging_shipping",
+                        label_ja="包装・梱包 / 配送系費用",
+                        label_en="Packaging / shipping",
+                        label_zh="包裝／配送相關費用",
+                        line_ids=["exp_packaging", "exp_shipping"],
+                    ),
+                ]
+            ),
+            _labor_l_rate_group(),
+        ],
+    },
+    "hair_salon": {
+        "mode": KEY_EXPENSE_ANALYZE_MODE,
+        "groups": [
+            _key_expense_group(
+                [
+                    _analysis_row(
+                        "analyze_treatment_materials",
+                        label_ja="薬剤・施術材料費",
+                        label_en="Treatment materials",
+                        label_zh="藥劑／施術材料費",
+                        line_ids=["exp_treatment_materials"],
+                    ),
+                    _analysis_row(
+                        "analyze_retail_product_cogs",
+                        label_ja="店販商品仕入",
+                        label_en="Retail product purchases",
+                        label_zh="店販商品進貨",
+                        line_ids=["exp_retail_product_cogs"],
+                    ),
+                ]
+            ),
+            _labor_l_rate_group(),
+        ],
+    },
+    "fitness": {
+        "mode": KEY_EXPENSE_ANALYZE_MODE,
+        "groups": [
+            _key_expense_group(
+                [
+                    _analysis_row(
+                        "analyze_facility_fee",
+                        label_ja="ジム・施設利用料",
+                        label_en="Gym / facility usage fees",
+                        label_zh="健身房／場地使用費",
+                        line_ids=["exp_facility_fee"],
+                    ),
+                    _analysis_row(
+                        "analyze_training_equipment",
+                        label_ja="トレーニング機器 / メンテナンス関連",
+                        label_en="Training equipment / maintenance",
+                        label_zh="訓練器材／維護相關",
+                        line_ids=["exp_training_equipment", "exp_equipment_maintenance"],
+                    ),
+                ]
+            ),
+            _labor_l_rate_group(),
+        ],
+    },
+    "hotel": {
+        "mode": KEY_EXPENSE_ANALYZE_MODE,
+        "groups": [
+            _key_expense_group(
+                [
+                    _analysis_row(
+                        "analyze_linen_cleaning",
+                        label_ja="リネン / 清掃関連費",
+                        label_en="Linen / cleaning",
+                        label_zh="布巾／清潔相關費",
+                        line_ids=[
+                            "exp_linen_cleaning",
+                            "exp_cleaning_supplies",
+                            "exp_cleaning_outsource",
+                        ],
+                    ),
+                    _analysis_row(
+                        "analyze_ota_fees",
+                        label_ja="OTA・予約手数料",
+                        label_en="OTA / booking commissions",
+                        label_zh="OTA／訂房手續費",
+                        line_ids=["exp_ota_fees"],
+                    ),
+                ]
+            ),
+            _labor_l_rate_group(),
+        ],
+    },
+    "other": {
+        "mode": KEY_EXPENSE_ANALYZE_MODE,
+        "groups": [
+            _key_expense_group(
+                [
+                    _analysis_row(
+                        "analyze_materials",
+                        label_ja="材料・仕入費",
+                        label_en="Materials / purchases",
+                        label_zh="材料／進貨費",
+                        line_ids=["exp_materials"],
+                    ),
+                    _analysis_row(
+                        "analyze_outsourcing",
+                        label_ja="外注費",
+                        label_en="Outsourcing",
+                        label_zh="外包費",
+                        line_ids=["exp_outsourcing"],
+                    ),
+                ]
+            ),
+            _labor_l_rate_group(),
+        ],
+    },
+}
+
 
 def resolve_input_style(raw: str, line_id: str, bucket: str) -> str:
     if raw == "daily":
@@ -316,6 +539,29 @@ def expense_presets_payload() -> dict[str, Any]:
         else:
             out[code] = {"status": "defined", "lines": catalog_from_expense_tuples(list(preset))}
     return out
+
+
+def analysis_metrics_payload() -> dict[str, Any]:
+    """PL Analyze metadata keyed by Business Type. Separate from expense lines."""
+    out: dict[str, Any] = {}
+    for code in BUSINESS_TYPE_CANONICAL:
+        rec = ANALYSIS_METRICS_V1.get(code)
+        if rec is None:
+            out[code] = {
+                "mode": RESTAURANT_ANALYZE_MODE,
+                "groups": [],
+            }
+        else:
+            out[code] = copy.deepcopy(rec)
+    return out
+
+
+def get_analysis_metrics(
+    business_type: str | None = FALLBACK_BUSINESS_TYPE,
+) -> dict[str, Any]:
+    key = normalize_business_type_for_preset(business_type)
+    rec = ANALYSIS_METRICS_V1.get(key) or ANALYSIS_METRICS_V1[FALLBACK_BUSINESS_TYPE]
+    return copy.deepcopy(rec)
 
 
 def reconcile_catalog_lines(
@@ -464,10 +710,13 @@ def mep_catalog_js() -> str:
 def presets_runtime_js() -> str:
     """Runtime selector consumed by PL / MEP. 5B-2 only needs to fill EXPENSE_PRESET_LINES."""
     payload = json.dumps(expense_presets_payload(), ensure_ascii=False)
+    analysis = json.dumps(analysis_metrics_payload(), ensure_ascii=False)
     attributes = json.dumps(attribute_runtime_payload(), ensure_ascii=False)
     canonical = json.dumps(list(BUSINESS_TYPE_CANONICAL), ensure_ascii=False)
     fallback = json.dumps(FALLBACK_BUSINESS_TYPE)
     legacy = json.dumps(BUSINESS_TYPE_LEGACY, ensure_ascii=False)
+    labor_attrs = json.dumps(list(LABOR_ANALYSIS_ATTRIBUTES), ensure_ascii=False)
+    labor_ids = json.dumps(list(LABOR_ANALYSIS_LINE_IDS), ensure_ascii=False)
     return f"""/**
  * PL expense preset selector (Unit 5B-1).
  * Source of truth: scripts/pl_line_catalog.py — regenerate with
@@ -486,6 +735,9 @@ def presets_runtime_js() -> str:
   var FALLBACK = {fallback};
   var LEGACY = {legacy};
   var PRESETS = {payload};
+  var ANALYSIS = {analysis};
+  var LABOR_ANALYSIS_ATTRIBUTES = {labor_attrs};
+  var LABOR_ANALYSIS_LINE_IDS = {labor_ids};
   var ATTRIBUTES = {attributes};
 
   function resolveBusinessType() {{
@@ -524,6 +776,16 @@ def presets_runtime_js() -> str:
       return JSON.parse(JSON.stringify(lines));
     }} catch (_eCopy) {{
       return [];
+    }}
+  }}
+
+  function getAnalysisMetrics(businessType) {{
+    var rec = ANALYSIS[presetKey(businessType == null ? resolveBusinessType() : businessType)];
+    if (!rec) rec = ANALYSIS[FALLBACK] || {{ mode: 'restaurant_fl', groups: [] }};
+    try {{
+      return JSON.parse(JSON.stringify(rec));
+    }} catch (_eCopy) {{
+      return {{ mode: 'restaurant_fl', groups: [] }};
     }}
   }}
 
@@ -622,6 +884,9 @@ def presets_runtime_js() -> str:
     CANONICAL: CANONICAL.slice(),
     FALLBACK: FALLBACK,
     PRESETS: PRESETS,
+    ANALYSIS: ANALYSIS,
+    LABOR_ANALYSIS_ATTRIBUTES: LABOR_ANALYSIS_ATTRIBUTES.slice(),
+    LABOR_ANALYSIS_LINE_IDS: LABOR_ANALYSIS_LINE_IDS.slice(),
     ATTRIBUTES: ATTRIBUTES,
     UNCLASSIFIED: ATTRIBUTES.unclassified,
     FIXED_ATTRIBUTES: ATTRIBUTES.fixed,
@@ -631,6 +896,7 @@ def presets_runtime_js() -> str:
     resolveBusinessType: resolveBusinessType,
     hasDefinedPreset: hasDefinedPreset,
     getDefaultExpenseLines: getDefaultExpenseLines,
+    getAnalysisMetrics: getAnalysisMetrics,
     reconcileCatalogLines: reconcileCatalogLines,
   }};
 }})(typeof window !== 'undefined' ? window : this);

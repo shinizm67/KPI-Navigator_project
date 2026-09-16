@@ -635,6 +635,10 @@ from pl_monthly_allocate_client import pl_monthly_allocate_client_js  # noqa: E4
 from pl_income_client import pl_income_client_js  # noqa: E402
 from pl_ratio_client import pl_ratio_client_js  # noqa: E402
 from pl_analyze_client import pl_analyze_client_js  # noqa: E402
+from pl_analyze_business_type_client import (  # noqa: E402
+    pl_analyze_business_type_client_js,
+    pl_analyze_business_type_css,
+)
 from pl_bottom_graph_data_client import pl_bottom_graph_data_client_js  # noqa: E402
 from pl_reference_budget_client import pl_reference_budget_client_js  # noqa: E402
 from pl_sales_input_path_indicator_client import (  # noqa: E402
@@ -7806,6 +7810,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       min-height: calc(var(--pl-row-label-h) * 4);
       max-height: calc(var(--pl-row-label-h) * 4);
     }}
+{pl_analyze_business_type_css()}
     body.office-mode .pl-analyze-band {{
       /* Opaque wash: translucent cyan over dark panes looked charcoal + killed contrast. */
       background: #dff5f8 !important;
@@ -10105,6 +10110,7 @@ def render_page(lang: str, lang_switch: str) -> str:
 {pl_expense_import_client_js()}
 {pl_income_client_js()}
 {pl_analyze_client_js()}
+{pl_analyze_business_type_client_js()}
 {pl_sales_input_path_indicator_js()}
 {pl_bottom_graph_data_client_js()}
 {pl_ratio_client_js()}
