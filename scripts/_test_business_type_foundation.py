@@ -22,7 +22,7 @@ CANONICAL = (
     "restaurant",
     "retail",
     "hair_salon",
-    "personal_trainer",
+    "fitness",
     "hotel",
     "other",
 )
@@ -32,6 +32,8 @@ LEGACY = {
     "cafe": "restaurant",
     "wear_shop": "retail",
     "retail": "retail",
+    "personal_trainer": "fitness",
+    "fitness": "fitness",
 }
 
 
@@ -73,6 +75,11 @@ def normalize(raw):
         "Cafe": "restaurant",
         "Wear Shop": "retail",
         "Retail": "retail",
+        "personal_trainer": "fitness",
+        "Personal Trainer": "fitness",
+        "パーソナルトレーナー": "fitness",
+        "私人教練": "fitness",
+        "Fitness / Gym / Personal Training": "fitness",
     }
     return aliases.get(s) or aliases.get(lower)
 
@@ -106,6 +113,17 @@ def test_canonical_and_legacy() -> None:
     assert_true(get_business_type(None, None) == "restaurant", "missing -> restaurant fallback")
     assert_true(get_business_type("", "cafe") == "restaurant", "legacy cafe hydrates as restaurant")
     assert_true(get_business_type(None, "wear_shop") == "retail", "legacy wear_shop hydrates as retail")
+    assert_true(normalize("personal_trainer") == "fitness", "personal_trainer -> fitness")
+    assert_true(normalize("fitness") == "fitness", "fitness stays fitness")
+    assert_true(get_business_type("personal_trainer", None) == "fitness", "saved personal_trainer hydrates as fitness")
+    assert_true(get_business_type(None, "personal_trainer") == "fitness", "legacy personal_trainer hydrates as fitness")
+    store = {"meta": {}, "years": {"2026": {"dailyExpenses": {"exp_food_cost": {"2026-01-01": 50}}}}}
+    snapshot_years = json.loads(json.dumps(store["years"]))
+    assert_true(set_business_type(store, "fitness"), "fitness save succeeds")
+    assert_true(store["meta"]["businessType"] == "fitness", "fitness written to meta")
+    assert_true(set_business_type(store, "personal_trainer"), "legacy personal_trainer save normalizes")
+    assert_true(store["meta"]["businessType"] == "fitness", "personal_trainer save stores fitness")
+    assert_true(store["years"] == snapshot_years, "hydrate/save does not drop years")
 
 
 def test_js_source_contract() -> None:
@@ -113,6 +131,16 @@ def test_js_source_contract() -> None:
         assert_true(f"'{code}'" in JS, f"js lists canonical {code}")
     assert_true("cafe: 'restaurant'" in JS, "js maps cafe")
     assert_true("wear_shop: 'retail'" in JS, "js maps wear_shop")
+    assert_true("personal_trainer: 'fitness'" in JS, "js maps personal_trainer")
+    canon_m = re.search(r"var CANONICAL = \[([\s\S]*?)\];", JS)
+    assert_true(canon_m is not None, "js CANONICAL array present")
+    if canon_m:
+        canon_block = canon_m.group(1)
+        assert_true("'fitness'" in canon_block, "js CANONICAL includes fitness")
+        assert_true("'personal_trainer'" not in canon_block, "js CANONICAL does not include personal_trainer")
+    assert_true("Fitness / Gym / Personal Training" in JS, "en fitness label")
+    assert_true("フィットネス / ジム / パーソナルトレーニング" in JS, "ja fitness label")
+    assert_true("健身 / 健身房 / 私人教練" in JS, "zh fitness label")
     assert_true("function getBusinessType" in JS, "js getBusinessType")
     assert_true("function isRestaurantLike" in JS, "js isRestaurantLike")
     assert_true("function setBusinessType" in JS, "js setBusinessType")

@@ -17,16 +17,24 @@ from typing import Any
 # Bump when default line list / isDefault / expenseAttribute / active / inputStyle defaults change.
 CATALOG_SCHEMA_VERSION = 8
 
-# Same 6 codes as js/kpi-business-type.js. Do not add/remove here (Unit 5A).
+# Same 6 codes as js/kpi-business-type.js.
 BUSINESS_TYPE_CANONICAL: tuple[str, ...] = (
     "restaurant",
     "retail",
     "hair_salon",
-    "personal_trainer",
+    "fitness",
     "hotel",
     "other",
 )
 FALLBACK_BUSINESS_TYPE = "restaurant"
+BUSINESS_TYPE_LEGACY: dict[str, str] = {
+    "restaurant": "restaurant",
+    "cafe": "restaurant",
+    "wear_shop": "retail",
+    "retail": "retail",
+    "personal_trainer": "fitness",
+    "fitness": "fitness",
+}
 
 # (attrId, labelJa, labelEn) — fixed expense attributes for FL / KPI grouping
 FIXED_EXPENSE_ATTRIBUTES: list[tuple[str, str, str]] = [
@@ -120,7 +128,7 @@ EXPENSE_PRESET_LINES: dict[str, list[tuple[str, str, str, str, str, bool, str | 
     "restaurant": EXPENSE_DETAIL_LINES_V1,
     "retail": None,
     "hair_salon": None,
-    "personal_trainer": None,
+    "fitness": None,
     "hotel": None,
     "other": None,
 }
@@ -137,6 +145,9 @@ def normalize_business_type_for_preset(business_type: str | None) -> str:
     raw = str(business_type or "").strip()
     if raw in BUSINESS_TYPE_CANONICAL:
         return raw
+    mapped = BUSINESS_TYPE_LEGACY.get(raw) or BUSINESS_TYPE_LEGACY.get(raw.lower())
+    if mapped:
+        return mapped
     return FALLBACK_BUSINESS_TYPE
 
 
@@ -337,6 +348,7 @@ def presets_runtime_js() -> str:
     payload = json.dumps(expense_presets_payload(), ensure_ascii=False)
     canonical = json.dumps(list(BUSINESS_TYPE_CANONICAL), ensure_ascii=False)
     fallback = json.dumps(FALLBACK_BUSINESS_TYPE)
+    legacy = json.dumps(BUSINESS_TYPE_LEGACY, ensure_ascii=False)
     return f"""/**
  * PL expense preset selector (Unit 5B-1).
  * Source of truth: scripts/pl_line_catalog.py — regenerate with
@@ -354,6 +366,7 @@ def presets_runtime_js() -> str:
 
   var CANONICAL = {canonical};
   var FALLBACK = {fallback};
+  var LEGACY = {legacy};
   var PRESETS = {payload};
 
   function resolveBusinessType() {{
@@ -368,7 +381,15 @@ def presets_runtime_js() -> str:
 
   function presetKey(businessType) {{
     var key = String(businessType || '').trim();
+    if (global.KpiBusinessType && typeof global.KpiBusinessType.normalizeBusinessType === 'function') {{
+      try {{
+        var n = global.KpiBusinessType.normalizeBusinessType(key);
+        if (n) key = String(n);
+      }} catch (_eNorm) {{}}
+    }}
     if (CANONICAL.indexOf(key) >= 0) return key;
+    if (LEGACY[key]) return LEGACY[key];
+    if (LEGACY[key.toLowerCase()]) return LEGACY[key.toLowerCase()];
     return FALLBACK;
   }}
 

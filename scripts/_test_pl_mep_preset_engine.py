@@ -55,7 +55,7 @@ FROZEN_RESTAURANT = [
     ("exp_consumption_tax", "消費税", "consumption tax", "variable", "monthly", False, "taxes"),
 ]
 
-UNSET_TYPES = ("retail", "hair_salon", "personal_trainer", "hotel", "other")
+UNSET_TYPES = ("retail", "hair_salon", "fitness", "hotel", "other")
 
 PL_PAGES = [
     ROOT / "app/profit/pl/index.html",
@@ -103,7 +103,7 @@ def test_restaurant_catalog_unchanged() -> None:
 def test_selector_six_canonical() -> None:
     assert_true(
         BUSINESS_TYPE_CANONICAL
-        == ("restaurant", "retail", "hair_salon", "personal_trainer", "hotel", "other"),
+        == ("restaurant", "retail", "hair_salon", "fitness", "hotel", "other"),
         "selector lists the 6 canonical types",
     )
     for code in BUSINESS_TYPE_CANONICAL:
@@ -117,6 +117,15 @@ def test_selector_six_canonical() -> None:
         ids = {row[0] for row in lines}
         assert_true("exp_food_cost" not in ids, f"{code} does not spawn restaurant food")
         assert_true("exp_drink_cost" not in ids, f"{code} does not spawn restaurant drink")
+    assert_true(
+        normalize_business_type_for_preset("personal_trainer") == "fitness",
+        "preset selector maps personal_trainer -> fitness",
+    )
+    assert_true(
+        get_default_expense_lines("personal_trainer") == get_default_expense_lines("fitness"),
+        "legacy personal_trainer uses fitness preset slot",
+    )
+    assert_true(has_defined_expense_preset("personal_trainer") is False, "legacy trainer still unset until 5B-2")
 
 
 def test_unknown_fallback_restaurant() -> None:

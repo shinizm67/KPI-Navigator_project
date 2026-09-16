@@ -53,6 +53,7 @@ PROFILE_REPLACEMENTS = [
     (">Restaurant</option>", ">餐廳</option>"),
     (">Retail</option>", ">零售</option>"),
     (">Hair Salon</option>", ">美髮沙龍</option>"),
+    (">Fitness / Gym / Personal Training</option>", ">健身 / 健身房 / 私人教練</option>"),
     (">Personal Trainer</option>", ">私人教練</option>"),
     (">Hotel</option>", ">飯店</option>"),
     (">Other</option>", ">其他</option>"),
