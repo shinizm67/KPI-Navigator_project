@@ -29,6 +29,7 @@ MONTHLY_TW_MEP_OLD_JA = """      function getActiveDummyGroupValues(groupNo, iso
 
 MONTHLY_TW_MEP_LISTENERS = """      /* KPI-MONTHLY-TW-LISTENERS */
       function monthlyTwRebuildKeepFocus() {
+        if (typeof applyMonthlyTwBusinessTypeLayout === 'function') applyMonthlyTwBusinessTypeLayout();
         invalidateMonthlyMepMetricsCache();
         invalidateGroup1TwCache();
         var keepIso =
@@ -225,9 +226,211 @@ MONTHLY_TW_DIFF_CSS_BLOCK = f"""    .monthly-data-column__cell:last-child {{
     }}"""
 
 
+def monthly_tw_5c5_helpers_js() -> str:
+    """Layout / label / row-count helpers only (do not duplicate decorate/resolve)."""
+    return """      /* === UNIT-5C-5-MONTHLY-TW-BT-BEGIN === */
+      var __monthlyTwKeyCache = null;
+      function monthlyTwPageLang() {
+        var lang = '';
+        try {
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }
+
+      function monthlyTwIsRestaurant() {
+        try {
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {
+            return !!window.KpiBusinessType.isRestaurantLike();
+          }
+        } catch (_eRest) {}
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try {
+            var rec = api.getAnalysisMetrics();
+            return !rec || rec.mode !== 'key_expenses';
+          } catch (_eM) {}
+        }
+        return true;
+      }
+
+      function monthlyTwGroupRowCount(groupNo) {
+        if (monthlyTwIsRestaurant()) return 6;
+        if (groupNo === 1) return 4;
+        if (groupNo === 2) return 0;
+        return 6;
+      }
+
+      function monthlyTwGroup1TargetIdx() {
+        return monthlyTwIsRestaurant() ? 3 : 1;
+      }
+
+      function monthlyTwGroup1DiffIdx() {
+        return monthlyTwIsRestaurant() ? 4 : 2;
+      }
+
+      function monthlyTwPickLabel(row, lang) {
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }
+
+      function monthlyTwKeyExpenseSpec() {
+        var bt = 'restaurant';
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {
+            bt = String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          } else if (window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function') {
+            bt = String(window.KpiBusinessType.getBusinessType() || 'restaurant');
+          }
+        } catch (_eBt) {}
+        if (__monthlyTwKeyCache && __monthlyTwKeyCache.bt === bt) return __monthlyTwKeyCache;
+        var labels = [];
+        var idGroups = [];
+        var rec = null;
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.getAnalysisMetrics === 'function') {
+            rec = window.KpiPlExpensePresets.getAnalysisMetrics(bt);
+          }
+        } catch (_eRec) {}
+        var lang = monthlyTwPageLang();
+        if (rec && rec.mode === 'key_expenses') {
+          (rec.groups || []).forEach(function (group) {
+            (group.rows || []).forEach(function (row) {
+              if (!row || row.source === 'labor') return;
+              var ids = [];
+              (row.lineIds || []).forEach(function (id) { if (id) ids.push(String(id)); });
+              if (!ids.length) return;
+              idGroups.push(ids);
+              labels.push(monthlyTwPickLabel(row, lang));
+            });
+          });
+        }
+        if (idGroups.length > 2) {
+          idGroups = idGroups.slice(0, 2);
+          labels = labels.slice(0, 2);
+        }
+        __monthlyTwKeyCache = { bt: bt, labels: labels, idGroups: idGroups };
+        return __monthlyTwKeyCache;
+      }
+
+      function monthlyTwResidualLabel(lang) {
+        if (lang === 'en') return 'Other Var';
+        if (lang === 'zh') return '其他變動';
+        return 'その他変動';
+      }
+
+      function applyMonthlyTwMetricLabels() {
+        var col = document.querySelector('.monthly-table-window__metric-col');
+        if (!col) return;
+        var lines = col.querySelectorAll('.monthly-table-window__metric-line');
+        if (!lines.length) return;
+        var i;
+        for (i = 0; i < lines.length; i++) {
+          if (!lines[i].getAttribute('data-tw-orig')) {
+            lines[i].setAttribute('data-tw-orig', lines[i].textContent || '');
+          }
+        }
+        var restaurant = monthlyTwIsRestaurant();
+        for (i = 0; i < lines.length; i++) {
+          lines[i].style.display = '';
+          lines[i].textContent = lines[i].getAttribute('data-tw-orig') || '';
+        }
+        if (restaurant) return;
+        var hideIdx = [1, 2, 7, 8, 9, 10, 11, 12, 13];
+        hideIdx.forEach(function (idx) {
+          if (lines[idx]) lines[idx].style.display = 'none';
+        });
+        var spec = monthlyTwKeyExpenseSpec();
+        var lang = monthlyTwPageLang();
+        if (lines[14]) lines[14].textContent = spec.labels[0] || (lang === 'en' ? 'Key costs' : '主要費目');
+        if (lines[15]) lines[15].textContent = spec.labels[1] || (spec.labels[0] || '');
+        if (lines[16]) lines[16].textContent = monthlyTwResidualLabel(lang);
+      }
+
+      function monthlyTwResizeVfocusGroup(g, rows) {
+        if (!g) return;
+        g.setAttribute('data-tw-rows', String(rows));
+        while (g.childElementCount > rows) g.removeChild(g.lastChild);
+        while (g.childElementCount < rows) {
+          var sp = document.createElement('span');
+          sp.className = 'monthly-vfocus-cell';
+          sp.setAttribute('aria-hidden', 'true');
+          g.appendChild(sp);
+        }
+      }
+
+      function monthlyTwHookBusinessType() {
+        try {
+          if (!window.KpiBusinessType || window.KpiBusinessType.__monthlyTwHooked) return;
+          if (typeof window.KpiBusinessType.setBusinessType !== 'function') return;
+          window.KpiBusinessType.__monthlyTwHooked = true;
+          var orig = window.KpiBusinessType.setBusinessType;
+          window.KpiBusinessType.setBusinessType = function () {
+            var ok = orig.apply(this, arguments);
+            try {
+              document.dispatchEvent(new CustomEvent('kpi:businessTypeChanged'));
+            } catch (_eHook) {}
+            return ok;
+          };
+        } catch (_eWrap) {}
+      }
+
+      function applyMonthlyTwBusinessTypeLayout() {
+        __monthlyTwKeyCache = null;
+        monthlyTwHookBusinessType();
+        var root = document.querySelector('.monthly-table-window');
+        if (root) {
+          root.setAttribute('data-tw-layout', monthlyTwIsRestaurant() ? 'restaurant' : 'key-expenses');
+        }
+        applyMonthlyTwMetricLabels();
+        var row1 = monthlyTwGroupRowCount(1);
+        var row2 = monthlyTwGroupRowCount(2);
+        var row3 = monthlyTwGroupRowCount(3);
+        [
+          ['monthly-vfocus-prev-group-1', row1],
+          ['monthly-vfocus-group-1', row1],
+          ['monthly-vfocus-next-group-1', row1],
+          ['monthly-vfocus-prev-group-2', row2],
+          ['monthly-vfocus-group-2', row2],
+          ['monthly-vfocus-next-group-2', row2],
+          ['monthly-vfocus-prev-group-3', row3],
+          ['monthly-vfocus-group-3', row3],
+          ['monthly-vfocus-next-group-3', row3],
+        ].forEach(function (pair) {
+          monthlyTwResizeVfocusGroup(document.getElementById(pair[0]), pair[1]);
+        });
+        window.__monthlyTwGroupRowCount = monthlyTwGroupRowCount;
+        window.__monthlyTwIsRestaurant = monthlyTwIsRestaurant;
+        window.__monthlyTwGroup1DiffIdx = monthlyTwGroup1DiffIdx;
+        window.__applyMonthlyTwBusinessTypeLayout = applyMonthlyTwBusinessTypeLayout;
+      }
+
+      function mepSumVariablePortion(iso, ids, variableIds) {
+        var allow = {};
+        (variableIds || []).forEach(function (id) {
+          if (id) allow[id] = true;
+        });
+        var sum = 0;
+        (ids || []).forEach(function (id) {
+          if (allow[id]) sum += mepReadRow(iso, id);
+        });
+        return Math.round(sum);
+      }
+      applyMonthlyTwBusinessTypeLayout();
+      /* === UNIT-5C-5-MONTHLY-TW-BT-END === */
+"""
+
+
 def monthly_tw_mep_metrics_js() -> str:
     return f"""      {MONTHLY_TW_MEP_MARKER}
       var zeroMoney = useJa ? '\\u00a50' : '$0';
+      var __monthlyTwKeyCache = null;
       var MEP_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
       var MEP_FALLBACK_FIXED = [
         'exp_rent',
@@ -255,6 +458,7 @@ def monthly_tw_mep_metrics_js() -> str:
 
       function invalidateMonthlyMepMetricsCache() {{
         window.__MONTHLY_MEP_METRICS__ = null;
+        __monthlyTwKeyCache = null;
       }}
 
       function plCatalogLines() {{
@@ -434,12 +638,182 @@ def monthly_tw_mep_metrics_js() -> str:
         return snap;
       }}
 
-      function decorateMonthlyGroup1Cell(cell, cellIndex, iso) {{
+      /* === UNIT-5C-5-MONTHLY-TW-BT-BEGIN === */
+      function monthlyTwPageLang() {{
+        var lang = '';
+        try {{
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        }} catch (_eLang) {{}}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }}
+
+      function monthlyTwIsRestaurant() {{
+        try {{
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {{
+            return !!window.KpiBusinessType.isRestaurantLike();
+          }}
+        }} catch (_eRest) {{}}
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {{
+          try {{
+            var rec = api.getAnalysisMetrics();
+            return !rec || rec.mode !== 'key_expenses';
+          }} catch (_eM) {{}}
+        }}
+        return true;
+      }}
+
+      function monthlyTwGroupRowCount(groupNo) {{
+        if (monthlyTwIsRestaurant()) return 6;
+        if (groupNo === 1) return 4;
+        if (groupNo === 2) return 0;
+        return 6;
+      }}
+
+      function monthlyTwGroup1TargetIdx() {{
+        return monthlyTwIsRestaurant() ? 3 : 1;
+      }}
+
+      function monthlyTwGroup1DiffIdx() {{
+        return monthlyTwIsRestaurant() ? 4 : 2;
+      }}
+
+      function monthlyTwPickLabel(row, lang) {{
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }}
+
+      function monthlyTwKeyExpenseSpec() {{
+        var bt = 'restaurant';
+        try {{
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {{
+            bt = String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          }} else if (window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function') {{
+            bt = String(window.KpiBusinessType.getBusinessType() || 'restaurant');
+          }}
+        }} catch (_eBt) {{}}
+        if (__monthlyTwKeyCache && __monthlyTwKeyCache.bt === bt) return __monthlyTwKeyCache;
+        var labels = [];
+        var idGroups = [];
+        var rec = null;
+        try {{
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.getAnalysisMetrics === 'function') {{
+            rec = window.KpiPlExpensePresets.getAnalysisMetrics(bt);
+          }}
+        }} catch (_eRec) {{}}
+        var lang = monthlyTwPageLang();
+        if (rec && rec.mode === 'key_expenses') {{
+          (rec.groups || []).forEach(function (group) {{
+            (group.rows || []).forEach(function (row) {{
+              if (!row || row.source === 'labor') return;
+              var ids = [];
+              (row.lineIds || []).forEach(function (id) {{ if (id) ids.push(String(id)); }});
+              if (!ids.length) return;
+              idGroups.push(ids);
+              labels.push(monthlyTwPickLabel(row, lang));
+            }});
+          }});
+        }}
+        if (idGroups.length > 2) {{
+          idGroups = idGroups.slice(0, 2);
+          labels = labels.slice(0, 2);
+        }}
+        __monthlyTwKeyCache = {{ bt: bt, labels: labels, idGroups: idGroups }};
+        return __monthlyTwKeyCache;
+      }}
+
+      function monthlyTwResidualLabel(lang) {{
+        if (lang === 'en') return 'Other Var';
+        if (lang === 'zh') return '其他變動';
+        return 'その他変動';
+      }}
+
+      function applyMonthlyTwMetricLabels() {{
+        var col = document.querySelector('.monthly-table-window__metric-col');
+        if (!col) return;
+        var lines = col.querySelectorAll('.monthly-table-window__metric-line');
+        if (!lines.length) return;
+        var i;
+        for (i = 0; i < lines.length; i++) {{
+          if (!lines[i].getAttribute('data-tw-orig')) {{
+            lines[i].setAttribute('data-tw-orig', lines[i].textContent || '');
+          }}
+        }}
+        var restaurant = monthlyTwIsRestaurant();
+        for (i = 0; i < lines.length; i++) {{
+          lines[i].style.display = '';
+          lines[i].textContent = lines[i].getAttribute('data-tw-orig') || '';
+        }}
+        if (restaurant) return;
+        var hideIdx = [1, 2, 7, 8, 9, 10, 11, 12, 13];
+        hideIdx.forEach(function (idx) {{
+          if (lines[idx]) lines[idx].style.display = 'none';
+        }});
+        var spec = monthlyTwKeyExpenseSpec();
+        var lang = monthlyTwPageLang();
+        if (lines[14]) lines[14].textContent = spec.labels[0] || (lang === 'en' ? 'Key costs' : '主要費目');
+        if (lines[15]) lines[15].textContent = spec.labels[1] || lines[14].textContent;
+        if (lines[16]) lines[16].textContent = monthlyTwResidualLabel(lang);
+      }}
+
+      function monthlyTwResizeVfocusGroup(g, rows) {{
+        if (!g) return;
+        g.setAttribute('data-tw-rows', String(rows));
+        while (g.childElementCount > rows) g.removeChild(g.lastChild);
+        while (g.childElementCount < rows) {{
+          var sp = document.createElement('span');
+          sp.className = 'monthly-vfocus-cell';
+          sp.setAttribute('aria-hidden', 'true');
+          g.appendChild(sp);
+        }}
+      }}
+
+      function applyMonthlyTwBusinessTypeLayout() {{
+        __monthlyTwKeyCache = null;
+        var root = document.querySelector('.monthly-table-window');
+        if (root) {{
+          root.setAttribute('data-tw-layout', monthlyTwIsRestaurant() ? 'restaurant' : 'key-expenses');
+        }}
+        applyMonthlyTwMetricLabels();
+        var row1 = monthlyTwGroupRowCount(1);
+        var row2 = monthlyTwGroupRowCount(2);
+        var row3 = monthlyTwGroupRowCount(3);
+        [
+          ['monthly-vfocus-prev-group-1', row1],
+          ['monthly-vfocus-group-1', row1],
+          ['monthly-vfocus-next-group-1', row1],
+          ['monthly-vfocus-prev-group-2', row2],
+          ['monthly-vfocus-group-2', row2],
+          ['monthly-vfocus-next-group-2', row2],
+          ['monthly-vfocus-prev-group-3', row3],
+          ['monthly-vfocus-group-3', row3],
+          ['monthly-vfocus-next-group-3', row3],
+        ].forEach(function (pair) {{
+          monthlyTwResizeVfocusGroup(document.getElementById(pair[0]), pair[1]);
+        }});
+        window.__monthlyTwGroupRowCount = monthlyTwGroupRowCount;
+        window.__monthlyTwIsRestaurant = monthlyTwIsRestaurant;
+        window.__monthlyTwGroup1DiffIdx = monthlyTwGroup1DiffIdx;
+        window.__applyMonthlyTwBusinessTypeLayout = applyMonthlyTwBusinessTypeLayout;
+      }}
+
+      function decorateMonthlyGroup1Cell(cell, cellIndex, iso, skipDiffDecor) {{
         if (!cell) return;
-        if (cellIndex === 3) {{
+        cell.classList.remove('monthly-data-column__cell--plan-target');
+        if (skipDiffDecor) {{
+          clearMonthlyTwDiffClasses(cell);
+          return;
+        }}
+        if (cellIndex === monthlyTwGroup1TargetIdx()) {{
           cell.classList.add('monthly-data-column__cell--plan-target');
         }}
-        if (cellIndex !== 4) return;
+        if (cellIndex !== monthlyTwGroup1DiffIdx()) return;
         var snap = readGroup1TwSnapshot(iso);
         applyMonthlyTwDiffClass(cell, snap.diffActual, snap.diffTarget);
       }}
@@ -449,7 +823,8 @@ def monthly_tw_mep_metrics_js() -> str:
         var srcCol = trackGroup1.children[colIdx];
         if (!srcCol) return;
         var srcCells = srcCol.querySelectorAll('.monthly-data-column__cell');
-        var srcDiff = srcCells && srcCells[4] ? srcCells[4] : null;
+        var diffIdx = monthlyTwGroup1DiffIdx();
+        var srcDiff = srcCells && srcCells[diffIdx] ? srcCells[diffIdx] : null;
         clearMonthlyTwDiffClasses(cell);
         if (!srcDiff) return;
         monthlyTwDiffLevels().forEach(function (cls) {{
@@ -459,6 +834,14 @@ def monthly_tw_mep_metrics_js() -> str:
 
       function resolveGroup1Values(iso) {{
         var snap = readGroup1TwSnapshot(iso);
+        if (!monthlyTwIsRestaurant()) {{
+          return [
+            fmtTwMoney(snap.sales),
+            snap.targetText,
+            snap.diffText,
+            snap.achText,
+          ];
+        }}
         var lunch = mepReadRow(iso, 'incLunch');
         var dinner = mepSalesRowMinusLunch(iso, 'incLunch');
         return [
@@ -472,6 +855,7 @@ def monthly_tw_mep_metrics_js() -> str:
       }}
 
       function resolveGroup2Values(iso) {{
+        if (!monthlyTwIsRestaurant()) return [];
         var cust = mepReadRow(iso, 'cust');
         var custLunch = mepReadRow(iso, 'custLunch');
         var custDinner = mepParentMinusLunch(iso, 'cust', 'custLunch');
@@ -501,23 +885,55 @@ def monthly_tw_mep_metrics_js() -> str:
         ];
       }}
 
+      function mepSumVariablePortion(iso, ids, variableIds) {{
+        var allow = {{}};
+        (variableIds || []).forEach(function (id) {{
+          if (id) allow[id] = true;
+        }});
+        var sum = 0;
+        (ids || []).forEach(function (id) {{
+          if (allow[id]) sum += mepReadRow(iso, id);
+        }});
+        return Math.round(sum);
+      }}
+
       function resolveGroup3Values(iso) {{
         var cache = window.__MONTHLY_MEP_METRICS__ || {{}};
-        var food = mepReadRow(iso, 'exp_food_cost');
-        var bev = mepReadRow(iso, 'exp_drink_cost');
-        var misc = mepReadRow(iso, 'exp_misc');
         var fixed = mepSumRows(iso, cache.fixedIds);
         var expected = mepSumRows(iso, cache.variableIds);
         var total = fixed + expected;
+        if (monthlyTwIsRestaurant()) {{
+          var food = mepReadRow(iso, 'exp_food_cost');
+          var bev = mepReadRow(iso, 'exp_drink_cost');
+          var misc = mepReadRow(iso, 'exp_misc');
+          return [
+            fmtTwMoney(food),
+            fmtTwMoney(bev),
+            fmtTwMoney(misc),
+            fmtTwMoney(fixed),
+            fmtTwMoney(expected),
+            fmtTwMoney(total),
+          ];
+        }}
+        var spec = monthlyTwKeyExpenseSpec();
+        var k0 = mepSumRows(iso, spec.idGroups[0] || []);
+        var k1 = mepSumRows(iso, spec.idGroups[1] || []);
+        var residual = Math.max(
+          0,
+          expected -
+            mepSumVariablePortion(iso, spec.idGroups[0] || [], cache.variableIds) -
+            mepSumVariablePortion(iso, spec.idGroups[1] || [], cache.variableIds)
+        );
         return [
-          fmtTwMoney(food),
-          fmtTwMoney(bev),
-          fmtTwMoney(misc),
+          fmtTwMoney(k0),
+          fmtTwMoney(k1),
+          fmtTwMoney(residual),
           fmtTwMoney(fixed),
           fmtTwMoney(expected),
           fmtTwMoney(total),
         ];
       }}
+      /* === UNIT-5C-5-MONTHLY-TW-BT-END === */
 
       function resolveMonthlyProfitValue(iso) {{
         var sales = dailySalesAmount(iso);

@@ -4764,33 +4764,51 @@
       --monthly-data-cell-border: 1px;
       --monthly-data-row-h: 44px;
       --monthly-data-group-rows: 6;
+      --monthly-data-group1-rows: 6;
+      --monthly-data-group2-rows: 6;
+      --monthly-data-group3-rows: 6;
       --monthly-data-group-grid-rows: repeat(var(--monthly-data-group-rows), var(--monthly-data-row-h));
       --monthly-data-group-outer-top: 60px;
       --monthly-data-group-outer-h: calc(
         var(--monthly-data-group-rows) * var(--monthly-data-row-h) +
           2 * var(--monthly-data-cell-border)
       );
+      --monthly-data-group1-outer-h: calc(
+        var(--monthly-data-group1-rows) * var(--monthly-data-row-h) +
+          2 * var(--monthly-data-cell-border)
+      );
+      --monthly-data-group2-border-pad: calc(2 * var(--monthly-data-cell-border));
+      --monthly-data-group2-outer-h: calc(
+        var(--monthly-data-group2-rows) * var(--monthly-data-row-h) +
+          var(--monthly-data-group2-border-pad)
+      );
+      --monthly-data-group3-outer-h: calc(
+        var(--monthly-data-group3-rows) * var(--monthly-data-row-h) +
+          2 * var(--monthly-data-cell-border)
+      );
       --monthly-data-gap-between-groups: 39px;
+      --monthly-data-gap-after-g1: var(--monthly-data-gap-between-groups);
+      --monthly-data-gap-after-g2: var(--monthly-data-gap-between-groups);
       --monthly-data-group2-outer-top: calc(
-        var(--monthly-data-group-outer-top) + var(--monthly-data-group-outer-h) +
-          var(--monthly-data-gap-between-groups)
+        var(--monthly-data-group-outer-top) + var(--monthly-data-group1-outer-h) +
+          var(--monthly-data-gap-after-g1)
       );
       --monthly-data-group3-outer-top: calc(
-        var(--monthly-data-group2-outer-top) + var(--monthly-data-group-outer-h) +
-          var(--monthly-data-gap-between-groups)
+        var(--monthly-data-group2-outer-top) + var(--monthly-data-group2-outer-h) +
+          var(--monthly-data-gap-after-g2)
       );
       --monthly-date-row-h: 35px;
       --monthly-hscroll-top: 25px;
       --monthly-scroll-stack-h-three-groups: calc(
-        var(--monthly-date-row-h) + var(--monthly-data-group-outer-h) +
-          var(--monthly-data-gap-between-groups) + var(--monthly-data-group-outer-h) +
-          var(--monthly-data-gap-between-groups) + var(--monthly-data-group-outer-h)
+        var(--monthly-date-row-h) + var(--monthly-data-group1-outer-h) +
+          var(--monthly-data-gap-after-g1) + var(--monthly-data-group2-outer-h) +
+          var(--monthly-data-gap-after-g2) + var(--monthly-data-group3-outer-h)
       );
       /* 横スクロールバーが最下段セルに被らないよう、その下に余白 */
       --monthly-profit-row-h: 45px;
       --monthly-profit-gap-after-group3: 24px;
       --monthly-profit-row-top: calc(
-        var(--monthly-data-group3-outer-top) + var(--monthly-data-group-outer-h) +
+        var(--monthly-data-group3-outer-top) + var(--monthly-data-group3-outer-h) +
           var(--monthly-profit-gap-after-group3)
       );
       --monthly-profit-row-center: calc(
@@ -4804,7 +4822,7 @@
       /* Backward-compat vars for existing labels/guides */
       --monthly-income-cell-border: var(--monthly-data-cell-border);
       --monthly-income-cell-outer-top: var(--monthly-data-group-outer-top);
-      --monthly-income-cell-outer-h: var(--monthly-data-group-outer-h);
+      --monthly-income-cell-outer-h: var(--monthly-data-group1-outer-h);
       --monthly-income-label-band-top: calc(
         var(--monthly-income-cell-outer-top) + var(--monthly-income-cell-border)
       );
@@ -4816,7 +4834,7 @@
       --monthly-expenses-rows: var(--monthly-data-group-rows);
       --monthly-expenses-grid-rows: var(--monthly-data-group-grid-rows);
       --monthly-expenses-cell-outer-top: var(--monthly-data-group3-outer-top);
-      --monthly-expenses-cell-outer-h: var(--monthly-data-group-outer-h);
+      --monthly-expenses-cell-outer-h: var(--monthly-data-group3-outer-h);
       --monthly-expenses-label-band-top: calc(
         var(--monthly-expenses-cell-outer-top) + var(--monthly-income-cell-border)
       );
@@ -5495,15 +5513,15 @@
     /* Vertical "Income" band: same outer height as the 9-row data column (397px), flex-centered */
     .monthly-table-window__vlabel--income {
       top: var(--monthly-data-group-outer-top);
-      height: var(--monthly-data-group-outer-h);
+      height: var(--monthly-data-group1-outer-h);
     }
     .monthly-table-window__vlabel--customer {
       top: var(--monthly-data-group2-outer-top);
-      height: var(--monthly-data-group-outer-h);
+      height: var(--monthly-data-group2-outer-h);
     }
     .monthly-table-window__vlabel--expenses {
       top: var(--monthly-data-group3-outer-top);
-      height: var(--monthly-data-group-outer-h);
+      height: var(--monthly-data-group3-outer-h);
     }
     .monthly-table-window__vlabel .monthly-table-window__vlabel-inner {
       display: block;
@@ -6053,6 +6071,104 @@
     .monthly-table-window__metric-col .monthly-table-window__metric-line:nth-child(14) {
       visibility: hidden;
     }
+    /* === UNIT-5C-5-MONTHLY-TW-BT-CSS-BEGIN === */
+    .monthly-table-window[data-tw-layout="key-expenses"] {
+      --monthly-data-group1-rows: 4;
+      --monthly-data-group2-rows: 0;
+      --monthly-data-group2-border-pad: 0px;
+      --monthly-data-gap-after-g2: 0px;
+    }
+    .monthly-table-window[data-tw-layout="key-expenses"] .monthly-table-window__vlabel--customer {
+      display: none;
+    }
+    .monthly-table-window[data-tw-layout="key-expenses"] .monthly-table-window__metric-col {
+      height: calc(
+        var(--monthly-data-group1-rows) * var(--monthly-data-row-h) +
+          var(--monthly-data-gap-after-g1) +
+          var(--monthly-data-group3-rows) * var(--monthly-data-row-h)
+      );
+      grid-template-rows:
+        repeat(var(--monthly-data-group1-rows), var(--monthly-data-row-h))
+        var(--monthly-data-gap-after-g1)
+        repeat(var(--monthly-data-group3-rows), var(--monthly-data-row-h));
+    }
+    .monthly-table-window[data-tw-layout="key-expenses"] #monthly-scroll-track-group2 {
+      overflow: hidden;
+      min-height: 0;
+    }
+    .monthly-table-window[data-tw-layout="key-expenses"] #monthly-scroll-track-group2 .monthly-data-column--group {
+      border-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    #monthly-scroll-track-group1.monthly-scroll-data__track--group {
+      height: var(--monthly-data-group1-outer-h);
+      flex-basis: var(--monthly-data-group1-outer-h);
+    }
+    #monthly-scroll-track-group2.monthly-scroll-data__track--group {
+      height: var(--monthly-data-group2-outer-h);
+      flex-basis: var(--monthly-data-group2-outer-h);
+    }
+    #monthly-scroll-track-group3.monthly-scroll-data__track--group {
+      height: var(--monthly-data-group3-outer-h);
+      flex-basis: var(--monthly-data-group3-outer-h);
+    }
+    #monthly-scroll-track-group1 .monthly-data-column--group {
+      height: var(--monthly-data-group1-outer-h);
+      grid-template-rows: repeat(var(--monthly-data-group1-rows), var(--monthly-data-row-h));
+    }
+    #monthly-scroll-track-group2 .monthly-data-column--group {
+      height: var(--monthly-data-group2-outer-h);
+      grid-template-rows: repeat(var(--monthly-data-group2-rows), var(--monthly-data-row-h));
+    }
+    #monthly-scroll-track-group3 .monthly-data-column--group {
+      height: var(--monthly-data-group3-outer-h);
+      grid-template-rows: repeat(var(--monthly-data-group3-rows), var(--monthly-data-row-h));
+    }
+    #monthly-scroll-track-group1 .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-data-group1-outer-h);
+    }
+    #monthly-scroll-track-group2 .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-data-group2-outer-h);
+    }
+    #monthly-scroll-track-group3 .monthly-scroll-data__track-spacer {
+      min-height: var(--monthly-data-group3-outer-h);
+    }
+    #monthly-scroll-track-group2 + .monthly-scroll-data__between {
+      flex-basis: var(--monthly-data-gap-after-g2);
+      height: var(--monthly-data-gap-after-g2);
+      min-height: var(--monthly-data-gap-after-g2);
+    }
+    .monthly-table-window__metric-col {
+      height: calc(
+        var(--monthly-data-group1-rows) * var(--monthly-data-row-h) +
+          var(--monthly-data-gap-after-g1) +
+          var(--monthly-data-group2-rows) * var(--monthly-data-row-h) +
+          var(--monthly-data-gap-after-g2) +
+          var(--monthly-data-group3-rows) * var(--monthly-data-row-h)
+      );
+      grid-template-rows:
+        repeat(var(--monthly-data-group1-rows), var(--monthly-data-row-h))
+        var(--monthly-data-gap-after-g1)
+        repeat(var(--monthly-data-group2-rows), var(--monthly-data-row-h))
+        var(--monthly-data-gap-after-g2)
+        repeat(var(--monthly-data-group3-rows), var(--monthly-data-row-h));
+    }
+    .monthly-vfocus-group[data-tw-rows="4"] {
+      grid-template-rows: repeat(3, var(--monthly-vfocus-cell-row-h)) var(--monthly-vfocus-cell-inner-h);
+    }
+    .monthly-vfocus-group[data-tw-rows="0"] {
+      display: none;
+      margin-top: 0 !important;
+      height: 0;
+      border-width: 0;
+    }
+    .monthly-table-window__h-line-775,
+    .monthly-table-window__h-line-775-right {
+      top: var(--monthly-profit-row-top);
+    }
+    /* === UNIT-5C-5-MONTHLY-TW-BT-CSS-END === */
+
     html[lang="en"] .monthly-table-window__metric-col {
       font-family: 'Orbitron', sans-serif;
     }
@@ -31109,15 +31225,16 @@
       var vPrevDayBtn = document.getElementById('monthly-vfocus-prev-day');
       var vNextDayBtn = document.getElementById('monthly-vfocus-next-day');
       var vEditBtn = document.getElementById('monthly-vfocus-edit');
-      function ensureGroupShell(g) {
+      function ensureGroupShell(g, groupNo) {
         if (!g) return;
-        if (g.childElementCount === 0) {
-          for (var i = 0; i < 6; i++) {
-            var sp = document.createElement('span');
-            sp.className = 'monthly-vfocus-cell';
-            sp.setAttribute('aria-hidden', 'true');
-            g.appendChild(sp);
-          }
+        var rows = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(groupNo || 1) : 6;
+        g.setAttribute('data-tw-rows', String(rows));
+        while (g.childElementCount > rows) g.removeChild(g.lastChild);
+        while (g.childElementCount < rows) {
+          var sp = document.createElement('span');
+          sp.className = 'monthly-vfocus-cell';
+          sp.setAttribute('aria-hidden', 'true');
+          g.appendChild(sp);
         }
       }
       function ensureVFocusShell() {
@@ -31131,7 +31248,10 @@
           vGroupNext1,
           vGroupNext2,
           vGroupNext3
-        ].forEach(ensureGroupShell);
+        ].forEach(function (g, idx) {
+          var gNo = (idx % 3) + 1;
+          ensureGroupShell(g, gNo);
+        });
         return !!(
           vDatePrev &&
           vDateEl &&
@@ -31315,7 +31435,8 @@
             for (var gi = 0; gi < 3; gi++) {
               var gEmpty = groups[gi];
               if (!gEmpty) continue;
-              for (var ci0 = 0; ci0 < 6; ci0++) {
+              var emptyN = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(gi + 1) : 6;
+              for (var ci0 = 0; ci0 < emptyN; ci0++) {
                 if (gEmpty.children[ci0]) gEmpty.children[ci0].textContent = '';
               }
             }
@@ -31326,36 +31447,43 @@
             setFocusBarDateFromHeader(dateEl, hdrLane);
           }
           var valuesLane = [];
-          [trackGroup1, trackGroup2, trackGroup3].forEach(function (t) {
+          var laneCounts = [];
+          [trackGroup1, trackGroup2, trackGroup3].forEach(function (t, giLane) {
+            var nLane = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(giLane + 1) : 6;
+            laneCounts.push(nLane);
             var col = t && t.children ? t.children[colIdx] : null;
-            if (!col) return;
-            var cells = col.querySelectorAll('.monthly-data-column__cell');
-            for (var k = 0; k < 6; k++) {
+            var cells = col ? col.querySelectorAll('.monthly-data-column__cell') : [];
+            for (var k = 0; k < nLane; k++) {
               valuesLane.push(textOrDemo(cells[k] ? cells[k].textContent : ''));
             }
           });
-          while (valuesLane.length < 18) valuesLane.push(demoMoney);
+          var laneOffset = 0;
           for (var gi2 = 0; gi2 < 3; gi2++) {
             var g2 = groups[gi2];
-            if (!g2) continue;
-            for (var ci2 = 0; ci2 < 6; ci2++) {
-              var cell = g2.children[ci2];
-              if (cell) {
-                cell.textContent = valuesLane[gi2 * 6 + ci2] || demoMoney;
-                if (gi2 === 0 && ci2 === 4) {
-                  cell.classList.remove('monthly-vfocus-cell--plan-target');
-                  syncMonthlyVfocusDiffClass(cell, colIdx);
-                } else if (gi2 === 0 && ci2 === 3) {
-                  clearMonthlyTwDiffClasses(cell);
-                  cell.classList.add('monthly-vfocus-cell--plan-target');
-                } else if (gi2 === 0) {
-                  clearMonthlyTwDiffClasses(cell);
-                  cell.classList.remove('monthly-vfocus-cell--plan-target');
-                } else {
-                  cell.classList.remove('monthly-vfocus-cell--plan-target');
+            var nCopy = laneCounts[gi2] || 0;
+            var diffIdx = typeof monthlyTwGroup1DiffIdx === 'function' ? monthlyTwGroup1DiffIdx() : 4;
+            var targetIdx = typeof monthlyTwGroup1TargetIdx === 'function' ? monthlyTwGroup1TargetIdx() : 3;
+            if (g2) {
+              for (var ci2 = 0; ci2 < nCopy; ci2++) {
+                var cell = g2.children[ci2];
+                if (cell) {
+                  cell.textContent = valuesLane[laneOffset + ci2] || demoMoney;
+                  if (gi2 === 0 && ci2 === diffIdx) {
+                    cell.classList.remove('monthly-vfocus-cell--plan-target');
+                    syncMonthlyVfocusDiffClass(cell, colIdx);
+                  } else if (gi2 === 0 && ci2 === targetIdx) {
+                    clearMonthlyTwDiffClasses(cell);
+                    cell.classList.add('monthly-vfocus-cell--plan-target');
+                  } else if (gi2 === 0) {
+                    clearMonthlyTwDiffClasses(cell);
+                    cell.classList.remove('monthly-vfocus-cell--plan-target');
+                  } else {
+                    cell.classList.remove('monthly-vfocus-cell--plan-target');
+                  }
                 }
               }
             }
+            laneOffset += nCopy;
           }
           var pCol = trackProfit && trackProfit.children ? trackProfit.children[colIdx] : null;
           if (profitEl) {
@@ -31750,8 +31878,9 @@
       /* CLS hydrate 用の幅確保スケルトン（非表示）。OFF 日の最終表示には使わない。 */
       var TW_SKELETON_MONEY = '\u00a50,000,000';
       var TW_SKELETON_PCT = '000%';
-      function dashRow6() {
-        return [
+      function dashRow6(groupNo) {
+        var n = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(groupNo || 1) : 6;
+        var row = [
           TW_SKELETON_MONEY,
           TW_SKELETON_MONEY,
           TW_SKELETON_MONEY,
@@ -31759,6 +31888,8 @@
           TW_SKELETON_MONEY,
           TW_SKELETON_PCT,
         ];
+        if (groupNo === 1 && n === 4) return [TW_SKELETON_MONEY, TW_SKELETON_MONEY, TW_SKELETON_MONEY, TW_SKELETON_PCT];
+        return row.slice(0, n);
       }
       function twZeroMoney() {
         if (typeof fmtTwMoney === 'function') return fmtTwMoney(0);
@@ -31768,12 +31899,17 @@
       /* OFF 日: 表記ルールどおり ¥0/$0（達成率は 0%、来客数などは 0） */
       function offZeroRow6(groupNo) {
         var z = twZeroMoney();
-        if (groupNo === 1) return [z, z, z, z, z, '0%'];
-        if (groupNo === 2) {
-          if (useJa) return ['0', '0', '0', '0', '0', '0'];
-          return ['0', '0', '0', z, z, z];
+        var n = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(groupNo) : 6;
+        if (groupNo === 1) {
+          if (n === 4) return [z, z, z, '0%'];
+          return [z, z, z, z, z, '0%'];
         }
-        return [z, z, z, z, z, z];
+        if (groupNo === 2) {
+          if (!n) return [];
+          if (useJa) return ['0', '0', '0', '0', '0', '0'].slice(0, n);
+          return ['0', '0', '0', z, z, z].slice(0, n);
+        }
+        return [z, z, z, z, z, z].slice(0, n);
       }
                                           /* KPI-MONTHLY-TW-MEP-METRICS */
       var zeroMoney = window.KpiCurrency ? KpiCurrency.zero() : (useJa ? '\u00a50' : '$0');
@@ -31804,6 +31940,7 @@
 
       function invalidateMonthlyMepMetricsCache() {
         window.__MONTHLY_MEP_METRICS__ = null;
+        __monthlyTwKeyCache = null;
       }
 
       function plCatalogLines() {
@@ -31984,9 +32121,10 @@
         var col = trackGroup1.querySelector('.monthly-data-column[data-iso="' + iso + '"]');
         if (!col || col.classList.contains('monthly-data-column--off')) return null;
         var cells = col.querySelectorAll('.monthly-data-column__cell');
-        if (!cells || cells.length < 4) return null;
+        var tIdx = typeof monthlyTwGroup1TargetIdx === 'function' ? monthlyTwGroup1TargetIdx() : 3;
+        if (!cells || cells.length <= tIdx) return null;
         var salesText = cells[0] ? cells[0].textContent : '';
-        var targetText = cells[3] ? cells[3].textContent : '';
+        var targetText = cells[tIdx] ? cells[tIdx].textContent : '';
         if (isMonthlyTwSkeletonMoney(salesText) || isMonthlyTwSkeletonMoney(targetText)) return null;
         var sales = parseTwCellMoney(salesText);
         var target = parseTwCellMoney(targetText);
@@ -32092,12 +32230,214 @@
         };
       };
 
+                        /* === UNIT-5C-5-MONTHLY-TW-BT-BEGIN === */
+      var __monthlyTwKeyCache = null;
+      function monthlyTwPageLang() {
+        var lang = '';
+        try {
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }
+
+      function monthlyTwIsRestaurant() {
+        try {
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {
+            return !!window.KpiBusinessType.isRestaurantLike();
+          }
+        } catch (_eRest) {}
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try {
+            var rec = api.getAnalysisMetrics();
+            return !rec || rec.mode !== 'key_expenses';
+          } catch (_eM) {}
+        }
+        return true;
+      }
+
+      function monthlyTwGroupRowCount(groupNo) {
+        if (monthlyTwIsRestaurant()) return 6;
+        if (groupNo === 1) return 4;
+        if (groupNo === 2) return 0;
+        return 6;
+      }
+
+      function monthlyTwGroup1TargetIdx() {
+        return monthlyTwIsRestaurant() ? 3 : 1;
+      }
+
+      function monthlyTwGroup1DiffIdx() {
+        return monthlyTwIsRestaurant() ? 4 : 2;
+      }
+
+      function monthlyTwPickLabel(row, lang) {
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }
+
+      function monthlyTwKeyExpenseSpec() {
+        var bt = 'restaurant';
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {
+            bt = String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          } else if (window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function') {
+            bt = String(window.KpiBusinessType.getBusinessType() || 'restaurant');
+          }
+        } catch (_eBt) {}
+        if (__monthlyTwKeyCache && __monthlyTwKeyCache.bt === bt) return __monthlyTwKeyCache;
+        var labels = [];
+        var idGroups = [];
+        var rec = null;
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.getAnalysisMetrics === 'function') {
+            rec = window.KpiPlExpensePresets.getAnalysisMetrics(bt);
+          }
+        } catch (_eRec) {}
+        var lang = monthlyTwPageLang();
+        if (rec && rec.mode === 'key_expenses') {
+          (rec.groups || []).forEach(function (group) {
+            (group.rows || []).forEach(function (row) {
+              if (!row || row.source === 'labor') return;
+              var ids = [];
+              (row.lineIds || []).forEach(function (id) { if (id) ids.push(String(id)); });
+              if (!ids.length) return;
+              idGroups.push(ids);
+              labels.push(monthlyTwPickLabel(row, lang));
+            });
+          });
+        }
+        if (idGroups.length > 2) {
+          idGroups = idGroups.slice(0, 2);
+          labels = labels.slice(0, 2);
+        }
+        __monthlyTwKeyCache = { bt: bt, labels: labels, idGroups: idGroups };
+        return __monthlyTwKeyCache;
+      }
+
+      function monthlyTwResidualLabel(lang) {
+        if (lang === 'en') return 'Other Var';
+        if (lang === 'zh') return '其他變動';
+        return 'その他変動';
+      }
+
+      function applyMonthlyTwMetricLabels() {
+        var col = document.querySelector('.monthly-table-window__metric-col');
+        if (!col) return;
+        var lines = col.querySelectorAll('.monthly-table-window__metric-line');
+        if (!lines.length) return;
+        var i;
+        for (i = 0; i < lines.length; i++) {
+          if (!lines[i].getAttribute('data-tw-orig')) {
+            lines[i].setAttribute('data-tw-orig', lines[i].textContent || '');
+          }
+        }
+        var restaurant = monthlyTwIsRestaurant();
+        for (i = 0; i < lines.length; i++) {
+          lines[i].style.display = '';
+          lines[i].textContent = lines[i].getAttribute('data-tw-orig') || '';
+        }
+        if (restaurant) return;
+        var hideIdx = [1, 2, 7, 8, 9, 10, 11, 12, 13];
+        hideIdx.forEach(function (idx) {
+          if (lines[idx]) lines[idx].style.display = 'none';
+        });
+        var spec = monthlyTwKeyExpenseSpec();
+        var lang = monthlyTwPageLang();
+        if (lines[14]) lines[14].textContent = spec.labels[0] || (lang === 'en' ? 'Key costs' : '主要費目');
+        if (lines[15]) lines[15].textContent = spec.labels[1] || (spec.labels[0] || '');
+        if (lines[16]) lines[16].textContent = monthlyTwResidualLabel(lang);
+      }
+
+      function monthlyTwResizeVfocusGroup(g, rows) {
+        if (!g) return;
+        g.setAttribute('data-tw-rows', String(rows));
+        while (g.childElementCount > rows) g.removeChild(g.lastChild);
+        while (g.childElementCount < rows) {
+          var sp = document.createElement('span');
+          sp.className = 'monthly-vfocus-cell';
+          sp.setAttribute('aria-hidden', 'true');
+          g.appendChild(sp);
+        }
+      }
+
+      function monthlyTwHookBusinessType() {
+        try {
+          if (!window.KpiBusinessType || window.KpiBusinessType.__monthlyTwHooked) return;
+          if (typeof window.KpiBusinessType.setBusinessType !== 'function') return;
+          window.KpiBusinessType.__monthlyTwHooked = true;
+          var orig = window.KpiBusinessType.setBusinessType;
+          window.KpiBusinessType.setBusinessType = function () {
+            var ok = orig.apply(this, arguments);
+            try {
+              document.dispatchEvent(new CustomEvent('kpi:businessTypeChanged'));
+            } catch (_eHook) {}
+            return ok;
+          };
+        } catch (_eWrap) {}
+      }
+
+      function applyMonthlyTwBusinessTypeLayout() {
+        __monthlyTwKeyCache = null;
+        monthlyTwHookBusinessType();
+        var root = document.querySelector('.monthly-table-window');
+        if (root) {
+          root.setAttribute('data-tw-layout', monthlyTwIsRestaurant() ? 'restaurant' : 'key-expenses');
+        }
+        applyMonthlyTwMetricLabels();
+        var row1 = monthlyTwGroupRowCount(1);
+        var row2 = monthlyTwGroupRowCount(2);
+        var row3 = monthlyTwGroupRowCount(3);
+        [
+          ['monthly-vfocus-prev-group-1', row1],
+          ['monthly-vfocus-group-1', row1],
+          ['monthly-vfocus-next-group-1', row1],
+          ['monthly-vfocus-prev-group-2', row2],
+          ['monthly-vfocus-group-2', row2],
+          ['monthly-vfocus-next-group-2', row2],
+          ['monthly-vfocus-prev-group-3', row3],
+          ['monthly-vfocus-group-3', row3],
+          ['monthly-vfocus-next-group-3', row3],
+        ].forEach(function (pair) {
+          monthlyTwResizeVfocusGroup(document.getElementById(pair[0]), pair[1]);
+        });
+        window.__monthlyTwGroupRowCount = monthlyTwGroupRowCount;
+        window.__monthlyTwIsRestaurant = monthlyTwIsRestaurant;
+        window.__monthlyTwGroup1DiffIdx = monthlyTwGroup1DiffIdx;
+        window.__applyMonthlyTwBusinessTypeLayout = applyMonthlyTwBusinessTypeLayout;
+      }
+
+      function mepSumVariablePortion(iso, ids, variableIds) {
+        var allow = {};
+        (variableIds || []).forEach(function (id) {
+          if (id) allow[id] = true;
+        });
+        var sum = 0;
+        (ids || []).forEach(function (id) {
+          if (allow[id]) sum += mepReadRow(iso, id);
+        });
+        return Math.round(sum);
+      }
+      applyMonthlyTwBusinessTypeLayout();
+      /* === UNIT-5C-5-MONTHLY-TW-BT-END === */
+
       function decorateMonthlyGroup1Cell(cell, cellIndex, iso, skipDiffDecor) {
-        if (!cell || skipDiffDecor) return;
-        if (cellIndex === 3) {
+        if (!cell) return;
+        cell.classList.remove('monthly-data-column__cell--plan-target');
+        if (skipDiffDecor) {
+          clearMonthlyTwDiffClasses(cell);
+          return;
+        }
+        if (cellIndex === monthlyTwGroup1TargetIdx()) {
           cell.classList.add('monthly-data-column__cell--plan-target');
         }
-        if (cellIndex !== 4) return;
+        if (cellIndex !== monthlyTwGroup1DiffIdx()) return;
         var snap = readGroup1TwSnapshot(iso);
         applyMonthlyTwDiffClass(cell, snap.diffActual, snap.diffTarget);
       }
@@ -32107,7 +32447,8 @@
         var srcCol = trackGroup1.children[colIdx];
         if (!srcCol) return;
         var srcCells = srcCol.querySelectorAll('.monthly-data-column__cell');
-        var srcDiff = srcCells && srcCells[4] ? srcCells[4] : null;
+        var diffIdx = typeof monthlyTwGroup1DiffIdx === 'function' ? monthlyTwGroup1DiffIdx() : 4;
+        var srcDiff = srcCells && srcCells[diffIdx] ? srcCells[diffIdx] : null;
         clearMonthlyTwDiffClasses(cell);
         if (!srcDiff) return;
         monthlyTwDiffLevels().forEach(function (cls) {
@@ -32117,6 +32458,14 @@
 
       function resolveGroup1Values(iso) {
         var snap = readGroup1TwSnapshot(iso);
+        if (!monthlyTwIsRestaurant()) {
+          return [
+            fmtTwMoney(snap.sales),
+            snap.targetText,
+            snap.diffText,
+            snap.achText,
+          ];
+        }
         var lunch = mepReadRow(iso, 'incLunch');
         var dinner = mepSalesRowMinusLunch(iso, 'incLunch');
         return [
@@ -32130,6 +32479,7 @@
       }
 
       function resolveGroup2Values(iso) {
+        if (!monthlyTwIsRestaurant()) return [];
         var cust = mepReadRow(iso, 'cust');
         var custLunch = mepReadRow(iso, 'custLunch');
         var custDinner = mepParentMinusLunch(iso, 'cust', 'custLunch');
@@ -32161,16 +32511,35 @@
 
       function resolveGroup3Values(iso) {
         var cache = window.__MONTHLY_MEP_METRICS__ || {};
-        var food = mepReadRow(iso, 'exp_food_cost');
-        var bev = mepReadRow(iso, 'exp_drink_cost');
-        var misc = mepReadRow(iso, 'exp_misc');
         var fixed = mepSumRows(iso, cache.fixedIds);
         var expected = mepSumRows(iso, cache.variableIds);
         var total = fixed + expected;
+        if (monthlyTwIsRestaurant()) {
+          var food = mepReadRow(iso, 'exp_food_cost');
+          var bev = mepReadRow(iso, 'exp_drink_cost');
+          var misc = mepReadRow(iso, 'exp_misc');
+          return [
+            fmtTwMoney(food),
+            fmtTwMoney(bev),
+            fmtTwMoney(misc),
+            fmtTwMoney(fixed),
+            fmtTwMoney(expected),
+            fmtTwMoney(total),
+          ];
+        }
+        var spec = monthlyTwKeyExpenseSpec();
+        var k0 = mepSumRows(iso, spec.idGroups[0] || []);
+        var k1 = mepSumRows(iso, spec.idGroups[1] || []);
+        var residual = Math.max(
+          0,
+          expected -
+            mepSumVariablePortion(iso, spec.idGroups[0] || [], cache.variableIds) -
+            mepSumVariablePortion(iso, spec.idGroups[1] || [], cache.variableIds)
+        );
         return [
-          fmtTwMoney(food),
-          fmtTwMoney(bev),
-          fmtTwMoney(misc),
+          fmtTwMoney(k0),
+          fmtTwMoney(k1),
+          fmtTwMoney(residual),
           fmtTwMoney(fixed),
           fmtTwMoney(expected),
           fmtTwMoney(total),
@@ -32226,72 +32595,13 @@
         var iso = toISODateLocal(dayObj);
         var off = !isBusinessDayByIso(iso, dayObj);
         if (off) return { off: true };
-        var cache = window.__MONTHLY_MEP_METRICS__ || {};
-        var fixedIds = cache.fixedIds || [];
-        var variableIds = cache.variableIds || [];
-        var sales = dailySalesAmount(iso);
         var snap = readGroup1TwSnapshot(iso);
-        var lunch = mepReadRow(iso, 'incLunch');
-        var dinner = Math.max(0, Math.round(sales) - Math.round(lunch));
-        var g1 = [
-          fmtTwMoney(snap.sales),
-          fmtTwMoney(lunch),
-          fmtTwMoney(dinner),
-          snap.targetText,
-          snap.diffText,
-          snap.achText,
-        ];
-        var g2;
-        if (useJa) {
-          var cust = mepReadRow(iso, 'cust');
-          var custLunch = mepReadRow(iso, 'custLunch');
-          var custDinner = mepParentMinusLunch(iso, 'cust', 'custLunch');
-          var grp = mepReadRow(iso, 'groupCnt');
-          var grpLunch = mepReadRow(iso, 'groupCntLunch');
-          var grpDinner = mepParentMinusLunch(iso, 'groupCnt', 'groupCntLunch');
-          g2 = [
-            fmtTwCount(cust),
-            fmtTwCount(custLunch),
-            fmtTwCount(custDinner),
-            fmtTwCount(grp),
-            fmtTwCount(grpLunch),
-            fmtTwCount(grpDinner),
-          ];
-        } else {
-          var custEn = mepReadRow(iso, 'cust');
-          var custLunchEn = mepReadRow(iso, 'custLunch');
-          var custDinnerEn = mepParentMinusLunch(iso, 'cust', 'custLunch');
-          var pc = mepReadRow(iso, 'pc');
-          var pcLunch = mepReadRow(iso, 'pcLunch');
-          var pcDinner = mepParentMinusLunch(iso, 'pc', 'pcLunch');
-          g2 = [
-            fmtTwCount(custEn),
-            fmtTwCount(custLunchEn),
-            fmtTwCount(custDinnerEn),
-            fmtTwMoney(pc),
-            fmtTwMoney(pcLunch),
-            fmtTwMoney(pcDinner),
-          ];
-        }
-        var food = mepReadRow(iso, 'exp_food_cost');
-        var bev = mepReadRow(iso, 'exp_drink_cost');
-        var misc = mepReadRow(iso, 'exp_misc');
-        var fixedSum = mepSumRows(iso, fixedIds);
-        var varSum = mepSumRows(iso, variableIds);
-        var total = fixedSum + varSum;
         return {
           off: false,
-          g1: g1,
-          g2: g2,
-          g3: [
-            fmtTwMoney(food),
-            fmtTwMoney(bev),
-            fmtTwMoney(misc),
-            fmtTwMoney(fixedSum),
-            fmtTwMoney(varSum),
-            fmtTwMoney(total),
-          ],
-          profit: fmtTwMoney(sales - total),
+          g1: resolveGroup1Values(iso),
+          g2: resolveGroup2Values(iso),
+          g3: resolveGroup3Values(iso),
+          profit: resolveMonthlyProfitValue(iso),
           snap: snap,
         };
       }
@@ -32314,7 +32624,7 @@
         var values;
         /* KPI-MRP-PHASE2-6 */
         if (skeleton) {
-          values = dashRow6();
+          values = dashRow6(groupNo);
         } else if (!off && metrics) {
           if (groupNo === 1) values = metrics.g1;
           else if (groupNo === 2) values = metrics.g2;
@@ -32322,7 +32632,8 @@
         } else {
           values = getMonthlyGroupCellValues(groupNo, off, iso);
         }
-        for (var i = 0; i < 6; i++) {
+        var rowN = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(groupNo) : 6;
+        for (var i = 0; i < rowN; i++) {
           var cell = document.createElement('span');
           cell.className = 'monthly-data-column__cell';
           cell.setAttribute('aria-hidden', 'true');
@@ -32431,7 +32742,8 @@
         } else {
           values = metrics.g3;
         }
-        for (var hi = 0; hi < 6; hi++) {
+        var hydN = typeof monthlyTwGroupRowCount === 'function' ? monthlyTwGroupRowCount(groupNo) : 6;
+        for (var hi = 0; hi < hydN; hi++) {
           if (!cells[hi]) continue;
           cells[hi].textContent = values[hi] || '';
           if (groupNo === 1) decorateMonthlyGroup1Cell(cells[hi], hi, iso, buffer);
@@ -32670,6 +32982,7 @@
         scheduleMonthlyTwHydrateTick(runPhase1);
       }
       function rebuildColumnsChunked(runToken, onDone) {
+        if (typeof applyMonthlyTwBusinessTypeLayout === 'function') applyMonthlyTwBusinessTypeLayout();
         /* KPI-MRP-PHASE2-5 */
         window.__monthlyTwColumnsBusy = true;
         __vfocusLastIdx = null;
@@ -32812,6 +33125,7 @@
         if (window.KpiYearStore && typeof KpiYearStore.syncToAnnualDaily === 'function') {
           KpiYearStore.syncToAnnualDaily();
         }
+        if (typeof applyMonthlyTwBusinessTypeLayout === 'function') applyMonthlyTwBusinessTypeLayout();
         loadMonthlyMepMetricsForYear(state.year);
         primeMonthlyTwTargetCache(state.year);
         invalidateGroup1TwCache();
@@ -33252,6 +33566,7 @@
         if (__monthlyTwRebuildTimer != null) window.clearTimeout(__monthlyTwRebuildTimer);
         __monthlyTwRebuildTimer = window.setTimeout(function () {
           __monthlyTwRebuildTimer = null;
+          if (typeof applyMonthlyTwBusinessTypeLayout === 'function') applyMonthlyTwBusinessTypeLayout();
           invalidateMonthlyMepMetricsCache();
           invalidateGroup1TwCache();
           if (typeof window.clearTwMetricsCache === 'function') window.clearTwMetricsCache();
@@ -33269,6 +33584,11 @@
       document.addEventListener('kpi:businessDayChanged', monthlyTwRebuildKeepFocus);
       document.addEventListener('kpi:dailyTargetModeChanged', monthlyTwRebuildKeepFocus);
       document.addEventListener('kpi:weekdayBaselineChanged', monthlyTwRebuildKeepFocus);
+      document.addEventListener('kpi:businessTypeChanged', monthlyTwRebuildKeepFocus);
+      window.addEventListener('storage', function (ev) {
+        if (!ev || String(ev.key || '') !== 'kpiNavigator.kpiYearStore') return;
+        monthlyTwRebuildKeepFocus();
+      });
       /* END KPI-MONTHLY-TW-LISTENERS */
 
       window.__MONTHLY_UI = window.__MONTHLY_UI || {};
