@@ -72,6 +72,7 @@ LABELS = {
         "dl_sales": "売上雛形をダウンロード",
         "dl_daily": "支出雛形をダウンロード（日次）",
         "dl_monthly": "支出雛形をダウンロード（月次）",
+        "dl_excel": "Excel雛形をダウンロード",
         "dl_daily_file": "支出入力_日次_雛形.csv",
         "dl_monthly_file": "支出入力_月次_雛形.csv",
         "dl_data_heading": "データ出力",
@@ -124,6 +125,7 @@ LABELS = {
         "dl_sales": "Download Sales Template",
         "dl_daily": "Download Expense Template (Daily)",
         "dl_monthly": "Download Expense Template (Monthly)",
+        "dl_excel": "Download Excel Template",
         "dl_daily_file": "expense-import_daily_template.csv",
         "dl_monthly_file": "expense-import_monthly_template.csv",
         "dl_data_heading": "Data export",
@@ -176,6 +178,7 @@ LABELS = {
         "dl_sales": "下載銷售範本",
         "dl_daily": "下載支出範本（每日）",
         "dl_monthly": "下載支出範本（月度）",
+        "dl_excel": "下載 Excel 範本",
         "dl_daily_file": "expense-import_daily_template.csv",
         "dl_monthly_file": "expense-import_monthly_template.csv",
         "dl_data_heading": "資料匯出",
@@ -400,6 +403,7 @@ def build_header(
             <button type="button" class="template-dl-item" id="kpi-dl-csv-sales" role="menuitem" data-kpi-csv-template="sales">{L['dl_sales']}</button>
             <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-daily" role="menuitem" data-kpi-csv-template="expense-daily">{L['dl_daily']}</button>
             <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-monthly" role="menuitem" data-kpi-csv-template="expense-monthly">{L['dl_monthly']}</button>
+            <button type="button" class="template-dl-item" id="kpi-dl-excel-template" role="menuitem" data-kpi-excel-template="workbook">{L['dl_excel']}</button>
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">{L['dl_data_heading']}</p>
             <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="{base}setting/change_plan.html" aria-label="{L['dl_export_pl_mep_aria']}">{L['dl_export_pl_mep']}</button>
@@ -465,6 +469,7 @@ def build_header(
     <script src="{img}js/kpi-business-type.js"></script>
     <script src="{img}js/kpi-pl-expense-presets.js"></script>
     <script src="{img}js/kpi-csv-templates.js"></script>
+    <script src="{img}js/kpi-excel-templates.js"></script>
     <script>
     (function () {{
       if (window.__headerDlBound) return;
