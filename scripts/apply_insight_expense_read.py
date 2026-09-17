@@ -23,6 +23,8 @@ PAGES = [
     ROOT / "en/app/monthly/index.html",
     ROOT / "app/annual/index.html",
     ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/monthly/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
 ]
 
 MARKER = "__insightReadMonthExpense"
@@ -39,7 +41,30 @@ def strip_existing(text: str) -> str:
     return re.sub(pattern, "", text)
 
 
+def inject_presets_script(text: str) -> str:
+    if "kpi-pl-expense-presets.js" in text:
+        return text
+    m = re.search(
+        r'^([ \t]*)<script src="([^"]*)kpi-business-type\.js"></script>',
+        text,
+        re.M,
+    )
+    if not m:
+        raise SystemExit("kpi-business-type.js script tag missing")
+    indent = m.group(1)
+    prefix = m.group(2)
+    old = m.group(0)
+    new = (
+        old
+        + "\n"
+        + indent
+        + f'<script src="{prefix}kpi-pl-expense-presets.js"></script>'
+    )
+    return text.replace(old, new, 1)
+
+
 def inject(text: str) -> str:
+    text = inject_presets_script(text)
     text = strip_existing(text)
     block = insight_expense_read_js().rstrip() + "\n"
     if ANCHOR not in text:

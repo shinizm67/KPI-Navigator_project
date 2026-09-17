@@ -20,6 +20,7 @@ def insight_expense_read_js() -> str:
       var adjMapCache = {{}};
       var sumThroughMonthCache = {{}};
       var expenseSnapshotCache = {{}};
+      var keyGroupCache = null;
 
       function invalidateInsightExpenseCaches() {{
         allocCache = {{}};
@@ -28,6 +29,7 @@ def insight_expense_read_js() -> str:
         adjMapCache = {{}};
         sumThroughMonthCache = {{}};
         expenseSnapshotCache = {{}};
+        keyGroupCache = null;
         window.__INSIGHT_YEAR_EXPENSE_CACHE = {{}};
       }}
 
@@ -229,6 +231,46 @@ def insight_expense_read_js() -> str:
         return line.lineId === 'exp_fixed_labor' || line.lineId === 'exp_variable_labor';
       }}
 
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-BEGIN === */
+      function insightExpenseBt() {{
+        try {{
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {{
+            return String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          }}
+        }} catch (_eBt) {{}}
+        return 'restaurant';
+      }}
+      function insightKeyExpenseGroups() {{
+        var bt = insightExpenseBt();
+        if (keyGroupCache && keyGroupCache.bt === bt) return keyGroupCache.groups;
+        var groups = [];
+        var rec = null;
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {{
+          try {{ rec = api.getAnalysisMetrics(bt); }} catch (_eM) {{}}
+        }}
+        if (rec && rec.mode === 'key_expenses') {{
+          (rec.groups || []).forEach(function (group) {{
+            (group.rows || []).forEach(function (row) {{
+              if (!row || row.source === 'labor') return;
+              var ids = {{}};
+              (row.lineIds || []).forEach(function (id) {{ if (id) ids[id] = true; }});
+              groups.push({{ ids: ids }});
+            }});
+          }});
+        }}
+        if (groups.length > 2) groups = groups.slice(0, 2);
+        keyGroupCache = {{ bt: bt, groups: groups }};
+        return groups;
+      }}
+      function addKeyExpenseAmount(line, amt, acc) {{
+        if (!amt || isLaborLine(line)) return;
+        var groups = insightKeyExpenseGroups();
+        if (groups[0] && groups[0].ids[line.lineId]) acc.key0 += amt;
+        else if (groups[1] && groups[1].ids[line.lineId]) acc.key1 += amt;
+      }}
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-END === */
+
       function sumDayMetrics(isoStr) {{
         var parts = String(isoStr).split('-');
         var year = Number(parts[0]);
@@ -244,6 +286,8 @@ def insight_expense_read_js() -> str:
           drink: 0,
           misc: 0,
           labor: 0,
+          key0: 0,
+          key1: 0,
           hasData: false,
         }};
         if (!s || !Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {{
@@ -255,6 +299,7 @@ def insight_expense_read_js() -> str:
         var food = 0;
         var drink = 0;
         var labor = 0;
+        var keyAcc = {{ key0: 0, key1: 0 }};
         var hasData = false;
         catalog().forEach(function (line) {{
           if (lineHasMonthData(s, year, month0, line)) hasData = true;
@@ -265,20 +310,12 @@ def insight_expense_read_js() -> str:
           if (isFoodLine(line)) food += amt;
           if (isDrinkLine(line)) drink += amt;
           if (isLaborLine(line)) labor += amt;
+          addKeyExpenseAmount(line, amt, keyAcc);
         }});
-        return {{
-          fixed: Math.round(fixed),
-          variable: Math.round(variable),
-          total: Math.round(fixed + variable),
-          food: Math.round(food),
-          drink: Math.round(drink),
-          misc: Math.max(0, Math.round(variable - food - drink)),
-          labor: Math.round(labor),
-          hasData: hasData,
-        }};
+        return packSumThrough(fixed, variable, food, drink, labor, keyAcc.key0, keyAcc.key1, hasData);
       }}
 
-      function packSumThrough(fixed, variable, food, drink, labor, hasData) {{
+      function packSumThrough(fixed, variable, food, drink, labor, key0, key1, hasData) {{
         return {{
           fixed: Math.round(fixed),
           variable: Math.round(variable),
@@ -287,6 +324,8 @@ def insight_expense_read_js() -> str:
           drink: Math.round(drink),
           misc: Math.max(0, Math.round(variable - food - drink)),
           labor: Math.round(labor),
+          key0: Math.round(key0 || 0),
+          key1: Math.round(key1 || 0),
           hasData: !!hasData,
         }};
       }}
@@ -296,19 +335,20 @@ def insight_expense_read_js() -> str:
         var m = Number(month);
         var dayMax = Number(throughDay);
         if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {{
-          return {{ fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0, hasData: false }};
+          return packSumThrough(0, 0, 0, 0, 0, 0, 0, false);
         }}
         var dim = new Date(y, m, 0).getDate();
         if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
         if (dayMax > dim) dayMax = dim;
-        var cacheKey = y + '-' + m + '-' + dayMax;
+        var bt = insightExpenseBt();
+        var cacheKey = y + '-' + m + '-' + dayMax + '|' + bt;
         if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, cacheKey)) {{
           return sumThroughMonthCache[cacheKey];
         }}
 
         // 日付スクラブ向け: 前後1日のキャッシュから増分（Annual YTD のボトルネック緩和）
         if (dayMax > 1) {{
-          var prevKey = y + '-' + m + '-' + (dayMax - 1);
+          var prevKey = y + '-' + m + '-' + (dayMax - 1) + '|' + bt;
           if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, prevKey)) {{
             var prev = sumThroughMonthCache[prevKey];
             var addSnap = sumDayMetrics(isoOf(y, m, dayMax));
@@ -318,6 +358,8 @@ def insight_expense_read_js() -> str:
               prev.food + addSnap.food,
               prev.drink + addSnap.drink,
               prev.labor + addSnap.labor,
+              (prev.key0 || 0) + (addSnap.key0 || 0),
+              (prev.key1 || 0) + (addSnap.key1 || 0),
               prev.hasData
             );
             sumThroughMonthCache[cacheKey] = fwd;
@@ -325,7 +367,7 @@ def insight_expense_read_js() -> str:
           }}
         }}
         if (dayMax < dim) {{
-          var nextKey = y + '-' + m + '-' + (dayMax + 1);
+          var nextKey = y + '-' + m + '-' + (dayMax + 1) + '|' + bt;
           if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, nextKey)) {{
             var next = sumThroughMonthCache[nextKey];
             var subSnap = sumDayMetrics(isoOf(y, m, dayMax + 1));
@@ -335,6 +377,8 @@ def insight_expense_read_js() -> str:
               next.food - subSnap.food,
               next.drink - subSnap.drink,
               next.labor - subSnap.labor,
+              (next.key0 || 0) - (subSnap.key0 || 0),
+              (next.key1 || 0) - (subSnap.key1 || 0),
               next.hasData
             );
             sumThroughMonthCache[cacheKey] = back;
@@ -347,6 +391,8 @@ def insight_expense_read_js() -> str:
         var food = 0;
         var drink = 0;
         var labor = 0;
+        var key0 = 0;
+        var key1 = 0;
         var hasData = false;
         var s = store();
         catalog().forEach(function (line) {{
@@ -359,8 +405,10 @@ def insight_expense_read_js() -> str:
           food += snap.food;
           drink += snap.drink;
           labor += snap.labor;
+          key0 += snap.key0 || 0;
+          key1 += snap.key1 || 0;
         }}
-        var result = packSumThrough(fixed, variable, food, drink, labor, hasData);
+        var result = packSumThrough(fixed, variable, food, drink, labor, key0, key1, hasData);
         sumThroughMonthCache[cacheKey] = result;
         return result;
       }}
@@ -389,6 +437,8 @@ def insight_expense_read_js() -> str:
           drink: 0,
           misc: 0,
           labor: 0,
+          key0: 0,
+          key1: 0,
         }};
         var empty = {{
           hasData: false,
@@ -398,8 +448,9 @@ def insight_expense_read_js() -> str:
           source: 'pl-unified',
         }};
         if (!iso || !/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(String(iso))) return empty;
-        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, iso)) {{
-          return expenseSnapshotCache[iso];
+        var cacheKey = String(iso) + '|' + insightExpenseBt();
+        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, cacheKey)) {{
+          return expenseSnapshotCache[cacheKey];
         }}
         var parts = String(iso).split('-');
         var y = Number(parts[0]);
@@ -414,6 +465,8 @@ def insight_expense_read_js() -> str:
         var yearFood = 0;
         var yearDrink = 0;
         var yearLabor = 0;
+        var yearKey0 = 0;
+        var yearKey1 = 0;
         var yearHasData = false;
         for (var m = 1; m <= month; m++) {{
           var td = m === month ? day : new Date(y, m, 0).getDate();
@@ -423,6 +476,8 @@ def insight_expense_read_js() -> str:
           yearFood += ms.food;
           yearDrink += ms.drink;
           yearLabor += ms.labor;
+          yearKey0 += ms.key0 || 0;
+          yearKey1 += ms.key1 || 0;
           if (ms.hasData) yearHasData = true;
         }}
 
@@ -436,6 +491,8 @@ def insight_expense_read_js() -> str:
             drink: dayScope.drink,
             misc: dayScope.misc,
             labor: dayScope.labor,
+            key0: dayScope.key0 || 0,
+            key1: dayScope.key1 || 0,
           }},
           month: {{
             fixed: monthScope.fixed,
@@ -445,6 +502,8 @@ def insight_expense_read_js() -> str:
             drink: monthScope.drink,
             misc: monthScope.misc,
             labor: monthScope.labor,
+            key0: monthScope.key0 || 0,
+            key1: monthScope.key1 || 0,
           }},
           year: {{
             fixed: Math.round(yearFixed),
@@ -454,10 +513,12 @@ def insight_expense_read_js() -> str:
             drink: Math.round(yearDrink),
             misc: Math.max(0, Math.round(yearVariable - yearFood - yearDrink)),
             labor: Math.round(yearLabor),
+            key0: Math.round(yearKey0),
+            key1: Math.round(yearKey1),
           }},
           source: 'pl-unified',
         }};
-        expenseSnapshotCache[iso] = result;
+        expenseSnapshotCache[cacheKey] = result;
         return result;
       }};
 

@@ -24,6 +24,8 @@ PAGES = [
     ROOT / "en/app/monthly/index.html",
     ROOT / "app/annual/index.html",
     ROOT / "en/app/annual/index.html",
+    ROOT / "zh-tw/app/monthly/index.html",
+    ROOT / "zh-tw/app/annual/index.html",
 ]
 
 MARKER_FN = "patchSummaryAnnualBlocks"

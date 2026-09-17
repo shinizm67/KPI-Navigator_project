@@ -12736,6 +12736,7 @@
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
     <script src="../../js/kpi-business-type.js"></script>
+    <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -15437,7 +15438,7 @@
 
   <script>
     (function () {
-                                                                                                                                                                                                                                        /* KPI-INSIGHT-EXPENSE-READ */
+                                                                                                                                                                                                                                                /* KPI-INSIGHT-EXPENSE-READ */
     (function () {
       var YEAR_STORE_KEY = 'kpiNavigator.kpiYearStore';
       var CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -15450,6 +15451,7 @@
       var adjMapCache = {};
       var sumThroughMonthCache = {};
       var expenseSnapshotCache = {};
+      var keyGroupCache = null;
 
       function invalidateInsightExpenseCaches() {
         allocCache = {};
@@ -15458,6 +15460,7 @@
         adjMapCache = {};
         sumThroughMonthCache = {};
         expenseSnapshotCache = {};
+        keyGroupCache = null;
         window.__INSIGHT_YEAR_EXPENSE_CACHE = {};
       }
 
@@ -15537,13 +15540,15 @@
       }
 
       function isBizDay(iso) {
-        if (window.KpiYearStore && typeof KpiYearStore.isUiBusinessDay === 'function') {
-          return KpiYearStore.isUiBusinessDay(iso);
-        }
         if (typeof window.__isTwBusinessDay === 'function') return !!window.__isTwBusinessDay(iso);
         var maps = annualDailyMaps();
         var bmap = maps.businessDayByDate;
+        var tmap = maps.targetSalesByDate;
         if (Object.prototype.hasOwnProperty.call(bmap, iso)) return !!bmap[iso];
+        if (Object.prototype.hasOwnProperty.call(tmap, iso)) {
+          var n = Number(tmap[iso]);
+          return Number.isFinite(n) ? n !== 0 : true;
+        }
         return true;
       }
 
@@ -15657,6 +15662,46 @@
         return line.lineId === 'exp_fixed_labor' || line.lineId === 'exp_variable_labor';
       }
 
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-BEGIN === */
+      function insightExpenseBt() {
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.resolveBusinessType === 'function') {
+            return String(window.KpiPlExpensePresets.resolveBusinessType() || 'restaurant');
+          }
+        } catch (_eBt) {}
+        return 'restaurant';
+      }
+      function insightKeyExpenseGroups() {
+        var bt = insightExpenseBt();
+        if (keyGroupCache && keyGroupCache.bt === bt) return keyGroupCache.groups;
+        var groups = [];
+        var rec = null;
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try { rec = api.getAnalysisMetrics(bt); } catch (_eM) {}
+        }
+        if (rec && rec.mode === 'key_expenses') {
+          (rec.groups || []).forEach(function (group) {
+            (group.rows || []).forEach(function (row) {
+              if (!row || row.source === 'labor') return;
+              var ids = {};
+              (row.lineIds || []).forEach(function (id) { if (id) ids[id] = true; });
+              groups.push({ ids: ids });
+            });
+          });
+        }
+        if (groups.length > 2) groups = groups.slice(0, 2);
+        keyGroupCache = { bt: bt, groups: groups };
+        return groups;
+      }
+      function addKeyExpenseAmount(line, amt, acc) {
+        if (!amt || isLaborLine(line)) return;
+        var groups = insightKeyExpenseGroups();
+        if (groups[0] && groups[0].ids[line.lineId]) acc.key0 += amt;
+        else if (groups[1] && groups[1].ids[line.lineId]) acc.key1 += amt;
+      }
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-END === */
+
       function sumDayMetrics(isoStr) {
         var parts = String(isoStr).split('-');
         var year = Number(parts[0]);
@@ -15672,6 +15717,8 @@
           drink: 0,
           misc: 0,
           labor: 0,
+          key0: 0,
+          key1: 0,
           hasData: false,
         };
         if (!s || !Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
@@ -15683,6 +15730,7 @@
         var food = 0;
         var drink = 0;
         var labor = 0;
+        var keyAcc = { key0: 0, key1: 0 };
         var hasData = false;
         catalog().forEach(function (line) {
           if (lineHasMonthData(s, year, month0, line)) hasData = true;
@@ -15693,20 +15741,12 @@
           if (isFoodLine(line)) food += amt;
           if (isDrinkLine(line)) drink += amt;
           if (isLaborLine(line)) labor += amt;
+          addKeyExpenseAmount(line, amt, keyAcc);
         });
-        return {
-          fixed: Math.round(fixed),
-          variable: Math.round(variable),
-          total: Math.round(fixed + variable),
-          food: Math.round(food),
-          drink: Math.round(drink),
-          misc: Math.max(0, Math.round(variable - food - drink)),
-          labor: Math.round(labor),
-          hasData: hasData,
-        };
+        return packSumThrough(fixed, variable, food, drink, labor, keyAcc.key0, keyAcc.key1, hasData);
       }
 
-      function packSumThrough(fixed, variable, food, drink, labor, hasData) {
+      function packSumThrough(fixed, variable, food, drink, labor, key0, key1, hasData) {
         return {
           fixed: Math.round(fixed),
           variable: Math.round(variable),
@@ -15715,6 +15755,8 @@
           drink: Math.round(drink),
           misc: Math.max(0, Math.round(variable - food - drink)),
           labor: Math.round(labor),
+          key0: Math.round(key0 || 0),
+          key1: Math.round(key1 || 0),
           hasData: !!hasData,
         };
       }
@@ -15724,19 +15766,20 @@
         var m = Number(month);
         var dayMax = Number(throughDay);
         if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
-          return { fixed: 0, variable: 0, total: 0, food: 0, drink: 0, misc: 0, labor: 0, hasData: false };
+          return packSumThrough(0, 0, 0, 0, 0, 0, 0, false);
         }
         var dim = new Date(y, m, 0).getDate();
         if (!Number.isFinite(dayMax) || dayMax < 1) dayMax = dim;
         if (dayMax > dim) dayMax = dim;
-        var cacheKey = y + '-' + m + '-' + dayMax;
+        var bt = insightExpenseBt();
+        var cacheKey = y + '-' + m + '-' + dayMax + '|' + bt;
         if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, cacheKey)) {
           return sumThroughMonthCache[cacheKey];
         }
 
         // 日付スクラブ向け: 前後1日のキャッシュから増分（Annual YTD のボトルネック緩和）
         if (dayMax > 1) {
-          var prevKey = y + '-' + m + '-' + (dayMax - 1);
+          var prevKey = y + '-' + m + '-' + (dayMax - 1) + '|' + bt;
           if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, prevKey)) {
             var prev = sumThroughMonthCache[prevKey];
             var addSnap = sumDayMetrics(isoOf(y, m, dayMax));
@@ -15746,6 +15789,8 @@
               prev.food + addSnap.food,
               prev.drink + addSnap.drink,
               prev.labor + addSnap.labor,
+              (prev.key0 || 0) + (addSnap.key0 || 0),
+              (prev.key1 || 0) + (addSnap.key1 || 0),
               prev.hasData
             );
             sumThroughMonthCache[cacheKey] = fwd;
@@ -15753,7 +15798,7 @@
           }
         }
         if (dayMax < dim) {
-          var nextKey = y + '-' + m + '-' + (dayMax + 1);
+          var nextKey = y + '-' + m + '-' + (dayMax + 1) + '|' + bt;
           if (Object.prototype.hasOwnProperty.call(sumThroughMonthCache, nextKey)) {
             var next = sumThroughMonthCache[nextKey];
             var subSnap = sumDayMetrics(isoOf(y, m, dayMax + 1));
@@ -15763,6 +15808,8 @@
               next.food - subSnap.food,
               next.drink - subSnap.drink,
               next.labor - subSnap.labor,
+              (next.key0 || 0) - (subSnap.key0 || 0),
+              (next.key1 || 0) - (subSnap.key1 || 0),
               next.hasData
             );
             sumThroughMonthCache[cacheKey] = back;
@@ -15775,6 +15822,8 @@
         var food = 0;
         var drink = 0;
         var labor = 0;
+        var key0 = 0;
+        var key1 = 0;
         var hasData = false;
         var s = store();
         catalog().forEach(function (line) {
@@ -15787,8 +15836,10 @@
           food += snap.food;
           drink += snap.drink;
           labor += snap.labor;
+          key0 += snap.key0 || 0;
+          key1 += snap.key1 || 0;
         }
-        var result = packSumThrough(fixed, variable, food, drink, labor, hasData);
+        var result = packSumThrough(fixed, variable, food, drink, labor, key0, key1, hasData);
         sumThroughMonthCache[cacheKey] = result;
         return result;
       }
@@ -15817,6 +15868,8 @@
           drink: 0,
           misc: 0,
           labor: 0,
+          key0: 0,
+          key1: 0,
         };
         var empty = {
           hasData: false,
@@ -15826,8 +15879,9 @@
           source: 'pl-unified',
         };
         if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return empty;
-        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, iso)) {
-          return expenseSnapshotCache[iso];
+        var cacheKey = String(iso) + '|' + insightExpenseBt();
+        if (Object.prototype.hasOwnProperty.call(expenseSnapshotCache, cacheKey)) {
+          return expenseSnapshotCache[cacheKey];
         }
         var parts = String(iso).split('-');
         var y = Number(parts[0]);
@@ -15842,6 +15896,8 @@
         var yearFood = 0;
         var yearDrink = 0;
         var yearLabor = 0;
+        var yearKey0 = 0;
+        var yearKey1 = 0;
         var yearHasData = false;
         for (var m = 1; m <= month; m++) {
           var td = m === month ? day : new Date(y, m, 0).getDate();
@@ -15851,6 +15907,8 @@
           yearFood += ms.food;
           yearDrink += ms.drink;
           yearLabor += ms.labor;
+          yearKey0 += ms.key0 || 0;
+          yearKey1 += ms.key1 || 0;
           if (ms.hasData) yearHasData = true;
         }
 
@@ -15864,6 +15922,8 @@
             drink: dayScope.drink,
             misc: dayScope.misc,
             labor: dayScope.labor,
+            key0: dayScope.key0 || 0,
+            key1: dayScope.key1 || 0,
           },
           month: {
             fixed: monthScope.fixed,
@@ -15873,6 +15933,8 @@
             drink: monthScope.drink,
             misc: monthScope.misc,
             labor: monthScope.labor,
+            key0: monthScope.key0 || 0,
+            key1: monthScope.key1 || 0,
           },
           year: {
             fixed: Math.round(yearFixed),
@@ -15882,10 +15944,12 @@
             drink: Math.round(yearDrink),
             misc: Math.max(0, Math.round(yearVariable - yearFood - yearDrink)),
             labor: Math.round(yearLabor),
+            key0: Math.round(yearKey0),
+            key1: Math.round(yearKey1),
           },
           source: 'pl-unified',
         };
-        expenseSnapshotCache[iso] = result;
+        expenseSnapshotCache[cacheKey] = result;
         return result;
       };
 
@@ -16008,7 +16072,7 @@
           if (dailyEl) dailyEl.textContent = DASH;
           return;
         }
-        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH;
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
         if (dailyEl) {
           dailyEl.textContent =
             m.hasPlan && m.annualDailyNeed != null
@@ -16791,7 +16855,7 @@
           m.hasPlan && Number.isFinite(m.monthlyFullTarget)
             ? m.monthlyFullTarget - m.mtdA
             : null;
-        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.monthRemainingBD) : DASH;
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.monthRemainingBD);
         if (needEl) {
           needEl.textContent =
             monthlyNeed != null && Number.isFinite(monthlyNeed)
@@ -16806,6 +16870,118 @@
         }
       }
 
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-BEGIN === */
+      function insightSummaryPageLang() {
+        var lang = '';
+        try {
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        } catch (_eLang) {}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }
+      function insightSummaryIsRestaurantFl() {
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {
+          try {
+            var rec = api.getAnalysisMetrics();
+            return !rec || rec.mode !== 'key_expenses';
+          } catch (_eM) {}
+        }
+        return true;
+      }
+      function insightSummaryPickLabel(row, lang) {
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }
+      function insightSummaryRestaurantRowLabels(lang) {
+        if (lang === 'en') {
+          return ['Total Expenses', 'Fixed Cost', 'Expected Cost', 'Cost Margin', 'Food Cost', 'Drink Cost', 'Misc Cost', 'Cost Rate', 'FL Rate'];
+        }
+        if (lang === 'zh') {
+          return ['支出合計', '固定成本', '預計成本', '成本利潤率', '餐點成本', '飲料成本', '雜費成本', '成本率', 'FL 率'];
+        }
+        return ['合計経費', '固定費', '予定経費', 'コストマージン', '食材費', '飲料費', '雑費', 'コスト率', 'FL率'];
+      }
+      function insightSummaryCostRowLabels() {
+        var lang = insightSummaryPageLang();
+        var labels = insightSummaryRestaurantRowLabels(lang).slice();
+        if (insightSummaryIsRestaurantFl()) return labels;
+        var rec = null;
+        try {
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.getAnalysisMetrics === 'function') {
+            rec = window.KpiPlExpensePresets.getAnalysisMetrics();
+          }
+        } catch (_eCopy) {}
+        var keyLabels = [];
+        ((rec && rec.groups) || []).forEach(function (group) {
+          (group.rows || []).forEach(function (row) {
+            if (!row || row.source === 'labor') return;
+            var lab = insightSummaryPickLabel(row, lang);
+            if (lab) keyLabels.push(lab);
+          });
+        });
+        labels[4] = keyLabels[0] || (lang === 'en' ? 'Key costs' : '主要費目');
+        labels[5] = keyLabels[1] || labels[4];
+        labels[6] = lang === 'zh' ? '人事費用' : lang === 'en' ? 'Labor' : '人件費';
+        labels[8] = lang === 'en' ? 'L Rate' : 'L率';
+        return labels;
+      }
+      function applyInsightSummaryCostLabels(block, labelSel) {
+        if (!block) return;
+        var labels = insightSummaryCostRowLabels();
+        var els = block.querySelectorAll(labelSel);
+        for (var i = 0; i < els.length && i < labels.length; i++) {
+          els[i].textContent = labels[i];
+        }
+      }
+      function patchSummaryCostBlock(block, sales, scope, rowSel, labelSel) {
+        if (!block) return;
+        applyInsightSummaryCostLabels(block, labelSel);
+        var rows = block.querySelectorAll(rowSel);
+        function setRowValue(rowIdx, valueText, splitPctText) {
+          var row = rows[rowIdx];
+          if (!row) return;
+          var vals = row.querySelectorAll('.insight-monthly-cost__value, .insight-annual-cost__value');
+          if (!vals || !vals.length) return;
+          vals[0].textContent = valueText;
+          if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+        }
+        if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {
+          for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+          return;
+        }
+        var s = Number(sales);
+        var restaurant = insightSummaryIsRestaurantFl();
+        setRowValue(0, fmtInsightMoney(scope.total));
+        setRowValue(1, fmtInsightMoney(scope.fixed));
+        setRowValue(2, fmtInsightMoney(scope.variable));
+        setRowValue(3, fmtInsightPctFrom(s, scope.total));
+        if (restaurant) {
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.drink) + Number(scope.labor)));
+        } else {
+          var k0 = Number(scope.key0) || 0;
+          var k1 = Number(scope.key1) || 0;
+          var labor = Number(scope.labor) || 0;
+          setRowValue(4, fmtInsightMoney(k0), fmtInsightPctFrom(s, k0));
+          setRowValue(5, fmtInsightMoney(k1), fmtInsightPctFrom(s, k1));
+          setRowValue(6, fmtInsightMoney(labor), fmtInsightPctFrom(s, labor));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, labor));
+        }
+      }
+      window.__insightSummaryCostRowLabels = insightSummaryCostRowLabels;
+      window.__insightSummaryIsRestaurantFl = insightSummaryIsRestaurantFl;
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-END === */
+
       function patchSummaryMonthlyBlocks(root, m) {
         var section = root.querySelector('#insight-jump-summary-monthly');
         if (!section) return;
@@ -16817,40 +16993,14 @@
           expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
         }
 
-        function patchMonthlyCostBlock(block, sales, scope) {
-          var rows = block.querySelectorAll('.insight-monthly-cost__row');
-          function setRowValue(rowIdx, valueText, splitPctText) {
-            var row = rows[rowIdx];
-            if (!row) return;
-            var vals = row.querySelectorAll('.insight-monthly-cost__value');
-            if (!vals || !vals.length) return;
-            vals[0].textContent = valueText;
-            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
-          }
-          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {
-            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
-            return;
-          }
-          var s = Number(sales);
-          setRowValue(0, fmtInsightMoney(scope.total));
-          setRowValue(1, fmtInsightMoney(scope.fixed));
-          setRowValue(2, fmtInsightMoney(scope.variable));
-          setRowValue(3, fmtInsightPctFrom(s, scope.total));
-          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
-          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
-          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
-          setRowValue(7, fmtInsightPctFrom(s, scope.total));
-          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
-        }
-
         if (!m) {
           if (kpi) patchSummaryMonthlyKpiBlock(kpi, null, null);
-          if (cost) patchMonthlyCostBlock(cost, NaN, null);
+          if (cost) patchSummaryCostBlock(cost, NaN, null, '.insight-monthly-cost__row', '.insight-monthly-cost__label');
           if (progress) patchSummaryMonthlyProgressBlock(progress, null);
           return;
         }
         if (kpi) patchSummaryMonthlyKpiBlock(kpi, m, expenseSnap);
-        if (cost) patchMonthlyCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null);
+        if (cost) patchSummaryCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null, '.insight-monthly-cost__row', '.insight-monthly-cost__label');
         if (progress) patchSummaryMonthlyProgressBlock(progress, m);
       }
 
@@ -16899,7 +17049,7 @@
           if (dailyEl) dailyEl.textContent = DASH;
           return;
         }
-        if (bdEl) bdEl.textContent = m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH;
+        if (bdEl) bdEl.textContent = fmtInsightCount(m.yearRemainingBD);
         if (needEl) {
           needEl.textContent =
             m.hasPlan && m.annualRemaining != null
@@ -16935,7 +17085,7 @@
           revisionValue(groups, 0, 2),
           m.hasPlan && m.annualRemaining != null ? fmtInsightMoney(m.annualRemaining) : DASH
         );
-        setInsightRevisionValue(revisionValue(groups, 1, 0), m.hasPlan ? fmtInsightCount(m.yearRemainingBD) : DASH);
+        setInsightRevisionValue(revisionValue(groups, 1, 0), fmtInsightCount(m.yearRemainingBD));
         setInsightRevisionValue(
           revisionValue(groups, 1, 1),
           m.hasPlan && m.annualDailyNeed != null ? fmtInsightMoney(m.annualDailyNeed) : DASH
@@ -16968,41 +17118,15 @@
           expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
         }
 
-        function patchAnnualCostBlock(block, sales, scope) {
-          var rows = block.querySelectorAll('.insight-annual-cost__row');
-          function setRowValue(rowIdx, valueText, splitPctText) {
-            var row = rows[rowIdx];
-            if (!row) return;
-            var vals = row.querySelectorAll('.insight-annual-cost__value');
-            if (!vals || !vals.length) return;
-            vals[0].textContent = valueText;
-            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
-          }
-          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {
-            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
-            return;
-          }
-          var s = Number(sales);
-          setRowValue(0, fmtInsightMoney(scope.total));
-          setRowValue(1, fmtInsightMoney(scope.fixed));
-          setRowValue(2, fmtInsightMoney(scope.variable));
-          setRowValue(3, fmtInsightPctFrom(s, scope.total));
-          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
-          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
-          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
-          setRowValue(7, fmtInsightPctFrom(s, scope.total));
-          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
-        }
-
         if (!m) {
           if (kpi) patchSummaryAnnualKpiBlock(kpi, null, null);
-          if (cost) patchAnnualCostBlock(cost, NaN, null);
+          if (cost) patchSummaryCostBlock(cost, NaN, null, '.insight-annual-cost__row', '.insight-annual-cost__label');
           if (progress) patchSummaryAnnualProgressBlock(progress, null);
           if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
           return;
         }
         if (kpi) patchSummaryAnnualKpiBlock(kpi, m, expenseSnap);
-        if (cost) patchAnnualCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null);
+        if (cost) patchSummaryCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null, '.insight-annual-cost__row', '.insight-annual-cost__label');
         if (progress) patchSummaryAnnualProgressBlock(progress, m);
         if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
       }

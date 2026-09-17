@@ -1103,6 +1103,118 @@ def insight_diff_js() -> str:
         }}
       }}
 
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-BEGIN === */
+      function insightSummaryPageLang() {{
+        var lang = '';
+        try {{
+          lang = String(
+            (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+          ).toLowerCase();
+        }} catch (_eLang) {{}}
+        if (lang.indexOf('zh') === 0) return 'zh';
+        if (lang.indexOf('en') === 0) return 'en';
+        return 'ja';
+      }}
+      function insightSummaryIsRestaurantFl() {{
+        var api = window.KpiPlExpensePresets;
+        if (api && typeof api.getAnalysisMetrics === 'function') {{
+          try {{
+            var rec = api.getAnalysisMetrics();
+            return !rec || rec.mode !== 'key_expenses';
+          }} catch (_eM) {{}}
+        }}
+        return true;
+      }}
+      function insightSummaryPickLabel(row, lang) {{
+        if (!row) return '';
+        if (lang === 'zh') return row.labelZh || row.labelJa || row.labelEn || '';
+        if (lang === 'en') return row.labelEn || row.labelJa || '';
+        return row.labelJa || row.labelEn || '';
+      }}
+      function insightSummaryRestaurantRowLabels(lang) {{
+        if (lang === 'en') {{
+          return ['Total Expenses', 'Fixed Cost', 'Expected Cost', 'Cost Margin', 'Food Cost', 'Drink Cost', 'Misc Cost', 'Cost Rate', 'FL Rate'];
+        }}
+        if (lang === 'zh') {{
+          return ['支出合計', '固定成本', '預計成本', '成本利潤率', '餐點成本', '飲料成本', '雜費成本', '成本率', 'FL 率'];
+        }}
+        return ['合計経費', '固定費', '予定経費', 'コストマージン', '食材費', '飲料費', '雑費', 'コスト率', 'FL率'];
+      }}
+      function insightSummaryCostRowLabels() {{
+        var lang = insightSummaryPageLang();
+        var labels = insightSummaryRestaurantRowLabels(lang).slice();
+        if (insightSummaryIsRestaurantFl()) return labels;
+        var rec = null;
+        try {{
+          if (window.KpiPlExpensePresets && typeof window.KpiPlExpensePresets.getAnalysisMetrics === 'function') {{
+            rec = window.KpiPlExpensePresets.getAnalysisMetrics();
+          }}
+        }} catch (_eCopy) {{}}
+        var keyLabels = [];
+        ((rec && rec.groups) || []).forEach(function (group) {{
+          (group.rows || []).forEach(function (row) {{
+            if (!row || row.source === 'labor') return;
+            var lab = insightSummaryPickLabel(row, lang);
+            if (lab) keyLabels.push(lab);
+          }});
+        }});
+        labels[4] = keyLabels[0] || (lang === 'en' ? 'Key costs' : '主要費目');
+        labels[5] = keyLabels[1] || labels[4];
+        labels[6] = lang === 'zh' ? '人事費用' : lang === 'en' ? 'Labor' : '人件費';
+        labels[8] = lang === 'en' ? 'L Rate' : 'L率';
+        return labels;
+      }}
+      function applyInsightSummaryCostLabels(block, labelSel) {{
+        if (!block) return;
+        var labels = insightSummaryCostRowLabels();
+        var els = block.querySelectorAll(labelSel);
+        for (var i = 0; i < els.length && i < labels.length; i++) {{
+          els[i].textContent = labels[i];
+        }}
+      }}
+      function patchSummaryCostBlock(block, sales, scope, rowSel, labelSel) {{
+        if (!block) return;
+        applyInsightSummaryCostLabels(block, labelSel);
+        var rows = block.querySelectorAll(rowSel);
+        function setRowValue(rowIdx, valueText, splitPctText) {{
+          var row = rows[rowIdx];
+          if (!row) return;
+          var vals = row.querySelectorAll('.insight-monthly-cost__value, .insight-annual-cost__value');
+          if (!vals || !vals.length) return;
+          vals[0].textContent = valueText;
+          if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
+        }}
+        if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
+          for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
+          return;
+        }}
+        var s = Number(sales);
+        var restaurant = insightSummaryIsRestaurantFl();
+        setRowValue(0, fmtInsightMoney(scope.total));
+        setRowValue(1, fmtInsightMoney(scope.fixed));
+        setRowValue(2, fmtInsightMoney(scope.variable));
+        setRowValue(3, fmtInsightPctFrom(s, scope.total));
+        if (restaurant) {{
+          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
+          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
+          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.drink) + Number(scope.labor)));
+        }} else {{
+          var k0 = Number(scope.key0) || 0;
+          var k1 = Number(scope.key1) || 0;
+          var labor = Number(scope.labor) || 0;
+          setRowValue(4, fmtInsightMoney(k0), fmtInsightPctFrom(s, k0));
+          setRowValue(5, fmtInsightMoney(k1), fmtInsightPctFrom(s, k1));
+          setRowValue(6, fmtInsightMoney(labor), fmtInsightPctFrom(s, labor));
+          setRowValue(7, fmtInsightPctFrom(s, scope.total));
+          setRowValue(8, fmtInsightPctFrom(s, labor));
+        }}
+      }}
+      window.__insightSummaryCostRowLabels = insightSummaryCostRowLabels;
+      window.__insightSummaryIsRestaurantFl = insightSummaryIsRestaurantFl;
+      /* === UNIT-5C-2-INSIGHT-SUMMARY-BT-END === */
+
       function patchSummaryMonthlyBlocks(root, m) {{
         var section = root.querySelector('#insight-jump-summary-monthly');
         if (!section) return;
@@ -1114,40 +1226,14 @@ def insight_diff_js() -> str:
           expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
         }}
 
-        function patchMonthlyCostBlock(block, sales, scope) {{
-          var rows = block.querySelectorAll('.insight-monthly-cost__row');
-          function setRowValue(rowIdx, valueText, splitPctText) {{
-            var row = rows[rowIdx];
-            if (!row) return;
-            var vals = row.querySelectorAll('.insight-monthly-cost__value');
-            if (!vals || !vals.length) return;
-            vals[0].textContent = valueText;
-            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
-          }}
-          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
-            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
-            return;
-          }}
-          var s = Number(sales);
-          setRowValue(0, fmtInsightMoney(scope.total));
-          setRowValue(1, fmtInsightMoney(scope.fixed));
-          setRowValue(2, fmtInsightMoney(scope.variable));
-          setRowValue(3, fmtInsightPctFrom(s, scope.total));
-          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
-          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
-          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
-          setRowValue(7, fmtInsightPctFrom(s, scope.total));
-          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
-        }}
-
         if (!m) {{
           if (kpi) patchSummaryMonthlyKpiBlock(kpi, null, null);
-          if (cost) patchMonthlyCostBlock(cost, NaN, null);
+          if (cost) patchSummaryCostBlock(cost, NaN, null, '.insight-monthly-cost__row', '.insight-monthly-cost__label');
           if (progress) patchSummaryMonthlyProgressBlock(progress, null);
           return;
         }}
         if (kpi) patchSummaryMonthlyKpiBlock(kpi, m, expenseSnap);
-        if (cost) patchMonthlyCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null);
+        if (cost) patchSummaryCostBlock(cost, m.mtdA, expenseSnap ? expenseSnap.month : null, '.insight-monthly-cost__row', '.insight-monthly-cost__label');
         if (progress) patchSummaryMonthlyProgressBlock(progress, m);
       }}
 
@@ -1265,41 +1351,15 @@ def insight_diff_js() -> str:
           expenseSnap = window.__insightReadExpenseSnapshot(window.__INSIGHT_SELECTED_ISO);
         }}
 
-        function patchAnnualCostBlock(block, sales, scope) {{
-          var rows = block.querySelectorAll('.insight-annual-cost__row');
-          function setRowValue(rowIdx, valueText, splitPctText) {{
-            var row = rows[rowIdx];
-            if (!row) return;
-            var vals = row.querySelectorAll('.insight-annual-cost__value');
-            if (!vals || !vals.length) return;
-            vals[0].textContent = valueText;
-            if (vals[1] && splitPctText != null) vals[1].textContent = splitPctText;
-          }}
-          if (!scope || !Number.isFinite(Number(sales)) || Number(sales) <= 0) {{
-            for (var ri = 0; ri < rows.length; ri++) setRowValue(ri, DASH, DASH);
-            return;
-          }}
-          var s = Number(sales);
-          setRowValue(0, fmtInsightMoney(scope.total));
-          setRowValue(1, fmtInsightMoney(scope.fixed));
-          setRowValue(2, fmtInsightMoney(scope.variable));
-          setRowValue(3, fmtInsightPctFrom(s, scope.total));
-          setRowValue(4, fmtInsightMoney(scope.food), fmtInsightPctFrom(s, scope.food));
-          setRowValue(5, fmtInsightMoney(scope.drink), fmtInsightPctFrom(s, scope.drink));
-          setRowValue(6, fmtInsightMoney(scope.misc), fmtInsightPctFrom(s, scope.misc));
-          setRowValue(7, fmtInsightPctFrom(s, scope.total));
-          setRowValue(8, fmtInsightPctFrom(s, Number(scope.food) + Number(scope.labor)));
-        }}
-
         if (!m) {{
           if (kpi) patchSummaryAnnualKpiBlock(kpi, null, null);
-          if (cost) patchAnnualCostBlock(cost, NaN, null);
+          if (cost) patchSummaryCostBlock(cost, NaN, null, '.insight-annual-cost__row', '.insight-annual-cost__label');
           if (progress) patchSummaryAnnualProgressBlock(progress, null);
           if (revision) patchSummaryAnnualTargetRevisionBlock(revision, null);
           return;
         }}
         if (kpi) patchSummaryAnnualKpiBlock(kpi, m, expenseSnap);
-        if (cost) patchAnnualCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null);
+        if (cost) patchSummaryCostBlock(cost, m.ytdA, expenseSnap ? expenseSnap.year : null, '.insight-annual-cost__row', '.insight-annual-cost__label');
         if (progress) patchSummaryAnnualProgressBlock(progress, m);
         if (revision) patchSummaryAnnualTargetRevisionBlock(revision, m);
       }}
