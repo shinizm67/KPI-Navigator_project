@@ -29402,7 +29402,17 @@ Cumulative Target Annual Sales</p>
                 'Only dates for the open year (' + targetYear + ') will be applied.'
               );
           }
-          msg += '\n\n' + t('この内容で表に反映しますか？', 'Apply to the table?');
+          /* KPI-CSV-IMPORT-SAFETY-6H */
+          msg +=
+            '\n\n' +
+            t(
+              '同じ日付のデータは取込値で上書きされます。\n売上が空欄の場合は 0 として保存されます。',
+              'Existing data for the same date will be overwritten with imported values.\nBlank sales are saved as 0.',
+              '相同日期的既有資料會被匯入值覆寫。\n銷售額空白時會以 0 儲存。'
+            );
+          msg +=
+            '\n\n' +
+            t('この内容で表に反映しますか？', 'Apply to the table?', '要套用到表格嗎？');
           return window.confirm(msg);
         }
 
