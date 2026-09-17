@@ -183,12 +183,24 @@ def pl_expense_import_client_js() -> str:
         }
 
         /* ---------- catalog + aliases ---------- */
+        function isImportableLine(l) {
+          if (window.KpiExpenseCsvImport && typeof window.KpiExpenseCsvImport.isImportableLine === 'function') {
+            return window.KpiExpenseCsvImport.isImportableLine(l);
+          }
+          return !!(l && l.lineId && l.active !== false && !l.presetOrphan);
+        }
+        function looksLikeLineId(raw) {
+          if (window.KpiExpenseCsvImport && typeof window.KpiExpenseCsvImport.looksLikeLineId === 'function') {
+            return window.KpiExpenseCsvImport.looksLikeLineId(raw);
+          }
+          return /^exp_[a-z0-9_]+$/i.test(String(raw || '').trim());
+        }
         function loadCatalogLines() {
           if (typeof window.__plGetCatalogLines === 'function') {
             try {
               var viaApi = window.__plGetCatalogLines();
               if (Array.isArray(viaApi)) {
-                return viaApi.filter(function (l) { return l && l.lineId && l.active !== false; });
+                return viaApi.filter(isImportableLine);
               }
             } catch (_e0) {}
           }
@@ -197,7 +209,7 @@ def pl_expense_import_client_js() -> str:
             if (!raw) return [];
             var parsed = JSON.parse(raw);
             var lines = parsed && Array.isArray(parsed.lines) ? parsed.lines : [];
-            return lines.filter(function (l) { return l && l.lineId && l.active !== false; });
+            return lines.filter(isImportableLine);
           } catch (_e) {
             return [];
           }
@@ -216,22 +228,38 @@ def pl_expense_import_client_js() -> str:
         }
         function buildLabelIndex(lines) {
           var idx = {};
-          lines.forEach(function (l) {
-            [l.labelJa, l.labelEn, l.lineId].forEach(function (label) {
+          (lines || []).forEach(function (l) {
+            if (!isImportableLine(l)) return;
+            [l.labelJa, l.labelEn, l.labelZh, l.labelZhTw].forEach(function (label) {
               var k = normText(label);
               if (k && !idx[k]) idx[k] = l;
             });
           });
           return idx;
         }
-        /** resolver(displayName) -> line | null (catalog label first, then alias). */
+        /** resolver: lineId first, then current catalog label, then alias. */
         function makeResolver(lines, aliases) {
-          var idx = buildLabelIndex(lines);
+          if (window.KpiExpenseCsvImport && typeof window.KpiExpenseCsvImport.makeResolver === 'function') {
+            return window.KpiExpenseCsvImport.makeResolver(lines, aliases);
+          }
+          var importable = (lines || []).filter(isImportableLine);
+          var idx = buildLabelIndex(importable);
           var byId = {};
-          lines.forEach(function (l) { byId[String(l.lineId)] = l; });
+          var byIdNorm = {};
+          importable.forEach(function (l) {
+            var id = String(l.lineId);
+            byId[id] = l;
+            byIdNorm[normText(id)] = l;
+          });
           return function (display) {
-            var k = normText(display);
-            if (idx[k]) return idx[k];
+            var raw = String(display == null ? '' : display).trim();
+            if (!raw) return null;
+            if (window.KpiExpenseCsvImport && window.KpiExpenseCsvImport.isHeaderItemToken &&
+                window.KpiExpenseCsvImport.isHeaderItemToken(raw)) return null;
+            if (byId[raw]) return byId[raw];
+            var k = normText(raw);
+            if (byIdNorm[k]) return byIdNorm[k];
+            if (idx[k] && !byIdNorm[k]) return idx[k];
             var aid = aliases && aliases[k];
             if (aid && byId[String(aid)]) return byId[String(aid)];
             return null;
@@ -365,6 +393,11 @@ def pl_expense_import_client_js() -> str:
             var item = String(row[itemCol] == null ? '' : row[itemCol]).trim();
             var amount = parseAmount(row[amtCol]);
             if (!date || !item) { skippedNoData++; continue; }
+            if (window.KpiExpenseCsvImport && window.KpiExpenseCsvImport.isHeaderItemToken &&
+                window.KpiExpenseCsvImport.isHeaderItemToken(item)) {
+              skippedNoData++;
+              continue;
+            }
             parsed++;
             var isDaily = date.length === 10;
             var line = resolver(item);
@@ -764,8 +797,8 @@ def pl_expense_import_client_js() -> str:
               else { styleSel.disabled = false; }
             });
 
-            // 名寄せ候補: pre-select the closest catalog line (user can override).
-            var suggest = bestCatalogMatch(info.display, lines);
+            // 名寄せ候補: labels only. Never auto-assign unknown machine keys.
+            var suggest = looksLikeLineId(info.display) ? null : bestCatalogMatch(info.display, lines);
             if (suggest) {
               action.value = 'assign:' + String(suggest.line.lineId);
               var badge = el('span', 'pl-import-map__suggest', tt('候補', 'suggested'));
@@ -903,6 +936,8 @@ def pl_expense_import_client_js() -> str:
           detectColumns: detectColumns,
           columnLabels: columnLabels,
           makeResolver: makeResolver,
+          looksLikeLineId: looksLikeLineId,
+          isImportableLine: isImportableLine,
           parseText: parseText,
           applyPlan: applyPlan,
           analyzeConflicts: analyzeConflicts,

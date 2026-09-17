@@ -2687,6 +2687,7 @@
     <script src="../../../../js/kpi-business-type.js"></script>
     <script src="../../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../../js/kpi-csv-templates.js"></script>
+    <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -14727,25 +14728,43 @@
           var dateCol = -1, itemCol = -1, amtCol = -1;
           for (var i = 0; i < header.length; i++) {
             var h = header[i];
-            if (dateCol < 0 && (h === '日付' || h === 'date' || h === '年月日' || h === '年月')) dateCol = i;
-            else if (itemCol < 0 && (h === '費目' || h === '項目' || h === '科目' || h === 'item' || h === 'category' || h === 'name')) itemCol = i;
+            if (dateCol < 0 && (h === '日付' || h === 'date' || h === '年月日' || h === '年月' || h === 'month' || h === 'day' || h === 'ym' || h === 'ymd')) dateCol = i;
+            else if (itemCol < 0 && (h === '費目' || h === '項目' || h === '科目' || h === 'item' || h === 'category' || h === 'name' || h === 'lineid')) itemCol = i;
             else if (amtCol < 0 && (h === '金額' || h === 'amount' || h === 'value' || h === 'cost' || h === 'price')) amtCol = i;
           }
           if (dateCol >= 0 && itemCol >= 0 && amtCol >= 0) return { dateCol: dateCol, itemCol: itemCol, amtCol: amtCol, start: 1 };
-          return { dateCol: 0, itemCol: 1, amtCol: 2, start: 1 };
+          var fallbackAmt = ((rows[0] || []).length >= 4) ? 3 : 2;
+          return { dateCol: dateCol === -1 ? 0 : dateCol, itemCol: itemCol === -1 ? 1 : itemCol, amtCol: amtCol === -1 ? fallbackAmt : amtCol, start: 1 };
         }
         function catalogLineMap() {
-          var map = {};
           var all = []
             .concat(state.fixedItems || [])
             .concat(state.variableItems || []);
+          if (window.KpiExpenseCsvImport && typeof window.KpiExpenseCsvImport.makeResolver === 'function') {
+            var resolve = window.KpiExpenseCsvImport.makeResolver(all, {});
+            return { resolve: resolve };
+          }
+          var map = {};
+          var byId = {};
           all.forEach(function (row) {
-            if (!row || !row.lineId) return;
-            map[normText(row.labelJa)] = row;
-            map[normText(row.labelEn)] = row;
-            map[normText(row.lineId)] = row;
+            if (!row || !row.lineId || row.active === false || row.presetOrphan) return;
+            byId[String(row.lineId)] = row;
+            byId[normText(row.lineId)] = row;
+            [row.labelJa, row.labelEn, row.labelZh, row.labelZhTw].forEach(function (label) {
+              var k = normText(label);
+              if (k && !map[k] && !byId[k]) map[k] = row;
+            });
           });
-          return map;
+          return {
+            resolve: function (item) {
+              var raw = String(item == null ? '' : item).trim();
+              if (!raw) return null;
+              if (byId[raw]) return byId[raw];
+              var k = normText(raw);
+              if (byId[k]) return byId[k];
+              return map[k] || null;
+            }
+          };
         }
         function persistImportedDailyExpensesFallback(year, dailyByLine) {
           var y = Number(year);
@@ -14846,12 +14865,13 @@
             var date = normDate(row[cols.dateCol]);
             var item = String(row[cols.itemCol] == null ? '' : row[cols.itemCol]).trim();
             if (!date || !item) { skipped++; continue; }
-            var line = labelMap[normText(item)];
+            var line = labelMap.resolve ? labelMap.resolve(item) : labelMap[normText(item)];
             if (!line) { skipped++; continue; }
             var year = Number(date.slice(0, 4));
             if (!Number.isFinite(year)) { skipped++; continue; }
             var amt = parseAmount(row[cols.amtCol]);
             var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
+            if (style === 'daily' && date.length !== 10) { skipped++; continue; }
             if (style === 'daily' && date.length === 10) {
               if (year === Number(mefYear)) {
                 if (!rowValueById[line.lineId]) rowValueById[line.lineId] = {};
