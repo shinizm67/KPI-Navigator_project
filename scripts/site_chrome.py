@@ -251,8 +251,13 @@ def _nav_daily(base: str, img: str, label: str, L: dict, daily_mode: str, nav_at
           </li>"""
 
 
+def _default_insight_href(base: str) -> str:
+    """Pro Insight entry: Monthly FW via ?open=insight (not the profit hub)."""
+    return f"{base}app/monthly/index.html?open=insight"
+
+
 def _nav_profit(base: str, img: str, label: str, L: dict, active: bool, nav_attr: str = "", profit_href: str | None = None) -> str:
-    href = profit_href or f"{base}app/profit/index.html"
+    href = profit_href or _default_insight_href(base)
     inner = f"""              <span class="btn-mode-frame">
                 <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">{label}</span>
@@ -454,6 +459,7 @@ def build_header(
     </div>
     <script src="{img}js/kpi-auth-client.js"></script>
     <script src="{img}js/kpi-business-type.js"></script>
+    <script src="{img}js/kpi-pl-expense-presets.js"></script>
     <script>
     (function () {{
       if (window.__headerDlBound) return;

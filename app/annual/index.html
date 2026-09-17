@@ -14790,10 +14790,10 @@
           </li>
           <li class="global-nav-item">
             <a
-              href="../../app/profit/index.html"
+              href="../../app/monthly/index.html?open=insight"
               class="nav-frame-btn"
               id="global-nav-index-btn"
-              data-href-pro="../../app/profit/index.html"
+              data-href-pro="../../app/monthly/index.html?open=insight"
               data-href-basic="../../setting/change_plan.html"
               aria-label="利益サマリー（プロプラン）。ベーシックの場合はプラン変更へ"
             >
@@ -21537,6 +21537,8 @@
         ev.preventDefault();
         open();
       });
+      window.__KPI_MONTHLY_OVERLAYS__ = window.__KPI_MONTHLY_OVERLAYS__ || {};
+      window.__KPI_MONTHLY_OVERLAYS__.openInsight = open;
       btnClose.addEventListener('click', close);
       backdrop.addEventListener('click', close);
       bindInsightMainTab(tabSummary, 'summary');

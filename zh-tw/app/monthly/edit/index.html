@@ -2647,6 +2647,7 @@
             <a href="../../../setting/change_email.html" class="account-settings-item" role="menuitem">變更電子信箱</a>
             <a href="../../../setting/change_password.html" class="account-settings-item" role="menuitem">變更密碼</a>
             <a href="../../../setting/session_management.html" class="account-settings-item" role="menuitem">登入工作階段</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">登出</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -2677,6 +2678,8 @@
       </div>
     </div>
     <script src="../../../../js/kpi-auth-client.js"></script>
+    <script src="../../../../js/kpi-business-type.js"></script>
+    <script src="../../../../js/kpi-pl-expense-presets.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -2694,8 +2697,14 @@
     (function () {
       if (!window.__KPI_AUTH) return;
       try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
         if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
           window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
         }
       } catch (_e) {}
     })();

@@ -416,6 +416,140 @@
   }
 
   /**
+   * Locale Monthly page that hosts Insight FW (?open=insight).
+   */
+  function resolveMonthlyInsightHref() {
+    var root = resolveAppRoot();
+    var path = String(global.location.pathname || '');
+    if (root) {
+      if (path.indexOf('/zh-tw/') >= 0) return root + '/zh-tw/app/monthly/index.html?open=insight';
+      if (path.indexOf('/en/') >= 0) return root + '/en/app/monthly/index.html?open=insight';
+      return root + '/app/monthly/index.html?open=insight';
+    }
+    if (path.indexOf('/setting/') >= 0 || path.indexOf('/setting\\') >= 0) {
+      return '../app/monthly/index.html?open=insight';
+    }
+    if (path.indexOf('/app/monthly/edit') >= 0) {
+      return '../index.html?open=insight';
+    }
+    if (path.indexOf('/app/profit/pl') >= 0) {
+      return '../../monthly/index.html?open=insight';
+    }
+    if (
+      path.indexOf('/app/booking') >= 0 ||
+      path.indexOf('/app/profit') >= 0 ||
+      path.indexOf('/app/annual') >= 0 ||
+      path.indexOf('/app/monthly') >= 0
+    ) {
+      return '../monthly/index.html?open=insight';
+    }
+    return '../app/monthly/index.html?open=insight';
+  }
+
+  function readInsightNavContext() {
+    var year = null;
+    var month = null;
+    var iso = null;
+    try {
+      if (global.__MONTHLY_UI && typeof global.__MONTHLY_UI.getState === 'function') {
+        var st = global.__MONTHLY_UI.getState();
+        if (st && Number.isFinite(st.year)) year = st.year;
+        if (st && Number.isFinite(st.month0)) month = st.month0 + 1;
+      }
+      if (global.__MONTHLY_UI && typeof global.__MONTHLY_UI.getFocusedIsoDate === 'function') {
+        iso = global.__MONTHLY_UI.getFocusedIsoDate() || iso;
+      }
+    } catch (_eM) {}
+    try {
+      if (global.__ANNUAL_DATA) {
+        if (year == null && Number.isFinite(global.__ANNUAL_DATA.calendarYear)) {
+          year = global.__ANNUAL_DATA.calendarYear;
+        }
+        if (!iso && global.__ANNUAL_DATA.daily && global.__ANNUAL_DATA.daily.selectedDate) {
+          iso = global.__ANNUAL_DATA.daily.selectedDate;
+        }
+      }
+    } catch (_eA) {}
+    try {
+      var p = new URLSearchParams(global.location.search || '');
+      if (year == null && p.get('year')) year = p.get('year');
+      if (month == null && p.get('month')) month = p.get('month');
+      if (!iso && p.get('iso')) iso = p.get('iso');
+    } catch (_eQ) {}
+    return { year: year, month: month, iso: iso };
+  }
+
+  function appendInsightContextQuery(href) {
+    try {
+      var url = new URL(String(href || ''), global.location.href);
+      if (!url.searchParams.get('open')) url.searchParams.set('open', 'insight');
+      var ctx = readInsightNavContext();
+      if (ctx.year != null && !url.searchParams.get('year')) {
+        url.searchParams.set('year', String(ctx.year));
+      }
+      if (ctx.month != null && !url.searchParams.get('month')) {
+        url.searchParams.set('month', String(ctx.month));
+      }
+      if (ctx.iso && !url.searchParams.get('iso')) {
+        url.searchParams.set('iso', String(ctx.iso));
+      }
+      return url.href;
+    } catch (_e) {
+      return href;
+    }
+  }
+
+  function resolveInsightOpenHref(el) {
+    var hrefPro = '';
+    try {
+      hrefPro = (el && el.getAttribute('data-href-pro')) || (el && el.getAttribute('href')) || '';
+    } catch (_eHref) {}
+    if (hrefPro && String(hrefPro).indexOf('open=insight') >= 0) {
+      return appendInsightContextQuery(hrefPro);
+    }
+    return appendInsightContextQuery(resolveMonthlyInsightHref());
+  }
+
+  function openInsightFloatingWindow() {
+    var api = global.__KPI_MONTHLY_OVERLAYS__;
+    if (api && typeof api.openInsight === 'function') {
+      api.openInsight();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Global Menu Insight (#global-nav-index-btn):
+   * Pro + local FW → openInsight() (no hub navigation).
+   * Pro + no FW → Monthly ?open=insight.
+   * Basic → Change Plan (never silent).
+   */
+  function bindInsightMenuGate(el) {
+    if (!el || el.getAttribute('data-kpi-insight-gate') === '1') return;
+    el.setAttribute('data-kpi-insight-gate', '1');
+    el.addEventListener(
+      'click',
+      function (ev) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        function go() {
+          if (isBasicPlan()) {
+            var hrefBasic = el.getAttribute('data-href-basic') || resolveChangePlanHref();
+            if (hrefBasic) global.location.href = hrefBasic;
+            return;
+          }
+          if (openInsightFloatingWindow()) return;
+          var target = resolveInsightOpenHref(el);
+          if (target) global.location.href = target;
+        }
+        syncPlanFromServer().then(go).catch(go);
+      },
+      true
+    );
+  }
+
+  /**
    * Capture-phase Pro gate for links with data-href-basic / data-href-pro.
    * Waits for /auth/me.php so stale localStorage "basic" cannot send Pro users to Change Plan.
    */
@@ -445,7 +579,7 @@
    */
   function bindInsightNavGate(root) {
     var doc = root && root.querySelector ? root : document;
-    bindProHrefGate(doc.getElementById ? doc.getElementById('global-nav-index-btn') : null);
+    bindInsightMenuGate(doc.getElementById ? doc.getElementById('global-nav-index-btn') : null);
     bindProHrefGate(doc.getElementById ? doc.getElementById('header-booking-btn') : null);
     var nodes = doc.querySelectorAll ? doc.querySelectorAll('[data-kpi-pro-gate]') : [];
     for (var i = 0; i < nodes.length; i++) {
@@ -530,6 +664,7 @@
     resolveLoginHref: resolveLoginHref,
     bindAccountSettingsLogout: bindAccountSettingsLogout,
     bindProHrefGate: bindProHrefGate,
+    bindInsightMenuGate: bindInsightMenuGate,
     bindInsightNavGate: bindInsightNavGate,
     guardProPage: guardProPage,
     setRegistrationComplete: setRegistrationComplete,

@@ -125,7 +125,14 @@
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="../../app/profit/index.html" class="nav-frame-btn" aria-label="利潤摘要（目前頁面）" aria-current="page">
+            <a
+              href="../../app/monthly/index.html?open=insight"
+              class="nav-frame-btn"
+              id="global-nav-index-btn"
+              data-href-pro="../../app/monthly/index.html?open=insight"
+              data-href-basic="../../setting/change_plan.html"
+              aria-label="利潤摘要（專業方案）。基本方案請前往變更方案"
+            >
               <span class="btn-mode-frame">
                 <img src="../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">洞察</span>
@@ -243,6 +250,7 @@
     </div>
     <script src="../../../js/kpi-auth-client.js"></script>
     <script src="../../../js/kpi-business-type.js"></script>
+    <script src="../../../js/kpi-pl-expense-presets.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
