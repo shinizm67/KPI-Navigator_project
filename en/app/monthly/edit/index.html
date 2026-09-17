@@ -6142,11 +6142,22 @@
           return null;
         }
 
+        function salesCsvAllowsRestaurantFields() {
+          /* Missing/legacy Business Type stays restaurant so existing CSVs keep Unit 4 persist. */
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {
+            try {
+              return !!window.KpiBusinessType.isRestaurantLike();
+            } catch (_eBt) {}
+          }
+          return true;
+        }
+
         function rowsToMaps(rows) {
           if (!rows || !rows.length) throw new Error('empty');
           var header = rows[0].map(function (c) { return String(c == null ? '' : c); });
           var cols = detectColumns(header);
           if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
           for (var r = 1; r < rows.length; r++) {
@@ -6164,34 +6175,36 @@
             var lunchGroups = readMealCell(row, cols.lunchGroupsIdx, true);
             var dinnerGroups = readMealCell(row, cols.dinnerGroupsIdx, true);
             var totalGroups = readMealCell(row, cols.totalGroupsIdx, true);
-            var mealCells = [
-              [lunchSales, 'sales'],
-              [dinnerSales, 'sales'],
-              [lunchCust, 'customers'],
-              [dinnerCust, 'customers'],
-              [totalCust, 'customers'],
-              [lunchGroups, 'groups'],
-              [dinnerGroups, 'groups'],
-              [totalGroups, 'groups'],
-            ];
-            for (var mi = 0; mi < mealCells.length; mi++) {
-              if (mealCells[mi][0] && mealCells[mi][0].error === 'invalid') {
-                mealErrors.push(mealError(iso, mealCells[mi][1], 'invalid'));
+            if (allowRestaurant) {
+              var mealCells = [
+                [lunchSales, 'sales'],
+                [dinnerSales, 'sales'],
+                [lunchCust, 'customers'],
+                [dinnerCust, 'customers'],
+                [totalCust, 'customers'],
+                [lunchGroups, 'groups'],
+                [dinnerGroups, 'groups'],
+                [totalGroups, 'groups'],
+              ];
+              for (var mi = 0; mi < mealCells.length; mi++) {
+                if (mealCells[mi][0] && mealCells[mi][0].error === 'invalid') {
+                  mealErrors.push(mealError(iso, mealCells[mi][1], 'invalid'));
+                }
               }
+              var dailySalesMissing = !cellHasValue(row, cols.salesIdx);
+              if ((mealCellOn(lunchSales) || mealCellOn(dinnerSales)) && dailySalesMissing) {
+                mealErrors.push(mealError(iso, 'sales', 'sales-total-missing'));
+              }
+              var salesTotalCell = dailySalesMissing
+                ? { missing: true }
+                : { value: sales, missing: false };
+              var vSales = validateMealTriple(iso, 'sales', salesTotalCell, lunchSales, dinnerSales);
+              if (vSales) mealErrors.push(vSales);
+              var vCust = validateMealTriple(iso, 'customers', totalCust, lunchCust, dinnerCust);
+              if (vCust) mealErrors.push(vCust);
+              var vGroups = validateMealTriple(iso, 'groups', totalGroups, lunchGroups, dinnerGroups);
+              if (vGroups) mealErrors.push(vGroups);
             }
-            var dailySalesMissing = !cellHasValue(row, cols.salesIdx);
-            if ((mealCellOn(lunchSales) || mealCellOn(dinnerSales)) && dailySalesMissing) {
-              mealErrors.push(mealError(iso, 'sales', 'sales-total-missing'));
-            }
-            var salesTotalCell = dailySalesMissing
-              ? { missing: true }
-              : { value: sales, missing: false };
-            var vSales = validateMealTriple(iso, 'sales', salesTotalCell, lunchSales, dinnerSales);
-            if (vSales) mealErrors.push(vSales);
-            var vCust = validateMealTriple(iso, 'customers', totalCust, lunchCust, dinnerCust);
-            if (vCust) mealErrors.push(vCust);
-            var vGroups = validateMealTriple(iso, 'groups', totalGroups, lunchGroups, dinnerGroups);
-            if (vGroups) mealErrors.push(vGroups);
             pending.push({
               iso: iso,
               sales: sales,
@@ -6231,6 +6244,7 @@
             if (rec.biz !== null) businessDayByDate[rec.iso] = !!rec.biz;
             years[isoYear(rec.iso)] = true;
             imported++;
+            if (!allowRestaurant) continue;
             putMeal(lunchSalesByDate, rec.iso, rec.lunchSales);
             putMeal(dinnerSalesByDate, rec.iso, rec.dinnerSales);
             putMeal(lunchCustomersByDate, rec.iso, rec.lunchCust);
@@ -6275,8 +6289,8 @@
             foodCount: foodCount,
             drinkCount: drinkCount,
             mismatchCount: mismatchCount,
-            hasFoodCol: cols.foodIdx >= 0,
-            hasDrinkCol: cols.drinkIdx >= 0,
+            hasFoodCol: allowRestaurant && cols.foodIdx >= 0,
+            hasDrinkCol: allowRestaurant && cols.drinkIdx >= 0,
           };
         }
 
@@ -6315,6 +6329,7 @@
 
         function persistDailyMealFromMaps(maps) {
           if (!maps) return 0;
+          if (!salesCsvAllowsRestaurantFields()) return 0;
           var ops = [];
           for (var pi = 0; pi < MEAL_PERSIST_PAIRS.length; pi++) {
             var pair = MEAL_PERSIST_PAIRS[pi];
@@ -6707,6 +6722,7 @@
           rowsToMaps: rowsToMaps,
           detectColumns: detectColumns,
           parseBizCell: parseBizCell,
+          salesCsvAllowsRestaurantFields: salesCsvAllowsRestaurantFields,
           persistDailyMealFromMaps: persistDailyMealFromMaps,
           applyToRowState: applyToRowState,
           getDailyImportApi: getDailyImportApi,
@@ -10532,6 +10548,10 @@
           var n = Number(val);
           incomeByYear[y][streamId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
         }
+        var allowRestaurantFields = true;
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields === 'function') {
+          allowRestaurantFields = !!window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields();
+        }
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           var n = Number(maps.salesByDate[iso]);
           csvSales[iso] = Number.isFinite(n) ? n : 0;
@@ -10542,12 +10562,14 @@
             csvBiz[iso] = !!maps.businessDayByDate[iso];
           }
         });
-        Object.keys(maps.foodByDate || {}).forEach(function (iso) {
-          addIncome('food_sales', iso, maps.foodByDate[iso]);
-        });
-        Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
-          addIncome('drink_sales', iso, maps.drinkByDate[iso]);
-        });
+        if (allowRestaurantFields) {
+          Object.keys(maps.foodByDate || {}).forEach(function (iso) {
+            addIncome('food_sales', iso, maps.foodByDate[iso]);
+          });
+          Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
+            addIncome('drink_sales', iso, maps.drinkByDate[iso]);
+          });
+        }
         if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps === 'function') {
           window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
         }
@@ -10595,6 +10617,10 @@
         var yf = Number(year);
         var applied = 0;
         var foodMap = maps.foodByDate || {};
+        var allowRestaurantFields = true;
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields === 'function') {
+          allowRestaurantFields = !!window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields();
+        }
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
           if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep-sales-csv-import', iso)) return;
@@ -10607,6 +10633,10 @@
             writeValue(primary.id, iso, Math.round(sales));
           } else {
             writeValue(primary.id, iso, 0);
+          }
+          if (!allowRestaurantFields) {
+            applied++;
+            return;
           }
           if (Object.prototype.hasOwnProperty.call(foodMap, iso) && typeof writeValue === 'function') {
             var food = Number(foodMap[iso]);

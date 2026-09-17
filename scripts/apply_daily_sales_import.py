@@ -549,6 +549,10 @@ MEP_SALES_CSV_HELPER = """      function persistMepSalesCsvByYear(maps) {
           var n = Number(val);
           incomeByYear[y][streamId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
         }
+        var allowRestaurantFields = true;
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields === 'function') {
+          allowRestaurantFields = !!window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields();
+        }
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           var n = Number(maps.salesByDate[iso]);
           csvSales[iso] = Number.isFinite(n) ? n : 0;
@@ -559,12 +563,14 @@ MEP_SALES_CSV_HELPER = """      function persistMepSalesCsvByYear(maps) {
             csvBiz[iso] = !!maps.businessDayByDate[iso];
           }
         });
-        Object.keys(maps.foodByDate || {}).forEach(function (iso) {
-          addIncome('food_sales', iso, maps.foodByDate[iso]);
-        });
-        Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
-          addIncome('drink_sales', iso, maps.drinkByDate[iso]);
-        });
+        if (allowRestaurantFields) {
+          Object.keys(maps.foodByDate || {}).forEach(function (iso) {
+            addIncome('food_sales', iso, maps.foodByDate[iso]);
+          });
+          Object.keys(maps.drinkByDate || {}).forEach(function (iso) {
+            addIncome('drink_sales', iso, maps.drinkByDate[iso]);
+          });
+        }
         if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps === 'function') {
           window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
         }
@@ -630,6 +636,10 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
         var yf = Number(year);
         var applied = 0;
         var foodMap = maps.foodByDate || {};
+        var allowRestaurantFields = true;
+        if (window.__KPI_DAILY_IMPORT && typeof window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields === 'function') {
+          allowRestaurantFields = !!window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields();
+        }
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
           if (Number.isFinite(yf) && mepIsoYear(iso) !== yf) return;
           if (window.KpiYearStore && !KpiYearStore.canWriteDailySalesFrom('mep-sales-csv-import', iso)) return;
@@ -642,6 +652,10 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
             writeValue(primary.id, iso, Math.round(sales));
           } else {
             writeValue(primary.id, iso, 0);
+          }
+          if (!allowRestaurantFields) {
+            applied++;
+            return;
           }
           if (Object.prototype.hasOwnProperty.call(foodMap, iso) && typeof writeValue === 'function') {
             var food = Number(foodMap[iso]);

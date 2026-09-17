@@ -458,11 +458,22 @@ def daily_sales_import_js() -> str:
           return null;
         }}
 
+        function salesCsvAllowsRestaurantFields() {{
+          /* Missing/legacy Business Type stays restaurant so existing CSVs keep Unit 4 persist. */
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {{
+            try {{
+              return !!window.KpiBusinessType.isRestaurantLike();
+            }} catch (_eBt) {{}}
+          }}
+          return true;
+        }}
+
         function rowsToMaps(rows) {{
           if (!rows || !rows.length) throw new Error('empty');
           var header = rows[0].map(function (c) {{ return String(c == null ? '' : c); }});
           var cols = detectColumns(header);
           if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
           for (var r = 1; r < rows.length; r++) {{
@@ -480,34 +491,36 @@ def daily_sales_import_js() -> str:
             var lunchGroups = readMealCell(row, cols.lunchGroupsIdx, true);
             var dinnerGroups = readMealCell(row, cols.dinnerGroupsIdx, true);
             var totalGroups = readMealCell(row, cols.totalGroupsIdx, true);
-            var mealCells = [
-              [lunchSales, 'sales'],
-              [dinnerSales, 'sales'],
-              [lunchCust, 'customers'],
-              [dinnerCust, 'customers'],
-              [totalCust, 'customers'],
-              [lunchGroups, 'groups'],
-              [dinnerGroups, 'groups'],
-              [totalGroups, 'groups'],
-            ];
-            for (var mi = 0; mi < mealCells.length; mi++) {{
-              if (mealCells[mi][0] && mealCells[mi][0].error === 'invalid') {{
-                mealErrors.push(mealError(iso, mealCells[mi][1], 'invalid'));
+            if (allowRestaurant) {{
+              var mealCells = [
+                [lunchSales, 'sales'],
+                [dinnerSales, 'sales'],
+                [lunchCust, 'customers'],
+                [dinnerCust, 'customers'],
+                [totalCust, 'customers'],
+                [lunchGroups, 'groups'],
+                [dinnerGroups, 'groups'],
+                [totalGroups, 'groups'],
+              ];
+              for (var mi = 0; mi < mealCells.length; mi++) {{
+                if (mealCells[mi][0] && mealCells[mi][0].error === 'invalid') {{
+                  mealErrors.push(mealError(iso, mealCells[mi][1], 'invalid'));
+                }}
               }}
+              var dailySalesMissing = !cellHasValue(row, cols.salesIdx);
+              if ((mealCellOn(lunchSales) || mealCellOn(dinnerSales)) && dailySalesMissing) {{
+                mealErrors.push(mealError(iso, 'sales', 'sales-total-missing'));
+              }}
+              var salesTotalCell = dailySalesMissing
+                ? {{ missing: true }}
+                : {{ value: sales, missing: false }};
+              var vSales = validateMealTriple(iso, 'sales', salesTotalCell, lunchSales, dinnerSales);
+              if (vSales) mealErrors.push(vSales);
+              var vCust = validateMealTriple(iso, 'customers', totalCust, lunchCust, dinnerCust);
+              if (vCust) mealErrors.push(vCust);
+              var vGroups = validateMealTriple(iso, 'groups', totalGroups, lunchGroups, dinnerGroups);
+              if (vGroups) mealErrors.push(vGroups);
             }}
-            var dailySalesMissing = !cellHasValue(row, cols.salesIdx);
-            if ((mealCellOn(lunchSales) || mealCellOn(dinnerSales)) && dailySalesMissing) {{
-              mealErrors.push(mealError(iso, 'sales', 'sales-total-missing'));
-            }}
-            var salesTotalCell = dailySalesMissing
-              ? {{ missing: true }}
-              : {{ value: sales, missing: false }};
-            var vSales = validateMealTriple(iso, 'sales', salesTotalCell, lunchSales, dinnerSales);
-            if (vSales) mealErrors.push(vSales);
-            var vCust = validateMealTriple(iso, 'customers', totalCust, lunchCust, dinnerCust);
-            if (vCust) mealErrors.push(vCust);
-            var vGroups = validateMealTriple(iso, 'groups', totalGroups, lunchGroups, dinnerGroups);
-            if (vGroups) mealErrors.push(vGroups);
             pending.push({{
               iso: iso,
               sales: sales,
@@ -547,6 +560,7 @@ def daily_sales_import_js() -> str:
             if (rec.biz !== null) businessDayByDate[rec.iso] = !!rec.biz;
             years[isoYear(rec.iso)] = true;
             imported++;
+            if (!allowRestaurant) continue;
             putMeal(lunchSalesByDate, rec.iso, rec.lunchSales);
             putMeal(dinnerSalesByDate, rec.iso, rec.dinnerSales);
             putMeal(lunchCustomersByDate, rec.iso, rec.lunchCust);
@@ -591,8 +605,8 @@ def daily_sales_import_js() -> str:
             foodCount: foodCount,
             drinkCount: drinkCount,
             mismatchCount: mismatchCount,
-            hasFoodCol: cols.foodIdx >= 0,
-            hasDrinkCol: cols.drinkIdx >= 0,
+            hasFoodCol: allowRestaurant && cols.foodIdx >= 0,
+            hasDrinkCol: allowRestaurant && cols.drinkIdx >= 0,
           }};
         }}
 
@@ -631,6 +645,7 @@ def daily_sales_import_js() -> str:
 
         function persistDailyMealFromMaps(maps) {{
           if (!maps) return 0;
+          if (!salesCsvAllowsRestaurantFields()) return 0;
           var ops = [];
           for (var pi = 0; pi < MEAL_PERSIST_PAIRS.length; pi++) {{
             var pair = MEAL_PERSIST_PAIRS[pi];
@@ -1023,6 +1038,7 @@ def daily_sales_import_js() -> str:
           rowsToMaps: rowsToMaps,
           detectColumns: detectColumns,
           parseBizCell: parseBizCell,
+          salesCsvAllowsRestaurantFields: salesCsvAllowsRestaurantFields,
           persistDailyMealFromMaps: persistDailyMealFromMaps,
           applyToRowState: applyToRowState,
           getDailyImportApi: getDailyImportApi,
