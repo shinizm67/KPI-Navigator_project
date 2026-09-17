@@ -12972,8 +12972,9 @@
           >DL</summary>
           <div class="template-dl-menu" role="menu" aria-label="下載選單">
             <p class="template-dl-heading">範本</p>
-            <a href="../../../excel/expense-import_daily_template.csv" download class="template-dl-item" role="menuitem">下載支出範本（每日）</a>
-            <a href="../../../excel/expense-import_monthly_template.csv" download class="template-dl-item" role="menuitem">下載支出範本（月度）</a>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-sales" role="menuitem" data-kpi-csv-template="sales">下載銷售範本</button>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-daily" role="menuitem" data-kpi-csv-template="expense-daily">下載支出範本（每日）</button>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-monthly" role="menuitem" data-kpi-csv-template="expense-monthly">下載支出範本（月度）</button>
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">資料匯出</p>
             <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../setting/change_plan.html" aria-label="下載 MEP 與 PL 的 Excel（專業方案）">損益資料（MEP＋PL）</button>
@@ -13038,6 +13039,7 @@
     <script src="../../../js/kpi-auth-client.js"></script>
     <script src="../../../js/kpi-business-type.js"></script>
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
+    <script src="../../../js/kpi-csv-templates.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;

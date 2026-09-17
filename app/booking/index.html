@@ -150,8 +150,9 @@
           >DL</summary>
           <div class="template-dl-menu" role="menu" aria-label="ダウンロードメニュー">
             <p class="template-dl-heading">雛形</p>
-            <a href="../../excel/支出入力_日次_雛形.csv" download class="template-dl-item" role="menuitem">支出雛形をダウンロード（日次）</a>
-            <a href="../../excel/支出入力_月次_雛形.csv" download class="template-dl-item" role="menuitem">支出雛形をダウンロード（月次）</a>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-sales" role="menuitem" data-kpi-csv-template="sales">売上雛形をダウンロード</button>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-daily" role="menuitem" data-kpi-csv-template="expense-daily">支出雛形をダウンロード（日次）</button>
+            <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-monthly" role="menuitem" data-kpi-csv-template="expense-monthly">支出雛形をダウンロード（月次）</button>
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">データ出力</p>
             <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../setting/change_plan.html" aria-label="MEPとPLの収支データをExcelでダウンロード（Pro）">収支データ（MEP＋PL）</button>
@@ -216,6 +217,7 @@
     <script src="../../js/kpi-auth-client.js"></script>
     <script src="../../js/kpi-business-type.js"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
+    <script src="../../js/kpi-csv-templates.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
