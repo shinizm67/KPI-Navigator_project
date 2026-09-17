@@ -1,0 +1,282 @@
+{
+  "schema": "kpn-6e-smoke-fixtures-v1",
+  "generatedBy": "csv_smoke_fixture_generator.py",
+  "locale": "machine-key",
+  "reset": false,
+  "deletionSemantics": false,
+  "excel": "untouched",
+  "productionCatalog": false,
+  "restaurantYears": [
+    2024,
+    2025,
+    2026
+  ],
+  "minimalYear": 2026,
+  "minimalMonth": 3,
+  "salesCommonKeys": [
+    "date",
+    "business_day",
+    "daily_sales"
+  ],
+  "salesRestaurantOnlyKeys": [
+    "lunch_sales",
+    "dinner_sales",
+    "total_customers",
+    "lunch_customers",
+    "dinner_customers",
+    "total_groups",
+    "lunch_groups",
+    "dinner_groups",
+    "food_sales",
+    "drink_sales"
+  ],
+  "unit4PersistedMealKeys": [
+    "dinner_sales",
+    "total_customers",
+    "dinner_customers",
+    "total_groups",
+    "dinner_groups"
+  ],
+  "unit4LunchValidationKeys": [
+    "lunch_sales",
+    "lunch_customers",
+    "lunch_groups"
+  ],
+  "expenseDailyHeader": [
+    "date",
+    "item",
+    "label",
+    "amount"
+  ],
+  "expenseMonthlyHeader": [
+    "month",
+    "item",
+    "label",
+    "amount"
+  ],
+  "custom": {
+    "lineId": "exp_custom_variable_smoke",
+    "inputStyle": "monthly",
+    "active": true,
+    "hostBusinessType": "retail",
+    "labels": {
+      "ja": "Smoke custom fee",
+      "en": "Smoke custom fee",
+      "zh-tw": "Smoke custom fee"
+    },
+    "mockCatalog": true,
+    "productionCatalog": false
+  },
+  "files": [
+    "restaurant_2024_sales.csv",
+    "restaurant_2024_expenses_daily.csv",
+    "restaurant_2024_expenses_monthly.csv",
+    "restaurant_2025_sales.csv",
+    "restaurant_2025_expenses_daily.csv",
+    "restaurant_2025_expenses_monthly.csv",
+    "restaurant_2026_sales.csv",
+    "restaurant_2026_expenses_daily.csv",
+    "restaurant_2026_expenses_monthly.csv",
+    "retail_minimal_sales.csv",
+    "retail_minimal_expenses_daily.csv",
+    "retail_minimal_expenses_monthly.csv",
+    "hair_salon_minimal_sales.csv",
+    "hair_salon_minimal_expenses_daily.csv",
+    "hair_salon_minimal_expenses_monthly.csv",
+    "fitness_minimal_sales.csv",
+    "fitness_minimal_expenses_daily.csv",
+    "fitness_minimal_expenses_monthly.csv",
+    "hotel_minimal_sales.csv",
+    "hotel_minimal_expenses_daily.csv",
+    "hotel_minimal_expenses_monthly.csv",
+    "other_minimal_sales.csv",
+    "other_minimal_expenses_daily.csv",
+    "other_minimal_expenses_monthly.csv"
+  ],
+  "restaurant": [
+    {
+      "year": 2024,
+      "sales": "restaurant_2024_sales.csv",
+      "expensesDaily": "restaurant_2024_expenses_daily.csv",
+      "expensesMonthly": "restaurant_2024_expenses_monthly.csv",
+      "dailyLineIds": [
+        "exp_food_cost",
+        "exp_drink_cost",
+        "exp_variable_labor"
+      ],
+      "monthlyLineIds": [
+        "exp_rent",
+        "exp_fixed_labor",
+        "exp_non_life_insurance",
+        "exp_supplies",
+        "exp_misc",
+        "exp_electric",
+        "exp_gas",
+        "exp_water",
+        "exp_telecom",
+        "exp_advertising",
+        "exp_payment_fees"
+      ]
+    },
+    {
+      "year": 2025,
+      "sales": "restaurant_2025_sales.csv",
+      "expensesDaily": "restaurant_2025_expenses_daily.csv",
+      "expensesMonthly": "restaurant_2025_expenses_monthly.csv",
+      "dailyLineIds": [
+        "exp_food_cost",
+        "exp_drink_cost",
+        "exp_variable_labor"
+      ],
+      "monthlyLineIds": [
+        "exp_rent",
+        "exp_fixed_labor",
+        "exp_non_life_insurance",
+        "exp_supplies",
+        "exp_misc",
+        "exp_electric",
+        "exp_gas",
+        "exp_water",
+        "exp_telecom",
+        "exp_advertising",
+        "exp_payment_fees"
+      ]
+    },
+    {
+      "year": 2026,
+      "sales": "restaurant_2026_sales.csv",
+      "expensesDaily": "restaurant_2026_expenses_daily.csv",
+      "expensesMonthly": "restaurant_2026_expenses_monthly.csv",
+      "dailyLineIds": [
+        "exp_food_cost",
+        "exp_drink_cost",
+        "exp_variable_labor"
+      ],
+      "monthlyLineIds": [
+        "exp_rent",
+        "exp_fixed_labor",
+        "exp_non_life_insurance",
+        "exp_supplies",
+        "exp_misc",
+        "exp_electric",
+        "exp_gas",
+        "exp_water",
+        "exp_telecom",
+        "exp_advertising",
+        "exp_payment_fees"
+      ]
+    }
+  ],
+  "minimal": [
+    {
+      "businessType": "retail",
+      "sales": "retail_minimal_sales.csv",
+      "expensesDaily": "retail_minimal_expenses_daily.csv",
+      "expensesMonthly": "retail_minimal_expenses_monthly.csv",
+      "dailyLine": {
+        "lineId": "exp_variable_labor",
+        "labels": {
+          "ja": "スタッフ人件費",
+          "en": "Staff labor",
+          "zh-tw": "員工人事費用"
+        }
+      },
+      "monthlyLine": {
+        "lineId": "exp_inventory_cogs",
+        "labels": {
+          "ja": "商品仕入",
+          "en": "Merchandise purchases",
+          "zh-tw": "商品進貨"
+        }
+      }
+    },
+    {
+      "businessType": "hair_salon",
+      "sales": "hair_salon_minimal_sales.csv",
+      "expensesDaily": "hair_salon_minimal_expenses_daily.csv",
+      "expensesMonthly": "hair_salon_minimal_expenses_monthly.csv",
+      "dailyLine": {
+        "lineId": "exp_variable_labor",
+        "labels": {
+          "ja": "スタッフ人件費",
+          "en": "Staff labor",
+          "zh-tw": "員工人事費用"
+        }
+      },
+      "monthlyLine": {
+        "lineId": "exp_treatment_materials",
+        "labels": {
+          "ja": "薬剤・施術材料費",
+          "en": "Treatment materials",
+          "zh-tw": "藥劑／施術材料費"
+        }
+      }
+    },
+    {
+      "businessType": "fitness",
+      "sales": "fitness_minimal_sales.csv",
+      "expensesDaily": "fitness_minimal_expenses_daily.csv",
+      "expensesMonthly": "fitness_minimal_expenses_monthly.csv",
+      "dailyLine": {
+        "lineId": "exp_variable_labor",
+        "labels": {
+          "ja": "スタッフ人件費",
+          "en": "Staff labor",
+          "zh-tw": "員工人事費用"
+        }
+      },
+      "monthlyLine": {
+        "lineId": "exp_training_equipment",
+        "labels": {
+          "ja": "トレーニング機器購入・リース",
+          "en": "Training equipment purchase / lease",
+          "zh-tw": "訓練器材購置／租賃"
+        }
+      }
+    },
+    {
+      "businessType": "hotel",
+      "sales": "hotel_minimal_sales.csv",
+      "expensesDaily": "hotel_minimal_expenses_daily.csv",
+      "expensesMonthly": "hotel_minimal_expenses_monthly.csv",
+      "dailyLine": {
+        "lineId": "exp_variable_labor",
+        "labels": {
+          "ja": "スタッフ人件費",
+          "en": "Staff labor",
+          "zh-tw": "員工人事費用"
+        }
+      },
+      "monthlyLine": {
+        "lineId": "exp_linen_cleaning",
+        "labels": {
+          "ja": "リネン・クリーニング費",
+          "en": "Linen & cleaning",
+          "zh-tw": "布巾／清潔費"
+        }
+      }
+    },
+    {
+      "businessType": "other",
+      "sales": "other_minimal_sales.csv",
+      "expensesDaily": "other_minimal_expenses_daily.csv",
+      "expensesMonthly": "other_minimal_expenses_monthly.csv",
+      "dailyLine": {
+        "lineId": "exp_variable_labor",
+        "labels": {
+          "ja": "スタッフ人件費",
+          "en": "Staff labor",
+          "zh-tw": "員工人事費用"
+        }
+      },
+      "monthlyLine": {
+        "lineId": "exp_materials",
+        "labels": {
+          "ja": "材料・仕入費",
+          "en": "Materials / purchases",
+          "zh-tw": "材料／進貨費"
+        }
+      }
+    }
+  ]
+}

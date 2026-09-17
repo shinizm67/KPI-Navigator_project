@@ -1,0 +1,133 @@
+month,item,label,amount
+2024-01,exp_rent,Rent,21001
+2024-02,exp_rent,Rent,21002
+2024-03,exp_rent,Rent,21003
+2024-04,exp_rent,Rent,21004
+2024-05,exp_rent,Rent,21005
+2024-06,exp_rent,Rent,21006
+2024-07,exp_rent,Rent,21007
+2024-08,exp_rent,Rent,21008
+2024-09,exp_rent,Rent,21009
+2024-10,exp_rent,Rent,21010
+2024-11,exp_rent,Rent,21011
+2024-12,exp_rent,Rent,21012
+2024-01,exp_fixed_labor,Fixed Labor,22001
+2024-02,exp_fixed_labor,Fixed Labor,22002
+2024-03,exp_fixed_labor,Fixed Labor,22003
+2024-04,exp_fixed_labor,Fixed Labor,22004
+2024-05,exp_fixed_labor,Fixed Labor,22005
+2024-06,exp_fixed_labor,Fixed Labor,22006
+2024-07,exp_fixed_labor,Fixed Labor,22007
+2024-08,exp_fixed_labor,Fixed Labor,22008
+2024-09,exp_fixed_labor,Fixed Labor,22009
+2024-10,exp_fixed_labor,Fixed Labor,22010
+2024-11,exp_fixed_labor,Fixed Labor,22011
+2024-12,exp_fixed_labor,Fixed Labor,22012
+2024-01,exp_non_life_insurance,Non-life insurance,23001
+2024-02,exp_non_life_insurance,Non-life insurance,23002
+2024-03,exp_non_life_insurance,Non-life insurance,23003
+2024-04,exp_non_life_insurance,Non-life insurance,23004
+2024-05,exp_non_life_insurance,Non-life insurance,23005
+2024-06,exp_non_life_insurance,Non-life insurance,23006
+2024-07,exp_non_life_insurance,Non-life insurance,23007
+2024-08,exp_non_life_insurance,Non-life insurance,23008
+2024-09,exp_non_life_insurance,Non-life insurance,23009
+2024-10,exp_non_life_insurance,Non-life insurance,23010
+2024-11,exp_non_life_insurance,Non-life insurance,23011
+2024-12,exp_non_life_insurance,Non-life insurance,23012
+2024-01,exp_supplies,Supplies & Consumables,24001
+2024-02,exp_supplies,Supplies & Consumables,24002
+2024-03,exp_supplies,Supplies & Consumables,24003
+2024-04,exp_supplies,Supplies & Consumables,24004
+2024-05,exp_supplies,Supplies & Consumables,24005
+2024-06,exp_supplies,Supplies & Consumables,24006
+2024-07,exp_supplies,Supplies & Consumables,24007
+2024-08,exp_supplies,Supplies & Consumables,24008
+2024-09,exp_supplies,Supplies & Consumables,24009
+2024-10,exp_supplies,Supplies & Consumables,24010
+2024-11,exp_supplies,Supplies & Consumables,24011
+2024-12,exp_supplies,Supplies & Consumables,24012
+2024-01,exp_misc,Miscellaneous Expense,25001
+2024-02,exp_misc,Miscellaneous Expense,25002
+2024-03,exp_misc,Miscellaneous Expense,25003
+2024-04,exp_misc,Miscellaneous Expense,25004
+2024-05,exp_misc,Miscellaneous Expense,25005
+2024-06,exp_misc,Miscellaneous Expense,25006
+2024-07,exp_misc,Miscellaneous Expense,25007
+2024-08,exp_misc,Miscellaneous Expense,25008
+2024-09,exp_misc,Miscellaneous Expense,25009
+2024-10,exp_misc,Miscellaneous Expense,25010
+2024-11,exp_misc,Miscellaneous Expense,25011
+2024-12,exp_misc,Miscellaneous Expense,25012
+2024-01,exp_electric,Electricity Cost,26001
+2024-02,exp_electric,Electricity Cost,26002
+2024-03,exp_electric,Electricity Cost,26003
+2024-04,exp_electric,Electricity Cost,26004
+2024-05,exp_electric,Electricity Cost,26005
+2024-06,exp_electric,Electricity Cost,26006
+2024-07,exp_electric,Electricity Cost,26007
+2024-08,exp_electric,Electricity Cost,26008
+2024-09,exp_electric,Electricity Cost,26009
+2024-10,exp_electric,Electricity Cost,26010
+2024-11,exp_electric,Electricity Cost,26011
+2024-12,exp_electric,Electricity Cost,26012
+2024-01,exp_gas,Gas Cost,27001
+2024-02,exp_gas,Gas Cost,27002
+2024-03,exp_gas,Gas Cost,27003
+2024-04,exp_gas,Gas Cost,27004
+2024-05,exp_gas,Gas Cost,27005
+2024-06,exp_gas,Gas Cost,27006
+2024-07,exp_gas,Gas Cost,27007
+2024-08,exp_gas,Gas Cost,27008
+2024-09,exp_gas,Gas Cost,27009
+2024-10,exp_gas,Gas Cost,27010
+2024-11,exp_gas,Gas Cost,27011
+2024-12,exp_gas,Gas Cost,27012
+2024-01,exp_water,Water Cost,28001
+2024-02,exp_water,Water Cost,28002
+2024-03,exp_water,Water Cost,28003
+2024-04,exp_water,Water Cost,28004
+2024-05,exp_water,Water Cost,28005
+2024-06,exp_water,Water Cost,28006
+2024-07,exp_water,Water Cost,28007
+2024-08,exp_water,Water Cost,28008
+2024-09,exp_water,Water Cost,28009
+2024-10,exp_water,Water Cost,28010
+2024-11,exp_water,Water Cost,28011
+2024-12,exp_water,Water Cost,28012
+2024-01,exp_telecom,Communication,29001
+2024-02,exp_telecom,Communication,29002
+2024-03,exp_telecom,Communication,29003
+2024-04,exp_telecom,Communication,29004
+2024-05,exp_telecom,Communication,29005
+2024-06,exp_telecom,Communication,29006
+2024-07,exp_telecom,Communication,29007
+2024-08,exp_telecom,Communication,29008
+2024-09,exp_telecom,Communication,29009
+2024-10,exp_telecom,Communication,29010
+2024-11,exp_telecom,Communication,29011
+2024-12,exp_telecom,Communication,29012
+2024-01,exp_advertising,Advertising,30001
+2024-02,exp_advertising,Advertising,30002
+2024-03,exp_advertising,Advertising,30003
+2024-04,exp_advertising,Advertising,30004
+2024-05,exp_advertising,Advertising,30005
+2024-06,exp_advertising,Advertising,30006
+2024-07,exp_advertising,Advertising,30007
+2024-08,exp_advertising,Advertising,30008
+2024-09,exp_advertising,Advertising,30009
+2024-10,exp_advertising,Advertising,30010
+2024-11,exp_advertising,Advertising,30011
+2024-12,exp_advertising,Advertising,30012
+2024-01,exp_payment_fees,Payment Processing Fees,31001
+2024-02,exp_payment_fees,Payment Processing Fees,31002
+2024-03,exp_payment_fees,Payment Processing Fees,31003
+2024-04,exp_payment_fees,Payment Processing Fees,31004
+2024-05,exp_payment_fees,Payment Processing Fees,31005
+2024-06,exp_payment_fees,Payment Processing Fees,31006
+2024-07,exp_payment_fees,Payment Processing Fees,31007
+2024-08,exp_payment_fees,Payment Processing Fees,31008
+2024-09,exp_payment_fees,Payment Processing Fees,31009
+2024-10,exp_payment_fees,Payment Processing Fees,31010
+2024-11,exp_payment_fees,Payment Processing Fees,31011
+2024-12,exp_payment_fees,Payment Processing Fees,31012

@@ -1,0 +1,133 @@
+month,item,label,amount
+2025-01,exp_rent,Rent,21101
+2025-02,exp_rent,Rent,21102
+2025-03,exp_rent,Rent,21103
+2025-04,exp_rent,Rent,21104
+2025-05,exp_rent,Rent,21105
+2025-06,exp_rent,Rent,21106
+2025-07,exp_rent,Rent,21107
+2025-08,exp_rent,Rent,21108
+2025-09,exp_rent,Rent,21109
+2025-10,exp_rent,Rent,21110
+2025-11,exp_rent,Rent,21111
+2025-12,exp_rent,Rent,21112
+2025-01,exp_fixed_labor,Fixed Labor,22101
+2025-02,exp_fixed_labor,Fixed Labor,22102
+2025-03,exp_fixed_labor,Fixed Labor,22103
+2025-04,exp_fixed_labor,Fixed Labor,22104
+2025-05,exp_fixed_labor,Fixed Labor,22105
+2025-06,exp_fixed_labor,Fixed Labor,22106
+2025-07,exp_fixed_labor,Fixed Labor,22107
+2025-08,exp_fixed_labor,Fixed Labor,22108
+2025-09,exp_fixed_labor,Fixed Labor,22109
+2025-10,exp_fixed_labor,Fixed Labor,22110
+2025-11,exp_fixed_labor,Fixed Labor,22111
+2025-12,exp_fixed_labor,Fixed Labor,22112
+2025-01,exp_non_life_insurance,Non-life insurance,23101
+2025-02,exp_non_life_insurance,Non-life insurance,23102
+2025-03,exp_non_life_insurance,Non-life insurance,23103
+2025-04,exp_non_life_insurance,Non-life insurance,23104
+2025-05,exp_non_life_insurance,Non-life insurance,23105
+2025-06,exp_non_life_insurance,Non-life insurance,23106
+2025-07,exp_non_life_insurance,Non-life insurance,23107
+2025-08,exp_non_life_insurance,Non-life insurance,23108
+2025-09,exp_non_life_insurance,Non-life insurance,23109
+2025-10,exp_non_life_insurance,Non-life insurance,23110
+2025-11,exp_non_life_insurance,Non-life insurance,23111
+2025-12,exp_non_life_insurance,Non-life insurance,23112
+2025-01,exp_supplies,Supplies & Consumables,24101
+2025-02,exp_supplies,Supplies & Consumables,24102
+2025-03,exp_supplies,Supplies & Consumables,24103
+2025-04,exp_supplies,Supplies & Consumables,24104
+2025-05,exp_supplies,Supplies & Consumables,24105
+2025-06,exp_supplies,Supplies & Consumables,24106
+2025-07,exp_supplies,Supplies & Consumables,24107
+2025-08,exp_supplies,Supplies & Consumables,24108
+2025-09,exp_supplies,Supplies & Consumables,24109
+2025-10,exp_supplies,Supplies & Consumables,24110
+2025-11,exp_supplies,Supplies & Consumables,24111
+2025-12,exp_supplies,Supplies & Consumables,24112
+2025-01,exp_misc,Miscellaneous Expense,25101
+2025-02,exp_misc,Miscellaneous Expense,25102
+2025-03,exp_misc,Miscellaneous Expense,25103
+2025-04,exp_misc,Miscellaneous Expense,25104
+2025-05,exp_misc,Miscellaneous Expense,25105
+2025-06,exp_misc,Miscellaneous Expense,25106
+2025-07,exp_misc,Miscellaneous Expense,25107
+2025-08,exp_misc,Miscellaneous Expense,25108
+2025-09,exp_misc,Miscellaneous Expense,25109
+2025-10,exp_misc,Miscellaneous Expense,25110
+2025-11,exp_misc,Miscellaneous Expense,25111
+2025-12,exp_misc,Miscellaneous Expense,25112
+2025-01,exp_electric,Electricity Cost,26101
+2025-02,exp_electric,Electricity Cost,26102
+2025-03,exp_electric,Electricity Cost,26103
+2025-04,exp_electric,Electricity Cost,26104
+2025-05,exp_electric,Electricity Cost,26105
+2025-06,exp_electric,Electricity Cost,26106
+2025-07,exp_electric,Electricity Cost,26107
+2025-08,exp_electric,Electricity Cost,26108
+2025-09,exp_electric,Electricity Cost,26109
+2025-10,exp_electric,Electricity Cost,26110
+2025-11,exp_electric,Electricity Cost,26111
+2025-12,exp_electric,Electricity Cost,26112
+2025-01,exp_gas,Gas Cost,27101
+2025-02,exp_gas,Gas Cost,27102
+2025-03,exp_gas,Gas Cost,27103
+2025-04,exp_gas,Gas Cost,27104
+2025-05,exp_gas,Gas Cost,27105
+2025-06,exp_gas,Gas Cost,27106
+2025-07,exp_gas,Gas Cost,27107
+2025-08,exp_gas,Gas Cost,27108
+2025-09,exp_gas,Gas Cost,27109
+2025-10,exp_gas,Gas Cost,27110
+2025-11,exp_gas,Gas Cost,27111
+2025-12,exp_gas,Gas Cost,27112
+2025-01,exp_water,Water Cost,28101
+2025-02,exp_water,Water Cost,28102
+2025-03,exp_water,Water Cost,28103
+2025-04,exp_water,Water Cost,28104
+2025-05,exp_water,Water Cost,28105
+2025-06,exp_water,Water Cost,28106
+2025-07,exp_water,Water Cost,28107
+2025-08,exp_water,Water Cost,28108
+2025-09,exp_water,Water Cost,28109
+2025-10,exp_water,Water Cost,28110
+2025-11,exp_water,Water Cost,28111
+2025-12,exp_water,Water Cost,28112
+2025-01,exp_telecom,Communication,29101
+2025-02,exp_telecom,Communication,29102
+2025-03,exp_telecom,Communication,29103
+2025-04,exp_telecom,Communication,29104
+2025-05,exp_telecom,Communication,29105
+2025-06,exp_telecom,Communication,29106
+2025-07,exp_telecom,Communication,29107
+2025-08,exp_telecom,Communication,29108
+2025-09,exp_telecom,Communication,29109
+2025-10,exp_telecom,Communication,29110
+2025-11,exp_telecom,Communication,29111
+2025-12,exp_telecom,Communication,29112
+2025-01,exp_advertising,Advertising,30101
+2025-02,exp_advertising,Advertising,30102
+2025-03,exp_advertising,Advertising,30103
+2025-04,exp_advertising,Advertising,30104
+2025-05,exp_advertising,Advertising,30105
+2025-06,exp_advertising,Advertising,30106
+2025-07,exp_advertising,Advertising,30107
+2025-08,exp_advertising,Advertising,30108
+2025-09,exp_advertising,Advertising,30109
+2025-10,exp_advertising,Advertising,30110
+2025-11,exp_advertising,Advertising,30111
+2025-12,exp_advertising,Advertising,30112
+2025-01,exp_payment_fees,Payment Processing Fees,31101
+2025-02,exp_payment_fees,Payment Processing Fees,31102
+2025-03,exp_payment_fees,Payment Processing Fees,31103
+2025-04,exp_payment_fees,Payment Processing Fees,31104
+2025-05,exp_payment_fees,Payment Processing Fees,31105
+2025-06,exp_payment_fees,Payment Processing Fees,31106
+2025-07,exp_payment_fees,Payment Processing Fees,31107
+2025-08,exp_payment_fees,Payment Processing Fees,31108
+2025-09,exp_payment_fees,Payment Processing Fees,31109
+2025-10,exp_payment_fees,Payment Processing Fees,31110
+2025-11,exp_payment_fees,Payment Processing Fees,31111
+2025-12,exp_payment_fees,Payment Processing Fees,31112
