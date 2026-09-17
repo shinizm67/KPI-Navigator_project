@@ -102,6 +102,26 @@ def mep_daily_meal_runtime_js() -> str:
       function mepIsMealRowId(rowId) {{
         return MEP_MEAL_SKIP_EXPENSE_ROW_IDS.indexOf(String(rowId || '')) >= 0;
       }}
+      function mepEditIsRestaurantLike() {{
+        try {{
+          if (window.KpiBusinessType && typeof window.KpiBusinessType.isRestaurantLike === 'function') {{
+            return !!window.KpiBusinessType.isRestaurantLike();
+          }}
+        }} catch (_eRest) {{}}
+        return true;
+      }}
+      function mepEditShouldShowRestaurantMealUi() {{
+        return mepEditIsRestaurantLike();
+      }}
+      function mepEditIsRestaurantIncomeLineId(lineId) {{
+        var id = String(lineId || '');
+        return id === 'food_sales' || id === 'drink_sales';
+      }}
+      function mepEditIsRestaurantMealUiRowId(rowId) {{
+        var id = String(rowId || '');
+        if (mepIsMealRowId(id)) return true;
+        return id === 'pc' || id === 'pcLunch' || id === 'pcDinner';
+      }}
       function mepIsMealPersistRowId(rowId) {{
         return MEP_MEAL_PERSIST_ROW_IDS.indexOf(String(rowId || '')) >= 0;
       }}
@@ -210,6 +230,9 @@ def mep_daily_meal_runtime_js() -> str:
         return null;
       }}
       function mepValidateMealBreakdown(year) {{
+        if (typeof mepEditShouldShowRestaurantMealUi === 'function' && !mepEditShouldShowRestaurantMealUi()) {{
+          return null;
+        }}
         var y = Number(year);
         if (!Number.isFinite(y)) y = typeof mefYear !== 'undefined' ? Number(mefYear) : NaN;
         if (!Number.isFinite(y) || typeof monthIsoList !== 'function') return null;
@@ -237,6 +260,9 @@ def mep_daily_meal_runtime_js() -> str:
       }}
       function mepCollectMealTouchedIso(out, rowId, iso, curMap, baseMap) {{
         if (!mepIsMealRowId(rowId)) return false;
+        if (typeof mepEditShouldShowRestaurantMealUi === 'function' && !mepEditShouldShowRestaurantMealUi()) {{
+          return true;
+        }}
         if (!mepIsMealPersistRowId(rowId)) return true;
         var curHas = Object.prototype.hasOwnProperty.call(curMap, iso);
         var baseHas = Object.prototype.hasOwnProperty.call(baseMap, iso);
@@ -286,6 +312,9 @@ def mep_daily_meal_runtime_js() -> str:
       function persistMepMealToYearStore(touched) {{
         var meal = touched && touched.dailyMeal;
         if (!meal || typeof meal !== 'object') return true;
+        if (typeof mepEditShouldShowRestaurantMealUi === 'function' && !mepEditShouldShowRestaurantMealUi()) {{
+          return true;
+        }}
         if (!window.KpiYearStore || typeof KpiYearStore.writeDailyMeal !== 'function') return false;
         Object.keys(meal).forEach(function (field) {{
           var byIso = meal[field];

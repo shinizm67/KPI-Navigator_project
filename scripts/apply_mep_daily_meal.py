@@ -813,6 +813,73 @@ def patch_grid_display(text: str) -> str:
     return replace_once(text, old, new, "buildGrid meal missing display")
 
 
+def patch_current_rows_business_type(text: str) -> str:
+    """Skip generating restaurant meal / food-drink rows for non-restaurant BTs.
+
+    Hide-only: currentRows omits rows so the grid reflows. dailyMeal is not deleted.
+    """
+    old_income = """          state.incomeItems.forEach(function (r) {
+            rows.push({ type: 'moneyRow', row: r, section: 'income' });
+          });"""
+    new_income = """          state.incomeItems.forEach(function (r) {
+            if (
+              typeof mepEditShouldShowRestaurantMealUi === 'function' &&
+              !mepEditShouldShowRestaurantMealUi() &&
+              typeof mepEditIsRestaurantIncomeLineId === 'function' &&
+              mepEditIsRestaurantIncomeLineId(r.lineId || r.id)
+            ) {
+              return;
+            }
+            rows.push({ type: 'moneyRow', row: r, section: 'income' });
+          });"""
+    text = replace_once(text, old_income, new_income, "currentRows skip restaurant income")
+
+    meal_ui_open = (
+        "          if (typeof mepEditShouldShowRestaurantMealUi !== 'function' || "
+        "mepEditShouldShowRestaurantMealUi()) {\n"
+    )
+    lunch_open = """          rows.push({
+            type: 'moneyStatic',
+            id: 'incLunch',"""
+    lunch_wrapped = meal_ui_open + lunch_open
+    if lunch_wrapped not in text:
+        text = replace_once(text, lunch_open, lunch_wrapped, "currentRows wrap lunch/dinner open")
+
+    dinner_to_target = re.compile(
+        r"(id: 'incDinner',[\s\S]*?          \}\);\n)"
+        r"(          rows.push\(\{\n            type: 'moneyStatic',\n            id: 'target',)"
+    )
+    if dinner_to_target.search(text):
+        text, n = dinner_to_target.subn(r"\1          }\n\2", text, count=1)
+        if n != 1:
+            raise ValueError("patch miss (currentRows wrap lunch/dinner close)")
+    elif meal_ui_open in text and "id: 'incDinner'" in text:
+        pass
+    else:
+        raise ValueError("patch miss (currentRows wrap lunch/dinner close)")
+
+    cust_open = """          rows.push({
+            type: 'moneyStatic',
+            id: 'cust',"""
+    cust_wrapped = meal_ui_open + cust_open
+    if cust_wrapped not in text:
+        text = replace_once(text, cust_open, cust_wrapped, "currentRows wrap customer/group open")
+
+    group_to_exp = re.compile(
+        r"(id: 'groupCntDinner',[\s\S]*?          \}\);\n)"
+        r"(        \}\n        rows.push\(\{ type: 'group', id: 'g-exp')"
+    )
+    if group_to_exp.search(text):
+        text, n = group_to_exp.subn(r"\1          }\n\2", text, count=1)
+        if n != 1:
+            raise ValueError("patch miss (currentRows wrap customer/group close)")
+    elif "id: 'groupCntDinner'" in text and meal_ui_open in text:
+        pass
+    else:
+        raise ValueError("patch miss (currentRows wrap customer/group close)")
+    return text
+
+
 def patch_one(text: str) -> str:
     text = patch_year_store_daily_meal_api(text)
     text = patch_ensure_year_mep_data(text)
@@ -840,6 +907,7 @@ def patch_one(text: str) -> str:
     text = patch_meal_ref_css(text)
     text = patch_unused_dinner_auto_calc_hint(text)
     text = patch_perform_mep_save_validation(text)
+    text = patch_current_rows_business_type(text)
     return text
 
 
