@@ -469,21 +469,9 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     })();
-    (function () {
-      var el = document.getElementById('current-email');
-      if (!el) return;
-
-      var email = '';
-      try {
-        var raw = localStorage.getItem('kpi-profile-last');
-        if (raw) {
-          var data = JSON.parse(raw);
-          email = (data && data.email) ? String(data.email) : '';
-        }
-      } catch (e) {}
-      email = (email || '').trim() || 's.matsushita@forge-laboratory.com';
-      el.textContent = email;
-    })();
+  </script>
+  <script src="../../js/kpi-profile-session-account.js" data-kpi-profile-account-mode="change-email"></script>
+  <script>
     (function () {
       var form = document.getElementById('change-email-form');
       if (!form) return;

@@ -240,11 +240,11 @@
       <div class="profile-readonly-group">
         <div class="form-group form-group-user-id">
           <label>User ID :</label>
-          <p class="profile-user-id-value" id="fixed-user-id" aria-live="polite">KPI-000000</p>
+          <p class="profile-user-id-value" id="fixed-user-id" aria-live="polite">—</p>
         </div>
         <div class="form-group form-group-email-display">
           <label>Email Address :</label>
-          <p class="profile-email-value" id="fixed-email" aria-live="polite">s.matsushita@forge-laboratory.com</p>
+          <p class="profile-email-value" id="fixed-email" aria-live="polite">—</p>
         </div>
       </div>
 
@@ -517,8 +517,8 @@
         var v = (value || '').trim();
         el.textContent = v || (fallback || '—');
       }
-      setText('fixed-user-id', data.userId, 'KPI-000000');
-      setText('fixed-email', data.email, 's.matsushita@forge-laboratory.com');
+      // Auth identity (userId / email) is owned by kpi-profile-session-account.js
+      // via /auth/me.php — never hydrate from localStorage or Founder defaults.
       setText('fixed-business-name', data.businessName);
       setText('fixed-company', data.company);
       var industryValue = data.businessType || data.industry;
