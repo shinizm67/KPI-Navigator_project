@@ -32,7 +32,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
     <div id="admin-error" class="err" hidden></div>
     <div id="dash-cards" class="cards"></div>
   </div>
-  <script src="../js/kpi-auth-client.js"></script>
+  <script src="../js/kpi-auth-client.js?v=20260919-2"></script>
   <script src="admin.js"></script>
 </body>
 </html>

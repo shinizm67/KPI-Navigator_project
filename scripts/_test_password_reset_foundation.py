@@ -143,7 +143,7 @@ def main() -> None:
         check(f"{rel} login href locale", f'id="reset-login-link" href="{login_href}"' in t)
         check(f"{rel} login button label", login_label in t)
         check(f"{rel} login button class", 'id="reset-login-link"' in t and "btn-login" in t)
-        check(f"{rel} versioned auth-client", "kpi-auth-client.js?v=20260918-2" in t)
+        check(f"{rel} versioned auth-client", "kpi-auth-client.js?v=20260919-2" in t)
         check(f"{rel} versioned reset-page js", "kpi-reset-password-page.js?v=20260918-2" in t)
         # static href must remain a real anchor (not JS-only)
         check(

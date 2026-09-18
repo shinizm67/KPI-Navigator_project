@@ -33,7 +33,7 @@ $id = isset($_GET['id']) ? htmlspecialchars((string) $_GET['id'], ENT_QUOTES, 'U
     <div id="admin-error" class="err" hidden></div>
     <div id="detail-root"></div>
   </div>
-  <script src="../../../js/kpi-auth-client.js"></script>
+  <script src="../../../js/kpi-auth-client.js?v=20260919-2"></script>
   <script src="../../admin.js"></script>
 </body>
 </html>

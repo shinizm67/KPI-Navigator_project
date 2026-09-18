@@ -11,7 +11,7 @@
   var msg = document.getElementById('forgot-message');
   if (!form || !emailEl || !btn) return;
   if (!window.__KPI_AUTH) {
-    console.warn('[KPI Auth] kpi-auth-client.js not loaded');
+    console.warn('[KPI Auth] kpi-auth-client.js?v=20260919-2 not loaded');
     return;
   }
 

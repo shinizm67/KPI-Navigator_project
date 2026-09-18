@@ -950,6 +950,20 @@
       credentials: fetchCreds(cfg),
     })
       .then(function (res) {
+        if (res.status === 401 || res.status === 403) {
+          try {
+            if (
+              window.__KPI_AUTH &&
+              typeof window.__KPI_AUTH.handleUnauthorizedSession === 'function'
+            ) {
+              window.__KPI_AUTH.handleUnauthorizedSession({
+                status: res.status,
+                data: { ok: false, error: res.status === 403 ? 'account_disabled' : 'unauthorized' },
+              });
+            }
+          } catch (_eAuth) {}
+          return null;
+        }
         if (!res.ok) return null;
         return res.json();
       })

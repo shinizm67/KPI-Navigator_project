@@ -86,17 +86,13 @@ function kpi_v1_admin_require_founder_page($cfg)
 {
     $uid = kpi_v1_auth_current_user_id();
     if ($uid === null) {
-        http_response_code(401);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo "401 unauthorized\n";
+        header('Location: /kpi-navigator/login/index.html');
         exit;
     }
     $user = kpi_v1_auth_read_user($uid);
     if ($user === null) {
         kpi_v1_auth_clear_session();
-        http_response_code(401);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo "401 unauthorized\n";
+        header('Location: /kpi-navigator/login/index.html');
         exit;
     }
     if (kpi_v1_auth_user_is_disabled($user) || !kpi_v1_auth_is_founder_superadmin($user, $cfg)) {

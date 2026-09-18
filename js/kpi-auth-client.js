@@ -354,10 +354,16 @@
     if (!planSyncPromise) {
       planSyncPromise = me().then(
         function (r) {
+          if (!isPublicAuthPage() && isSessionUnauthorized(r)) {
+            handleUnauthorizedSession(r);
+          }
           return r;
         },
         function (err) {
           planSyncPromise = null;
+          if (!isPublicAuthPage()) {
+            handleUnauthorizedSession(null);
+          }
           throw err;
         }
       );
@@ -426,6 +432,87 @@
       return '../../login/index.html';
     }
     return '../login/index.html';
+  }
+
+  /**
+   * Public pages must not bounce to login on missing session
+   * (login / register / forgot / reset).
+   */
+  function isPublicAuthPage() {
+    var path = String(global.location.pathname || '').replace(/\\/g, '/').toLowerCase();
+    if (path.indexOf('/login/') >= 0 || /\/login\/?$/.test(path)) return true;
+    if (path.indexOf('/forgot-password/') >= 0) return true;
+    if (path.indexOf('/reset-password/') >= 0) return true;
+    if (path.indexOf('/register/') >= 0) return true;
+    return false;
+  }
+
+  function isSessionUnauthorized(r) {
+    if (!r) return true;
+    var status = r.status;
+    var err = (r.data && r.data.error) || '';
+    if (status === 401 || status === 403) return true;
+    if (err === 'unauthorized' || err === 'account_disabled' || err === 'revoked') return true;
+    if (r.data && r.data.ok === false && (status === 401 || status === 403)) return true;
+    return false;
+  }
+
+  /** Clear plan/identity display gate only — do not wipe business KPI data. */
+  function clearSessionDisplayState() {
+    try {
+      localStorage.removeItem(TIER_KEY);
+    } catch (_e0) {}
+    try {
+      sessionStorage.removeItem(TIER_KEY);
+    } catch (_e1) {}
+  }
+
+  var sessionRedirecting = false;
+
+  function redirectToLogin() {
+    if (sessionRedirecting) return;
+    sessionRedirecting = true;
+    var href = resolveLoginHref();
+    try {
+      global.location.replace(href);
+    } catch (_e) {
+      try {
+        global.location.href = href;
+      } catch (_e2) {}
+    }
+  }
+
+  /**
+   * Unauthorized / disabled / revoked session → clear display plan and go login.
+   * Safe to call repeatedly; public auth pages are no-ops.
+   */
+  function handleUnauthorizedSession(_r) {
+    if (isPublicAuthPage()) return;
+    clearSessionDisplayState();
+    redirectToLogin();
+  }
+
+  /**
+   * Protected page entry: /auth/me.php must be ok or redirect to login.
+   * Reuses syncPlanFromServer (shared in-flight).
+   */
+  function enforceSession() {
+    if (isPublicAuthPage()) {
+      return syncPlanFromServer().catch(function () {
+        return null;
+      });
+    }
+    return syncPlanFromServer()
+      .then(function (r) {
+        if (isSessionUnauthorized(r)) {
+          handleUnauthorizedSession(r);
+        }
+        return r;
+      })
+      .catch(function (err) {
+        handleUnauthorizedSession(null);
+        throw err;
+      });
   }
 
   /** Settings panel logout — session only; does not clear KPI localStorage. */
@@ -637,11 +724,16 @@
       return Promise.resolve({ redirected: true });
     }
     return syncPlanFromServer()
-      .then(function () {
+      .then(function (r) {
+        if (isSessionUnauthorized(r)) {
+          handleUnauthorizedSession(r);
+          return { redirected: true, reason: 'unauthorized' };
+        }
         return { redirected: bounceIfBasic() };
       })
       .catch(function () {
-        return { redirected: bounceIfBasic() };
+        handleUnauthorizedSession(null);
+        return { redirected: true, reason: 'unauthorized' };
       });
   }
 
@@ -712,6 +804,11 @@
     isBasicPlan: isBasicPlan,
     resolveChangePlanHref: resolveChangePlanHref,
     resolveLoginHref: resolveLoginHref,
+    isPublicAuthPage: isPublicAuthPage,
+    isSessionUnauthorized: isSessionUnauthorized,
+    enforceSession: enforceSession,
+    handleUnauthorizedSession: handleUnauthorizedSession,
+    clearSessionDisplayState: clearSessionDisplayState,
     bindAccountSettingsLogout: bindAccountSettingsLogout,
     bindProHrefGate: bindProHrefGate,
     bindInsightMenuGate: bindInsightMenuGate,
@@ -727,9 +824,9 @@
     errorMessage: errorMessage,
   };
 
-  // App pages: refresh display gate from server session as soon as the client loads.
+  // App / settings pages: enforce server session; public auth pages skip redirect.
   try {
-    syncPlanFromServer().catch(function () {});
+    enforceSession().catch(function () {});
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         bindInsightNavGate(document);

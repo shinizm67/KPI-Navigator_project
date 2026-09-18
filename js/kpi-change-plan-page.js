@@ -1,6 +1,6 @@
 /**
  * Change Plan page: live Current Plan from server / subscriptionTier.
- * Requires kpi-auth-client.js (loaded via site chrome header on this page).
+ * Requires kpi-auth-client.js?v=20260919-2 (loaded via site chrome header on this page).
  */
 (function () {
   'use strict';
