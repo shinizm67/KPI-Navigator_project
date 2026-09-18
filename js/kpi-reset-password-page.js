@@ -41,24 +41,60 @@
     if (okEl) okEl.hidden = true;
   }
 
+  /**
+   * Prefer app-root absolute login URL (stable vs trailing-slash / relative resolution).
+   * JP:  /kpi-navigator/login/index.html
+   * EN:  /kpi-navigator/en/login/index.html
+   * ZH:  /kpi-navigator/zh-tw/login/index.html
+   */
   function loginHref() {
-    if (loginLink && loginLink.getAttribute('href')) {
-      return loginLink.getAttribute('href');
+    try {
+      if (typeof window.__KPI_AUTH.resolveLoginHref === 'function') {
+        var resolved = window.__KPI_AUTH.resolveLoginHref();
+        if (resolved) return resolved;
+      }
+    } catch (_eRes) {}
+    try {
+      if (loginLink && loginLink.href) return loginLink.href;
+    } catch (_eAbs) {}
+    var path = String(window.location.pathname || '');
+    var rootMatch = path.match(/^(.*?\/kpi-navigator)(?:\/|$)/);
+    var root = rootMatch ? rootMatch[1] : '';
+    if (root) {
+      if (path.indexOf('/zh-tw/') >= 0) return root + '/zh-tw/login/index.html';
+      if (path.indexOf('/en/') >= 0) return root + '/en/login/index.html';
+      return root + '/login/index.html';
     }
     return '../login/index.html';
   }
 
+  function goLogin(href) {
+    var target = href || loginHref();
+    try {
+      window.location.assign(target);
+      return;
+    } catch (_eAssign) {}
+    try {
+      window.location.href = target;
+    } catch (_eHref) {}
+  }
+
   function showSuccess() {
+    var href = loginHref();
     if (okMsgEl) {
       okMsgEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
     } else if (okEl) {
       okEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
     }
+    if (loginLink) {
+      try {
+        loginLink.setAttribute('href', href);
+      } catch (_eLink) {}
+    }
     form.hidden = true;
     if (okEl) okEl.hidden = false;
-    var href = loginHref();
     window.setTimeout(function () {
-      window.location.href = href;
+      goLogin(href);
     }, REDIRECT_MS);
   }
 

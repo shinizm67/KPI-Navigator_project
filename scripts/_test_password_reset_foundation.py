@@ -93,11 +93,18 @@ def main() -> None:
     reset_js = read("js/kpi-reset-password-page.js")
     check("reset JS success hides form", "form.hidden = true" in reset_js)
     check("reset JS shows success container", "okEl.hidden = false" in reset_js)
-    check("reset JS auto redirect", "location.href" in reset_js and "setTimeout" in reset_js)
+    check("reset JS auto redirect", "setTimeout" in reset_js and ("location.assign" in reset_js or "location.href" in reset_js))
     check("reset JS redirect delay 2500", "2500" in reset_js)
+    check("reset JS uses resolveLoginHref", "resolveLoginHref" in reset_js)
+    check("reset JS goLogin helper", "function goLogin" in reset_js)
     check(
         "reset JS invalid token does not hide form",
         "form.hidden = true" not in reset_js.split("if (!token)")[1].split("form.addEventListener")[0],
+    )
+    check(
+        "reset JS invalid token does not redirect",
+        "goLogin" not in reset_js.split("if (!token)")[1].split("form.addEventListener")[0]
+        and "location.assign" not in reset_js.split("if (!token)")[1].split("form.addEventListener")[0],
     )
     check("reset JS uses success msg element", "reset-success-msg" in reset_js)
     check("reset JS reads login link href", "reset-login-link" in reset_js)
@@ -115,10 +122,10 @@ def main() -> None:
         "密碼已重設。正在前往登入畫面" in client,
     )
 
-    for rel, login_href in [
-        ("reset-password/index.html", "../login/index.html"),
-        ("en/reset-password/index.html", "../login/index.html"),
-        ("zh-tw/reset-password/index.html", "../login/index.html"),
+    for rel, login_href, login_label in [
+        ("reset-password/index.html", "/kpi-navigator/login/index.html", "ログイン画面へ"),
+        ("en/reset-password/index.html", "/kpi-navigator/en/login/index.html", "Go to Login"),
+        ("zh-tw/reset-password/index.html", "/kpi-navigator/zh-tw/login/index.html", "前往登入畫面"),
     ]:
         t = read(rel)
         form_m = re.search(r'<form[^>]*id="reset-form"[^>]*>(.*?)</form>', t, re.S)
@@ -130,10 +137,17 @@ def main() -> None:
         check(f"{rel} success msg element", 'id="reset-success-msg"' in t)
         check(f"{rel} login link in success", 'id="reset-login-link"' in t)
         check(f"{rel} login href locale", f'id="reset-login-link" href="{login_href}"' in t)
+        check(f"{rel} login button label", login_label in t)
+        check(f"{rel} login button class", 'id="reset-login-link"' in t and "btn-login" in t)
         # success block after form
         fi = t.find('id="reset-form"')
         si = t.find('id="reset-success"')
         check(f"{rel} success after form marker", fi >= 0 and si > fi)
+
+    # client resolveLoginHref still locale-correct
+    check("client resolveLoginHref JP path", "'/login/index.html'" in client or '"/login/index.html"' in client)
+    check("client resolveLoginHref EN path", "'/en/login/index.html'" in client)
+    check("client resolveLoginHref ZH path", "'/zh-tw/login/index.html'" in client)
 
     # Email subjects in helper
     check("JP email subject", "KPN パスワード再設定" in helper)
