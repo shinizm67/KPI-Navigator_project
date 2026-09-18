@@ -602,6 +602,12 @@
       var cityInput = document.getElementById('profile-city');
       var timezoneInput = document.getElementById('profile-timezone');
 
+      if (window.KpiProfileLocation && window.KpiProfileLocation.bindOverwriteSelect) {
+        window.KpiProfileLocation.bindOverwriteSelect(countryInput);
+        window.KpiProfileLocation.bindOverwriteSelect(stateInput);
+        window.KpiProfileLocation.bindOverwriteSelect(cityInput);
+      }
+
       function syncLocationLists() {
         /* KPI-PROFILE-LOCATION-DATALIST */
         var Loc = window.KpiProfileLocation;

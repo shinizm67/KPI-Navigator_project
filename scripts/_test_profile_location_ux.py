@@ -310,6 +310,7 @@ def test_html_contract() -> None:
         html = path.read_text(encoding="utf-8")
         ph = PLACEHOLDERS[loc]
         rel = path.relative_to(ROOT).as_posix()
+        assert_true("bindOverwriteSelect" in html, f"{rel} overwrite-select bind")
         assert_true("KPI-PROFILE-LOCATION-DATALIST" in html, f"{rel} marker")
         assert_true('kpi-profile-location.js' in html, f"{rel} loads location js")
         for field in ("country", "state", "city"):
@@ -397,6 +398,70 @@ def test_catalog_and_runtime() -> None:
     assert_true(not is_prompt("日本"), "real country is not a prompt")
 
 
+def overwrite_focus(value: str) -> dict:
+    v = str(value or "")
+    return {
+        "value": v,
+        "selected": bool(v),
+        "placeholder_selected": False,
+    }
+
+
+def overwrite_replace(current: str, incoming: str) -> str:
+    state = overwrite_focus(current)
+    if state["selected"]:
+        return incoming
+    return (current or "") + incoming
+
+
+def test_overwrite_select_ux() -> None:
+    js = JS.read_text(encoding="utf-8")
+    assert_true("KPI-PROFILE-LOCATION-OVERWRITE-SELECT" in js, "overwrite marker")
+    assert_true("function selectValueIfPresent" in js, "select helper")
+    assert_true("function bindOverwriteSelect" in js, "bind helper")
+    assert_true("addEventListener('focus'" in js, "focus selects")
+    assert_true("addEventListener('click'" in js, "click selects")
+    assert_true("el.select()" in js, "uses input.select")
+    assert_true("if (!v) return false" in js, "empty value is not selected")
+    assert_true("profile-location-dropdown" not in js, "no custom dropdown")
+
+    for loc, path in EDIT.items():
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("bindOverwriteSelect(countryInput)" in html, f"{rel} country overwrite")
+        assert_true("bindOverwriteSelect(stateInput)" in html, f"{rel} state overwrite")
+        assert_true("bindOverwriteSelect(cityInput)" in html, f"{rel} city overwrite")
+        assert_true('<datalist id="profile-country-suggestions">' in html, f"{rel} datalist kept")
+        assert_true('<input type="text" id="profile-country"' in html, f"{rel} free input kept")
+        assert_true("KPI-PROFILE-GENRE-PLACEHOLDER" in html, f"{rel} genre UX kept")
+        assert_true("getSelectText(currencyEl)" in html, f"{rel} currency kept")
+        assert_true("timezoneEl ? timezoneEl.value" in html, f"{rel} timezone kept")
+        assert_true("hydrateLocation()" in html, f"{rel} legacy hydrate kept")
+
+    kanagawa = overwrite_focus("神奈川県")
+    assert_true(kanagawa["selected"] and kanagawa["value"] == "神奈川県", "神奈川県 click selects all")
+    assert_true(not kanagawa["placeholder_selected"], "placeholder not selected")
+    assert_true(overwrite_replace("神奈川県", "東京都") == "東京都", "東京都 replaces after select")
+
+    yokohama = overwrite_focus("Yokohama")
+    assert_true(yokohama["selected"] and yokohama["value"] == "Yokohama", "Yokohama click selects all")
+    assert_true(overwrite_replace("Yokohama", "Fujisawa") == "Fujisawa", "Fujisawa overwrites Yokohama")
+
+    empty = overwrite_focus("")
+    assert_true(not empty["selected"] and empty["value"] == "", "empty stays normal focus")
+
+    for field, saved, nxt in (
+        ("country", "日本", "アメリカ合衆国"),
+        ("state", "神奈川県", "東京都"),
+        ("city", "横浜市", "藤沢市"),
+    ):
+        assert_true(overwrite_focus(saved)["selected"], f"{field} valued click selects")
+        assert_true(overwrite_replace(saved, nxt) == nxt, f"{field} replace {saved} → {nxt}")
+
+    assert_true(display_city("Yokohama", "en") == "Yokohama", "locale display maintained")
+    assert_true(display_state("Tokyo", "ja") == "東京都", "legacy hydrate maintained")
+
+
 def test_modes_and_regression() -> None:
     bt = BT_JS.read_text(encoding="utf-8")
     for code in ("restaurant", "retail", "hair_salon", "fitness", "hotel", "other"):
@@ -421,6 +486,7 @@ def test_genre_and_unit5_still_green() -> None:
 def main() -> int:
     test_html_contract()
     test_catalog_and_runtime()
+    test_overwrite_select_ux()
     test_modes_and_regression()
     test_genre_and_unit5_still_green()
     print(f"passed={PASSED} failed={FAILED}")

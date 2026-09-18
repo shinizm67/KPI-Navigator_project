@@ -545,6 +545,45 @@
     });
   }
 
+  function selectValueIfPresent(el) {
+    /* KPI-PROFILE-LOCATION-OVERWRITE-SELECT */
+    if (!el) return false;
+    var v = String(el.value == null ? '' : el.value);
+    if (!v) return false;
+    try {
+      if (typeof el.select === 'function') el.select();
+      if (typeof el.setSelectionRange === 'function' && el.type !== 'number') {
+        el.setSelectionRange(0, v.length);
+      }
+    } catch (_e) {}
+    return true;
+  }
+
+  function bindOverwriteSelect(el) {
+    if (!el || el.getAttribute('data-kpi-location-overwrite') === '1') return;
+    el.setAttribute('data-kpi-location-overwrite', '1');
+    function onFocusOrClick() {
+      selectValueIfPresent(el);
+    }
+    el.addEventListener('focus', onFocusOrClick);
+    el.addEventListener('click', onFocusOrClick);
+  }
+
+  function bindLocationOverwrite() {
+    if (!global.document) return;
+    ['profile-country', 'profile-state', 'profile-city'].forEach(function (id) {
+      bindOverwriteSelect(document.getElementById(id));
+    });
+  }
+
+  if (global.document) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindLocationOverwrite);
+    } else {
+      bindLocationOverwrite();
+    }
+  }
+
   global.KpiProfileLocation = {
     COUNTRY_CODES: COUNTRY_CODES,
     JP_PREFECTURES: JP_PREFECTURES,
@@ -563,6 +602,9 @@
     timezoneFor: timezoneFor,
     fillDatalist: fillDatalist,
     findState: findState,
-    findCity: findCity
+    findCity: findCity,
+    selectValueIfPresent: selectValueIfPresent,
+    bindOverwriteSelect: bindOverwriteSelect,
+    bindLocationOverwrite: bindLocationOverwrite
   };
 })(typeof window !== 'undefined' ? window : this);
