@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -285,7 +286,14 @@ def test_did_not_touch_forbidden_surfaces() -> None:
     meal = (ROOT / "scripts" / "mep_daily_meal_client.py").read_text(encoding="utf-8")
     assert_true("KpiPlExpensePresets" not in meal, "MEP meal client untouched")
     schema = (ROOT / "api" / "v1" / "schema.sql").read_text(encoding="utf-8")
-    assert_true("business_type" not in schema.lower(), "no DB business_type column")
+    # Profile table may store business_type; year-store / kpi_users must not.
+    schema_wo_profile = re.sub(
+        r"create\s+table\s+if\s+not\s+exists\s+kpi_user_profiles\b.*?;",
+        "",
+        schema,
+        flags=re.I | re.S,
+    )
+    assert_true("business_type" not in schema_wo_profile.lower(), "no DB business_type column outside profiles")
     store_php = (ROOT / "api" / "v1" / "store.php").read_text(encoding="utf-8")
     assert_true("KpiPlExpensePresets" not in store_php, "store.php API untouched")
     csv = (ROOT / "scripts" / "_test_daily_sales_meal_csv_import.py").read_text(encoding="utf-8")

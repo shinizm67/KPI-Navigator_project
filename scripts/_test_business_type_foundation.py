@@ -181,7 +181,15 @@ def test_set_does_not_delete_payload() -> None:
 def test_basic_entitlement_keeps_meta() -> None:
     assert_true("dailyExpenses" in ENTITLEMENT, "entitlement still about dailyExpenses")
     assert_true("businessType" not in ENTITLEMENT, "entitlement does not strip businessType")
-    assert_true("business_type" not in SCHEMA.lower(), "no business_type column")
+    # Business Type must not be a year-store / kpi_users column. Profile may store
+    # business_type (Admin Profile Sync) — strip that table before asserting.
+    schema_wo_profile = re.sub(
+        r"create\s+table\s+if\s+not\s+exists\s+kpi_user_profiles\b.*?;",
+        "",
+        SCHEMA,
+        flags=re.I | re.S,
+    )
+    assert_true("business_type" not in schema_wo_profile.lower(), "no business_type column outside profiles")
     assert_true("revenue_mode" not in SCHEMA.lower(), "no revenue_mode column")
     docs = (ROOT / "docs" / "backend-phase-a-store-api.md").read_text(encoding="utf-8")
     assert_true("中身を解釈せず" in docs, "store API remains opaque JSON")
