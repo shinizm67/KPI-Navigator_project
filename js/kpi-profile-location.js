@@ -1000,9 +1000,9 @@
 
   function toggleAriaLabel(locale) {
     var loc = localeOf(locale || localeFromDocument());
-    if (loc === 'ja') return '候補一覧を表示';
-    if (loc === 'zh-tw') return '顯示候選清單';
-    return 'Show suggestions';
+    if (loc === 'ja') return '候補一覧を開く';
+    if (loc === 'zh-tw') return '開啟候選清單';
+    return 'Open options';
   }
 
   function closeCandidateMenu(el) {
@@ -1137,6 +1137,7 @@
     }
     btn.setAttribute('aria-label', toggleAriaLabel());
     btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-haspopup', 'listbox');
     btn.setAttribute('aria-controls', (el.id || 'profile-location') + '-menu');
 
     var menu = wrap.querySelector('.profile-location-dropdown');

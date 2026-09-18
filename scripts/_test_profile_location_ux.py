@@ -589,11 +589,23 @@ def test_overwrite_select_ux() -> None:
     assert_true("profile-location-dropdown" in js, "custom dropdown class")
     assert_true("profile-location-toggle" in js, "▼ toggle button")
     assert_true("opts.showAll" in js or "showAll: true" in js, "▼ opens full list")
+    assert_true("Open options" in js, "EN aria Open options")
+    assert_true("aria-haspopup" in js, "toggle haspopup")
+    assert_true("候補一覧を開く" in js, "JP aria open label")
 
     css = (ROOT / "en" / "setting" / "style.css").read_text(encoding="utf-8")
     assert_true(".profile-location-dropdown" in css, "dropdown CSS")
     assert_true(".profile-location-toggle" in css, "toggle CSS")
     assert_true("body.office-mode .si-fi.profile-page .profile-form .profile-location-dropdown" in css, "Office dropdown CSS")
+    assert_true("profile-location-toggle" in css and "background-image: url(" in css.split(".profile-location-toggle", 1)[1].split(".profile-location-dropdown", 1)[0], "Sci-Fi chevron on toggle")
+    assert_true("body.office-mode .si-fi.profile-page .profile-form .profile-location-toggle" in css, "Office toggle chevron rule")
+    assert_true("width: 40px" in css.split(".profile-location-toggle", 1)[1][:400], "40px hit area")
+    assert_true("background-image: none" in css.split("profile-location-input", 1)[1][:350], "input does not own chevron")
+    # input body click must not force-open menu
+    assert_true("el.addEventListener('click', onFocusOrClick)" in js, "input click selects")
+    open_on_input_click = "addEventListener('click'" in js and "openCandidateMenu(el, { showAll: true })" in js.split("el.addEventListener('click'", 1)[-1][:200]
+    assert_true(not open_on_input_click, "input body click does not force-open full list")
+    assert_true("btn.addEventListener('click'" in js and "showAll: true" in js.split("btn.addEventListener('click'", 1)[1][:500], "chevron click opens full list")
 
     for loc, path in EDIT.items():
         html = path.read_text(encoding="utf-8")

@@ -688,6 +688,8 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-help {
   width: 100%;
   padding-right: 40px;
   cursor: text;
+  /* form-group input `background` shorthand clears select chevron — icon lives on toggle */
+  background-image: none;
 }
 .si-fi.profile-page .profile-form .profile-location-toggle {
   position: absolute;
@@ -698,9 +700,25 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-help {
   border: 0;
   padding: 0;
   margin: 0;
-  background: transparent;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%2358E1F3'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
   cursor: pointer;
   z-index: 2;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+.si-fi.profile-page .profile-form .profile-location-toggle:hover,
+.si-fi.profile-page .profile-form .profile-location-toggle:focus-visible {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(88, 225, 243, 0.55));
+  outline: none;
+}
+.si-fi.profile-page .profile-form .profile-location-toggle[aria-expanded="true"] {
+  opacity: 1;
+  transform: rotate(180deg);
 }
 .si-fi.profile-page .profile-form .profile-location-dropdown {
   position: absolute;
@@ -737,6 +755,16 @@ html[lang="ja"] .si-fi.profile-page .profile-form .profile-location-option {
 }
 .si-fi.profile-page .profile-form .profile-location-option.is-current {
   font-weight: 600;
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-toggle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23333'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  opacity: 0.75;
+  filter: none;
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-toggle:hover,
+body.office-mode .si-fi.profile-page .profile-form .profile-location-toggle:focus-visible {
+  opacity: 1;
+  filter: none;
 }
 body.office-mode .si-fi.profile-page .profile-form .profile-location-dropdown {
   border-color: #ccc;
