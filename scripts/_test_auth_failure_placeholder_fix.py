@@ -63,6 +63,7 @@ def main() -> int:
         check(f"{rel}: no Founder email", FOUNDER not in html)
         check(f"{rel}: no KPI-000000 identity", DEFAULT_UID not in html)
         check(f"{rel}: includes session-account", "kpi-profile-session-account.js" in html)
+        check(f"{rel}: cache-bust query", "kpi-profile-session-account.js?v=" in html)
         if "profile_edit" in rel:
             check(f"{rel}: edit mode", 'data-kpi-profile-account-mode="edit"' in html)
             check(f"{rel}: placeholder userId", 'id="profile-user-id"' in html and ">—" in html)
@@ -80,6 +81,7 @@ def main() -> int:
         html = read(rel)
         check(f"{rel}: no Founder email", FOUNDER not in html)
         check(f"{rel}: includes session-account", "kpi-profile-session-account.js" in html)
+        check(f"{rel}: cache-bust query", "kpi-profile-session-account.js?v=" in html)
         check(
             f"{rel}: change-email mode",
             'data-kpi-profile-account-mode="change-email"' in html,
