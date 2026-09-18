@@ -297,6 +297,12 @@ def display_city(raw: str, locale: str) -> str:
     return label_of(rec, locale) if rec else s
 
 
+def country_labels(locale: str) -> list[str]:
+    labels = cat()["country_labels"].get(locale) or cat()["country_labels"].get("en") or {}
+    codes = cat()["country_codes"]
+    return [labels[code] for code in codes if code in labels]
+
+
 def state_labels(country_raw: str, locale: str) -> list[str]:
     code = to_canonical_country(country_raw)
     recs = cat()["prefs"] if code == "JP" else cat()["other"].get(code, [])
@@ -326,7 +332,7 @@ def test_html_contract() -> None:
         html = path.read_text(encoding="utf-8")
         ph = PLACEHOLDERS[loc]
         rel = path.relative_to(ROOT).as_posix()
-        assert_true("bindOverwriteSelect" in html, f"{rel} overwrite-select bind")
+        assert_true("bindCandidateField" in html, f"{rel} candidate dropdown bind")
         assert_true("KPI-PROFILE-LOCATION-DATALIST" in html, f"{rel} marker")
         assert_true('kpi-profile-location.js' in html, f"{rel} loads location js")
         for field in ("country", "state", "city"):
@@ -339,8 +345,8 @@ def test_html_contract() -> None:
                 f"{rel} {field} not a fixed select",
             )
             assert_true(
-                f'list="profile-{field}-suggestions"' in html,
-                f"{rel} {field} datalist hook",
+                f'list="profile-{field}-suggestions"' not in html,
+                f"{rel} {field} uses custom dropdown not native datalist",
             )
             assert_true(f'placeholder="{ph[field]}"' in html, f"{rel} {field} placeholder")
             chunk = html.split(f'id="profile-{field}"', 1)[1].split(">", 1)[0]
@@ -360,6 +366,10 @@ def test_html_contract() -> None:
         assert_true("office-mode" in html, f"{rel} Sci-Fi/Office share page")
         assert_true(html.count("function syncGenreField") == 1, f"{rel} genre sync unchanged")
         assert_true("KPI-PROFILE-GENRE-PLACEHOLDER" in html, f"{rel} genre placeholder kept")
+        assert_true("KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN" in html, f"{rel} dropdown marker")
+        assert_true("bindCandidateField(countryInput" in html, f"{rel} country candidates")
+        assert_true("bindCandidateField(stateInput" in html, f"{rel} state candidates")
+        assert_true("bindCandidateField(cityInput" in html, f"{rel} city candidates")
 
     jp = EDIT["jp"].read_text(encoding="utf-8")
     country_block = jp.split('id="profile-country"', 1)[1].split('id="profile-state"', 1)[0]
@@ -554,24 +564,44 @@ def overwrite_replace(current: str, incoming: str) -> str:
     return (current or "") + incoming
 
 
+def filter_candidate_labels(labels: list[str], query: str, show_all: bool = False) -> list[str]:
+    if show_all:
+        return list(labels)
+    q = str(query or "").strip().lower()
+    if not q:
+        return list(labels)
+    return [label for label in labels if q in str(label).lower()]
+
+
 def test_overwrite_select_ux() -> None:
     js = JS.read_text(encoding="utf-8")
     assert_true("KPI-PROFILE-LOCATION-OVERWRITE-SELECT" in js, "overwrite marker")
+    assert_true("KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN" in js, "candidate dropdown marker")
     assert_true("function selectValueIfPresent" in js, "select helper")
     assert_true("function bindOverwriteSelect" in js, "bind helper")
+    assert_true("function bindCandidateField" in js, "candidate bind helper")
+    assert_true("function filterCandidateLabels" in js, "filter helper")
+    assert_true("function openCandidateMenu" in js, "open menu helper")
     assert_true("addEventListener('focus'" in js, "focus selects")
     assert_true("addEventListener('click'" in js, "click selects")
     assert_true("el.select()" in js, "uses input.select")
     assert_true("if (!v) return false" in js, "empty value is not selected")
-    assert_true("profile-location-dropdown" not in js, "no custom dropdown")
+    assert_true("profile-location-dropdown" in js, "custom dropdown class")
+    assert_true("profile-location-toggle" in js, "▼ toggle button")
+    assert_true("opts.showAll" in js or "showAll: true" in js, "▼ opens full list")
+
+    css = (ROOT / "en" / "setting" / "style.css").read_text(encoding="utf-8")
+    assert_true(".profile-location-dropdown" in css, "dropdown CSS")
+    assert_true(".profile-location-toggle" in css, "toggle CSS")
+    assert_true("body.office-mode .si-fi.profile-page .profile-form .profile-location-dropdown" in css, "Office dropdown CSS")
 
     for loc, path in EDIT.items():
         html = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
-        assert_true("bindOverwriteSelect(countryInput)" in html, f"{rel} country overwrite")
-        assert_true("bindOverwriteSelect(stateInput)" in html, f"{rel} state overwrite")
-        assert_true("bindOverwriteSelect(cityInput)" in html, f"{rel} city overwrite")
-        assert_true('<datalist id="profile-country-suggestions">' in html, f"{rel} datalist kept")
+        assert_true("bindCandidateField(countryInput" in html, f"{rel} country candidates")
+        assert_true("bindCandidateField(stateInput" in html, f"{rel} state candidates")
+        assert_true("bindCandidateField(cityInput" in html, f"{rel} city candidates")
+        assert_true('list="profile-country-suggestions"' not in html, f"{rel} no native country datalist")
         assert_true('<input type="text" id="profile-country"' in html, f"{rel} free input kept")
         assert_true("KPI-PROFILE-GENRE-PLACEHOLDER" in html, f"{rel} genre UX kept")
         assert_true("KpiCurrency.saveCode" in html, f"{rel} currency canonical save kept")
@@ -579,6 +609,26 @@ def test_overwrite_select_ux() -> None:
         assert_true("hydrateCurrency" in html, f"{rel} currency hydrate kept")
         assert_true("currencyUserSet" in html, f"{rel} currency override guard kept")
         assert_true("hydrateLocation()" in html, f"{rel} legacy hydrate kept")
+
+    countries = country_labels("ja")
+    assert_true("日本" in countries and "アメリカ合衆国" in countries, "JP country catalog")
+    shown_jp = filter_candidate_labels(countries, "日本", True)
+    assert_true("日本" in shown_jp and "アメリカ合衆国" in shown_jp, "▼ with 日本 shows other countries")
+    assert_true("台湾" in shown_jp or "台灣" in countries or "台湾" in countries, "TW in catalog")
+    shown_us = filter_candidate_labels(countries, "アメリカ合衆国", True)
+    assert_true("日本" in shown_us and "アメリカ合衆国" in shown_us, "▼ with US shows Japan too")
+    filtered = filter_candidate_labels(countries, "アメリカ", False)
+    assert_true("アメリカ合衆国" in filtered and "日本" not in filtered, "typing filters country list")
+
+    states = state_labels("日本", "ja")
+    assert_true("神奈川県" in states and "東京都" in states, "JP states")
+    shown_st = filter_candidate_labels(states, "神奈川県", True)
+    assert_true("東京都" in shown_st and "神奈川県" in shown_st, "▼ with 神奈川県 shows 東京都")
+
+    cities = city_labels("神奈川県", "ja")
+    assert_true("藤沢市" in cities and "横浜市" in cities, "Kanagawa cities")
+    shown_city = filter_candidate_labels(cities, "藤沢市", True)
+    assert_true("横浜市" in shown_city and "藤沢市" in shown_city, "▼ with 藤沢市 shows other cities")
 
     kanagawa = overwrite_focus("神奈川県")
     assert_true(kanagawa["selected"] and kanagawa["value"] == "神奈川県", "神奈川県 click selects all")
@@ -602,6 +652,9 @@ def test_overwrite_select_ux() -> None:
 
     assert_true(display_city("Yokohama", "en") == "Yokohama", "locale display maintained")
     assert_true(display_state("Tokyo", "ja") == "東京都", "legacy hydrate maintained")
+    assert_true(save_country("台湾") == "TW" or save_country("台灣") == "TW", "free/canonical country still works")
+    assert_true(save_text("My Custom Town") == "My Custom Town", "free city input preserved")
+
 
 
 def resolve_timezone(state_raw: str = "", country_raw: str = "", existing: str = "", browser: str = "Asia/Tokyo") -> str:

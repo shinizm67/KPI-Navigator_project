@@ -981,24 +981,295 @@
     return true;
   }
 
+  /* KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN
+   * Native <datalist> filters by current value, so ▼ cannot show the full catalog.
+   * Custom menu: ▼ = all candidates; typing = filtered; input body = select-all overwrite.
+   */
+  var _openMenus = [];
+
+  function filterCandidateLabels(labels, query, opts) {
+    opts = opts || {};
+    var list = Array.isArray(labels) ? labels.slice() : [];
+    if (opts.showAll) return list;
+    var q = fold(query);
+    if (!q) return list;
+    return list.filter(function (label) {
+      return fold(label).indexOf(q) !== -1;
+    });
+  }
+
+  function toggleAriaLabel(locale) {
+    var loc = localeOf(locale || localeFromDocument());
+    if (loc === 'ja') return '候補一覧を表示';
+    if (loc === 'zh-tw') return '顯示候選清單';
+    return 'Show suggestions';
+  }
+
+  function closeCandidateMenu(el) {
+    if (!el || !el._kpiLoc) return;
+    var menu = el._kpiLoc.menu;
+    var btn = el._kpiLoc.btn;
+    if (menu) {
+      menu.hidden = true;
+      menu.innerHTML = '';
+    }
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    el._kpiLoc.activeIndex = -1;
+    el._kpiLoc.showAll = false;
+    var idx = _openMenus.indexOf(el);
+    if (idx >= 0) _openMenus.splice(idx, 1);
+  }
+
+  function closeAllCandidateMenus(exceptEl) {
+    _openMenus.slice().forEach(function (el) {
+      if (el !== exceptEl) closeCandidateMenu(el);
+    });
+  }
+
+  function renderCandidateMenu(el, labels) {
+    var menu = el._kpiLoc && el._kpiLoc.menu;
+    if (!menu) return;
+    menu.innerHTML = '';
+    var current = String(el.value || '');
+    labels.forEach(function (label, i) {
+      var li = document.createElement('li');
+      li.className = 'profile-location-option';
+      li.setAttribute('role', 'option');
+      li.setAttribute('data-value', label);
+      li.id = (el.id || 'profile-location') + '-opt-' + i;
+      li.textContent = label;
+      if (label === current) li.classList.add('is-current');
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        pickCandidate(el, label);
+      });
+      menu.appendChild(li);
+    });
+    menu.hidden = labels.length === 0;
+    if (el._kpiLoc.btn) {
+      el._kpiLoc.btn.setAttribute('aria-expanded', labels.length ? 'true' : 'false');
+    }
+  }
+
+  function setActiveCandidate(el, index) {
+    if (!el._kpiLoc || !el._kpiLoc.menu) return;
+    var items = el._kpiLoc.menu.querySelectorAll('.profile-location-option');
+    if (!items.length) {
+      el._kpiLoc.activeIndex = -1;
+      return;
+    }
+    if (index < 0) index = items.length - 1;
+    if (index >= items.length) index = 0;
+    el._kpiLoc.activeIndex = index;
+    for (var i = 0; i < items.length; i++) {
+      if (i === index) {
+        items[i].classList.add('is-active');
+        items[i].setAttribute('aria-selected', 'true');
+        if (typeof items[i].scrollIntoView === 'function') {
+          items[i].scrollIntoView({ block: 'nearest' });
+        }
+      } else {
+        items[i].classList.remove('is-active');
+        items[i].removeAttribute('aria-selected');
+      }
+    }
+  }
+
+  function pickCandidate(el, label) {
+    el.value = label;
+    try {
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (_e) {}
+    closeCandidateMenu(el);
+    try {
+      el.focus();
+      selectValueIfPresent(el);
+    } catch (_e2) {}
+  }
+
+  function openCandidateMenu(el, opts) {
+    opts = opts || {};
+    if (!el || !el._kpiLoc) return [];
+    closeAllCandidateMenus(el);
+    var getLabels = el._kpiLoc.getLabels;
+    var all = typeof getLabels === 'function' ? (getLabels() || []) : [];
+    var showAll = !!opts.showAll;
+    el._kpiLoc.showAll = showAll;
+    var shown = filterCandidateLabels(all, el.value, { showAll: showAll });
+    renderCandidateMenu(el, shown);
+    if (_openMenus.indexOf(el) < 0) _openMenus.push(el);
+    if (shown.length) {
+      var current = String(el.value || '');
+      var curIdx = shown.indexOf(current);
+      setActiveCandidate(el, curIdx >= 0 ? curIdx : 0);
+    }
+    return shown;
+  }
+
+  function ensureCandidateChrome(el) {
+    if (!el || !global.document) return null;
+    if (el._kpiLoc && el._kpiLoc.wrap) return el._kpiLoc.wrap;
+    var parent = el.parentNode;
+    if (!parent) return null;
+    var wrap = parent.classList && parent.classList.contains('profile-location-field')
+      ? parent
+      : null;
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'profile-location-field';
+      parent.insertBefore(wrap, el);
+      wrap.appendChild(el);
+    }
+    el.classList.add('profile-location-input');
+    el.removeAttribute('list');
+    el.setAttribute('autocomplete', 'off');
+    el.setAttribute('aria-autocomplete', 'list');
+
+    var btn = wrap.querySelector('.profile-location-toggle');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'profile-location-toggle';
+      btn.tabIndex = -1;
+      wrap.appendChild(btn);
+    }
+    btn.setAttribute('aria-label', toggleAriaLabel());
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', (el.id || 'profile-location') + '-menu');
+
+    var menu = wrap.querySelector('.profile-location-dropdown');
+    if (!menu) {
+      menu = document.createElement('ul');
+      menu.className = 'profile-location-dropdown';
+      menu.setAttribute('role', 'listbox');
+      menu.hidden = true;
+      wrap.appendChild(menu);
+    }
+    menu.id = (el.id || 'profile-location') + '-menu';
+
+    el._kpiLoc = el._kpiLoc || {};
+    el._kpiLoc.wrap = wrap;
+    el._kpiLoc.btn = btn;
+    el._kpiLoc.menu = menu;
+    el._kpiLoc.activeIndex = -1;
+    el._kpiLoc.showAll = false;
+    return wrap;
+  }
+
   function bindOverwriteSelect(el) {
     if (!el || el.getAttribute('data-kpi-location-overwrite') === '1') return;
     el.setAttribute('data-kpi-location-overwrite', '1');
-    function onFocusOrClick() {
+    function onFocusOrClick(e) {
+      if (e && e.target && e.target.classList && e.target.classList.contains('profile-location-toggle')) {
+        return;
+      }
       selectValueIfPresent(el);
     }
     el.addEventListener('focus', onFocusOrClick);
     el.addEventListener('click', onFocusOrClick);
   }
 
+  function bindCandidateField(el, opts) {
+    /* KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN */
+    opts = opts || {};
+    if (!el || el.getAttribute('data-kpi-location-dropdown') === '1') {
+      if (el && el._kpiLoc && typeof opts.getLabels === 'function') {
+        el._kpiLoc.getLabels = opts.getLabels;
+      }
+      return;
+    }
+    ensureCandidateChrome(el);
+    el.setAttribute('data-kpi-location-dropdown', '1');
+    el._kpiLoc.getLabels = typeof opts.getLabels === 'function' ? opts.getLabels : function () { return []; };
+
+    bindOverwriteSelect(el);
+
+    var btn = el._kpiLoc.btn;
+    btn.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var open = el._kpiLoc.menu && !el._kpiLoc.menu.hidden && el._kpiLoc.showAll;
+      if (open) {
+        closeCandidateMenu(el);
+        return;
+      }
+      openCandidateMenu(el, { showAll: true });
+      try {
+        el.focus();
+      } catch (_e) {}
+    });
+
+    el.addEventListener('input', function () {
+      openCandidateMenu(el, { showAll: false });
+    });
+
+    el.addEventListener('keydown', function (e) {
+      var menu = el._kpiLoc.menu;
+      var isOpen = menu && !menu.hidden;
+      if (e.key === 'Escape') {
+        if (isOpen) {
+          e.preventDefault();
+          closeCandidateMenu(el);
+        }
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) openCandidateMenu(el, { showAll: !String(el.value || '').trim() });
+        else setActiveCandidate(el, (el._kpiLoc.activeIndex < 0 ? 0 : el._kpiLoc.activeIndex + 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        if (!isOpen) return;
+        e.preventDefault();
+        setActiveCandidate(el, (el._kpiLoc.activeIndex < 0 ? 0 : el._kpiLoc.activeIndex - 1));
+        return;
+      }
+      if (e.key === 'Enter' && isOpen && el._kpiLoc.activeIndex >= 0) {
+        var items = menu.querySelectorAll('.profile-location-option');
+        var active = items[el._kpiLoc.activeIndex];
+        if (active) {
+          e.preventDefault();
+          pickCandidate(el, active.getAttribute('data-value') || active.textContent);
+        }
+      }
+    });
+
+    el.addEventListener('blur', function () {
+      setTimeout(function () {
+        if (!el._kpiLoc || !el._kpiLoc.wrap) return;
+        var active = document.activeElement;
+        if (active && el._kpiLoc.wrap.contains(active)) return;
+        closeCandidateMenu(el);
+      }, 120);
+    });
+  }
+
   function bindLocationOverwrite() {
     if (!global.document) return;
     ['profile-country', 'profile-state', 'profile-city'].forEach(function (id) {
-      bindOverwriteSelect(document.getElementById(id));
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.getAttribute('data-kpi-location-dropdown') === '1') return;
+      bindOverwriteSelect(el);
     });
   }
 
   if (global.document) {
+    document.addEventListener('mousedown', function (e) {
+      if (!_openMenus.length) return;
+      var t = e.target;
+      _openMenus.slice().forEach(function (el) {
+        if (el._kpiLoc && el._kpiLoc.wrap && el._kpiLoc.wrap.contains(t)) return;
+        closeCandidateMenu(el);
+      });
+    });
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', bindLocationOverwrite);
     } else {
@@ -1030,6 +1301,11 @@
     findCity: findCity,
     selectValueIfPresent: selectValueIfPresent,
     bindOverwriteSelect: bindOverwriteSelect,
-    bindLocationOverwrite: bindLocationOverwrite
+    bindLocationOverwrite: bindLocationOverwrite,
+    filterCandidateLabels: filterCandidateLabels,
+    bindCandidateField: bindCandidateField,
+    openCandidateMenu: openCandidateMenu,
+    closeCandidateMenu: closeCandidateMenu,
+    closeAllCandidateMenus: closeAllCandidateMenus
   };
 })(typeof window !== 'undefined' ? window : this);

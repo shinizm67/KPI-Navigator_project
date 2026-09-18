@@ -282,20 +282,17 @@
 
         <div class="form-group">
           <label for="profile-country">國家 :</label>
-          <input type="text" id="profile-country" name="country" class="profile-select profile-location-input" list="profile-country-suggestions" autocomplete="off" placeholder="請選擇國家，或自行輸入" aria-label="國家" aria-describedby="profile-location-help">
-          <datalist id="profile-country-suggestions"></datalist>
+          <input type="text" id="profile-country" name="country" class="profile-select profile-location-input" autocomplete="off" placeholder="請選擇國家，或自行輸入" aria-label="國家" aria-describedby="profile-location-help">
         </div>
 
         <div class="form-group">
           <label for="profile-state">縣市 / 州 :</label>
-          <input type="text" id="profile-state" name="state" class="profile-select profile-location-input" list="profile-state-suggestions" autocomplete="off" placeholder="請選擇縣市／州，或自行輸入" aria-label="縣市 / 州" aria-describedby="profile-location-help">
-          <datalist id="profile-state-suggestions"></datalist>
+          <input type="text" id="profile-state" name="state" class="profile-select profile-location-input" autocomplete="off" placeholder="請選擇縣市／州，或自行輸入" aria-label="縣市 / 州" aria-describedby="profile-location-help">
         </div>
 
         <div class="form-group">
           <label for="profile-city">城市 :</label>
-          <input type="text" id="profile-city" name="city" class="profile-select profile-location-input" list="profile-city-suggestions" autocomplete="off" placeholder="請選擇城市／地區，或自行輸入" aria-label="城市" aria-describedby="profile-location-help">
-          <datalist id="profile-city-suggestions"></datalist>
+          <input type="text" id="profile-city" name="city" class="profile-select profile-location-input" autocomplete="off" placeholder="請選擇城市／地區，或自行輸入" aria-label="城市" aria-describedby="profile-location-help">
           <p class="profile-location-help" id="profile-location-help">變更國家時，已儲存的縣市／城市不會自動刪除。</p>
         </div>
 
@@ -594,7 +591,30 @@
       var currencyInput = document.getElementById('profile-currency');
       var currencyUserSet = false;
 
-      if (window.KpiProfileLocation && window.KpiProfileLocation.bindOverwriteSelect) {
+      if (window.KpiProfileLocation && window.KpiProfileLocation.bindCandidateField) {
+        /* KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN */
+        window.KpiProfileLocation.bindCandidateField(countryInput, {
+          getLabels: function () {
+            return window.KpiProfileLocation.countryLabels(window.KpiProfileLocation.localeFromDocument());
+          }
+        });
+        window.KpiProfileLocation.bindCandidateField(stateInput, {
+          getLabels: function () {
+            return window.KpiProfileLocation.stateLabels(
+              countryInput && countryInput.value,
+              window.KpiProfileLocation.localeFromDocument()
+            );
+          }
+        });
+        window.KpiProfileLocation.bindCandidateField(cityInput, {
+          getLabels: function () {
+            return window.KpiProfileLocation.cityLabels(
+              stateInput && stateInput.value,
+              window.KpiProfileLocation.localeFromDocument()
+            );
+          }
+        });
+      } else if (window.KpiProfileLocation && window.KpiProfileLocation.bindOverwriteSelect) {
         window.KpiProfileLocation.bindOverwriteSelect(countryInput);
         window.KpiProfileLocation.bindOverwriteSelect(stateInput);
         window.KpiProfileLocation.bindOverwriteSelect(cityInput);
@@ -602,12 +622,9 @@
 
       function syncLocationLists() {
         /* KPI-PROFILE-LOCATION-DATALIST */
-        var Loc = window.KpiProfileLocation;
-        if (!Loc) return;
-        var locale = Loc.localeFromDocument();
-        Loc.fillDatalist('profile-country-suggestions', Loc.countryLabels(locale));
-        Loc.fillDatalist('profile-state-suggestions', Loc.stateLabels(countryInput && countryInput.value, locale));
-        Loc.fillDatalist('profile-city-suggestions', Loc.cityLabels(stateInput && stateInput.value, locale));
+        if (window.KpiProfileLocation && window.KpiProfileLocation.closeAllCandidateMenus) {
+          window.KpiProfileLocation.closeAllCandidateMenus();
+        }
       }
 
       function maybeTimezone() {

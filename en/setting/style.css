@@ -678,6 +678,79 @@ body.office-mode .si-fi.profile-page .profile-form .profile-genre-tip-panel {
 body.office-mode .si-fi.profile-page .profile-form .profile-location-help {
   opacity: 0.75;
 }
+
+/* Location candidate dropdown (▼ = full list; typing = filter) */
+.si-fi.profile-page .profile-form .profile-location-field {
+  position: relative;
+  width: 100%;
+}
+.si-fi.profile-page .profile-form .profile-location-field .profile-location-input {
+  width: 100%;
+  padding-right: 40px;
+  cursor: text;
+}
+.si-fi.profile-page .profile-form .profile-location-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}
+.si-fi.profile-page .profile-form .profile-location-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 40;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--si-fi-green);
+  border-radius: 3px;
+  background: var(--si-fi-input-bg);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+.si-fi.profile-page .profile-form .profile-location-dropdown[hidden] {
+  display: none !important;
+}
+.si-fi.profile-page .profile-form .profile-location-option {
+  padding: 8px 14px;
+  color: var(--si-fi-cyan);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+html[lang="ja"] .si-fi.profile-page .profile-form .profile-location-option {
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+.si-fi.profile-page .profile-form .profile-location-option:hover,
+.si-fi.profile-page .profile-form .profile-location-option.is-active {
+  background: rgba(88, 225, 243, 0.14);
+}
+.si-fi.profile-page .profile-form .profile-location-option.is-current {
+  font-weight: 600;
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-dropdown {
+  border-color: #ccc;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-option {
+  color: #222;
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-option:hover,
+body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-active {
+  background: #f0f0f0;
+}
+
 .si-fi.profile-page .profile-form .profile-timezone-group[hidden] {
   display: none !important;
 }
