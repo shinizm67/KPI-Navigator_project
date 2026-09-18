@@ -54,6 +54,9 @@ function kpi_v1_load_config()
             'dbCharset' => 'utf8mb4',
             'supportEmail' => 'support@forge-laboratory.com',
             'supportFrom' => 'support@forge-laboratory.com',
+            'passwordResetTtlMinutes' => 30,
+            'passwordResetCooldownSeconds' => 120,
+            'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
         ],
         $cfg
     );

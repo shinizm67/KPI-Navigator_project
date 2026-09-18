@@ -287,6 +287,37 @@
     });
   }
 
+  /** Forgot password — server always returns generic ok (no existence leak). */
+  function forgotPassword(email, locale) {
+    return request('POST', '/auth/forgot-password.php', {
+      email: email,
+      locale: locale || 'en',
+    });
+  }
+
+  function resetPassword(token, password) {
+    return request('POST', '/auth/reset-password.php', {
+      token: token,
+      password: password,
+    });
+  }
+
+  function forgotPasswordGenericMessage(lang) {
+    var isJa = lang === 'ja';
+    var isZh = lang === 'zh' || lang === 'zh-tw';
+    if (isJa) return 'パスワード再設定用の案内を送信しました。メールをご確認ください。';
+    if (isZh) return '若帳號存在，密碼重設說明已寄出。請檢查您的電子郵件。';
+    return 'If the account exists, password reset instructions have been sent.';
+  }
+
+  function resetPasswordSuccessMessage(lang) {
+    var isJa = lang === 'ja';
+    var isZh = lang === 'zh' || lang === 'zh-tw';
+    if (isJa) return 'パスワードを更新しました。ログイン画面からサインインしてください。';
+    if (isZh) return '密碼已更新。請從登入畫面重新登入。';
+    return 'Password updated. Please sign in from the login page.';
+  }
+
   function logout() {
     return request('POST', '/auth/logout.php', null);
   }
@@ -638,6 +669,16 @@
       if (isZh) return '密碼至少需 8 個字元。';
       return 'Password must be at least 8 characters.';
     }
+    if (code === 'password_mismatch') {
+      if (isJa) return 'パスワード（確認）が一致しません。';
+      if (isZh) return '確認密碼不一致。';
+      return 'Password confirmation does not match.';
+    }
+    if (code === 'invalid_or_expired_token') {
+      if (isJa) return '再設定リンクが無効か、有効期限が切れています。もう一度お試しください。';
+      if (isZh) return '重設連結無效或已過期。請重新申請。';
+      return 'This reset link is invalid or has expired. Please request a new one.';
+    }
     if (code === 'registration_disabled') {
       if (isJa) return '現在、新規登録の受付を一時停止しています。';
       if (isZh) return '目前暫停接受新註冊。';
@@ -659,6 +700,10 @@
     resolveAppRoot: resolveAppRoot,
     register: register,
     login: login,
+    forgotPassword: forgotPassword,
+    resetPassword: resetPassword,
+    forgotPasswordGenericMessage: forgotPasswordGenericMessage,
+    resetPasswordSuccessMessage: resetPasswordSuccessMessage,
     logout: logout,
     me: me,
     setPlan: setPlan,

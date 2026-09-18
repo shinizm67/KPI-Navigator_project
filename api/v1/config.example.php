@@ -38,4 +38,8 @@ return [
     // Feedback / survey mail (gear → ご意見・リクエスト)
     'supportEmail' => 'support@forge-laboratory.com',
     'supportFrom' => 'support@forge-laboratory.com',
+    // Password reset (Forgot Password). Empty baseUrl → production default.
+    'passwordResetTtlMinutes' => 30,
+    'passwordResetCooldownSeconds' => 120,
+    'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
 ];

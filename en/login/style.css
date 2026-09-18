@@ -101,6 +101,41 @@ html[lang^="zh"] .si-fi.login-page {
   text-align: center;
 }
 
+.si-fi.login-page .auth-secondary-link {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.si-fi.login-page .auth-secondary-link a {
+  color: var(--si-fi-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.si-fi.login-page .auth-secondary-link a:hover {
+  color: var(--si-fi-green);
+}
+
+.si-fi.login-page .auth-message,
+.si-fi.login-page .auth-error {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  max-width: 520px;
+}
+
+.si-fi.login-page .auth-message {
+  color: var(--si-fi-green);
+}
+
+.si-fi.login-page .auth-error {
+  color: #ff7b7b;
+}
+
 /* Log IN ボタン: 非アクティブ = 緑枠・塗り0%・緑文字 / アクティブ = 緑塗り・白文字 */
 .si-fi.login-page .btn-login {
   padding: 12px 48px;

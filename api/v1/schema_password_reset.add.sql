@@ -1,0 +1,22 @@
+-- Password Reset Foundation (additive migration)
+-- Apply once on MySQL/MariaDB. Existing users unchanged.
+-- Stores token HASH only — never plaintext tokens.
+
+CREATE TABLE IF NOT EXISTS kpi_password_reset_tokens (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(64) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL DEFAULT NULL,
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_kpi_password_reset_token_hash (token_hash),
+  KEY idx_kpi_password_reset_user (user_id),
+  KEY idx_kpi_password_reset_expires (expires_at),
+  CONSTRAINT fk_kpi_password_reset_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Rollback (manual):
+-- DROP TABLE IF EXISTS kpi_password_reset_tokens;
