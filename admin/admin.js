@@ -29,8 +29,28 @@
     return String(v);
   }
 
-  function fetchJson(url) {
-    return fetch(url, { credentials: 'include', cache: 'no-store' }).then(function (r) {
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function fetchJson(url, opts) {
+    var options = opts || {};
+    var init = {
+      credentials: 'include',
+      cache: 'no-store',
+      method: options.method || 'GET',
+      headers: options.headers || {}
+    };
+    if (options.body !== undefined) {
+      init.headers['Content-Type'] = 'application/json';
+      init.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+    }
+    return fetch(url, init).then(function (r) {
       return r.json().then(function (j) {
         return { status: r.status, data: j };
       }).catch(function () {
@@ -43,6 +63,12 @@
     if (!el) return;
     el.hidden = false;
     el.textContent = msg;
+  }
+
+  function clearError(el) {
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = '';
   }
 
   function renderDashboard() {
@@ -134,6 +160,231 @@
     });
   }
 
+  function postSetParent(childUserId, parentUserId) {
+    return fetchJson(apiBase() + '/admin/set-parent.php', {
+      method: 'POST',
+      body: {
+        userId: childUserId,
+        parentUserId: parentUserId
+      }
+    });
+  }
+
+  function userOptionLabel(u) {
+    return dash(u.email) + ' (' + dash(u.userId) + ')';
+  }
+
+  function paintDetail(root, err, detailId, detailPayload, allUsers) {
+    var u = detailPayload.user || {};
+    var p = detailPayload.profile || {};
+    var hist = detailPayload.planHistory || [];
+    var parent = detailPayload.parent;
+    var children = detailPayload.children || [];
+    var detailBase = adminRoot() + '/users/detail/?id=';
+    var users = allUsers || [];
+
+    function kv(label, value) {
+      return '<div class="k">' + label + '</div><div class="v">' + dash(value) + '</div>';
+    }
+
+    var histHtml = hist.length
+      ? '<ul class="history-list">' + hist.map(function (h) {
+          return '<li>' + dash(h.changedAt) + ' · ' + dash(h.oldPlan) + ' → ' + dash(h.newPlan) +
+            ' · ' + dash(h.source) + (h.changedBy ? (' · by ' + h.changedBy) : '') + '</li>';
+        }).join('') + '</ul>'
+      : '<div class="muted">No plan history yet.</div>';
+
+    var parentHtml = parent
+      ? '<a href="' + detailBase + encodeURIComponent(parent.userId) + '">' + esc(dash(parent.email)) + ' (' + esc(parent.userId) + ')</a>'
+      : '<span class="muted">None</span>';
+
+    var childRows = children.length
+      ? children.map(function (c) {
+          return (
+            '<div class="rel-child-row">' +
+              '<a href="' + detailBase + encodeURIComponent(c.userId) + '">' + esc(dash(c.email)) + ' (' + esc(c.userId) + ')</a>' +
+              ' <button type="button" class="btn-admin btn-danger" data-rel-action="remove-child" data-child-id="' + esc(c.userId) + '">Remove</button>' +
+            '</div>'
+          );
+        }).join('')
+      : '<span class="muted">None</span>';
+
+    var parentChoices = users.filter(function (x) {
+      return x.userId && x.userId !== u.userId && !x.disabled;
+    });
+    var parentOpts = '<option value="">No Parent</option>' + parentChoices.map(function (x) {
+      var sel = parent && parent.userId === x.userId ? ' selected' : '';
+      return '<option value="' + esc(x.userId) + '"' + sel + '>' + esc(userOptionLabel(x)) + '</option>';
+    }).join('');
+
+    var childIds = {};
+    children.forEach(function (c) { childIds[c.userId] = true; });
+    var childChoices = users.filter(function (x) {
+      return x.userId && x.userId !== u.userId && !x.disabled && !childIds[x.userId];
+    });
+    var childOpts = '<option value="">Select user…</option>' + childChoices.map(function (x) {
+      return '<option value="' + esc(x.userId) + '">' + esc(userOptionLabel(x)) + '</option>';
+    }).join('');
+
+    var profileNote = p.synced ? '' : '<div class="muted">Server profile: Not synced</div>';
+
+    root.innerHTML =
+      '<div class="dossier">' +
+      '<h2>User Dossier</h2>' +
+      '<div class="section"><h3>Account</h3><div class="kv">' +
+        kv('User ID', u.userId) +
+        kv('Email', u.email) +
+        kv('Status', u.disabled ? 'disabled' : 'active') +
+        kv('Role', u.role) +
+        kv('Created At', u.createdAt) +
+        kv('Last Login', u.lastLoginAt) +
+      '</div></div>' +
+      '<div class="section"><h3>Subscription</h3><div class="kv">' +
+        kv('Current Plan', u.plan) +
+        kv('Plan Changed At', u.planUpdatedAt) +
+      '</div><div style="margin-top:10px">' + histHtml + '</div></div>' +
+      '<div class="section"><h3>Business Profile</h3>' + profileNote + '<div class="kv">' +
+        kv('Business Name', p.synced ? p.businessName : null) +
+        kv('Company Name', p.synced ? p.companyName : null) +
+        kv('Business Type', p.synced ? p.businessType : null) +
+        kv('Genre', p.synced ? p.genre : null) +
+      '</div></div>' +
+      '<div class="section"><h3>Location</h3><div class="kv">' +
+        kv('Language', p.synced ? p.locale : null) +
+        kv('Country', p.synced ? p.country : null) +
+        kv('State / Region', p.synced ? p.stateRegion : null) +
+        kv('City', p.synced ? p.city : null) +
+        kv('Currency', p.synced ? p.currency : null) +
+      '</div></div>' +
+      '<div class="section"><h3>Related Accounts</h3>' +
+        '<div class="kv">' +
+          '<div class="k">Parent Account</div><div class="v">' + parentHtml + '</div>' +
+          '<div class="k">Child Accounts</div><div class="v">' + childRows + '</div>' +
+        '</div>' +
+        '<div class="rel-actions">' +
+          '<button type="button" class="btn-admin" data-rel-action="toggle-parent">Change Parent</button>' +
+          '<button type="button" class="btn-admin" data-rel-action="toggle-child">Add Child</button>' +
+        '</div>' +
+        '<div id="rel-parent-panel" class="rel-edit-panel" hidden>' +
+          '<label class="rel-label">New parent</label>' +
+          '<select id="rel-parent-select" class="admin-select">' + parentOpts + '</select>' +
+          '<div class="rel-actions">' +
+            '<button type="button" class="btn-admin" data-rel-action="save-parent">Save Parent</button>' +
+            '<button type="button" class="btn-admin btn-muted" data-rel-action="cancel-parent">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="rel-child-panel" class="rel-edit-panel" hidden>' +
+          '<label class="rel-label">Add child account</label>' +
+          '<select id="rel-child-select" class="admin-select">' + childOpts + '</select>' +
+          '<div class="rel-actions">' +
+            '<button type="button" class="btn-admin" data-rel-action="save-child">Add Child</button>' +
+            '<button type="button" class="btn-admin btn-muted" data-rel-action="cancel-child">Cancel</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="section"><h3>Admin Actions</h3>' +
+        '<div class="actions-box">Force Logout / Password Reset / Disable / Delete — reserved for later phases. Password is never displayed.</div>' +
+      '</div>' +
+      '</div>';
+
+    function reloadDetail() {
+      clearError(err);
+      renderDetail();
+    }
+
+    function failMsg(res) {
+      if (res.status === 401) return '401 unauthorized — sign in as Founder Super Admin.';
+      if (res.status === 403) return '403 forbidden — Founder Super Admin required.';
+      if (res.data && res.data.error) return 'Failed: ' + res.data.error;
+      return 'Related Accounts update failed.';
+    }
+
+    root.querySelectorAll('[data-rel-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-rel-action');
+        var parentPanel = document.getElementById('rel-parent-panel');
+        var childPanel = document.getElementById('rel-child-panel');
+
+        if (action === 'toggle-parent') {
+          if (parentPanel) parentPanel.hidden = !parentPanel.hidden;
+          if (childPanel) childPanel.hidden = true;
+          return;
+        }
+        if (action === 'toggle-child') {
+          if (childPanel) childPanel.hidden = !childPanel.hidden;
+          if (parentPanel) parentPanel.hidden = true;
+          return;
+        }
+        if (action === 'cancel-parent') {
+          if (parentPanel) parentPanel.hidden = true;
+          return;
+        }
+        if (action === 'cancel-child') {
+          if (childPanel) childPanel.hidden = true;
+          return;
+        }
+        if (action === 'save-parent') {
+          var sel = document.getElementById('rel-parent-select');
+          var nextParent = sel && sel.value ? sel.value : null;
+          var label = nextParent ? nextParent : 'No Parent';
+          if (!window.confirm('Change parent of this account to: ' + label + ' ?')) return;
+          btn.disabled = true;
+          postSetParent(detailId, nextParent).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, failMsg(res));
+              return;
+            }
+            reloadDetail();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error updating parent.');
+          });
+          return;
+        }
+        if (action === 'save-child') {
+          var csel = document.getElementById('rel-child-select');
+          var childId = csel && csel.value ? csel.value : '';
+          if (!childId) {
+            showError(err, 'Select a child account first.');
+            return;
+          }
+          if (!window.confirm('Set parent of ' + childId + ' to this account (' + detailId + ')?')) return;
+          btn.disabled = true;
+          postSetParent(childId, detailId).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, failMsg(res));
+              return;
+            }
+            reloadDetail();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error adding child.');
+          });
+          return;
+        }
+        if (action === 'remove-child') {
+          var rid = btn.getAttribute('data-child-id') || '';
+          if (!rid) return;
+          if (!window.confirm('Remove child link for ' + rid + ' (clear parent)?')) return;
+          btn.disabled = true;
+          postSetParent(rid, null).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, failMsg(res));
+              return;
+            }
+            reloadDetail();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error removing child.');
+          });
+        }
+      });
+    });
+  }
+
   function renderDetail() {
     var err = document.getElementById('admin-error');
     var root = document.getElementById('detail-root');
@@ -144,7 +395,13 @@
       showError(err, 'Missing user id.');
       return;
     }
-    fetchJson(apiBase() + '/admin/user-detail.php?id=' + encodeURIComponent(id)).then(function (res) {
+    clearError(err);
+    Promise.all([
+      fetchJson(apiBase() + '/admin/user-detail.php?id=' + encodeURIComponent(id)),
+      fetchJson(apiBase() + '/admin/users.php')
+    ]).then(function (pair) {
+      var res = pair[0];
+      var usersRes = pair[1];
       if (res.status === 401) {
         showError(err, '401 unauthorized — sign in as Founder Super Admin.');
         return;
@@ -161,72 +418,8 @@
         showError(err, 'Failed to load user detail.');
         return;
       }
-      var u = res.data.user || {};
-      var p = res.data.profile || {};
-      var hist = res.data.planHistory || [];
-      var parent = res.data.parent;
-      var children = res.data.children || [];
-      var detailBase = adminRoot() + '/users/detail/?id=';
-
-      function kv(label, value) {
-        return '<div class="k">' + label + '</div><div class="v">' + dash(value) + '</div>';
-      }
-
-      var histHtml = hist.length
-        ? '<ul class="history-list">' + hist.map(function (h) {
-            return '<li>' + dash(h.changedAt) + ' · ' + dash(h.oldPlan) + ' → ' + dash(h.newPlan) +
-              ' · ' + dash(h.source) + (h.changedBy ? (' · by ' + h.changedBy) : '') + '</li>';
-          }).join('') + '</ul>'
-        : '<div class="muted">No plan history yet.</div>';
-
-      var parentHtml = parent
-        ? '<a href="' + detailBase + encodeURIComponent(parent.userId) + '">' + dash(parent.email) + ' (' + parent.userId + ')</a>'
-        : '<span class="muted">None</span>';
-
-      var childHtml = children.length
-        ? children.map(function (c) {
-            return '<div><a href="' + detailBase + encodeURIComponent(c.userId) + '">' + dash(c.email) + ' (' + c.userId + ')</a></div>';
-          }).join('')
-        : '<span class="muted">None</span>';
-
-      var profileNote = p.synced ? '' : '<div class="muted">Server profile: Not synced</div>';
-
-      root.innerHTML =
-        '<div class="dossier">' +
-        '<h2>User Dossier</h2>' +
-        '<div class="section"><h3>Account</h3><div class="kv">' +
-          kv('User ID', u.userId) +
-          kv('Email', u.email) +
-          kv('Status', u.disabled ? 'disabled' : 'active') +
-          kv('Role', u.role) +
-          kv('Created At', u.createdAt) +
-          kv('Last Login', u.lastLoginAt) +
-        '</div></div>' +
-        '<div class="section"><h3>Subscription</h3><div class="kv">' +
-          kv('Current Plan', u.plan) +
-          kv('Plan Changed At', u.planUpdatedAt) +
-        '</div><div style="margin-top:10px">' + histHtml + '</div></div>' +
-        '<div class="section"><h3>Business Profile</h3>' + profileNote + '<div class="kv">' +
-          kv('Business Name', p.synced ? p.businessName : null) +
-          kv('Company Name', p.synced ? p.companyName : null) +
-          kv('Business Type', p.synced ? p.businessType : null) +
-          kv('Genre', p.synced ? p.genre : null) +
-        '</div></div>' +
-        '<div class="section"><h3>Location</h3><div class="kv">' +
-          kv('Language', p.synced ? p.locale : null) +
-          kv('Country', p.synced ? p.country : null) +
-          kv('State / Region', p.synced ? p.stateRegion : null) +
-          kv('City', p.synced ? p.city : null) +
-          kv('Currency', p.synced ? p.currency : null) +
-        '</div></div>' +
-        '<div class="section"><h3>Related Accounts</h3><div class="kv">' +
-          '<div class="k">Parent Account</div><div class="v">' + parentHtml + '</div>' +
-          '<div class="k">Child Accounts</div><div class="v">' + childHtml + '</div>' +
-        '</div></div>' +
-        '<div class="section"><h3>Admin Actions</h3>' +
-          '<div class="actions-box">Force Logout / Password Reset / Disable / Delete — reserved for later phases. Password is never displayed.</div>' +
-        '</div>' +
-        '</div>';
+      var allUsers = (usersRes.data && usersRes.data.ok && usersRes.data.users) ? usersRes.data.users : [];
+      paintDetail(root, err, id, res.data, allUsers);
     }).catch(function () {
       showError(err, 'Network error loading detail.');
     });

@@ -193,3 +193,74 @@ table.admin-table {
   border-bottom: 1px solid rgba(88, 225, 243, 0.15);
   padding: 6px 0;
 }
+
+.rel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rel-edit-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--admin-border);
+  background: rgba(88, 225, 243, 0.04);
+}
+
+.rel-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--admin-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-select {
+  width: 100%;
+  max-width: 520px;
+  background: #000;
+  color: var(--admin-cyan);
+  border: 1px solid var(--admin-border);
+  padding: 8px 10px;
+  font-family: var(--admin-mono);
+  font-size: 12px;
+}
+
+.btn-admin {
+  background: transparent;
+  color: var(--admin-cyan);
+  border: 1px solid var(--admin-border);
+  padding: 6px 12px;
+  font-family: var(--admin-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-admin:hover {
+  border-color: var(--admin-cyan);
+  background: rgba(88, 225, 243, 0.08);
+}
+
+.btn-admin:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-admin.btn-danger {
+  color: var(--admin-danger);
+  border-color: rgba(255, 77, 77, 0.55);
+}
+
+.btn-admin.btn-muted {
+  color: var(--admin-muted);
+}
+
+.rel-child-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}

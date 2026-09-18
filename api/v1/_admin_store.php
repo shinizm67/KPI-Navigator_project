@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/_db.php';
 require_once __DIR__ . '/_admin.php';
+require_once __DIR__ . '/_admin_parent.php';
 
 function kpi_v1_admin_profiles_dir()
 {
@@ -294,42 +295,93 @@ function kpi_v1_admin_touch_last_login($cfg, $userId)
 }
 
 /**
- * Validate parent link: no self, parent exists, no cycle.
+ * Validate parent link: no self, parent exists + active, no cycle.
  */
 function kpi_v1_admin_validate_parent($cfg, $childUserId, $parentUserId)
 {
-    $childUserId = (string) $childUserId;
-    $parentUserId = $parentUserId !== null && $parentUserId !== '' ? (string) $parentUserId : null;
+    return kpi_v1_admin_parent_reject_reason($cfg, $childUserId, $parentUserId) === null;
+}
+
+/**
+ * @return string|null error code or null if valid
+ */
+function kpi_v1_admin_parent_reject_reason($cfg, $childUserId, $parentUserId)
+{
+    return kpi_v1_admin_parent_reject_reason_lookup(
+        $childUserId,
+        $parentUserId,
+        function ($uid) {
+            return kpi_v1_auth_read_user($uid);
+        }
+    );
+}
+
+/**
+ * Set or clear parent_user_id for a child account.
+ * $parentUserId null/'' clears the link.
+ *
+ * @return array{ok:bool,error?:string,user?:array,parent?:?array,children?:array}
+ */
+function kpi_v1_admin_set_parent($cfg, $childUserId, $parentUserId)
+{
+    $childUserId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $childUserId);
+    if ($childUserId === '') {
+        return ['ok' => false, 'error' => 'invalid_id'];
+    }
+    if ($parentUserId !== null && $parentUserId !== '') {
+        $parentUserId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $parentUserId);
+        if ($parentUserId === '') {
+            return ['ok' => false, 'error' => 'invalid_parent'];
+        }
+    } else {
+        $parentUserId = null;
+    }
+
+    $child = kpi_v1_auth_read_user($childUserId);
+    if ($child === null) {
+        return ['ok' => false, 'error' => 'user_not_found'];
+    }
+
+    $err = kpi_v1_admin_parent_reject_reason($cfg, $childUserId, $parentUserId);
+    if ($err !== null) {
+        return ['ok' => false, 'error' => $err];
+    }
+
     if ($parentUserId === null) {
-        return true;
+        unset($child['parentUserId']);
+    } else {
+        $child['parentUserId'] = $parentUserId;
     }
-    if ($parentUserId === $childUserId) {
-        return false;
-    }
-    $parent = kpi_v1_auth_read_user($parentUserId);
-    if ($parent === null) {
-        return false;
-    }
-    // Walk ancestors of parent; reject if child appears.
-    $seen = [];
-    $cur = $parentUserId;
-    $guard = 0;
-    while ($cur !== null && $guard < 32) {
-        if ($cur === $childUserId) {
-            return false;
+    kpi_v1_auth_write_user($child);
+
+    $safe = kpi_v1_admin_safe_user_row($child);
+    $parent = null;
+    if ($parentUserId) {
+        $pu = kpi_v1_auth_read_user($parentUserId);
+        if ($pu) {
+            $parent = [
+                'userId' => (string) $pu['userId'],
+                'email' => (string) $pu['email'],
+            ];
         }
-        if (isset($seen[$cur])) {
-            return false;
-        }
-        $seen[$cur] = true;
-        $u = kpi_v1_auth_read_user($cur);
-        if ($u === null) {
-            break;
-        }
-        $cur = !empty($u['parentUserId']) ? (string) $u['parentUserId'] : null;
-        $guard++;
     }
-    return true;
+    $children = [];
+    foreach (kpi_v1_admin_list_child_ids($cfg, $childUserId) as $cid) {
+        $cu = kpi_v1_auth_read_user($cid);
+        if ($cu) {
+            $children[] = [
+                'userId' => (string) $cu['userId'],
+                'email' => (string) $cu['email'],
+            ];
+        }
+    }
+
+    return [
+        'ok' => true,
+        'user' => $safe,
+        'parent' => $parent,
+        'children' => $children,
+    ];
 }
 
 function kpi_v1_admin_list_child_ids($cfg, $parentUserId)

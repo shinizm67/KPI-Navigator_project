@@ -76,8 +76,10 @@ def main() -> None:
     check("profile write path", "kpi_v1_profile_write" in profile)
 
     store = read("api/v1/_admin_store.php")
-    check("parent validate rejects self", "parentUserId === $childUserId" in store or "$parentUserId === $childUserId" in store)
-    check("cycle walk present", "$guard" in store or "cycle" in store.lower() or "ancestors" in store.lower() or "seen" in store)
+    parent_mod = read("api/v1/_admin_parent.php")
+    check("parent validate rejects self", "self_parent" in parent_mod or "$parentUserId === $childUserId" in parent_mod)
+    check("cycle walk present", "$guard" in parent_mod or "cycle" in parent_mod.lower())
+    check("parent validate helper wired", "kpi_v1_admin_parent_reject_reason" in store)
 
     cfg = read("api/v1/config.example.php")
     check("founder emails config key", "founderSuperAdminEmails" in cfg)
@@ -91,6 +93,12 @@ def main() -> None:
     ui = read("admin/admin.js")
     check("users table row navigates detail", "data-href" in ui)
     check("detail renders dossier", "User Dossier" in ui)
+    check("related edit change parent", "Change Parent" in ui)
+    check("related edit set-parent API", "set-parent.php" in ui)
+
+    set_parent = read("api/v1/admin/set-parent.php")
+    check("set-parent founder gate", "kpi_v1_auth_require_founder_superadmin" in set_parent)
+    check("set-parent uses helper", "kpi_v1_admin_set_parent" in set_parent)
 
     # Ensure trial auto-promote not present
     check(
