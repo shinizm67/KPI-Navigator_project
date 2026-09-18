@@ -10,6 +10,8 @@
   var btn = document.getElementById('btn-reset');
   var errEl = document.getElementById('reset-error');
   var okEl = document.getElementById('reset-success');
+  var okMsgEl = document.getElementById('reset-success-msg');
+  var loginLink = document.getElementById('reset-login-link');
   if (!form || !pwEl || !confirmEl || !btn) return;
   if (!window.__KPI_AUTH) {
     console.warn('[KPI Auth] kpi-auth-client.js not loaded');
@@ -18,6 +20,7 @@
 
   var langAttr = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
   var lang = langAttr.indexOf('zh') === 0 ? 'zh' : langAttr.split('-')[0];
+  var REDIRECT_MS = 2500;
 
   function tokenFromQuery() {
     try {
@@ -36,6 +39,27 @@
       errEl.textContent = text || '';
     }
     if (okEl) okEl.hidden = true;
+  }
+
+  function loginHref() {
+    if (loginLink && loginLink.getAttribute('href')) {
+      return loginLink.getAttribute('href');
+    }
+    return '../login/index.html';
+  }
+
+  function showSuccess() {
+    if (okMsgEl) {
+      okMsgEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
+    } else if (okEl) {
+      okEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
+    }
+    form.hidden = true;
+    if (okEl) okEl.hidden = false;
+    var href = loginHref();
+    window.setTimeout(function () {
+      window.location.href = href;
+    }, REDIRECT_MS);
   }
 
   function checkActive() {
@@ -75,11 +99,7 @@
       .then(function (r) {
         btn.removeAttribute('data-busy');
         if (r.status === 200 && r.data && r.data.ok) {
-          if (okEl) {
-            okEl.hidden = false;
-            okEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
-          }
-          form.hidden = true;
+          showSuccess();
           return;
         }
         showErr(window.__KPI_AUTH.errorMessage(lang, r.status, r.data));

@@ -90,6 +90,51 @@ def main() -> None:
         t = read(rel)
         check(f"{rel} wiring", needle in t)
 
+    reset_js = read("js/kpi-reset-password-page.js")
+    check("reset JS success hides form", "form.hidden = true" in reset_js)
+    check("reset JS shows success container", "okEl.hidden = false" in reset_js)
+    check("reset JS auto redirect", "location.href" in reset_js and "setTimeout" in reset_js)
+    check("reset JS redirect delay 2500", "2500" in reset_js)
+    check(
+        "reset JS invalid token does not hide form",
+        "form.hidden = true" not in reset_js.split("if (!token)")[1].split("form.addEventListener")[0],
+    )
+    check("reset JS uses success msg element", "reset-success-msg" in reset_js)
+    check("reset JS reads login link href", "reset-login-link" in reset_js)
+
+    check(
+        "success message JP redirect wording",
+        "パスワードを再設定しました。ログイン画面へ移動します。" in client,
+    )
+    check(
+        "success message EN redirect wording",
+        "Your password has been reset. Redirecting to login" in client,
+    )
+    check(
+        "success message ZH-TW redirect wording",
+        "密碼已重設。正在前往登入畫面" in client,
+    )
+
+    for rel, login_href in [
+        ("reset-password/index.html", "../login/index.html"),
+        ("en/reset-password/index.html", "../login/index.html"),
+        ("zh-tw/reset-password/index.html", "../login/index.html"),
+    ]:
+        t = read(rel)
+        form_m = re.search(r'<form[^>]*id="reset-form"[^>]*>(.*?)</form>', t, re.S)
+        check(f"{rel} has reset-form", bool(form_m))
+        if form_m:
+            check(f"{rel} success not inside form", 'id="reset-success"' not in form_m.group(1))
+            check(f"{rel} form kept on invalid path", 'id="reset-error"' in form_m.group(1))
+        check(f"{rel} success outside form", 'id="reset-success"' in t)
+        check(f"{rel} success msg element", 'id="reset-success-msg"' in t)
+        check(f"{rel} login link in success", 'id="reset-login-link"' in t)
+        check(f"{rel} login href locale", f'id="reset-login-link" href="{login_href}"' in t)
+        # success block after form
+        fi = t.find('id="reset-form"')
+        si = t.find('id="reset-success"')
+        check(f"{rel} success after form marker", fi >= 0 and si > fi)
+
     # Email subjects in helper
     check("JP email subject", "KPN パスワード再設定" in helper)
     check("EN email subject", "KPN Password Reset" in helper)

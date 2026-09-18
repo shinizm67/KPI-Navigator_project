@@ -313,9 +313,9 @@
   function resetPasswordSuccessMessage(lang) {
     var isJa = lang === 'ja';
     var isZh = lang === 'zh' || lang === 'zh-tw';
-    if (isJa) return 'パスワードを更新しました。ログイン画面からサインインしてください。';
-    if (isZh) return '密碼已更新。請從登入畫面重新登入。';
-    return 'Password updated. Please sign in from the login page.';
+    if (isJa) return 'パスワードを再設定しました。ログイン画面へ移動します。';
+    if (isZh) return '密碼已重設。正在前往登入畫面…';
+    return 'Your password has been reset. Redirecting to login…';
   }
 
   function logout() {
