@@ -4225,7 +4225,8 @@
             list.forEach(function (y, idx) {
               p = p.then(function () {
                 /* KPI-BULK-YEAR-REBUILD-AK: year-chunk progress on overlay */
-                if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {
+                /* KPI-BUSY-CSV-HIDE-CZ: progress only if overlay already owned */
+                if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy() && typeof window.__KPI_BUSY.update === 'function') {
                   window.__KPI_BUSY.update('rebuild', {
                     year: y,
                     index: idx + 1,
@@ -4303,9 +4304,23 @@
           if (meta && meta.hlBaselineYears && meta.hlBaselineYears.length) {
             rec.plan.hlBaselineYears = meta.hlBaselineYears.slice();
           }
+          /* KPI-NAV-BUSY-SILENT-HL-CW: opening a page auto-writes H/L baseline
+             (observed-baseline / dom-seed / plan-default). That must NOT run
+             Saving/Rebuilding. User H/L edits still schedule rebuild. */
+          var srcHl = (meta && meta.source) || 'kpi-year-store';
+          var silentHl =
+            !!(meta && meta.skipRebuild) ||
+            srcHl === 'observed-baseline' ||
+            srcHl === 'plan-default' ||
+            srcHl === 'dom-seed' ||
+            srcHl === 'sales-data-analyze';
+          if (silentHl) {
+            persistStore();
+            return true;
+          }
           if (!(meta && meta.deferRebuild)) scheduleServerYearRebuild(y, 'hl-weights', {
             monthlyHlWeights: normalized.slice(),
-            source: (meta && meta.source) || 'kpi-year-store',
+            source: srcHl,
           });
           return true;
         }
@@ -4886,7 +4901,8 @@
             .sort(function (a, b) { return a - b; });
           if (!years.length) return Promise.resolve();
           var work = function () {
-            if (window.__KPI_BUSY && typeof window.__KPI_BUSY.update === 'function') {
+            /* KPI-BUSY-CSV-HIDE-CZ: never open overlay here (orphan hang). Progress only if already busy. */
+            if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy() && typeof window.__KPI_BUSY.update === 'function') {
               window.__KPI_BUSY.update('rebuild', {
                 year: years[0],
                 index: 1,
@@ -4907,14 +4923,7 @@
               return Promise.resolve(hyd);
             });
           };
-          if (window.__KPI_BUSY && (window.__KPI_BUSY._inRun || window.__KPI_BUSY.isBusy())) {
-            return work();
-          }
-          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
-            return window.__KPI_BUSY
-              .run('rebuild', work, { yearCount: years.length, year: years[0], index: 1, total: years.length })
-              .catch(function (err) { if (opts && opts.singlePut) throw err; });
-          }
+          /* KPI-BUSY-CSV-HIDE-CZ / CX: background silent; CSV/Save parent awaits this work(). */
           return work();
         }
 
