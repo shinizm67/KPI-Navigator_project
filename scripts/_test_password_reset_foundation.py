@@ -108,6 +108,10 @@ def main() -> None:
     )
     check("reset JS uses success msg element", "reset-success-msg" in reset_js)
     check("reset JS reads login link href", "reset-login-link" in reset_js)
+    check(
+        "reset JS never wipes success via textContent on container",
+        "okEl.textContent" not in reset_js,
+    )
 
     check(
         "success message JP redirect wording",
@@ -139,6 +143,17 @@ def main() -> None:
         check(f"{rel} login href locale", f'id="reset-login-link" href="{login_href}"' in t)
         check(f"{rel} login button label", login_label in t)
         check(f"{rel} login button class", 'id="reset-login-link"' in t and "btn-login" in t)
+        check(f"{rel} versioned auth-client", "kpi-auth-client.js?v=20260918-2" in t)
+        check(f"{rel} versioned reset-page js", "kpi-reset-password-page.js?v=20260918-2" in t)
+        # static href must remain a real anchor (not JS-only)
+        check(
+            f"{rel} static login anchor",
+            re.search(
+                r'<a[^>]*id="reset-login-link"[^>]*href="' + re.escape(login_href) + r'"',
+                t,
+            )
+            is not None,
+        )
         # success block after form
         fi = t.find('id="reset-form"')
         si = t.find('id="reset-success"')

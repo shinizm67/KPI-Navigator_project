@@ -81,10 +81,9 @@
 
   function showSuccess() {
     var href = loginHref();
+    // Never assign text onto the success container — that would wipe the static Login <a href> fallback.
     if (okMsgEl) {
       okMsgEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
-    } else if (okEl) {
-      okEl.textContent = window.__KPI_AUTH.resetPasswordSuccessMessage(lang);
     }
     if (loginLink) {
       try {
