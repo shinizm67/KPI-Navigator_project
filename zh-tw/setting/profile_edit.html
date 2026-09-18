@@ -187,6 +187,7 @@
     <script src="../../js/kpi-auth-client.js"></script>
     <script src="../../js/kpi-business-type.js"></script>
     <script src="../../js/kpi-profile-location.js"></script>
+    <script src="../../js/kpi-profile-server.js"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
     <script src="../../js/kpi-excel-templates.js"></script>
@@ -577,6 +578,11 @@
           return;
         }
 
+        var goProfile = function () { window.location.href = 'profile.html'; };
+        if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.saveServerProfile === 'function') {
+          window.__KPI_PROFILE_SERVER.saveServerProfile(data).then(goProfile).catch(goProfile);
+          return;
+        }
         window.location.href = 'profile.html';
       });
     })();

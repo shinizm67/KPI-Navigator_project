@@ -19,6 +19,9 @@ return [
     // Public self-serve signup (POST /auth/register.php). Keep false until billing is ready.
     // Production: false. Admin create-user is independent and ignores this flag.
     'registrationEnabled' => false,
+    // Founder Super Admin bootstrap emails (optional). Prefer DB role=founder_superadmin.
+    // Never list full_authorized / trial accounts here unless intentional.
+    'founderSuperAdminEmails' => [],
     'planAdminToken' => 'dev-plan-admin-change-me',
     'tokenModePlan' => 'pro',
     // B4-T1 store backups

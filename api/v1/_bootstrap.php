@@ -36,6 +36,8 @@ function kpi_v1_load_config()
             'allowSelfPlanChange' => true,
             // Public self-serve signup. Default/production: false until billing is ready.
             'registrationEnabled' => false,
+            // Optional Founder Super Admin bootstrap (emails). DB role is preferred.
+            'founderSuperAdminEmails' => [],
             'planAdminToken' => 'dev-plan-admin-change-me',
             // Token-mode store (no user file): treat as this plan
             'tokenModePlan' => 'pro',

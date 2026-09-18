@@ -48,6 +48,7 @@ $user = [
     'plan' => $rawPlan,
     'planUpdatedAt' => gmdate('c'),
     'disabled' => false,
+    'role' => 'user',
     'createdAt' => gmdate('c'),
 ];
 kpi_v1_auth_write_user($user);

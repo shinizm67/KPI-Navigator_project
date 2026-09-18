@@ -63,8 +63,14 @@ if ($user === null) {
     kpi_v1_json_out(404, ['ok' => false, 'error' => 'user_not_found']);
 }
 
+$oldPlan = isset($user['plan']) ? strtolower(trim((string) $user['plan'])) : null;
 $user['plan'] = $plan;
 $user['planUpdatedAt'] = gmdate('c');
 kpi_v1_auth_write_user($user);
+
+require_once __DIR__ . '/../_admin_store.php';
+$actor = kpi_v1_auth_current_user_id();
+$source = $isAdmin ? 'admin' : 'self';
+kpi_v1_plan_history_append($cfg, $user['userId'], $oldPlan, $plan, $actor, $source);
 
 kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

@@ -177,11 +177,19 @@ function kpi_v1_auth_public_user($user, $cfg = null)
         $p = strtolower(trim((string) $cfg['legacyPlan']));
         $plan = ($p === 'basic') ? 'basic' : 'pro';
     }
+    $role = 'user';
+    if (is_array($user) && isset($user['role'])) {
+        $role = strtolower(trim((string) $user['role']));
+        if ($role !== 'founder_superadmin' && $role !== 'admin_staff' && $role !== 'support_readonly') {
+            $role = 'user';
+        }
+    }
     return [
         'userId' => (string) $user['userId'],
         'email' => (string) $user['email'],
         'plan' => $plan,
         'disabled' => kpi_v1_auth_user_is_disabled($user),
+        'role' => $role,
     ];
 }
 

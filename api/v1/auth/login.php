@@ -34,5 +34,9 @@ if (kpi_v1_auth_user_is_disabled($user)) {
     kpi_v1_json_out(403, ['ok' => false, 'error' => 'account_disabled']);
 }
 
+require_once __DIR__ . '/../_admin_store.php';
+kpi_v1_admin_touch_last_login($cfg, $user['userId']);
+$user = kpi_v1_auth_read_user($user['userId']) ?: $user;
+
 kpi_v1_auth_set_session_user($user['userId']);
 kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

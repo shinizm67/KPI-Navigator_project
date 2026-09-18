@@ -7,15 +7,21 @@ CREATE TABLE IF NOT EXISTS kpi_users (
   password_hash VARCHAR(255) NOT NULL,
   plan VARCHAR(16) NOT NULL DEFAULT 'basic',
   disabled TINYINT(1) NOT NULL DEFAULT 0,
+  role VARCHAR(32) NOT NULL DEFAULT 'user',
   plan_updated_at DATETIME NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
+  last_login_at DATETIME NULL,
+  parent_user_id VARCHAR(64) NULL,
   PRIMARY KEY (user_id),
-  UNIQUE KEY uq_kpi_users_email (email)
+  UNIQUE KEY uq_kpi_users_email (email),
+  KEY idx_kpi_users_role (role),
+  KEY idx_kpi_users_parent (parent_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Existing DBs created before disabled existed:
 -- ALTER TABLE kpi_users ADD COLUMN disabled TINYINT(1) NOT NULL DEFAULT 0 AFTER plan;
+-- Admin Console Foundation: see schema_admin_console_foundation.add.sql
 
 CREATE TABLE IF NOT EXISTS kpi_store (
   user_id VARCHAR(64) NOT NULL,
@@ -61,6 +67,39 @@ CREATE TABLE IF NOT EXISTS kpi_daily_inputs (
   PRIMARY KEY (user_id, iso),
   KEY idx_kpi_daily_inputs_user_updated (user_id, updated_at),
   CONSTRAINT fk_kpi_daily_inputs_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kpi_plan_history (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(64) NOT NULL,
+  old_plan VARCHAR(16) NULL,
+  new_plan VARCHAR(16) NOT NULL,
+  changed_at DATETIME NOT NULL,
+  changed_by VARCHAR(64) NULL,
+  source VARCHAR(32) NOT NULL DEFAULT 'system',
+  PRIMARY KEY (id),
+  KEY idx_kpi_plan_history_user_changed (user_id, changed_at),
+  CONSTRAINT fk_kpi_plan_history_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kpi_user_profiles (
+  user_id VARCHAR(64) NOT NULL,
+  business_name VARCHAR(255) NULL,
+  company_name VARCHAR(255) NULL,
+  business_type VARCHAR(64) NULL,
+  genre VARCHAR(255) NULL,
+  locale VARCHAR(32) NULL,
+  country VARCHAR(128) NULL,
+  state_region VARCHAR(128) NULL,
+  city VARCHAR(128) NULL,
+  currency VARCHAR(16) NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_kpi_user_profiles_user
     FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

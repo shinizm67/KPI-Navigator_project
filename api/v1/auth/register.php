@@ -44,6 +44,8 @@ $user = [
     'email' => $email,
     'passwordHash' => $hash,
     'plan' => kpi_v1_entitlement_default_plan($cfg),
+    'role' => 'user',
+    'disabled' => false,
     'createdAt' => gmdate('c'),
 ];
 kpi_v1_auth_write_user($user);

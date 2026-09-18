@@ -1,0 +1,195 @@
+/* Founder Admin Console — Sci-Fi ONLY */
+:root {
+  --admin-bg: #000;
+  --admin-cyan: #58e1f3;
+  --admin-cyan-dim: rgba(88, 225, 243, 0.55);
+  --admin-border: rgba(88, 225, 243, 0.35);
+  --admin-panel: #0a0f12;
+  --admin-danger: #ff4d4d;
+  --admin-muted: rgba(88, 225, 243, 0.65);
+  --admin-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--admin-bg);
+  color: var(--admin-cyan);
+  font-family: var(--admin-mono);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+a { color: var(--admin-cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.admin-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px 48px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--admin-border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-nav a {
+  border: 1px solid transparent;
+  padding: 4px 8px;
+}
+.admin-nav a.active,
+.admin-nav a:hover {
+  border-color: var(--admin-border);
+  text-decoration: none;
+}
+
+.admin-meta {
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--admin-panel);
+  border: 1px solid var(--admin-border);
+  padding: 12px 14px;
+}
+
+.card .label {
+  color: var(--admin-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.card .value {
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel);
+}
+
+table.admin-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1400px;
+}
+
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid rgba(88, 225, 243, 0.18);
+  padding: 8px 10px;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: var(--admin-muted);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  background: #071014;
+}
+
+.admin-table tbody tr {
+  cursor: pointer;
+}
+.admin-table tbody tr:hover {
+  background: rgba(88, 225, 243, 0.08);
+}
+
+.dossier {
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel);
+  padding: 18px 20px;
+}
+
+.dossier h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--admin-border);
+  padding-bottom: 8px;
+}
+
+.section {
+  margin-top: 18px;
+}
+
+.section h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 6px 12px;
+}
+
+.kv .k { color: var(--admin-muted); }
+.kv .v { word-break: break-all; white-space: normal; }
+
+.muted { color: var(--admin-muted); }
+.danger { color: var(--admin-danger); }
+
+.actions-box {
+  border: 1px dashed rgba(255, 77, 77, 0.45);
+  padding: 12px;
+  color: var(--admin-muted);
+}
+
+.err {
+  border: 1px solid var(--admin-danger);
+  color: var(--admin-danger);
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.history-list li {
+  border-bottom: 1px solid rgba(88, 225, 243, 0.15);
+  padding: 6px 0;
+}
