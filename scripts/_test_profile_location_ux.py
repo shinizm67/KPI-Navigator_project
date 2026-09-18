@@ -351,7 +351,8 @@ def test_html_contract() -> None:
         assert_true("hydrateLocation()" in html, f"{rel} hydrates saved location")
         assert_true("stateInput.value =" not in html.split("function syncLocationLists", 1)[1].split("function hydrateLocation", 1)[0], f"{rel} country sync does not write state value")
         save = html.split("var data = {", 1)[1].split("};", 1)[0]
-        assert_true("getSelectText(currencyEl)" in save, f"{rel} currency contract kept")
+        assert_true("KpiCurrency.saveCode" in save, f"{rel} currency canonical save")
+        assert_true("getSelectText(currencyEl)" not in save, f"{rel} currency not label-save")
         assert_true("timezoneEl ? timezoneEl.value" in save, f"{rel} timezone contract kept")
         assert_true("isGenrePrompt(g) ? '' : g" in save, f"{rel} genre save kept")
         assert_true("wear_shop" not in html, f"{rel} Wear Shop not a BT option")
@@ -573,8 +574,10 @@ def test_overwrite_select_ux() -> None:
         assert_true('<datalist id="profile-country-suggestions">' in html, f"{rel} datalist kept")
         assert_true('<input type="text" id="profile-country"' in html, f"{rel} free input kept")
         assert_true("KPI-PROFILE-GENRE-PLACEHOLDER" in html, f"{rel} genre UX kept")
-        assert_true("getSelectText(currencyEl)" in html, f"{rel} currency kept")
+        assert_true("KpiCurrency.saveCode" in html, f"{rel} currency canonical save kept")
         assert_true("timezoneEl ? timezoneEl.value" in html, f"{rel} timezone kept")
+        assert_true("hydrateCurrency" in html, f"{rel} currency hydrate kept")
+        assert_true("currencyUserSet" in html, f"{rel} currency override guard kept")
         assert_true("hydrateLocation()" in html, f"{rel} legacy hydrate kept")
 
     kanagawa = overwrite_focus("神奈川県")

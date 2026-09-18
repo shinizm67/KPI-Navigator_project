@@ -182,6 +182,7 @@
       </div>
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
+    <script src="../../js/kpi-currency.js"></script>
     <script src="../../js/kpi-business-type.js"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
@@ -550,7 +551,12 @@
       setText('fixed-country', data.country);
       setText('fixed-state', data.state);
       setText('fixed-city', data.city);
-      setText('fixed-currency', data.currency);
+      setText(
+        'fixed-currency',
+        window.KpiCurrency && typeof KpiCurrency.displayLabel === 'function'
+          ? (KpiCurrency.displayLabel(data.currency, 'en') || data.currency)
+          : data.currency
+      );
       setText('fixed-timezone', data.timezone);
       setText('fixed-kpi-focus', data.kpiFocus);
       // 直前の一時データは読み込み後に削除（localStorage 側は保持）

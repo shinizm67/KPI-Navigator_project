@@ -301,13 +301,9 @@
 
           <div class="form-group">
             <label for="profile-currency">通貨 :</label>
+            <!-- KPI-PROFILE-CURRENCY-CATALOG: options filled by KpiCurrency.fillSelect -->
             <select id="profile-currency" name="currency" class="profile-select" aria-label="通貨を選択">
-              <option value="">— Select —</option>
-              <option value="JPY">¥ - Yen</option>
-              <option value="USD">$ - US Dollar</option>
-              <option value="EUR">€ - Euro</option>
-              <option value="GBP">£ - Pound</option>
-              <option value="TWD">NT$ - New Taiwan Dollar</option>
+              <option value="">— 選択 —</option>
             </select>
           </div>
 
@@ -448,15 +444,6 @@
       var form = document.getElementById('profile-form');
       if (!form) return;
       var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
-      var currencyElInit = document.getElementById('profile-currency');
-      try {
-        if (currencyElInit && window.KpiCurrency && typeof KpiCurrency.arrangeSelect === 'function') {
-          KpiCurrency.arrangeSelect(currencyElInit);
-        }
-        var curSaved = localStorage.getItem('kpi-currency') || '';
-        if (currencyElInit && curSaved) currencyElInit.value = curSaved;
-      } catch (_e) {}
-
       var profileSaveConfirmed = false;
       var initialBusinessType = window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function'
         ? window.KpiBusinessType.getBusinessType()
@@ -552,7 +539,9 @@
           city: window.KpiProfileLocation
             ? window.KpiProfileLocation.saveText(cityEl ? cityEl.value : '')
             : locationText(cityEl),
-          currency: getSelectText(currencyEl),
+          currency: window.KpiCurrency
+            ? (KpiCurrency.saveCode(currencyEl ? currencyEl.value : '') || '')
+            : (currencyEl ? String(currencyEl.value || '').trim() : ''),
           timezone: timezoneEl ? timezoneEl.value : '',
           kpiFocus: kpiFocusEl ? kpiFocusEl.value : ''
         };
@@ -563,8 +552,8 @@
           localStorage.setItem('kpi-profile-last', JSON.stringify(data));
           // プロフィール編集済みフラグ（ナビゲーション用）
           localStorage.setItem('kpi-profile-edited', '1');
-          if (currencyEl && currencyEl.value) {
-            localStorage.setItem('kpi-currency', currencyEl.value);
+          if (data.currency) {
+            localStorage.setItem('kpi-currency', data.currency);
           }
         } catch (err) {
           return;
@@ -602,6 +591,8 @@
       var stateInput = document.getElementById('profile-state');
       var cityInput = document.getElementById('profile-city');
       var timezoneInput = document.getElementById('profile-timezone');
+      var currencyInput = document.getElementById('profile-currency');
+      var currencyUserSet = false;
 
       if (window.KpiProfileLocation && window.KpiProfileLocation.bindOverwriteSelect) {
         window.KpiProfileLocation.bindOverwriteSelect(countryInput);
@@ -627,6 +618,54 @@
           existing: timezoneInput.value
         });
         if (next) timezoneInput.value = next;
+      }
+
+      function currencyLocale() {
+        return window.KpiProfileLocation ? window.KpiProfileLocation.localeFromDocument() : 'ja';
+      }
+
+      function fillCurrencySelect(selected) {
+        /* KPI-PROFILE-CURRENCY-CATALOG */
+        if (!currencyInput || !window.KpiCurrency) return;
+        if (typeof KpiCurrency.fillSelect === 'function') {
+          KpiCurrency.fillSelect(currencyInput, {
+            locale: currencyLocale(),
+            selected: selected || '',
+            country: countryInput && countryInput.value,
+            forceCatalog: true
+          });
+          return;
+        }
+        if (typeof KpiCurrency.arrangeSelect === 'function') {
+          KpiCurrency.arrangeSelect(currencyInput);
+        }
+      }
+
+      function maybeCurrencyFromCountry() {
+        if (!currencyInput || !window.KpiCurrency || typeof KpiCurrency.maybeSuggestFromCountry !== 'function') return;
+        KpiCurrency.maybeSuggestFromCountry(currencyInput, countryInput && countryInput.value, {
+          userSet: currencyUserSet,
+          locale: currencyLocale()
+        });
+      }
+
+      function hydrateCurrency(lastProfile) {
+        if (!currencyInput || !window.KpiCurrency) return;
+        var raw = '';
+        try {
+          raw = (lastProfile && lastProfile.currency) || localStorage.getItem('kpi-currency') || '';
+        } catch (_eCur) {
+          raw = (lastProfile && lastProfile.currency) || '';
+        }
+        var code = typeof KpiCurrency.normalizeCode === 'function' ? KpiCurrency.normalizeCode(raw) : '';
+        fillCurrencySelect(code);
+        if (code) {
+          currencyInput.value = code;
+          currencyUserSet = true;
+        } else {
+          currencyUserSet = false;
+          maybeCurrencyFromCountry();
+        }
       }
 
       function hydrateLocation() {
@@ -662,6 +701,7 @@
           }
         }
         syncLocationLists();
+        hydrateCurrency(lastProfile);
       }
 
       function normalizeIndustry(code) {
@@ -737,14 +777,22 @@
         });
       }
 
+      if (currencyInput) {
+        currencyInput.addEventListener('change', function () {
+          currencyUserSet = !!(currencyInput.value && String(currencyInput.value).trim());
+        });
+      }
+
       if (countryInput) {
         countryInput.addEventListener('input', function () {
           syncLocationLists();
           maybeTimezone();
+          maybeCurrencyFromCountry();
         });
         countryInput.addEventListener('change', function () {
           syncLocationLists();
           maybeTimezone();
+          maybeCurrencyFromCountry();
         });
       }
 
