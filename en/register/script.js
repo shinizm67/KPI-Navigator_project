@@ -8,6 +8,23 @@
 
   var STORAGE_KEY_OFFICE = 'kpi-office-mode';
   var STORAGE_KEY_PLAN = 'kpi-registration-plan';
+
+  /* Public registration emergency gate: do not submit when notice is shown */
+  var regDisabledNotice = document.getElementById('registration-disabled-notice');
+  if (regDisabledNotice) {
+    var regFormGate = document.getElementById('registration-form');
+    if (regFormGate) {
+      regFormGate.setAttribute('hidden', 'hidden');
+      regFormGate.setAttribute('aria-hidden', 'true');
+      regFormGate.addEventListener('submit', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+    }
+    var btnGate = document.getElementById('btn-register');
+    if (btnGate) btnGate.disabled = true;
+  }
+
   var bodyEl = document.getElementById('body-el');
   var btnModeToggle = document.getElementById('btn-mode-toggle');
   var btnModeText = document.getElementById('btn-mode-text');

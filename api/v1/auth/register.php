@@ -2,6 +2,9 @@
 /**
  * POST /api/v1/auth/register.php
  * Body: { "email": "...", "password": "..." }
+ *
+ * Public self-serve signup. Gated by config registrationEnabled (default false).
+ * Admin account creation uses admin-create-user.php and is not affected by this gate.
  */
 
 require __DIR__ . '/../_entitlement.php';
@@ -9,6 +12,10 @@ require __DIR__ . '/../_entitlement.php';
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
 kpi_v1_auth_require_post();
+
+if (empty($cfg['registrationEnabled'])) {
+    kpi_v1_json_out(403, ['ok' => false, 'error' => 'registration_disabled']);
+}
 
 $body = kpi_v1_auth_read_json_body();
 $email = kpi_v1_auth_normalize_email(isset($body['email']) ? $body['email'] : '');

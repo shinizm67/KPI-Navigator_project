@@ -54,7 +54,16 @@
         <span class="title-sub">登録</span>
       </h2>
 
-      <form class="registration-form" action="#" method="post" id="registration-form">
+      <div class="registration-disabled-notice" id="registration-disabled-notice" role="status">
+        <p class="registration-disabled-title">新規登録の受付を一時停止しています</p>
+        <p class="registration-disabled-body">現在、新規登録の受付を一時停止しています。既存アカウントのログインはそのままご利用いただけます。</p>
+        <p class="registration-disabled-actions">
+          <a href="../../login/">ログインはこちら</a>
+          <span aria-hidden="true"> · </span>
+          <a href="mailto:support@forge-laboratory.com?subject=KPN%20Early%20Access">Early Access / お問い合わせ</a>
+        </p>
+      </div>
+      <form class="registration-form" hidden aria-hidden="true" action="#" method="post" id="registration-form">
         <div class="form-group">
           <label for="name">お名前 / ニックネーム可 :</label>
           <input type="text" id="name" name="name" required autocomplete="name">

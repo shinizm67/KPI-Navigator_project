@@ -8,6 +8,23 @@
 
   var STORAGE_KEY_OFFICE = 'kpi-office-mode';
   var STORAGE_KEY_PLAN = 'kpi-registration-plan';
+
+  /* Public registration emergency gate: do not submit when notice is shown */
+  var regDisabledNotice = document.getElementById('registration-disabled-notice');
+  if (regDisabledNotice) {
+    var regFormGate = document.getElementById('registration-form');
+    if (regFormGate) {
+      regFormGate.setAttribute('hidden', 'hidden');
+      regFormGate.setAttribute('aria-hidden', 'true');
+      regFormGate.addEventListener('submit', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+    }
+    var btnGate = document.getElementById('btn-register');
+    if (btnGate) btnGate.disabled = true;
+  }
+
   var bodyEl = document.getElementById('body-el');
   var btnModeToggle = document.getElementById('btn-mode-toggle');
   var btnModeText = document.getElementById('btn-mode-text');
@@ -274,11 +291,11 @@
             window.location.href = '../login/index.html';
             return;
           }
-          alert(window.__KPI_AUTH.errorMessage('en', r.status, r.data));
+          alert(window.__KPI_AUTH.errorMessage('zh', r.status, r.data));
           setRegisterButtonState();
         })
         .catch(function () {
-          alert(window.__KPI_AUTH.errorMessage('en', 0, { error: 'network' }));
+          alert(window.__KPI_AUTH.errorMessage('zh', 0, { error: 'network' }));
           setRegisterButtonState();
         });
     });

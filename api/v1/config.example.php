@@ -13,9 +13,12 @@ return [
     // Allow browser calls from same site / local tools
     'corsOrigin' => '*',
     // B3 Entitlement
-    'defaultPlan' => 'basic',       // new registrations
+    'defaultPlan' => 'basic',       // new registrations (when registrationEnabled)
     'legacyPlan' => 'pro',          // users created before plan field
     'allowSelfPlanChange' => true,  // set false on production
+    // Public self-serve signup (POST /auth/register.php). Keep false until billing is ready.
+    // Production: false. Admin create-user is independent and ignores this flag.
+    'registrationEnabled' => false,
     'planAdminToken' => 'dev-plan-admin-change-me',
     'tokenModePlan' => 'pro',
     // B4-T1 store backups

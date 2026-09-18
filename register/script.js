@@ -9,6 +9,25 @@
   var STORAGE_KEY_OFFICE = 'kpi-office-mode';
   var STORAGE_KEY_PLAN = 'kpi-registration-plan';
   var isJa = (document.documentElement.getAttribute('lang') || '').toLowerCase().split('-')[0] === 'ja';
+  var pageLangRaw = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+  var authLang = pageLangRaw.indexOf('zh') === 0 ? 'zh' : (pageLangRaw.indexOf('ja') === 0 ? 'ja' : 'en');
+
+  /* Public registration emergency gate: do not submit when notice is shown */
+  var regDisabledNotice = document.getElementById('registration-disabled-notice');
+  if (regDisabledNotice) {
+    var regFormGate = document.getElementById('registration-form');
+    if (regFormGate) {
+      regFormGate.setAttribute('hidden', 'hidden');
+      regFormGate.setAttribute('aria-hidden', 'true');
+      regFormGate.addEventListener('submit', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+    }
+    var btnGate = document.getElementById('btn-register');
+    if (btnGate) btnGate.disabled = true;
+  }
+
 
   /* プラン表示: URL の ?plan=basic / ?plan=pro。言語切替で同じプランを維持するため sessionStorage に保存 */
   var planTitle = document.getElementById('plan-title');
@@ -288,11 +307,11 @@
             window.location.href = '../../login/index.html';
             return;
           }
-          alert(window.__KPI_AUTH.errorMessage(isJa ? 'ja' : 'en', r.status, r.data));
+          alert(window.__KPI_AUTH.errorMessage(authLang, r.status, r.data));
           setRegisterButtonState();
         })
         .catch(function () {
-          alert(window.__KPI_AUTH.errorMessage(isJa ? 'ja' : 'en', 0, { error: 'network' }));
+          alert(window.__KPI_AUTH.errorMessage(authLang, 0, { error: 'network' }));
           setRegisterButtonState();
         });
     });

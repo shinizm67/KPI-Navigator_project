@@ -1282,3 +1282,33 @@ body.office-mode .kpi-busy-overlay__title {
 body.office-mode .kpi-busy-overlay__msg {
   color: #333;
 }
+
+
+/* Public registration emergency gate */
+.registration-disabled-notice {
+  max-width: 36rem;
+  margin: 1.5rem auto 2rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgba(15, 148, 3, 0.45);
+  border-radius: 4px;
+  text-align: center;
+  line-height: 1.6;
+}
+.registration-disabled-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.registration-disabled-body {
+  margin: 0 0 0.75rem;
+}
+.registration-disabled-actions {
+  margin: 0;
+}
+.registration-disabled-actions a {
+  color: inherit;
+  text-decoration: underline;
+}
+.si-fi.office-mode .registration-disabled-notice {
+  border-color: #333;
+}

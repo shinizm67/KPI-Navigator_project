@@ -34,6 +34,8 @@ function kpi_v1_load_config()
             'legacyPlan' => 'pro',
             // Local QA: allow logged-in user to POST /auth/set-plan.php
             'allowSelfPlanChange' => true,
+            // Public self-serve signup. Default/production: false until billing is ready.
+            'registrationEnabled' => false,
             'planAdminToken' => 'dev-plan-admin-change-me',
             // Token-mode store (no user file): treat as this plan
             'tokenModePlan' => 'pro',

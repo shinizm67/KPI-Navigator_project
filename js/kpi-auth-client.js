@@ -638,6 +638,11 @@
       if (isZh) return '密碼至少需 8 個字元。';
       return 'Password must be at least 8 characters.';
     }
+    if (code === 'registration_disabled') {
+      if (isJa) return '現在、新規登録の受付を一時停止しています。';
+      if (isZh) return '目前暫停接受新註冊。';
+      return 'New registrations are temporarily unavailable.';
+    }
     if (code === 'entitlement_required' || status === 403) {
       if (isJa) return 'この機能には Pro プランが必要です。';
       if (isZh) return '此功能需要 Pro 方案。';

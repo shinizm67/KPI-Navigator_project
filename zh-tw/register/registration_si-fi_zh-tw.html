@@ -51,7 +51,16 @@
         <span class="title-sub">註冊</span>
       </h2>
 
-      <form class="registration-form" action="#" method="post" id="registration-form">
+      <div class="registration-disabled-notice" id="registration-disabled-notice" role="status">
+        <p class="registration-disabled-title">目前暫停接受新註冊</p>
+        <p class="registration-disabled-body">目前暫停接受新註冊。既有帳號仍可登入使用。</p>
+        <p class="registration-disabled-actions">
+          <a href="../login/">前往登入</a>
+          <span aria-hidden="true"> · </span>
+          <a href="mailto:support@forge-laboratory.com?subject=KPN%20Early%20Access">搶先體驗／聯絡我們</a>
+        </p>
+      </div>
+      <form class="registration-form" hidden aria-hidden="true" action="#" method="post" id="registration-form">
         <div class="form-group">
           <label for="name">姓名 :</label>
           <input type="text" id="name" name="name" required autocomplete="name">
