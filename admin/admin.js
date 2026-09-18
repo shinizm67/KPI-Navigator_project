@@ -187,12 +187,37 @@
       return '<div class="k">' + label + '</div><div class="v">' + dash(value) + '</div>';
     }
 
-    var histHtml = hist.length
-      ? '<ul class="history-list">' + hist.map(function (h) {
-          return '<li>' + dash(h.changedAt) + ' · ' + dash(h.oldPlan) + ' → ' + dash(h.newPlan) +
-            ' · ' + dash(h.source) + (h.changedBy ? (' · by ' + h.changedBy) : '') + '</li>';
-        }).join('') + '</ul>'
-      : '<div class="muted">No plan history yet.</div>';
+    var histHtml;
+    if (!hist.length) {
+      histHtml =
+        '<div class="plan-history">' +
+          '<h4>Plan History</h4>' +
+          '<div class="muted">No plan history yet.</div>' +
+        '</div>';
+    } else {
+      histHtml =
+        '<div class="plan-history">' +
+          '<h4>Plan History</h4>' +
+          '<ul class="history-list">' +
+          hist.map(function (h) {
+            var plan = dash(h.newPlan);
+            var when = dash(h.changedAt);
+            var metaParts = [];
+            if (h.oldPlan) metaParts.push(dash(h.oldPlan) + ' → ' + plan);
+            if (h.source) metaParts.push(dash(h.source));
+            if (h.changedBy) metaParts.push('by ' + dash(h.changedBy));
+            var meta = metaParts.length ? '<div class="hist-meta">' + esc(metaParts.join(' · ')) + '</div>' : '';
+            return (
+              '<li>' +
+                '<div class="hist-row"><span class="hist-k">Plan</span><span class="hist-v">' + esc(plan) + '</span></div>' +
+                '<div class="hist-row"><span class="hist-k">Changed At</span><span class="hist-v">' + esc(when) + '</span></div>' +
+                meta +
+              '</li>'
+            );
+          }).join('') +
+          '</ul>' +
+        '</div>';
+    }
 
     var parentHtml = parent
       ? '<a href="' + detailBase + encodeURIComponent(parent.userId) + '">' + esc(dash(parent.email)) + ' (' + esc(parent.userId) + ')</a>'
@@ -242,7 +267,7 @@
       '<div class="section"><h3>Subscription</h3><div class="kv">' +
         kv('Current Plan', u.plan) +
         kv('Plan Changed At', u.planUpdatedAt) +
-      '</div><div style="margin-top:10px">' + histHtml + '</div></div>' +
+      '</div>' + histHtml + '</div>' +
       '<div class="section"><h3>Business Profile</h3>' + profileNote + '<div class="kv">' +
         kv('Business Name', p.synced ? p.businessName : null) +
         kv('Company Name', p.synced ? p.companyName : null) +

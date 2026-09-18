@@ -95,6 +95,8 @@ def main() -> None:
     check("detail renders dossier", "User Dossier" in ui)
     check("related edit change parent", "Change Parent" in ui)
     check("related edit set-parent API", "set-parent.php" in ui)
+    check("plan history heading in detail UI", "Plan History" in ui)
+    check("plan history empty copy", "No plan history yet." in ui)
 
     set_parent = read("api/v1/admin/set-parent.php")
     check("set-parent founder gate", "kpi_v1_auth_require_founder_superadmin" in set_parent)

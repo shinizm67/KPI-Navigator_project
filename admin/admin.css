@@ -191,7 +191,36 @@ table.admin-table {
 }
 .history-list li {
   border-bottom: 1px solid rgba(88, 225, 243, 0.15);
-  padding: 6px 0;
+  padding: 8px 0;
+}
+
+.plan-history {
+  margin-top: 14px;
+}
+
+.plan-history h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  font-weight: 600;
+}
+
+.hist-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px 12px;
+  margin-bottom: 2px;
+}
+
+.hist-k { color: var(--admin-muted); }
+.hist-v { word-break: break-all; }
+
+.hist-meta {
+  margin-top: 4px;
+  color: var(--admin-muted);
+  font-size: 12px;
 }
 
 .rel-actions {
