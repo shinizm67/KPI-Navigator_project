@@ -29,6 +29,8 @@ if ($method === 'GET') {
 
 if ($method === 'PUT' || $method === 'POST') {
     $body = kpi_v1_auth_read_json_body();
+    // Ignore any client-supplied user id — session user only.
+    unset($body['userId'], $body['user_id'], $body['id']);
     $fields = [
         'businessName' => isset($body['businessName']) ? $body['businessName'] : (isset($body['business_name']) ? $body['business_name'] : null),
         'companyName' => isset($body['companyName']) ? $body['companyName'] : (isset($body['company']) ? $body['company'] : null),

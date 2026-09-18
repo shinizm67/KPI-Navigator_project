@@ -559,6 +559,7 @@
 
         var goProfile = function () { window.location.href = 'profile.html'; };
         if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.saveServerProfile === 'function') {
+          // Local already saved above; server failure must not roll back local.
           window.__KPI_PROFILE_SERVER.saveServerProfile(data).then(goProfile).catch(goProfile);
           return;
         }
@@ -852,6 +853,27 @@
       }
       syncGenreField();
       hydrateLocation();
+      /* Server profile preferred when synced; empty/unsynced server must not wipe local. */
+      if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.hydrateEditForm === 'function') {
+        window.__KPI_PROFILE_SERVER.hydrateEditForm({
+          onDone: function () {
+            syncGenreField();
+            if (typeof syncLocationLists === 'function') syncLocationLists();
+            if (industrySelect) {
+              try {
+                window.initialBusinessType = industrySelect.value;
+              } catch (_eInit) {}
+            }
+          }
+        });
+      } else if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.applyLocalShapeToForm === 'function') {
+        window.__KPI_PROFILE_SERVER.applyLocalShapeToForm(
+          window.__KPI_PROFILE_SERVER.readLocalProfile
+            ? window.__KPI_PROFILE_SERVER.readLocalProfile()
+            : {}
+        );
+        syncGenreField();
+      }
     })();
     (function () {
       var langBtn = document.getElementById('lang-select-btn');

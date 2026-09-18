@@ -85,6 +85,8 @@ def main() -> None:
 
     js = read("js/kpi-profile-server.js")
     check("profile server sync helper", "saveServerProfile" in js)
+    check("profile server hydrate helper", "hydrateEditForm" in js)
+    check("profile server merge helper", "mergePreferServer" in js)
 
     ui = read("admin/admin.js")
     check("users table row navigates detail", "data-href" in ui)
