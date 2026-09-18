@@ -186,6 +186,7 @@
     </div>
     <script src="../../js/kpi-auth-client.js"></script>
     <script src="../../js/kpi-business-type.js"></script>
+    <script src="../../js/kpi-profile-location.js"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
     <script src="../../js/kpi-excel-templates.js"></script>
@@ -281,28 +282,21 @@
 
         <div class="form-group">
           <label for="profile-country">國家 :</label>
-          <select id="profile-country" name="country" class="profile-select" aria-label="選擇國家">
-            <option value="">— 請選擇 —</option>
-            <option value="JP">JP</option>
-            <option value="US">US</option>
-            <option value="UK">UK</option>
-            <option value="DE">DE</option>
-            <option value="FR">FR</option>
-          </select>
+          <input type="text" id="profile-country" name="country" class="profile-select profile-location-input" list="profile-country-suggestions" autocomplete="off" placeholder="請選擇國家，或自行輸入" aria-label="國家" aria-describedby="profile-location-help">
+          <datalist id="profile-country-suggestions"></datalist>
         </div>
 
         <div class="form-group">
           <label for="profile-state">縣市 / 州 :</label>
-          <select id="profile-state" name="state" class="profile-select" aria-label="選擇縣市或州" disabled>
-            <option value="">— 請先選擇國家 —</option>
-          </select>
+          <input type="text" id="profile-state" name="state" class="profile-select profile-location-input" list="profile-state-suggestions" autocomplete="off" placeholder="請選擇縣市／州，或自行輸入" aria-label="縣市 / 州" aria-describedby="profile-location-help">
+          <datalist id="profile-state-suggestions"></datalist>
         </div>
 
         <div class="form-group">
           <label for="profile-city">城市 :</label>
-          <select id="profile-city" name="city" class="profile-select" aria-label="選擇城市" disabled>
-            <option value="">— 請先選擇縣市 / 州 —</option>
-          </select>
+          <input type="text" id="profile-city" name="city" class="profile-select profile-location-input" list="profile-city-suggestions" autocomplete="off" placeholder="請選擇城市／地區，或自行輸入" aria-label="城市" aria-describedby="profile-location-help">
+          <datalist id="profile-city-suggestions"></datalist>
+          <p class="profile-location-help" id="profile-location-help">變更國家時，已儲存的縣市／城市不會自動刪除。</p>
         </div>
 
         <div class="form-group">
@@ -522,6 +516,12 @@
           return opt ? opt.textContent : '';
         }
 
+        function locationText(el) {
+          var v = el ? String(el.value || '').trim() : '';
+          if (window.KpiProfileLocation && window.KpiProfileLocation.isPrompt(v)) return '';
+          return v;
+        }
+
         var canonicalType = window.KpiBusinessType
           ? window.KpiBusinessType.normalizeBusinessType(industryEl ? industryEl.value : '')
           : (industryEl ? industryEl.value : '');
@@ -563,9 +563,15 @@
             var g = genreEl ? String(genreEl.value || '').trim() : '';
             return isGenrePrompt(g) ? '' : g;
           })(),
-          country: getSelectText(countryEl),
-          state: getSelectText(stateEl),
-          city: getSelectText(cityEl),
+          country: window.KpiProfileLocation
+            ? window.KpiProfileLocation.saveCountry(countryEl ? countryEl.value : '')
+            : locationText(countryEl),
+          state: window.KpiProfileLocation
+            ? window.KpiProfileLocation.saveText(stateEl ? stateEl.value : '')
+            : locationText(stateEl),
+          city: window.KpiProfileLocation
+            ? window.KpiProfileLocation.saveText(cityEl ? cityEl.value : '')
+            : locationText(cityEl),
           currency: getSelectText(currencyEl),
           timezone: timezoneEl ? timezoneEl.value : '',
           kpiFocus: kpiFocusEl ? kpiFocusEl.value : ''
@@ -591,71 +597,51 @@
       var industrySelect = document.getElementById('profile-industry');
       var genreInput = document.getElementById('profile-genre');
       var genreGroup = document.getElementById('profile-genre-group');
-      var countrySelect = document.getElementById('profile-country');
-      var stateSelect = document.getElementById('profile-state');
-      var citySelect = document.getElementById('profile-city');
+      var countryInput = document.getElementById('profile-country');
+      var stateInput = document.getElementById('profile-state');
+      var cityInput = document.getElementById('profile-city');
       var timezoneInput = document.getElementById('profile-timezone');
 
-      var statesByCountry = {
-        JP: [{ v: 'tokyo', l: 'Tokyo' }, { v: 'osaka', l: 'Osaka' }, { v: 'kyoto', l: 'Kyoto' }, { v: 'fukuoka', l: 'Fukuoka' }],
-        US: [{ v: 'ca', l: 'California' }, { v: 'ny', l: 'New York' }, { v: 'tx', l: 'Texas' }, { v: 'wa', l: 'Washington' }],
-        UK: [{ v: 'england', l: 'England' }, { v: 'scotland', l: 'Scotland' }, { v: 'wales', l: 'Wales' }],
-        DE: [{ v: 'by', l: 'Bavaria' }, { v: 'nw', l: 'North Rhine-Westphalia' }],
-        FR: [{ v: 'idf', l: 'Île-de-France' }, { v: 'paca', l: 'Provence-Alpes-Côte d\'Azur' }]
-      };
+      function syncLocationLists() {
+        /* KPI-PROFILE-LOCATION-DATALIST */
+        var Loc = window.KpiProfileLocation;
+        if (!Loc) return;
+        var locale = Loc.localeFromDocument();
+        Loc.fillDatalist('profile-country-suggestions', Loc.countryLabels(locale));
+        Loc.fillDatalist('profile-state-suggestions', Loc.stateLabels(countryInput && countryInput.value, locale));
+        Loc.fillDatalist('profile-city-suggestions', Loc.cityLabels(stateInput && stateInput.value, locale));
+      }
 
-      var citiesByState = {
-        tokyo: [{ v: 'tokyo_city', l: 'Tokyo' }, { v: 'yokohama', l: 'Yokohama' }],
-        osaka: [{ v: 'osaka_city', l: 'Osaka' }, { v: 'kobe', l: 'Kobe' }],
-        kyoto: [{ v: 'kyoto_city', l: 'Kyoto' }],
-        fukuoka: [{ v: 'fukuoka_city', l: 'Fukuoka' }],
-        ca: [{ v: 'los_angeles', l: 'Los Angeles' }, { v: 'san_francisco', l: 'San Francisco' }],
-        ny: [{ v: 'new_york', l: 'New York City' }, { v: 'buffalo', l: 'Buffalo' }],
-        tx: [{ v: 'houston', l: 'Houston' }, { v: 'dallas', l: 'Dallas' }],
-        wa: [{ v: 'seattle', l: 'Seattle' }],
-        england: [{ v: 'london', l: 'London' }, { v: 'manchester', l: 'Manchester' }],
-        scotland: [{ v: 'edinburgh', l: 'Edinburgh' }, { v: 'glasgow', l: 'Glasgow' }],
-        wales: [{ v: 'cardiff', l: 'Cardiff' }],
-        by: [{ v: 'munich', l: 'Munich' }],
-        nw: [{ v: 'cologne', l: 'Cologne' }, { v: 'dusseldorf', l: 'Düsseldorf' }],
-        idf: [{ v: 'paris', l: 'Paris' }],
-        paca: [{ v: 'marseille', l: 'Marseille' }, { v: 'nice', l: 'Nice' }]
-      };
+      function maybeTimezone() {
+        if (!timezoneInput || !window.KpiProfileLocation) return;
+        var tz = window.KpiProfileLocation.timezoneFor(stateInput && stateInput.value);
+        if (tz) timezoneInput.value = tz;
+      }
 
-      var timezoneByState = {
-        tokyo: 'Asia/Tokyo (JST, UTC+9)',
-        osaka: 'Asia/Tokyo (JST, UTC+9)',
-        kyoto: 'Asia/Tokyo (JST, UTC+9)',
-        fukuoka: 'Asia/Tokyo (JST, UTC+9)',
-        ca: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
-        ny: 'America/New_York (EST/EDT, UTC-5/-4)',
-        tx: 'America/Chicago (CST/CDT, UTC-6/-5)',
-        wa: 'America/Los_Angeles (PST/PDT, UTC-8/-7)',
-        england: 'Europe/London (GMT/BST, UTC+0/+1)',
-        scotland: 'Europe/London (GMT/BST, UTC+0/+1)',
-        wales: 'Europe/London (GMT/BST, UTC+0/+1)',
-        by: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
-        nw: 'Europe/Berlin (CET/CEST, UTC+1/+2)',
-        idf: 'Europe/Paris (CET/CEST, UTC+1/+2)',
-        paca: 'Europe/Paris (CET/CEST, UTC+1/+2)'
-      };
-
-      function fillSelect(sel, options, defaultLabel) {
-        if (!sel) return;
-        var first = sel.options[0];
-        sel.innerHTML = '';
-        if (defaultLabel) {
-          var opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = defaultLabel;
-          sel.appendChild(opt);
+      function hydrateLocation() {
+        var Loc = window.KpiProfileLocation;
+        var lastProfile = {};
+        try {
+          lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
+        } catch (_eLoc) {
+          lastProfile = {};
         }
-        (options || []).forEach(function (o) {
-          var opt = document.createElement('option');
-          opt.value = o.v;
-          opt.textContent = o.l;
-          sel.appendChild(opt);
-        });
+        var locale = Loc ? Loc.localeFromDocument() : 'en';
+        if (countryInput) {
+          countryInput.value = Loc ? Loc.displayCountry(lastProfile.country, locale) : String(lastProfile.country || '');
+          if (Loc && Loc.isPrompt(countryInput.value)) countryInput.value = '';
+        }
+        if (stateInput) {
+          stateInput.value = Loc ? Loc.displayState(lastProfile.state, locale) : String(lastProfile.state || '');
+          if (Loc && Loc.isPrompt(stateInput.value)) stateInput.value = '';
+        }
+        if (cityInput) {
+          cityInput.value = Loc ? Loc.displayCity(lastProfile.city, locale) : String(lastProfile.city || '');
+          if (Loc && Loc.isPrompt(cityInput.value)) cityInput.value = '';
+        }
+        if (timezoneInput && lastProfile.timezone) timezoneInput.value = lastProfile.timezone;
+        else maybeTimezone();
+        syncLocationLists();
       }
 
       function normalizeIndustry(code) {
@@ -731,35 +717,30 @@
         });
       }
 
-      if (countrySelect && stateSelect) {
-        countrySelect.addEventListener('change', function () {
-          var v = countrySelect.value;
-          stateSelect.disabled = !v;
-          citySelect.disabled = true;
-          fillSelect(citySelect, [], '— Select State first —');
-          fillSelect(stateSelect, statesByCountry[v], '— Select —');
-          if (timezoneInput) timezoneInput.value = '';
+      if (countryInput) {
+        countryInput.addEventListener('input', function () {
+          syncLocationLists();
+          maybeTimezone();
+        });
+        countryInput.addEventListener('change', function () {
+          syncLocationLists();
+          maybeTimezone();
         });
       }
 
-      if (stateSelect && citySelect) {
-        stateSelect.addEventListener('change', function () {
-          var v = stateSelect.value;
-          citySelect.disabled = !v;
-          fillSelect(citySelect, citiesByState[v] || [], '— Select —');
-          if (timezoneInput && timezoneByState[v]) timezoneInput.value = timezoneByState[v];
-          else if (timezoneInput && !v) timezoneInput.value = '';
+      if (stateInput) {
+        stateInput.addEventListener('input', function () {
+          syncLocationLists();
+          maybeTimezone();
+        });
+        stateInput.addEventListener('change', function () {
+          syncLocationLists();
+          maybeTimezone();
         });
       }
 
-      if (citySelect && timezoneInput) {
-        citySelect.addEventListener('change', function () {
-          if (stateSelect && stateSelect.value && timezoneByState[stateSelect.value]) return;
-          if (timezoneInput && !timezoneInput.value && citySelect.value) {
-            var stateVal = stateSelect && stateSelect.value;
-            if (stateVal && timezoneByState[stateVal]) timezoneInput.value = timezoneByState[stateVal];
-          }
-        });
+      if (cityInput) {
+        cityInput.addEventListener('change', maybeTimezone);
       }
 
       if (window.KpiBusinessType && industrySelect) {
@@ -779,6 +760,7 @@
         }
       }
       syncGenreField();
+      hydrateLocation();
     })();
     (function () {
       var langBtn = document.getElementById('lang-select-btn');

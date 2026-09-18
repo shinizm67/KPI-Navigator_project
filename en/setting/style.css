@@ -669,6 +669,15 @@ body.office-mode .si-fi.profile-page .profile-form .profile-genre-tip-panel {
   height: 0;
   overflow: hidden;
 }
+.si-fi.profile-page .profile-form .profile-location-help {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+body.office-mode .si-fi.profile-page .profile-form .profile-location-help {
+  opacity: 0.75;
+}
 
 /* Time Zone 自動入力用の読み取り専用スタイル */
 .si-fi.profile-page .profile-form .profile-input-readonly {

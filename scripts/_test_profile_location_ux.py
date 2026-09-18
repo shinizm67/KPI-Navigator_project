@@ -1,0 +1,431 @@
+# -*- coding: utf-8 -*-
+"""Profile Country / State / City: locale datalist + free input."""
+
+from __future__ import annotations
+
+import importlib.util
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+JS = ROOT / "js" / "kpi-profile-location.js"
+BT_JS = ROOT / "js" / "kpi-business-type.js"
+FAILED = 0
+PASSED = 0
+
+EDIT = {
+    "jp": ROOT / "setting/profile_edit.html",
+    "en": ROOT / "en/setting/profile_edit.html",
+    "zh": ROOT / "zh-tw/setting/profile_edit.html",
+}
+
+PLACEHOLDERS = {
+    "jp": {
+        "country": "国を選択するか、自由に入力してください",
+        "state": "都道府県を選択するか、自由に入力してください",
+        "city": "市区町村を選択するか、自由に入力してください",
+    },
+    "en": {
+        "country": "Choose a country or enter your own",
+        "state": "Choose a state / prefecture or enter your own",
+        "city": "Choose a city / town or enter your own",
+    },
+    "zh": {
+        "country": "請選擇國家，或自行輸入",
+        "state": "請選擇縣市／州，或自行輸入",
+        "city": "請選擇城市／地區，或自行輸入",
+    },
+}
+
+HELPERS = {
+    "jp": "保存済みの都道府県・市区町村は、国を変えても自動では消しません。",
+    "en": "Saved state and city values are kept if you change country.",
+    "zh": "變更國家時，已儲存的縣市／城市不會自動刪除。",
+}
+
+
+def assert_true(cond: bool, msg: str) -> None:
+    global PASSED, FAILED
+    if cond:
+        PASSED += 1
+        return
+    FAILED += 1
+    print("FAIL:", msg)
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+REC_RE = re.compile(
+    r"\{\s*id:\s*'([^']+)',\s*ja:\s*'((?:\\'|[^'])*)',\s*en:\s*'((?:\\'|[^'])*)',\s*zh:\s*'((?:\\'|[^'])*)'\s*\}"
+)
+COUNTRY_PAIR_RE = re.compile(r"([A-Z]{2}):\s*'((?:\\'|[^'])*)'")
+ALIAS_RE = re.compile(r"(?:'([^']+)'|([A-Za-z0-9_]+)):\s*'([A-Z]{2})'")
+
+
+def unquote(s: str) -> str:
+    return s.replace("\\'", "'")
+
+
+def parse_recs(block: str) -> list[dict]:
+    out = []
+    for match in REC_RE.finditer(block):
+        out.append(
+            {
+                "id": match.group(1),
+                "ja": unquote(match.group(2)),
+                "en": unquote(match.group(3)),
+                "zh": unquote(match.group(4)),
+            }
+        )
+    return out
+
+
+def load_catalog() -> dict:
+    js = JS.read_text(encoding="utf-8")
+    country_labels = {}
+    for loc, key in (("ja", "ja:"), ("en", "en:"), ("zh-tw", "'zh-tw':")):
+        chunk = js.split("var COUNTRY_LABELS = {", 1)[1]
+        sub = chunk.split(key, 1)[1].split("}", 1)[0]
+        country_labels[loc] = {m.group(1): unquote(m.group(2)) for m in COUNTRY_PAIR_RE.finditer(sub)}
+    alias_block = js.split("var COUNTRY_ALIASES = {", 1)[1].split("};", 1)[0]
+    aliases = {}
+    for m in ALIAS_RE.finditer(alias_block):
+        aliases[(m.group(1) or m.group(2)).lower()] = m.group(3)
+    prefs = parse_recs(js.split("var JP_PREFECTURES = [", 1)[1].split("];", 1)[0])
+    other_block = js.split("var OTHER_STATES = {", 1)[1].split("var CITIES = {", 1)[0]
+    other = {}
+    for code in ("US", "GB", "DE", "FR", "TW", "KR", "AU", "CA"):
+        if f"{code}:" not in other_block:
+            continue
+        other[code] = parse_recs(other_block.split(f"{code}:", 1)[1].split("],", 1)[0])
+    cities_block = js.split("var CITIES = {", 1)[1].split("var TZ_TOKYO", 1)[0]
+    cities = {}
+    for m in re.finditer(r"\n\s*([A-Za-z0-9_]+):\s*\[", cities_block):
+        start = m.end()
+        chunk = cities_block[start:].split("],", 1)[0]
+        cities[m.group(1)] = parse_recs("[" + chunk)
+    tz_tokyo = re.search(r"var TZ_TOKYO = '([^']+)'", js).group(1)
+    tz_block = js.split("var TIMEZONE_BY_STATE = {", 1)[1].split("};", 1)[0]
+    tz_map = {m.group(1): unquote(m.group(2)) for m in re.finditer(r"([A-Za-z0-9_]+):\s*'((?:\\'|[^'])*)'", tz_block)}
+    return {
+        "country_labels": country_labels,
+        "aliases": aliases,
+        "prefs": prefs,
+        "other": other,
+        "cities": cities,
+        "tz_tokyo": tz_tokyo,
+        "tz_map": tz_map,
+        "js": js,
+    }
+
+
+CAT = None
+
+
+def cat() -> dict:
+    global CAT
+    if CAT is None:
+        CAT = load_catalog()
+    return CAT
+
+
+def fold(v) -> str:
+    return re.sub(r"\s+", " ", str(v or "").strip().lower())
+
+
+def is_prompt(v) -> bool:
+    s = str(v or "").strip()
+    if not s:
+        return True
+    n = re.sub(r"^[—–-]\s*|\s*[—–-]$", "", s).strip().lower()
+    return n in (
+        "select",
+        "select country first",
+        "select state first",
+        "select industry first",
+        "select a business type first",
+        "please select",
+        "請選擇",
+        "請先選擇國家",
+        "請先選擇縣市 / 州",
+        "請先選擇縣市／州",
+    ) or s in PLACEHOLDERS["jp"].values() or s in PLACEHOLDERS["en"].values() or s in PLACEHOLDERS["zh"].values()
+
+
+def label_of(rec: dict, locale: str) -> str:
+    if locale == "ja":
+        return rec["ja"]
+    if locale in ("zh-tw", "zh"):
+        return rec["zh"]
+    return rec["en"]
+
+
+def rec_match(rec: dict, raw: str) -> bool:
+    f = fold(raw)
+    if not f:
+        return False
+    if fold(rec["id"]) == f or fold(rec["ja"]) == f or fold(rec["en"]) == f or fold(rec["zh"]) == f:
+        return True
+    if rec["id"] == "tokyo" and f in ("東京", "tokyo"):
+        return True
+    if rec["id"] in ("osaka", "kyoto", "fukuoka") and f in (rec["id"], rec["ja"][:2]):
+        return True
+    return False
+
+
+def to_canonical_country(raw: str) -> str:
+    if is_prompt(raw):
+        return ""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    upper = s.upper()
+    labels = cat()["country_labels"]
+    if upper == "UK":
+        return "GB"
+    if upper in labels["en"] or upper in labels["ja"]:
+        return upper
+    aliased = cat()["aliases"].get(fold(s))
+    if aliased:
+        return aliased
+    for loc_map in labels.values():
+        for code, label in loc_map.items():
+            if label == s:
+                return code
+    return ""
+
+
+def save_country(raw: str) -> str:
+    if is_prompt(raw):
+        return ""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    return to_canonical_country(s) or s
+
+
+def save_text(raw: str) -> str:
+    if is_prompt(raw):
+        return ""
+    return str(raw or "").strip()
+
+
+def display_country(raw: str, locale: str) -> str:
+    if is_prompt(raw):
+        return ""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    code = to_canonical_country(s)
+    if not code:
+        return s
+    return cat()["country_labels"].get(locale, cat()["country_labels"]["en"]).get(code, s)
+
+
+def all_states() -> list[dict]:
+    out = list(cat()["prefs"])
+    for recs in cat()["other"].values():
+        out.extend(recs)
+    return out
+
+
+def find_state(raw: str):
+    if is_prompt(raw):
+        return None
+    s = str(raw or "").strip()
+    if not s:
+        return None
+    for rec in all_states():
+        if rec_match(rec, s):
+            return rec
+    return None
+
+
+def find_city(raw: str):
+    if is_prompt(raw):
+        return None
+    s = str(raw or "").strip()
+    if not s:
+        return None
+    for recs in cat()["cities"].values():
+        for rec in recs:
+            if rec_match(rec, s):
+                return rec
+    return None
+
+
+def display_state(raw: str, locale: str) -> str:
+    if is_prompt(raw):
+        return ""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    rec = find_state(s)
+    return label_of(rec, locale) if rec else s
+
+
+def display_city(raw: str, locale: str) -> str:
+    if is_prompt(raw):
+        return ""
+    s = str(raw or "").strip()
+    if not s:
+        return ""
+    rec = find_city(s)
+    return label_of(rec, locale) if rec else s
+
+
+def state_labels(country_raw: str, locale: str) -> list[str]:
+    code = to_canonical_country(country_raw)
+    recs = cat()["prefs"] if code == "JP" else cat()["other"].get(code, [])
+    return [label_of(rec, locale) for rec in recs]
+
+
+def city_labels(state_raw: str, locale: str) -> list[str]:
+    rec = find_state(state_raw)
+    if not rec:
+        return []
+    return [label_of(city, locale) for city in cat()["cities"].get(rec["id"], [])]
+
+
+def timezone_for(state_raw: str) -> str:
+    rec = find_state(state_raw)
+    if not rec:
+        return ""
+    if rec["id"] in cat()["tz_map"]:
+        return cat()["tz_map"][rec["id"]]
+    if any(p["id"] == rec["id"] for p in cat()["prefs"]):
+        return cat()["tz_tokyo"]
+    return ""
+
+
+def test_html_contract() -> None:
+    for loc, path in EDIT.items():
+        html = path.read_text(encoding="utf-8")
+        ph = PLACEHOLDERS[loc]
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("KPI-PROFILE-LOCATION-DATALIST" in html, f"{rel} marker")
+        assert_true('kpi-profile-location.js' in html, f"{rel} loads location js")
+        for field in ("country", "state", "city"):
+            assert_true(
+                f'<input type="text" id="profile-{field}"' in html,
+                f"{rel} {field} is input",
+            )
+            assert_true(
+                f'<select id="profile-{field}"' not in html,
+                f"{rel} {field} not a fixed select",
+            )
+            assert_true(
+                f'list="profile-{field}-suggestions"' in html,
+                f"{rel} {field} datalist hook",
+            )
+            assert_true(f'placeholder="{ph[field]}"' in html, f"{rel} {field} placeholder")
+            chunk = html.split(f'id="profile-{field}"', 1)[1].split(">", 1)[0]
+            assert_true("disabled" not in chunk, f"{rel} {field} not disabled")
+            assert_true("required" not in chunk, f"{rel} {field} optional")
+        assert_true(HELPERS[loc] in html, f"{rel} keep-values helper")
+        assert_true("saveCountry" in html, f"{rel} saves canonical country")
+        assert_true("hydrateLocation()" in html, f"{rel} hydrates saved location")
+        assert_true("stateInput.value =" not in html.split("function syncLocationLists", 1)[1].split("function hydrateLocation", 1)[0], f"{rel} country sync does not write state value")
+        save = html.split("var data = {", 1)[1].split("};", 1)[0]
+        assert_true("getSelectText(currencyEl)" in save, f"{rel} currency contract kept")
+        assert_true("timezoneEl ? timezoneEl.value" in save, f"{rel} timezone contract kept")
+        assert_true("isGenrePrompt(g) ? '' : g" in save, f"{rel} genre save kept")
+        assert_true("wear_shop" not in html, f"{rel} Wear Shop not a BT option")
+        assert_true('value="cafe"' not in html, f"{rel} Cafe not a BT option")
+        assert_true("office-mode" in html, f"{rel} Sci-Fi/Office share page")
+        assert_true(html.count("function syncGenreField") == 1, f"{rel} genre sync unchanged")
+        assert_true("KPI-PROFILE-GENRE-PLACEHOLDER" in html, f"{rel} genre placeholder kept")
+
+    jp = EDIT["jp"].read_text(encoding="utf-8")
+    country_block = jp.split('id="profile-country"', 1)[1].split('id="profile-state"', 1)[0]
+    assert_true(">JP<" not in country_block and 'value="JP"' not in country_block, "1 JP country not raw JP option")
+    assert_true("Select Country first" not in jp, "7 JP has no Select Country first")
+    assert_true("Select State first" not in jp, "7 JP has no Select State first")
+    assert_true("国を選択するか、自由に入力してください" in jp, "1 JP country placeholder JA")
+    assert_true("日本" in JS.read_text(encoding="utf-8"), "2 Japan candidate in catalog")
+
+    en = EDIT["en"].read_text(encoding="utf-8")
+    assert_true("Choose a country or enter your own" in en, "8 EN country placeholder")
+    zh = EDIT["zh"].read_text(encoding="utf-8")
+    assert_true("請選擇國家，或自行輸入" in zh, "11 ZH-TW country placeholder")
+
+
+def test_catalog_and_runtime() -> None:
+    js = JS.read_text(encoding="utf-8")
+    block = js.split("var JP_PREFECTURES = [", 1)[1].split("];", 1)[0]
+    ids = re.findall(r"id: '([^']+)'", block)
+    assert_true(len(ids) == 47, f"4 JP 47 prefectures (got {len(ids)})")
+    for ja in ("東京都", "神奈川県", "大阪府", "京都府", "北海道", "沖縄県"):
+        assert_true(ja in block, f"4 JP prefecture {ja}")
+    assert_true("Kanagawa" in block, "9 EN prefecture labels")
+    assert_true("神奈川縣" in block, "12 ZH-TW prefecture labels")
+    assert_true("藤沢市" in js and "Fujisawa" in js and "藤澤市" in js, "city locale labels")
+
+    assert_true(display_country("JP", "ja") == "日本", "14 hydrate JP → 日本")
+    assert_true(display_state("Tokyo", "ja") == "東京都", "14 hydrate Tokyo → 東京都")
+    assert_true(display_city("Yokohama", "ja") == "横浜市", "14 hydrate Yokohama → 横浜市")
+    assert_true(timezone_for("Kanagawa").startswith("Asia/Tokyo"), "19 timezone from JP state")
+
+    assert_true(save_country("日本") == "JP", "3 save 日本 → JP")
+    assert_true(save_country("UK") == "GB", "UK alias → GB")
+    assert_true(save_country("Estonia") == "Estonia", "3 free country saved")
+    assert_true(save_text("藤沢市") == "藤沢市", "6 free city saved")
+    assert_true(save_text("Select Country first") == "", "prompt not saved")
+    assert_true(display_country("JP", "en") == "Japan", "8 EN country display")
+    assert_true(display_state("Kanagawa", "en") == "Kanagawa", "9 EN state display")
+    assert_true(display_country("JP", "zh-tw") == "日本", "11 ZH-TW country display")
+    assert_true(display_state("Kanagawa", "zh-tw") == "神奈川縣", "12 ZH-TW state display")
+    assert_true(display_city("Fujisawa", "zh-tw") == "藤澤市", "ZH-TW city display")
+
+    jp_states = state_labels("日本", "ja")
+    assert_true(len(jp_states) == 47, "17 JP country → 47 states")
+    assert_true("神奈川県" in jp_states, "17 JP state candidates")
+    us_states = state_labels("United States", "en")
+    assert_true("California" in us_states, "17 US country → US states")
+    cities = city_labels("神奈川県", "ja")
+    assert_true("藤沢市" in cities and "横浜市" in cities, "18 Kanagawa → city candidates")
+
+    assert_true(display_state("神奈川県", "ja") == "神奈川県" and display_city("藤沢市", "ja") == "藤沢市", "16 saved values stay after country remap")
+    assert_true(is_prompt("— Select Country first —"), "prompt stripped")
+    assert_true(not is_prompt("日本"), "real country is not a prompt")
+
+
+def test_modes_and_regression() -> None:
+    bt = BT_JS.read_text(encoding="utf-8")
+    for code in ("restaurant", "retail", "hair_salon", "fitness", "hotel", "other"):
+        assert_true(f"'{code}'" in bt, f"23 canonical {code}")
+    canon_block = bt.split("var CANONICAL = [", 1)[1].split("];", 1)[0]
+    assert_true("'wear_shop'" not in canon_block, "24 Wear Shop not canonical")
+    assert_true("'cafe'" not in canon_block, "24 Cafe not canonical")
+    jp = EDIT["jp"].read_text(encoding="utf-8")
+    assert_true("kpi-office-mode" in jp, "20/21 Office toggle on same Profile source")
+    assert_true("classList.toggle('office-mode')" in jp or 'classList.toggle("office-mode")' in jp, "20/21 Sci-Fi/Office class")
+    assert_true(jp.count("function syncLocationLists") == 1, "20/21 one location sync for both modes")
+    store = (ROOT / "api" / "v1" / "store.php").read_text(encoding="utf-8")
+    assert_true("profile-country" not in store, "store.php untouched")
+
+
+def test_genre_and_unit5_still_green() -> None:
+    u_ph = load_module("u_genre_ph", SCRIPTS / "_test_profile_genre_placeholder_ux.py")
+    rc = u_ph.main()
+    assert_true(rc == 0, "22 Genre UX + Unit 5 still green")
+
+
+def main() -> int:
+    test_html_contract()
+    test_catalog_and_runtime()
+    test_modes_and_regression()
+    test_genre_and_unit5_still_green()
+    print(f"passed={PASSED} failed={FAILED}")
+    return 1 if FAILED else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
