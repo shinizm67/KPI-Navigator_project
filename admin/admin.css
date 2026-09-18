@@ -177,6 +177,25 @@ table.admin-table {
   color: var(--admin-muted);
 }
 
+.actions-note {
+  margin: 0 0 10px;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.actions-msg {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.actions-msg-ok {
+  color: var(--admin-cyan);
+}
+
+.actions-msg-error {
+  color: var(--admin-danger);
+}
+
 .err {
   border: 1px solid var(--admin-danger);
   color: var(--admin-danger);

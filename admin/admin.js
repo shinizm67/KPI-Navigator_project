@@ -308,7 +308,18 @@
         '</div>' +
       '</div>' +
       '<div class="section"><h3>Admin Actions</h3>' +
-        '<div class="actions-box">Force Logout / Password Reset / Disable / Delete — reserved for later phases. Password is never displayed.</div>' +
+        '<div class="actions-box">' +
+          '<p class="actions-note">Password is never displayed.</p>' +
+          '<div class="rel-actions">' +
+            '<button type="button" class="btn-admin" data-admin-action="force-logout">Force Logout</button>' +
+            '<button type="button" class="btn-admin" data-admin-action="send-reset">Send Password Reset</button>' +
+            '<button type="button" class="btn-admin btn-danger" data-admin-action="toggle-disabled">' +
+              (u.disabled ? 'Enable User' : 'Disable User') +
+            '</button>' +
+            '<button type="button" class="btn-admin btn-muted" data-admin-action="delete" disabled title="Reserved">Delete (reserved)</button>' +
+          '</div>' +
+          '<div id="admin-action-msg" class="actions-msg muted" hidden></div>' +
+        '</div>' +
       '</div>' +
       '</div>';
 
@@ -323,6 +334,99 @@
       if (res.data && res.data.error) return 'Failed: ' + res.data.error;
       return 'Related Accounts update failed.';
     }
+
+    function actionFailMsg(res) {
+      if (res.status === 401) return '401 unauthorized — sign in as Founder Super Admin.';
+      if (res.status === 403) return '403 forbidden — Founder Super Admin required.';
+      if (res.data && res.data.error) return 'Failed: ' + res.data.error;
+      return 'Admin action failed.';
+    }
+
+    function showActionMsg(text, isError) {
+      var msg = document.getElementById('admin-action-msg');
+      if (!msg) return;
+      msg.hidden = false;
+      msg.textContent = text || '';
+      msg.className = 'actions-msg' + (isError ? ' actions-msg-error' : ' actions-msg-ok');
+    }
+
+    function postAdminAction(path, body) {
+      return fetchJson(apiBase() + path, { method: 'POST', body: body || {} });
+    }
+
+    root.querySelectorAll('[data-admin-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-admin-action');
+        if (action === 'delete') return;
+
+        if (action === 'force-logout') {
+          if (!window.confirm('Force logout this user on all active sessions? They can sign in again afterward.')) {
+            return;
+          }
+          btn.disabled = true;
+          postAdminAction('/admin/force-logout.php', { userId: detailId }).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, actionFailMsg(res));
+              showActionMsg(actionFailMsg(res), true);
+              return;
+            }
+            clearError(err);
+            showActionMsg('Force logout completed. Active sessions invalidated.', false);
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error during force logout.');
+          });
+          return;
+        }
+
+        if (action === 'send-reset') {
+          if (!window.confirm('Send a password reset email to this user?')) return;
+          btn.disabled = true;
+          postAdminAction('/admin/send-password-reset.php', { userId: detailId, locale: 'ja' }).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, actionFailMsg(res));
+              showActionMsg(actionFailMsg(res), true);
+              return;
+            }
+            clearError(err);
+            showActionMsg('Password reset email sent.', false);
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error sending password reset.');
+          });
+          return;
+        }
+
+        if (action === 'toggle-disabled') {
+          var nextDisabled = !u.disabled;
+          var confirmText = nextDisabled
+            ? 'Disable this user? They will be unable to sign in.'
+            : 'Enable this user? They will be able to sign in again.';
+          if (!window.confirm(confirmText)) return;
+          btn.disabled = true;
+          postAdminAction('/admin/set-disabled.php', {
+            userId: detailId,
+            disabled: nextDisabled
+          }).then(function (res) {
+            btn.disabled = false;
+            if (!res.data || !res.data.ok) {
+              showError(err, actionFailMsg(res));
+              showActionMsg(actionFailMsg(res), true);
+              return;
+            }
+            clearError(err);
+            showActionMsg(nextDisabled ? 'User disabled.' : 'User enabled.', false);
+            reloadDetail();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error updating disabled status.');
+          });
+        }
+      });
+    });
+
 
     root.querySelectorAll('[data-rel-action]').forEach(function (btn) {
       btn.addEventListener('click', function () {

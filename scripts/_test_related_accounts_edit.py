@@ -151,7 +151,8 @@ def main() -> None:
     check("no new relationship table", "account_relationship" not in store and "CREATE TABLE" not in api)
 
     check("detail dossier retained", "User Dossier" in ui)
-    check("admin actions reserved retained", "reserved for later phases" in ui)
+    check("admin actions Force Logout present", 'data-admin-action="force-logout"' in ui)
+    check("admin actions Delete reserved", "Delete (reserved)" in ui)
     check(
         "detail page still founder-gated file",
         "kpi_v1_admin_require_founder_page" in read("admin/users/detail/index.php"),

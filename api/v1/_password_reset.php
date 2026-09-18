@@ -307,6 +307,44 @@ function kpi_v1_password_reset_mail_copy($locale, $resetUrl, $ttlMinutes)
 }
 
 /**
+ * Founder Admin: send reset mail for a known user (honest result, no existence hiding).
+ * Reuses token create + mail helpers. Skips anonymous throttle.
+ * Never returns token plaintext or password hash.
+ *
+ * @param array $user auth user row
+ * @return array{ok:true,mailed:bool}|array{ok:false,error:string}
+ */
+function kpi_v1_password_reset_admin_send($cfg, $user, $locale)
+{
+    if (!is_array($user) || empty($user['userId']) || empty($user['email'])) {
+        return ['ok' => false, 'error' => 'user_not_found'];
+    }
+    if (kpi_v1_auth_user_is_disabled($user)) {
+        return ['ok' => false, 'error' => 'user_disabled'];
+    }
+    $emailNorm = kpi_v1_auth_normalize_email($user['email']);
+    if ($emailNorm === null) {
+        return ['ok' => false, 'error' => 'invalid_email'];
+    }
+    $locale = kpi_v1_password_reset_normalize_locale($locale);
+    $plain = kpi_v1_password_reset_create_token($cfg, $user['userId']);
+    if ($plain === null || $plain === '') {
+        return ['ok' => false, 'error' => 'token_failed'];
+    }
+    $ttl = kpi_v1_password_reset_ttl_minutes($cfg);
+    $base = kpi_v1_password_reset_public_base($cfg);
+    $path = kpi_v1_password_reset_path_for_locale($locale);
+    $resetUrl = $base . $path . '?token=' . rawurlencode($plain);
+    $copy = kpi_v1_password_reset_mail_copy($locale, $resetUrl, $ttl);
+    $mailed = kpi_v1_mail_send($cfg, $emailNorm, $copy['subject'], $copy['body']);
+    $plain = '';
+    if (!$mailed) {
+        return ['ok' => false, 'error' => 'mail_failed'];
+    }
+    return ['ok' => true, 'mailed' => true];
+}
+
+/**
  * Issue reset (if user exists) and always return generic success to caller.
  * Does not reveal existence. Never logs token/password.
  *
@@ -413,7 +451,9 @@ function kpi_v1_password_reset_consume($cfg, $plainToken, $newPassword)
         kpi_v1_password_reset_invalidate_user_tokens($cfg, $user['userId']);
     }
 
-    // Clear current browser session only (PHP file sessions have no per-user revoke index).
+    // Invalidate all sessions for this user (file-backed revoke epoch) + clear this browser.
+    require_once __DIR__ . '/_session_revoke.php';
+    kpi_v1_session_revoke_bump($user['userId']);
     if (kpi_v1_auth_current_user_id() !== null) {
         kpi_v1_auth_clear_session();
     }

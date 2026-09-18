@@ -244,7 +244,11 @@ function kpi_v1_auth_reject_if_disabled($user)
 
 function kpi_v1_auth_set_session_user($userId)
 {
-    $_SESSION['kpi_user_id'] = (string) $userId;
+    require_once __DIR__ . '/_session_revoke.php';
+    $uid = (string) $userId;
+    $_SESSION['kpi_user_id'] = $uid;
+    /* Stamp revoke epoch so Force Logout / Disable can invalidate older sessions. */
+    $_SESSION['kpi_session_epoch'] = kpi_v1_session_revoke_get_epoch($uid);
 }
 
 function kpi_v1_auth_clear_session()
@@ -262,7 +266,22 @@ function kpi_v1_auth_current_user_id()
     if (empty($_SESSION['kpi_user_id'])) {
         return null;
     }
-    return (string) $_SESSION['kpi_user_id'];
+    $uid = (string) $_SESSION['kpi_user_id'];
+    require_once __DIR__ . '/_session_revoke.php';
+    $need = kpi_v1_session_revoke_get_epoch($uid);
+    if (!isset($_SESSION['kpi_session_epoch'])) {
+        /* Soft-migrate pre-epoch sessions while revoke epoch is still 0. */
+        if ($need === 0) {
+            $_SESSION['kpi_session_epoch'] = 0;
+        } else {
+            kpi_v1_auth_clear_session();
+            return null;
+        }
+    } elseif ((int) $_SESSION['kpi_session_epoch'] < $need) {
+        kpi_v1_auth_clear_session();
+        return null;
+    }
+    return $uid;
 }
 
 function kpi_v1_auth_require_post()

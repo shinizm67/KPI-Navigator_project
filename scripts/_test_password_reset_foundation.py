@@ -169,10 +169,10 @@ def main() -> None:
     check("EN email subject", "KPN Password Reset" in helper)
     check("ZH-TW email subject", "KPN 密碼重設" in helper)
 
-    # Session honesty: clear current session only, no fake full revoke
+    # Session: consume bumps per-user revoke epoch + clears current browser session
     check(
-        "session revoke limited to current",
-        "kpi_v1_auth_clear_session" in helper and "no per-user revoke" in helper.lower() or "no per-user revoke index" in helper,
+        "session revoke on consume uses epoch bump",
+        "kpi_v1_session_revoke_bump" in helper and "kpi_v1_auth_clear_session" in helper,
     )
 
     # Login / register contracts untouched
