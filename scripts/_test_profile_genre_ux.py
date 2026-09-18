@@ -88,7 +88,9 @@ def test_g_j_save_hydrate_preserve() -> None:
         assert_true("required" not in genre_input, f"G {rel} optional")
         assert_true("genreInput.value = savedGenre" in html, f"G {rel} hydrates any saved string")
         sync = html.split("function syncGenreField", 1)[1].split("if (industrySelect)", 1)[0]
-        assert_true("genreInput.value" not in sync, f"J {rel} type change does not clear genre")
+        assert_true("savedGenre" not in sync, f"J {rel} type change does not assign saved genre")
+        assert_true("genreInput.value = savedGenre" not in sync, f"J {rel} type change does not clear saved genre")
+        assert_true("isGenrePrompt(genreInput.value)" in sync, f"J {rel} only strips prompt sentinels")
         assert_true("industrySelect.addEventListener('change', syncGenreField)" in html, f"I {rel} switches suggestions")
         assert_true("GENRE_BY_TYPE[type]" in html, f"I {rel} uses type map")
 

@@ -275,7 +275,7 @@
               <button type="button" class="profile-genre-tip-btn" id="profile-genre-tip-btn" aria-expanded="false" aria-controls="profile-genre-tip-panel" aria-label="入力のヒント">ⓘ</button>
             </label>
             <p class="profile-genre-tip-panel" id="profile-genre-tip-panel">候補から選択するか、ご自身の業態・ジャンルを自由に入力してください。</p>
-            <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" aria-label="料理ジャンル（任意）" aria-describedby="profile-genre-tip-panel">
+            <input type="text" id="profile-genre" name="genre" class="profile-select profile-genre-input" list="profile-genre-suggestions" autocomplete="off" placeholder="候補から選択するか、ご自身の業態・ジャンルを自由に入力してください" aria-label="料理ジャンル（任意）" aria-describedby="profile-genre-tip-panel">
             <datalist id="profile-genre-suggestions"></datalist>
           </div>
 
@@ -482,6 +482,19 @@
         var timezoneEl = document.getElementById('profile-timezone');
         var kpiFocusEl = document.getElementById('profile-kpi-focus');
 
+        function isGenrePrompt(v) {
+          var s = String(v == null ? '' : v).trim();
+          if (!s) return true;
+          var n = s.replace(/^[—–-]\s*|\s*[—–-]$/g, '').trim().toLowerCase();
+          return (
+            n === 'select industry first' ||
+            n === 'select a business type first' ||
+            n === 'select' ||
+            s === '先に業種を選択してください' ||
+            s === '請先選擇業態'
+          );
+        }
+
         function getSelectText(sel) {
           if (!sel) return '';
           var opt = sel.options[sel.selectedIndex];
@@ -525,7 +538,10 @@
           company: companyEl ? companyEl.value : '',
           industry: canonicalType,
           businessType: canonicalType,
-          genre: genreEl ? String(genreEl.value || '').trim() : '',
+          genre: (function () {
+            var g = genreEl ? String(genreEl.value || '').trim() : '';
+            return isGenrePrompt(g) ? '' : g;
+          })(),
           country: getSelectText(countryEl),
           state: getSelectText(stateEl),
           city: getSelectText(cityEl),
@@ -642,11 +658,29 @@
       }
 
       function normalizeIndustry(code) {
+        var raw = String(code == null ? '' : code).trim();
+        if (!raw) return '';
         if (window.KpiBusinessType && typeof window.KpiBusinessType.normalizeBusinessType === 'function') {
-          var n = window.KpiBusinessType.normalizeBusinessType(code);
+          var n = window.KpiBusinessType.normalizeBusinessType(raw);
           if (n) return n;
         }
-        return String(code || '') || 'other';
+        return raw;
+      }
+
+      var GENRE_PLACEHOLDER_NEED_TYPE = '先に業種を選択してください';
+      var GENRE_PLACEHOLDER_READY = '候補から選択するか、ご自身の業態・ジャンルを自由に入力してください';
+
+      function isGenrePrompt(v) {
+        var s = String(v == null ? '' : v).trim();
+        if (!s) return true;
+        var n = s.replace(/^[—–-]\s*|\s*[—–-]$/g, '').trim().toLowerCase();
+        return (
+          n === 'select industry first' ||
+          n === 'select a business type first' ||
+          n === 'select' ||
+          s === GENRE_PLACEHOLDER_NEED_TYPE ||
+          s === '請先選擇業態'
+        );
       }
 
       var GENRE_BY_TYPE = {
@@ -659,20 +693,28 @@
       };
 
       function syncGenreField() {
+        /* KPI-PROFILE-GENRE-PLACEHOLDER */
         if (genreGroup) genreGroup.hidden = false;
-        var type = normalizeIndustry(industrySelect ? industrySelect.value : '');
-        var rec = GENRE_BY_TYPE[type] || GENRE_BY_TYPE.other;
+        var rawType = industrySelect ? String(industrySelect.value || '').trim() : '';
+        var type = rawType ? normalizeIndustry(rawType) : '';
+        var rec = type ? (GENRE_BY_TYPE[type] || GENRE_BY_TYPE.other) : null;
         var labelText = document.getElementById('profile-genre-label-text');
-        if (labelText) labelText.textContent = rec.label;
-        if (genreInput) genreInput.setAttribute('aria-label', rec.label);
+        if (labelText && rec) labelText.textContent = rec.label;
+        if (genreInput) {
+          if (isGenrePrompt(genreInput.value)) genreInput.value = '';
+          genreInput.placeholder = type ? GENRE_PLACEHOLDER_READY : GENRE_PLACEHOLDER_NEED_TYPE;
+          if (rec) genreInput.setAttribute('aria-label', rec.label);
+        }
         var list = document.getElementById('profile-genre-suggestions');
         if (list) {
           list.innerHTML = '';
-          (rec.suggestions || []).forEach(function (s) {
-            var opt = document.createElement('option');
-            opt.value = s;
-            list.appendChild(opt);
-          });
+          if (type && rec) {
+            (rec.suggestions || []).forEach(function (s) {
+              var opt = document.createElement('option');
+              opt.value = s;
+              list.appendChild(opt);
+            });
+          }
         }
       }
 
@@ -728,8 +770,11 @@
           try {
             var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
             var savedGenre = lastProfile && lastProfile.genre;
-            if (savedGenre) genreInput.value = savedGenre;
-          } catch (_eGenre) {}
+            if (isGenrePrompt(savedGenre)) savedGenre = '';
+            genreInput.value = savedGenre;
+          } catch (_eGenre) {
+            genreInput.value = '';
+          }
         }
       }
       syncGenreField();
