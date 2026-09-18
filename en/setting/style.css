@@ -678,6 +678,9 @@ body.office-mode .si-fi.profile-page .profile-form .profile-genre-tip-panel {
 body.office-mode .si-fi.profile-page .profile-form .profile-location-help {
   opacity: 0.75;
 }
+.si-fi.profile-page .profile-form .profile-timezone-group[hidden] {
+  display: none !important;
+}
 
 /* Time Zone 自動入力用の読み取り専用スタイル */
 .si-fi.profile-page .profile-form .profile-input-readonly {

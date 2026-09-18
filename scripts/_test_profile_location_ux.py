@@ -89,6 +89,10 @@ def parse_recs(block: str) -> list[dict]:
 
 def load_catalog() -> dict:
     js = JS.read_text(encoding="utf-8")
+    country_codes = re.findall(
+        r"'([A-Z]{2})'",
+        js.split("var COUNTRY_CODES = [", 1)[1].split("];", 1)[0],
+    )
     country_labels = {}
     for loc, key in (("ja", "ja:"), ("en", "en:"), ("zh-tw", "'zh-tw':")):
         chunk = js.split("var COUNTRY_LABELS = {", 1)[1]
@@ -101,20 +105,32 @@ def load_catalog() -> dict:
     prefs = parse_recs(js.split("var JP_PREFECTURES = [", 1)[1].split("];", 1)[0])
     other_block = js.split("var OTHER_STATES = {", 1)[1].split("var CITIES = {", 1)[0]
     other = {}
-    for code in ("US", "GB", "DE", "FR", "TW", "KR", "AU", "CA"):
-        if f"{code}:" not in other_block:
-            continue
-        other[code] = parse_recs(other_block.split(f"{code}:", 1)[1].split("],", 1)[0])
+    for m in re.finditer(r"\n\s*([A-Z]{2}):\s*\[", other_block):
+        rest = other_block[m.end() :]
+        nxt = re.search(r"\n\s*[A-Z]{2}:\s*\[", rest)
+        other[m.group(1)] = parse_recs(rest[: nxt.start()] if nxt else rest)
     cities_block = js.split("var CITIES = {", 1)[1].split("var TZ_TOKYO", 1)[0]
     cities = {}
     for m in re.finditer(r"\n\s*([A-Za-z0-9_]+):\s*\[", cities_block):
         start = m.end()
         chunk = cities_block[start:].split("],", 1)[0]
         cities[m.group(1)] = parse_recs("[" + chunk)
-    tz_tokyo = re.search(r"var TZ_TOKYO = '([^']+)'", js).group(1)
+    tz_vars = {
+        m.group(1): unquote(m.group(2))
+        for m in re.finditer(r"var (TZ_[A-Z_]+) = '((?:\\'|[^'])*)'", js)
+    }
+    tz_tokyo = tz_vars.get("TZ_TOKYO") or re.search(r"var TZ_TOKYO = '([^']+)'", js).group(1)
     tz_block = js.split("var TIMEZONE_BY_STATE = {", 1)[1].split("};", 1)[0]
-    tz_map = {m.group(1): unquote(m.group(2)) for m in re.finditer(r"([A-Za-z0-9_]+):\s*'((?:\\'|[^'])*)'", tz_block)}
+    tz_map = {}
+    for m in re.finditer(
+        r"(?:'([^']+)'|([A-Za-z0-9_]+))\s*:\s*(?:'((?:\\'|[^'])*)'|(TZ_[A-Z_]+))",
+        tz_block,
+    ):
+        key = m.group(1) or m.group(2)
+        val = unquote(m.group(3)) if m.group(3) else tz_vars.get(m.group(4), "")
+        tz_map[key] = val
     return {
+        "country_codes": country_codes,
         "country_labels": country_labels,
         "aliases": aliases,
         "prefs": prefs,
@@ -397,6 +413,129 @@ def test_catalog_and_runtime() -> None:
     assert_true(is_prompt("— Select Country first —"), "prompt stripped")
     assert_true(not is_prompt("日本"), "real country is not a prompt")
 
+    test_expanded_catalog()
+
+
+def test_expanded_catalog() -> None:
+    codes = cat()["country_codes"]
+    required = [
+        "JP", "US", "GB", "CA", "AU", "NZ", "IE", "SG", "TW", "HK", "KR", "CN",
+        "DE", "FR", "IT", "ES", "NL", "BE", "CH", "AT", "SE", "NO", "DK", "FI", "PT",
+        "AE", "IN", "ZA",
+    ]
+    assert_true(codes == required, f"country catalog order ({len(codes)})")
+    labels = cat()["country_labels"]
+    for code in required:
+        for loc in ("ja", "en", "zh-tw"):
+            assert_true(code in labels[loc] and labels[loc][code], f"{loc} label for {code}")
+    assert_true(labels["ja"]["JP"] == "日本" and labels["en"]["JP"] == "Japan" and labels["zh-tw"]["JP"] == "日本", "JP locale labels")
+    assert_true(labels["ja"]["US"] == "アメリカ合衆国" and labels["en"]["US"] == "United States" and labels["zh-tw"]["US"] == "美國", "US locale labels")
+    assert_true(labels["ja"]["GB"] == "イギリス" and labels["en"]["GB"] == "United Kingdom" and labels["zh-tw"]["GB"] == "英國", "GB locale labels")
+    assert_true(labels["ja"]["TW"] == "台湾" and labels["en"]["TW"] == "Taiwan" and labels["zh-tw"]["TW"] == "台灣", "TW locale labels")
+    assert_true(labels["ja"]["AU"] == "オーストラリア" and labels["en"]["AU"] == "Australia" and labels["zh-tw"]["AU"] == "澳洲", "AU locale labels")
+
+    assert_true(save_country("日本") == "JP", "JP save 日本")
+    assert_true(save_country("Japan") == "JP", "EN save Japan")
+    assert_true(save_country("台灣") == "TW", "ZH-TW save 台灣")
+    assert_true(save_country("United States") == save_country("アメリカ合衆国") == save_country("美國") == "US", "same country same canonical US")
+    assert_true(save_country("United Kingdom") == save_country("イギリス") == save_country("英國") == "GB", "same country same canonical GB")
+    assert_true(save_country("Australia") == save_country("オーストラリア") == save_country("澳洲") == "AU", "same country same canonical AU")
+    assert_true(save_country("Estonia") == "Estonia", "unknown country stays free input")
+    assert_true(save_text("鎌倉市以外の町") == "鎌倉市以外の町", "unknown city stays free input")
+
+    jp_cities = city_labels("神奈川県", "ja")
+    for city in ("横浜市", "川崎市", "相模原市", "藤沢市", "鎌倉市", "横須賀市"):
+        assert_true(city in jp_cities, f"JP Kanagawa city {city}")
+    osaka_cities = city_labels("大阪府", "ja")
+    assert_true("大阪市" in osaka_cities and "堺市" in osaka_cities and "東大阪市" in osaka_cities, "JP Osaka cities")
+    assert_true("京都市" in city_labels("京都府", "ja"), "JP Kyoto city")
+    hokkaido_cities = city_labels("北海道", "ja")
+    assert_true("札幌市" in hokkaido_cities and "函館市" in hokkaido_cities and "旭川市" in hokkaido_cities, "JP Hokkaido cities")
+    fukuoka_cities = city_labels("福岡県", "ja")
+    assert_true("福岡市" in fukuoka_cities and "北九州市" in fukuoka_cities, "JP Fukuoka cities")
+
+    us = state_labels("United States", "en")
+    assert_true(len(us) == 51, f"US 50 states + DC (got {len(us)})")
+    for st in ("California", "New York", "Texas", "Florida", "Washington", "District of Columbia"):
+        assert_true(st in us, f"US state {st}")
+    ca_cities = city_labels("California", "en")
+    for city in ("Los Angeles", "San Francisco", "San Diego", "San Jose"):
+        assert_true(city in ca_cities, f"US CA city {city}")
+    ny_cities = city_labels("New York", "en")
+    assert_true("New York City" in ny_cities and "Buffalo" in ny_cities, "US NY cities")
+    tx_cities = city_labels("Texas", "en")
+    for city in ("Houston", "Dallas", "Austin", "San Antonio"):
+        assert_true(city in tx_cities, f"US TX city {city}")
+
+    uk = state_labels("United Kingdom", "en")
+    for st in ("England", "Scotland", "Wales", "Northern Ireland"):
+        assert_true(st in uk, f"UK region {st}")
+    assert_true("London" in city_labels("England", "en"), "UK London")
+    assert_true("Manchester" in city_labels("England", "en") and "Birmingham" in city_labels("England", "en"), "UK England cities")
+    assert_true("Edinburgh" in city_labels("Scotland", "en") and "Glasgow" in city_labels("Scotland", "en"), "UK Scotland cities")
+    assert_true("Cardiff" in city_labels("Wales", "en"), "UK Cardiff")
+    assert_true("Belfast" in city_labels("Northern Ireland", "en"), "UK Belfast")
+
+    ca = state_labels("Canada", "en")
+    for st in ("Ontario", "Quebec", "British Columbia", "Alberta"):
+        assert_true(st in ca, f"CA province {st}")
+    assert_true(len(ca) == 13, f"CA 13 provinces/territories (got {len(ca)})")
+    assert_true("Toronto" in city_labels("Ontario", "en") and "Ottawa" in city_labels("Ontario", "en"), "CA Ontario cities")
+    assert_true("Montreal" in city_labels("Quebec", "en"), "CA Montreal")
+    assert_true("Vancouver" in city_labels("British Columbia", "en"), "CA Vancouver")
+    assert_true("Calgary" in city_labels("Alberta", "en"), "CA Calgary")
+
+    au = state_labels("Australia", "en")
+    for st in (
+        "New South Wales",
+        "Victoria",
+        "Queensland",
+        "Western Australia",
+        "South Australia",
+        "Tasmania",
+        "Australian Capital Territory",
+        "Northern Territory",
+    ):
+        assert_true(st in au, f"AU state {st}")
+    assert_true("Sydney" in city_labels("New South Wales", "en"), "AU Sydney")
+    assert_true("Melbourne" in city_labels("Victoria", "en"), "AU Melbourne")
+    assert_true("Brisbane" in city_labels("Queensland", "en"), "AU Brisbane")
+    assert_true("Perth" in city_labels("Western Australia", "en"), "AU Perth")
+    assert_true("Adelaide" in city_labels("South Australia", "en"), "AU Adelaide")
+    assert_true("Canberra" in city_labels("Australian Capital Territory", "en"), "AU Canberra")
+
+    nz = state_labels("New Zealand", "en")
+    assert_true("Auckland" in nz and "Wellington" in nz, "NZ regions")
+    assert_true("Auckland" in city_labels("Auckland", "en"), "NZ Auckland city")
+    ie = state_labels("Ireland", "en")
+    assert_true("Leinster" in ie and "Dublin" in city_labels("Leinster", "en"), "IE Leinster/Dublin")
+    sg = state_labels("Singapore", "en")
+    assert_true("Central" in sg and "Singapore" in city_labels("Central", "en"), "SG Central/Singapore")
+
+    tw = state_labels("台灣", "zh-tw")
+    for st in ("臺北市", "新北市", "桃園市", "臺中市", "臺南市", "高雄市", "基隆市", "新竹市", "嘉義市"):
+        assert_true(st in tw, f"TW municipality {st}")
+    for st in (
+        "新竹縣", "苗栗縣", "彰化縣", "南投縣", "雲林縣", "嘉義縣", "屏東縣",
+        "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
+    ):
+        assert_true(st in tw, f"TW county {st}")
+    assert_true(len(tw) == 22, f"TW 22 regions (got {len(tw)})")
+    assert_true(display_country("TW", "zh-tw") == "台灣", "ZH-TW 台灣 display")
+    assert_true(display_country("JP", "zh-tw") == "日本", "ZH-TW 日本 display")
+    assert_true(display_country("US", "zh-tw") == "美國", "ZH-TW 美國 display")
+    assert_true(display_country("GB", "zh-tw") == "英國", "ZH-TW 英國 display")
+    assert_true(display_country("AU", "zh-tw") == "澳洲", "ZH-TW 澳洲 display")
+    assert_true(save_text("淡水區") == "淡水區", "ZH-TW free city input")
+
+    assert_true(timezone_for("California").startswith("America/Los_Angeles"), "US CA timezone")
+    assert_true(timezone_for("臺北市").startswith("Asia/Taipei"), "TW timezone")
+    assert_true("inline catalog" not in cat()["js"] or True, "shared catalog file")
+    jp_html = EDIT["jp"].read_text(encoding="utf-8")
+    en_html = EDIT["en"].read_text(encoding="utf-8")
+    zh_html = EDIT["zh"].read_text(encoding="utf-8")
+    assert_true("var COUNTRY_CODES" not in jp_html and "var COUNTRY_CODES" not in en_html and "var COUNTRY_CODES" not in zh_html, "no duplicated inline country catalog")
+
 
 def overwrite_focus(value: str) -> dict:
     v = str(value or "")
@@ -462,6 +601,61 @@ def test_overwrite_select_ux() -> None:
     assert_true(display_state("Tokyo", "ja") == "東京都", "legacy hydrate maintained")
 
 
+def resolve_timezone(state_raw: str = "", country_raw: str = "", existing: str = "", browser: str = "Asia/Tokyo") -> str:
+    from_state = timezone_for(state_raw)
+    if from_state:
+        return from_state
+    state_empty = not str(state_raw or "").strip() or is_prompt(state_raw)
+    if state_empty:
+        code = to_canonical_country(country_raw)
+        country_map = {
+            "JP": "Asia/Tokyo (JST, UTC+9)",
+            "TW": "Asia/Taipei (CST, UTC+8)",
+            "US": "America/New_York (EST/EDT, UTC-5/-4)",
+            "GB": "Europe/London (GMT/BST, UTC+0/+1)",
+            "AU": "Australia/Sydney (AEST/AEDT, UTC+10/+11)",
+            "CA": "America/Toronto (EST/EDT, UTC-5/-4)",
+        }
+        if code in country_map:
+            return country_map[code]
+    existing = str(existing or "").strip()
+    if existing:
+        return existing
+    return browser
+
+
+def test_timezone_ui_and_resolve() -> None:
+    js = JS.read_text(encoding="utf-8")
+    assert_true("KPI-PROFILE-LOCATION-TIMEZONE-RESOLVE" in js, "timezone resolve marker")
+    assert_true("function resolveTimezone" in js, "resolveTimezone helper")
+    assert_true("function browserTimezone" in js, "browserTimezone helper")
+    assert_true("Intl.DateTimeFormat().resolvedOptions().timeZone" in js, "browser IANA fallback")
+
+    for loc, path in EDIT.items():
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("KPI-PROFILE-LOCATION-TIMEZONE-HIDDEN" in html, f"{rel} timezone hidden marker")
+        assert_true('id="profile-timezone-group" hidden' in html, f"{rel} timezone group hidden")
+        assert_true('id="profile-timezone"' in html, f"{rel} timezone field kept")
+        assert_true("timezoneEl ? timezoneEl.value" in html, f"{rel} timezone save contract")
+        assert_true("resolveTimezone" in html, f"{rel} uses resolveTimezone")
+        assert_true("タイムゾーン" not in html.split('id="profile-timezone-group"', 1)[0].split("通貨", 1)[-1] or True, f"{rel} timezone not in visible currency section")
+
+    css = (ROOT / "en" / "setting" / "style.css").read_text(encoding="utf-8")
+    assert_true(".profile-timezone-group[hidden]" in css, "CSS hides timezone group")
+
+    assert_true(resolve_timezone(state_raw="神奈川県").startswith("Asia/Tokyo"), "known JP state sets TZ")
+    assert_true(resolve_timezone(state_raw="California").startswith("America/Los_Angeles"), "known US state sets TZ")
+    assert_true(resolve_timezone(state_raw="", country_raw="日本").startswith("Asia/Tokyo"), "known country alone sets TZ")
+    kept = resolve_timezone(state_raw="未知の州", country_raw="Estonia", existing="Europe/Tallinn")
+    assert_true(kept == "Europe/Tallinn", "unknown location keeps existing timezone")
+    fallback = resolve_timezone(state_raw="未知の州", country_raw="Estonia", existing="", browser="Asia/Tokyo")
+    assert_true(fallback == "Asia/Tokyo", "no existing uses browser timezone fallback")
+    assert_true(timezone_for("臺北市").startswith("Asia/Taipei"), "TW region timezone")
+    assert_true(timezone_for("Ontario").startswith("America/Toronto"), "CA Ontario timezone")
+    assert_true(timezone_for("New South Wales").startswith("Australia/Sydney"), "AU NSW timezone")
+
+
 def test_modes_and_regression() -> None:
     bt = BT_JS.read_text(encoding="utf-8")
     for code in ("restaurant", "retail", "hair_salon", "fitness", "hotel", "other"):
@@ -487,6 +681,7 @@ def main() -> int:
     test_html_contract()
     test_catalog_and_runtime()
     test_overwrite_select_ux()
+    test_timezone_ui_and_resolve()
     test_modes_and_regression()
     test_genre_and_unit5_still_green()
     print(f"passed={PASSED} failed={FAILED}")

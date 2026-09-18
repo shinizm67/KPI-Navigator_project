@@ -311,9 +311,10 @@
             </select>
           </div>
 
-          <div class="form-group">
+          <!-- KPI-PROFILE-LOCATION-TIMEZONE-HIDDEN: keep field for save/hydrate; not shown in UI -->
+          <div class="form-group profile-timezone-group" id="profile-timezone-group" hidden>
             <label for="profile-timezone">タイムゾーン :</label>
-            <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="都道府県 / 市区町村から自動入力" aria-label="タイムゾーン（自動入力）">
+            <input type="text" id="profile-timezone" name="timezone" readonly class="profile-input-readonly" placeholder="都道府県 / 市区町村から自動入力" aria-label="タイムゾーン（自動入力）" tabindex="-1">
           </div>
 
           <div class="form-group form-group-textarea">
@@ -619,9 +620,13 @@
       }
 
       function maybeTimezone() {
-        if (!timezoneInput || !window.KpiProfileLocation) return;
-        var tz = window.KpiProfileLocation.timezoneFor(stateInput && stateInput.value);
-        if (tz) timezoneInput.value = tz;
+        if (!timezoneInput || !window.KpiProfileLocation || !window.KpiProfileLocation.resolveTimezone) return;
+        var next = window.KpiProfileLocation.resolveTimezone({
+          country: countryInput && countryInput.value,
+          state: stateInput && stateInput.value,
+          existing: timezoneInput.value
+        });
+        if (next) timezoneInput.value = next;
       }
 
       function hydrateLocation() {
@@ -645,8 +650,17 @@
           cityInput.value = Loc ? Loc.displayCity(lastProfile.city, locale) : String(lastProfile.city || '');
           if (Loc && Loc.isPrompt(cityInput.value)) cityInput.value = '';
         }
-        if (timezoneInput && lastProfile.timezone) timezoneInput.value = lastProfile.timezone;
-        else maybeTimezone();
+        if (timezoneInput) {
+          if (Loc && Loc.resolveTimezone) {
+            timezoneInput.value = Loc.resolveTimezone({
+              country: countryInput && countryInput.value,
+              state: stateInput && stateInput.value,
+              existing: lastProfile.timezone || ''
+            });
+          } else if (lastProfile.timezone) {
+            timezoneInput.value = lastProfile.timezone;
+          }
+        }
         syncLocationLists();
       }
 
