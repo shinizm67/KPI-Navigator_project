@@ -2,20 +2,14 @@
  * Planning Readiness / KPI Setup Status
  * Spec: docs/planning-readiness.md
  *
- * Seasonality contract (runtime-confirmed):
- * - Stored: years[YYYY].plan.monthlyHlWeights (length 12)
- * - Default seed: [85,85,100,110,120,85,100,100,100,110,110,115] (NOT all-100)
- * - Structural validity: each value integer 60–200, multiple of 5
- * - Alloc UI OK: average of 12 months ≈ 100% (|avg-100| < 0.01)
- * - No auto-adjust of weights
+ * Seasonality modes:
+ * - AUTO: KPN Recommended (Reference → 5% snap → sum 1200). Ready when valid.
+ * - MANUAL: user HL edits. Ready only if valid AND (matches recommendation OR
+ *   deviation explicitly confirmed). Never overwrite MANUAL with AUTO silently.
  *
- * Confirm actions live ONLY in the Alert FW (not Sales Data chrome),
- * except seasonality: a user-edited valid HL save auto-confirms.
- *
- * Seasonality paths:
- * A) Untouched default → Alert FW explicit confirm (even if structurally valid)
- * B) User-edited + formal-valid save → auto-confirm current signature
- * C) User-edited invalid → stay unconfirmed / PROVISIONAL
+ * Reference Seasonality formula is NOT redefined here — uses
+ * KpiYearStore.computeAverageSeasonalityPct (past monthlyPct equal-weight mean).
+ * Projection algorithm: KpiSeasonalityAllocator.projectAndBalance.
  */
 (function (global) {
   'use strict';
@@ -76,6 +70,11 @@
         tipTitle: '暫定目標値',
         tipBody: 'KPI設定が完了していないため、\nこの目標値は暫定計算です。',
         tipUnset: '未確定:',
+        seasonDeviationBody: 'KPN推奨の月次配分と異なる設定があります。',
+        seasonConfirmOverride: 'この配分で確定',
+        seasonRestoreRecommended: '推奨配分に戻す',
+        seasonModeAuto: 'AUTO',
+        seasonModeManual: 'MANUAL',
         dismiss: '閉じる',
       },
       en: {
@@ -104,6 +103,11 @@
         tipTitle: 'Provisional target',
         tipBody: 'KPI setup is incomplete.\nThis target is a provisional calculation.',
         tipUnset: 'Unconfirmed:',
+        seasonDeviationBody: 'Monthly allocation differs from the KPN recommendation.',
+        seasonConfirmOverride: 'Confirm this allocation',
+        seasonRestoreRecommended: 'Restore recommended',
+        seasonModeAuto: 'AUTO',
+        seasonModeManual: 'MANUAL',
         dismiss: 'Close',
       },
       zh: {
@@ -129,6 +133,11 @@
         tipTitle: '暫定目標值',
         tipBody: 'KPI 設定尚未完成。\n此目標值為暫定計算。',
         tipUnset: '未確認：',
+        seasonDeviationBody: '月次配分與 KPN 建議值不同。',
+        seasonConfirmOverride: '以此配分確認',
+        seasonRestoreRecommended: '還原建議配分',
+        seasonModeAuto: 'AUTO',
+        seasonModeManual: 'MANUAL',
         dismiss: '關閉',
       },
     };
@@ -295,6 +304,201 @@
     return false;
   }
 
+  function allocator() {
+    return global.KpiSeasonalityAllocator || null;
+  }
+
+  function getHlSource(year) {
+    var api = storeApi();
+    if (!api || typeof api.getStore !== 'function') return null;
+    var store = api.getStore();
+    var y = Number(year);
+    var rec = store && store.years && store.years[y];
+    return rec && rec.plan ? rec.plan.hlSource || null : null;
+  }
+
+  function readReferencePack(year) {
+    var api = storeApi();
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    if (!api || typeof api.computeAverageSeasonalityPct !== 'function') return null;
+    var pack = api.computeAverageSeasonalityPct(y, 2);
+    if (!pack || !pack.months || pack.months.length !== 12) return null;
+    return pack;
+  }
+
+  function getRecommendedSeasonality(year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var alloc = allocator();
+    if (!alloc || typeof alloc.projectAndBalance !== 'function') {
+      return { ok: false, reason: 'no-allocator' };
+    }
+    var pack = readReferencePack(y);
+    if (!pack) return { ok: false, reason: 'no-reference' };
+    var projected = alloc.projectAndBalance(pack.months);
+    if (!projected || !projected.ok) {
+      return { ok: false, reason: (projected && projected.reason) || 'project-failed', pack: pack };
+    }
+    var sourceSignature =
+      typeof alloc.referenceSourceSignature === 'function'
+        ? alloc.referenceSourceSignature(y, pack.months, pack.yearsUsed || [])
+        : 'ref:' + y;
+    return {
+      ok: true,
+      weights: projected.weights.slice(),
+      sum: projected.sum,
+      steps: projected.steps,
+      yearsUsed: (pack.yearsUsed || []).slice(),
+      referenceMonths: pack.months.slice(),
+      sourceSignature: sourceSignature,
+      recommendedSignature: 'hl:' + y + ':' + projected.weights.join(','),
+    };
+  }
+
+  function weightsEqual(a, b) {
+    var alloc = allocator();
+    if (alloc && typeof alloc.weightsEqual === 'function') return alloc.weightsEqual(a, b);
+    if (!a || !b || a.length !== 12 || b.length !== 12) return false;
+    for (var i = 0; i < 12; i++) {
+      if (Number(a[i]) !== Number(b[i])) return false;
+    }
+    return true;
+  }
+
+  function isStrictAllocValid(weights) {
+    var norm = normalizeHlWeights(weights);
+    return !!(norm && isAllocTotalOk(norm));
+  }
+
+  function isFormalSeasonalityValid(weights) {
+    var norm = normalizeHlWeights(weights);
+    if (!norm) return false;
+    if (isDefaultSeasonality(norm)) return true;
+    return isAllocTotalOk(norm);
+  }
+
+  function evaluateSeasonalityStatus(year, pr, weights) {
+    var y = Number(year);
+    var mode = pr.seasonalityMode || null;
+    var hlCur = seasonalitySignature(y);
+    var hlSaved = pr.seasonalityConfirmedSignature || null;
+    var recommended = getRecommendedSeasonality(y);
+    var matchRec =
+      recommended.ok && weights && weightsEqual(weights, recommended.weights);
+
+    if (!normalizeHlWeights(weights)) {
+      return {
+        seasonStatus: 'invalid',
+        mode: mode || 'manual',
+        needsSeasonAction: true,
+        seasonDeviation: false,
+        recommended: recommended,
+        matchRecommended: false,
+      };
+    }
+
+    // AUTO with valid recommendation → ready (auto-confirmed)
+    if (mode === 'auto' && recommended.ok) {
+      var autoReady =
+        matchRec &&
+        hlSaved &&
+        hlSaved === hlCur &&
+        pr.seasonalityAutoSourceSignature === recommended.sourceSignature;
+      if (autoReady) {
+        return {
+          seasonStatus: 'confirmed',
+          mode: 'auto',
+          needsSeasonAction: false,
+          seasonDeviation: false,
+          recommended: recommended,
+          matchRecommended: true,
+        };
+      }
+      // AUTO but stale — sync should fix; until then treat as provisional only if not matched
+      return {
+        seasonStatus: matchRec && hlSaved === hlCur ? 'confirmed' : 'changed',
+        mode: 'auto',
+        needsSeasonAction: !(matchRec && hlSaved === hlCur),
+        seasonDeviation: false,
+        recommended: recommended,
+        matchRecommended: matchRec,
+      };
+    }
+
+    // MANUAL
+    if (mode === 'manual') {
+      if (!isStrictAllocValid(weights)) {
+        return {
+          seasonStatus: 'invalid',
+          mode: 'manual',
+          needsSeasonAction: true,
+          seasonDeviation: !!(recommended.ok && !matchRec),
+          recommended: recommended,
+          matchRecommended: false,
+        };
+      }
+      if (recommended.ok && matchRec) {
+        var okMatch = hlSaved && hlSaved === hlCur;
+        return {
+          seasonStatus: okMatch ? 'confirmed' : 'unconfirmed',
+          mode: 'manual',
+          needsSeasonAction: !okMatch,
+          seasonDeviation: false,
+          recommended: recommended,
+          matchRecommended: true,
+        };
+      }
+      // valid + deviation
+      if (recommended.ok && !matchRec) {
+        var approved =
+          hlSaved &&
+          hlSaved === hlCur &&
+          pr.seasonalityDeviationApprovedSignature === hlCur;
+        return {
+          seasonStatus: approved ? 'confirmed' : 'unconfirmed',
+          mode: 'manual',
+          needsSeasonAction: !approved,
+          seasonDeviation: !approved,
+          recommended: recommended,
+          matchRecommended: false,
+        };
+      }
+      // no recommendation available — require explicit confirm of valid manual
+      var okManual = hlSaved && hlSaved === hlCur;
+      return {
+        seasonStatus: okManual ? 'confirmed' : 'unconfirmed',
+        mode: 'manual',
+        needsSeasonAction: !okManual,
+        seasonDeviation: false,
+        recommended: recommended,
+        matchRecommended: false,
+      };
+    }
+
+    // Legacy / unset mode
+    if (hlSaved) {
+      var st = hlSaved === hlCur ? 'confirmed' : 'changed';
+      return {
+        seasonStatus: st,
+        mode: mode,
+        needsSeasonAction: st !== 'confirmed',
+        seasonDeviation: false,
+        recommended: recommended,
+        matchRecommended: matchRec,
+      };
+    }
+    // Untouched default without AUTO → still needs explicit confirm
+    return {
+      seasonStatus: 'unconfirmed',
+      mode: mode,
+      needsSeasonAction: true,
+      seasonDeviation: false,
+      recommended: recommended,
+      matchRecommended: matchRec,
+    };
+  }
+
   function evaluate(year) {
     var y = Number(year);
     if (!Number.isFinite(y)) y = operatingYear();
@@ -303,15 +507,13 @@
     var bdCur = businessDaysSignature(y);
     var hlCur = seasonalitySignature(y);
     var bdSaved = pr.businessDaysConfirmedSignature || null;
-    var hlSaved = pr.seasonalityConfirmedSignature || null;
 
     var bdStatus = 'unconfirmed';
     if (bdSaved) bdStatus = bdSaved === bdCur ? 'confirmed' : 'changed';
 
-    var seasonStatus = 'unconfirmed';
     var weights = readHlWeights(y);
-    if (!normalizeHlWeights(weights)) seasonStatus = 'invalid';
-    else if (hlSaved) seasonStatus = hlSaved === hlCur ? 'confirmed' : 'changed';
+    var seasonEval = evaluateSeasonalityStatus(y, pr, weights);
+    var seasonStatus = seasonEval.seasonStatus;
 
     var missingReasons = [];
     var provisionalReasons = [];
@@ -327,6 +529,7 @@
       if (seasonStatus !== 'confirmed') {
         if (seasonStatus === 'invalid') provisionalReasons.push('seasonalityInvalid');
         else if (seasonStatus === 'changed') provisionalReasons.push('seasonalityChanged');
+        else if (seasonEval.seasonDeviation) provisionalReasons.push('seasonalityDeviation');
         else provisionalReasons.push('seasonality');
       }
       if (provisionalReasons.length) state = STATE.PROVISIONAL;
@@ -338,6 +541,12 @@
       annualTarget: annualOk ? 'ready' : 'missing',
       businessDays: bdStatus,
       seasonality: seasonStatus,
+      seasonalityMode: seasonEval.mode,
+      seasonDeviation: !!seasonEval.seasonDeviation,
+      matchRecommended: !!seasonEval.matchRecommended,
+      recommendedWeights: seasonEval.recommended && seasonEval.recommended.ok
+        ? seasonEval.recommended.weights
+        : null,
       missingReasons: missingReasons,
       provisionalReasons: provisionalReasons,
       businessDaysCurrentSignature: bdCur,
@@ -346,7 +555,7 @@
       allocTotalOk: isAllocTotalOk(weights),
       openDayCount: countOpenDays(y),
       needsBdAction: annualOk && bdStatus !== 'confirmed',
-      needsSeasonAction: annualOk && seasonStatus !== 'confirmed',
+      needsSeasonAction: annualOk && !!seasonEval.needsSeasonAction,
     };
   }
 
@@ -375,13 +584,6 @@
     return isAllocTotalOk(weights);
   }
 
-  function isFormalSeasonalityValid(weights) {
-    var norm = normalizeHlWeights(weights);
-    if (!norm) return false;
-    if (isDefaultSeasonality(norm)) return true;
-    return isAllocTotalOk(norm);
-  }
-
   function isUserSeasonalityEditSource(meta) {
     var src = (meta && meta.source) || '';
     return (
@@ -398,11 +600,15 @@
     if (!Number.isFinite(y)) y = operatingYear();
     var pr = ensurePrRecord(y);
     if (!pr) return { ok: false };
-    pr.seasonalityConfirmedSignature = seasonalitySignature(y);
+    var sig = seasonalitySignature(y);
+    pr.seasonalityConfirmedSignature = sig;
     pr.seasonalityConfirmedAt = Date.now();
     pr.seasonalityVisited = true;
     if (opts.edited) pr.seasonalityEdited = true;
     if (opts.auto) pr.seasonalityAutoConfirmed = true;
+    if (opts.deviationApproved) pr.seasonalityDeviationApprovedSignature = sig;
+    if (opts.clearDeviation) delete pr.seasonalityDeviationApprovedSignature;
+    if (opts.mode) pr.seasonalityMode = opts.mode;
     persistStoreQuiet();
     emitChanged(y);
     return { ok: true, auto: !!opts.auto };
@@ -416,17 +622,123 @@
     if (!normalizeHlWeights(weights)) return { ok: false, reason: 'invalid' };
     var isDefault = isDefaultSeasonality(weights);
     if (!isDefault && !isAllocTotalOk(weights)) return { ok: false, reason: 'alloc' };
-    // Untouched default still requires explicit Alert confirm (dialog).
     if (isDefault && !opts.skipDefaultPrompt && !opts.autoFromEdit) {
       return { needDefaultConfirm: true };
     }
-    return writeSeasonalityConfirmed(y, { edited: !!opts.edited });
+    return writeSeasonalityConfirmed(y, {
+      edited: !!opts.edited,
+      mode: opts.mode || 'manual',
+      clearDeviation: true,
+    });
+  }
+
+  function confirmSeasonalityDeviation(year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var weights = readHlWeights(y);
+    if (!isStrictAllocValid(weights)) return { ok: false, reason: 'invalid' };
+    var pr = ensurePrRecord(y);
+    if (!pr) return { ok: false };
+    pr.seasonalityMode = 'manual';
+    return writeSeasonalityConfirmed(y, {
+      edited: true,
+      mode: 'manual',
+      deviationApproved: true,
+    });
+  }
+
+  function restoreRecommendedSeasonality(year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var recommended = getRecommendedSeasonality(y);
+    if (!recommended.ok) return { ok: false, reason: recommended.reason || 'no-recommendation' };
+    var api = storeApi();
+    if (!api || typeof api.writeMonthlyHlWeights !== 'function') return { ok: false };
+    var ok = api.writeMonthlyHlWeights(y, recommended.weights, { source: 'seasonality-auto' });
+    if (!ok) return { ok: false, reason: 'write-failed' };
+    var pr = ensurePrRecord(y);
+    if (!pr) return { ok: false };
+    pr.seasonalityMode = 'auto';
+    pr.seasonalityEdited = false;
+    pr.seasonalityAutoSourceSignature = recommended.sourceSignature;
+    pr.seasonalityRecommendedSignature = recommended.recommendedSignature;
+    delete pr.seasonalityDeviationApprovedSignature;
+    return writeSeasonalityConfirmed(y, { mode: 'auto', auto: true, clearDeviation: true });
+  }
+
+  function applyAutoSeasonality(year, force) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var pr = ensurePrRecord(y);
+    if (!pr) return { ok: false };
+    if (pr.seasonalityMode === 'manual' && !force) return { ok: false, reason: 'manual' };
+    var recommended = getRecommendedSeasonality(y);
+    if (!recommended.ok) return { ok: false, reason: recommended.reason || 'no-recommendation' };
+    var api = storeApi();
+    if (!api || typeof api.writeMonthlyHlWeights !== 'function') return { ok: false };
+    var current = readHlWeights(y);
+    var hlCur = 'hl:' + y + ':' + recommended.weights.join(',');
+    var sameWeights = weightsEqual(current, recommended.weights);
+    var sameSrc = pr.seasonalityAutoSourceSignature === recommended.sourceSignature;
+    var alreadyConfirmed =
+      pr.seasonalityMode === 'auto' &&
+      sameWeights &&
+      sameSrc &&
+      pr.seasonalityConfirmedSignature === hlCur;
+    if (alreadyConfirmed) return { ok: true, skipped: true };
+
+    if (!sameWeights) {
+      var written = api.writeMonthlyHlWeights(y, recommended.weights, {
+        source: 'seasonality-auto',
+      });
+      if (!written) return { ok: false, reason: 'write-failed' };
+    }
+    pr.seasonalityMode = 'auto';
+    pr.seasonalityAutoSourceSignature = recommended.sourceSignature;
+    pr.seasonalityRecommendedSignature = recommended.recommendedSignature;
+    pr.seasonalityEdited = false;
+    delete pr.seasonalityDeviationApprovedSignature;
+    return writeSeasonalityConfirmed(y, { mode: 'auto', auto: true, clearDeviation: true });
   }
 
   /**
-   * After a user HL write: mark edited; if formal-valid, auto-confirm.
-   * Untouched default seeds (plan-default / observed-baseline / dom-seed) must NOT call this.
+   * Existing-user migration — never overwrite differing weights.
+   * matching recommendation → AUTO; different → MANUAL preserve.
    */
+  function migrateSeasonalityMode(year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var pr = ensurePrRecord(y);
+    if (!pr) return { ok: false };
+    if (pr.seasonalityMode === 'auto' || pr.seasonalityMode === 'manual') {
+      if (pr.seasonalityMode === 'auto') applyAutoSeasonality(y, false);
+      return { ok: true, mode: pr.seasonalityMode, migrated: false };
+    }
+    var recommended = getRecommendedSeasonality(y);
+    var weights = readHlWeights(y);
+    var src = getHlSource(y);
+    if (recommended.ok && weightsEqual(weights, recommended.weights)) {
+      pr.seasonalityMode = 'auto';
+      pr.seasonalityAutoSourceSignature = recommended.sourceSignature;
+      pr.seasonalityRecommendedSignature = recommended.recommendedSignature;
+      writeSeasonalityConfirmed(y, { mode: 'auto', auto: true, clearDeviation: true });
+      return { ok: true, mode: 'auto', migrated: true };
+    }
+    if (recommended.ok) {
+      // Preserve existing configured weights (user or legacy seed) as MANUAL.
+      pr.seasonalityMode = 'manual';
+      persistStoreQuiet();
+      return { ok: true, mode: 'manual', migrated: true, preserved: true };
+    }
+    // No reference: keep legacy unset; default seed still needs explicit confirm.
+    if (src === 'sales-data-analyze' || pr.seasonalityEdited) {
+      pr.seasonalityMode = 'manual';
+      persistStoreQuiet();
+      return { ok: true, mode: 'manual', migrated: true };
+    }
+    return { ok: true, mode: null, migrated: false };
+  }
+
   function onSeasonalityUserSaved(year, weights, meta) {
     if (!isUserSeasonalityEditSource(meta)) return { ok: false, reason: 'not-user-edit' };
     var y = Number(year);
@@ -434,24 +746,51 @@
     var norm = normalizeHlWeights(weights != null ? weights : readHlWeights(y));
     var pr = ensurePrRecord(y);
     if (!pr) return { ok: false };
+    pr.seasonalityMode = 'manual';
     pr.seasonalityEdited = true;
     pr.seasonalityVisited = true;
-    if (!norm || !isFormalSeasonalityValid(norm)) {
-      // Invalid edit: keep / fall back to unconfirmed (signature mismatch if previously confirmed).
+    delete pr.seasonalityAutoConfirmed;
+
+    if (!norm || !isStrictAllocValid(norm)) {
       persistStoreQuiet();
       emitChanged(y);
       if (document.getElementById(ALERT_ID)) {
         pageAlertDismissed = false;
         renderAlertFw({ force: true, afterAction: true });
       }
-      return { ok: true, confirmed: false, reason: 'invalid' };
+      return { ok: true, confirmed: false, reason: 'invalid', mode: 'manual' };
     }
-    var res = writeSeasonalityConfirmed(y, { edited: true, auto: true });
+
+    var recommended = getRecommendedSeasonality(y);
+    if (recommended.ok && weightsEqual(norm, recommended.weights)) {
+      var res = writeSeasonalityConfirmed(y, {
+        edited: true,
+        mode: 'manual',
+        clearDeviation: true,
+      });
+      if (document.getElementById(ALERT_ID)) {
+        pageAlertDismissed = false;
+        renderAlertFw({ force: true, afterAction: true });
+      }
+      return { ok: !!res.ok, confirmed: true, mode: 'manual', matchRecommended: true };
+    }
+
+    // Valid deviation — do not auto-confirm
+    delete pr.seasonalityDeviationApprovedSignature;
+    // Invalidate prior confirm if signature no longer matches after edit
+    persistStoreQuiet();
+    emitChanged(y);
     if (document.getElementById(ALERT_ID)) {
       pageAlertDismissed = false;
       renderAlertFw({ force: true, afterAction: true });
     }
-    return { ok: !!res.ok, confirmed: true, auto: true };
+    return {
+      ok: true,
+      confirmed: false,
+      mode: 'manual',
+      reason: 'deviation',
+      matchRecommended: false,
+    };
   }
 
   function markVisited(year, which) {
@@ -477,6 +816,27 @@
       return ok;
     };
     api.writeMonthlyHlWeights.__kpiPrHooked = true;
+  }
+
+  function refreshSeasonalityModeBadge() {
+    var title =
+      document.querySelector('.sales-data-modal__seasonality-title') ||
+      document.querySelector('[data-sdm-tab="analyze"] .sales-data-modal__seasonality h3');
+    if (!title) return;
+    var snap = evaluate(operatingYear());
+    var mode = snap.seasonalityMode;
+    var badge = title.querySelector('.kpi-pr-season-mode');
+    if (!mode) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'kpi-pr-season-mode';
+      title.appendChild(document.createTextNode(' '));
+      title.appendChild(badge);
+    }
+    badge.textContent = mode === 'auto' ? t('seasonModeAuto') : t('seasonModeManual');
   }
 
   function emitChanged(year) {
@@ -581,6 +941,8 @@
       '.kpi-pr-dialog button.primary { border-color: #c65a32; background: #c65a32; color: #fff; }' +
       'body:not(.office-mode) .kpi-pr-dialog button { border-color: #3dff3d; background: #1a1f24; color: #58e1f3; }' +
       'body:not(.office-mode) .kpi-pr-dialog button.primary { background: #16301a; color: #9eff9e; }' +
+      '.kpi-pr-season-mode { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; opacity: 0.85; letter-spacing: 0.04em; }' +
+      '.kpi-pr-alert__note { margin: 0 0 8px; font-size: 13px; opacity: 0.95; }' +
       /* Remove any leftover SDM confirm bar from prior build */ '' +
       '.kpi-pr-sdm-bar { display: none !important; }';
   }
@@ -757,6 +1119,12 @@
   function runConfirmSeasonality() {
     var y = operatingYear();
     markVisited(y, 'seasonality');
+    var snap = evaluate(y);
+    if (snap.seasonDeviation) {
+      confirmSeasonalityDeviation(y);
+      afterConfirmRefresh();
+      return;
+    }
     var res = confirmSeasonality(y);
     if (res && res.needDefaultConfirm) {
       showDialog(
@@ -765,7 +1133,7 @@
         t('seasonConfirm'),
         t('seasonAdjust'),
         function () {
-          confirmSeasonality(y, { skipDefaultPrompt: true });
+          confirmSeasonality(y, { skipDefaultPrompt: true, mode: 'manual' });
           afterConfirmRefresh();
         },
         function () {
@@ -780,6 +1148,12 @@
       } catch (_a) {}
       return;
     }
+    if (res && res.ok) afterConfirmRefresh();
+  }
+
+  function runRestoreRecommended() {
+    var y = operatingYear();
+    var res = restoreRecommendedSeasonality(y);
     if (res && res.ok) afterConfirmRefresh();
   }
 
@@ -824,11 +1198,22 @@
     if (snap.needsSeasonAction) {
       html +=
         '<div class="kpi-pr-alert__section" data-pr-section="season">' +
-        '<p class="kpi-pr-alert__section-title"></p>' +
-        '<div class="kpi-pr-alert__row">' +
-        '<button type="button" class="kpi-pr-alert__primary" data-pr-act="confirm-season"></button>' +
-        '<button type="button" data-pr-act="adjust-season"></button>' +
-        '</div></div>';
+        '<p class="kpi-pr-alert__section-title"></p>';
+      if (snap.seasonDeviation) {
+        html += '<p class="kpi-pr-alert__note" data-pr-note="deviation"></p>';
+        html +=
+          '<div class="kpi-pr-alert__row">' +
+          '<button type="button" class="kpi-pr-alert__primary" data-pr-act="confirm-season-override"></button>' +
+          '<button type="button" data-pr-act="restore-season"></button>' +
+          '<button type="button" data-pr-act="adjust-season"></button>' +
+          '</div></div>';
+      } else {
+        html +=
+          '<div class="kpi-pr-alert__row">' +
+          '<button type="button" class="kpi-pr-alert__primary" data-pr-act="confirm-season"></button>' +
+          '<button type="button" data-pr-act="adjust-season"></button>' +
+          '</div></div>';
+      }
     }
     if (snap.annualTarget === 'missing') {
       html +=
@@ -855,8 +1240,16 @@
     var seSec = el.querySelector('[data-pr-section="season"]');
     if (seSec) {
       seSec.querySelector('.kpi-pr-alert__section-title').textContent = t('reasonSeason');
-      seSec.querySelector('[data-pr-act="confirm-season"]').textContent = t('confirmSeason');
-      seSec.querySelector('[data-pr-act="adjust-season"]').textContent = t('adjustSeason');
+      var note = seSec.querySelector('[data-pr-note="deviation"]');
+      if (note) note.textContent = t('seasonDeviationBody');
+      var btnConfirm = seSec.querySelector('[data-pr-act="confirm-season"]');
+      if (btnConfirm) btnConfirm.textContent = t('confirmSeason');
+      var btnOverride = seSec.querySelector('[data-pr-act="confirm-season-override"]');
+      if (btnOverride) btnOverride.textContent = t('seasonConfirmOverride');
+      var btnRestore = seSec.querySelector('[data-pr-act="restore-season"]');
+      if (btnRestore) btnRestore.textContent = t('seasonRestoreRecommended');
+      var btnAdj = seSec.querySelector('[data-pr-act="adjust-season"]');
+      if (btnAdj) btnAdj.textContent = t('adjustSeason');
     }
     var anSec = el.querySelector('[data-pr-section="annual"]');
     if (anSec) {
@@ -876,7 +1269,8 @@
       }
       if (act === 'confirm-bd') runConfirmBusinessDays();
       if (act === 'edit-bd' || act === 'edit-annual') openSalesDataModal(false);
-      if (act === 'confirm-season') runConfirmSeasonality();
+      if (act === 'confirm-season' || act === 'confirm-season-override') runConfirmSeasonality();
+      if (act === 'restore-season') runRestoreRecommended();
       if (act === 'adjust-season') openSalesDataModal(true);
     };
   }
@@ -887,24 +1281,36 @@
   }
 
   function bindListeners() {
+    function onDataChanged(ev) {
+      // Avoid re-entry loops from our own emitChanged
+      if (ev && ev.type === 'kpi:planningReadinessChanged') {
+        applyBodyState();
+        refreshTooltips();
+        refreshSeasonalityModeBadge();
+        return;
+      }
+      try {
+        migrateSeasonalityMode(operatingYear());
+      } catch (_m) {}
+      applyBodyState();
+      refreshTooltips();
+      refreshSeasonalityModeBadge();
+      if (document.getElementById(ALERT_ID)) {
+        pageAlertDismissed = false;
+        renderAlertFw({ force: true });
+      }
+    }
     [
       'kpi:businessDayChanged',
       'kpi:annualPlanChanged',
       'kpi:weekdayBaselineChanged',
       'kpi:dailyTargetModeChanged',
+      'kpi:observedChanged',
       'annual:salesDataSaved',
       'annual:pastSalesSaved',
       'kpi:planningReadinessChanged',
     ].forEach(function (ev) {
-      document.addEventListener(ev, function () {
-        applyBodyState();
-        refreshTooltips();
-        // If alert open, re-render actions after data change (invalidation)
-        if (document.getElementById(ALERT_ID)) {
-          pageAlertDismissed = false;
-          renderAlertFw({ force: true });
-        }
-      });
+      document.addEventListener(ev, onDataChanged);
     });
     document.addEventListener('insight:dateChanged', refreshTooltips);
     document.addEventListener('annual:dailyDateChanged', refreshTooltips);
@@ -915,19 +1321,26 @@
     ensureCss();
     removeLegacySdmBar();
     hookWriteMonthlyHlWeights();
-    // KpiYearStore may boot slightly later on some hosts
     setTimeout(hookWriteMonthlyHlWeights, 0);
     setTimeout(hookWriteMonthlyHlWeights, 500);
+    try {
+      migrateSeasonalityMode(operatingYear());
+    } catch (_mig) {}
     applyBodyState();
     refreshTooltips();
+    refreshSeasonalityModeBadge();
     bindListeners();
     setTimeout(function () {
+      try {
+        migrateSeasonalityMode(operatingYear());
+      } catch (_m2) {}
       showPageEntryAlert(false);
       refreshTooltips();
+      refreshSeasonalityModeBadge();
     }, 700);
-    // Keep Focus Bar tip wired after focus redraw
     setInterval(function () {
       if (document.body.classList.contains(BODY_PROVISIONAL)) refreshTooltips();
+      refreshSeasonalityModeBadge();
     }, 2500);
   }
 
@@ -938,6 +1351,11 @@
     evaluate: evaluate,
     confirmBusinessDays: confirmBusinessDays,
     confirmSeasonality: confirmSeasonality,
+    confirmSeasonalityDeviation: confirmSeasonalityDeviation,
+    restoreRecommendedSeasonality: restoreRecommendedSeasonality,
+    applyAutoSeasonality: applyAutoSeasonality,
+    migrateSeasonalityMode: migrateSeasonalityMode,
+    getRecommendedSeasonality: getRecommendedSeasonality,
     canConfirmSeasonality: canConfirmSeasonality,
     isFormalSeasonalityValid: isFormalSeasonalityValid,
     onSeasonalityUserSaved: onSeasonalityUserSaved,
@@ -953,6 +1371,7 @@
     refreshTooltips: refreshTooltips,
     runConfirmBusinessDays: runConfirmBusinessDays,
     runConfirmSeasonality: runConfirmSeasonality,
+    runRestoreRecommended: runRestoreRecommended,
     removeLegacySdmBar: removeLegacySdmBar,
     hookWriteMonthlyHlWeights: hookWriteMonthlyHlWeights,
   };

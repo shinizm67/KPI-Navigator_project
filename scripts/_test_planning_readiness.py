@@ -214,22 +214,13 @@ def main() -> int:
     check(auto["pr"].get("seasonalityEdited") is True, "D3 edited flag set")
     check(not auto["pr"].get("seasonalityConfirmedSignature"), "D3 no signature")
 
-    # 4 user edit valid → auto confirmed
+    # 4 user edit valid but no recommendation match in pure helper → still marks edited
+    # (JS path: MANUAL deviation → not auto-confirmed without override)
     auto = maybe_auto_confirm_seasonality(weights=good, source="sales-data-analyze", pr={}, year=y)
-    check(auto["confirmed"] is True, "D4 valid edit auto-confirmed")
-    check(auto["pr"].get("seasonalityConfirmedSignature") == seasonality_signature(y, good), "D4 sig saved")
-    r = evaluate(
-        year=y,
-        annual_target=10_000_000,
-        business_days_map=bd,
-        hl_weights=good,
-        pr={
-            "businessDaysConfirmedSignature": bd_sig,
-            "seasonalityConfirmedSignature": auto["pr"]["seasonalityConfirmedSignature"],
-        },
-    )
-    check(r["state"] == STATE_READY, "D4/5 reload with auto sig → READY (no Season action)")
-    check(r["seasonality"] == "confirmed", "D5 season confirmed after valid edit save")
+    check(auto["pr"].get("seasonalityEdited") is True, "D4 edited flag set on valid user save")
+    check(auto["confirmed"] is True, "D4 lib helper still writes sig when no deviation context")
+    # Note: runtime JS requires recommendation match OR explicit deviation approve.
+    # Lib helper remains a low-level signature writer for unit tests.
 
     # 6 confirmed → change → PROVISIONAL
     good2 = good[:]
@@ -293,11 +284,17 @@ def main() -> int:
     check("hookWriteMonthlyHlWeights" in js, "HL write hook")
     check("seasonalityEdited" in js, "edited metadata")
     check("isFormalSeasonalityValid" in js, "formal valid helper")
+    check("seasonalityMode" in js, "AUTO/MANUAL mode")
+    check("KpiSeasonalityAllocator" in js, "allocator integration")
+    check("migrateSeasonalityMode" in js, "migration")
+    check("confirmSeasonalityDeviation" in js, "deviation confirm")
+    check("restoreRecommendedSeasonality" in js, "restore recommended")
 
     # 365-open / default season confirm prompts
     check("年間365日すべて営業日として設定されています" in js, "BD 365 confirm copy JP")
     check("月次配分は現在デフォルト設定です" in js, "Season default confirm copy JP")
     check("月次配分の設定が確定条件を満たしていません" in js, "Season invalid copy JP")
+    check("KPN推奨の月次配分と異なる設定があります" in js, "deviation copy JP")
     check("skipAllOpenPrompt" in js, "BD confirm skip flag")
     check("skipDefaultPrompt" in js, "Season confirm skip flag")
 
@@ -320,9 +317,10 @@ def main() -> int:
         html = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
+        check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260919-pr3" in html,
-            f"{rel} cache-bust pr3",
+            "kpi-planning-readiness.js?v=20260919-pr4" in html,
+            f"{rel} cache-bust pr4",
         )
 
     # regression markers still present
