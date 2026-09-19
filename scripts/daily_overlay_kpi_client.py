@@ -269,7 +269,7 @@ def daily_overlay_kpi_js() -> str:
             m.hasPlan ? fmtOverlayDiff(m.mtdA, m.mtdT) : dash,
             m.hasPlan ? fmtOverlayAchPct(m.mtdA, m.mtdT) : dash,
             m.hasPlan && m.monthlyDailyNeed != null ? fmtOverlayMoney(m.monthlyDailyNeed) : dash,
-            fmtOverlayCount(m.monthRemainingBD),
+            m.hasPlan ? fmtOverlayCount(m.monthRemainingBD) : dash,
           ],
           m.hasPlan && Number.isFinite(Number(m.mtdT)) && Number(m.mtdT) > 0
             ? {{ idx: 2, actual: Number(m.mtdA), target: Number(m.mtdT) }}
@@ -290,7 +290,7 @@ def daily_overlay_kpi_js() -> str:
         setValueBoxes(annualG2, [
           m.annualTarget != null ? fmtOverlayMoney(m.annualTarget) : dash,
           m.hasPlan && m.annualRemaining != null ? fmtOverlayMoney(m.annualRemaining) : dash,
-          fmtOverlayCount(m.yearRemainingBD),
+          m.hasPlan ? fmtOverlayCount(m.yearRemainingBD) : dash,
           m.hasPlan && m.annualDailyNeed != null ? fmtOverlayMoney(m.annualDailyNeed) : dash,
         ]);
         setOverlayGraph(dailyGraph, m.dailySales, m.dailyTarget, hasDailyPlan);
