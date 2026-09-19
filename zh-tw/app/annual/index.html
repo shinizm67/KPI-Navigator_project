@@ -13685,8 +13685,9 @@
       td.sales-data-modal__cb-td {
       background: var(--sdm-bg-active-55);
     }
-    .sales-data-modal__monthly-td,
-    .sales-data-modal__annual-td {
+    /* Beat `.sales-data-modal__table td` (0,2,1) so readonly tokens apply. */
+    .sales-data-modal__table td.sales-data-modal__monthly-td,
+    .sales-data-modal__table td.sales-data-modal__annual-td {
       height: 40px;
       padding: 0 8px;
       font-size: var(--sdm-fs-body);
