@@ -140,9 +140,16 @@ Sales Data Analyze の **参考繁閑期%（Reference Seasonality）** は次の
 - 最低 **1 年以上**選択必須（0 年 → Reference 不可 → Seasonality **PROVISIONAL**）。
 - 1 / 2 / 3 / 4+ / 長期蓄積（10・20・30 年等）すべて同じ平均式。年を重ねるごとに候補が増える。
 - 新年度で直前年が候補に加わっても、**既存 OFF を勝手に ON へ戻さない**。未 persist 時の default は従来どおり直近最大 2 年（`getDefaultWeekdayBaselineYears`）。
-- 永続化: `years[operatingYear].plan.weekdayBaselineYears`（新 DB schema 禁止）。
+- 永続化: `years[operatingYear].plan.weekdayBaselineYears`（ON リスト）+ `weekdayBaselineExcludedYears`（明示 OFF）。新 DB schema 禁止。
 
-**禁止:** Reference を「直近最大 2 年」へ戻すこと。固定 year limit を再導入すること。
+**Baseline Auto-Growth（正式）:**
+
+- 正常な過去年は年を重ねるごとに Baseline 母集団へ **自動追加**（eligible − explicit OFF）。
+- 例: 2026 で 2024/2025 ON → 2027 では 2024/2025/2026 ON。
+- ユーザーが明示 OFF した年は `weekdayBaselineExcludedYears` に永続化し、新年度でも OFF を維持。
+- Legacy（ON リストのみ）は `≤ max(selected)` の未選択年を excluded として再構成。それより新しい eligible 年は自動 ON。
+
+**禁止:** Reference を「直近最大 2 年」へ戻すこと。固定 year limit を再導入すること。明示 OFF 年を勝手に ON へ戻すこと。異常年の自動 OFF。
 
 ### 7.1b Automatic Seasonality 連携
 
@@ -162,6 +169,31 @@ Selected Baseline Years
 | **MANUAL** | Reference / Recommended は再計算するが、ユーザー weights は **overwrite しない**。Recommended との差異を再評価（deviation warning 可） |
 
 AUTO source signature は次を含む: selected year IDs・selected year count（`n=`）・resulting monthly reference values。
+
+### 7.1c Seasonality Anomaly Warning（警告のみ・自動除外なし）
+
+| 項目 | 正本 |
+|------|------|
+| 目的 | 他の選択年と比べ繁閑 **パターン** が著しく乖離する年に気付かせる |
+| 入力 | 各年 `monthlyPct`（12）。**年商の高低だけでは判定しない**（売上水準 anomaly は別概念） |
+| 参照 | 判定対象以外の **selected** 年の月次 median（leave-one-out） |
+| 指標 | MAE と max\|Δ\|。閾値: MAE ≥ 12 または maxDev ≥ 25（fixture 調査: 正常≈1.5–2.5 / 極端≈41） |
+| API | `KpiYearStore.assessSeasonalityAnomalies(operatingYear)` |
+| 自動 OFF | **禁止**。flag は warning のみ。最終判断はユーザー |
+| Planning Readiness | anomaly だけでは強制 PROVISIONAL にしない |
+| UI | Baseline 一覧に ⚠。Annual/Monthly Cockpit「月次配分率合計」付近に小さな warning |
+
+### 7.1d Tutorial ON/OFF（説明 Tooltip の正式 contract）
+
+正本: [`tutorial-tooltips-sync-memo.md`](./tutorial-tooltips-sync-memo.md)
+
+| 状態 | 挙動 |
+|------|------|
+| Tutorial ON | 異常の **詳細説明 Tooltip** を表示可（`data-kpi-tutorial-tip` + `data-tooltip`） |
+| Tutorial OFF | 詳細 Tooltip は非表示（`body.tutorial-advanced-off`） |
+| 共通 | **⚠ / warning color は Tutorial OFF でも残す**（異常そのものは消さない） |
+
+保存キー: `sessionStorage['kpi-tutorial-advanced']`（`'1'`/`'0'`）。
 
 ### 7.2 Automatic Seasonality（KPN Recommended）
 
@@ -208,6 +240,8 @@ MANUAL deviation Alert:
 | キー | 用途 |
 |------|------|
 | `years[Y].plan.monthlyHlWeights` | 現行どおり配分値 |
+| `years[Y].plan.weekdayBaselineYears` | Baseline ON 年リスト |
+| `years[Y].plan.weekdayBaselineExcludedYears` | 明示 OFF 年（auto-growth でも復活させない） |
 | `years[Y].planningReadiness.seasonalityMode` | `"auto"` \| `"manual"` |
 | `seasonalityAutoSourceSignature` | Recommended の元 Reference signature |
 | `seasonalityRecommendedSignature` | Recommended weights signature |

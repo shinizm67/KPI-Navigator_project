@@ -138,8 +138,8 @@ def main() -> int:
         html = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
-        check("kpi-planning-readiness.js?v=20260919-pr6" in html, f"{rel} cache-bust pr6")
-        check("kpi-seasonality-allocator.js?v=20260919-pr6" in html, f"{rel} allocator script")
+        check("kpi-planning-readiness.js?v=20260919-pr7" in html, f"{rel} cache-bust pr7")
+        check("kpi-seasonality-allocator.js?v=20260919-pr7" in html, f"{rel} allocator script")
 
     print(f"passed={PASSED} failed={FAILED}")
     return 1 if FAILED else 0

@@ -6791,6 +6791,8 @@
 
 
         
+        
+        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
 
@@ -6867,20 +6869,172 @@
           return picked;
         }
 
+        function normalizeWeekdayBaselineExcludedYears(years, operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var seen = {};
+          var out = [];
+          (years || []).forEach(function (raw) {
+            var y = Number(raw);
+            if (!Number.isFinite(y) || y >= oy || seen[y]) return;
+            seen[y] = true;
+            out.push(y);
+          });
+          return out.sort(function (a, b) {
+            return a - b;
+          });
+        }
+
+        function planHasWeekdayBaselineState(plan) {
+          if (!plan) return false;
+          if (Array.isArray(plan.weekdayBaselineExcludedYears)) return true;
+          if (
+            Array.isArray(plan.weekdayBaselineYears) &&
+            plan.weekdayBaselineYears.length
+          ) {
+            return true;
+          }
+          return false;
+        }
+
+        /* Legacy ON-list only → reconstruct explicit OFF among years that were
+           already candidates (≤ max selected). Newer eligible years auto-ON. */
+        function reconstructExcludedFromLegacySelection(selected, operatingYear) {
+          var oy = Number(operatingYear);
+          var selectedNorm = normalizeWeekdayBaselineYears(selected, oy);
+          if (!selectedNorm.length) return [];
+          var maxSel = selectedNorm[selectedNorm.length - 1];
+          var eligible = listEligibleWeekdayBaselineYears(oy);
+          var out = [];
+          eligible.forEach(function (y) {
+            if (y <= maxSel && selectedNorm.indexOf(y) < 0) out.push(y);
+          });
+          return out;
+        }
+
+        function findWeekdayBaselineStateRecord(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          for (var y = oy; y >= oy - 80; y--) {
+            var rec = store.years[y];
+            if (!rec || !rec.plan) continue;
+            if (!planHasWeekdayBaselineState(rec.plan)) continue;
+            return { year: y, plan: rec.plan };
+          }
+          return null;
+        }
+
+        function resolveWeekdayBaselineExcludedYears(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var found = findWeekdayBaselineStateRecord(oy);
+          if (!found) return [];
+          var plan = found.plan;
+          if (Array.isArray(plan.weekdayBaselineExcludedYears)) {
+            return normalizeWeekdayBaselineExcludedYears(
+              plan.weekdayBaselineExcludedYears,
+              oy
+            );
+          }
+          return reconstructExcludedFromLegacySelection(plan.weekdayBaselineYears, oy);
+        }
+
+        function materializeWeekdayBaselineState(operatingYear, selected, excluded, meta) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return false;
+          var selectedNorm = normalizeWeekdayBaselineYears(selected, oy);
+          if (!selectedNorm.length) return false;
+          var excludedNorm = normalizeWeekdayBaselineExcludedYears(excluded, oy);
+          var rec = ensureYearRecord(oy);
+          if (!rec.plan) rec.plan = {};
+          var prevSel = Array.isArray(rec.plan.weekdayBaselineYears)
+            ? rec.plan.weekdayBaselineYears.slice()
+            : null;
+          var prevEx = Array.isArray(rec.plan.weekdayBaselineExcludedYears)
+            ? rec.plan.weekdayBaselineExcludedYears.slice()
+            : null;
+          var sameSel =
+            prevSel &&
+            prevSel.length === selectedNorm.length &&
+            prevSel.every(function (y, i) {
+              return Number(y) === selectedNorm[i];
+            });
+          var sameEx =
+            prevEx &&
+            prevEx.length === excludedNorm.length &&
+            prevEx.every(function (y, i) {
+              return Number(y) === excludedNorm[i];
+            });
+          rec.plan.weekdayBaselineYears = selectedNorm.slice();
+          rec.plan.weekdayBaselineExcludedYears = excludedNorm.slice();
+          rec.plan.weekdayBaselineUpdatedAt = Date.now();
+          rec.plan.weekdayBaselineSource =
+            (meta && meta.source) || rec.plan.weekdayBaselineSource || 'kpi-year-store';
+          if (sameSel && sameEx) return true;
+          if (!(meta && meta.skipPersist)) persistStore();
+          clearDailyTargetDisplayCache();
+          if (!(meta && meta.silent)) {
+            document.dispatchEvent(
+              new CustomEvent('kpi:weekdayBaselineChanged', {
+                detail: {
+                  year: oy,
+                  weekdayBaselineYears: selectedNorm.slice(),
+                  weekdayBaselineExcludedYears: excludedNorm.slice(),
+                  source: rec.plan.weekdayBaselineSource,
+                  autoGrowth: !!(meta && meta.autoGrowth),
+                },
+              })
+            );
+          }
+          return true;
+        }
+
+        function readWeekdayBaselineExcludedYears(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) y = getOperatingYear();
+          return resolveWeekdayBaselineExcludedYears(y);
+        }
+
         function readWeekdayBaselineYears(year) {
           var y = Number(year);
-          if (!Number.isFinite(y)) return getDefaultWeekdayBaselineYears(getOperatingYear());
-          var rec = store.years[y];
-          if (
-            rec &&
-            rec.plan &&
-            rec.plan.weekdayBaselineYears &&
-            rec.plan.weekdayBaselineYears.length
-          ) {
-            var normalized = normalizeWeekdayBaselineYears(rec.plan.weekdayBaselineYears, y);
-            if (normalized.length) return normalized;
+          if (!Number.isFinite(y)) y = getOperatingYear();
+          var eligible = listEligibleWeekdayBaselineYears(y);
+          var found = findWeekdayBaselineStateRecord(y);
+          if (!found) {
+            return getDefaultWeekdayBaselineYears(y);
           }
-          return getDefaultWeekdayBaselineYears(y);
+          var excluded = resolveWeekdayBaselineExcludedYears(y);
+          var selected = [];
+          eligible.forEach(function (ey) {
+            if (excluded.indexOf(ey) < 0) selected.push(ey);
+          });
+          if (!selected.length) {
+            return getDefaultWeekdayBaselineYears(y);
+          }
+          /* Auto-growth: persist grown ON set onto operating year without flipping OFF. */
+          var rec = store.years[y];
+          var needsMaterialize =
+            !rec ||
+            !rec.plan ||
+            !Array.isArray(rec.plan.weekdayBaselineExcludedYears) ||
+            !Array.isArray(rec.plan.weekdayBaselineYears) ||
+            rec.plan.weekdayBaselineYears.length !== selected.length ||
+            selected.some(function (sy, i) {
+              return Number(rec.plan.weekdayBaselineYears[i]) !== sy;
+            });
+          if (needsMaterialize) {
+            var prevLen =
+              rec && rec.plan && Array.isArray(rec.plan.weekdayBaselineYears)
+                ? rec.plan.weekdayBaselineYears.length
+                : 0;
+            var grew = selected.length > prevLen;
+            materializeWeekdayBaselineState(y, selected, excluded, {
+              source: 'baseline-auto-growth',
+              autoGrowth: true,
+              silent: !grew,
+            });
+          }
+          return selected.slice();
         }
 
         function writeWeekdayBaselineYears(year, years, meta) {
@@ -6888,23 +7042,165 @@
           if (!Number.isFinite(y)) return false;
           var normalized = normalizeWeekdayBaselineYears(years, y);
           if (!normalized.length) return false;
-          var rec = ensureYearRecord(y);
-          if (!rec.plan) rec.plan = {};
-          rec.plan.weekdayBaselineYears = normalized.slice();
-          rec.plan.weekdayBaselineUpdatedAt = Date.now();
-          rec.plan.weekdayBaselineSource = (meta && meta.source) || 'kpi-year-store';
-          persistStore();
-          clearDailyTargetDisplayCache();
-          document.dispatchEvent(
-            new CustomEvent('kpi:weekdayBaselineChanged', {
-              detail: {
+          var eligible = listEligibleWeekdayBaselineYears(y);
+          var excluded = [];
+          eligible.forEach(function (ey) {
+            if (normalized.indexOf(ey) < 0) excluded.push(ey);
+          });
+          /* Keep explicit OFF for years temporarily without data. */
+          resolveWeekdayBaselineExcludedYears(y).forEach(function (ey) {
+            if (ey >= y) return;
+            if (eligible.indexOf(ey) >= 0) return;
+            if (normalized.indexOf(ey) >= 0) return;
+            if (excluded.indexOf(ey) < 0) excluded.push(ey);
+          });
+          excluded.sort(function (a, b) {
+            return a - b;
+          });
+          return materializeWeekdayBaselineState(y, normalized, excluded, meta || {
+            source: 'kpi-year-store',
+          });
+        }
+
+        var SEASONALITY_ANOMALY_MAE = 12;
+        var SEASONALITY_ANOMALY_MAX_DEV = 25;
+
+        function seasonalityMedianMonths(rows) {
+          var out = [];
+          for (var m = 0; m < 12; m++) {
+            var col = [];
+            rows.forEach(function (row) {
+              var v = row && row[m] != null ? Number(row[m]) : NaN;
+              if (Number.isFinite(v)) col.push(v);
+            });
+            if (!col.length) {
+              out.push(null);
+              continue;
+            }
+            col.sort(function (a, b) {
+              return a - b;
+            });
+            var mid = Math.floor(col.length / 2);
+            out.push(
+              col.length % 2
+                ? col[mid]
+                : Math.round(((col[mid - 1] + col[mid]) / 2) * 100) / 100
+            );
+          }
+          return out;
+        }
+
+        function seasonalityDistance(a, b) {
+          if (!a || !b || a.length !== 12 || b.length !== 12) {
+            return { mae: null, maxDev: null };
+          }
+          var sum = 0;
+          var n = 0;
+          var maxDev = 0;
+          for (var i = 0; i < 12; i++) {
+            var av = Number(a[i]);
+            var bv = Number(b[i]);
+            if (!Number.isFinite(av) || !Number.isFinite(bv)) continue;
+            var d = Math.abs(av - bv);
+            sum += d;
+            n++;
+            if (d > maxDev) maxDev = d;
+          }
+          if (!n) return { mae: null, maxDev: null };
+          return {
+            mae: Math.round((sum / n) * 100) / 100,
+            maxDev: Math.round(maxDev * 100) / 100,
+          };
+        }
+
+        function assessSeasonalityAnomalies(operatingYear) {
+          /* Pattern-only: monthlyPct leave-one-out median vs peers among selected.
+             Never auto-OFF. Sales level alone is not used. */
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) oy = getOperatingYear();
+          var selected = readWeekdayBaselineYears(oy);
+          var eligible = listEligibleWeekdayBaselineYears(oy);
+          var vectors = {};
+          eligible.forEach(function (y) {
+            var obs =
+              typeof observedForPastYear === 'function' ? observedForPastYear(y) : null;
+            if (
+              !obs ||
+              !obs.monthlyPct ||
+              obs.monthlyPct.length !== 12
+            ) {
+              return;
+            }
+            var row = [];
+            var ok = true;
+            for (var i = 0; i < 12; i++) {
+              var v = Number(obs.monthlyPct[i]);
+              if (!Number.isFinite(v)) {
+                ok = false;
+                break;
+              }
+              row.push(v);
+            }
+            if (ok) vectors[y] = row;
+          });
+          var selectedSet = {};
+          selected.forEach(function (y) {
+            selectedSet[y] = true;
+          });
+          var details = [];
+          var flaggedYears = [];
+          Object.keys(vectors).forEach(function (yk) {
+            var y = Number(yk);
+            var peers = [];
+            selected.forEach(function (sy) {
+              if (sy === y) return;
+              if (vectors[sy]) peers.push(vectors[sy]);
+            });
+            if (peers.length < 1) {
+              details.push({
                 year: y,
-                weekdayBaselineYears: normalized.slice(),
-                source: rec.plan.weekdayBaselineSource,
-              },
-            })
-          );
-          return true;
+                flagged: false,
+                reason: 'insufficient-peers',
+                score: null,
+                maxDev: null,
+                selected: !!selectedSet[y],
+              });
+              return;
+            }
+            var ref = seasonalityMedianMonths(peers);
+            var dist = seasonalityDistance(vectors[y], ref);
+            var flagged =
+              dist.mae != null &&
+              (dist.mae >= SEASONALITY_ANOMALY_MAE ||
+                dist.maxDev >= SEASONALITY_ANOMALY_MAX_DEV);
+            if (flagged) flaggedYears.push(y);
+            details.push({
+              year: y,
+              flagged: flagged,
+              reason: flagged ? 'pattern-divergence' : 'ok',
+              score: dist.mae,
+              maxDev: dist.maxDev,
+              selected: !!selectedSet[y],
+            });
+          });
+          flaggedYears.sort(function (a, b) {
+            return a - b;
+          });
+          details.sort(function (a, b) {
+            return a.year - b.year;
+          });
+          var anySelectedFlagged = flaggedYears.some(function (y) {
+            return !!selectedSet[y];
+          });
+          return {
+            operatingYear: oy,
+            flaggedYears: flaggedYears,
+            details: details,
+            anyFlagged: flaggedYears.length > 0,
+            anySelectedFlagged: anySelectedFlagged,
+            maeThreshold: SEASONALITY_ANOMALY_MAE,
+            maxDevThreshold: SEASONALITY_ANOMALY_MAX_DEV,
+          };
         }
 
         function readTimelineSalesAmount(iso) {
@@ -7493,8 +7789,10 @@
           ensureOperatingYearPlanDefaults: ensureOperatingYearPlanDefaults,
           readWeekdayBaselineYears: readWeekdayBaselineYears,
           writeWeekdayBaselineYears: writeWeekdayBaselineYears,
+          readWeekdayBaselineExcludedYears: readWeekdayBaselineExcludedYears,
           getDefaultWeekdayBaselineYears: getDefaultWeekdayBaselineYears,
           listEligibleWeekdayBaselineYears: listEligibleWeekdayBaselineYears,
+          assessSeasonalityAnomalies: assessSeasonalityAnomalies,
           computeWeekdayShareForYear: computeWeekdayShareForYear,
           computeWeekdayShareAvg: computeWeekdayShareAvg,
           computeWeekdayShareMatrix: computeWeekdayShareMatrix,

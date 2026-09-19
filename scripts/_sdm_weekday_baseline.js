@@ -18,16 +18,24 @@
           );
         }
 
-        function isJa() {
-          return (
-            String(document.documentElement.getAttribute('lang') || '')
-              .toLowerCase()
-              .indexOf('ja') === 0
-          );
+        function pageLang() {
+          try {
+            var lang = String(
+              (document.documentElement && document.documentElement.getAttribute('lang')) || ''
+            ).toLowerCase();
+            if (lang.indexOf('zh') === 0) return 'zh';
+            if (lang.indexOf('en') === 0) return 'en';
+            return 'ja';
+          } catch (_e) {
+            return 'ja';
+          }
         }
 
-        function t(ja, en) {
-          return isJa() ? ja : en;
+        function t3(ja, en, zh) {
+          var lang = pageLang();
+          if (lang === 'zh') return zh || en;
+          if (lang === 'en') return en;
+          return ja;
         }
 
         function getOperatingYear() {
@@ -116,6 +124,23 @@
           return KpiYearStore.readWeekdayBaselineYears(operatingYear).slice();
         }
 
+        function anomalyYearsSet(operatingYear) {
+          var set = {};
+          if (
+            !storeReady() ||
+            typeof KpiYearStore.assessSeasonalityAnomalies !== 'function'
+          ) {
+            return set;
+          }
+          try {
+            var pack = KpiYearStore.assessSeasonalityAnomalies(operatingYear);
+            (pack && pack.flaggedYears ? pack.flaggedYears : []).forEach(function (y) {
+              set[Number(y)] = true;
+            });
+          } catch (_e) {}
+          return set;
+        }
+
         function hideStatus() {
           if (!statusEl) return;
           statusEl.textContent = '';
@@ -129,12 +154,26 @@
         }
 
         function hintForYear(year, hasData) {
-          if (!hasData) return t('データなし', 'No data');
+          if (!hasData) {
+            return t3('データなし', 'No data', '無資料');
+          }
           var n = countPositiveTimelineDays(year);
           if (n > 0) {
-            return t('日次 ' + n + ' 日入力済み', n + ' daily entries saved');
+            return t3(
+              '日次 ' + n + ' 日入力済み',
+              n + ' daily entries saved',
+              '已輸入日次 ' + n + ' 日'
+            );
           }
-          return t('入力済み', 'Has data');
+          return t3('入力済み', 'Has data', '已有資料');
+        }
+
+        function anomalyTip() {
+          return t3(
+            '他の選択年度と比べ、月次繁閑パターンの乖離が大きい年度です。',
+            'Seasonality pattern diverges sharply from other selected years.',
+            '與其他選定年度相比，月次淡旺季型態差異很大。'
+          );
         }
 
         function writeSelection(years, operatingYear) {
@@ -168,13 +207,18 @@
           selected.forEach(function (y) {
             selectedSet[y] = true;
           });
+          var anomalies = anomalyYearsSet(oy);
 
           listEl.innerHTML = '';
           var years = listDisplayYears(oy);
           years.forEach(function (year) {
             var hasData = yearHasData(year);
+            var isAnomaly = !!anomalies[year];
             var row = document.createElement('label');
-            row.className = 'sdm-weekday-baseline__row' + (hasData ? '' : ' is-disabled');
+            row.className =
+              'sdm-weekday-baseline__row' +
+              (hasData ? '' : ' is-disabled') +
+              (isAnomaly ? ' is-anomaly' : '');
             row.setAttribute('data-wbl-year', String(year));
 
             var cb = document.createElement('input');
@@ -195,6 +239,16 @@
 
             row.appendChild(cb);
             row.appendChild(yearEl);
+            if (isAnomaly) {
+              var mark = document.createElement('span');
+              mark.className = 'sdm-weekday-baseline__anomaly';
+              mark.setAttribute('aria-hidden', 'true');
+              mark.textContent = '⚠';
+              mark.setAttribute('data-kpi-tutorial-tip', '');
+              mark.setAttribute('data-tooltip', anomalyTip());
+              mark.setAttribute('tabindex', '0');
+              row.appendChild(mark);
+            }
             row.appendChild(hintEl);
             listEl.appendChild(row);
           });
@@ -219,13 +273,15 @@
           var next = collectCheckedYears();
           if (!next.length) {
             cb.checked = true;
-            showStatus(t('1年以上選んでください', 'Select at least one year'));
+            showStatus(
+              t3('1年以上選んでください', 'Select at least one year', '請至少選擇一年')
+            );
             return;
           }
           hideStatus();
           if (!writeSelection(next, oy)) {
             render();
-            showStatus(t('保存できませんでした', 'Could not save'));
+            showStatus(t3('保存できませんでした', 'Could not save', '無法儲存'));
           }
         }
 
@@ -234,12 +290,18 @@
           var oy = getOperatingYear();
           var defaults = KpiYearStore.getDefaultWeekdayBaselineYears(oy);
           if (!defaults.length) {
-            showStatus(t('選択可能な年がありません', 'No eligible years to select'));
+            showStatus(
+              t3(
+                '選択可能な年がありません',
+                'No eligible years to select',
+                '沒有可選年度'
+              )
+            );
             return;
           }
           hideStatus();
           if (!writeSelection(defaults, oy)) {
-            showStatus(t('保存できませんでした', 'Could not save'));
+            showStatus(t3('保存できませんでした', 'Could not save', '無法儲存'));
           }
           render();
         }
@@ -255,6 +317,9 @@
           render();
         });
         document.addEventListener('kpi:dailyTargetModeChanged', function () {
+          render();
+        });
+        document.addEventListener('kpi:observedChanged', function () {
           render();
         });
 

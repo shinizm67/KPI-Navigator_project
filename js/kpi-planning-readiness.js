@@ -76,6 +76,9 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: '閉じる',
+        anomalyAllocTip:
+          '選択中のベースライン年に、過去の繁閑パターンから大きく乖離した年度があります。\nベースライン年設定を確認してください。',
+        anomalyAllocAria: '繁閑パターン乖離の警告',
       },
       en: {
         confirmBd: 'Confirm business days',
@@ -109,6 +112,9 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: 'Close',
+        anomalyAllocTip:
+          'A selected baseline year diverges sharply from past seasonality patterns.\nReview baseline year settings.',
+        anomalyAllocAria: 'Seasonality pattern divergence warning',
       },
       zh: {
         confirmBd: '確認營業日設定',
@@ -139,6 +145,9 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: '關閉',
+        anomalyAllocTip:
+          '選定的基準年中，有年度的淡旺季型態與過去差異很大。\n請確認基準年設定。',
+        anomalyAllocAria: '淡旺季型態差異警告',
       },
     };
     return (table[lang] || table.ja)[key] || (table.ja[key] || key);
@@ -856,6 +865,7 @@
     document.body.classList.remove(BODY_PROVISIONAL, BODY_NOT_READY);
     if (snap.state === STATE.PROVISIONAL) document.body.classList.add(BODY_PROVISIONAL);
     if (snap.state === STATE.NOT_READY) document.body.classList.add(BODY_NOT_READY);
+    refreshSeasonalityAnomalyUi();
   }
 
   function ensureCss() {
@@ -943,8 +953,87 @@
       'body:not(.office-mode) .kpi-pr-dialog button.primary { background: #16301a; color: #9eff9e; }' +
       '.kpi-pr-season-mode { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; opacity: 0.85; letter-spacing: 0.04em; }' +
       '.kpi-pr-alert__note { margin: 0 0 8px; font-size: 13px; opacity: 0.95; }' +
+      /* Seasonality anomaly — marker stays; detailed tip respects Tutorial */ '' +
+      '.annual-kpi-allocation-cluster.is-seasonality-anomaly .annual-kpi-strip-label--allocation,' +
+      '.annual-kpi-allocation-cluster.is-seasonality-anomaly .annual-allocation-percent {' +
+      '  color: #d97706;' +
+      '}' +
+      '.kpi-pr-anomaly-mark {' +
+      '  display: inline-block; margin-left: 6px; font-size: 12px; line-height: 1;' +
+      '  color: #d97706; vertical-align: middle; cursor: help; position: relative;' +
+      '}' +
+      '.kpi-pr-anomaly-mark[data-tooltip]:hover::after,' +
+      '.kpi-pr-anomaly-mark[data-tooltip]:focus-visible::after {' +
+      '  content: attr(data-tooltip); position: absolute; left: 50%; bottom: calc(100% + 8px);' +
+      '  transform: translateX(-50%); width: max-content; max-width: 260px; padding: 6px 8px;' +
+      '  border: 1px solid rgba(217,119,6,0.55); background: rgba(12,14,16,0.95); color: #fbbf24;' +
+      '  font-size: 11px; font-weight: 600; line-height: 1.35; white-space: pre-line; z-index: 40;' +
+      '  pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);' +
+      '}' +
+      'body.office-mode .kpi-pr-anomaly-mark[data-tooltip]:hover::after,' +
+      'body.office-mode .kpi-pr-anomaly-mark[data-tooltip]:focus-visible::after {' +
+      '  background: #fffbeb; color: #92400e; border-color: rgba(180,100,30,0.45);' +
+      '}' +
+      'body.tutorial-advanced-off .kpi-pr-anomaly-mark[data-kpi-tutorial-tip]:hover::after,' +
+      'body.tutorial-advanced-off .kpi-pr-anomaly-mark[data-kpi-tutorial-tip]:focus-visible::after,' +
+      'body.tutorial-advanced-off .sdm-weekday-baseline__anomaly[data-kpi-tutorial-tip]:hover::after,' +
+      'body.tutorial-advanced-off .sdm-weekday-baseline__anomaly[data-kpi-tutorial-tip]:focus-visible::after {' +
+      '  content: none !important;' +
+      '}' +
+      '.sdm-weekday-baseline__anomaly {' +
+      '  display: inline-block; margin-left: 4px; color: #d97706; font-size: 12px;' +
+      '  cursor: help; position: relative; flex-shrink: 0;' +
+      '}' +
+      '.sdm-weekday-baseline__row.is-anomaly .sdm-weekday-baseline__year { color: #d97706; }' +
+      '.sdm-weekday-baseline__anomaly[data-tooltip]:hover::after,' +
+      '.sdm-weekday-baseline__anomaly[data-tooltip]:focus-visible::after {' +
+      '  content: attr(data-tooltip); position: absolute; left: 50%; bottom: calc(100% + 6px);' +
+      '  transform: translateX(-50%); width: max-content; max-width: 220px; padding: 5px 7px;' +
+      '  border: 1px solid rgba(217,119,6,0.55); background: rgba(12,14,16,0.95); color: #fbbf24;' +
+      '  font-size: 11px; font-weight: 600; line-height: 1.3; white-space: normal; z-index: 50;' +
+      '  pointer-events: none;' +
+      '}' +
       /* Remove any leftover SDM confirm bar from prior build */ '' +
       '.kpi-pr-sdm-bar { display: none !important; }';
+  }
+
+  function refreshSeasonalityAnomalyUi() {
+    var api = storeApi();
+    var y = operatingYear();
+    var pack = null;
+    if (api && typeof api.assessSeasonalityAnomalies === 'function') {
+      try {
+        pack = api.assessSeasonalityAnomalies(y);
+      } catch (_e) {
+        pack = null;
+      }
+    }
+    var warn = !!(pack && pack.anySelectedFlagged);
+    var clusters = document.querySelectorAll('.annual-kpi-allocation-cluster');
+    for (var i = 0; i < clusters.length; i++) {
+      var cluster = clusters[i];
+      cluster.classList.toggle('is-seasonality-anomaly', warn);
+      if (warn) cluster.removeAttribute('aria-hidden');
+      var label = cluster.querySelector('.annual-kpi-strip-label--allocation');
+      if (!label) continue;
+      var mark = label.querySelector('.kpi-pr-anomaly-mark');
+      if (warn) {
+        if (!mark) {
+          mark = document.createElement('span');
+          mark.className = 'kpi-pr-anomaly-mark';
+          mark.setAttribute('data-kpi-tutorial-tip', '');
+          mark.setAttribute('tabindex', '0');
+          mark.textContent = '⚠';
+          label.appendChild(mark);
+        }
+        mark.setAttribute('data-tooltip', t('anomalyAllocTip'));
+        mark.setAttribute('aria-label', t('anomalyAllocAria'));
+        mark.removeAttribute('hidden');
+      } else if (mark) {
+        mark.setAttribute('hidden', '');
+        mark.removeAttribute('data-tooltip');
+      }
+    }
   }
 
   function reasonLabels(snap) {
@@ -1369,6 +1458,7 @@
     renderAlertFw: renderAlertFw,
     applyBodyState: applyBodyState,
     refreshTooltips: refreshTooltips,
+    refreshSeasonalityAnomalyUi: refreshSeasonalityAnomalyUi,
     runConfirmBusinessDays: runConfirmBusinessDays,
     runConfirmSeasonality: runConfirmSeasonality,
     runRestoreRecommended: runRestoreRecommended,

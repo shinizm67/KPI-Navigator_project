@@ -28,33 +28,55 @@ TARGETS = [
 
 STORE_ASSIGN_ANCHOR = "        window.KpiYearStore = {"
 
+EXPORT_OLD = """          readWeekdayBaselineYears: readWeekdayBaselineYears,
+          writeWeekdayBaselineYears: writeWeekdayBaselineYears,
+          getDefaultWeekdayBaselineYears: getDefaultWeekdayBaselineYears,
+          listEligibleWeekdayBaselineYears: listEligibleWeekdayBaselineYears,"""
+
+EXPORT_NEW = """          readWeekdayBaselineYears: readWeekdayBaselineYears,
+          writeWeekdayBaselineYears: writeWeekdayBaselineYears,
+          readWeekdayBaselineExcludedYears: readWeekdayBaselineExcludedYears,
+          getDefaultWeekdayBaselineYears: getDefaultWeekdayBaselineYears,
+          listEligibleWeekdayBaselineYears: listEligibleWeekdayBaselineYears,
+          assessSeasonalityAnomalies: assessSeasonalityAnomalies,"""
+
+
 def patch_exports(text: str) -> str:
-    if "assessWeekdayTargetQuality: assessWeekdayTargetQuality" in text:
-        return text
-    patterns = [
-        (
-            """          weekdayTargetDataReady: weekdayTargetDataReady,
+    if "assessSeasonalityAnomalies: assessSeasonalityAnomalies" in text:
+        if "readWeekdayBaselineExcludedYears: readWeekdayBaselineExcludedYears" in text:
+            return text
+    if EXPORT_OLD in text:
+        return text.replace(EXPORT_OLD, EXPORT_NEW, 1)
+    if "assessWeekdayTargetQuality: assessWeekdayTargetQuality" not in text:
+        patterns = [
+            (
+                """          weekdayTargetDataReady: weekdayTargetDataReady,
           computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
           resolveDailyTargetRawByIso: resolveDailyTargetRawByIso,""",
-            """          weekdayTargetDataReady: weekdayTargetDataReady,
+                """          weekdayTargetDataReady: weekdayTargetDataReady,
           assessWeekdayTargetQuality: assessWeekdayTargetQuality,
           computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
           resolveDailyTargetRawByIso: resolveDailyTargetRawByIso,""",
-        ),
-        (
-            """          weekdayTargetDataReady: weekdayTargetDataReady,
+            ),
+            (
+                """          weekdayTargetDataReady: weekdayTargetDataReady,
           computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
           resolveDailyTargetByIso: resolveDailyTargetByIso,""",
-            """          weekdayTargetDataReady: weekdayTargetDataReady,
+                """          weekdayTargetDataReady: weekdayTargetDataReady,
           assessWeekdayTargetQuality: assessWeekdayTargetQuality,
           computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
           resolveDailyTargetByIso: resolveDailyTargetByIso,""",
-        ),
-    ]
-    for old, new in patterns:
-        if old in text:
-            return text.replace(old, new, 1)
-    raise SystemExit("KpiYearStore weekday exports anchor missing")
+            ),
+        ]
+        for old, new in patterns:
+            if old in text:
+                text = text.replace(old, new, 1)
+                break
+    if EXPORT_OLD in text:
+        text = text.replace(EXPORT_OLD, EXPORT_NEW, 1)
+    if "assessSeasonalityAnomalies: assessSeasonalityAnomalies" not in text:
+        raise SystemExit("KpiYearStore weekday anomaly exports missing")
+    return text
 
 
 def patch_page(text: str) -> str:
