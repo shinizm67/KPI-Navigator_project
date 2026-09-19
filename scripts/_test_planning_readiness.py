@@ -319,7 +319,7 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260919-pr4" in html,
+            "kpi-planning-readiness.js?v=20260919-pr5" in html,
             f"{rel} cache-bust pr4",
         )
 
