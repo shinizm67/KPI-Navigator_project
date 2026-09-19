@@ -14724,8 +14724,8 @@
       </div>
     </div>
     <script src="../../../js/kpi-auth-client.js?v=20260919-2"></script>
-    <script src="../../../js/kpi-seasonality-allocator.js?v=20260919-pr5"></script>
-    <script src="../../../js/kpi-planning-readiness.js?v=20260919-pr5"></script>
+    <script src="../../../js/kpi-seasonality-allocator.js?v=20260919-pr6"></script>
+    <script src="../../../js/kpi-planning-readiness.js?v=20260919-pr6"></script>
 
     <script src="../../../js/kpi-business-type.js"></script>
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
@@ -25622,18 +25622,23 @@ Cumulative Target Annual Sales</p>
         }
 
         function computeAverageSeasonalityPct(operatingYear, maxYears) {
-          /* KPI-SEASON-PCT-MEAN-AH: equal-weight mean of each year's monthlyPct */
-          var eligible = listEligiblePastYearsForBaseline(operatingYear, maxYears);
-          if (!eligible.length) return null;
+          /* Selected weekdayBaselineYears are source of truth (no fixed year cap).
+             maxYears kept for API compat but ignored. */
+          var oy = Number(operatingYear);
+          var yearsUsed =
+            typeof readWeekdayBaselineYears === 'function'
+              ? readWeekdayBaselineYears(oy)
+              : [];
+          if (!yearsUsed.length) return null;
           var months = [];
           for (var mj = 0; mj < 12; mj++) {
             var sum = 0;
             var n = 0;
-            eligible.forEach(function (item) {
+            yearsUsed.forEach(function (yy) {
+              var observed =
+                typeof observedForPastYear === 'function' ? observedForPastYear(yy) : null;
               var v =
-                item.observed && item.observed.monthlyPct
-                  ? item.observed.monthlyPct[mj]
-                  : null;
+                observed && observed.monthlyPct ? observed.monthlyPct[mj] : null;
               if (v != null && Number.isFinite(Number(v))) {
                 sum += Number(v);
                 n++;
@@ -25643,7 +25648,7 @@ Cumulative Target Annual Sales</p>
           }
           return {
             months: months,
-            yearsUsed: eligible.map(function (item) { return item.year; }),
+            yearsUsed: yearsUsed.slice(),
           };
         }
 
@@ -25678,6 +25683,11 @@ Cumulative Target Annual Sales</p>
         }
 
         function baselineYearsUsed(operatingYear, maxYears) {
+          /* Prefer persisted/selected weekday baseline years (no fixed cap). */
+          if (typeof readWeekdayBaselineYears === 'function') {
+            var selected = readWeekdayBaselineYears(operatingYear);
+            if (selected && selected.length) return selected.slice();
+          }
           var cap = maxYears == null ? 2 : Math.max(1, Math.min(5, Number(maxYears) || 2));
           return listEligiblePastYearsForBaseline(operatingYear, cap).map(function (item) {
             return item.year;
@@ -26948,6 +26958,7 @@ Cumulative Target Annual Sales</p>
         }
 
 
+        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
 
@@ -26987,9 +26998,10 @@ Cumulative Target Annual Sales</p>
         }
 
         function listEligibleWeekdayBaselineYears(operatingYear, maxLookback) {
+          /* No fixed year limit: all past years with positive timeline sales.
+             maxLookback retained for API compat but ignored. */
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
-          var cap = maxLookback == null ? 5 : Math.max(1, Math.min(5, Number(maxLookback) || 5));
           var seen = {};
           var out = [];
           function tryYear(y) {
@@ -27004,7 +27016,10 @@ Cumulative Target Annual Sales</p>
           listYearsWithData().forEach(function (y) {
             tryYear(y);
           });
-          return out.sort(function (a, b) { return b - a; }).slice(0, cap).sort(function (a, b) {
+          Object.keys(store.timeline.dailySales || {}).forEach(function (iso) {
+            tryYear(isoYear(iso));
+          });
+          return out.sort(function (a, b) {
             return a - b;
           });
         }
@@ -27012,7 +27027,7 @@ Cumulative Target Annual Sales</p>
         function getDefaultWeekdayBaselineYears(operatingYear) {
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
-          var eligible = listEligibleWeekdayBaselineYears(oy, 5);
+          var eligible = listEligibleWeekdayBaselineYears(oy);
           var picked = [];
           for (var i = eligible.length - 1; i >= 0 && picked.length < 2; i--) {
             picked.unshift(eligible[i]);
@@ -27073,8 +27088,8 @@ Cumulative Target Annual Sales</p>
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
+            if (!isCalendarBusinessDay(year, month, day)) continue;
             var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
-            if (!isBaselineActualDay(iso)) continue;
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -27089,10 +27104,10 @@ Cumulative Target Annual Sales</p>
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {
-            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
-            if (!isBaselineActualDay(iso)) continue;
+            if (!isCalendarBusinessDay(year, month, day)) continue;
             var dt = new Date(year, month, day);
             if (dt.getDay() !== weekday) continue;
+            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
             total += readTimelineSalesAmount(iso);
           }
           return total;
@@ -27164,8 +27179,7 @@ Cumulative Target Annual Sales</p>
           var dc = new Date(y, month + 1, 0).getDate();
           var count = 0;
           for (var day = 1; day <= dc; day++) {
-            var iso = y + '-' + pad2(month + 1) + '-' + pad2(day);
-            if (!isPlanningBusinessDay(iso)) continue;
+            if (!isCalendarBusinessDay(y, month, day)) continue;
             var dt = new Date(y, month, day);
             if (dt.getDay() !== weekday) continue;
             count++;
@@ -27177,8 +27191,7 @@ Cumulative Target Annual Sales</p>
           var y = Number(year);
           if (!Number.isFinite(y)) return null;
           if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
-          if (!hasSavedAnnualPlanTarget(y)) return null;
-          var annualTarget = readSavedAnnualPlanTarget(y);
+          var annualTarget = readAnnualTarget(y);
           if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
             return null;
           }
@@ -27189,8 +27202,7 @@ Cumulative Target Annual Sales</p>
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-              if (!isPlanningBusinessDay(iso)) continue;
+              if (!isCalendarBusinessDay(y, m0, day)) continue;
               monthlyBD[m0]++;
               totalBD++;
             }
@@ -27278,7 +27290,7 @@ Cumulative Target Annual Sales</p>
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isPlanningBusinessDay(iso)) return 0;
+          if (!isCalendarBusinessDay(y, m0, day)) return 0;
           var dt = new Date(y, m0, day);
           return computeDailyKpiByMonthDow(oy, m0, dt.getDay(), baselineYears);
         }
@@ -27369,7 +27381,7 @@ Cumulative Target Annual Sales</p>
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isPlanningBusinessDay(iso)) return 0;
+          if (!isCalendarBusinessDay(y, m0, day)) return 0;
           var plan = computePlanMonthlyTargets(oy);
           if (!plan) return null;
           var bdCount = plan.monthlyBD[m0];
@@ -27475,8 +27487,8 @@ Cumulative Target Annual Sales</p>
           var rows = [];
           var dc = new Date(oy, month + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {
+            if (!isCalendarBusinessDay(oy, month, day)) continue;
             var iso = oy + '-' + pad2(month + 1) + '-' + pad2(day);
-            if (!isPlanningBusinessDay(iso)) continue;
             var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
             var raw = rawResult.value;
             if (raw == null || !Number.isFinite(raw)) raw = 0;
@@ -27537,7 +27549,7 @@ Cumulative Target Annual Sales</p>
           var parts = iso.split('-');
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
-          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isPlanningBusinessDay(iso)) {
+          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isCalendarBusinessDay(oy, m0, day)) {
             return {
               value: rawResult.value,
               rawValue: rawResult.value,
@@ -27573,7 +27585,7 @@ Cumulative Target Annual Sales</p>
           };
         }
 
-        window.KpiYearStore = {
+                window.KpiYearStore = {
           init: init,
           resetForUserScope: resetForUserScope,
           __userScopeReady: false,
@@ -29842,7 +29854,6 @@ Cumulative Target Annual Sales</p>
         var resetBtn = document.getElementById('sdm-weekday-baseline-reset');
         var statusEl = document.getElementById('sdm-weekday-baseline-status');
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
-        var MAX_LOOKBACK = 5;
 
         function storeReady() {
           return !!(
@@ -29895,23 +29906,54 @@ Cumulative Target Annual Sales</p>
           }
         }
 
-        function yearHasData(year) {
+        function listEligibleYears(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!isFinite(oy)) return [];
           if (
             storeReady() &&
             typeof KpiYearStore.listEligibleWeekdayBaselineYears === 'function'
           ) {
-            var eligible = KpiYearStore.listEligibleWeekdayBaselineYears(getOperatingYear(), MAX_LOOKBACK);
-            return eligible.indexOf(Number(year)) >= 0;
+            return KpiYearStore.listEligibleWeekdayBaselineYears(oy).slice();
           }
-          return countPositiveTimelineDays(year) > 0;
+          var out = [];
+          try {
+            var gw = window.__KPI_DATA_GATEWAY;
+            if (!gw || typeof gw.getJson !== 'function') return out;
+            var parsed = gw.getJson(STORE_KEY);
+            var sales = (parsed && parsed.timeline && parsed.timeline.dailySales) || {};
+            var seen = {};
+            Object.keys(sales).forEach(function (iso) {
+              var y = Number(String(iso).slice(0, 4));
+              if (!isFinite(y) || y >= oy || seen[y]) return;
+              if (!(Number(sales[iso]) > 0)) return;
+              seen[y] = true;
+              out.push(y);
+            });
+          } catch (_e) {}
+          return out.sort(function (a, b) {
+            return a - b;
+          });
         }
 
+        function yearHasData(year) {
+          return listEligibleYears(getOperatingYear()).indexOf(Number(year)) >= 0;
+        }
+
+        /* All prior years from oy-1 down to oldest eligible/selected (gaps = データなし).
+           No fixed year-count cap — long-term accumulation. */
         function listDisplayYears(operatingYear) {
           var oy = Number(operatingYear);
           if (!isFinite(oy)) return [];
+          var eligible = listEligibleYears(oy);
+          var selected = readSelectedYears(oy);
+          var minY = oy - 1;
+          eligible.concat(selected).forEach(function (y) {
+            var n = Number(y);
+            if (isFinite(n) && n < oy && n < minY) minY = n;
+          });
           var out = [];
-          for (var i = 1; i <= MAX_LOOKBACK; i++) {
-            out.push(oy - i);
+          for (var y = oy - 1; y >= minY; y--) {
+            out.push(y);
           }
           return out;
         }
@@ -37419,7 +37461,7 @@ Cumulative Target Annual Sales</p>
             avgDaily = KpiYearStore.computePastAverageDailySales(operatingYear, 2);
           }
           if (typeof KpiYearStore.computeAverageSeasonalityPct === 'function') {
-            var seasonPack = KpiYearStore.computeAverageSeasonalityPct(operatingYear, 2);
+            var seasonPack = KpiYearStore.computeAverageSeasonalityPct(operatingYear);
             seasonalityMonths = seasonPack ? seasonPack.months : null;
           }
         }

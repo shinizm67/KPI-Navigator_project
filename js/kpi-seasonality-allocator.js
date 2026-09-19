@@ -3,7 +3,7 @@
  * Spec: docs/planning-readiness.md (Automatic Seasonality)
  *
  * Reference Seasonality (unchanged — computed elsewhere):
- *   KpiYearStore.computeAverageSeasonalityPct(oy, 2)
+ *   KpiYearStore.computeAverageSeasonalityPct(oy)  // selected baseline years
  *   = equal-weight mean of past years' computeObserved().monthlyPct
  *
  * This module only: 5% projection + sum-1200 balance.
@@ -113,8 +113,19 @@
       var v = Number(m);
       parts.push(Number.isFinite(v) ? v.toFixed(2) : 'null');
     }
-    var yu = (yearsUsed || []).map(String).join(',');
-    return 'ref:' + Number(year) + ':' + yu + ':' + parts.join('|');
+    var yuList = (yearsUsed || [])
+      .map(function (y) {
+        return Number(y);
+      })
+      .filter(function (y) {
+        return Number.isFinite(y);
+      })
+      .sort(function (a, b) {
+        return a - b;
+      });
+    var yu = yuList.join(',');
+    var cnt = yuList.length;
+    return 'ref:' + Number(year) + ':n=' + cnt + ':' + yu + ':' + parts.join('|');
   }
 
   var api = {

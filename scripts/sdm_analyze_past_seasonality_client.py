@@ -66,7 +66,7 @@ def analyze_model_js() -> str:
             avgDaily = KpiYearStore.computePastAverageDailySales(operatingYear, 2);
           }}
           if (typeof KpiYearStore.computeAverageSeasonalityPct === 'function') {{
-            var seasonPack = KpiYearStore.computeAverageSeasonalityPct(operatingYear, 2);
+            var seasonPack = KpiYearStore.computeAverageSeasonalityPct(operatingYear);
             seasonalityMonths = seasonPack ? seasonPack.months : null;
           }}
         }}

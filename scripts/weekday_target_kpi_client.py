@@ -46,9 +46,10 @@ def weekday_target_kpi_js() -> str:
         }}
 
         function listEligibleWeekdayBaselineYears(operatingYear, maxLookback) {{
+          /* No fixed year limit: all past years with positive timeline sales.
+             maxLookback retained for API compat but ignored. */
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
-          var cap = maxLookback == null ? 5 : Math.max(1, Math.min(5, Number(maxLookback) || 5));
           var seen = {{}};
           var out = [];
           function tryYear(y) {{
@@ -63,7 +64,10 @@ def weekday_target_kpi_js() -> str:
           listYearsWithData().forEach(function (y) {{
             tryYear(y);
           }});
-          return out.sort(function (a, b) {{ return b - a; }}).slice(0, cap).sort(function (a, b) {{
+          Object.keys(store.timeline.dailySales || {{}}).forEach(function (iso) {{
+            tryYear(isoYear(iso));
+          }});
+          return out.sort(function (a, b) {{
             return a - b;
           }});
         }}
@@ -71,7 +75,7 @@ def weekday_target_kpi_js() -> str:
         function getDefaultWeekdayBaselineYears(operatingYear) {{
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
-          var eligible = listEligibleWeekdayBaselineYears(oy, 5);
+          var eligible = listEligibleWeekdayBaselineYears(oy);
           var picked = [];
           for (var i = eligible.length - 1; i >= 0 && picked.length < 2; i--) {{
             picked.unshift(eligible[i]);

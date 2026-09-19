@@ -7,7 +7,6 @@
         var resetBtn = document.getElementById('sdm-weekday-baseline-reset');
         var statusEl = document.getElementById('sdm-weekday-baseline-status');
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
-        var MAX_LOOKBACK = 5;
 
         function storeReady() {
           return !!(
@@ -60,23 +59,54 @@
           }
         }
 
-        function yearHasData(year) {
+        function listEligibleYears(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!isFinite(oy)) return [];
           if (
             storeReady() &&
             typeof KpiYearStore.listEligibleWeekdayBaselineYears === 'function'
           ) {
-            var eligible = KpiYearStore.listEligibleWeekdayBaselineYears(getOperatingYear(), MAX_LOOKBACK);
-            return eligible.indexOf(Number(year)) >= 0;
+            return KpiYearStore.listEligibleWeekdayBaselineYears(oy).slice();
           }
-          return countPositiveTimelineDays(year) > 0;
+          var out = [];
+          try {
+            var gw = window.__KPI_DATA_GATEWAY;
+            if (!gw || typeof gw.getJson !== 'function') return out;
+            var parsed = gw.getJson(STORE_KEY);
+            var sales = (parsed && parsed.timeline && parsed.timeline.dailySales) || {};
+            var seen = {};
+            Object.keys(sales).forEach(function (iso) {
+              var y = Number(String(iso).slice(0, 4));
+              if (!isFinite(y) || y >= oy || seen[y]) return;
+              if (!(Number(sales[iso]) > 0)) return;
+              seen[y] = true;
+              out.push(y);
+            });
+          } catch (_e) {}
+          return out.sort(function (a, b) {
+            return a - b;
+          });
         }
 
+        function yearHasData(year) {
+          return listEligibleYears(getOperatingYear()).indexOf(Number(year)) >= 0;
+        }
+
+        /* All prior years from oy-1 down to oldest eligible/selected (gaps = データなし).
+           No fixed year-count cap — long-term accumulation. */
         function listDisplayYears(operatingYear) {
           var oy = Number(operatingYear);
           if (!isFinite(oy)) return [];
+          var eligible = listEligibleYears(oy);
+          var selected = readSelectedYears(oy);
+          var minY = oy - 1;
+          eligible.concat(selected).forEach(function (y) {
+            var n = Number(y);
+            if (isFinite(n) && n < oy && n < minY) minY = n;
+          });
           var out = [];
-          for (var i = 1; i <= MAX_LOOKBACK; i++) {
-            out.push(oy - i);
+          for (var y = oy - 1; y >= minY; y--) {
+            out.push(y);
           }
           return out;
         }

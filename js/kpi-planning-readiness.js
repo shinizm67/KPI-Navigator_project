@@ -8,7 +8,7 @@
  *   deviation explicitly confirmed). Never overwrite MANUAL with AUTO silently.
  *
  * Reference Seasonality formula is NOT redefined here — uses
- * KpiYearStore.computeAverageSeasonalityPct (past monthlyPct equal-weight mean).
+ * KpiYearStore.computeAverageSeasonalityPct (selected baseline years' monthlyPct mean).
  * Projection algorithm: KpiSeasonalityAllocator.projectAndBalance.
  */
 (function (global) {
@@ -322,7 +322,7 @@
     var y = Number(year);
     if (!Number.isFinite(y)) y = operatingYear();
     if (!api || typeof api.computeAverageSeasonalityPct !== 'function') return null;
-    var pack = api.computeAverageSeasonalityPct(y, 2);
+    var pack = api.computeAverageSeasonalityPct(y);
     if (!pack || !pack.months || pack.months.length !== 12) return null;
     return pack;
   }

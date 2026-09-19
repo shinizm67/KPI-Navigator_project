@@ -988,18 +988,23 @@ def kpi_year_store_js() -> str:
         }}
 
         function computeAverageSeasonalityPct(operatingYear, maxYears) {{
-          /* KPI-SEASON-PCT-MEAN-AH: equal-weight mean of each year's monthlyPct */
-          var eligible = listEligiblePastYearsForBaseline(operatingYear, maxYears);
-          if (!eligible.length) return null;
+          /* Selected weekdayBaselineYears are source of truth (no fixed year cap).
+             maxYears kept for API compat but ignored. */
+          var oy = Number(operatingYear);
+          var yearsUsed =
+            typeof readWeekdayBaselineYears === 'function'
+              ? readWeekdayBaselineYears(oy)
+              : [];
+          if (!yearsUsed.length) return null;
           var months = [];
           for (var mj = 0; mj < 12; mj++) {{
             var sum = 0;
             var n = 0;
-            eligible.forEach(function (item) {{
+            yearsUsed.forEach(function (yy) {{
+              var observed =
+                typeof observedForPastYear === 'function' ? observedForPastYear(yy) : null;
               var v =
-                item.observed && item.observed.monthlyPct
-                  ? item.observed.monthlyPct[mj]
-                  : null;
+                observed && observed.monthlyPct ? observed.monthlyPct[mj] : null;
               if (v != null && Number.isFinite(Number(v))) {{
                 sum += Number(v);
                 n++;
@@ -1009,7 +1014,7 @@ def kpi_year_store_js() -> str:
           }}
           return {{
             months: months,
-            yearsUsed: eligible.map(function (item) {{ return item.year; }}),
+            yearsUsed: yearsUsed.slice(),
           }};
         }}
 
@@ -1044,6 +1049,11 @@ def kpi_year_store_js() -> str:
         }}
 
         function baselineYearsUsed(operatingYear, maxYears) {{
+          /* Prefer persisted/selected weekday baseline years (no fixed cap). */
+          if (typeof readWeekdayBaselineYears === 'function') {{
+            var selected = readWeekdayBaselineYears(operatingYear);
+            if (selected && selected.length) return selected.slice();
+          }}
           var cap = maxYears == null ? 2 : Math.max(1, Math.min(5, Number(maxYears) || 2));
           return listEligiblePastYearsForBaseline(operatingYear, cap).map(function (item) {{
             return item.year;

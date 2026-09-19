@@ -119,8 +119,10 @@ def reference_source_signature(year: int, months: list[Any], years_used: list[in
                 parts.append(f"{float(m):.2f}")
             except (TypeError, ValueError):
                 parts.append("null")
-    yu = ",".join(str(y) for y in (years_used or []))
-    return f"ref:{int(year)}:{yu}:{'|'.join(parts)}"
+    yu_list = sorted(int(y) for y in (years_used or []) if y is not None)
+    yu = ",".join(str(y) for y in yu_list)
+    cnt = len(yu_list)
+    return f"ref:{int(year)}:n={cnt}:{yu}:{'|'.join(parts)}"
 
 
 # Screenshot / production Human Smoke fixture (Reference Seasonality column)

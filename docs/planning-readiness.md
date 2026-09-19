@@ -1,8 +1,8 @@
 # Planning Readiness / KPI Setup Status
 
-ステータス: **正式仕様 / Automatic Seasonality 実装済み（2026-09-19）**  
+ステータス: **正式仕様 / Baseline-Year Contract + Automatic Seasonality（2026-09-19）**  
 記録日: 2026-09-19  
-実装: `js/kpi-planning-readiness.js` · `js/kpi-seasonality-allocator.js` · `scripts/planning_readiness_lib.py` · `scripts/seasonality_allocator_lib.py` · Annual/Monthly hosts  
+実装: `js/kpi-planning-readiness.js` · `js/kpi-seasonality-allocator.js` · `scripts/planning_readiness_lib.py` · `scripts/seasonality_allocator_lib.py` · Annual/Monthly hosts · `weekdayBaselineYears`  
 関連: [`target-sales-daily-monthly-annual.md`](./target-sales-daily-monthly-annual.md) · [`display-vs-operating-year.md`](./display-vs-operating-year.md) · [`weekday-target-sales-kpi-memo.md`](./weekday-target-sales-kpi-memo.md)
 
 ---
@@ -117,19 +117,51 @@ Actual layer（Daily Sales）は Ready 判定に使わない。
 
 ## 7. Monthly Seasonality（月次繁閑／月次配分）
 
-### 7.1 Reference Seasonality（変更しない正本）
+### 7.1 Reference Seasonality（算出式は維持・母集団は Baseline Year 選択）
 
-Sales Data Analyze の **参考繁閑期%** は次の runtime 正本（変更禁止）:
+Sales Data Analyze の **参考繁閑期%（Reference Seasonality）** は次の runtime 正本:
 
 | 項目 | 正本 |
 |------|------|
-| 関数 | `KpiYearStore.computeAverageSeasonalityPct(operatingYear, maxYears=2)` |
-| 年選択 | `listEligiblePastYearsForBaseline` — operatingYear より前・観測可能な直近最大 2 年 |
-| 各年% | `computeObserved(year).monthlyPct[m]` |
+| 関数 | `KpiYearStore.computeAverageSeasonalityPct(operatingYear)` |
+| 年選択（正本） | ユーザーが「曜日配分のベースライン年」で ON にした年度すべて（`years[Y].plan.weekdayBaselineYears`） |
+| 固定年数制限 | **なし**（直近2年・最大5年などの cap を設けない） |
+| 各年% | `computeObserved(year).monthlyPct[m]`（`observedForPastYear`） |
 | 観測日 | `isBaselineActualDay`（false 除外 / true 対象 / unset は sales>0 のみ） |
 | 各年式 | `dailyAvg = annualSales/totalBizDays`、`monthlyPct = round((monthSales/(dailyAvg*monthBizDays))*100, 2)` |
-| 平均 | 各年%の **同月単純平均**（金額合算ではない）。`Math.round((sum/n)*100)/100` |
+| 平均 | 選択年の同月%の **単純平均**（金額合算ではない）。`Math.round((sum/n)*100)/100` |
 | BT | 依存なし（Business Type 非依存） |
+
+**Baseline Year Contract（正式）:**
+
+- UI 正本は既存の「曜日配分のベースライン年」checkbox（新規 UI を増やさない）。
+- ON/OFF は **非破壊**: OFF は Reference 母集団からの除外のみ。過去データは削除しない。再 ON で再参加可。
+- 対象年自身・未来年は候補にしない。データなし年は選択不可（既存「データなし」表示を維持）。
+- 最低 **1 年以上**選択必須（0 年 → Reference 不可 → Seasonality **PROVISIONAL**）。
+- 1 / 2 / 3 / 4+ / 長期蓄積（10・20・30 年等）すべて同じ平均式。年を重ねるごとに候補が増える。
+- 新年度で直前年が候補に加わっても、**既存 OFF を勝手に ON へ戻さない**。未 persist 時の default は従来どおり直近最大 2 年（`getDefaultWeekdayBaselineYears`）。
+- 永続化: `years[operatingYear].plan.weekdayBaselineYears`（新 DB schema 禁止）。
+
+**禁止:** Reference を「直近最大 2 年」へ戻すこと。固定 year limit を再導入すること。
+
+### 7.1b Automatic Seasonality 連携
+
+```
+Selected Baseline Years
+  → 各年 monthlyPct
+  → 月ごとの単純平均 = Reference Seasonality
+  → snapHlWeightFromObserved / 5% grid
+  → sum 1200 / avg 100% balancing
+  → Recommended Seasonality
+  → AUTO mode 適用
+```
+
+| モード | Baseline 変更時 |
+|--------|-----------------|
+| **AUTO** | source signature 変化 → Recommended 再計算 → weights 自動更新 |
+| **MANUAL** | Reference / Recommended は再計算するが、ユーザー weights は **overwrite しない**。Recommended との差異を再評価（deviation warning 可） |
+
+AUTO source signature は次を含む: selected year IDs・selected year count（`n=`）・resulting monthly reference values。
 
 ### 7.2 Automatic Seasonality（KPN Recommended）
 
