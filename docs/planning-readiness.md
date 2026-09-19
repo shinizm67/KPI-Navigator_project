@@ -1,8 +1,8 @@
 # Planning Readiness / KPI Setup Status
 
-ステータス: **正式仕様（未実装）**  
+ステータス: **正式仕様 / runtime 実装済み（2026-09-19）**  
 記録日: 2026-09-19  
-実装タイミング: Floating Window Functional Audit 一通り完了後に独立タスクとして設計 → 実装  
+実装: `js/kpi-planning-readiness.js` · `scripts/planning_readiness_lib.py` · Annual/Monthly hosts  
 関連: [`target-sales-daily-monthly-annual.md`](./target-sales-daily-monthly-annual.md) · [`display-vs-operating-year.md`](./display-vs-operating-year.md) · [`weekday-target-sales-kpi-memo.md`](./weekday-target-sales-kpi-memo.md)
 
 ---
@@ -117,11 +117,24 @@ Actual layer（Daily Sales）は Ready 判定に使わない。
 
 ## 7. Monthly Seasonality（月次繁閑／月次配分）
 
-### 7.1 デフォルト想定
+### 7.1 デフォルト想定（runtime 正本）
 
-現在のデフォルトは **全月 100% の繁閑係数** である想定。
+実装開始時にコードから固定した正式 contract:
 
-全月 100% は形式的に有効でも、ユーザー未確認なら **confirmed にしない**。
+| 項目 | 正本 |
+|------|------|
+| 保存キー | `years[YYYY].plan.monthlyHlWeights`（長さ 12） |
+| デフォルト seed | `[85, 85, 100, 110, 120, 85, 100, 100, 100, 110, 110, 115]`（**全月 100% ではない**） |
+| 構造 valid | 各値整数・60–200・5% 刻み（`normalizeHlWeights`） |
+| 配分 UI OK | 12 か月の **平均 ≈ 100%**（`|(sum/12)−100| < 0.01`） |
+| Auto-adjust | **なし**（平均≠100 でも保存は可能。確定時は下記） |
+
+確定ルール:
+
+- デフォルト seed（または全月 100%）のまま「このまま確定」→ 構造 valid なら可
+- ユーザーが調整した場合 → **平均 ≈ 100%** を満たさない限り確定不可
+
+形式的に有効でも、ユーザー未確認なら **confirmed にしない**。
 
 ### 7.2 提示例
 
@@ -141,10 +154,9 @@ Actual layer（Daily Sales）は Ready 判定に使わない。
 
 調整後の最終係数が正式な必要条件を満たしていない場合は **確定不可**。
 
-### 7.4 実装開始時の再確認（必須）
+### 7.4 実装時の固定結果
 
-現在コードの「各月 100%」と「月次配分合計 100%」の正式 contract は、**実装開始時に runtime コードから再確認して固定する。**  
-本ドキュメントだけでは係数の算術ルールを断定しない。
+§7.1 に runtime 正本を記録済み。Login Reminder は初回実装では **DEFERRED**（page-entry alert まで）。
 
 ---
 
@@ -243,20 +255,11 @@ checkbox: **「次回から表示しない」**
 
 ---
 
-## 12. 実装タイミング
+## 12. 実装メモ
 
-**今は実装しない。**
-
-順序:
-
-1. Floating Window Functional Audit を一通り完了する
-2. 本仕様を独立タスクとして設計 → 実装する
-3. その後 FW / UI 最終調整へ進む
-
-実装開始時の必須作業:
-
-- 月次繁閑の正式 contract（各月 100% vs 配分合計 100% 等）を runtime から再確認して固定する
-- `operatingYear` 基準で Ready 状態を持つ（displayYear と混同しない。[`display-vs-operating-year.md`](./display-vs-operating-year.md)）
+- Ready 状態は **`operatingYear`** 基準（displayYear と混同しない。[`display-vs-operating-year.md`](./display-vs-operating-year.md)）
+- 永続化: `years[YYYY].planningReadiness`（signature 方式）
+- Login Reminder: 初回は page-entry alert のみ（壊さない範囲で DEFERRED）
 
 ---
 
