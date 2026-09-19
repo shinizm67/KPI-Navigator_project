@@ -11684,9 +11684,13 @@
       --sdm-bg-inactive: rgba(16, 193, 216, 0.44);
       --sdm-bg-active-55: rgba(16, 193, 216, 0.55);
       --sdm-bg-active-70: rgba(16, 193, 216, 0.7);
+      /* Readonly cols (monthly/annual): bg base #10C1D8 lightness -5% → #0EACC0 */
+      --sdm-bg-readonly: rgba(14, 172, 192, 0.44);
       --sdm-row-off-fill: #1d4a50;
       /* Closed-day text: #58E1F3 lightness -30% (hue/sat kept) */
       --sdm-row-off-text: #10c1d8;
+      /* Readonly text: #58E1F3 lightness -5% (still highly readable) */
+      --sdm-text-readonly: #41ddf1;
       --sdm-panel-bg: #000000;
       --sdm-frame: #0f9403;
       --sdm-panel-w: 1100px;
@@ -12618,6 +12622,8 @@
     .sales-data-modal__colhead-annual {
       min-width: 0;
       overflow: hidden;
+      background: var(--sdm-bg-readonly);
+      color: var(--sdm-text-readonly);
     }
     .sales-data-modal__scroll {
       position: relative;
@@ -13315,10 +13321,12 @@
       --sdm-bg-inactive: rgba(0, 0, 0, 0.06);
       --sdm-bg-active-55: rgba(0, 0, 0, 0.1);
       --sdm-bg-active-70: rgba(0, 0, 0, 0.14);
+      --sdm-bg-readonly: rgba(0, 0, 0, 0.06);
       --sdm-bg-reference: rgba(0, 0, 0, 0.046);
       --sdm-bg-reference-focus: rgba(0, 0, 0, 0.070);
       --sdm-row-off-fill: rgba(0, 0, 0, 0.04);
       --sdm-row-off-text: #111;
+      --sdm-text-readonly: #111;
       --sdm-panel-bg: #e8f2ff;
       --sdm-frame: #2b6cb0;
     }
@@ -13754,17 +13762,30 @@
       height: 40px;
       padding: 0 8px;
     }
+    /* Edit lease: sales (+ B.DAY) cells step up; monthly/annual stay readonly. */
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__table
+      tr:not(.sales-data-modal__row--off)
+      td.sales-data-modal__sales-td,
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__table
+      tr:not(.sales-data-modal__row--off)
+      td.sales-data-modal__cb-td {
+      background: var(--sdm-bg-active-55);
+    }
     .sales-data-modal__monthly-td,
     .sales-data-modal__annual-td {
       height: 40px;
       padding: 0 8px;
       font-size: var(--sdm-fs-body);
       text-align: right;
-      background: var(--sdm-bg-inactive);
+      background: var(--sdm-bg-readonly);
+      color: var(--sdm-text-readonly);
     }
     .sales-data-modal__table tr.sales-data-modal__row--off td.sales-data-modal__monthly-td,
     .sales-data-modal__table tr.sales-data-modal__row--off td.sales-data-modal__annual-td {
       background: var(--sdm-row-off-fill);
+      color: var(--sdm-row-off-text);
     }
     .sales-data-modal__monthly-td {
       width: var(--sdm-col-monthly);
@@ -16142,7 +16163,7 @@
             </div>
           </div>
           <div class="sales-data-modal__colhead-monthly">月次合計</div>
-          <div class="sales-data-modal__colhead-annual">年間合計</div>
+          <div class="sales-data-modal__colhead-annual">年次合計</div>
         </div>
         <div class="sales-data-modal__scroll sales-data-modal__input-only" id="sales-data-pane-input">
           <table class="sales-data-modal__table" id="sales-data-modal-table" aria-label="過去売上日次一覧"></table>
