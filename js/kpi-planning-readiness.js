@@ -9,7 +9,13 @@
  * - Alloc UI OK: average of 12 months ≈ 100% (|avg-100| < 0.01)
  * - No auto-adjust of weights
  *
- * Confirm actions live ONLY in the Alert FW (not Sales Data chrome).
+ * Confirm actions live ONLY in the Alert FW (not Sales Data chrome),
+ * except seasonality: a user-edited valid HL save auto-confirms.
+ *
+ * Seasonality paths:
+ * A) Untouched default → Alert FW explicit confirm (even if structurally valid)
+ * B) User-edited + formal-valid save → auto-confirm current signature
+ * C) User-edited invalid → stay unconfirmed / PROVISIONAL
  */
 (function (global) {
   'use strict';
@@ -369,6 +375,39 @@
     return isAllocTotalOk(weights);
   }
 
+  function isFormalSeasonalityValid(weights) {
+    var norm = normalizeHlWeights(weights);
+    if (!norm) return false;
+    if (isDefaultSeasonality(norm)) return true;
+    return isAllocTotalOk(norm);
+  }
+
+  function isUserSeasonalityEditSource(meta) {
+    var src = (meta && meta.source) || '';
+    return (
+      src === 'sales-data-analyze' ||
+      src === 'cockpit-plan-edit' ||
+      src === 'sales-data-hl' ||
+      src === 'user-edit'
+    );
+  }
+
+  function writeSeasonalityConfirmed(year, opts) {
+    opts = opts || {};
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var pr = ensurePrRecord(y);
+    if (!pr) return { ok: false };
+    pr.seasonalityConfirmedSignature = seasonalitySignature(y);
+    pr.seasonalityConfirmedAt = Date.now();
+    pr.seasonalityVisited = true;
+    if (opts.edited) pr.seasonalityEdited = true;
+    if (opts.auto) pr.seasonalityAutoConfirmed = true;
+    persistStoreQuiet();
+    emitChanged(y);
+    return { ok: true, auto: !!opts.auto };
+  }
+
   function confirmSeasonality(year, opts) {
     opts = opts || {};
     var y = Number(year);
@@ -377,15 +416,42 @@
     if (!normalizeHlWeights(weights)) return { ok: false, reason: 'invalid' };
     var isDefault = isDefaultSeasonality(weights);
     if (!isDefault && !isAllocTotalOk(weights)) return { ok: false, reason: 'alloc' };
-    if (isDefault && !opts.skipDefaultPrompt) return { needDefaultConfirm: true };
+    // Untouched default still requires explicit Alert confirm (dialog).
+    if (isDefault && !opts.skipDefaultPrompt && !opts.autoFromEdit) {
+      return { needDefaultConfirm: true };
+    }
+    return writeSeasonalityConfirmed(y, { edited: !!opts.edited });
+  }
+
+  /**
+   * After a user HL write: mark edited; if formal-valid, auto-confirm.
+   * Untouched default seeds (plan-default / observed-baseline / dom-seed) must NOT call this.
+   */
+  function onSeasonalityUserSaved(year, weights, meta) {
+    if (!isUserSeasonalityEditSource(meta)) return { ok: false, reason: 'not-user-edit' };
+    var y = Number(year);
+    if (!Number.isFinite(y)) y = operatingYear();
+    var norm = normalizeHlWeights(weights != null ? weights : readHlWeights(y));
     var pr = ensurePrRecord(y);
     if (!pr) return { ok: false };
-    pr.seasonalityConfirmedSignature = seasonalitySignature(y);
-    pr.seasonalityConfirmedAt = Date.now();
+    pr.seasonalityEdited = true;
     pr.seasonalityVisited = true;
-    persistStoreQuiet();
-    emitChanged(y);
-    return { ok: true };
+    if (!norm || !isFormalSeasonalityValid(norm)) {
+      // Invalid edit: keep / fall back to unconfirmed (signature mismatch if previously confirmed).
+      persistStoreQuiet();
+      emitChanged(y);
+      if (document.getElementById(ALERT_ID)) {
+        pageAlertDismissed = false;
+        renderAlertFw({ force: true, afterAction: true });
+      }
+      return { ok: true, confirmed: false, reason: 'invalid' };
+    }
+    var res = writeSeasonalityConfirmed(y, { edited: true, auto: true });
+    if (document.getElementById(ALERT_ID)) {
+      pageAlertDismissed = false;
+      renderAlertFw({ force: true, afterAction: true });
+    }
+    return { ok: !!res.ok, confirmed: true, auto: true };
   }
 
   function markVisited(year, which) {
@@ -394,6 +460,23 @@
     if (which === 'businessDays') pr.businessDaysVisited = true;
     if (which === 'seasonality') pr.seasonalityVisited = true;
     persistStoreQuiet();
+  }
+
+  function hookWriteMonthlyHlWeights() {
+    var api = storeApi();
+    if (!api || typeof api.writeMonthlyHlWeights !== 'function') return;
+    if (api.writeMonthlyHlWeights.__kpiPrHooked) return;
+    var orig = api.writeMonthlyHlWeights;
+    api.writeMonthlyHlWeights = function (year, weights, meta) {
+      var ok = orig.call(api, year, weights, meta);
+      if (ok) {
+        try {
+          onSeasonalityUserSaved(year, weights, meta || {});
+        } catch (_e) {}
+      }
+      return ok;
+    };
+    api.writeMonthlyHlWeights.__kpiPrHooked = true;
   }
 
   function emitChanged(year) {
@@ -831,6 +914,10 @@
   function boot() {
     ensureCss();
     removeLegacySdmBar();
+    hookWriteMonthlyHlWeights();
+    // KpiYearStore may boot slightly later on some hosts
+    setTimeout(hookWriteMonthlyHlWeights, 0);
+    setTimeout(hookWriteMonthlyHlWeights, 500);
     applyBodyState();
     refreshTooltips();
     bindListeners();
@@ -852,6 +939,9 @@
     confirmBusinessDays: confirmBusinessDays,
     confirmSeasonality: confirmSeasonality,
     canConfirmSeasonality: canConfirmSeasonality,
+    isFormalSeasonalityValid: isFormalSeasonalityValid,
+    onSeasonalityUserSaved: onSeasonalityUserSaved,
+    isUserSeasonalityEditSource: isUserSeasonalityEditSource,
     businessDaysSignature: businessDaysSignature,
     seasonalitySignature: seasonalitySignature,
     isDefaultSeasonality: isDefaultSeasonality,
@@ -864,6 +954,7 @@
     runConfirmBusinessDays: runConfirmBusinessDays,
     runConfirmSeasonality: runConfirmSeasonality,
     removeLegacySdmBar: removeLegacySdmBar,
+    hookWriteMonthlyHlWeights: hookWriteMonthlyHlWeights,
   };
 
   global.KpiPlanningReadiness = api;

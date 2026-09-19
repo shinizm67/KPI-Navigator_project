@@ -57,6 +57,46 @@ def can_confirm_seasonality(weights: list[int]) -> bool:
     return is_alloc_total_ok(weights)
 
 
+def is_formal_seasonality_valid(weights: list[Any] | None) -> bool:
+    norm = normalize_hl_weights(weights)
+    if norm is None:
+        return False
+    if is_default_seasonality(norm):
+        return True
+    return is_alloc_total_ok(norm)
+
+
+def is_user_seasonality_edit_source(source: str | None) -> bool:
+    return source in {
+        "sales-data-analyze",
+        "cockpit-plan-edit",
+        "sales-data-hl",
+        "user-edit",
+    }
+
+
+def maybe_auto_confirm_seasonality(
+    *,
+    weights: list[int],
+    source: str | None,
+    pr: dict[str, Any] | None,
+    year: int,
+) -> dict[str, Any]:
+    """Twin of JS onSeasonalityUserSaved (returns updated pr; does not mutate input)."""
+    pr_out: dict[str, Any] = dict(pr or {})
+    if not is_user_seasonality_edit_source(source):
+        return {"ok": False, "reason": "not-user-edit", "pr": pr_out, "confirmed": False}
+    norm = normalize_hl_weights(weights)
+    pr_out["seasonalityEdited"] = True
+    pr_out["seasonalityVisited"] = True
+    if not is_formal_seasonality_valid(norm):
+        return {"ok": True, "confirmed": False, "reason": "invalid", "pr": pr_out}
+    assert norm is not None
+    pr_out["seasonalityConfirmedSignature"] = seasonality_signature(year, norm)
+    pr_out["seasonalityAutoConfirmed"] = True
+    return {"ok": True, "confirmed": True, "auto": True, "pr": pr_out}
+
+
 def fnv1a_hex(s: str) -> str:
     h = 2166136261
     for ch in s:

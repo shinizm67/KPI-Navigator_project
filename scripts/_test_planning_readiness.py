@@ -20,6 +20,9 @@ from planning_readiness_lib import (  # noqa: E402
     evaluate,
     is_alloc_total_ok,
     is_default_seasonality,
+    is_formal_seasonality_valid,
+    is_user_seasonality_edit_source,
+    maybe_auto_confirm_seasonality,
     normalize_hl_weights,
     seasonality_signature,
 )
@@ -169,6 +172,9 @@ def main() -> int:
     check(normalize_hl_weights([50] + [100] * 11) is None, "C invalid low rejected")
     avg100 = [100] * 12
     check(is_alloc_total_ok(avg100), "C avg100 ok")
+    # DEFAULT seed averages ~101.67 — NOT the same as UI 100.00% contract
+    check(not is_alloc_total_ok(DEFAULT_HL_WEIGHTS), "C default avg is not 100")
+    check(is_formal_seasonality_valid(DEFAULT_HL_WEIGHTS), "C default still formal-valid via default path")
     # adjusted invalid avg (all 120) → cannot confirm
     bad = [120] * 12
     check(normalize_hl_weights(bad) is not None, "C structural ok for 120")
@@ -179,6 +185,86 @@ def main() -> int:
     # sum=1200 avg=100
     check(is_alloc_total_ok(good), "C18 adjusted valid")
     check(can_confirm_seasonality(good), "C18 confirm allowed")
+    check(is_formal_seasonality_valid(good), "C18 formal valid")
+
+    # D auto-confirm paths
+    # 1 untouched default → PROVISIONAL, no auto
+    r = evaluate(year=y, annual_target=10_000_000, business_days_map=bd, hl_weights=hl, pr={})
+    check(r["state"] == STATE_PROVISIONAL, "D1 untouched default → PROVISIONAL")
+    check(r["seasonality"] == "unconfirmed", "D1 season unconfirmed")
+    auto = maybe_auto_confirm_seasonality(
+        weights=DEFAULT_HL_WEIGHTS, source="plan-default", pr={}, year=y
+    )
+    check(auto["confirmed"] is False and auto.get("reason") == "not-user-edit", "D1 seed source no auto")
+
+    # 2 explicit confirm of untouched default (signature write)
+    hl_sig = seasonality_signature(y, DEFAULT_HL_WEIGHTS)
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=DEFAULT_HL_WEIGHTS,
+        pr={"seasonalityConfirmedSignature": hl_sig, "businessDaysConfirmedSignature": bd_sig},
+    )
+    check(r["state"] == STATE_READY, "D2 explicit default confirm → READY when BD also ok")
+
+    # 3 user edit invalid → not confirmed
+    auto = maybe_auto_confirm_seasonality(weights=bad, source="sales-data-analyze", pr={}, year=y)
+    check(auto["confirmed"] is False, "D3 invalid edit not auto-confirmed")
+    check(auto["pr"].get("seasonalityEdited") is True, "D3 edited flag set")
+    check(not auto["pr"].get("seasonalityConfirmedSignature"), "D3 no signature")
+
+    # 4 user edit valid → auto confirmed
+    auto = maybe_auto_confirm_seasonality(weights=good, source="sales-data-analyze", pr={}, year=y)
+    check(auto["confirmed"] is True, "D4 valid edit auto-confirmed")
+    check(auto["pr"].get("seasonalityConfirmedSignature") == seasonality_signature(y, good), "D4 sig saved")
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=good,
+        pr={
+            "businessDaysConfirmedSignature": bd_sig,
+            "seasonalityConfirmedSignature": auto["pr"]["seasonalityConfirmedSignature"],
+        },
+    )
+    check(r["state"] == STATE_READY, "D4/5 reload with auto sig → READY (no Season action)")
+    check(r["seasonality"] == "confirmed", "D5 season confirmed after valid edit save")
+
+    # 6 confirmed → change → PROVISIONAL
+    good2 = good[:]
+    good2[0] = 85
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=good2,
+        pr={
+            "businessDaysConfirmedSignature": bd_sig,
+            "seasonalityConfirmedSignature": seasonality_signature(y, good),
+        },
+    )
+    check(r["state"] == STATE_PROVISIONAL, "D6 change after confirm → PROVISIONAL")
+    check(r["seasonality"] == "changed", "D6 season changed")
+
+    # 7 changed → valid save → auto confirm again
+    # make good2 valid avg 100: adjust another month
+    # good was sum 1200; good2[0]=85 means sum 1205? good[0]=80 → 85 is +5 → sum 1205 avg 100.416
+    # craft valid:
+    valid2 = [85, 85, 100, 110, 120, 100, 100, 100, 100, 100, 100, 100]  # sum 1200
+    check(is_alloc_total_ok(valid2), "D7 valid2 alloc ok")
+    auto = maybe_auto_confirm_seasonality(
+        weights=valid2,
+        source="sales-data-analyze",
+        pr={"seasonalityConfirmedSignature": seasonality_signature(y, good)},
+        year=y,
+    )
+    check(auto["confirmed"] is True, "D7 re-auto-confirm")
+    check(auto["pr"]["seasonalityConfirmedSignature"] == seasonality_signature(y, valid2), "D7 new sig")
+
+    check(is_user_seasonality_edit_source("sales-data-analyze"), "D user source analyze")
+    check(not is_user_seasonality_edit_source("observed-baseline"), "D seed source blocked")
+    check(not is_user_seasonality_edit_source("plan-default"), "D plan-default blocked")
 
     # JS source contracts — Alert FW action model
     js = JS.read_text(encoding="utf-8")
@@ -203,6 +289,10 @@ def main() -> int:
     check("alertDone" in js or "KPI設定が完了しました" in js, "complete message on READY")
     check(".kpi-pr-sdm-bar { display: none !important; }" in js, "legacy SDM bar hidden")
     check("removeLegacySdmBar" in js, "legacy SDM bar removed at boot")
+    check("onSeasonalityUserSaved" in js, "auto-confirm hook API")
+    check("hookWriteMonthlyHlWeights" in js, "HL write hook")
+    check("seasonalityEdited" in js, "edited metadata")
+    check("isFormalSeasonalityValid" in js, "formal valid helper")
 
     # 365-open / default season confirm prompts
     check("年間365日すべて営業日として設定されています" in js, "BD 365 confirm copy JP")
@@ -231,8 +321,8 @@ def main() -> int:
         rel = path.relative_to(ROOT).as_posix()
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check(
-            "kpi-planning-readiness.js?v=20260919-pr2" in html,
-            f"{rel} cache-bust pr2",
+            "kpi-planning-readiness.js?v=20260919-pr3" in html,
+            f"{rel} cache-bust pr3",
         )
 
     # regression markers still present
@@ -243,6 +333,10 @@ def main() -> int:
     check(
         (ROOT / "scripts/_test_daily_fw_functional_wiring.py").exists(),
         "daily fw test still present",
+    )
+    check(
+        (ROOT / "scripts/_test_pl_insight_functional_wiring.py").exists(),
+        "pl insight test still present",
     )
 
     print(f"passed={PASSED} failed={FAILED}")

@@ -235,6 +235,20 @@ Planning 未確定状態で Annual / Monthly 等の対象ページへ入った�
 - 同一 page/session で連発しない（閉じたあとはページ離脱後に再表示可）
 - READY なら表示しない
 
+**Seasonality の2経路:**
+
+| 経路 | 条件 | 確定方法 |
+|------|------|----------|
+| A Untouched default | ユーザーが月次配分を一度も編集していない | Alert FW の明示「月次配分を確定」のみ（形式的に valid でも自動確定しない） |
+| B User-edited valid | Sales Data / Cockpit で HL を変更し、runtime formal-valid で保存 | **SAVE 自体が確認** → signature 自動保存。追加の Alert 確定は不要 |
+| Edited invalid | 編集したが formal-valid でない | confirmed にしない。Alert の Season action を残す |
+
+formal-valid（runtime 正本）:
+
+1. 各月 integer・60–200・5%刻み（`normalizeHlWeights`）
+2. default seed（`DEFAULT_HL_WEIGHTS` または全月100%）→ Alert 明示確定可
+3. default 以外 → 12ヶ月平均 ≈ 100%（`|avg-100| < 0.01`）。UI「月次配分率合計 100.00%」はこの条件
+
 ---
 
 ## 11. Login Reminder
