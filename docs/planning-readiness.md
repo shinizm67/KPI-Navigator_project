@@ -217,7 +217,7 @@ KPI設定が完了していないため、
 
 ---
 
-## 10. Page Entry Alert
+## 10. Page Entry Alert / Confirm Action FW
 
 Planning 未確定状態で Annual / Monthly 等の対象ページへ入った場合、Floating Alert を出す。
 
@@ -226,8 +226,14 @@ Planning 未確定状態で Annual / Monthly 等の対象ページへ入った�
 > KPI設定に未確定項目があります。  
 > 現在表示している目標値は暫定値です。
 
-- 対象設定への導線を表示する。
-- ページを離れて再度戻った場合、未確定なら再表示可能。
+**確定操作は Alert FW 内にのみ置く（Sales Data 常設ボタンは置かない）。**
+
+- 未確定項目だけセクション表示（営業日設定 / 月次配分）
+- 各セクション: `[確定]` + `[編集する|調整する]`
+- 確定後は Alert FW を再描画。未確定が 0 なら完了メッセージ後に閉じる
+- signature mismatch で confirmed が解除された項目だけ、次回表示時に再出現
+- 同一 page/session で連発しない（閉じたあとはページ離脱後に再表示可）
+- READY なら表示しない
 
 ---
 
@@ -272,6 +278,6 @@ checkbox: **「次回から表示しない」**
 | Ready の最終条件 | `confirmed` のみ（visited / edited では不足） |
 | 営業日 | 値推測禁止。「確定」操作必須。365 日も確認ダイアログ |
 | 繁閑デフォルト | 全月 100% 想定。未確認なら confirmed にしない |
-| 暫定目標 | 消さない。warning 色 + Tooltip / Alert。セル内常時「暫定値」テキスト禁止 |
-| Reminder | 「次回から表示しない」は状態紐付け抑制。永久 disable ではない |
-| 実装 | FW Audit 完了後の独立タスク |
+| 暫定目標 | 消さない。warning 色（暖色背景+濃オレンジ文字）+ Focus Bar Tooltip / Alert。セル内常時「暫定値」テキスト禁止 |
+| 確定 UI | Alert FW のみ。Sales Data 常設確定ボタンなし |
+| Reminder | 「次回から表示しない」は状態紐付け抑制。永久 disable ではない（Login Reminder は DEFERRED） |

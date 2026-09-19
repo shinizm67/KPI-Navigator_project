@@ -2,7 +2,6 @@
 """Tests for Planning Readiness / KPI Setup Status."""
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
 
@@ -181,7 +180,7 @@ def main() -> int:
     check(is_alloc_total_ok(good), "C18 adjusted valid")
     check(can_confirm_seasonality(good), "C18 confirm allowed")
 
-    # JS source contracts
+    # JS source contracts — Alert FW action model
     js = JS.read_text(encoding="utf-8")
     check("planningReadiness" in js, "persist under years[].planningReadiness")
     check("businessDaysConfirmedSignature" in js, "BD signature field")
@@ -192,10 +191,49 @@ def main() -> int:
     check("showPageEntryAlert" in js, "page entry alert")
     check("次回から表示しない" not in js, "login reminder deferred (no permanent suppress UI)")
 
+    # Confirm actions live only in Alert FW (not Sales Data chrome)
+    check("mountSdmConfirmBar" not in js, "1/7 no mountSdmConfirmBar")
+    check("function renderAlertFw" in js, "Alert FW renderer")
+    check('data-pr-act="confirm-bd"' in js, "Alert FW BD confirm action")
+    check('data-pr-act="confirm-season"' in js, "Alert FW Season confirm action")
+    check('data-pr-act="edit-bd"' in js, "Alert FW BD edit")
+    check('data-pr-act="adjust-season"' in js, "Alert FW Season adjust")
+    check("needsBdAction" in js and "needsSeasonAction" in js, "action visibility flags")
+    check("afterConfirmRefresh" in js or "afterAction" in js, "confirm → Alert FW re-render")
+    check("alertDone" in js or "KPI設定が完了しました" in js, "complete message on READY")
+    check(".kpi-pr-sdm-bar { display: none !important; }" in js, "legacy SDM bar hidden")
+    check("removeLegacySdmBar" in js, "legacy SDM bar removed at boot")
+
+    # 365-open / default season confirm prompts
+    check("年間365日すべて営業日として設定されています" in js, "BD 365 confirm copy JP")
+    check("月次配分は現在デフォルト設定です" in js, "Season default confirm copy JP")
+    check("月次配分の設定が確定条件を満たしていません" in js, "Season invalid copy JP")
+    check("skipAllOpenPrompt" in js, "BD confirm skip flag")
+    check("skipDefaultPrompt" in js, "Season confirm skip flag")
+
+    # Focus Bar tooltip + warning
+    check("pointer-events: auto" in js, "10 Focus Bar pointer-events restored for tip")
+    check("nth-child(3)" in js, "Focus Bar 目標売上 cell targeted")
+    check("tipTitle" in js and "暫定目標値" in js, "10 Focus Bar tooltip copy")
+    check("rgba(255, 214, 102" in js or "255, 214, 102" in js, "12 yellow-warm warning bg")
+    check("#b45309" in js or "#9a3412" in js, "12 deep orange warning text")
+    check("body:not(.office-mode) .kpi-pr-alert" in js, "Sci-Fi alert theme")
+    check("background: #fff8f4" in js, "Office alert theme retained")
+
+    # i18n keys present
+    check("Confirm business days" in js, "18/19 EN BD confirm")
+    check("Confirm monthly allocation" in js, "19 EN Season confirm")
+    check("確認營業日設定" in js, "20 ZH-TW BD confirm")
+    check("確認月次配分" in js, "20 ZH-TW Season confirm")
+
     for path in HOSTS:
         html = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
+        check(
+            "kpi-planning-readiness.js?v=20260919-pr2" in html,
+            f"{rel} cache-bust pr2",
+        )
 
     # regression markers still present
     check(
