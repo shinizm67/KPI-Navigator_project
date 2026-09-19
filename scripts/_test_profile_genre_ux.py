@@ -143,7 +143,9 @@ def test_l_canonical_and_forbidden() -> None:
     jp_reg = (ROOT / "register" / "registration_si-fi_jp" / "registration_si-fi_jp.html").read_text(encoding="utf-8")
     assert_true("profile-genre" not in jp_reg, "Registration unchanged")
     schema = (ROOT / "api" / "v1" / "schema.sql").read_text(encoding="utf-8")
-    assert_true("business_type" not in schema.lower(), "no new schema column")
+    # Unit 5 profile sync intentionally stores business_type + genre on server.
+    assert_true("business_type" in schema.lower(), "business_type schema column present")
+    assert_true("genre" in schema.lower(), "genre schema column present")
     store = (ROOT / "api" / "v1" / "store.php").read_text(encoding="utf-8")
     assert_true("profile-genre" not in store, "store.php untouched")
     catalog = (ROOT / "scripts" / "pl_line_catalog.py").read_text(encoding="utf-8")
