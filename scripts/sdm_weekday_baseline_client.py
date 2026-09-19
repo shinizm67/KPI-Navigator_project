@@ -77,6 +77,9 @@ CSS = """
     .sdm-weekday-baseline__row.is-disabled {
       opacity: 0.55;
     }
+    .sdm-weekday-baseline__row.is-anomaly {
+      grid-template-columns: 20px minmax(56px, 72px) 20px minmax(0, 1fr);
+    }
     .sdm-weekday-baseline__cb {
       width: 16px;
       height: 16px;

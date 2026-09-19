@@ -423,6 +423,18 @@ def weekday_target_kpi_js() -> str:
           return Number.isFinite(n) && n > 0 ? n : 0;
         }}
 
+        function isWeekdayBaselineDay(y, m0, day) {{
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (typeof isBaselineActualDay === 'function') return isBaselineActualDay(iso);
+          return isCalendarBusinessDay(y, m0, day);
+        }}
+
+        function isWeekdayPlanningDay(y, m0, day) {{
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (typeof isPlanningBusinessDay === 'function') return isPlanningBusinessDay(iso);
+          return isCalendarBusinessDay(y, m0, day);
+        }}
+
         function computeWeekdayMonthSalesTotal(y, m0) {{
           var year = Number(y);
           var month = Number(m0);
@@ -430,7 +442,7 @@ def weekday_target_kpi_js() -> str:
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {{
-            if (!isCalendarBusinessDay(year, month, day)) continue;
+            if (!isWeekdayBaselineDay(year, month, day)) continue;
             var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
             total += readTimelineSalesAmount(iso);
           }}
@@ -446,7 +458,7 @@ def weekday_target_kpi_js() -> str:
           var dc = new Date(year, month + 1, 0).getDate();
           var total = 0;
           for (var day = 1; day <= dc; day++) {{
-            if (!isCalendarBusinessDay(year, month, day)) continue;
+            if (!isWeekdayBaselineDay(year, month, day)) continue;
             var dt = new Date(year, month, day);
             if (dt.getDay() !== weekday) continue;
             var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
@@ -521,7 +533,7 @@ def weekday_target_kpi_js() -> str:
           var dc = new Date(y, month + 1, 0).getDate();
           var count = 0;
           for (var day = 1; day <= dc; day++) {{
-            if (!isCalendarBusinessDay(y, month, day)) continue;
+            if (!isWeekdayPlanningDay(y, month, day)) continue;
             var dt = new Date(y, month, day);
             if (dt.getDay() !== weekday) continue;
             count++;
@@ -544,7 +556,7 @@ def weekday_target_kpi_js() -> str:
           for (var m0 = 0; m0 < 12; m0++) {{
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {{
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
+              if (!isWeekdayPlanningDay(y, m0, day)) continue;
               monthlyBD[m0]++;
               totalBD++;
             }}
@@ -632,7 +644,7 @@ def weekday_target_kpi_js() -> str:
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isWeekdayPlanningDay(y, m0, day)) return 0;
           var dt = new Date(y, m0, day);
           return computeDailyKpiByMonthDow(oy, m0, dt.getDay(), baselineYears);
         }}
@@ -723,7 +735,7 @@ def weekday_target_kpi_js() -> str:
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
           if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
-          if (!isCalendarBusinessDay(y, m0, day)) return 0;
+          if (!isWeekdayPlanningDay(y, m0, day)) return 0;
           var plan = computePlanMonthlyTargets(oy);
           if (!plan) return null;
           var bdCount = plan.monthlyBD[m0];
@@ -829,7 +841,7 @@ def weekday_target_kpi_js() -> str:
           var rows = [];
           var dc = new Date(oy, month + 1, 0).getDate();
           for (var day = 1; day <= dc; day++) {{
-            if (!isCalendarBusinessDay(oy, month, day)) continue;
+            if (!isWeekdayPlanningDay(oy, month, day)) continue;
             var iso = oy + '-' + pad2(month + 1) + '-' + pad2(day);
             var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
             var raw = rawResult.value;
@@ -891,7 +903,7 @@ def weekday_target_kpi_js() -> str:
           var parts = iso.split('-');
           var m0 = Number(parts[1]) - 1;
           var day = Number(parts[2]);
-          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isCalendarBusinessDay(oy, m0, day)) {{
+          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isWeekdayPlanningDay(oy, m0, day)) {{
             return {{
               value: rawResult.value,
               rawValue: rawResult.value,
