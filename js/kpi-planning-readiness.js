@@ -876,25 +876,56 @@
       document.head.appendChild(style);
     }
     style.textContent =
-      /* Warning: yellow-warm bg + deep orange text (not error red) */ '' +
-      'body.kpi-pr-provisional .annual-daily-row__cell--plan-target,' +
-      'body.kpi-pr-provisional .monthly-data-column__cell--plan-target,' +
-      'body.kpi-pr-provisional .monthly-vfocus-cell--plan-target,' +
-      'body.kpi-pr-provisional .kpi-pr-target-warn,' +
-      'body.kpi-pr-provisional .annual-daily-focus-bar-lower__group--base > .annual-daily-focus-bar-lower__cell:nth-child(3),' +
-      'body.kpi-pr-provisional .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3) {' +
-      '  box-shadow: inset 0 0 0 1.5px rgba(196, 120, 20, 0.65);' +
-      '  background-color: rgba(255, 214, 102, 0.42) !important;' +
-      '  color: #b45309 !important;' +
+      /* Sci-Fi PROVISIONAL: dark amber/gold (not bright orange / not error) */ '' +
+      'body.kpi-pr-provisional:not(.office-mode) {' +
+      '  --kpn-pr-warn-bg: rgba(180, 125, 25, 0.16);' +
+      '  --kpn-pr-warn-bg-soft: rgba(180, 125, 25, 0.10);' +
+      '  --kpn-pr-warn-border: rgba(230, 180, 55, 0.75);' +
+      '  --kpn-pr-warn-border-soft: rgba(230, 180, 55, 0.55);' +
+      '  --kpn-pr-warn-text: #D9AD45;' +
       '}' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-row__cell--plan-target,' +
+      'body.kpi-pr-provisional:not(.office-mode) .monthly-data-column__cell--plan-target,' +
+      'body.kpi-pr-provisional:not(.office-mode) .monthly-vfocus-cell--plan-target,' +
+      'body.kpi-pr-provisional:not(.office-mode) .kpi-pr-target-warn,' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-lower__group--base > .annual-daily-focus-bar-lower__cell:nth-child(3),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-lower__group--monthly > .annual-daily-focus-bar-lower__cell:nth-child(1),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-upper__group--monthly > .annual-daily-focus-bar-upper__cell:nth-child(1),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-lower__group--annual > .annual-daily-focus-bar-lower__cell:nth-child(1),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-bar-upper__group--annual > .annual-daily-focus-bar-upper__cell:nth-child(1) {' +
+      '  box-shadow: inset 0 0 0 1px var(--kpn-pr-warn-border);' +
+      '  background-color: var(--kpn-pr-warn-bg) !important;' +
+      '  color: var(--kpn-pr-warn-text) !important;' +
+      '}' +
+      /* Headers: border + text first; soft amber wash only */ '' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-menu-group--base > .annual-daily-hdr__cell:nth-child(3),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-menu-group--monthly > .annual-daily-hdr__cell:nth-child(1),' +
+      'body.kpi-pr-provisional:not(.office-mode) .annual-daily-focus-menu-group--annual > .annual-daily-hdr__cell:nth-child(1) {' +
+      '  box-shadow: inset 0 0 0 1px var(--kpn-pr-warn-border-soft);' +
+      '  background-color: var(--kpn-pr-warn-bg-soft) !important;' +
+      '  color: var(--kpn-pr-warn-text) !important;' +
+      '}' +
+      /* Office: keep existing warm/neutral warning (do not import Sci-Fi amber) */ '' +
       'body.office-mode.kpi-pr-provisional .annual-daily-row__cell--plan-target,' +
       'body.office-mode.kpi-pr-provisional .monthly-data-column__cell--plan-target,' +
       'body.office-mode.kpi-pr-provisional .monthly-vfocus-cell--plan-target,' +
       'body.office-mode.kpi-pr-provisional .kpi-pr-target-warn,' +
       'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-lower__group--base > .annual-daily-focus-bar-lower__cell:nth-child(3),' +
-      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3) {' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-lower__group--monthly > .annual-daily-focus-bar-lower__cell:nth-child(1),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-upper__group--monthly > .annual-daily-focus-bar-upper__cell:nth-child(1),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-lower__group--annual > .annual-daily-focus-bar-lower__cell:nth-child(1),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-bar-upper__group--annual > .annual-daily-focus-bar-upper__cell:nth-child(1) {' +
       '  box-shadow: inset 0 0 0 1.5px rgba(180, 100, 30, 0.55);' +
       '  background-color: rgba(255, 236, 179, 0.75) !important;' +
+      '  color: #9a3412 !important;' +
+      '}' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-menu-group--base > .annual-daily-hdr__cell:nth-child(3),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-menu-group--monthly > .annual-daily-hdr__cell:nth-child(1),' +
+      'body.office-mode.kpi-pr-provisional .annual-daily-focus-menu-group--annual > .annual-daily-hdr__cell:nth-child(1) {' +
+      '  box-shadow: inset 0 0 0 1px rgba(180, 100, 30, 0.45);' +
+      '  background-color: rgba(255, 236, 179, 0.35) !important;' +
       '  color: #9a3412 !important;' +
       '}' +
       /* Focus Bar default pointer-events:none — enable target cells for tooltip */ '' +
@@ -905,7 +936,8 @@
       '  pointer-events: none;' +
       '}' +
       'body.kpi-pr-provisional .annual-daily-focus-bar-lower__group--base > .annual-daily-focus-bar-lower__cell:nth-child(3),' +
-      'body.kpi-pr-provisional .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3) {' +
+      'body.kpi-pr-provisional .annual-daily-focus-bar-upper__group--base > .annual-daily-focus-bar-upper__cell:nth-child(3),' +
+      'body.kpi-pr-provisional .monthly-vfocus-cell--plan-target {' +
       '  pointer-events: auto;' +
       '  cursor: help;' +
       '  position: relative;' +

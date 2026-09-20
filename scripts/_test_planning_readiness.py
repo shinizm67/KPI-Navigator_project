@@ -302,10 +302,15 @@ def main() -> int:
     check("pointer-events: auto" in js, "10 Focus Bar pointer-events restored for tip")
     check("nth-child(3)" in js, "Focus Bar 目標売上 cell targeted")
     check("tipTitle" in js and "暫定目標値" in js, "10 Focus Bar tooltip copy")
-    check("rgba(255, 214, 102" in js or "255, 214, 102" in js, "12 yellow-warm warning bg")
-    check("#b45309" in js or "#9a3412" in js, "12 deep orange warning text")
+    check("--kpn-pr-warn-bg" in js and "rgba(180, 125, 25, 0.16)" in js, "12 Sci-Fi amber warn bg token")
+    check("--kpn-pr-warn-border" in js and "rgba(230, 180, 55, 0.75)" in js, "12 Sci-Fi amber warn border token")
+    check("--kpn-pr-warn-text" in js and "#D9AD45" in js, "12 Sci-Fi amber/gold warn text token")
+    check("rgba(255, 214, 102" not in js, "12 no bright yellow-warm Sci-Fi warn bg")
+    check("#b45309" not in js, "12 no deep-orange Sci-Fi warn text")
+    check("rgba(255, 236, 179, 0.75)" in js and "#9a3412" in js, "12 Office warm warning retained")
     check("body:not(.office-mode) .kpi-pr-alert" in js, "Sci-Fi alert theme")
     check("background: #fff8f4" in js, "Office alert theme retained")
+    check("annual-daily-hdr__cell:nth-child(3)" in js, "12 TW target header warn")
 
     # i18n keys present
     check("Confirm business days" in js, "18/19 EN BD confirm")
@@ -319,8 +324,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260919-pr5" in html,
-            f"{rel} cache-bust pr4",
+            "kpi-planning-readiness.js?v=20260920-pr8" in html,
+            f"{rel} cache-bust pr8",
         )
 
     # regression markers still present

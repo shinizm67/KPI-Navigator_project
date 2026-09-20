@@ -296,11 +296,11 @@ Planning 未確定（`PROVISIONAL`）でも、日次目標値は消さない。
 
 ### 9.1 Warning 表現
 
-- 赤〜赤橙系
-- 真っ赤な error 色は避ける
-- 背景または border 中心
+- **Sci-Fi:** dark amber / gold（`--kpn-pr-warn-*`）。明るいオレンジ・黄ベタ禁止。error には見せない
+- **Office:** 既存の warm / neutral warning を維持（Sci-Fi amber を流し込まない）
+- 背景は半透明 + thin border + muted text
 - error ではなく **warning / provisional**
-- Ready になったら通常色へ戻す
+- Ready になったら通常 cyan（Sci-Fi）／通常色へ完全復帰
 
 ### 9.2 Tooltip 方針
 
