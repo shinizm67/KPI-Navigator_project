@@ -12494,6 +12494,14 @@
     .sales-data-modal__panel[data-sdm-tab='analyze'] .sales-data-modal__input-only {
       display: none !important;
     }
+    /* OSB wraps panes in .kpn-osb-host; tab CSS only hid the inner pane, leaving
+       inactive hosts as flex:1 black gaps. Hide the inactive host with the pane. */
+    .sales-data-modal__panel[data-sdm-tab='analyze'] .kpn-osb-host:has(#sales-data-pane-input) {
+      display: none !important;
+    }
+    .sales-data-modal__panel[data-sdm-tab='input'] .kpn-osb-host:has(#sales-data-pane-analyze) {
+      display: none !important;
+    }
     .sales-data-modal__panel[data-sdm-tab='input'] #sales-data-pane-analyze {
       display: none !important;
     }

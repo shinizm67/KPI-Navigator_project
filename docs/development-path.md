@@ -31,6 +31,7 @@ CLOSED (under BR-LAUNCH-01):
 CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C0 (Founder Pro + Demo Account Setup) P0 — closed 2026-09-20
 - BR-LAUNCH-01-C2-A (Annual TW Content Missing) P0 — closed 2026-09-20
+- BR-LAUNCH-01-C2-B (Sales Data Target Tab Layout Gap) P0 — closed 2026-09-20
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -491,6 +492,23 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | audit_note | Demo Reset = wipe（reuse `reset-user-kpi`）→ apply seed → `__KPI_AUTH.clear` → re-login |
 | confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
 | accounts | Founder Pro + Demo Basic/Pro（同一 dataset・plan差のみ）。C0 で準備 |
+
+### BR-LAUNCH-01-C2-B
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2-B` |
+| name | Sales Data Target Tab Layout Gap |
+| parent | `BR-LAUNCH-01-C2` |
+| status | CLOSED |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | Demo Pro Human Smoke で Sales Data FW 目標売上 tab に巨大な不要空白を発見 |
+| evidence | OSB host 残留が原因。fix=tab 時 inactive `.kpn-osb-host:has(#sales-data-pane-*)` を display:none（JP/EN/ZH-TW）。local smoke gap=0 × Sci-Fi/Office roundtrip PASS。OSB JS 非変更 |
+| next_action | N/A（CLOSED）→ return BR-LAUNCH-01-C2 |
+| constraint | OSB JS / calc / TW / excel 非変更 |
 
 ### BR-LAUNCH-01-C2-A
 
