@@ -10469,6 +10469,8 @@
     .past-sales-modal__pane--view-only .past-sales-modal__sales-input,
     .sales-data-modal__pane--path-blocked .sales-data-modal__sales-input,
     .sales-data-modal__pane--path-blocked .sales-data-modal__cb,
+    .sales-data-modal__summary--path-blocked .sales-data-modal__summary-row--reference,
+    .sales-data-modal__summary--path-blocked .sales-data-modal__summary-reference-input,
     .annual-edit-modal--path-blocked .annual-edit-modal__sales-input,
     .annual-edit-modal--path-blocked .annual-edit-modal__cb {
       opacity: 0.72;
@@ -12272,6 +12274,8 @@
     .past-sales-modal__pane--view-only .past-sales-modal__sales-input,
     .sales-data-modal__pane--path-blocked .sales-data-modal__sales-input,
     .sales-data-modal__pane--path-blocked .sales-data-modal__cb,
+    .sales-data-modal__summary--path-blocked .sales-data-modal__summary-row--reference,
+    .sales-data-modal__summary--path-blocked .sales-data-modal__summary-reference-input,
     .annual-edit-modal--path-blocked .annual-edit-modal__sales-input,
     .annual-edit-modal--path-blocked .annual-edit-modal__cb {
       opacity: 0.72;
@@ -13811,6 +13815,19 @@
       tr:not(.sales-data-modal__row--off)
       td.sales-data-modal__cb-td {
       background: var(--sdm-bg-active-55);
+    }
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__summary-row--reference,
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__summary-row--reference
+      > *,
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__summary-reference-input {
+      background-color: var(--sdm-bg-active-55);
+    }
+    .sales-data-modal:has(.kpi-daily-input-path--sales-data.is-edit)
+      .sales-data-modal__summary-reference-input:focus {
+      background: var(--sdm-bg-active-70);
     }
     /* Beat `.sales-data-modal__table td` (0,2,1) so readonly tokens apply. */
     .sales-data-modal__table td.sales-data-modal__monthly-td,
@@ -28377,9 +28394,9 @@
         }
         function dailySalesPathBlockTitle() {
           return t(
-            '閲覧モードです。編集するには「編集」を押してください。',
-            'View mode. Press Edit to change values.',
-            '檢視模式。若要編輯，請按下「編輯」。'
+            '編集するには右上の『編集』へ切り替えてください',
+            'To edit, switch the top-right control to Edit.',
+            '若要編輯，請將右上角切換為「編輯」。'
           );
         }
         function salesDataLeaseLostBlockTitle() {
@@ -28568,23 +28585,61 @@
           var modal = document.getElementById('sales-data-modal');
           if (!modal) return;
           var pane = document.getElementById('sales-data-pane-input');
-          if (!pane) return;
+          var summaryPanel = document.getElementById('sales-data-summary-panel');
           var blocked = salesDataLiveBlocked();
           var open = modalIsOpen(modal);
           var blockTitle = salesDataLiveBlockTitle();
-          pane.classList.toggle('sales-data-modal__pane--path-blocked', blocked);
+          if (pane) {
+            pane.classList.toggle('sales-data-modal__pane--path-blocked', blocked);
+          }
           modal.classList.toggle('sales-data-modal--path-blocked', blocked && open);
+          if (summaryPanel) {
+            summaryPanel.classList.toggle('sales-data-modal__summary--path-blocked', blocked && open);
+          }
           if (!open) return;
-          setInputsReadOnly(
-            pane,
-            blocked,
-            '.sales-data-modal__sales-input, .sales-data-modal__cb, .sales-data-modal__summary-reference-input'
-          );
-          pane.querySelectorAll('.sales-data-modal__sales-input, .sales-data-modal__cb').forEach(function (el) {
-            el.title = blocked ? blockTitle : '';
-            if (blocked) el.setAttribute('data-tooltip', blockTitle);
-            else el.removeAttribute('data-tooltip');
-          });
+          if (pane) {
+            setInputsReadOnly(
+              pane,
+              blocked,
+              '.sales-data-modal__sales-input, .sales-data-modal__cb'
+            );
+            pane.querySelectorAll('.sales-data-modal__sales-input, .sales-data-modal__cb').forEach(function (el) {
+              el.title = blocked ? blockTitle : '';
+              if (blocked) el.setAttribute('data-tooltip', blockTitle);
+              else el.removeAttribute('data-tooltip');
+            });
+          }
+          if (summaryPanel) {
+            setInputsReadOnly(
+              summaryPanel,
+              blocked,
+              '.sales-data-modal__summary-reference-input'
+            );
+            summaryPanel.querySelectorAll('.sales-data-modal__summary-reference-input').forEach(function (el) {
+              el.title = blocked ? blockTitle : '';
+              if (blocked) el.setAttribute('data-tooltip', blockTitle);
+              else el.removeAttribute('data-tooltip');
+            });
+            var refRow = summaryPanel.querySelector('.sales-data-modal__summary-row--reference');
+            if (refRow) {
+              if (blocked) {
+                if (!refRow.hasAttribute('data-kpi-guard-was-tooltip')) {
+                  refRow.setAttribute(
+                    'data-kpi-guard-was-tooltip',
+                    refRow.getAttribute('data-tooltip') || ''
+                  );
+                }
+                refRow.setAttribute('title', blockTitle);
+                refRow.setAttribute('data-tooltip', blockTitle);
+              } else if (refRow.hasAttribute('data-kpi-guard-was-tooltip')) {
+                var prevTip = refRow.getAttribute('data-kpi-guard-was-tooltip');
+                refRow.removeAttribute('data-kpi-guard-was-tooltip');
+                refRow.removeAttribute('title');
+                if (prevTip) refRow.setAttribute('data-tooltip', prevTip);
+                else refRow.removeAttribute('data-tooltip');
+              }
+            }
+          }
           setGuardButtonsDisabled(
             [
               'sales-data-modal-save',
@@ -39952,17 +40007,20 @@
       if (summaryReferenceInput) {
         bindSalesAmountZeroClearUx(summaryReferenceInput);
         summaryReferenceInput.addEventListener('input', function () {
+          if (summaryReferenceInput.readOnly || summaryReferenceInput.disabled) return;
           state.modalDirty = true;
           state.referenceDirty = true;
           scheduleSalesDataInputRefresh();
         });
         summaryReferenceInput.addEventListener('change', function () {
+          if (summaryReferenceInput.readOnly || summaryReferenceInput.disabled) return;
           pushReferenceUndoSnapshot();
           state.modalDirty = true;
           state.referenceDirty = true;
           updateSalesDataSummary();
         });
         summaryReferenceInput.addEventListener('blur', function () {
+          if (summaryReferenceInput.readOnly || summaryReferenceInput.disabled) return;
           var parsed = parseSalesInputRaw(summaryReferenceInput);
           if (parsed != null && isFinite(parsed) && parsed >= 0) {
             summaryReferenceInput.value = fmtSalesInput(parsed);

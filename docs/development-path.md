@@ -23,6 +23,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C (Demo Seed / Demo Reset) P0
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
+- BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 — closed 2026-09-20
@@ -32,6 +33,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C0 (Founder Pro + Demo Account Setup) P0 — closed 2026-09-20
 - BR-LAUNCH-01-C2-A (Annual TW Content Missing) P0 — closed 2026-09-20
 - BR-LAUNCH-01-C2-B (Sales Data Target Tab Layout Gap) P0 — closed 2026-09-20
+- BR-LAUNCH-01-C2-D (Sales Data Annual Target Edit-State UX) P1 — closed 2026-09-20
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -48,7 +50,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 → BR-LAUNCH-01-C → BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2 Human Import Smoke（Demo Basic Sales / Demo Pro Sales+Expenses）→ C2 CLOSE 判断
+BR-LAUNCH-01-C2 — C2-D CLOSED。Human Import Smoke / C2-C 判断へ戻る
 ```
 
 ### Git snapshot（経路記録時点）
@@ -492,6 +494,39 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | audit_note | Demo Reset = wipe（reuse `reset-user-kpi`）→ apply seed → `__KPI_AUTH.clear` → re-login |
 | confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
 | accounts | Founder Pro + Demo Basic/Pro（同一 dataset・plan差のみ）。C0 で準備 |
+
+### BR-LAUNCH-01-C2-D
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2-D` |
+| name | Sales Data Annual Target Edit-State UX |
+| parent | `BR-LAUNCH-01-C2` |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | 閲覧モードでも年間目標が入力可能に見え、編集切替でも見た目が変わらない |
+| evidence | fix=`applySalesDataGuards` が summary panel + `#sales-data-summary-reference` を Past Sales 同型で guard。dim=`summary--path-blocked` opacity、active=`--sdm-bg-active-55/70`、dirty listener は readOnly/disabled で early return。local smoke JP/EN/ZH-TW × Sci-Fi/Office PASS |
+| next_action | N/A（CLOSED）→ return BR-LAUNCH-01-C2 |
+| constraint | save logic / 計算 / import / excel 禁止 |
+
+### BR-LAUNCH-01-C2-C
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2-C` |
+| name | Cross-Tab Account Session Collision |
+| parent | `BR-LAUNCH-01-C2` |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | 同一 Chrome profile で複数 account tab を開くと、後からの login が他 tab の identity を上書き。Sales Data で編集権移動アラート |
+| evidence | Cookie `KPISESSID` path=/ が profile 共有（login が session user を上書き）。LS `lastKpiUserId` + store も profile 共有。編集権は LS `kpiEditLeases`（ブラウザ全体1 lease）。年次目標 save 失敗は lease lost の SECONDARY。concurrent multi-account は未サポート契約 |
+| next_action | Case判断: Bug扱いせず運用制約（別 profile / Incognito）とするか、将来 session redesign を DEFER するか |
+| constraint | auth architecture / session redesign / Sales save / OCC / runtime 変更禁止（本ノードは audit） |
 
 ### BR-LAUNCH-01-C2-B
 
