@@ -510,7 +510,7 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | return_to | `BR-LAUNCH-01-C2` |
 | reason | Sales Data Enter不足。監査で MEP/PL/Past/Annual Edit も未統一 |
 | evidence | 正本完全一致なし。helper=`js/kpi-editable-grid-keys.js`。Phase1 Sales/Past/Annual Edit → Phase2 MEP → Phase3 PL |
-| next_action | Phase 1 実装・smoke |
+| next_action | Phase 2 MEP smoke → commit/deploy → Phase 3 PL |
 | constraint | Enter≠Save / Tab再設計禁止 / OCC·lease·calc·excel 禁止 |
 
 ### BR-LAUNCH-01-C2-E
