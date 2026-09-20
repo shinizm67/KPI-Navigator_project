@@ -89,9 +89,27 @@ Past Sales: purple shell + cyan/blue overlay thumb。
 
 Windows classic は overlay JS が thumb を出す。Mac は native overlay を維持。
 
-### PL Insight
+### Annual Timeline Window（TW）
 
-`.pl-graph-overlay__scroll` が対象（旧 `.pl-insight-scroll` エイリアスは廃止）。
+`.annual-daily-focus-scroll` 系は **共通 SELECTORS から除外**（2026-09-20 hotfix）。
+
+理由: host wrap が `height:100%`（absolute clip 内）を content 高さへピン留めし、
+`canY=false` / 縦スクロール不能 / 内容がクリップされて消えて見える。
+
+Annual TW は native scroll（Mac overlay / Windows classic）を維持。
+Windows classic rail が再発する場合は Annual 専用 hook で open 後 enhance を再設計する。
+
+### First-open race
+
+`[hidden]` / `display:none` 中、または `clientWidth|Height < 2` のときは enhance しない
+（`data-kpn-osb-pending` + `ResizeObserver` / rAF×2 で監視）。
+
+表示後に `refresh()` / MutationObserver（hidden/class）→ rAF×2 / pending watcher で remeasure。
+
+flex scroll child の host は `height:100%` 固定せず `flex` + `height:auto` で fill
+（`height:100%` 連鎖で host が 0px になるのを防ぐ）。
+
+API: `KpiOverlayScrollbar.refresh()` / `remeasure()` / `destroyAnnualTwWrappers()`
 
 ## Accessibility
 

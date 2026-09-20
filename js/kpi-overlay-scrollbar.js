@@ -18,13 +18,12 @@
   var TARGET_CLASS = 'kpn-osb-target';
   var ENABLED_HTML = 'kpn-overlay-scroll';
 
-  /** Known KPN scroll containers (Phase 1–3). */
+  /** Known KPN scroll containers (Phase 1–3).
+   *  Annual Timeline Window (.annual-daily-focus-*) intentionally excluded:
+   *  wrapping breaks height:100% inside absolute clip → host pins to content
+   *  height, canY becomes false, content appears clipped with no vertical scroll.
+   */
   var SELECTORS = [
-    /* Annual / Monthly TW */
-    '.annual-daily-focus-scroll',
-    '.annual-daily-focus-global-scroll',
-    '.annual-daily-focus-bar-upper-scroll',
-    '.annual-daily-focus-bar-lower-scroll',
     /* Daily FW */
     '.daily-overlay__scroll',
     '.annual-edit-modal__scroll',
@@ -50,6 +49,14 @@
     '.pl-graph-overlay__scroll',
     /* Generic opt-in */
     '[data-kpn-overlay-scroll]'
+  ];
+
+  /** Legacy Annual TW selectors — destroy if previously wrapped (hotfixed out). */
+  var ANNUAL_TW_SELECTORS = [
+    '.annual-daily-focus-scroll',
+    '.annual-daily-focus-global-scroll',
+    '.annual-daily-focus-bar-upper-scroll',
+    '.annual-daily-focus-bar-lower-scroll'
   ];
 
   var nativeWidthCache = null;
@@ -107,8 +114,8 @@
       ' > .' +
       TARGET_CLASS +
       '{' +
-      'width:100%;height:100%;' +
-      'max-width:100%;max-height:100%;' +
+      'width:100%;' +
+      'height:100%;' +
       'box-sizing:border-box;' +
       '}' +
       '.kpn-osb-thumb{' +
@@ -223,6 +230,43 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
+  function isFlexScrollChild(el, cs) {
+    if (!cs) cs = getComputedStyle(el);
+    if (cs.flexGrow && cs.flexGrow !== '0') return true;
+    return (
+      el.classList.contains('pl-data-pane') ||
+      el.classList.contains('pl-table-scroll-y') ||
+      el.classList.contains('monthly-edit-float__scroll') ||
+      el.classList.contains('pl-graph-overlay__scroll') ||
+      el.classList.contains('daily-overlay__scroll') ||
+      el.classList.contains('insight-overlay__scroll') ||
+      el.classList.contains('annual-edit-modal__scroll') ||
+      el.classList.contains('past-sales-modal__scroll') ||
+      el.classList.contains('sales-data-modal__scroll') ||
+      el.classList.contains('past-sales-modal__analyze-scroll') ||
+      el.classList.contains('sales-data-modal__analyze-scroll') ||
+      el.classList.contains('memo-float-modal__body-scroll')
+    );
+  }
+
+  function applyFlexFillHost(el, host, cs) {
+    /* Host becomes the flex item; target fills host. Prefer flex grow over
+       height:100% so nested % height does not collapse the flex chain to 0. */
+    host.style.minHeight = '0';
+    host.style.minWidth = '0';
+    host.style.flex =
+      cs.flex && cs.flex !== '0 1 auto' ? cs.flex : '1 1 0%';
+    host.style.flexGrow = cs.flexGrow && cs.flexGrow !== '0' ? cs.flexGrow : '1';
+    host.style.flexShrink = cs.flexShrink || '1';
+    host.style.alignSelf = cs.alignSelf && cs.alignSelf !== 'auto' ? cs.alignSelf : 'stretch';
+    host.style.width = '100%';
+    host.style.height = 'auto';
+    el.style.width = '100%';
+    el.style.height = '100%';
+    el.style.minHeight = '0';
+    el.style.minWidth = '0';
+  }
+
   function copyLayoutToHost(el, host) {
     var cs = getComputedStyle(el);
     var pos = cs.position;
@@ -235,6 +279,15 @@
       cs.overflowY === 'scroll' ||
       cs.overflowX === 'auto' ||
       cs.overflowX === 'scroll';
+    var heightIsPct =
+      (cs.height && String(cs.height).indexOf('%') !== -1) ||
+      el.style.height === '100%' ||
+      (el.style.height && el.style.height.indexOf('%') !== -1);
+    /* Never pin host to content-sized height (kills overflow / canY). */
+    var contentSized =
+      isScrollPort && portH > 0 && el.scrollHeight <= portH + 1;
+    var flexFill = isFlexScrollChild(el, cs);
+
     if (pos === 'absolute' || pos === 'fixed') {
       host.style.position = pos;
       host.style.left = el.style.left || cs.left;
@@ -256,69 +309,97 @@
       el.style.zIndex = '0';
     } else if (pos === 'relative') {
       host.style.position = 'relative';
-      host.style.width = el.style.width || '';
-      host.style.height = el.style.height || '';
-      host.style.flex = cs.flex || '';
-      host.style.minHeight = cs.minHeight !== 'auto' ? cs.minHeight : '';
-      host.style.flexGrow = cs.flexGrow;
-      host.style.flexShrink = cs.flexShrink;
-      host.style.alignSelf = cs.alignSelf;
-      if (isScrollPort && portH > 0 && !el.style.height) {
+      if (flexFill || heightIsPct || contentSized) {
+        applyFlexFillHost(el, host, cs);
+      } else if (isScrollPort && portH > 0 && el.scrollHeight > portH + 1) {
+        host.style.width = el.style.width || '';
+        host.style.flex = cs.flex || '';
+        host.style.minHeight = '0';
         host.style.height = portH + 'px';
+      } else {
+        host.style.width = el.style.width || '';
+        host.style.flex = cs.flex || '';
+        host.style.minHeight = cs.minHeight !== 'auto' ? cs.minHeight : '';
+        host.style.flexGrow = cs.flexGrow;
+        host.style.flexShrink = cs.flexShrink;
+        host.style.alignSelf = cs.alignSelf;
+        host.style.height = el.style.height || '';
       }
     } else {
       /* static / sticky: host fills as block wrapper */
-      host.style.display = cs.display === 'flex' || cs.display === 'grid' ? 'block' : cs.display;
-      if (cs.flexGrow && cs.flexGrow !== '0') {
-        host.style.flex = cs.flex;
-        host.style.minHeight = '0';
-        host.style.minWidth = '0';
-      }
-      var fillFlex =
-        el.classList.contains('pl-data-pane') ||
-        el.classList.contains('pl-table-scroll-y') ||
-        el.classList.contains('monthly-edit-float__scroll') ||
-        el.classList.contains('pl-graph-overlay__scroll');
-      /* Preserve scrollport size so wrap does not expand to content (kills overflow).
-         Flex/grid fill children: do not pin px height — keep 100% of host. */
-      if (fillFlex) {
-        host.style.minHeight = '0';
-        host.style.minWidth = '0';
-        if (!host.style.flex) host.style.flex = cs.flex && cs.flex !== '0 1 auto' ? cs.flex : '1 1 auto';
-        host.style.height = '100%';
-        host.style.width = '100%';
-        el.style.width = '100%';
-        el.style.height = '100%';
-        el.style.minHeight = '0';
-        el.style.minWidth = '0';
-      } else if (isScrollPort && portH > 0) {
+      host.style.display =
+        cs.display === 'flex' || cs.display === 'grid' ? 'block' : cs.display;
+      if (flexFill || heightIsPct || contentSized) {
+        applyFlexFillHost(el, host, cs);
+      } else if (isScrollPort && portH > 0 && el.scrollHeight > portH + 1) {
         host.style.height = portH + 'px';
+        if (el.style.width) host.style.width = el.style.width;
+        else if (isScrollPort && portW > 0 && cs.width && cs.width.indexOf('px') !== -1) {
+          host.style.width = portW + 'px';
+        }
       } else if (cs.height && cs.height !== 'auto' && el.style.height) {
         host.style.height = el.style.height;
-      }
-      if (isScrollPort && portW > 0 && (cs.width === 'auto' || !el.style.width)) {
-        /* keep width from flow; only pin when explicit px width existed */
-      }
-      if (!fillFlex) {
+        if (el.style.width) host.style.width = el.style.width;
+      } else {
         if (el.style.width) {
           host.style.width = el.style.width;
         } else if (isScrollPort && portW > 0 && cs.width && cs.width.indexOf('px') !== -1) {
           host.style.width = portW + 'px';
         }
       }
-      if (
-        !isScrollPort &&
-        (el.classList.contains('past-sales-modal__scroll') ||
-          el.classList.contains('sales-data-modal__scroll') ||
-          el.classList.contains('insight-overlay__scroll') ||
-          el.classList.contains('daily-overlay__scroll') ||
-          el.classList.contains('annual-edit-modal__scroll') ||
-          el.classList.contains('annual-daily-focus-scroll'))
-      ) {
-        host.style.flex = '1 1 auto';
-        host.style.minHeight = '0';
-        host.style.height = '100%';
+    }
+  }
+
+  function isUnmeasurable(el) {
+    if (!el || !el.isConnected) return true;
+    if (el.closest('[hidden]')) return true;
+    var node = el;
+    while (node && node.nodeType === 1) {
+      var cs = getComputedStyle(node);
+      if (cs.display === 'none') return true;
+      node = node.parentElement;
+    }
+    /* Either axis still 0 => layout not settled (flex open race). */
+    return el.clientWidth < 2 || el.clientHeight < 2;
+  }
+
+  function watchPending(el) {
+    if (!el || el._kpnOsbWatch) return;
+    el._kpnOsbWatch = true;
+    var finished = false;
+    var ro = null;
+    function cleanup() {
+      if (finished) return;
+      finished = true;
+      try {
+        if (ro) ro.disconnect();
+      } catch (e) {}
+      delete el._kpnOsbWatch;
+    }
+    function tryFlush() {
+      if (finished) return;
+      if (el.dataset.kpnOsb === '1') {
+        cleanup();
+        return;
       }
+      if (isUnmeasurable(el)) return;
+      cleanup();
+      delete el.dataset.kpnOsbPending;
+      enhance(el);
+    }
+    ro =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(function () {
+            tryFlush();
+          })
+        : null;
+    if (ro) ro.observe(el);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(tryFlush);
+      });
+    } else {
+      tryFlush();
     }
   }
 
@@ -326,12 +407,19 @@
     if (!el || el.nodeType !== 1) return null;
     if (el.dataset.kpnOsb === '1') return el._kpnOsb || null;
     if (!needsOverlay()) return null;
+    if (isUnmeasurable(el)) {
+      el.dataset.kpnOsbPending = '1';
+      watchPending(el);
+      return null;
+    }
 
     injectCss();
     document.documentElement.classList.add(ENABLED_HTML);
 
     var parent = el.parentNode;
     if (!parent) return null;
+
+    delete el.dataset.kpnOsbPending;
 
     var host = document.createElement('div');
     host.className = HOST_CLASS;
@@ -507,6 +595,26 @@
       sync: sync,
       show: show,
       scheduleHide: scheduleHide,
+      remeasure: function () {
+        if (isUnmeasurable(el)) return;
+        /* Drop content-sized pins; restore percentage fill. */
+        if (host.style.height && el.scrollHeight > 0) {
+          var pinned = parseFloat(host.style.height);
+          if (
+            Number.isFinite(pinned) &&
+            pinned > 0 &&
+            Math.abs(pinned - el.scrollHeight) <= 2
+          ) {
+            host.style.height = '100%';
+            host.style.minHeight = '0';
+          }
+        }
+        if (el.clientHeight < 2 && host.style.height && host.style.height.indexOf('px') !== -1) {
+          host.style.height = '100%';
+          host.style.minHeight = '0';
+        }
+        sync();
+      },
       destroy: function () {
         if (ro) ro.disconnect();
         el.removeEventListener('scroll', onScroll);
@@ -518,14 +626,69 @@
           host.parentNode.removeChild(host);
         }
         el.classList.remove(TARGET_CLASS);
+        el.style.width = '';
+        el.style.height = '';
+        el.style.minHeight = '';
+        el.style.minWidth = '';
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.right = '';
+        el.style.bottom = '';
+        el.style.margin = '';
+        el.style.zIndex = '';
         delete el.dataset.kpnOsb;
+        delete el.dataset.kpnOsbPending;
         delete el._kpnOsb;
+        instances = instances.filter(function (x) {
+          return x !== api;
+        });
       }
     };
     el._kpnOsb = api;
     instances.push(api);
     sync();
     return api;
+  }
+
+  function flushPending(root) {
+    root = root || document;
+    var pending = root.querySelectorAll
+      ? root.querySelectorAll('[data-kpn-osb-pending="1"]')
+      : [];
+    var out = [];
+    for (var i = 0; i < pending.length; i++) {
+      var el = pending[i];
+      if (isUnmeasurable(el)) continue;
+      delete el.dataset.kpnOsbPending;
+      var api = enhance(el);
+      if (api) out.push(api);
+    }
+    return out;
+  }
+
+  function refreshAll(root) {
+    if (!needsOverlay()) return [];
+    enhanceAll(root || document);
+    flushPending(root || document);
+    for (var i = 0; i < instances.length; i++) {
+      if (instances[i] && typeof instances[i].remeasure === 'function') {
+        instances[i].remeasure();
+      }
+    }
+    return instances.slice();
+  }
+
+  function destroyAnnualTwWrappers() {
+    for (var i = 0; i < ANNUAL_TW_SELECTORS.length; i++) {
+      var nodes = document.querySelectorAll(ANNUAL_TW_SELECTORS[i]);
+      for (var j = 0; j < nodes.length; j++) {
+        var el = nodes[j];
+        if (el._kpnOsb && typeof el._kpnOsb.destroy === 'function') {
+          el._kpnOsb.destroy();
+        }
+      }
+    }
   }
 
   function enhanceAll(root) {
@@ -538,12 +701,15 @@
     root = root || document;
     var out = [];
     for (var i = 0; i < SELECTORS.length; i++) {
-      var nodes = root.querySelectorAll(SELECTORS[i]);
+      var nodes = root.querySelectorAll
+        ? root.querySelectorAll(SELECTORS[i])
+        : [];
       for (var j = 0; j < nodes.length; j++) {
         var api = enhance(nodes[j]);
         if (api) out.push(api);
       }
     }
+    flushPending(root);
     return out;
   }
 
@@ -558,20 +724,43 @@
       reducedMotion = false;
     }
     measureNativeScrollbarWidth();
+    destroyAnnualTwWrappers();
     if (!needsOverlay()) return;
     enhanceAll(document);
     if (typeof MutationObserver !== 'undefined') {
       var mo = new MutationObserver(function (muts) {
+        var needRefresh = false;
         for (var i = 0; i < muts.length; i++) {
           var m = muts[i];
+          if (m.type === 'attributes') {
+            needRefresh = true;
+            continue;
+          }
           for (var j = 0; j < m.addedNodes.length; j++) {
             var n = m.addedNodes[j];
             if (n.nodeType !== 1) continue;
             enhanceAll(n);
           }
         }
+        if (needRefresh) {
+          /* Overlay open/close toggles [hidden] — enhance deferred ports after layout. */
+          if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(function () {
+              requestAnimationFrame(function () {
+                refreshAll(document);
+              });
+            });
+          } else {
+            refreshAll(document);
+          }
+        }
       });
-      mo.observe(document.documentElement, { childList: true, subtree: true });
+      mo.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['hidden', 'class', 'style', 'aria-hidden']
+      });
     }
   }
 
@@ -582,6 +771,10 @@
     needsOverlay: needsOverlay,
     enhance: enhance,
     enhanceAll: enhanceAll,
+    refresh: refreshAll,
+    refreshAll: refreshAll,
+    remeasure: refreshAll,
+    destroyAnnualTwWrappers: destroyAnnualTwWrappers,
     boot: boot,
     getNativeScrollbarWidth: function () {
       return measureNativeScrollbarWidth();
