@@ -6312,10 +6312,13 @@ def render_page(lang: str, lang_switch: str) -> str:
       --pl-cell-border-color: #58e1f3;
       --pl-cell-border: 1px solid var(--pl-cell-border-color);
       --pl-freeze-border: 3px double var(--pl-cell-border-color);
-      /* ビューポート高固定 + 内側 zoom。Business Days 下のみ縦スクロール */
+      /* ビューポート高固定 + 内側 zoom。Business Days 下のみ縦スクロール.
+         Scrollbar layout gutter は使わない（KPN Overlay Scrollbar Contract）。
+         Windows classic rail は js/kpi-overlay-scrollbar.js が overlay 化する。
+         Mac native overlay は nativeWidth==0 で維持。 */
       --pl-viewport-h: calc(100vh - 132px);
       --pl-zoom-factor: 1;
-      --pl-scrollbar-w: 8px;
+      --pl-scrollbar-w: 0;
       width: 100%;
       max-width: none;
       margin: 0;
@@ -6342,18 +6345,18 @@ def render_page(lang: str, lang_switch: str) -> str:
       position: relative;
       z-index: 10;
       background: #1f1e1e;
-      /* 下の縦スクロールバー幅分を確保し、月列の縦線を揃える */
-      padding-right: var(--pl-scrollbar-w, 8px);
+      /* overlay scrollbar: no reserved rail width */
+      padding-right: 0;
       box-sizing: border-box;
     }}
     .pl-table-scroll-y {{
       flex: 1 1 auto;
       min-height: 0;
-      overflow-y: scroll;
+      overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       background: #1f1e1e;
-      scrollbar-gutter: stable;
+      scrollbar-gutter: auto;
       /* Business Days より下 — 縦ラベル用に行高を拡張（固定ペインは 30px のまま） */
       --pl-row-label-h: 40px;
       --pl-analyze-band-h: 40px;
@@ -6395,31 +6398,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
       background: #1f1e1e;
-      scrollbar-color: #58e1f3 #1f1e1e;
-      scrollbar-width: thin;
-    }}
-    .pl-data-pane::-webkit-scrollbar {{
-      height: 8px;
-      width: 8px;
-    }}
-    .pl-data-pane::-webkit-scrollbar-track {{
-      background: #1f1e1e;
-    }}
-    .pl-data-pane::-webkit-scrollbar-thumb {{
-      background: #58e1f3;
-    }}
-    .pl-table-scroll-y {{
-      scrollbar-color: #58e1f3 #1f1e1e;
-      scrollbar-width: thin;
-    }}
-    .pl-table-scroll-y::-webkit-scrollbar {{
-      width: 8px;
-    }}
-    .pl-table-scroll-y::-webkit-scrollbar-track {{
-      background: #1f1e1e;
-    }}
-    .pl-table-scroll-y::-webkit-scrollbar-thumb {{
-      background: #58e1f3;
+      /* native track/thumb は描画しない。Windows overlay / Mac native overlay に委譲 */
     }}
     .pl-table--labels-body.pl-table--v1,
     .pl-table--data-body.pl-table--v1 {{
@@ -8626,13 +8605,6 @@ def render_page(lang: str, lang_switch: str) -> str:
     }}
     body.office-mode .pl-data-pane {{
       background: #f5f5f5;
-      scrollbar-color: #999 #f5f5f5;
-    }}
-    body.office-mode .pl-data-pane::-webkit-scrollbar-track {{
-      background: #f5f5f5;
-    }}
-    body.office-mode .pl-data-pane::-webkit-scrollbar-thumb {{
-      background: #bbb;
     }}
     body.office-mode .pl-table--v1 .pl-label-corner,
     body.office-mode .pl-table--v1 .pl-row-label,
@@ -8855,6 +8827,7 @@ def render_page(lang: str, lang_switch: str) -> str:
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
   <script src="{"../../../js/kpi-currency.js" if lang == "ja" else "../../../../js/kpi-currency.js"}"></script>
+  <script src="{"../../../js/kpi-overlay-scrollbar.js?v=20260920-1" if lang == "ja" else "../../../../js/kpi-overlay-scrollbar.js?v=20260920-1"}"></script>
   <script src="{"../../../js/kpi-pl-monthly-allocate.js" if lang == "ja" else "../../../../js/kpi-pl-monthly-allocate.js"}"></script>
   <script src="{"../../../js/kpi-business-type.js" if lang == "ja" else "../../../../js/kpi-business-type.js"}"></script>
   <script src="{"../../../js/kpi-pl-expense-presets.js" if lang == "ja" else "../../../../js/kpi-pl-expense-presets.js"}"></script>
