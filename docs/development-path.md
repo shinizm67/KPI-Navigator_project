@@ -60,7 +60,7 @@ BR-LAUNCH-01-C2 — Demo Import Smoke（C2-F CLOSED → return）
 | 項目 | 値 |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | （C2-F P3 commit 後に更新） |
+| HEAD | `910ddfc` — Add PL Enter vertical amount navigation via shared helper |
 | origin sync | （都度確認） |
 | excel/ | user-owned dirty / **do not touch** |
 
