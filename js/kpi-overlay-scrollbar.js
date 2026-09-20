@@ -289,29 +289,39 @@
     var flexFill = isFlexScrollChild(el, cs);
 
     if (pos === 'absolute' || pos === 'fixed') {
-      /* Insight / absolute ports: top+bottom (or left+right) already size the box.
-         Copying computed px height/width freezes a shorter viewport and leaves a blank band. */
+      /* Absolute ports come in two authoring patterns:
+         A) Insight-style insets: left+right / top+bottom (no definite box size)
+         B) Box-style: left+top+width+height (Monthly TW .monthly-scroll-data)
+         getComputedStyle always resolves the residual inset (right/bottom) even for
+         pattern B — copying that residual makes the host larger than the TW and
+         content paints past the window with canX/thumb still on an oversized port. */
       host.style.position = pos;
-      host.style.left = el.style.left || (cs.left !== 'auto' ? cs.left : '');
-      host.style.right = el.style.right || (cs.right !== 'auto' ? cs.right : '');
-      host.style.top = el.style.top || (cs.top !== 'auto' ? cs.top : '');
-      host.style.bottom = el.style.bottom || (cs.bottom !== 'auto' ? cs.bottom : '');
-      var pinY =
-        (host.style.top || cs.top !== 'auto') && (host.style.bottom || cs.bottom !== 'auto');
-      var pinX =
-        (host.style.left || cs.left !== 'auto') && (host.style.right || cs.right !== 'auto');
-      if (pinX) {
-        host.style.width = el.style.width || '';
-      } else {
-        host.style.width = el.style.width || cs.width;
-      }
-      if (pinY) {
-        host.style.height = el.style.height || '';
-      } else {
-        host.style.height = el.style.height || cs.height;
-      }
       host.style.zIndex = el.style.zIndex || cs.zIndex;
       host.style.margin = el.style.margin || cs.margin;
+
+      var insetPort =
+        el.classList.contains('insight-overlay__scroll') ||
+        el.classList.contains('pl-graph-overlay__scroll');
+
+      if (insetPort) {
+        host.style.left = el.style.left || (cs.left !== 'auto' ? cs.left : '');
+        host.style.right = el.style.right || (cs.right !== 'auto' ? cs.right : '');
+        host.style.top = el.style.top || (cs.top !== 'auto' ? cs.top : '');
+        host.style.bottom = el.style.bottom || (cs.bottom !== 'auto' ? cs.bottom : '');
+        host.style.width = el.style.width || '';
+        host.style.height = el.style.height || '';
+      } else {
+        /* Box-style absolute (Monthly TW etc.): never copy residual right/bottom. */
+        host.style.left = el.style.left || (cs.left !== 'auto' ? cs.left : '');
+        host.style.top = el.style.top || (cs.top !== 'auto' ? cs.top : '');
+        host.style.right = el.style.right || '';
+        host.style.bottom = el.style.bottom || '';
+        host.style.width = el.style.width || portW + 'px';
+        host.style.height = el.style.height || portH + 'px';
+        host.setAttribute('data-kpn-osb-box-w', String(portW));
+        host.setAttribute('data-kpn-osb-box-h', String(portH));
+      }
+
       el.style.position = 'relative';
       el.style.left = '0';
       el.style.right = 'auto';
@@ -621,6 +631,26 @@
           String(host.style.height).indexOf('px') !== -1
         ) {
           host.style.height = '';
+        }
+        /* Monthly TW box-style absolute: drop residual right/bottom from older enhance. */
+        if (
+          el.classList.contains('monthly-scroll-data') &&
+          (hcs.position === 'absolute' || hcs.position === 'fixed')
+        ) {
+          host.style.right = '';
+          host.style.bottom = '';
+          var boxW = parseFloat(host.getAttribute('data-kpn-osb-box-w') || '');
+          var boxH = parseFloat(host.getAttribute('data-kpn-osb-box-h') || '');
+          var parent = host.parentElement;
+          var leftPx = parseFloat(host.style.left);
+          if (parent && Number.isFinite(leftPx) && parent.clientWidth > 0) {
+            host.style.width = Math.max(0, parent.clientWidth - leftPx) + 'px';
+          } else if (Number.isFinite(boxW) && boxW > 0) {
+            host.style.width = boxW + 'px';
+          }
+          if (Number.isFinite(boxH) && boxH > 0) {
+            host.style.height = boxH + 'px';
+          }
         }
         /* Drop content-sized pins; restore percentage fill. */
         if (host.style.height && el.scrollHeight > 0) {
