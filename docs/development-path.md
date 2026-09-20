@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -20,10 +20,17 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 ACTIVE BRANCHES:
 - BR-LAUNCH-01 (Demo / New User State) P0
+- BR-LAUNCH-01-C (Demo Seed / Demo Reset) P0
+- BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
+- BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 — closed 2026-09-20
 - BR-LAUNCH-01-B (New User Smoke Reset / Account Reuse) P0 — closed 2026-09-20
+
+CLOSED (under BR-LAUNCH-01-C):
+- BR-LAUNCH-01-C0 (Founder Pro + Demo Account Setup) P0 — closed 2026-09-20
+- BR-LAUNCH-01-C2-A (Annual TW Content Missing) P0 — closed 2026-09-20
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -37,10 +44,10 @@ DEFERRED:
   return when: Final Performance / Speed Optimization phase
 
 RETURN TARGET:
-BR-LAUNCH-01 → TRUNK-06
+BR-LAUNCH-01-C2 → BR-LAUNCH-01-C → BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01 残スコープ選定（Demo Seed / Reset 等）。01-A / 01-B は CLOSED。
+BR-LAUNCH-01-C2 Human Import Smoke（Demo Basic Sales / Demo Pro Sales+Expenses）→ C2 CLOSE 判断
 ```
 
 ### Git snapshot（経路記録時点）
@@ -48,8 +55,8 @@ BR-LAUNCH-01 残スコープ選定（Demo Seed / Reset 等）。01-A / 01-B は 
 | 項目 | 値 |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | empty-state `153484e` + docs closeout（次 commit） |
-| origin sync | push 後に一致させる |
+| HEAD | `48d3828` — Fix new-user smoke reset documentation |
+| origin sync | （都度確認） |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -411,7 +418,7 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / 主要 UI/UX closeout が完了し、KPN を「開発中」から「安全に人へ見せ、使わせられる状態」へ移行するため。 |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit（2026-09-20）; HEAD `dffeb8e` UI/UX closeout; Shin/Case 決定で本線開始 |
-| next_action | `BR-LAUNCH-01` 残スコープ（Demo Seed / Reset 等） |
+| next_action | `BR-LAUNCH-01-C` Demo Seed / Demo Reset（監査・設計） |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)（配布運用・関連） |
 
 ### BR-LAUNCH-01
@@ -427,7 +434,7 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | return_to | `TRUNK-06` |
 | reason | 新規・デモ利用者が壊れない初期状態・導線を確定する |
 | evidence | TRUNK-06 開始決定（2026-09-20） |
-| next_action | Demo Seed / Reset 等の残スコープ選定。01-A / 01-B CLOSED |
+| next_action | `BR-LAUNCH-01-C` ACTIVE。Demo Seed / Reset 監査→実装 |
 
 ### BR-LAUNCH-01-A
 
@@ -465,6 +472,95 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | phase1 | Admin Reset API `api/v1/admin/reset-user-kpi.php` + tests + ops docs（Founder UI なし） |
 | phase2_candidate | Founder Console Reset UI |
 | browser_cleanup | `window.__KPI_AUTH.clearUserScopedLocalData()` → logout → login（UI logout のみでは LS 残存。`KpiAuthClient` は誤り） |
+
+### BR-LAUNCH-01-C
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C` |
+| name | Demo Seed / Demo Reset |
+| parent | `BR-LAUNCH-01` |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01` |
+| reason | New User Empty-State / Smoke Reset が CLOSED。再現可能なデモ状態を正式に定義・実装する |
+| evidence | 01-A/01-B CLOSED; New User Reset ≠ Demo Reset; 監査: wipe API のみ（他user store inject API なし）; meal/customers は `years[].dailyMeal`（daily-inputs は sales/BD のみ）; 素材 `excel/*_official*` + `tests/generated-fixtures/`; Founder User Detail が将来 UI 候補 |
+| next_action | C2 Demo Operation Pack 設計・監査（Reset + Sales/Expenses CSV） |
+| constraint | 一般ユーザー UI に出さない（Founder/Admin 第一候補）。random 禁止。01-B empty reset と分離 |
+| audit_note | Demo Reset = wipe（reuse `reset-user-kpi`）→ apply seed → `__KPI_AUTH.clear` → re-login |
+| confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
+| accounts | Founder Pro + Demo Basic/Pro（同一 dataset・plan差のみ）。C0 で準備 |
+
+### BR-LAUNCH-01-C2-A
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2-A` |
+| name | Annual TW Content Missing |
+| parent | `BR-LAUNCH-01-C2` |
+| status | CLOSED |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | Demo Pro Human Smoke で Annual TW body missing を発見 |
+| evidence | root=`153484e` Graph1 `buildDemoPayload`→未定義 `buildEmptyTrendPayload`。fix=Graph1 scope に同関数追加（JP/EN/ZH-TW）。local smoke: pageerror0 / renderFn / 57rows / wrapなし |
+| next_action | N/A（CLOSED）→ return BR-LAUNCH-01-C2 |
+| constraint | Monthly / OSB / TW sizing / excel 非変更 |
+
+### BR-LAUNCH-01-C2
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2` |
+| name | Demo Operation Pack |
+| parent | `BR-LAUNCH-01-C` |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C` |
+| reason | 営業が短時間で再現できる 3 点セット（Demo Reset / Sales CSV / Expenses CSV） |
+| evidence | fixtures/demo/restaurant-v1 固定 CSV 作成済（integrity OK）。docs/demo-operation-pack.md。Reset=reuse reset-user-kpi。runtime 生成ロジックなし |
+| next_action | C2-A 解消後 → Human Import Smoke（Demo Basic Sales / Demo Pro Sales+Expenses）→ C2 CLOSE 判断 |
+| pack | Reset + sales_2024|2025|2026 + expenses daily/monthly |
+| demo_basic | `kpn_demo_restaurant_basic01@…` / `u_7aac8cb5cbb0f607` |
+| demo_pro | `kpn_demo_restaurant_pro01@…` / `u_a57d33d6ae864d99` |
+
+### BR-LAUNCH-01-C0
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C0` |
+| name | Founder Pro + Demo Account Setup |
+| parent | `BR-LAUNCH-01-C` |
+| status | CLOSED |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C` |
+| reason | Demo 運用前に Founder=PRO と Demo Basic/Pro 専用アカウントを確定・準備する |
+| evidence | Founder `u_43e738560b91617f` plan=pro role=founder_superadmin; Demo Basic `u_7aac8cb5cbb0f607` plan=basic; Demo Pro `u_a57d33d6ae864d99` plan=pro。共用 dataset・plan差のみ。BT は seed 時 |
+| next_action | N/A（CLOSED） |
+| founder | `s.matsushita@forge-laboratory.com` |
+| demo_basic | `kpn_demo_restaurant_basic01@trial.forge-laboratory.com` |
+| demo_pro | `kpn_demo_restaurant_pro01@trial.forge-laboratory.com` |
+
+### BR-LAUNCH-01-C1
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C1` |
+| name | Demo Dataset Contract & Existing Fixture Audit |
+| parent | `BR-LAUNCH-01-C` |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-20 |
+| return_to | `BR-LAUNCH-01-C` |
+| reason | Demo Seed API 前に generated-fixtures を監査し restaurant Demo v1 の deterministic dataset 正本を確定する |
+| evidence | `tests/generated-fixtures/` = CSV smoke（`csv_smoke_fixture_generator.py`）。L/D 整合ありだが線形合成・休業日にも expense。plan/PR なし。昇格は PARTIAL |
+| next_action | Case合意後 → C2 dataset 正本作成 or HOLD |
+| constraint | runtime変更禁止; dataset生成禁止（本ノード）; excel untouched |
 
 ### BR-LAUNCH-02
 
@@ -552,8 +648,14 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 
 | id | name | status | priority | parent |
 |----|------|--------|----------|--------|
-| `BR-LAUNCH-01` | Demo / New User State | ACTIVE | P0 | `TRUNK-06` |
+| `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | ACTIVE | P0 | `BR-LAUNCH-01` |
+| `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
+| `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 
+CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
+CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`  
+PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
+DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
@@ -568,7 +670,7 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | Unit 5D 以降 | **UNKNOWN**（現本線は TRUNK-06） |
 | FW Audit が全 Floating Window を網羅したか | 配線 tests は Daily / Top Insight / PL Insight のみ確認。それ以外の COMPLETE 宣言 doc なし → **UNKNOWN** |
 | `TR-UNIT-5B` / `TR-UNIT-5C` の厳密な started_at | **UNKNOWN** |
-| BR-LAUNCH-01 の詳細スコープ（画面・ストア・デモデータ） | Empty-State は `BR-LAUNCH-01-A` で契約確定。Demo Seed/Reset 等は親ブランチ残件 |
+| BR-LAUNCH-01 の詳細スコープ（画面・ストア・デモデータ） | Empty-State / Smoke Reset CLOSED。残件は `BR-LAUNCH-01-C` Demo Seed/Reset |
 | BT Option C 全面ゲート | **DEFERRED**（01-A は Option B） |
 
 ---
@@ -598,3 +700,9 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-20 | **BR-LAUNCH-01-B Phase 1** Admin Reset API + tests + Smoke Reset ops（Founder UI 未着手・未 commit）。 |
 | 2026-09-20 | **BR-LAUNCH-01-B** Server Reset API commit/push/deploy `d2a9f39` PASS。Real Smoke で browser cleanup namespace mismatch 発見（`KpiAuthClient` 誤 → 正 `__KPI_AUTH`）。runtime 変更なし・docs のみ修正。 |
 | 2026-09-20 | **BR-LAUNCH-01-B CLOSED**（Reset API + `__KPI_AUTH` cleanup + same-account Human Smoke PASS）。**BR-LAUNCH-01-A CLOSED**（empty-state Human Smoke ALL PASS）。CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01`。 |
+| 2026-09-20 | **BR-LAUNCH-01-C** Demo Seed / Demo Reset ACTIVE。CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C`。監査・設計のみ（runtime 未着手）。 |
+| 2026-09-20 | **BR-LAUNCH-01-C1** Demo Dataset Contract & Fixture Audit ACTIVE。CURRENT PATH = `… -> BR-LAUNCH-01-C1`。generated-fixtures は smoke 用・Demo 正本へは PARTIAL。 |
+| 2026-09-20 | **BR-LAUNCH-01-C0** Founder Pro + Demo Account Setup ACTIVE。CURRENT PATH = `… -> BR-LAUNCH-01-C0`。 |
+| 2026-09-20 | **BR-LAUNCH-01-C0 CLOSED**。Founder plan=pro; Demo Basic/Pro 作成済。CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C`。 |
+| 2026-09-20 | **BR-LAUNCH-01-C2** Demo Operation Pack ACTIVE。CURRENT PATH = `… -> BR-LAUNCH-01-C2`。Reset+Sales/Expenses CSV 設計・監査のみ。 |
+| 2026-09-20 | **BR-LAUNCH-01-C2** `fixtures/demo/restaurant-v1` 固定 CSV + `docs/demo-operation-pack.md` 作成。Human Import Smoke 待ち（未 commit）。 |

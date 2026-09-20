@@ -23663,6 +23663,28 @@
           return CFG.plotBottom - ratio * CFG.plotH;
         }
 
+        function buildEmptyTrendPayload(dim, todayDay) {
+          var target = [];
+          var actual = [];
+          var dailyTarget = [];
+          var dailyActual = [];
+          for (var d = 1; d <= dim; d++) {
+            dailyTarget.push(0);
+            dailyActual.push(0);
+            target.push(0);
+            actual.push(0);
+          }
+          var td = Number(todayDay);
+          if (!Number.isFinite(td) || td < 1) td = 1;
+          if (td > dim) td = dim;
+          return {
+            target: target,
+            actual: actual,
+            dailyTarget: dailyTarget,
+            dailyActual: dailyActual,
+            todayDay: td
+          };
+        }
         function buildDemoPayload(dim, todayDay) {
           return buildEmptyTrendPayload(dim, todayDay);
         }
