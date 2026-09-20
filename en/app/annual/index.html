@@ -38520,6 +38520,12 @@ Cumulative Target Annual Sales</p>
           }
         });
         inp.addEventListener('input', stripLeadingZerosWhileTyping);
+        inp.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter') return;
+          if (inp.readOnly || inp.disabled) return;
+          e.preventDefault();
+          inp.blur();
+        });
         inp.addEventListener('blur', function () {
           if (inp.readOnly) return;
           var n = parseSalesInputRaw(inp);
@@ -38736,6 +38742,29 @@ Cumulative Target Annual Sales</p>
         }
         return 'Edit rights moved to another screen. Changes were not saved.';
       }
+      function salesDataUnsavedNeedEditMessage() {
+        var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+        if (lang.indexOf('zh') === 0) {
+          return '有尚未儲存的變更。請切換到編輯模式後再儲存。';
+        }
+        if (lang.indexOf('ja') === 0) {
+          return '未保存の変更があります。編集モードに切り替えて保存してください。';
+        }
+        return 'You have unsaved changes. Switch to Edit mode to save.';
+      }
+      function isSalesDataForeignLeaseLost() {
+        if (
+          !(
+            window.KpiYearStore &&
+            typeof window.KpiYearStore.getEditLease === 'function' &&
+            typeof window.KpiYearStore.holdsEditLease === 'function'
+          )
+        ) {
+          return false;
+        }
+        var rec = window.KpiYearStore.getEditLease('daily-sales');
+        return !!(rec && !window.KpiYearStore.holdsEditLease('daily-sales'));
+      }
       function rejectSalesDataSaveLeaseLost() {
         window.alert(salesDataLeaseLostSaveMessage());
         if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
@@ -38743,9 +38772,22 @@ Cumulative Target Annual Sales</p>
         }
         return Promise.resolve({ ok: false, error: 'edit_lease_lost' });
       }
+      function rejectSalesDataSaveNotLive() {
+        var msg = isSalesDataForeignLeaseLost()
+          ? salesDataLeaseLostSaveMessage()
+          : salesDataUnsavedNeedEditMessage();
+        window.alert(msg);
+        if (window.__KPI_EDIT_GUARDS && typeof window.__KPI_EDIT_GUARDS.applyAll === 'function') {
+          window.__KPI_EDIT_GUARDS.applyAll();
+        }
+        return Promise.resolve({
+          ok: false,
+          error: isSalesDataForeignLeaseLost() ? 'edit_lease_lost' : 'unsaved_need_edit'
+        });
+      }
       function saveSalesDataModal() {
         if (!canEditSalesDataLiveNow()) {
-          return rejectSalesDataSaveLeaseLost();
+          return rejectSalesDataSaveNotLive();
         }
         /* KPI-BUSY-OVERLAY */
         if (window.__KPI_BUSY && !window.__KPI_BUSY._inRun) {
@@ -38776,7 +38818,7 @@ Cumulative Target Annual Sales</p>
           }
         });
         if (!canEditSalesDataLiveNow()) {
-          return rejectSalesDataSaveLeaseLost();
+          return rejectSalesDataSaveNotLive();
         }
         return Promise.resolve(persistSalesDataShared()).then(function (persistResult) {
           if (
