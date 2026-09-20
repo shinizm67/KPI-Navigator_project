@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-B
+TRUNK-06 -> BR-LAUNCH-01
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -20,11 +20,12 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 ACTIVE BRANCHES:
 - BR-LAUNCH-01 (Demo / New User State) P0
-- BR-LAUNCH-01-B (New User Smoke Reset / Account Reuse) P0
+
+CLOSED (under BR-LAUNCH-01):
+- BR-LAUNCH-01-A (New User Empty-State Contract) P0 — closed 2026-09-20
+- BR-LAUNCH-01-B (New User Smoke Reset / Account Reuse) P0 — closed 2026-09-20
 
 PAUSED (under TRUNK-06):
-- BR-LAUNCH-01-A (New User Empty-State Contract) P0
-  reason: BT unset fix production反映済。New User Human Smoke再実施前に Smoke アカウント完全初期化手段が必要
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
 - BR-LAUNCH-03 UI Consistency Audit P1
 - BR-LAUNCH-04 PL Editable Cell Visual Finish P1
@@ -36,10 +37,10 @@ DEFERRED:
   return when: Final Performance / Speed Optimization phase
 
 RETURN TARGET:
-BR-LAUNCH-01-A (then BR-LAUNCH-01 → TRUNK-06)
+BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-B Phase 1 local完了確認 →（合意後）commit/push/deploy → browser clear + Human Smoke
+BR-LAUNCH-01 残スコープ選定（Demo Seed / Reset 等）。01-A / 01-B は CLOSED。
 ```
 
 ### Git snapshot（経路記録時点）
@@ -47,9 +48,8 @@ BR-LAUNCH-01-B Phase 1 local完了確認 →（合意後）commit/push/deploy �
 | 項目 | 値 |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `6ee7d3b` — Fix unset business type profile hydration |
-| origin sync | ahead 0 / behind 0 |
-| uncommitted mainline | empty-state app/** 等（BT-scope は commit済） |
+| HEAD | empty-state `153484e` + docs closeout（次 commit） |
+| origin sync | push 後に一致させる |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -411,7 +411,7 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / 主要 UI/UX closeout が完了し、KPN を「開発中」から「安全に人へ見せ、使わせられる状態」へ移行するため。 |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit（2026-09-20）; HEAD `dffeb8e` UI/UX closeout; Shin/Case 決定で本線開始 |
-| next_action | `BR-LAUNCH-01-A` Empty-State Contract 実装 |
+| next_action | `BR-LAUNCH-01` 残スコープ（Demo Seed / Reset 等） |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)（配布運用・関連） |
 
 ### BR-LAUNCH-01
@@ -427,7 +427,7 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | return_to | `TRUNK-06` |
 | reason | 新規・デモ利用者が壊れない初期状態・導線を確定する |
 | evidence | TRUNK-06 開始決定（2026-09-20） |
-| next_action | `BR-LAUNCH-01-A` 完了後に Demo Seed / Reset 等の残スコープへ |
+| next_action | Demo Seed / Reset 等の残スコープ選定。01-A / 01-B CLOSED |
 
 ### BR-LAUNCH-01-A
 
@@ -436,15 +436,15 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | id | `BR-LAUNCH-01-A` |
 | name | New User Empty-State Contract |
 | parent | `BR-LAUNCH-01` |
-| status | PAUSED |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
 | return_to | `BR-LAUNCH-01` |
-| reason | BT unset fix production反映済。New User Human Smoke再実施前に Smoke アカウント完全初期化手段が必要 |
-| evidence | emptyStore / demoMoney / BT unset audit; Option B; commit `6ee7d3b` BT unset Settings hydrate（prod deploy済） |
-| next_action | `BR-LAUNCH-01-B` 完了後に Human Smoke 再実施 → 01-A へ復帰 |
+| reason | 新規ユーザー empty ≠ デモ。Option B BT unset。PR empty = NOT_READY |
+| evidence | automated tests; production Human Smoke ALL PASS（BT unset / Annual·Monthly·PL empty / PR NOT_READY / no target amber / Pro·MEP·PL / no fake money）; BT Settings hydrate `6ee7d3b` |
+| next_action | N/A（CLOSED） |
 | contract | 空≠デモ; `—`=未定義; `0`=定義済みゼロ; PR empty=NOT_READY; BT Option B; 数値契約は言語/plan/theme共通 |
-| note | CLOSED にしない。Smoke は 01-B reset 確立後 |
 
 ### BR-LAUNCH-01-B
 
@@ -453,16 +453,18 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | id | `BR-LAUNCH-01-B` |
 | name | New User Smoke Reset / Account Reuse |
 | parent | `BR-LAUNCH-01` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-20 |
 | return_to | `BR-LAUNCH-01-A` |
 | reason | 同一 Smoke 専用アカウントを毎回 emptyStore / BT 未設定の新規同等状態へ戻して再利用する |
-| evidence | Human Smoke で BT unset 再確認前に初期化手段が必要; 対象 `kpn_empty_state_smoke01@trial.forge-laboratory.com` |
-| next_action | Phase 1 完了後: local verify → commit/push/deploy（未実施）→ browser clear + Human Smoke |
+| evidence | production Reset API `d2a9f39`; target-only wipe; session revoke; `__KPI_AUTH.clearUserScopedLocalData` → logout → same-account re-login Human Smoke PASS; Pro 維持 |
+| next_action | N/A（CLOSED） |
 | target_account | `kpn_empty_state_smoke01@trial.forge-laboratory.com` |
 | phase1 | Admin Reset API `api/v1/admin/reset-user-kpi.php` + tests + ops docs（Founder UI なし） |
 | phase2_candidate | Founder Console Reset UI |
+| browser_cleanup | `window.__KPI_AUTH.clearUserScopedLocalData()` → logout → login（UI logout のみでは LS 残存。`KpiAuthClient` は誤り） |
 
 ### BR-LAUNCH-02
 
@@ -551,9 +553,9 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | id | name | status | priority | parent |
 |----|------|--------|----------|--------|
 | `BR-LAUNCH-01` | Demo / New User State | ACTIVE | P0 | `TRUNK-06` |
-| `BR-LAUNCH-01-B` | New User Smoke Reset / Account Reuse | ACTIVE | P0 | `BR-LAUNCH-01` |
 
-PAUSED under `TRUNK-06`: `BR-LAUNCH-01-A`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
+CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
+PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 
 ---
@@ -594,3 +596,5 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-20 | BT unset Settings hydrate fix commit `6ee7d3b` + prod deploy。01-A は **ACTIVE / Human Smoke pending**（CLOSED にしない）。 |
 | 2026-09-20 | **BR-LAUNCH-01-B** New User Smoke Reset / Account Reuse ACTIVE。01-A → PAUSED。CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-B`。 |
 | 2026-09-20 | **BR-LAUNCH-01-B Phase 1** Admin Reset API + tests + Smoke Reset ops（Founder UI 未着手・未 commit）。 |
+| 2026-09-20 | **BR-LAUNCH-01-B** Server Reset API commit/push/deploy `d2a9f39` PASS。Real Smoke で browser cleanup namespace mismatch 発見（`KpiAuthClient` 誤 → 正 `__KPI_AUTH`）。runtime 変更なし・docs のみ修正。 |
+| 2026-09-20 | **BR-LAUNCH-01-B CLOSED**（Reset API + `__KPI_AUTH` cleanup + same-account Human Smoke PASS）。**BR-LAUNCH-01-A CLOSED**（empty-state Human Smoke ALL PASS）。CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01`。 |

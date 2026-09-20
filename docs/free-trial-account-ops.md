@@ -281,26 +281,33 @@ Invoke-RestMethod `
 
 ### 8.3 Browser cleanup（同一 userId 再利用のため必須）
 
-`bindLocalUserId` は **同一 userId なら localStorage を消さない**。サーバ reset だけでは古い LS が残る。
+公開APIは **`window.__KPI_AUTH`**（`window.KpiAuthClient` は存在しない）。
 
-理想運用:
+契約:
 
-1. Admin Reset API
-2. ブラウザで user-scoped LS を clear
-3. logout
-4. login
+- `bindLocalUserId` は **同一 userId なら localStorage を消さない**
+- UI logout は **session のみ**（KPI LS は消えない）
+- サーバ reset 後に同一アカウントを再利用するときは **明示 clear が必須**
+- hydrate は `store` が object のときだけ LS を上書きする。reset 後 `store=null` だと古い LS が残る
+- **`localStorage.clear()` は禁止**（他設定・他 scope まで消す）
+
+順序（必須）:
+
+1. Admin Reset API（サーバ）
+2. **`clearUserScopedLocalData()`**（browser）
+3. **logout**
+4. **login**
 5. hydrate → emptyStore / BT unset から Smoke
 
 DevTools Console（対象ユーザーでログイン中のタブ）:
 
 ```javascript
-window.KpiAuthClient.clearUserScopedLocalData();
-// 必要なら明示ログアウト
-await window.KpiAuthClient.logout();
+window.__KPI_AUTH.clearUserScopedLocalData();
+await window.__KPI_AUTH.logout();
 location.href = '/kpi-navigator/login/index.html';
 ```
 
-`clearUserScopedLocalData` は `kpiNavigator.lastKpiUserId` を含む user-scoped キーを削除する（`localStorage.clear()` は使わない）。KPN 一般 UI に Reset ボタンは **置かない**。
+`clearUserScopedLocalData` は user-scoped KPI キーのみ削除する（`lastKpiUserId` / `subscriptionTier` 等の KEEP キーは残す）。KPN 一般 UI に Reset ボタンは **置かない**。
 
 ### 8.4 Phase 2 候補（未実装）
 
