@@ -91,13 +91,20 @@ Windows classic は overlay JS が thumb を出す。Mac は native overlay を�
 
 ### Annual Timeline Window（TW）
 
-`.annual-daily-focus-scroll` 系は **共通 SELECTORS から除外**（2026-09-20 hotfix）。
+`.annual-daily-focus-scroll` 系は **共通 SELECTORS から除外**（wrap 禁止）。
 
-理由: host wrap が `height:100%`（absolute clip 内）を content 高さへピン留めし、
-`canY=false` / 縦スクロール不能 / 内容がクリップされて消えて見える。
+専用実装: [`js/kpi-annual-tw-overlay-scrollbar.js`](../js/kpi-annual-tw-overlay-scrollbar.js)
 
-Annual TW は native scroll（Mac overlay / Windows classic）を維持。
-Windows classic rail が再発する場合は Annual 専用 hook で open 後 enhance を再設計する。
+| ルール | 内容 |
+|---|---|
+| wrap | **禁止**（clip 内 `height:100%` を壊す） |
+| layout props | height / max-height / min-height / flex / overflow **変更禁止** |
+| thumbs | clip 内へ sibling 配置（`position:absolute`） |
+| rails | Windows classic のみ非表示。Mac native overlay は維持 |
+| API | `KpiAnnualTwOverlayScrollbar.refresh()` |
+| wiring | Annual pages（JP/EN/ZH-TW）のみ。Monthly は `.annual-daily-focus-window{display:none!important}` で TW を置き換えているため **非適用** |
+
+Windows classic rail を消しつつ Mac 風 thumb を出す。共通 SELECTORS へ戻さない。
 
 ### First-open race
 
