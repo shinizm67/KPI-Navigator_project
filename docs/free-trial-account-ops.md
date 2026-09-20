@@ -1,7 +1,7 @@
 # 無料お試しアカウント配布 — 運用手順
 
-更新日: 2026-08-12  
-状態: **運用メモ（自動化前）**  
+更新日: 2026-09-20  
+状態: **運用メモ（自動化前）+ Smoke Reset Phase 1**  
 前提: Phase B 認証・`plan`（basic/pro）・`set-plan` は本番稼働済み  
 関連: [`plan-entitlement-security-memo.md`](./plan-entitlement-security-memo.md) · アカウント層 Canvas / 会話メモ
 
@@ -220,3 +220,88 @@ EN 登録: `https://forge-laboratory.com/kpi-navigator/en/register/registration_
 - [ ] 上記の相手向け文面をコピーできる  
 
 ここまでできたら **無料お試し配布スタート可**。
+
+---
+
+## 8. New User Smoke Reset（BR-LAUNCH-01-B / Phase 1）
+
+目的: Smoke 専用アカウントを **削除せず**、同じ `userId` / email / password / plan / role のまま、サーバ側 KPI データを完全新規ユーザー相当へ戻す。
+
+対象例: `kpn_empty_state_smoke01@trial.forge-laboratory.com`
+
+### 8.1 永続化契約（触る／触らない）
+
+| Preserve | Reset |
+|----------|-------|
+| `kpi_users`（user_id / email / password_hash / plan / role / disabled / parent_user_id） | `kpi_store`（store_json / annual_nav_json / pl_json → NULL） |
+| `kpi_plan_history` | `kpi_user_profiles`（行 DELETE → BT unset） |
+| 他ユーザー全データ | `kpi_daily_inputs` / `kpi_daily_facts`（当該 user_id のみ DELETE） |
+| | sessionEpoch bump（force logout） |
+
+### 8.2 Admin Reset API
+
+```
+POST /kpi-navigator/api/v1/admin/reset-user-kpi.php
+```
+
+認証（どちらか）:
+
+- Founder Super Admin セッション Cookie
+- `X-KPI-Plan-Admin-Token: （planAdminToken）`
+
+Body:
+
+```json
+{
+  "email": "kpn_empty_state_smoke01@trial.forge-laboratory.com",
+  "confirm": "RESET_KPN_DATA"
+}
+```
+
+`userId` も可。email と userId を同時指定する場合は **同一ユーザー**でなければ `ambiguous_target`。`confirm` 不一致は拒否。パスワードや hash はレスポンスに出ない。
+
+PowerShell 例（トークン方式・本番）:
+
+```powershell
+$token = '（本番 planAdminToken・チャットに貼らない）'
+$body = @{
+  email   = 'kpn_empty_state_smoke01@trial.forge-laboratory.com'
+  confirm = 'RESET_KPN_DATA'
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri 'https://forge-laboratory.com/kpi-navigator/api/v1/admin/reset-user-kpi.php' `
+  -ContentType 'application/json' `
+  -Headers @{ 'X-KPI-Plan-Admin-Token' = $token } `
+  -Body $body
+```
+
+期待: `ok: true`、`reset.store/profile/dailyInputs/dailyFacts/sessionRevoked: true`。
+
+### 8.3 Browser cleanup（同一 userId 再利用のため必須）
+
+`bindLocalUserId` は **同一 userId なら localStorage を消さない**。サーバ reset だけでは古い LS が残る。
+
+理想運用:
+
+1. Admin Reset API
+2. ブラウザで user-scoped LS を clear
+3. logout
+4. login
+5. hydrate → emptyStore / BT unset から Smoke
+
+DevTools Console（対象ユーザーでログイン中のタブ）:
+
+```javascript
+window.KpiAuthClient.clearUserScopedLocalData();
+// 必要なら明示ログアウト
+await window.KpiAuthClient.logout();
+location.href = '/kpi-navigator/login/index.html';
+```
+
+`clearUserScopedLocalData` は `kpiNavigator.lastKpiUserId` を含む user-scoped キーを削除する（`localStorage.clear()` は使わない）。KPN 一般 UI に Reset ボタンは **置かない**。
+
+### 8.4 Phase 2 候補（未実装）
+
+Founder Console から 1 クリック Reset UI。Phase 1 は API + CLI/PowerShell + docs のみ。
