@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-F
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,7 +24,6 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
-- BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation) P1
 
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 — closed 2026-09-20
@@ -36,6 +35,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-B (Sales Data Target Tab Layout Gap) P0 — closed 2026-09-20
 - BR-LAUNCH-01-C2-D (Sales Data Annual Target Edit-State UX) P1 — closed 2026-09-20
 - BR-LAUNCH-01-C2-E (Sales Data Unsaved Alert + Enter Commit UX) P1 — closed 2026-09-21
+- BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation) P1 — closed 2026-09-21
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -52,7 +52,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 → BR-LAUNCH-01-C → BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-F Phase 1 — Sales / Past / Annual Edit keyboard navigation
+BR-LAUNCH-01-C2 — Demo Import Smoke（C2-F CLOSED → return）
 ```
 
 ### Git snapshot（経路記録時点）
@@ -60,7 +60,7 @@ BR-LAUNCH-01-C2-F Phase 1 — Sales / Past / Annual Edit keyboard navigation
 | 項目 | 値 |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `48d3828` — Fix new-user smoke reset documentation |
+| HEAD | （C2-F P3 commit 後に更新） |
 | origin sync | （都度確認） |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -504,13 +504,14 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | id | `BR-LAUNCH-01-C2-F` |
 | name | Global Editable Grid Keyboard Navigation |
 | parent | `BR-LAUNCH-01-C2` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-21 |
+| closed_at | 2026-09-21 |
 | return_to | `BR-LAUNCH-01-C2` |
 | reason | Sales Data Enter不足。監査で MEP/PL/Past/Annual Edit も未統一 |
-| evidence | 正本完全一致なし。helper=`js/kpi-editable-grid-keys.js`。Phase1 Sales/Past/Annual Edit → Phase2 MEP → Phase3 PL |
-| next_action | Phase 2 MEP smoke → commit/deploy → Phase 3 PL |
+| evidence | helper=`js/kpi-editable-grid-keys.js`。P1 Sales/Past/Annual Edit `9b7c0b0`。P2 MEP `42d2243`。P3 PL Enter vertical via helper（JP/EN blur-commit、ZH-TW 既存 commit/skip-blur adapter） |
+| next_action | N/A（CLOSED）→ return BR-LAUNCH-01-C2 → Demo Import Smoke |
 | constraint | Enter≠Save / Tab再設計禁止 / OCC·lease·calc·excel 禁止 |
 
 ### BR-LAUNCH-01-C2-E

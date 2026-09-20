@@ -4345,6 +4345,7 @@
 
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
+  <script src="../../../../js/kpi-editable-grid-keys.js?v=20260921-1"></script>
   <script src="../../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../../js/kpi-business-type.js"></script>
   <script src="../../../../js/kpi-pl-expense-presets.js"></script>
@@ -11300,6 +11301,34 @@
         run();
       }
 
+
+      function plGridKeys() {
+        return window.KpiEditableGridKeys || null;
+      }
+      function plBindAmountEnter(cell) {
+        var g = plGridKeys();
+        if (!g || !cell) return;
+        g.bindEnterVertical({
+          el: cell,
+          commit: function (el) {
+            commitPlEditableCell(el);
+          },
+          findNext: function (el) {
+            return findNextPlEditableVerticalLoop(el);
+          },
+          afterFocus: function (next) {
+            plSkipBlurCommit = true;
+            try {
+              g.focusControl(next);
+            } finally {
+              plSkipBlurCommit = false;
+            }
+            if (typeof schedulePlSelectAll === 'function') schedulePlSelectAll(next, false);
+            else g.selectAll(next);
+          },
+        });
+      }
+
       function bindPlEditableCells() {
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           if (cell.getAttribute('data-pl-bound') === '1') return;
@@ -11319,21 +11348,7 @@
             markPlLocalEdited(cell.getAttribute('data-row'), cell.getAttribute('data-month'));
             schedulePlExpenseLiveRefresh();
           });
-          cell.addEventListener('keydown', function (e) {
-            if (e.key !== 'Enter') return;
-            if (e.isComposing || e.keyCode === 229) return;
-            e.preventDefault();
-            commitPlEditableCell(cell);
-            if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
-            var next = findNextPlEditableVerticalLoop(cell);
-            if (!next || next === cell) return;
-            plSkipBlurCommit = true;
-            try {
-              next.focus();
-            } finally {
-              plSkipBlurCommit = false;
-            }
-          });
+          plBindAmountEnter(cell);
           cell.addEventListener('blur', function () {
             if (plSkipBlurCommit) return;
             commitPlEditableCell(cell);

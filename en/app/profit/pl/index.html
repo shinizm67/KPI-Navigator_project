@@ -4109,6 +4109,7 @@
   <!-- KPI-CURRENCY-JS:START -->
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
+  <script src="../../../../js/kpi-editable-grid-keys.js?v=20260921-1"></script>
   <script src="../../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../../js/kpi-business-type.js"></script>
   <script src="../../../../js/kpi-pl-expense-presets.js"></script>
@@ -10943,6 +10944,27 @@
         }, 120);
       }
 
+
+      function plGridKeys() {
+        return window.KpiEditableGridKeys || null;
+      }
+      function plBindAmountEnter(cell) {
+        var g = plGridKeys();
+        if (!g || !cell) return;
+        g.bindEnterVertical({
+          el: cell,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function (el) {
+            var month = el.getAttribute('data-month');
+            if (month == null || month === '') return null;
+            var list = g.listEditable(document, '[data-pl-editable="1"][data-month="' + month + '"]');
+            return g.nextInList(list, el);
+          },
+        });
+      }
+
       function bindPlEditableCells() {
         document.querySelectorAll('[data-pl-editable="1"]').forEach(function (cell) {
           if (cell.getAttribute('data-pl-bound') === '1') return;
@@ -10950,7 +10972,10 @@
           cell.addEventListener('focus', function () {
             pushUndoSnapshot();
             markTouched();
+            var g = plGridKeys();
+            if (g) g.selectAll(cell);
           });
+          plBindAmountEnter(cell);
           cell.addEventListener('input', function () {
             markTouched();
             schedulePlExpenseLiveRefresh();
