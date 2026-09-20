@@ -921,14 +921,14 @@ def patch_vfocus_fill_lane(text: str) -> str:
               valuesLane.push(textOrDemo(cells[k] ? cells[k].textContent : ''));
             }
           });
-          while (valuesLane.length < 18) valuesLane.push(demoMoney);
+          while (valuesLane.length < 18) valuesLane.push(emptyMoney);
           for (var gi2 = 0; gi2 < 3; gi2++) {
             var g2 = groups[gi2];
             if (!g2) continue;
             for (var ci2 = 0; ci2 < 6; ci2++) {
               var cell = g2.children[ci2];
               if (cell) {
-                cell.textContent = valuesLane[gi2 * 6 + ci2] || demoMoney;
+                cell.textContent = valuesLane[gi2 * 6 + ci2] || emptyMoney;
                 if (gi2 === 0 && ci2 === 4) {
                   syncMonthlyVfocusDiffClass(cell, colIdx);
                 } else if (gi2 === 0) {
@@ -957,7 +957,7 @@ def patch_vfocus_fill_lane(text: str) -> str:
               for (var ci2 = 0; ci2 < nCopy; ci2++) {
                 var cell = g2.children[ci2];
                 if (cell) {
-                  cell.textContent = valuesLane[laneOffset + ci2] || demoMoney;
+                  cell.textContent = valuesLane[laneOffset + ci2] || emptyMoney;
                   if (gi2 === 0 && ci2 === diffIdx) {
                     syncMonthlyVfocusDiffClass(cell, colIdx);
                   } else if (gi2 === 0) {
@@ -979,14 +979,14 @@ def patch_vfocus_fill_lane(text: str) -> str:
               valuesLane.push(textOrDemo(cells[k] ? cells[k].textContent : ''));
             }
           });
-          while (valuesLane.length < 18) valuesLane.push(demoMoney);
+          while (valuesLane.length < 18) valuesLane.push(emptyMoney);
           for (var gi2 = 0; gi2 < 3; gi2++) {
             var g2 = groups[gi2];
             if (!g2) continue;
             for (var ci2 = 0; ci2 < 6; ci2++) {
               var cell = g2.children[ci2];
               if (cell) {
-                cell.textContent = valuesLane[gi2 * 6 + ci2] || demoMoney;
+                cell.textContent = valuesLane[gi2 * 6 + ci2] || emptyMoney;
                 if (gi2 === 0 && ci2 === 4) {
                   cell.classList.remove('monthly-vfocus-cell--plan-target');
                   syncMonthlyVfocusDiffClass(cell, colIdx);
@@ -1023,7 +1023,7 @@ def patch_vfocus_fill_lane(text: str) -> str:
               for (var ci2 = 0; ci2 < nCopy; ci2++) {
                 var cell = g2.children[ci2];
                 if (cell) {
-                  cell.textContent = valuesLane[laneOffset + ci2] || demoMoney;
+                  cell.textContent = valuesLane[laneOffset + ci2] || emptyMoney;
                   if (gi2 === 0 && ci2 === diffIdx) {
                     cell.classList.remove('monthly-vfocus-cell--plan-target');
                     syncMonthlyVfocusDiffClass(cell, colIdx);

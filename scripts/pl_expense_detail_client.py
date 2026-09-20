@@ -341,6 +341,12 @@ def expense_detail_client_js(
             }}
           }}
         }} catch (_e) {{}}
+        var btSet = window.KpiBusinessType
+          && typeof window.KpiBusinessType.isBusinessTypeSet === 'function'
+          && window.KpiBusinessType.isBusinessTypeSet();
+        if (!btSet) {
+          return [];
+        }
         var fresh = JSON.parse(JSON.stringify(currentPresetLines()));
         syncOccupancyActiveFlags(fresh);
         saveLines(fresh);

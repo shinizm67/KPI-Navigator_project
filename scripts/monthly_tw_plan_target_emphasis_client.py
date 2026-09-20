@@ -41,7 +41,7 @@ VFOCUS_CELL_COPY_OLD = """              if (cell) {
               }"""
 
 VFOCUS_CELL_COPY_NEW = """              if (cell) {
-                cell.textContent = valuesLane[gi2 * 6 + ci2] || demoMoney;
+                cell.textContent = valuesLane[gi2 * 6 + ci2] || emptyMoney;
                 if (gi2 === 0 && ci2 === 4) {
                   cell.classList.remove('monthly-vfocus-cell--plan-target');
                   syncMonthlyVfocusDiffClass(cell, colIdx);
