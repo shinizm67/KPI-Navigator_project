@@ -522,11 +522,13 @@
       setText('fixed-business-name', data.businessName);
       setText('fixed-company', data.company);
       var industryValue = data.businessType || data.industry;
-      var industryLabel = industryValue;
+      var industryLabel = '';
       if (window.KpiBusinessType) {
-        var canonical = window.KpiBusinessType.normalizeBusinessType(industryValue) ||
-          window.KpiBusinessType.getBusinessType();
-        industryLabel = window.KpiBusinessType.label(canonical);
+        var canonical =
+          typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+            ? window.KpiBusinessType.readMetaBusinessType()
+            : window.KpiBusinessType.normalizeBusinessType(industryValue);
+        industryLabel = canonical ? window.KpiBusinessType.label(canonical) : '';
       }
       setText('fixed-industry', industryLabel);
       setText('fixed-genre', data.genre);
@@ -541,8 +543,9 @@
       var genreGroup = document.getElementById('profile-genre-group');
       var genreViewLabel = document.getElementById('profile-genre-view-label');
       var viewType = window.KpiBusinessType
-        ? (window.KpiBusinessType.normalizeBusinessType(industryValue) ||
-          window.KpiBusinessType.getBusinessType())
+        ? ((typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+            ? window.KpiBusinessType.readMetaBusinessType()
+            : window.KpiBusinessType.normalizeBusinessType(industryValue)) || 'other')
         : (industryValue || 'other');
       if (genreGroup) genreGroup.hidden = false;
       if (genreViewLabel) {

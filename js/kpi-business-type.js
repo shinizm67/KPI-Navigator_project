@@ -239,6 +239,13 @@
     return readPersistedBusinessType() || DEFAULT_TYPE;
   }
 
+  /** UI / PL seed: meta.businessType only (legacy profile does not count as set). */
+  function isBusinessTypeSet() {
+    return !!readMetaBusinessType();
+  }
+
+
+
   function isRestaurantLike() {
     return getBusinessType() === 'restaurant';
   }
@@ -397,6 +404,8 @@
     DEFAULT: DEFAULT_TYPE,
     normalizeBusinessType: normalizeBusinessType,
     getBusinessType: getBusinessType,
+    isBusinessTypeSet: isBusinessTypeSet,
+    readMetaBusinessType: readMetaBusinessType,
     readPersistedBusinessType: readPersistedBusinessType,
     setBusinessType: setBusinessType,
     isRestaurantLike: isRestaurantLike,

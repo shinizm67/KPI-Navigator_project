@@ -443,9 +443,9 @@
       if (!form) return;
       var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
       var profileSaveConfirmed = false;
-      var initialBusinessType = window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function'
-        ? window.KpiBusinessType.getBusinessType()
-        : 'restaurant';
+      var initialBusinessType = window.KpiBusinessType && typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+        ? (window.KpiBusinessType.readMetaBusinessType() || '')
+        : '';
       form.addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -493,9 +493,9 @@
         if (!canonicalType) return;
 
         var currentType = initialBusinessType
-          || (window.KpiBusinessType && typeof window.KpiBusinessType.getBusinessType === 'function'
-            ? window.KpiBusinessType.getBusinessType()
-            : 'restaurant');
+          || (window.KpiBusinessType && typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+            ? (window.KpiBusinessType.readMetaBusinessType() || '')
+            : '');
         if (
           currentType &&
           currentType !== canonicalType &&
@@ -835,45 +835,68 @@
         cityInput.addEventListener('change', maybeTimezone);
       }
 
-      if (window.KpiBusinessType && industrySelect) {
-        window.KpiBusinessType.populateSelect(industrySelect);
-        var hydratedType = window.KpiBusinessType.getBusinessType();
-        industrySelect.value = hydratedType;
-        initialBusinessType = hydratedType;
-        if (genreInput) {
-          try {
-            var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
-            var savedGenre = lastProfile && lastProfile.genre;
-            if (isGenrePrompt(savedGenre)) savedGenre = '';
-            genreInput.value = savedGenre;
-          } catch (_eGenre) {
-            genreInput.value = '';
-          }
-        }
+      function syncIndustrySelectFromMeta() {
+        if (!industrySelect || !window.KpiBusinessType) return '';
+        var metaType =
+          typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+            ? window.KpiBusinessType.readMetaBusinessType()
+            : null;
+        var v = metaType || '';
+        industrySelect.value = v;
+        initialBusinessType = v;
+        try {
+          window.initialBusinessType = v;
+        } catch (_eInit) {}
+        return v;
       }
-      syncGenreField();
-      hydrateLocation();
-      /* Server profile preferred when synced; empty/unsynced server must not wipe local. */
-      if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.hydrateEditForm === 'function') {
-        window.__KPI_PROFILE_SERVER.hydrateEditForm({
-          onDone: function () {
-            syncGenreField();
-            if (typeof syncLocationLists === 'function') syncLocationLists();
-            if (industrySelect) {
-              try {
-                window.initialBusinessType = industrySelect.value;
-              } catch (_eInit) {}
+      function runIndustryHydrateAfterUserScope() {
+        if (window.KpiBusinessType && industrySelect) {
+          window.KpiBusinessType.populateSelect(industrySelect);
+          syncIndustrySelectFromMeta();
+          if (genreInput) {
+            try {
+              var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
+              var savedGenre = lastProfile && lastProfile.genre;
+              if (isGenrePrompt(savedGenre)) savedGenre = '';
+              genreInput.value = savedGenre;
+            } catch (_eGenre) {
+              genreInput.value = '';
             }
           }
-        });
-      } else if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.applyLocalShapeToForm === 'function') {
-        window.__KPI_PROFILE_SERVER.applyLocalShapeToForm(
-          window.__KPI_PROFILE_SERVER.readLocalProfile
-            ? window.__KPI_PROFILE_SERVER.readLocalProfile()
-            : {}
-        );
+        }
         syncGenreField();
+        hydrateLocation();
+        /* Server profile preferred when synced; empty/unsynced server must not wipe local.
+           Industry select is always re-synced from store.meta only (Option B). */
+        if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.hydrateEditForm === 'function') {
+          window.__KPI_PROFILE_SERVER.hydrateEditForm({
+            onDone: function () {
+              syncIndustrySelectFromMeta();
+              syncGenreField();
+              if (typeof syncLocationLists === 'function') syncLocationLists();
+            }
+          });
+        } else if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.applyLocalShapeToForm === 'function') {
+          window.__KPI_PROFILE_SERVER.applyLocalShapeToForm(
+            window.__KPI_PROFILE_SERVER.readLocalProfile
+              ? window.__KPI_PROFILE_SERVER.readLocalProfile()
+              : {}
+          );
+          syncIndustrySelectFromMeta();
+          syncGenreField();
+        }
       }
+      var scopeBind =
+        window.__KPI_AUTH && typeof window.__KPI_AUTH.ensureUserScopeBound === 'function'
+          ? window.__KPI_AUTH.ensureUserScopeBound()
+          : null;
+      Promise.resolve(scopeBind)
+        .then(function () {
+          runIndustryHydrateAfterUserScope();
+        })
+        .catch(function () {
+          runIndustryHydrateAfterUserScope();
+        });
     })();
     (function () {
       var langBtn = document.getElementById('lang-select-btn');

@@ -255,16 +255,17 @@
 
     var industry = document.getElementById('profile-industry');
     var type = d.businessType || d.industry || '';
-    if (industry && type) {
-      if (global.KpiBusinessType && typeof global.KpiBusinessType.normalizeBusinessType === 'function') {
-        type = global.KpiBusinessType.normalizeBusinessType(type) || type;
+    if (industry) {
+      if (type) {
+        if (global.KpiBusinessType && typeof global.KpiBusinessType.normalizeBusinessType === 'function') {
+          type = global.KpiBusinessType.normalizeBusinessType(type) || type;
+        }
+        industry.value = type;
+      } else {
+        /* Empty profile must clear select (do not leave stale prior-user value). */
+        industry.value = '';
       }
-      industry.value = type;
-      if (global.KpiBusinessType && typeof global.KpiBusinessType.setBusinessType === 'function') {
-        try {
-          global.KpiBusinessType.setBusinessType(type);
-        } catch (_eBt) {}
-      }
+      /* Never auto-write store.meta.businessType during hydrate (BR-LAUNCH-01-A Option B). */
     }
 
     var genre = document.getElementById('profile-genre');

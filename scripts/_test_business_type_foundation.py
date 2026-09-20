@@ -142,6 +142,9 @@ def test_js_source_contract() -> None:
     assert_true("フィットネス / ジム / パーソナルトレーニング" in JS, "ja fitness label")
     assert_true("健身 / 健身房 / 私人教練" in JS, "zh fitness label")
     assert_true("function getBusinessType" in JS, "js getBusinessType")
+    assert_true("function isBusinessTypeSet" in JS, "js isBusinessTypeSet (Option B)")
+    assert_true("function readPersistedBusinessType" in JS, "js readPersistedBusinessType")
+    assert_true("isBusinessTypeSet: isBusinessTypeSet" in JS, "js exports isBusinessTypeSet")
     assert_true("function isRestaurantLike" in JS, "js isRestaurantLike")
     assert_true("function setBusinessType" in JS, "js setBusinessType")
     assert_true("function confirmRegistration" in JS, "js registration dialog")
@@ -227,10 +230,16 @@ def test_surfaces() -> None:
     en_edit = (ROOT / "en" / "setting" / "profile_edit.html").read_text(encoding="utf-8")
     zh_edit = (ROOT / "zh-tw" / "setting" / "profile_edit.html").read_text(encoding="utf-8")
     for label, html in (("jp", jp_edit), ("en", en_edit), ("zh", zh_edit)):
-        assert_true("getBusinessType()" in html, f"{label} profile hydrates from helper")
+        # BR-LAUNCH-01-A Option B: UI hydrates from meta.businessType only (unset ≠ restaurant)
+        assert_true("readMetaBusinessType()" in html, f"{label} profile hydrates from meta BT")
+        assert_true("syncIndustrySelectFromMeta" in html, f"{label} profile re-syncs select from meta")
+        assert_true("ensureUserScopeBound" in html, f"{label} profile waits for user-scope bind")
         assert_true("initialBusinessType" in html, f"{label} profile snapshots loaded BT")
         assert_true("currentType !== canonicalType" in html, f"{label} warning compares effective type")
-        assert_true("readPersistedBusinessType()" not in html, f"{label} warning not skipped when persisted is null")
+        assert_true(
+            "getBusinessType()" not in html.split("var initialBusinessType", 1)[1][:500],
+            f"{label} hydrate does not silent-default via getBusinessType",
+        )
         assert_true("confirmChange" in html, f"{label} profile change warning")
         assert_true("profileSaveConfirmed" in html, f"{label} profile does not save change immediately")
         assert_true("setBusinessType" in html, f"{label} profile writes store.meta")
@@ -242,7 +251,7 @@ def test_surfaces() -> None:
     zh_view = (ROOT / "zh-tw" / "setting" / "profile.html").read_text(encoding="utf-8")
     for label, html in (("jp", jp_view), ("en", en_view), ("zh", zh_view)):
         assert_true("KpiBusinessType.label" in html, f"{label} profile view shows localized label")
-
+        assert_true("readMetaBusinessType" in html, f"{label} profile view Option B unset-safe")
 
 def test_unit5a_did_not_touch_mep_pl_meal() -> None:
     assert_true("exp_food_cost" in PL_CATALOG, "PL catalog still food default")
