@@ -14688,6 +14688,7 @@
   <script src="../../../js/kpi-currency.js"></script>
   <script src="../../../js/kpi-busy-overlay.js"></script>
   <script src="../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
+  <script src="../../../js/kpi-editable-grid-keys.js?v=20260921-1"></script>
   <script src="../../../js/kpi-annual-tw-overlay-scrollbar.js?v=20260920-atw1"></script>
   <script src="../../../js/kpi-daily-facts-sync.js"></script>
   <script src="../../../js/kpi-daily-inputs-sync.js"></script>
@@ -35462,6 +35463,65 @@ Cumulative Target Annual Sales</p>
       var selectAllBtn = document.getElementById('past-sales-select-all');
       var scrollEl = modal ? modal.querySelector('.past-sales-modal__scroll') : null;
       var summaryCumulativeEl = document.getElementById('past-sales-summary-cumulative');
+
+      function psmGridKeys() {
+        return window.KpiEditableGridKeys || null;
+      }
+      function psmSalesRoot() {
+        return document.getElementById('past-sales-modal-table') || modalTable;
+      }
+      function psmListSalesInputs() {
+        var g = psmGridKeys();
+        if (!g) return [];
+        return g.listEditable(psmSalesRoot(), '.past-sales-modal__sales-input');
+      }
+      function psmListBizCbs() {
+        var g = psmGridKeys();
+        if (!g) return [];
+        return g.listEditable(psmSalesRoot(), '.past-sales-modal__cb');
+      }
+      function psmBindSalesEnter(inp) {
+        var g = psmGridKeys();
+        if (!g || !inp) return;
+        g.bindEnterVertical({
+          el: inp,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function (el) {
+            return g.nextInList(psmListSalesInputs(), el);
+          },
+        });
+      }
+      function psmBindCbEnter(cb) {
+        var g = psmGridKeys();
+        if (!g || !cb) return;
+        g.bindEnterVertical({
+          el: cb,
+          commit: function () {},
+          findNext: function (el) {
+            return g.nextInList(psmListBizCbs(), el);
+          },
+          afterFocus: function (next) {
+            g.focusControl(next);
+          },
+        });
+      }
+      function psmBindReferenceEnter(inp) {
+        var g = psmGridKeys();
+        if (!g || !inp) return;
+        g.bindEnterVertical({
+          el: inp,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function () {
+            var list = psmListSalesInputs();
+            return list.length ? list[0] : null;
+          },
+        });
+      }
+
       var summaryReferenceInput = document.getElementById('past-sales-summary-reference');
       var summaryRemainingEl = document.getElementById('past-sales-summary-remaining');
       var summaryPctEl = document.getElementById('past-sales-summary-progress-pct');
@@ -36950,6 +37010,7 @@ Cumulative Target Annual Sales</p>
           cb.checked = !off;
           cb.setAttribute('aria-label', isJa ? '営業日' : 'Business day');
           tdCb.appendChild(cb);
+          psmBindCbEnter(cb);
 
           let tdSales = document.createElement('td');
           tdSales.className = 'past-sales-modal__sales-td';
@@ -36971,6 +37032,7 @@ Cumulative Target Annual Sales</p>
           }
           tdSales.appendChild(inp);
           bindSalesAmountZeroClearUx(inp);
+          psmBindSalesEnter(inp);
 
           var totalsEntry = totalsMap[item.iso];
           let tdMonthly = document.createElement('td');
@@ -37248,6 +37310,7 @@ Cumulative Target Annual Sales</p>
 
       if (summaryReferenceInput) {
         bindSalesAmountZeroClearUx(summaryReferenceInput);
+        psmBindReferenceEnter(summaryReferenceInput);
         summaryReferenceInput.addEventListener('input', function () {
           state.modalDirty = true;
           state.referenceDirty = true;
@@ -38520,12 +38583,6 @@ Cumulative Target Annual Sales</p>
           }
         });
         inp.addEventListener('input', stripLeadingZerosWhileTyping);
-        inp.addEventListener('keydown', function (e) {
-          if (e.key !== 'Enter') return;
-          if (inp.readOnly || inp.disabled) return;
-          e.preventDefault();
-          inp.blur();
-        });
         inp.addEventListener('blur', function () {
           if (inp.readOnly) return;
           var n = parseSalesInputRaw(inp);
@@ -38723,6 +38780,65 @@ Cumulative Target Annual Sales</p>
           if (!defs.off) n++;
         }
         el.textContent = String(n);
+      }
+
+
+      function sdmGridKeys() {
+        return window.KpiEditableGridKeys || null;
+      }
+      function sdmSalesRoot() {
+        return document.getElementById('sales-data-modal-table') || modalTable;
+      }
+      function sdmListSalesInputs() {
+        var g = sdmGridKeys();
+        if (!g) return [];
+        return g.listEditable(sdmSalesRoot(), '.sales-data-modal__sales-input');
+      }
+      function sdmListBizCbs() {
+        var g = sdmGridKeys();
+        if (!g) return [];
+        return g.listEditable(sdmSalesRoot(), '.sales-data-modal__cb');
+      }
+      function sdmBindSalesEnter(inp) {
+        var g = sdmGridKeys();
+        if (!g || !inp) return;
+        g.bindEnterVertical({
+          el: inp,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function (el) {
+            return g.nextInList(sdmListSalesInputs(), el);
+          },
+        });
+      }
+      function sdmBindCbEnter(cb) {
+        var g = sdmGridKeys();
+        if (!g || !cb) return;
+        g.bindEnterVertical({
+          el: cb,
+          commit: function () {},
+          findNext: function (el) {
+            return g.nextInList(sdmListBizCbs(), el);
+          },
+          afterFocus: function (next) {
+            g.focusControl(next);
+          },
+        });
+      }
+      function sdmBindReferenceEnter(inp) {
+        var g = sdmGridKeys();
+        if (!g || !inp) return;
+        g.bindEnterVertical({
+          el: inp,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function () {
+            var list = sdmListSalesInputs();
+            return list.length ? list[0] : null;
+          },
+        });
       }
 
       function canEditSalesDataLiveNow() {
@@ -39378,6 +39494,7 @@ Cumulative Target Annual Sales</p>
           cb.checked = !off;
           cb.setAttribute('aria-label', isJa ? '営業日' : 'Business day');
           tdCb.appendChild(cb);
+          sdmBindCbEnter(cb);
 
           let tdSales = document.createElement('td');
           tdSales.className = 'sales-data-modal__sales-td';
@@ -39399,6 +39516,7 @@ Cumulative Target Annual Sales</p>
           }
           tdSales.appendChild(inp);
           bindSalesAmountZeroClearUx(inp);
+          sdmBindSalesEnter(inp);
 
           var totalsEntry = totalsMap[item.iso];
           let tdMonthly = document.createElement('td');
@@ -39834,6 +39952,7 @@ Cumulative Target Annual Sales</p>
 
       if (summaryReferenceInput) {
         bindSalesAmountZeroClearUx(summaryReferenceInput);
+        sdmBindReferenceEnter(summaryReferenceInput);
         summaryReferenceInput.addEventListener('input', function () {
           if (summaryReferenceInput.readOnly || summaryReferenceInput.disabled) return;
           state.modalDirty = true;
@@ -40000,6 +40119,51 @@ Cumulative Target Annual Sales</p>
     (function () {
       var modal = document.getElementById('annual-edit-modal');
       var backdrop = document.getElementById('annual-edit-modal-backdrop');
+
+      function aemGridKeys() {
+        return window.KpiEditableGridKeys || null;
+      }
+      function aemSalesRoot() {
+        return document.getElementById('annual-edit-modal-table') || modalTable;
+      }
+      function aemListSalesInputs() {
+        var g = aemGridKeys();
+        if (!g) return [];
+        return g.listEditable(aemSalesRoot(), '.annual-edit-modal__sales-input');
+      }
+      function aemListBizCbs() {
+        var g = aemGridKeys();
+        if (!g) return [];
+        return g.listEditable(aemSalesRoot(), '.annual-edit-modal__cb');
+      }
+      function aemBindSalesEnter(inp) {
+        var g = aemGridKeys();
+        if (!g || !inp) return;
+        g.bindEnterVertical({
+          el: inp,
+          commit: function (el) {
+            g.defaultCommit(el);
+          },
+          findNext: function (el) {
+            return g.nextInList(aemListSalesInputs(), el);
+          },
+        });
+      }
+      function aemBindCbEnter(cb) {
+        var g = aemGridKeys();
+        if (!g || !cb) return;
+        g.bindEnterVertical({
+          el: cb,
+          commit: function () {},
+          findNext: function (el) {
+            return g.nextInList(aemListBizCbs(), el);
+          },
+          afterFocus: function (next) {
+            g.focusControl(next);
+          },
+        });
+      }
+
       var btnClose = document.getElementById('annual-edit-modal-close');
       var btnSave = document.getElementById('annual-edit-modal-save');
       var btnUndo = document.getElementById('annual-edit-modal-undo');
@@ -40775,6 +40939,7 @@ Cumulative Target Annual Sales</p>
           cb.checked = !off;
           cb.setAttribute('aria-label', isJa ? '営業日' : 'Business day');
           tdCb.appendChild(cb);
+          aemBindCbEnter(cb);
 
           let tdSales = document.createElement('td');
           tdSales.className = 'annual-edit-modal__sales-td';
@@ -40795,6 +40960,7 @@ Cumulative Target Annual Sales</p>
           }
           tdSales.appendChild(inp);
           bindSalesAmountZeroClearUx(inp);
+          aemBindSalesEnter(inp);
 
           tr.appendChild(tdDate);
           tr.appendChild(tdCb);

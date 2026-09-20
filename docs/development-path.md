@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-F
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,6 +24,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
+- BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation) P1
 
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 — closed 2026-09-20
@@ -51,7 +52,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 → BR-LAUNCH-01-C → BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2 — C2-E CLOSED。Demo Import Smoke / C2-C 判断へ戻る
+BR-LAUNCH-01-C2-F Phase 1 — Sales / Past / Annual Edit keyboard navigation
 ```
 
 ### Git snapshot（経路記録時点）
@@ -495,6 +496,22 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | audit_note | Demo Reset = wipe（reuse `reset-user-kpi`）→ apply seed → `__KPI_AUTH.clear` → re-login |
 | confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
 | accounts | Founder Pro + Demo Basic/Pro（同一 dataset・plan差のみ）。C0 で準備 |
+
+### BR-LAUNCH-01-C2-F
+
+| フィールド | 値 |
+|------------|-----|
+| id | `BR-LAUNCH-01-C2-F` |
+| name | Global Editable Grid Keyboard Navigation |
+| parent | `BR-LAUNCH-01-C2` |
+| status | ACTIVE |
+| priority | P1 |
+| started_at | 2026-09-21 |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | Sales Data Enter不足。監査で MEP/PL/Past/Annual Edit も未統一 |
+| evidence | 正本完全一致なし。helper=`js/kpi-editable-grid-keys.js`。Phase1 Sales/Past/Annual Edit → Phase2 MEP → Phase3 PL |
+| next_action | Phase 1 実装・smoke |
+| constraint | Enter≠Save / Tab再設計禁止 / OCC·lease·calc·excel 禁止 |
 
 ### BR-LAUNCH-01-C2-E
 
