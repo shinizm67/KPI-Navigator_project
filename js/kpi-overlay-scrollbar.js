@@ -289,13 +289,27 @@
     var flexFill = isFlexScrollChild(el, cs);
 
     if (pos === 'absolute' || pos === 'fixed') {
+      /* Insight / absolute ports: top+bottom (or left+right) already size the box.
+         Copying computed px height/width freezes a shorter viewport and leaves a blank band. */
       host.style.position = pos;
-      host.style.left = el.style.left || cs.left;
+      host.style.left = el.style.left || (cs.left !== 'auto' ? cs.left : '');
       host.style.right = el.style.right || (cs.right !== 'auto' ? cs.right : '');
-      host.style.top = el.style.top || cs.top;
+      host.style.top = el.style.top || (cs.top !== 'auto' ? cs.top : '');
       host.style.bottom = el.style.bottom || (cs.bottom !== 'auto' ? cs.bottom : '');
-      host.style.width = el.style.width || cs.width;
-      host.style.height = el.style.height || cs.height;
+      var pinY =
+        (host.style.top || cs.top !== 'auto') && (host.style.bottom || cs.bottom !== 'auto');
+      var pinX =
+        (host.style.left || cs.left !== 'auto') && (host.style.right || cs.right !== 'auto');
+      if (pinX) {
+        host.style.width = el.style.width || '';
+      } else {
+        host.style.width = el.style.width || cs.width;
+      }
+      if (pinY) {
+        host.style.height = el.style.height || '';
+      } else {
+        host.style.height = el.style.height || cs.height;
+      }
       host.style.zIndex = el.style.zIndex || cs.zIndex;
       host.style.margin = el.style.margin || cs.margin;
       el.style.position = 'relative';
@@ -597,6 +611,17 @@
       scheduleHide: scheduleHide,
       remeasure: function () {
         if (isUnmeasurable(el)) return;
+        var hcs = getComputedStyle(host);
+        /* Absolute inset hosts must not keep a frozen px height (Insight blank band). */
+        if (
+          (hcs.position === 'absolute' || hcs.position === 'fixed') &&
+          host.style.top &&
+          host.style.bottom &&
+          host.style.height &&
+          String(host.style.height).indexOf('px') !== -1
+        ) {
+          host.style.height = '';
+        }
         /* Drop content-sized pins; restore percentage fill. */
         if (host.style.height && el.scrollHeight > 0) {
           var pinned = parseFloat(host.style.height);
@@ -648,6 +673,13 @@
     el._kpnOsb = api;
     instances.push(api);
     sync();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (api && typeof api.remeasure === 'function') api.remeasure();
+        });
+      });
+    }
     return api;
   }
 
@@ -728,6 +760,24 @@
     if (!needsOverlay()) return;
     enhanceAll(document);
     if (typeof MutationObserver !== 'undefined') {
+      var moRefreshQueued = false;
+      function queueRefreshAll() {
+        if (moRefreshQueued) return;
+        moRefreshQueued = true;
+        function run() {
+          moRefreshQueued = false;
+          refreshAll(document);
+        }
+        if (typeof requestAnimationFrame === 'function') {
+          /* Overlay open/close toggles [hidden] — enhance after layout settles.
+             Do NOT watch style attrs: PL Insight chart style thrash was blocking scroll ~10s. */
+          requestAnimationFrame(function () {
+            requestAnimationFrame(run);
+          });
+        } else {
+          run();
+        }
+      }
       var mo = new MutationObserver(function (muts) {
         var needRefresh = false;
         for (var i = 0; i < muts.length; i++) {
@@ -742,24 +792,13 @@
             enhanceAll(n);
           }
         }
-        if (needRefresh) {
-          /* Overlay open/close toggles [hidden] — enhance deferred ports after layout. */
-          if (typeof requestAnimationFrame === 'function') {
-            requestAnimationFrame(function () {
-              requestAnimationFrame(function () {
-                refreshAll(document);
-              });
-            });
-          } else {
-            refreshAll(document);
-          }
-        }
+        if (needRefresh) queueRefreshAll();
       });
       mo.observe(document.documentElement, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['hidden', 'class', 'style', 'aria-hidden']
+        attributeFilter: ['hidden', 'class', 'aria-hidden']
       });
     }
   }

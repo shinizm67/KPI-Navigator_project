@@ -104,10 +104,14 @@ Windows classic rail が再発する場合は Annual 専用 hook で open 後 en
 `[hidden]` / `display:none` 中、または `clientWidth|Height < 2` のときは enhance しない
 （`data-kpn-osb-pending` + `ResizeObserver` / rAF×2 で監視）。
 
-表示後に `refresh()` / MutationObserver（hidden/class）→ rAF×2 / pending watcher で remeasure。
+表示後に `refresh()` / MutationObserver（`hidden` / `class` / `aria-hidden`）→ rAF×2 / pending watcher で remeasure。
+`style` 属性は監視しない（PL Insight の chart style 更新で refresh 連打 → 初回スクロール不能になるため）。
 
 flex scroll child の host は `height:100%` 固定せず `flex` + `height:auto` で fill
 （`height:100%` 連鎖で host が 0px になるのを防ぐ）。
+
+absolute で `top`+`bottom`（Insight TW）の port は host に computed px 高さをコピーしない
+（短い高さで固定され下部に空白が残るため。inset のみで fill）。
 
 API: `KpiOverlayScrollbar.refresh()` / `remeasure()` / `destroyAnnualTwWrappers()`
 

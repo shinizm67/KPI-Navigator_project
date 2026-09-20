@@ -8827,7 +8827,7 @@ def render_page(lang: str, lang_switch: str) -> str:
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
   <script src="{"../../../js/kpi-currency.js" if lang == "ja" else "../../../../js/kpi-currency.js"}"></script>
-  <script src="{"../../../js/kpi-overlay-scrollbar.js?v=20260920-3" if lang == "ja" else "../../../../js/kpi-overlay-scrollbar.js?v=20260920-3"}"></script>
+  <script src="{"../../../js/kpi-overlay-scrollbar.js?v=20260920-4" if lang == "ja" else "../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"}"></script>
   <script src="{"../../../js/kpi-pl-monthly-allocate.js" if lang == "ja" else "../../../../js/kpi-pl-monthly-allocate.js"}"></script>
   <script src="{"../../../js/kpi-business-type.js" if lang == "ja" else "../../../../js/kpi-business-type.js"}"></script>
   <script src="{"../../../js/kpi-pl-expense-presets.js" if lang == "ja" else "../../../../js/kpi-pl-expense-presets.js"}"></script>
