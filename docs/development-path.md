@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -23,6 +23,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C (Demo Seed / Demo Reset) P0
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
+- BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 CLOSED (under BR-LAUNCH-01):
@@ -500,6 +501,22 @@ CLOSED node ? **?????**??????????????
 | accounts | Founder Pro + Demo Basic/Pro??? dataset?plan?????C0 ??? |
 
 
+### BR-LAUNCH-01-C2-L
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L |
+| name | Flexible CSV / Excel Import Foundation |
+| parent | BR-LAUNCH-01-C2 |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-21 |
+| return_to | BR-LAUNCH-01-C2 |
+| reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
+| principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible; only when translation fails, guide to KPN Template. |
+| next_action | Handoff fixed; await AUDIT FIRST in new Cursor chat (no implement yet) |
+| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved |
+
 ### BR-LAUNCH-01-C2-K
 
 | Field | Value |
@@ -514,7 +531,7 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | Profile BT save did not durable-PUT store.meta.businessType; Annual hydrate wiped meta; PL seed gate stayed false |
 | evidence | gateway hydrate preserve + pushToServerWhenReady; profile_edit x3 flush; verify 14 PASS; foundation 135 PASS |
-| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> Demo Import Smoke / C2-L candidate |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> C2-L ACTIVE |
 | constraint | no CSV inference; no restaurant fallback change; no PL seed gate change; no expense delete |
 
 
@@ -830,6 +847,7 @@ CLOSED node ? **?????**??????????????
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | ACTIVE | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
+| `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
@@ -887,3 +905,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-20 | **BR-LAUNCH-01-C2** `fixtures/demo/restaurant-v1` ?? CSV + `docs/demo-operation-pack.md` ???Human Import Smoke ???? commit?? |
 | 2026-09-21 | **BR-LAUNCH-01-C2-K** PL Expense Rows Missing After BT Set ACTIVE (AUDIT FIRST) |
 | 2026-09-21 | **BR-LAUNCH-01-C2-K CLOSED** Persist BT meta + restore PL expense rows; return C2 |
+| 2026-09-21 | **BR-LAUNCH-01-C2-L** Flexible CSV / Excel Import Foundation ACTIVE (handoff fixed; CURRENT PATH -> C2-L) |
