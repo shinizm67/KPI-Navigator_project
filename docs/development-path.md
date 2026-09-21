@@ -498,6 +498,23 @@ CLOSED node ? **?????**??????????????
 | accounts | Founder Pro + Demo Basic/Pro??? dataset?plan?????C0 ??? |
 
 
+### BR-LAUNCH-01-C2-I
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-I |
+| name | Cockpit Target Font Parity + Currency Decimal Display |
+| parent | BR-LAUNCH-01-C2 |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-21 |
+| closed_at | 2026-09-21 |
+| return_to | BR-LAUNCH-01-C2 |
+| reason | Human Smoke: JP Sci-Fi annual target font too small vs Office; JPY amounts show .00 |
+| evidence | JP Sci-Fi target inherits 16px; KpiCurrency.fractionDigits/formatMoney; Cockpit fmtMoney JPY=0 else=2; verify PASS |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> Demo Import Smoke |
+| constraint | display-only; no calc/save; no layout/position change; EN/ZH font untouched |
+
 ### BR-LAUNCH-01-C2-H
 
 | Field | Value |
