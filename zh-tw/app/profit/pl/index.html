@@ -4345,7 +4345,7 @@
 
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
-  <script src="../../../../js/kpi-editable-grid-keys.js?v=20260921-1"></script>
+  <script src="../../../../js/kpi-editable-grid-keys.js?v=20260921-2"></script>
   <script src="../../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../../js/kpi-business-type.js"></script>
   <script src="../../../../js/kpi-pl-expense-presets.js"></script>
@@ -11305,16 +11305,49 @@
       function plGridKeys() {
         return window.KpiEditableGridKeys || null;
       }
+      function plBuildMatrix() {
+        var cells = document.querySelectorAll('[data-pl-editable="1"]');
+        var rowOrder = [];
+        var seen = {};
+        for (var i = 0; i < cells.length; i++) {
+          var cell = cells[i];
+          if (typeof isPlEditableNumericCellOpen === 'function') {
+            if (!isPlEditableNumericCellOpen(cell)) continue;
+          }
+          var rid = cell.getAttribute('data-row');
+          if (!rid || seen[rid]) continue;
+          seen[rid] = 1;
+          rowOrder.push(rid);
+        }
+        var matrix = [];
+        for (var ri = 0; ri < rowOrder.length; ri++) {
+          var rowId = rowOrder[ri];
+          var row = [];
+          var any = false;
+          for (var mi = 0; mi < 12; mi++) {
+            var el = document.querySelector(
+              '[data-pl-editable="1"][data-row="' +
+                rowId +
+                '"][data-month="' +
+                mi +
+                '"]'
+            );
+            var ok = el && (typeof isPlEditableNumericCellOpen !== 'function' || isPlEditableNumericCellOpen(el));
+            if (ok) any = true;
+            row.push(ok ? el : null);
+          }
+          if (any) matrix.push(row);
+        }
+        return matrix;
+      }
       function plBindAmountEnter(cell) {
         var g = plGridKeys();
         if (!g || !cell) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: cell,
+          getMatrix: plBuildMatrix,
           commit: function (el) {
             commitPlEditableCell(el);
-          },
-          findNext: function (el) {
-            return findNextPlEditableVerticalLoop(el);
           },
           afterFocus: function (next) {
             plSkipBlurCommit = true;

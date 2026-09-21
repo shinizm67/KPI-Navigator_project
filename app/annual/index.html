@@ -14879,7 +14879,7 @@
   <script src="../../js/kpi-currency.js"></script>
   <script src="../../js/kpi-busy-overlay.js"></script>
   <script src="../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
-  <script src="../../js/kpi-editable-grid-keys.js?v=20260921-1"></script>
+  <script src="../../js/kpi-editable-grid-keys.js?v=20260921-2"></script>
   <script src="../../js/kpi-annual-tw-overlay-scrollbar.js?v=20260920-atw1"></script>
   <script src="../../js/kpi-daily-facts-sync.js"></script>
   <script src="../../js/kpi-daily-inputs-sync.js"></script>
@@ -35664,31 +35664,39 @@
         if (!g) return [];
         return g.listEditable(psmSalesRoot(), '.past-sales-modal__cb');
       }
+      function psmBuildMatrix() {
+        var root = psmSalesRoot();
+        if (!root) return [];
+        var trs = root.querySelectorAll('tr[data-iso-date]');
+        var matrix = [];
+        for (var i = 0; i < trs.length; i++) {
+          var tr = trs[i];
+          var cb = tr.querySelector('.past-sales-modal__cb');
+          var inp = tr.querySelector('.past-sales-modal__sales-input');
+          var c0 = cb && !cb.disabled ? cb : null;
+          var c1 = inp && !inp.disabled && !inp.readOnly ? inp : null;
+          if (c0 || c1) matrix.push([c0, c1]);
+        }
+        return matrix;
+      }
       function psmBindSalesEnter(inp) {
         var g = psmGridKeys();
         if (!g || !inp) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: inp,
+          getMatrix: psmBuildMatrix,
           commit: function (el) {
             g.defaultCommit(el);
-          },
-          findNext: function (el) {
-            return g.nextInList(psmListSalesInputs(), el);
           },
         });
       }
       function psmBindCbEnter(cb) {
         var g = psmGridKeys();
         if (!g || !cb) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: cb,
+          getMatrix: psmBuildMatrix,
           commit: function () {},
-          findNext: function (el) {
-            return g.nextInList(psmListBizCbs(), el);
-          },
-          afterFocus: function (next) {
-            g.focusControl(next);
-          },
         });
       }
       function psmBindReferenceEnter(inp) {
@@ -35702,6 +35710,10 @@
           findNext: function () {
             var list = psmListSalesInputs();
             return list.length ? list[0] : null;
+          },
+          findPrev: function () {
+            var list = psmListSalesInputs();
+            return list.length ? list[list.length - 1] : null;
           },
         });
       }
@@ -38988,31 +39000,39 @@
         if (!g) return [];
         return g.listEditable(sdmSalesRoot(), '.sales-data-modal__cb');
       }
+      function sdmBuildMatrix() {
+        var root = sdmSalesRoot();
+        if (!root) return [];
+        var trs = root.querySelectorAll('tr[data-iso-date]');
+        var matrix = [];
+        for (var i = 0; i < trs.length; i++) {
+          var tr = trs[i];
+          var cb = tr.querySelector('.sales-data-modal__cb');
+          var inp = tr.querySelector('.sales-data-modal__sales-input');
+          var c0 = cb && !cb.disabled ? cb : null;
+          var c1 = inp && !inp.disabled && !inp.readOnly ? inp : null;
+          if (c0 || c1) matrix.push([c0, c1]);
+        }
+        return matrix;
+      }
       function sdmBindSalesEnter(inp) {
         var g = sdmGridKeys();
         if (!g || !inp) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: inp,
+          getMatrix: sdmBuildMatrix,
           commit: function (el) {
             g.defaultCommit(el);
-          },
-          findNext: function (el) {
-            return g.nextInList(sdmListSalesInputs(), el);
           },
         });
       }
       function sdmBindCbEnter(cb) {
         var g = sdmGridKeys();
         if (!g || !cb) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: cb,
+          getMatrix: sdmBuildMatrix,
           commit: function () {},
-          findNext: function (el) {
-            return g.nextInList(sdmListBizCbs(), el);
-          },
-          afterFocus: function (next) {
-            g.focusControl(next);
-          },
         });
       }
       function sdmBindReferenceEnter(inp) {
@@ -39026,6 +39046,10 @@
           findNext: function () {
             var list = sdmListSalesInputs();
             return list.length ? list[0] : null;
+          },
+          findPrev: function () {
+            var list = sdmListSalesInputs();
+            return list.length ? list[list.length - 1] : null;
           },
         });
       }
@@ -40325,31 +40349,39 @@
         if (!g) return [];
         return g.listEditable(aemSalesRoot(), '.annual-edit-modal__cb');
       }
+      function aemBuildMatrix() {
+        var root = aemSalesRoot();
+        if (!root) return [];
+        var trs = root.querySelectorAll('tr[data-iso-date]');
+        var matrix = [];
+        for (var i = 0; i < trs.length; i++) {
+          var tr = trs[i];
+          var cb = tr.querySelector('.annual-edit-modal__cb');
+          var inp = tr.querySelector('.annual-edit-modal__sales-input');
+          var c0 = cb && !cb.disabled ? cb : null;
+          var c1 = inp && !inp.disabled && !inp.readOnly ? inp : null;
+          if (c0 || c1) matrix.push([c0, c1]);
+        }
+        return matrix;
+      }
       function aemBindSalesEnter(inp) {
         var g = aemGridKeys();
         if (!g || !inp) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: inp,
+          getMatrix: aemBuildMatrix,
           commit: function (el) {
             g.defaultCommit(el);
-          },
-          findNext: function (el) {
-            return g.nextInList(aemListSalesInputs(), el);
           },
         });
       }
       function aemBindCbEnter(cb) {
         var g = aemGridKeys();
         if (!g || !cb) return;
-        g.bindEnterVertical({
+        g.bindGridKeys({
           el: cb,
+          getMatrix: aemBuildMatrix,
           commit: function () {},
-          findNext: function (el) {
-            return g.nextInList(aemListBizCbs(), el);
-          },
-          afterFocus: function (next) {
-            g.focusControl(next);
-          },
         });
       }
 

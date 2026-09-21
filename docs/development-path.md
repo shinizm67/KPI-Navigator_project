@@ -35,7 +35,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-B (Sales Data Target Tab Layout Gap) P0 — closed 2026-09-20
 - BR-LAUNCH-01-C2-D (Sales Data Annual Target Edit-State UX) P1 — closed 2026-09-20
 - BR-LAUNCH-01-C2-E (Sales Data Unsaved Alert + Enter Commit UX) P1 — closed 2026-09-21
-- BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation) P1 — closed 2026-09-21
+- BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation — Wraparound) P1 — closed 2026-09-21
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -52,7 +52,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 → BR-LAUNCH-01-C → BR-LAUNCH-01 → TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2 — Demo Import Smoke（C2-F CLOSED → return）
+BR-LAUNCH-01-C2 — Demo Import Smoke（C2-F Wraparound CLOSED → return）
 ```
 
 ### Git snapshot（経路記録時点）
@@ -60,7 +60,7 @@ BR-LAUNCH-01-C2 — Demo Import Smoke（C2-F CLOSED → return）
 | 項目 | 値 |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `910ddfc` — Add PL Enter vertical amount navigation via shared helper |
+| HEAD | （wrap commit SHA） |
 | origin sync | （都度確認） |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -507,12 +507,13 @@ CLOSED node は **削除しない**（履歴・再利用のため残す）。
 | status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-21 |
+| reopened_at | 2026-09-21 |
 | closed_at | 2026-09-21 |
 | return_to | `BR-LAUNCH-01-C2` |
-| reason | Sales Data Enter不足。監査で MEP/PL/Past/Annual Edit も未統一 |
-| evidence | helper=`js/kpi-editable-grid-keys.js`。P1 Sales/Past/Annual Edit `9b7c0b0`。P2 MEP `42d2243`。P3 PL Enter vertical via helper（JP/EN blur-commit、ZH-TW 既存 commit/skip-blur adapter） |
+| reason | Human Smokeで端停止を確認。Enter/Tab/Shift+Enter/Shift+Tab の wraparound 契約を追加 |
+| evidence | helper=`bindGridKeys` + matrix wrap。Sales/Past/Annual/MEP/PL logical adapters。smoke Enter/Shift+Enter/Tab/Shift+Tab 完全循環 PASS |
 | next_action | N/A（CLOSED）→ return BR-LAUNCH-01-C2 → Demo Import Smoke |
-| constraint | Enter≠Save / Tab再設計禁止 / OCC·lease·calc·excel 禁止 |
+| constraint | Enter≠Save / Space native / OCC·lease·calc·excel 禁止 |
 
 ### BR-LAUNCH-01-C2-E
 
