@@ -271,6 +271,12 @@
     .annual-target-sales-group.annual-target-sales-group--positioned {
       opacity: 1;
     }
+    /* KPI-C2H-HL-OPEN: Cockpit H/L % → Sales Data Analyze (same page) */
+    .annual-open-table tbody td.kpi-hl-plan-open-link {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
     .annual-target-sales-label {
       margin: 0;
       color: #58e1f3;
@@ -24539,15 +24545,37 @@ Cumulative Target Annual Sales</p>
         var hlWeights = KpiYearStore.readMonthlyHlWeights(hlCy);
         if (hlWeights) applyHlWeightsToCells(hlWeights);
       }
+      function openSalesDataAnalyzeFromHl() {
+        window.__KPI_SDM_OPEN_TAB = 'analyze';
+        var btn = document.getElementById('annual-current-sales-btn');
+        if (btn) btn.click();
+      }
+      var hlSeasonHeader = document.querySelector('.annual-open-table thead th:nth-child(4)');
+      var hlPlanOpenTitle = isJaHl
+        ? 'クリックで Sales Data（繁閑期%設定）を開く'
+        : (document.documentElement.getAttribute('lang') &&
+            String(document.documentElement.getAttribute('lang')).toLowerCase().indexOf('zh') === 0)
+          ? '點擊以開啟 Sales Data（旺淡季%設定）'
+          : 'Click to open Sales Data (H/L % settings)';
       hlSeasonCells.forEach(function (cell) {
-        cell.setAttribute('title', hlPlanReadOnlyTitle);
+        cell.setAttribute('title', hlPlanOpenTitle);
         cell.classList.add('kpi-hl-plan-readonly');
+        cell.classList.add('kpi-hl-plan-open-link');
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', openSalesDataAnalyzeFromHl);
       });
+      if (hlSeasonHeader) {
+        hlSeasonHeader.setAttribute('title', hlPlanOpenTitle);
+        hlSeasonHeader.classList.add('kpi-hl-plan-editable-header');
+        hlSeasonHeader.style.cursor = 'pointer';
+        hlSeasonHeader.addEventListener('click', openSalesDataAnalyzeFromHl);
+      }
       document.addEventListener('kpi:annualPlanChanged', refreshHlPlanFromStore);
       document.addEventListener('annual:calendarYearChanged', refreshHlPlanFromStore);
       window.__ANNUAL_UI = window.__ANNUAL_UI || {};
       window.__ANNUAL_UI.refreshHlPlanFromStore = refreshHlPlanFromStore;
       window.__ANNUAL_UI.recalcMonthlyAllocationTotal = recalcMonthlyAllocationTotal;
+      window.__ANNUAL_UI.openSalesDataAnalyzeFromHl = openSalesDataAnalyzeFromHl;
       recalcMonthlyAllocationTotal();
     })();
     (function () {
