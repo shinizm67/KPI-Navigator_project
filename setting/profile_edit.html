@@ -185,6 +185,7 @@
       </div>
     </div>
     <script src="../js/kpi-auth-client.js?v=20260919-2"></script>
+    <script src="../js/kpi-data-gateway.js?v=20260921-c2k"></script>
     <script src="../js/kpi-business-type.js"></script>
     <script src="../js/kpi-profile-location.js"></script>
     <script src="../js/kpi-profile-server.js"></script>
@@ -558,12 +559,22 @@
         }
 
         var goProfile = function () { window.location.href = 'profile.html'; };
+        /* BR-LAUNCH-01-C2-K: flush store.meta.businessType via gateway before leave. */
+        var pushStore = Promise.resolve();
+        try {
+          var gw = window.__KPI_DATA_GATEWAY;
+          if (gw && typeof gw.pushToServerWhenReady === 'function') {
+            pushStore = Promise.resolve(gw.pushToServerWhenReady(12000)).catch(function () { return null; });
+          } else if (gw && typeof gw.pushToServerNow === 'function') {
+            pushStore = Promise.resolve(gw.pushToServerNow()).catch(function () { return null; });
+          }
+        } catch (_ePush) {}
+        var profileSave = Promise.resolve();
         if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.saveServerProfile === 'function') {
-          // Local already saved above; server failure must not roll back local.
-          window.__KPI_PROFILE_SERVER.saveServerProfile(data).then(goProfile).catch(goProfile);
-          return;
+          profileSave = window.__KPI_PROFILE_SERVER.saveServerProfile(data).catch(function () { return null; });
         }
-        window.location.href = 'profile.html';
+        Promise.all([pushStore, profileSave]).then(goProfile).catch(goProfile);
+        return;
       });
     })();
     (function () {

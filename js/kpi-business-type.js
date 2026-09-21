@@ -280,7 +280,19 @@
       store.meta = emptyStoreSkeleton().meta;
     }
     store.meta.businessType = next;
-    return persistStoreObject(store);
+    var ok = persistStoreObject(store);
+    /* BR-LAUNCH-01-C2-K: best-effort store PUT when gateway is on the page. */
+    if (ok) {
+      try {
+        var gw = global.__KPI_DATA_GATEWAY;
+        if (gw && typeof gw.pushToServerWhenReady === 'function') {
+          gw.pushToServerWhenReady(12000);
+        } else if (gw && typeof gw.pushToServerNow === 'function') {
+          gw.pushToServerNow();
+        }
+      } catch (_ePush) {}
+    }
+    return ok;
   }
 
   function label(code, lang) {

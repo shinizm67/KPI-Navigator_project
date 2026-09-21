@@ -1000,7 +1000,29 @@
         /* GET store is canonical at this revision. Do not fill missing ISOs from
            localStorage. Explicit unsaved dirty lives in OCC / rowState overlay. */
         if (data.store && typeof data.store === 'object') {
+          /* BR-LAUNCH-01-C2-K: keep explicit local meta.businessType when server omits it
+             (Profile setBusinessType may land before store PUT). Do not invent a default. */
+          var localBtBefore = null;
+          try {
+            var prevStore = localGet(STORE_KEY);
+            if (prevStore && prevStore.meta && prevStore.meta.businessType != null) {
+              var prevBt = String(prevStore.meta.businessType).trim();
+              if (prevBt) localBtBefore = prevBt;
+            }
+          } catch (_eLocalBt) {}
           var fullStore = stripDailyFactsFromStore(data.store);
+          var preservedBt = false;
+          if (!fullStore.meta || typeof fullStore.meta !== 'object') {
+            fullStore.meta = {};
+          }
+          var serverBt =
+            fullStore.meta.businessType != null
+              ? String(fullStore.meta.businessType).trim()
+              : '';
+          if (!serverBt && localBtBefore) {
+            fullStore.meta.businessType = localBtBefore;
+            preservedBt = true;
+          }
           hookQuiet = true;
           try {
             localSet(STORE_KEY, fullStore);
@@ -1018,6 +1040,14 @@
             localSet(STORE_KEY, slimTimelineForLocalStorage(fullStore));
           } finally {
             hookQuiet = false;
+          }
+          if (preservedBt) {
+            /* Persist recovered meta.businessType after hydrate finishes (see below). */
+            window.setTimeout(function () {
+              try {
+                schedulePut(cfg, 'full');
+              } catch (_ePresPut) {}
+            }, 0);
           }
         }
         if (data.annualNav && typeof data.annualNav === 'object') {
@@ -1219,6 +1249,32 @@
     pushToServerNow: function () {
       cfg = readSyncConfig();
       return flushPut();
+    },
+    /** Wait until hydrate allows PUT, then flush (Profile BT save / C2-K). */
+    pushToServerWhenReady: function (timeoutMs) {
+      cfg = readSyncConfig();
+      var limit = typeof timeoutMs === 'number' && timeoutMs > 0 ? timeoutMs : 12000;
+      return new Promise(function (resolve) {
+        var start = Date.now();
+        function tick() {
+          if (!canSync(cfg)) {
+            resolve({ ok: false, skipped: true });
+            return;
+          }
+          if (hydrateComplete) {
+            Promise.resolve(flushPut()).then(resolve, function () {
+              resolve({ ok: false, error: 'put_failed' });
+            });
+            return;
+          }
+          if (Date.now() - start >= limit) {
+            resolve({ ok: false, skipped: true, waiting: true });
+            return;
+          }
+          window.setTimeout(tick, 50);
+        }
+        tick();
+      });
     },
     flushPut: flushPut,
     collectPlFromLocal: collectPlFromLocal,

@@ -36,6 +36,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-D (Sales Data Annual Target Edit-State UX) P1 ? closed 2026-09-20
 - BR-LAUNCH-01-C2-E (Sales Data Unsaved Alert + Enter Commit UX) P1 ? closed 2026-09-21
 - BR-LAUNCH-01-C2-F (Global Editable Grid Keyboard Navigation ? Wraparound) P1 ? closed 2026-09-21
+- BR-LAUNCH-01-C2-G / C2-H / C2-I / C2-J (CLOSED 2026-09-21)
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -498,6 +499,24 @@ CLOSED node ? **?????**??????????????
 | accounts | Founder Pro + Demo Basic/Pro??? dataset?plan?????C0 ??? |
 
 
+### BR-LAUNCH-01-C2-K
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-K |
+| name | PL Expense Rows Missing After Business Type Set |
+| parent | BR-LAUNCH-01-C2 |
+| status | CLOSED |
+| priority | P0 |
+| started_at | 2026-09-21 |
+| closed_at | 2026-09-21 |
+| return_to | BR-LAUNCH-01-C2 |
+| reason | Profile BT save did not durable-PUT store.meta.businessType; Annual hydrate wiped meta; PL seed gate stayed false |
+| evidence | gateway hydrate preserve + pushToServerWhenReady; profile_edit x3 flush; verify 14 PASS; foundation 135 PASS |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> Demo Import Smoke / C2-L candidate |
+| constraint | no CSV inference; no restaurant fallback change; no PL seed gate change; no expense delete |
+
+
 ### BR-LAUNCH-01-C2-J
 
 | Field | Value |
@@ -511,7 +530,7 @@ CLOSED node ? **?????**??????????????
 | closed_at | 2026-09-21 |
 | return_to | BR-LAUNCH-01-C2 |
 | reason | Human Smoke: JP year arrow/year gaps too tight vs ZH-TW |
-| evidence | JP year-cluster gap 0→13px; verify L/R=13 font=18 Annual/Monthly parity; target/today≈45; no overlap PASS |
+| evidence | JP year-cluster gap 0?13px; verify L/R=13 font=18 Annual/Monthly parity; target/today?45; no overlap PASS |
 | next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> Demo Import Smoke |
 | constraint | no +45/target formula change; JP only; reuse existing gap token |
 
@@ -810,6 +829,7 @@ CLOSED node ? **?????**??????????????
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | ACTIVE | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
+| `BR-LAUNCH-01-C2-K` | PL Expense Rows Missing After BT Set | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`  
@@ -865,3 +885,5 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-20 | **BR-LAUNCH-01-C0 CLOSED**?Founder plan=pro; Demo Basic/Pro ????CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C`? |
 | 2026-09-20 | **BR-LAUNCH-01-C2** Demo Operation Pack ACTIVE?CURRENT PATH = `? -> BR-LAUNCH-01-C2`?Reset+Sales/Expenses CSV ???????? |
 | 2026-09-20 | **BR-LAUNCH-01-C2** `fixtures/demo/restaurant-v1` ?? CSV + `docs/demo-operation-pack.md` ???Human Import Smoke ???? commit?? |
+| 2026-09-21 | **BR-LAUNCH-01-C2-K** PL Expense Rows Missing After BT Set ACTIVE (AUDIT FIRST) |
+| 2026-09-21 | **BR-LAUNCH-01-C2-K CLOSED** Persist BT meta + restore PL expense rows; return C2 |
