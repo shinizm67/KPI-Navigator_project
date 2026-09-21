@@ -189,6 +189,56 @@ def test_parsers_and_templates_untouched() -> None:
     assert_true("getBusinessType" not in sales, "sales parser still has no BT gate")
 
 
+def test_c2_l1_business_type_import_gate() -> None:
+    js = daily_sales_import_js()
+    begin = js.split("function beginImport(options)", 1)[1].split("function bindButton", 1)[0]
+    bt_at = begin.find("isBusinessTypeSet")
+    file_at = begin.find("ensureFileInput()")
+    parse_at = begin.find("live.parseFile(file)")
+    assert_true(bt_at >= 0, "Sales beginImport uses isBusinessTypeSet")
+    assert_true("getBusinessType" not in begin, "Sales gate does not use getBusinessType")
+    assert_true(0 <= bt_at < file_at < parse_at, "Sales BT gate before file picker and parse")
+    assert_true("データを取り込む前に業種を選択してください。" in begin, "Sales JP BT copy")
+    assert_true("Please select your business type before importing data." in begin, "Sales EN BT copy")
+    assert_true("請先選擇業種類型，再匯入資料。" in begin, "Sales ZH-TW BT copy")
+    expense = (SCRIPTS / "pl_expense_import_client.py").read_text(encoding="utf-8")
+    pick = expense.split("function pickExpenseFile()", 1)[1].split("window.__plExpenseImport", 1)[0]
+    assert_true("isBusinessTypeSet" in pick, "PL pickExpenseFile uses isBusinessTypeSet")
+    assert_true("getBusinessType" not in pick, "PL gate does not use getBusinessType")
+    assert_true(pick.find("isBusinessTypeSet") < pick.find("fileInput.click()"), "PL BT gate before fileInput.click")
+    assert_true("function parseFile(file)" in expense, "PL parseFile still present")
+    assert_true("function buildPlan(rows, cols, resolver)" in expense, "PL buildPlan still present")
+    for path in SALES_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        html_begin = html.split("function beginImport(options)", 1)[1].split("function bindButton", 1)[0]
+        assert_true("isBusinessTypeSet" in html_begin, f"{rel} Sales copy has BT gate")
+        assert_true(html_begin.find("isBusinessTypeSet") < html_begin.find("ensureFileInput()"), f"{rel} Sales gate before file picker")
+        assert_true("getBusinessType" not in html_begin, f"{rel} Sales copy avoids getBusinessType")
+    for path in PL_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        html_pick = html.split("function pickExpenseFile()", 1)[1].split("window.__plExpenseImport", 1)[0]
+        assert_true("isBusinessTypeSet" in html_pick, f"{rel} PL copy has BT gate")
+        assert_true(html_pick.find("isBusinessTypeSet") < html_pick.find("fileInput.click()"), f"{rel} PL gate before click")
+        seed = html.split("var btSet = window.KpiBusinessType", 1)[1][:400]
+        assert_true("isBusinessTypeSet()" in seed, f"{rel} PL seed gate unchanged")
+    for path in MEP_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        handler = html.split("btnExpenseCsvUpload.addEventListener('click'", 1)[1].split("if (btnConfirm)", 1)[0]
+        blocked_at = handler.find("isMepScreenEditBlocked")
+        bt_h = handler.find("isBusinessTypeSet")
+        input_at = handler.find("ensureExpenseInput()")
+        assert_true(0 <= blocked_at < bt_h < input_at, f"{rel} MEP: edit-block then BT then file input")
+        assert_true("getBusinessType" not in handler, f"{rel} MEP gate avoids getBusinessType")
+        assert_true("mepExpenseText(" in handler, f"{rel} MEP uses mepExpenseText")
+        assert_true("データを取り込む前に業種を選択してください。" in handler, f"{rel} MEP JP BT copy")
+        assert_true("Please select your business type before importing data." in handler, f"{rel} MEP EN BT copy")
+        assert_true("請先選擇業種類型，再匯入資料。" in handler, f"{rel} MEP ZH-TW BT copy")
+        assert_true("KPI-CSV-IMPORT-SAFETY-6H" in handler, f"{rel} MEP overwrite confirm kept")
+
+
 def test_regression_1_to_6g() -> None:
     suites = [
         ("6A", "_test_csv_sales_schema_6a.py"),
@@ -215,6 +265,8 @@ def main() -> int:
     test_pl_policy_unchanged()
     print("--- 6H freeze ---")
     test_parsers_and_templates_untouched()
+    print("--- C2-L1 BT import gate ---")
+    test_c2_l1_business_type_import_gate()
     print("--- 6H regression 1-6G ---")
     test_regression_1_to_6g()
     print(f"passed={PASSED} failed={FAILED}")

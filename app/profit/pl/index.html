@@ -12759,6 +12759,18 @@
         }
 
         function pickExpenseFile() {
+          var btApi = window.KpiBusinessType;
+          if (!btApi || typeof btApi.isBusinessTypeSet !== 'function' || !btApi.isBusinessTypeSet()) {
+            var lang = String((document.documentElement && document.documentElement.lang) || '').toLowerCase();
+            var msg = 'Please select your business type before importing data.';
+            if (lang.indexOf('ja') === 0) {
+              msg = 'データを取り込む前に業種を選択してください。';
+            } else if (lang.indexOf('zh') === 0) {
+              msg = '請先選擇業種類型，再匯入資料。';
+            }
+            window.alert(msg);
+            return;
+          }
           if (!fileInput) {
             fileInput = document.createElement('input');
             fileInput.type = 'file';

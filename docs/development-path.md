@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L1
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,6 +24,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
+- BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 CLOSED (under BR-LAUNCH-01):
@@ -55,7 +56,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2 ? Demo Import Smoke?C2-F Wraparound CLOSED ? return?
+BR-LAUNCH-01-C2-L1 Business Type Import Gate - Human Smoke pending (do not start C2-L2)
 ```
 
 ### Git snapshot????????
@@ -514,8 +515,23 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible; only when translation fails, guide to KPN Template. |
-| next_action | Handoff fixed; await AUDIT FIRST in new Cursor chat (no implement yet) |
+| next_action | C2-L1 Human Smoke pending; then continue C2-L |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved |
+
+### BR-LAUNCH-01-C2-L1
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L1 |
+| name | Business Type Import Gate |
+| parent | BR-LAUNCH-01-C2-L |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-21 |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | Import must start only after explicit Profile Business Type; do not use restaurant fallback as "set" |
+| next_action | Human Smoke (unset blocks Sales/PL/MEP file picker; explicit BT including restaurant allows import) |
+| constraint | isBusinessTypeSet only; no getBusinessType; no parser/mapping/seed/fallback change; no excel/ touch |
 
 ### BR-LAUNCH-01-C2-K
 
@@ -848,6 +864,7 @@ CLOSED node ? **?????**??????????????
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
+| `BR-LAUNCH-01-C2-L1` | Business Type Import Gate | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
@@ -906,3 +923,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-21 | **BR-LAUNCH-01-C2-K** PL Expense Rows Missing After BT Set ACTIVE (AUDIT FIRST) |
 | 2026-09-21 | **BR-LAUNCH-01-C2-K CLOSED** Persist BT meta + restore PL expense rows; return C2 |
 | 2026-09-21 | **BR-LAUNCH-01-C2-L** Flexible CSV / Excel Import Foundation ACTIVE (handoff fixed; CURRENT PATH -> C2-L) |
+| 2026-09-21 | **BR-LAUNCH-01-C2-L1** Business Type Import Gate ACTIVE ? Sales/PL/MEP import blocked until explicit BT; Human Smoke pending |
