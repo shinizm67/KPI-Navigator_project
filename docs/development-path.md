@@ -498,6 +498,23 @@ CLOSED node ? **?????**??????????????
 | accounts | Founder Pro + Demo Basic/Pro??? dataset?plan?????C0 ??? |
 
 
+### BR-LAUNCH-01-C2-J
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-J |
+| name | JP Cockpit Year Navigation Spacing Parity |
+| parent | BR-LAUNCH-01-C2 |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-21 |
+| closed_at | 2026-09-21 |
+| return_to | BR-LAUNCH-01-C2 |
+| reason | Human Smoke: JP year arrow/year gaps too tight vs ZH-TW |
+| evidence | JP year-cluster gap 0→13px; verify L/R=13 font=18 Annual/Monthly parity; target/today≈45; no overlap PASS |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2 -> Demo Import Smoke |
+| constraint | no +45/target formula change; JP only; reuse existing gap token |
+
 ### BR-LAUNCH-01-C2-I
 
 | Field | Value |
