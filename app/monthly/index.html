@@ -282,9 +282,10 @@
       font-family: 'Orbitron', sans-serif;
       background: rgba(0, 0, 0, 0.1);
     }
+    /* KPI-C2G-TARGET-ALIGN: match Annual place contract */
     .annual-target-sales-group {
       position: absolute;
-      left: 0;
+      left: calc(100% - 620px);
       transform: none;
       top: 21px;
       z-index: 2;
@@ -292,6 +293,15 @@
       flex-direction: column;
       align-items: center;
       gap: 6px;
+      opacity: 0;
+    }
+    .annual-target-sales-group.annual-target-sales-group--positioned {
+      opacity: 1;
+    }
+    .annual-open-table tbody td.kpi-hl-plan-open-link {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
     .annual-target-sales-label {
       margin: 0;
@@ -25174,6 +25184,28 @@
           return CFG.plotBottom - ratio * CFG.plotH;
         }
 
+        function buildEmptyTrendPayload(dim, todayDay) {
+          var target = [];
+          var actual = [];
+          var dailyTarget = [];
+          var dailyActual = [];
+          for (var d = 1; d <= dim; d++) {
+            dailyTarget.push(0);
+            dailyActual.push(0);
+            target.push(0);
+            actual.push(0);
+          }
+          var td = Number(todayDay);
+          if (!Number.isFinite(td) || td < 1) td = 1;
+          if (td > dim) td = dim;
+          return {
+            target: target,
+            actual: actual,
+            dailyTarget: dailyTarget,
+            dailyActual: dailyActual,
+            todayDay: td
+          };
+        }
         function buildDemoPayload(dim, todayDay) {
           return buildEmptyTrendPayload(dim, todayDay);
         }
@@ -26199,44 +26231,24 @@
         var oy = KpiYearStore.getOperatingYear();
         return KpiYearStore.writeMonthlyHlWeights(oy, weights, { source: source || 'cockpit-plan-edit' });
       }
+      function navigateToAnnualSalesDataAnalyze() {
+        var y = Number(window.__ANNUAL_DATA && window.__ANNUAL_DATA.calendarYear);
+        if (!Number.isFinite(y) && window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function') {
+          y = Number(KpiYearStore.getOperatingYear());
+        }
+        if (!Number.isFinite(y)) y = new Date().getFullYear();
+        try {
+          sessionStorage.setItem(
+            'kpiNavigator.openIntent',
+            JSON.stringify({ type: 'sales-data-analyze', year: y })
+          );
+        } catch (_eIntent) {}
+        var link = document.querySelector('.global-nav a[href*="annual/index.html"]');
+        var href = link && link.getAttribute('href') ? link.getAttribute('href') : '../annual/index.html';
+        window.location.href = href;
+      }
       function openHlWeightsEditor() {
-        if (!window.KpiYearStore) return;
-        var oy = KpiYearStore.getOperatingYear();
-        if (KpiYearStore.isYearLocked(oy)) {
-          window.alert(
-            document.documentElement.getAttribute('lang') === 'ja'
-              ? '確定済みの年は繁閑%を編集できません。'
-              : 'Cannot edit H/L % for a locked year.'
-          );
-          return;
-        }
-        var weights = KpiYearStore.readMonthlyHlWeights(oy) || parseHlCellsToWeights();
-        var monthNames =
-          document.documentElement.getAttribute('lang') === 'ja'
-            ? ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-            : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        for (var i = 0; i < 12; i++) {
-          var input = window.prompt(
-            (document.documentElement.getAttribute('lang') === 'ja' ? '繁閑期% ' : 'H/L % ') +
-              monthNames[i] +
-              ' (5% steps)',
-            String(weights[i])
-          );
-          if (input == null) return;
-          var next = normalizeWeightInput(input);
-          if (next == null) {
-            window.alert(
-              document.documentElement.getAttribute('lang') === 'ja'
-                ? '5%刻みの整数（60〜200）で入力してください。'
-                : 'Please enter an integer in 5% steps (60 to 200).'
-            );
-            return;
-          }
-          weights[i] = next;
-        }
-        if (!saveHlWeightsToStore(weights, 'cockpit-plan-edit')) return;
-        applyHlWeightsToCells(weights);
-        recalcMonthlyAllocationTotal();
+        navigateToAnnualSalesDataAnalyze();
       }
       if (window.KpiYearStore && hlSeasonCells.length) {
         var hlOy = KpiYearStore.getOperatingYear();
@@ -26247,12 +26259,22 @@
         }
         applyHlWeightsToCells(hlWeights);
       }
+      var hlPlanOpenTitle =
+        document.documentElement.getAttribute('lang') === 'ja'
+          ? 'クリックで Annual の Sales Data（繁閑期%設定）を開く'
+          : document.documentElement.getAttribute('lang') &&
+              String(document.documentElement.getAttribute('lang')).toLowerCase().indexOf('zh') === 0
+            ? '點擊以開啟 Annual 的 Sales Data（旺淡季%設定）'
+            : 'Click to open Annual Sales Data (H/L % settings)';
       hlSeasonCells.forEach(function (cell) {
-        cell.setAttribute('title', hlPlanReadOnlyTitle);
+        cell.setAttribute('title', hlPlanOpenTitle);
         cell.classList.add('kpi-hl-plan-readonly');
+        cell.classList.add('kpi-hl-plan-open-link');
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', navigateToAnnualSalesDataAnalyze);
       });
       if (hlSeasonHeader) {
-        hlSeasonHeader.setAttribute('title', hlPlanHeaderTitle);
+        hlSeasonHeader.setAttribute('title', hlPlanOpenTitle);
         hlSeasonHeader.classList.add('kpi-hl-plan-editable-header');
         hlSeasonHeader.style.cursor = 'pointer';
         hlSeasonHeader.addEventListener('click', openHlWeightsEditor);
@@ -26266,6 +26288,7 @@
       window.__ANNUAL_UI.recalcMonthlyAllocationTotal = recalcMonthlyAllocationTotal;
       recalcMonthlyAllocationTotal();
     })();
+
     (function () {
       window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
       window.__ANNUAL_DATA.daily = window.__ANNUAL_DATA.daily || {
@@ -26303,14 +26326,27 @@
       var achPastEl = document.getElementById('annual-daily-ach-rate');
       if (!dateBtn || !dateInput || !todayBtn) return;
 
+      /* KPI-C2G-TARGET-ALIGN: Annual placeTargetSalesGroup contract */
+      var __placeTargetSalesLeft = null;
       function placeTargetSalesGroup() {
         if (!targetGroup) return;
         var root = document.getElementById('annual-monthly-data');
-        if (!root) return;
+        if (!root || !todayBtn) {
+          targetGroup.classList.add('annual-target-sales-group--positioned');
+          return;
+        }
         var rootRect = root.getBoundingClientRect();
         var todayRect = todayBtn.getBoundingClientRect();
         var left = Math.round(todayRect.right - rootRect.left + 45);
+        if (__placeTargetSalesLeft === left) {
+          if (!targetGroup.classList.contains('annual-target-sales-group--positioned')) {
+            targetGroup.classList.add('annual-target-sales-group--positioned');
+          }
+          return;
+        }
+        __placeTargetSalesLeft = left;
         targetGroup.style.left = left + 'px';
+        targetGroup.classList.add('annual-target-sales-group--positioned');
       }
 
       var langJa = document.documentElement.lang === 'ja';
@@ -26659,9 +26695,26 @@
       }
       bindCockpitDateHoldRepeat(datePrevBtn, -1);
       bindCockpitDateHoldRepeat(dateNextBtn, 1);
-      placeTargetSalesGroup();
-      window.addEventListener('resize', placeTargetSalesGroup);
-      requestAnimationFrame(placeTargetSalesGroup);
+      var __placeTargetSalesRaf = null;
+      function schedulePlaceTargetSalesGroup() {
+        if (__placeTargetSalesRaf != null) return;
+        __placeTargetSalesRaf = window.requestAnimationFrame(function () {
+          __placeTargetSalesRaf = null;
+          placeTargetSalesGroup();
+        });
+      }
+      schedulePlaceTargetSalesGroup();
+      window.addEventListener('resize', schedulePlaceTargetSalesGroup);
+      document.addEventListener('annual:calendarYearChanged', schedulePlaceTargetSalesGroup);
+      document.addEventListener('kpi:readSurfacesRefresh', schedulePlaceTargetSalesGroup);
+      if (typeof ResizeObserver !== 'undefined') {
+        var __placeTargetSalesRo = new ResizeObserver(schedulePlaceTargetSalesGroup);
+        var __placeRoot = document.getElementById('annual-monthly-data');
+        if (__placeRoot) __placeTargetSalesRo.observe(__placeRoot);
+        if (todayBtn) __placeTargetSalesRo.observe(todayBtn);
+      }
+      window.addEventListener('load', schedulePlaceTargetSalesGroup);
+      requestAnimationFrame(schedulePlaceTargetSalesGroup);
 
       function goToTodayFromDailyUi() {
         var now = new Date();

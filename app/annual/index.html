@@ -39846,7 +39846,8 @@
             clearDateFilterUi();
             clearMonthFilterUi();
             closeSalesSortPanel();
-            setSalesDataTab('input');
+            setSalesDataTab(window.__KPI_SDM_OPEN_TAB === 'analyze' ? 'analyze' : 'input');
+            window.__KPI_SDM_OPEN_TAB = null;
             /* KPI-MEP-SALES-ROUNDTRIP-CD: MEP 保存後の timeline を Sales Data 表に載せる */
             if (window.KpiYearStore && typeof window.KpiYearStore.syncToAnnualDaily === 'function') {
               window.KpiYearStore.syncToAnnualDaily();
@@ -39977,6 +39978,44 @@
         e.preventDefault();
         openModal();
       });
+      /* KPI-C2G-SDM-INTENT: Monthly Cockpit H/L % → Sales Data Analyze */
+      (function consumeOpenIntent() {
+        var intent = null;
+        try {
+          var raw = sessionStorage.getItem('kpiNavigator.openIntent');
+          if (!raw) return;
+          sessionStorage.removeItem('kpiNavigator.openIntent');
+          intent = JSON.parse(raw);
+        } catch (_eIntent) {
+          return;
+        }
+        if (!intent || intent.type !== 'sales-data-analyze') return;
+        var y = Number(intent.year);
+        var attempts = 0;
+        function runOpen() {
+          attempts += 1;
+          if (Number.isFinite(y)) {
+            if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setCalendarYear === 'function') {
+              window.__ANNUAL_UI.setCalendarYear(y);
+            } else if (window.__ANNUAL_DATA) {
+              window.__ANNUAL_DATA.calendarYear = y;
+            }
+          }
+          window.__KPI_SDM_OPEN_TAB = 'analyze';
+          openModal();
+          window.setTimeout(function () {
+            if (!modal || !modal.hasAttribute('hidden')) return;
+            if (attempts >= 8) return;
+            runOpen();
+          }, 250);
+        }
+        function arm() {
+          window.setTimeout(runOpen, 0);
+        }
+        if (document.readyState === 'complete') arm();
+        else window.addEventListener('load', arm);
+      })();
+
       if (scrollEl) {
         var psmScrollHideTimer;
         scrollEl.addEventListener(
