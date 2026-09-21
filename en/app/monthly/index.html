@@ -2982,10 +2982,10 @@
       letter-spacing: 0;
       line-height: 1;
     }
-    html[lang="ja"] .si-fi:not(.office-mode) .annual-total-bd-value,
-    html[lang="ja"] .si-fi:not(.office-mode) .annual-target-sales-value {
+    html[lang="ja"] .si-fi:not(.office-mode) .annual-total-bd-value {
       font-size: 11px;
     }
+    /* KPI-C2I-TARGET-FONT: JP Sci-Fi target amount inherits base 16px (Office parity) */
     html[lang="ja"] .si-fi:not(.office-mode) .annual-target-inline-edit {
       font-family: 'BIZ UDPGothic', sans-serif;
     }
@@ -23419,6 +23419,9 @@ Cumulative Target Annual Sales</p>
 
         function fmtMoney(n) {
           if (n == null || !Number.isFinite(Number(n))) return DASH;
+          if (window.KpiCurrency && typeof KpiCurrency.formatMoney === 'function') {
+            return KpiCurrency.formatMoney(n);
+          }
           var v = Math.round(Number(n) * 100) / 100;
           if (window.KpiCurrency) {
             return KpiCurrency.format(v, {
@@ -24422,9 +24425,11 @@ Cumulative Target Annual Sales</p>
       }
       var zeroLabel = ((document.documentElement.getAttribute('lang') || '').toLowerCase().indexOf('ja') === 0) ? '¥0' : '$0';
       if (raw != null) {
-        targetEl.textContent = window.KpiCurrency
-          ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : (zeroLabel.charAt(0) + Number(raw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        targetEl.textContent = window.KpiCurrency && typeof KpiCurrency.formatMoney === 'function'
+          ? KpiCurrency.formatMoney(raw)
+          : window.KpiCurrency
+            ? KpiCurrency.format(raw, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : (zeroLabel.charAt(0) + Number(raw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       } else {
         targetEl.textContent = '—';
       }

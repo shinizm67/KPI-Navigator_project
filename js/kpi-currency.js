@@ -524,6 +524,32 @@
     return symbol() + '0';
   }
 
+  /** Display precision: JPY → 0 decimals, others → 2. Display-only. */
+  function fractionDigits(currencyCode) {
+    var c = normalizeCode(currencyCode != null ? currencyCode : code()) || code();
+    return c === 'JPY' ? 0 : 2;
+  }
+
+  /**
+   * Currency-aware money display (does not mutate stored values).
+   * @param {number|string} n
+   * @param {{signed?:boolean,minusGlyph?:string,locale?:string,currency?:string}} [opts]
+   */
+  function formatMoney(n, opts) {
+    opts = opts || {};
+    var digits = fractionDigits(opts.currency);
+    var num = Number(n);
+    if (!isFinite(num)) num = 0;
+    var scaled = digits === 0 ? Math.round(num) : Math.round(num * 100) / 100;
+    return format(scaled, {
+      signed: opts.signed,
+      minusGlyph: opts.minusGlyph,
+      locale: opts.locale,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  }
+
   global.KpiCurrency = {
     KEY: KEY,
     CURRENCY_CODES: CURRENCY_CODES,
@@ -546,6 +572,8 @@
     maybeSuggestFromCountry: maybeSuggestFromCountry,
     format: format,
     zero: zero,
+    fractionDigits: fractionDigits,
+    formatMoney: formatMoney,
   };
 
   global.__twFmtMoney = function (n) {

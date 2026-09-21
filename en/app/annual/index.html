@@ -28731,6 +28731,9 @@ Cumulative Target Annual Sales</p>
 
         function fmtMoney(n) {
           if (n == null || !Number.isFinite(Number(n))) return DASH;
+          if (window.KpiCurrency && typeof KpiCurrency.formatMoney === 'function') {
+            return KpiCurrency.formatMoney(n);
+          }
           var v = Math.round(Number(n) * 100) / 100;
           if (window.KpiCurrency) {
             return KpiCurrency.format(v, {
