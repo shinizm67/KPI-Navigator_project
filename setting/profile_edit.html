@@ -610,6 +610,7 @@
       var currencyUserSet = false;
       var industryUserDirty = false;
       var retainedRestaurantGenre = '';
+      var lastSyncedType = '';
 
       if (window.KpiProfileLocation && window.KpiProfileLocation.bindCandidateField) {
         /* KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN */
@@ -791,7 +792,7 @@
 
       function syncGenreField() {
         /* KPI-PROFILE-GENRE-PLACEHOLDER */
-        /* BR-LAUNCH-01-C2-L1-A: retain stored genre; UI inactive unless BT is restaurant. */
+        /* BR-LAUNCH-01-C2-L1-A: session-stash only; do not restore stale lastProfile genre. */
         if (genreGroup) genreGroup.hidden = false;
         var rawType = industrySelect ? String(industrySelect.value || '').trim() : '';
         var type = rawType ? normalizeIndustry(rawType) : '';
@@ -801,8 +802,10 @@
         if (genreInput) {
           if (isGenrePrompt(genreInput.value)) genreInput.value = '';
           var visible = String(genreInput.value || '').trim();
-          if (!type) {
+          if (lastSyncedType === 'restaurant' && type !== 'restaurant') {
             rememberRestaurantGenre(visible);
+          }
+          if (!type) {
             genreInput.value = '';
             genreInput.disabled = true;
             genreInput.placeholder = GENRE_PLACEHOLDER_NEED_TYPE;
@@ -816,7 +819,6 @@
             }
           } else {
             if (visible && (visible === retainedRestaurantGenre || isRestaurantSuggestion(visible))) {
-              rememberRestaurantGenre(visible);
               genreInput.value = '';
             }
             genreInput.disabled = false;
@@ -824,6 +826,7 @@
           }
           if (rec) genreInput.setAttribute('aria-label', rec.label);
         }
+        lastSyncedType = type;
         var list = document.getElementById('profile-genre-suggestions');
         if (list) {
           list.innerHTML = '';
@@ -909,8 +912,16 @@
               var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
               var savedGenre = lastProfile && lastProfile.genre;
               if (isGenrePrompt(savedGenre)) savedGenre = '';
-              retainedRestaurantGenre = savedGenre || '';
-              genreInput.value = savedGenre;
+              var canonicalNow =
+                typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+                  ? window.KpiBusinessType.readMetaBusinessType()
+                  : null;
+              if (canonicalNow === 'restaurant') {
+                retainedRestaurantGenre = savedGenre || '';
+                genreInput.value = savedGenre;
+              } else {
+                genreInput.value = '';
+              }
             } catch (_eGenre) {
               genreInput.value = '';
             }
