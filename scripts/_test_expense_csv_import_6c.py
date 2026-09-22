@@ -72,7 +72,21 @@ def is_header_item(raw: str) -> bool:
     return norm_text(raw) in ("lineid", "item", "label")
 
 
-def make_resolver(lines, aliases=None):
+SHARED_SYNONYMS = {
+    "店舗家賃": "exp_rent",
+    "賃借料": "exp_rent",
+    "広告費": "exp_advertising",
+}
+RESTAURANT_SYNONYMS = {
+    "食材費": "exp_food_cost",
+    "食材仕入": "exp_food_cost",
+    "原材料費": "exp_food_cost",
+    "飲料費": "exp_drink_cost",
+    "ドリンク仕入": "exp_drink_cost",
+}
+
+
+def make_resolver(lines, aliases=None, business_type=None):
     importable = [row for row in (lines or []) if is_importable(row)]
     by_id = {str(row["lineId"]): row for row in importable}
     by_id_norm = {norm_text(row["lineId"]): row for row in importable}
@@ -98,6 +112,15 @@ def make_resolver(lines, aliases=None):
         aid = aliases.get(k)
         if aid and str(aid) in by_id:
             return by_id[str(aid)]
+        if looks_like_line_id(raw):
+            return None
+        sid = SHARED_SYNONYMS.get(k)
+        if sid and sid in by_id:
+            return by_id[sid]
+        if business_type == "restaurant":
+            rid = RESTAURANT_SYNONYMS.get(k)
+            if rid and rid in by_id:
+                return by_id[rid]
         return None
 
     return resolve
@@ -154,9 +177,9 @@ def norm_date(v):
     return None
 
 
-def build_plan(rows, lines, aliases=None):
+def build_plan(rows, lines, aliases=None, business_type=None):
     cols = detect_columns(rows)
-    resolve = make_resolver(lines, aliases)
+    resolve = make_resolver(lines, aliases, business_type=business_type)
     monthly = {}
     daily = {}
     unmatched = {}
@@ -419,6 +442,100 @@ def test_pages_load_shared_resolver() -> None:
         assert_true("style === 'daily' && date.length !== 10" in html, f"{rel} MEP does not monthly-ize daily lines")
 
 
+def test_c2_l2_high_confidence_synonyms() -> None:
+    restaurant = default_catalog_lines("restaurant")
+    retail = default_catalog_lines("retail")
+    other = default_catalog_lines("other")
+    r = make_resolver(restaurant, business_type="restaurant")
+    assert_true(r("店舗家賃")["lineId"] == "exp_rent", "restaurant 店舗家賃 -> exp_rent")
+    assert_true(r("賃借料")["lineId"] == "exp_rent", "restaurant 賃借料 -> exp_rent")
+    assert_true(r("食材費")["lineId"] == "exp_food_cost", "restaurant 食材費 -> exp_food_cost")
+    assert_true(r("食材仕入")["lineId"] == "exp_food_cost", "restaurant 食材仕入 -> exp_food_cost")
+    assert_true(r("原材料費")["lineId"] == "exp_food_cost", "restaurant 原材料費 -> exp_food_cost")
+    assert_true(r("飲料費")["lineId"] == "exp_drink_cost", "restaurant 飲料費 -> exp_drink_cost")
+    assert_true(r("ドリンク仕入")["lineId"] == "exp_drink_cost", "restaurant ドリンク仕入 -> exp_drink_cost")
+    assert_true(r("広告費")["lineId"] == "exp_advertising", "restaurant 広告費 -> exp_advertising")
+    assert_true(r("exp_food_cost")["lineId"] == "exp_food_cost", "raw lineId exp_food_cost unchanged")
+    assert_true(r("EXP_FOOD_COST")["lineId"] == "exp_food_cost", "normalized lineId still wins")
+
+    custom = custom_line(line_id="exp_custom_variable_foodalias", labelJa="独自食材")
+    aliased = make_resolver(
+        restaurant + [custom],
+        aliases={norm_text("食材費"): "exp_custom_variable_foodalias"},
+        business_type="restaurant",
+    )
+    assert_true(
+        aliased("食材費")["lineId"] == "exp_custom_variable_foodalias",
+        "saved alias 食材費 beats built-in synonym",
+    )
+
+    retail_r = make_resolver(retail, business_type="retail")
+    assert_true(retail_r("食材費") is None, "retail 食材費 does not map to food")
+    assert_true(retail_r("原材料費") is None, "retail 原材料費 does not map to food")
+    assert_true(retail_r("飲料費") is None, "retail 飲料費 does not map to drink")
+    assert_true(retail_r("店舗家賃")["lineId"] == "exp_rent", "retail shared 店舗家賃 still maps rent")
+    assert_true(retail_r("広告費")["lineId"] == "exp_advertising", "retail shared 広告費 still maps ads")
+
+    other_r = make_resolver(other, business_type="other")
+    assert_true(other_r("食材費") is None, "other 食材費 restaurant synonym does not fire")
+    assert_true(other_r("原材料費") is None, "other 原材料費 does not map to exp_food_cost")
+    assert_true(other_r("ドリンク仕入") is None, "other drink synonym does not fire")
+
+    unset_r = make_resolver(restaurant, business_type=None)
+    assert_true(unset_r("食材費") is None, "unset BT does not apply restaurant synonym")
+    assert_true(unset_r("店舗家賃")["lineId"] == "exp_rent", "shared synonym still requires importable target only")
+
+    orphan_food = [dict(row, presetOrphan=True) if row["lineId"] == "exp_food_cost" else row for row in restaurant]
+    orphan_r = make_resolver(orphan_food, business_type="restaurant")
+    assert_true(orphan_r("食材費") is None, "presetOrphan food is not revived by synonym")
+    assert_true(orphan_r("exp_food_cost") is None, "presetOrphan raw lineId stays unimportable")
+
+    inactive_ads = [dict(row, active=False) if row["lineId"] == "exp_advertising" else row for row in restaurant]
+    inactive_r = make_resolver(inactive_ads, business_type="restaurant")
+    assert_true(inactive_r("広告費") is None, "inactive advertising is not revived by synonym")
+
+    for label in ("人件費", "手数料", "その他"):
+        assert_true(r(label) is None, f"forbidden {label} stays unmatched")
+
+    assert_true(r("exp_unknown_zzzz") is None, "unknown machine key is not synonym-translated")
+    assert_true(looks_like_line_id("exp_unknown_zzzz"), "unknown machine key still looks like lineId")
+
+    syn_plan = build_plan(
+        [["日付", "費目", "金額"], ["2026-01", "店舗家賃", "100"], ["2026-01-02", "食材費", "50"]],
+        restaurant,
+        business_type="restaurant",
+    )
+    assert_true(syn_plan["monthlyByYear"][2026]["exp_rent:0"] == 100, "synonym rent writes without unmatched")
+    assert_true(syn_plan["dailyByYear"][2026]["exp_food_cost"]["2026-01-02"] == 50, "synonym food writes daily")
+    assert_true("店舗家賃" not in syn_plan["unmatched"] and "食材費" not in syn_plan["unmatched"], "mapped synonyms are not unmatched")
+
+    js = (ROOT / "js" / "kpi-expense-csv-import.js").read_text(encoding="utf-8")
+    alias_at = js.find("var aid = aliases && aliases[k];")
+    look_at = js.find("if (looksLikeLineId(raw)) return null;")
+    syn_at = js.find("return resolveSynonym(k, byId, opts)")
+    assert_true(0 <= alias_at < look_at < syn_at, "JS: alias then machine-key skip then synonym")
+    assert_true("readMetaBusinessType" in js, "JS restaurant-only uses readMetaBusinessType")
+    assert_true("getBusinessType" not in js, "JS does not call getBusinessType")
+    assert_true("店舗家賃" in js and "食材費" in js and "原材料費" in js, "JS synonym table present")
+    assert_true("人件費" not in js and "販促費" not in js and "消耗品費" not in js, "JS has no forbidden synonyms")
+    assert_true("bestScore >= 0.6" in PL_JS, "PL fuzzy threshold unchanged")
+    assert_true("KpiExpenseCsvImport.makeResolver" in PL_JS, "PL still delegates to shared resolver")
+    for path in PL_PAGES + MEP_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("kpi-expense-csv-import.js" in html, f"{rel} still loads shared resolver")
+    for path in PL_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("KpiExpenseCsvImport.makeResolver" in html, f"{rel} PL shared makeResolver")
+        assert_true("looksLikeLineId(info.display) ? null" in html, f"{rel} fuzzy still skips machine keys")
+    for path in MEP_PAGES:
+        html = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        assert_true("KpiExpenseCsvImport.makeResolver" in html, f"{rel} MEP uses shared makeResolver")
+    assert_true("店舗家賃" not in SALES_PARSER, "Sales importer has no expense synonyms")
+
+
 def test_regression_1_to_6d() -> None:
     u6d = load_module("u6d_csv_templates", SCRIPTS / "_test_csv_templates_6d.py")
     before = u6d.FAILED
@@ -442,6 +559,8 @@ def main() -> int:
     test_zero_blank_duplicate()
     test_save_targets_and_sources()
     test_pages_load_shared_resolver()
+    print("--- C2-L2 high-confidence synonyms ---")
+    test_c2_l2_high_confidence_synonyms()
     print("--- 6C regression ---")
     test_regression_1_to_6d()
     print(f"passed={PASSED} failed={FAILED}")

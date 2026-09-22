@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L1
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L2
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,11 +24,10 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0
+- BR-LAUNCH-01-C2-L2 (High-confidence Expense Synonyms) P1
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
-- BR-LAUNCH-01-C2-L2 High-confidence Expense Synonyms
 - BR-LAUNCH-01-C2-L3 Unknown Label Preservation + Persistent Import Mapping Record
 - BR-LAUNCH-01-C2-L4 Expense Classification Lifecycle
 - BR-LAUNCH-01-C2-L5 Plan-independent Import / Storage + Basic/Pro Expense Visibility
@@ -48,6 +47,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-G / C2-H / C2-I / C2-J (CLOSED 2026-09-21)
 - BR-LAUNCH-01-C2-K (PL Expense Rows Missing After BT Set) P0 closed 2026-09-21
 - BR-LAUNCH-01-C2-L1-A (Profile Business Type / Genre Sync) P0 closed 2026-09-22
+- BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0 closed 2026-09-22
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -64,7 +64,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L1 Business Type Import Gate - Human Smoke pending (Sales/Expense import blocked while BT unset; do not start C2-L2)
+BR-LAUNCH-01-C2-L2 High-confidence Expense Synonyms - Human Smoke pending (do not start C2-L3)
 ```
 
 ### Git snapshot????????
@@ -523,8 +523,8 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 ACTIVE; L1-A CLOSED; L2-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
-| next_action | C2-L1 Human Smoke pending; do not start C2-L2 |
+| children | L1 CLOSED; L1-A CLOSED; L2 ACTIVE (Human Smoke); L3-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
+| next_action | C2-L2 Human Smoke pending; do not start C2-L3 |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L3-L6 spec only until L1 returns |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -574,9 +574,9 @@ Guide to KPN Template only when the file is still uninterpretable.
 
 | id | name | status | note |
 |----|------|--------|------|
-| C2-L1 | Business Type Import Gate | ACTIVE | parent smoke still open; do not close without evidence |
+| C2-L1 | Business Type Import Gate | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L1-A | Profile Business Type / Genre Sync | CLOSED | Human Smoke PASS 2026-09-22 |
-| C2-L2 | High-confidence Expense Synonyms | SPEC-REGISTERED | do not start until L1 returns |
+| C2-L2 | High-confidence Expense Synonyms | ACTIVE | implemented; Human Smoke pending |
 | C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | SPEC-REGISTERED | spec only |
 | C2-L4 | Expense Classification Lifecycle | SPEC-REGISTERED | unclassified / fixed-variable / order; spec only |
 | C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | SPEC-REGISTERED | spec only |
@@ -589,12 +589,14 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L1 |
 | name | Business Type Import Gate |
 | parent | BR-LAUNCH-01-C2-L |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-21 |
+| closed_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Import must start only after explicit Profile Business Type; do not use restaurant fallback as "set" |
-| next_action | Human Smoke (unset blocks Sales/PL/MEP file picker; explicit BT including restaurant/retail allows import); do not start C2-L2 |
+| evidence | Human Smoke PASS: BT unset blocks Sales and Expense import; BT set opens Annual/MEP/PL picker; restaurant fallback does not bypass gate. Commit 714a62b |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2-L |
 | constraint | isBusinessTypeSet only; no getBusinessType; no parser/mapping/seed/fallback change; no excel/ touch |
 
 ### BR-LAUNCH-01-C2-L1-A
@@ -621,13 +623,14 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L2 |
 | name | High-confidence Expense Synonyms |
 | parent | BR-LAUNCH-01-C2-L |
-| status | SPEC-REGISTERED |
-| priority | P0 |
-| started_at | not started |
+| status | ACTIVE |
+| priority | P1 |
+| started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Map known expense labels to canonical lines after BT gate |
-| next_action | Do not start until C2-L1 returns |
-| constraint | no BT auto-change; unknown labels not discarded (that is L3) |
+| next_action | Human Smoke (restaurant synonyms auto-map; forbidden labels stay unmatched; retail food labels do not map to exp_food_cost). Do not start C2-L3 |
+| evidence | shared resolver synonym after alias; restaurant-only via readMetaBusinessType; target must be importable |
+| constraint | high-confidence exact synonyms only; restaurant-scoped food/drink; no fuzzy/AI/unknown auto-create; no excel/ touch |
 
 ### BR-LAUNCH-01-C2-L3
 
@@ -1020,8 +1023,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L1` | Business Type Import Gate | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
-| `BR-LAUNCH-01-C2-L2` | High-confidence Expense Synonyms | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L2` | High-confidence Expense Synonyms | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
@@ -1029,6 +1031,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
+CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
@@ -1089,3 +1092,5 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-22 | **BR-LAUNCH-01-C2-L1-A** Profile Business Type / Genre Sync ACTIVE (Option 1 retain+inactive UI; Human Smoke pending; do not close C2-L1 / start C2-L2) |
 | 2026-09-22 | **C2-L Specification Consolidated** canonical translate-not-require + 28-point contract + superseded A/B; register L2-L5 spec-only and L6 POST-LAUNCH; CURRENT PATH unchanged (L1-A Human Smoke) |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L1-A CLOSED** Human Smoke PASS (unset Genre blank; first restaurant no stale 和食). CURRENT PATH -> C2-L1. Gate already in 714a62b; C2-L1 remains ACTIVE pending import Human Smoke |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L1 CLOSED** Human Smoke PASS (unset blocks Sales/Expense; BT set opens picker; no restaurant-fallback bypass). CURRENT PATH -> C2-L2. Phase 1 audit only |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L2** high-confidence expense synonyms in shared resolver (alias-first; restaurant-only food/drink; Human Smoke pending) |
