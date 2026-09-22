@@ -312,3 +312,20 @@ location.href = '/kpi-navigator/login/index.html';
 ### 8.4 Phase 2 候補（未実装）
 
 Founder Console から 1 クリック Reset UI。Phase 1 は API + CLI/PowerShell + docs のみ。
+
+---
+
+## 9. C2-L Retail smoke account（2026-09-22）
+
+C2-L2〜L5 の Retail 隔離 Human Smoke 専用。Restaurant Demo とは別。CSV / Demo seed なし。
+
+| 項目 | 値 |
+|------|----|
+| email | `kpn_smoke_retail_pro01@trial.forge-laboratory.com` |
+| userId | `u_719d9f9880dc925d` |
+| plan | pro |
+| canonical BT | retail（`store.meta.businessType`） |
+| disabled | false |
+| 初期データ | 空（sales / expenses / income なし） |
+
+パスワードはローカル `kpi-navigator-ops/retail-smoke-account-20260922.json` のみ。このドキュメントに書かない。既存 trial / Demo アカウントは削除・変更しない。
