@@ -5542,14 +5542,14 @@
       top: var(--monthly-data-group3-outer-top);
       height: var(--monthly-data-group3-outer-h);
     }
-    /* C2-L5-B: Basic hides Monthly Expense section (UI only; storage unchanged). */
-    body.kpi-plan-basic .monthly-table-window__vlabel--expenses,
-    body.kpi-plan-basic #monthly-scroll-track-group3,
-    body.kpi-plan-basic .monthly-table-window__expenses-col,
-    body.kpi-plan-basic [data-kpi-expense-ui] {
+    /* C2-L5-B: Expense hidden until server-confirmed Pro (fail-closed; storage unchanged). */
+    body:not(.kpi-plan-pro) .monthly-table-window__vlabel--expenses,
+    body:not(.kpi-plan-pro) #monthly-scroll-track-group3,
+    body:not(.kpi-plan-pro) .monthly-table-window__expenses-col,
+    body:not(.kpi-plan-pro) [data-kpi-expense-ui] {
       display: none !important;
     }
-    body.kpi-plan-basic {
+    body:not(.kpi-plan-pro) {
       --monthly-data-group3-rows: 0;
       --monthly-data-group3-outer-h: 0px;
     }
@@ -19806,23 +19806,24 @@
       if (!lockLink || !lockFrame || !lockLabel || !topEditBtn) return;
 
       function normalizeTier(raw) {
-        return String(raw || '').trim().toLowerCase() === 'basic' ? 'basic' : 'pro';
+        return String(raw || '').trim().toLowerCase() === 'pro' ? 'pro' : 'basic';
       }
       function resolveTier() {
         try {
           return normalizeTier(
             sessionStorage.getItem(TIER_KEY) ||
               localStorage.getItem(TIER_KEY) ||
-              'pro'
+              ''
           );
         } catch (_err) {
-          return 'pro';
+          return 'basic';
         }
       }
       function applyPlanUi(tier) {
         var isPro = tier === 'pro';
         try {
           document.body.classList.toggle('kpi-plan-basic', !isPro);
+          document.body.classList.toggle('kpi-plan-pro', isPro);
         } catch (_eCls) {}
         if (isPro) {
           // UNLOCKED is a status badge only: remove href so it is not clickable
@@ -19846,7 +19847,7 @@
         }
       }
 
-      applyPlanUi(resolveTier());
+      applyPlanUi('basic');
       window.__MONTHLY_UI = window.__MONTHLY_UI || {};
       window.__MONTHLY_UI.setUserPlan = function (tier) {
         var normalized = normalizeTier(tier);
@@ -19861,10 +19862,23 @@
       window.addEventListener('storage', function (e) {
         if (e && e.key === TIER_KEY) applyPlanUi(resolveTier());
       });
-      document.addEventListener('kpi:planChanged', function (e) {
+      function onPlanChanged(e) {
         var p = e && e.detail && e.detail.plan;
         applyPlanUi(p ? normalizeTier(p) : resolveTier());
-      });
+      }
+      document.addEventListener('kpi:planChanged', onPlanChanged);
+      window.addEventListener('kpi:planChanged', onPlanChanged);
+      try {
+        if (window.__KPI_AUTH && typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().then(function () {
+            applyPlanUi(resolveTier());
+          }).catch(function () {
+            applyPlanUi('basic');
+          });
+        }
+      } catch (_eSync) {
+        applyPlanUi('basic');
+      }
 
       topEditBtn.addEventListener('click', function () {
         if (!window.__MONTHLY_EDIT_NAV__) return;
@@ -34819,10 +34833,10 @@
       var CTA_TEXT = 'This section is Pro-only. Click to change your plan.';
       function isBasic() {
         try {
-          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
-          return String(t).trim().toLowerCase() === 'basic';
+          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '';
+          return String(t).trim().toLowerCase() !== 'pro';
         } catch (_e) {
-          return false;
+          return true;
         }
       }
       function makeLock() {
@@ -34859,6 +34873,7 @@
         if (e && e.key === TIER_KEY) apply();
       });
       document.addEventListener('kpi:planChanged', apply);
+      window.addEventListener('kpi:planChanged', apply);
       window.__KPI_APPLY_PLAN_LOCKS = apply;
     })();
   </script>

@@ -89,11 +89,15 @@ def test_guard_pro_page_source() -> None:
 def test_monthly_expense_hidden() -> None:
     for lang, path in MONTHLY.items():
         html = path.read_text(encoding="utf-8")
-        assert_true("C2-L5-B: Basic hides Monthly Expense section" in html, f"{lang} monthly hide CSS")
-        assert_true("body.kpi-plan-basic #monthly-scroll-track-group3" in html, f"{lang} hides group3")
-        assert_true("body.kpi-plan-basic .monthly-table-window__vlabel--expenses" in html, f"{lang} hides expenses vlabel")
+        assert_true("Expense hidden until server-confirmed Pro" in html, f"{lang} monthly fail-closed CSS")
+        assert_true("body:not(.kpi-plan-pro) #monthly-scroll-track-group3" in html, f"{lang} hides group3 until Pro")
+        assert_true("body:not(.kpi-plan-pro) .monthly-table-window__vlabel--expenses" in html, f"{lang} hides expenses vlabel until Pro")
         assert_true("data-kpi-expense-ui" in html, f"{lang} expense metric markers")
-        assert_true("classList.toggle('kpi-plan-basic'" in html, f"{lang} applyPlanUi toggles body class")
+        assert_true("classList.toggle('kpi-plan-basic'" in html, f"{lang} applyPlanUi toggles basic class")
+        assert_true("classList.toggle('kpi-plan-pro'" in html, f"{lang} applyPlanUi toggles pro class")
+        assert_true("applyPlanUi('basic')" in html, f"{lang} first paint fail-closed")
+        assert_true("syncPlanFromServer" in html and "applyPlanUi(resolveTier())" in html, f"{lang} reapply after server sync")
+        assert_true("window.addEventListener('kpi:planChanged'" in html, f"{lang} listens window planChanged")
         assert_true("kpi:planChanged" in html and "applyPlanUi" in html, f"{lang} monthly listens planChanged")
         assert_true("display: none !important" in html, f"{lang} display none not blur-only for TW expense")
 
@@ -128,9 +132,10 @@ def test_parity() -> None:
     assert_true(len(set(pl_flags.values())) == 1, "PL 3-lang gate flags match")
     mon_flags = {
         k: (
-            "C2-L5-B: Basic hides Monthly Expense section" in v.read_text(encoding="utf-8"),
-            "data-kpi-expense-ui" in v.read_text(encoding="utf-8"),
-            "classList.toggle('kpi-plan-basic'" in v.read_text(encoding="utf-8"),
+            "Expense hidden until server-confirmed Pro" in v.read_text(encoding="utf-8"),
+            "body:not(.kpi-plan-pro) #monthly-scroll-track-group3" in v.read_text(encoding="utf-8"),
+            "applyPlanUi('basic')" in v.read_text(encoding="utf-8"),
+            "classList.toggle('kpi-plan-pro'" in v.read_text(encoding="utf-8"),
         )
         for k, v in MONTHLY.items()
     }
