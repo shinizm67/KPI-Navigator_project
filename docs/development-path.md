@@ -747,7 +747,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | started_at | 2026-09-23 |
 | closed_at | 2026-09-23 |
 | return_to | BR-LAUNCH-01-C2-L5 |
-| reason | Storage vs UI entitlement split. Basic keeps Expense on server, hides Monthly Expense, gates MEP/PL via existing guardProPage. |
+| reason | Storage vs UI entitlement split. Basic keeps Expense on server, hides Monthly Expense, gates MEP/PL via existing guardProPage. First-load fail-closed: Expense hidden until server-confirmed Pro (`151d736`). |
 | next_action | CLOSED. Return to C2-L5. Do not start L6. |
 | constraint | no L5-A storage change; no new auth framework; no Stripe; no schema; no excel/; no Demo fixture |
 
