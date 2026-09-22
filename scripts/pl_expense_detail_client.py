@@ -97,6 +97,8 @@ def expense_detail_client_js(
       var labelEditModal = document.getElementById('pl-expense-label-edit-modal');
       var labelEditInput = document.getElementById('pl-expense-label-edit-input');
       var labelEditSource = document.getElementById('pl-expense-label-edit-source');
+      var labelEditBucket = document.getElementById('pl-expense-label-edit-bucket');
+      var labelEditBucketHint = document.getElementById('pl-expense-label-edit-bucket-hint');
       var attributeModal = document.getElementById('pl-expense-attribute-modal');
       var attributeModalTitle = document.getElementById('pl-expense-attribute-modal-title');
       var hideModal = document.getElementById('pl-hide-line-modal');
@@ -563,11 +565,81 @@ def expense_detail_client_js(
         if (radio) radio.checked = true;
       }}
 
+      function classifyTt(ja, en, zh) {{
+        var lang = '';
+        try {{
+          lang = String(document.documentElement.lang || '').toLowerCase();
+        }} catch (_eLang) {{}}
+        if (lang.indexOf('zh') === 0) return zh || en;
+        if (lang.indexOf('ja') === 0 || isJa) return ja;
+        return en;
+      }}
+
+      function getLabelEditBucket() {{
+        if (!labelEditBucket || labelEditBucket.hidden) return null;
+        var picked = labelEditBucket.querySelector(
+          'input[name="pl-expense-label-edit-bucket"]:checked'
+        );
+        return picked ? picked.value : null;
+      }}
+
+      function setLabelEditBucket(bucket) {{
+        if (!labelEditBucket) return;
+        var radio = labelEditBucket.querySelector(
+          'input[name="pl-expense-label-edit-bucket"][value="' + bucket + '"]'
+        );
+        if (radio) radio.checked = true;
+      }}
+
+      function applyLabelEditBucketUi(show, currentBucket, opts) {{
+        var options = opts || {{}};
+        if (!labelEditBucket) return;
+        labelEditBucket.hidden = !show;
+        labelEditBucket.querySelectorAll('input[type="radio"]').forEach(function (inp) {{
+          inp.disabled = !show;
+          if (inp.value === 'fixed' && options.blockFixed) inp.disabled = true;
+        }});
+        if (show) {{
+          if (currentBucket === 'fixed' && !options.blockFixed) setLabelEditBucket('fixed');
+          else if (currentBucket === 'variable' || options.blockFixed) setLabelEditBucket('variable');
+        }}
+        if (labelEditBucketHint) labelEditBucketHint.hidden = !(show && options.blockFixed);
+      }}
+
+      function hasNonzeroDailyExpenses(lineId) {{
+        if (window.KpiExpenseClassify && typeof window.KpiExpenseClassify.hasNonzeroDailyExpenses === 'function') {{
+          try {{
+            return !!window.KpiExpenseClassify.hasNonzeroDailyExpenses(lineId);
+          }} catch (_eDaily) {{}}
+        }}
+        return false;
+      }}
+
+      function setLineBucket(lineId, nextBucket) {{
+        var lines = loadLines();
+        var line = lines.find(function (l) {{ return l.lineId === lineId; }});
+        var opts = {{
+          hasNonzeroDaily: hasNonzeroDailyExpenses(lineId),
+        }};
+        if (!window.KpiExpenseClassify || typeof window.KpiExpenseClassify.applySetLineBucket !== 'function') {{
+          return {{ ok: false, reason: 'helper_missing' }};
+        }}
+        var result = window.KpiExpenseClassify.applySetLineBucket(lines, lineId, nextBucket, opts);
+        if (!result || !result.ok) return result || {{ ok: false, reason: 'blocked' }};
+        if (result.changed) {{
+          saveLines(result.lines);
+          renderExpenseDetail();
+        }}
+        return result;
+      }}
+
       function closeLabelEditModal() {{
         if (!labelEditModal) return;
         labelEditModal.hidden = true;
         document.body.classList.remove('pl-expense-label-edit-modal-open');
         pendingLabelEdit = null;
+        if (labelEditInput) labelEditInput.readOnly = false;
+        if (labelEditBucketHint) labelEditBucketHint.hidden = true;
       }}
 
       function openLabelEditModal(lineId) {{
@@ -576,6 +648,7 @@ def expense_detail_client_js(
         var line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }});
         if (!line) return;
         pendingLabelEdit = {{ lineId: lineId }};
+        labelEditInput.readOnly = false;
         labelEditInput.value = labelText(line);
         var showSource = line.bucket === 'variable';
         if (labelEditSource) {{
@@ -587,6 +660,11 @@ def expense_detail_client_js(
             setLabelEditSourceStyle(line.resolvedInputStyle || line.inputStyle || 'monthly');
           }}
         }}
+        var custom = String(line.lineId || '').indexOf('exp_custom_') === 0;
+        var style = line.resolvedInputStyle || line.inputStyle || 'monthly';
+        applyLabelEditBucketUi(custom, line.bucket, {{
+          blockFixed: custom && style === 'daily' && hasNonzeroDailyExpenses(line.lineId),
+        }});
         labelEditModal.hidden = false;
         document.body.classList.add('pl-expense-label-edit-modal-open');
         labelEditInput.focus();
@@ -599,6 +677,7 @@ def expense_detail_client_js(
           return;
         }}
         pendingLabelEdit = {{ createBucket: bucket }};
+        labelEditInput.readOnly = false;
         labelEditInput.value = '';
         var showSource = bucket === 'variable';
         if (labelEditSource) {{
@@ -608,9 +687,65 @@ def expense_detail_client_js(
           }});
           if (showSource) setLabelEditSourceStyle('monthly');
         }}
+        applyLabelEditBucketUi(false, bucket, {{}});
         labelEditModal.hidden = false;
         document.body.classList.add('pl-expense-label-edit-modal-open');
         labelEditInput.focus();
+      }}
+
+      function openClassifyUnknownModal(unknownId) {{
+        if (!labelEditModal || !labelEditInput) return;
+        var hold = window.KpiExpenseUnknownHold;
+        if (!hold || typeof hold.readBlob !== 'function') return;
+        var blob = hold.readBlob() || {{ records: {{}} }};
+        var rec = blob.records && blob.records[String(unknownId || '')];
+        if (!rec || rec.status === 'resolved') return;
+        closeLineManageModal();
+        pendingLabelEdit = {{ unknownId: String(unknownId), classify: true }};
+        labelEditInput.readOnly = true;
+        labelEditInput.value = rec.originalLabel || rec.normalizedLabel || '';
+        if (labelEditSource) {{
+          labelEditSource.hidden = true;
+          labelEditSource.querySelectorAll('input[type="radio"]').forEach(function (inp) {{
+            inp.disabled = true;
+          }});
+        }}
+        var hasDaily = window.KpiExpenseClassify && typeof window.KpiExpenseClassify.rowsHaveDaily === 'function'
+          ? window.KpiExpenseClassify.rowsHaveDaily(rec.rows)
+          : false;
+        applyLabelEditBucketUi(true, hasDaily ? 'variable' : '', {{ blockFixed: hasDaily }});
+        labelEditModal.hidden = false;
+        document.body.classList.add('pl-expense-label-edit-modal-open');
+      }}
+
+      function commitClassifyUnknown() {{
+        if (!pendingLabelEdit || !pendingLabelEdit.unknownId) return false;
+        var bucket = getLabelEditBucket();
+        if (bucket !== 'fixed' && bucket !== 'variable') {{
+          if (labelEditBucket) labelEditBucket.focus();
+          return false;
+        }}
+        if (!window.KpiExpenseClassify || typeof window.KpiExpenseClassify.classifyUnknownHold !== 'function') {{
+          return false;
+        }}
+        var result = window.KpiExpenseClassify.classifyUnknownHold(
+          pendingLabelEdit.unknownId,
+          bucket,
+          addCatalogLineWithLabel
+        );
+        if (!result || !result.ok) {{
+          if (result && result.reason === 'daily_requires_variable') {{
+            window.alert(classifyTt(
+              '日次データがある未分類科目は変動費のみに分類できます',
+              'Unknown lines with daily amounts can only be classified as Variable',
+              '有日次資料的未分類科目只能分類為變動費用'
+            ));
+          }}
+          return false;
+        }}
+        closeLabelEditModal();
+        renderExpenseDetail();
+        return true;
       }}
 
       function commitCreateLineFromLabel() {{
@@ -645,6 +780,9 @@ def expense_detail_client_js(
         if (pendingLabelEdit.createBucket) {{
           return commitCreateLineFromLabel();
         }}
+        if (pendingLabelEdit.unknownId) {{
+          return commitClassifyUnknown();
+        }}
         var lineId = pendingLabelEdit.lineId;
         var next = String(labelEditInput.value || '').replace(/\\s+/g, ' ').trim();
         if (!next) {{
@@ -660,9 +798,32 @@ def expense_detail_client_js(
         var prevJa = line.labelJa;
         var prevEn = line.labelEn;
         var prevStyle = line.resolvedInputStyle || line.inputStyle || 'monthly';
+        var prevBucket = line.bucket;
         if (isJa) line.labelJa = next;
         else line.labelEn = next;
-        if (line.bucket === 'variable') {{
+        var pickedBucket = getLabelEditBucket();
+        var custom = String(line.lineId || '').indexOf('exp_custom_') === 0;
+        var didBucket = false;
+        if (custom && pickedBucket && pickedBucket !== prevBucket) {{
+          saveLines(lines);
+          var br = setLineBucket(lineId, pickedBucket);
+          if (!br || !br.ok) {{
+            if (br && br.reason === 'daily_data') {{
+              window.alert(classifyTt(
+                '日次データがある科目は固定費に変更できません',
+                'Lines with daily amounts cannot move to Fixed',
+                '有日次資料的科目無法改為固定費用'
+              ));
+            }}
+            closeLabelEditModal();
+            renderExpenseDetail();
+            return false;
+          }}
+          didBucket = !!br.changed;
+          lines = loadLines();
+          line = lines.find(function (l) {{ return l.lineId === lineId && l.active; }}) || line;
+        }}
+        if (!didBucket && line.bucket === 'variable') {{
           var style = getLabelEditSourceStyle();
           if (style === 'daily' || style === 'monthly') {{
             line.inputStyle = style;
@@ -1409,26 +1570,49 @@ def expense_detail_client_js(
       function renderLineManageList() {{
         if (!manageList) return;
         var hidden = inactiveLines(loadLines());
-        if (!hidden.length) {{
+        var unknown = [];
+        if (window.KpiExpenseUnknownHold && typeof window.KpiExpenseUnknownHold.listUnresolved === 'function') {{
+          try {{
+            unknown = window.KpiExpenseUnknownHold.listUnresolved() || [];
+          }} catch (_eHold) {{
+            unknown = [];
+          }}
+        }}
+        if (!hidden.length && !unknown.length) {{
           manageList.innerHTML =
             '<p class="pl-line-manage__empty">' + escapeHtml(lineManageEmpty) + '</p>';
           return;
         }}
-        manageList.innerHTML = hidden
-          .map(function (line) {{
-            return (
-              '<div class="pl-line-manage__item" data-line-id="' +
-              escapeHtml(line.lineId) +
-              '"><span class="pl-line-manage__item-label">' +
-              escapeHtml(bucketLabel(line.bucket) + ' — ' + labelText(line)) +
-              '</span><button type="button" class="pl-line-manage__restore" data-action="restore-line" data-line-id="' +
-              escapeHtml(line.lineId) +
-              '">' +
-              escapeHtml(lineManageRestore) +
-              '</button></div>'
-            );
-          }})
-          .join('');
+        var classifyLabel = classifyTt('分類', 'Classify', '分類');
+        var unknownBits = unknown.map(function (rec) {{
+          var uid = escapeHtml(rec.unknownId || '');
+          var label = escapeHtml(rec.originalLabel || rec.normalizedLabel || '');
+          return (
+            '<div class="pl-line-manage__item pl-line-manage__item--unknown" data-unknown-id="' +
+            uid +
+            '"><span class="pl-line-manage__item-label">' +
+            label +
+            '</span><button type="button" class="pl-line-manage__restore" data-action="classify-unknown" data-unknown-id="' +
+            uid +
+            '">' +
+            escapeHtml(classifyLabel) +
+            '</button></div>'
+          );
+        }});
+        var hiddenBits = hidden.map(function (line) {{
+          return (
+            '<div class="pl-line-manage__item" data-line-id="' +
+            escapeHtml(line.lineId) +
+            '"><span class="pl-line-manage__item-label">' +
+            escapeHtml(bucketLabel(line.bucket) + ' — ' + labelText(line)) +
+            '</span><button type="button" class="pl-line-manage__restore" data-action="restore-line" data-line-id="' +
+            escapeHtml(line.lineId) +
+            '">' +
+            escapeHtml(lineManageRestore) +
+            '</button></div>'
+          );
+        }});
+        manageList.innerHTML = unknownBits.concat(hiddenBits).join('');
       }}
 
       function promptAddLine(bucket) {{
@@ -1490,7 +1674,7 @@ def expense_detail_client_js(
         manageModal.addEventListener('click', function (e) {{
           var btn =
             e.target && e.target.closest
-              ? e.target.closest('[data-pl-line-manage-action],[data-action="restore-line"]')
+              ? e.target.closest('[data-pl-line-manage-action],[data-action="restore-line"],[data-action="classify-unknown"]')
               : null;
           if (!btn) return;
           var action = btn.getAttribute('data-pl-line-manage-action') || btn.getAttribute('data-action');
@@ -1502,6 +1686,11 @@ def expense_detail_client_js(
           if (action === 'restore-line') {{
             e.preventDefault();
             restoreLine(btn.getAttribute('data-line-id'));
+            return;
+          }}
+          if (action === 'classify-unknown') {{
+            e.preventDefault();
+            openClassifyUnknownModal(btn.getAttribute('data-unknown-id'));
           }}
         }});
       }}
@@ -1716,6 +1905,13 @@ def expense_detail_client_js(
       }}
 
       window.__plSetLineInputStyle = setLineInputStyle;
+      window.__plSetLineBucket = setLineBucket;
+      window.__plClassifyUnknownHold = function (unknownId, bucket) {{
+        if (!window.KpiExpenseClassify || typeof window.KpiExpenseClassify.classifyUnknownHold !== 'function') {{
+          return {{ ok: false, reason: 'helper_missing' }};
+        }}
+        return window.KpiExpenseClassify.classifyUnknownHold(unknownId, bucket, addCatalogLineWithLabel);
+      }};
       window.__plSetOccupancy = setOccupancy;
       window.__plGetOccupancy = loadOccupancy;
       window.__plAddCatalogLineWithLabel = addCatalogLineWithLabel;

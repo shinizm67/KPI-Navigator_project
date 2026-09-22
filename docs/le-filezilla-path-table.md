@@ -2745,6 +2745,25 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## C2-L4 Expense Classification Lifecycle — launch-safe（2026-09-22）
+
+`js/` を先に。HTML は言語で完結（monthly/edit → profit/pl）。annual / booking / profile は未変更。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| L41 | `C:\Users\funki\kpi-navigator\js\kpi-expense-classify.js` | `public_html/kpi-navigator/js/kpi-expense-classify.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-expense-classify.js |
+| L42 | `C:\Users\funki\kpi-navigator\js\kpi-expense-unknown-hold.js` | `public_html/kpi-navigator/js/kpi-expense-unknown-hold.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-expense-unknown-hold.js |
+| L43 | `C:\Users\funki\kpi-navigator\app\monthly\edit\index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| L44 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| L45 | `C:\Users\funki\kpi-navigator\en\app\monthly\edit\index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+| L46 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| L47 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\edit\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+| L48 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+
+確認: `kpi-expense-classify.js` に `applySetLineBucket` / `daily_data`。PL 科目編集に `pl-expense-label-edit-bucket`。科目管理に `classify-unknown`。preset bucket 変更なし。daily 自動月次変換なし。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

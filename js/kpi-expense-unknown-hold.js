@@ -23,6 +23,7 @@
   var STORAGE_KEY = 'kpiNavigator.plExpenseUnknownHold';
   var SCHEMA_VERSION = 1;
   var STATUS_UNKNOWN = 'unknown';
+  var STATUS_RESOLVED = 'resolved';
 
   function emptyBlob() {
     return { schemaVersion: SCHEMA_VERSION, records: {} };
@@ -212,6 +213,30 @@
     return ingestUnmatched(unmatched, meta);
   }
 
+  function listUnresolved() {
+    var blob = readBlob();
+    var out = [];
+    var records = blob.records || {};
+    Object.keys(records).forEach(function (id) {
+      var rec = records[id];
+      if (!rec) return;
+      if (rec.status === STATUS_RESOLVED) return;
+      out.push(rec);
+    });
+    return out;
+  }
+
+  function markResolved(unknownId, lineId) {
+    var blob = readBlob();
+    var rec = blob.records && blob.records[String(unknownId || '')];
+    if (!rec) return { ok: false, reason: 'missing' };
+    rec.status = STATUS_RESOLVED;
+    rec.resolvedLineId = String(lineId || '');
+    rec.resolvedAt = Date.now();
+    writeBlob(blob);
+    return { ok: true, record: rec };
+  }
+
   function clearLocal() {
     return writeBlob(emptyBlob());
   }
@@ -237,6 +262,8 @@
     writeBlob: writeBlob,
     ingestUnmatched: ingestUnmatched,
     ingestRawRows: ingestRawRows,
+    listUnresolved: listUnresolved,
+    markResolved: markResolved,
     clearLocal: clearLocal,
   };
 })(typeof window !== 'undefined' ? window : this);

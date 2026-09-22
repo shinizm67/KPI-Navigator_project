@@ -372,6 +372,10 @@ LABELS_JA = {
     "label_edit_modal_title": "科目を編集",
     "label_edit_modal_label": "科目名",
     "label_edit_modal_source": "数値の入力先",
+    "label_edit_modal_bucket": "固定費 / 変動費",
+    "label_edit_modal_bucket_fixed": "固定費",
+    "label_edit_modal_bucket_variable": "変動費",
+    "label_edit_modal_bucket_daily_block": "日次データがある科目は固定費に変更できません",
     "label_edit_modal_confirm": "決定",
     "label_edit_modal_cancel": "キャンセル",
     "adj_modal_title": "月次調整額",
@@ -537,6 +541,10 @@ LABELS_EN = {
     "label_edit_modal_title": "Edit line item",
     "label_edit_modal_label": "Label",
     "label_edit_modal_source": "Where to enter amounts",
+    "label_edit_modal_bucket": "Fixed / Variable",
+    "label_edit_modal_bucket_fixed": "Fixed",
+    "label_edit_modal_bucket_variable": "Variable",
+    "label_edit_modal_bucket_daily_block": "Lines with daily amounts cannot move to Fixed",
     "label_edit_modal_confirm": "Confirm",
     "label_edit_modal_cancel": "Cancel",
     "adj_modal_title": "Monthly adjustment",
@@ -4112,6 +4120,18 @@ def pl_expense_label_edit_modal_html(L: dict) -> str:
           <input type="radio" name="pl-expense-label-edit-source" value="monthly">
           <span>{L["input_source_monthly"]}</span>
         </label>
+      </fieldset>
+      <fieldset class="pl-input-source-modal__choices" id="pl-expense-label-edit-bucket" hidden>
+        <legend class="pl-input-source-modal__legend">{L["label_edit_modal_bucket"]}</legend>
+        <label class="pl-input-source-modal__choice">
+          <input type="radio" name="pl-expense-label-edit-bucket" value="fixed">
+          <span>{L["label_edit_modal_bucket_fixed"]}</span>
+        </label>
+        <label class="pl-input-source-modal__choice">
+          <input type="radio" name="pl-expense-label-edit-bucket" value="variable">
+          <span>{L["label_edit_modal_bucket_variable"]}</span>
+        </label>
+        <p class="pl-input-source-modal__hint" id="pl-expense-label-edit-bucket-hint" hidden>{L["label_edit_modal_bucket_daily_block"]}</p>
       </fieldset>
       <div class="pl-input-source-modal__actions">
         <button type="button" class="pl-input-source-modal__btn pl-input-source-modal__btn--ghost"
@@ -8833,8 +8853,9 @@ def render_page(lang: str, lang_switch: str) -> str:
   <script src="{"../../../js/kpi-pl-expense-presets.js" if lang == "ja" else "../../../../js/kpi-pl-expense-presets.js"}"></script>
   <script src="{"../../../js/kpi-csv-templates.js" if lang == "ja" else "../../../../js/kpi-csv-templates.js"}"></script>
   <script src="{"../../../js/kpi-expense-csv-import.js" if lang == "ja" else "../../../../js/kpi-expense-csv-import.js"}"></script>
-  <script src="{"../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a" if lang == "ja" else "../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a"}"></script>
+  <script src="{"../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4" if lang == "ja" else "../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"}"></script>
   <script src="{"../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b" if lang == "ja" else "../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"}"></script>
+  <script src="{"../../../js/kpi-expense-classify.js?v=20260922-c2l4" if lang == "ja" else "../../../../js/kpi-expense-classify.js?v=20260922-c2l4"}"></script>
   <!-- KPI-CURRENCY-JS:END -->
 {header}
   <div class="page-wrap profile-wrap">

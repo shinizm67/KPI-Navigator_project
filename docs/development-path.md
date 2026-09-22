@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L3
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L4
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,11 +24,10 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P1
+- BR-LAUNCH-01-C2-L4 (Expense Classification Lifecycle) P1 Human Smoke 1 block
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
-- BR-LAUNCH-01-C2-L4 Expense Classification Lifecycle
 - BR-LAUNCH-01-C2-L5 Plan-independent Import / Storage + Basic/Pro Expense Visibility
 - BR-LAUNCH-01-C2-L6 Flexible Translator Expansion (POST-LAUNCH / LARGE)
 
@@ -50,6 +49,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L2 (High-confidence Expense Synonyms) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L3-A (Unknown Expense Hold Foundation) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L3-B (Persistent Mapping Record + Alias Server Persistence) P1 closed 2026-09-22
+- BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P1 closed 2026-09-22
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -66,7 +66,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L3 ACTIVE. C2-L3-A / C2-L3-B CLOSED. Do not start C2-L4 / C2-L5. Preview UI is later.
+BR-LAUNCH-01-C2-L4 launch-safe implement complete (setLineBucket + unknown→classified). Human Smoke 1 UX block (科目編集 bucket / 科目管理 分類). Do not start L5 / L6.
 ```
 
 ### Git snapshot????????
@@ -525,8 +525,8 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 ACTIVE; L4-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
-| next_action | C2-L3-A / C2-L3-B CLOSED. Preview UI later. Do not start C2-L4 |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 ACTIVE (Phase 1 AUDIT); L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
+| next_action | C2-L4 launch-safe implement complete. Human Smoke 1 UX block. Do not start L5 |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L4-L6 spec only until L3 returns |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -643,12 +643,12 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L3 |
 | name | Unknown Label Preservation + Persistent Import Mapping Record |
 | parent | BR-LAUNCH-01-C2-L |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Keep unknown labels with stable IDs, source labels, and persisted mapping/preview |
-| next_action | C2-L3-A / C2-L3-B CLOSED. Preview UI later. Do not start C2-L4 |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2-L |
 | constraint | unknown is not BT mismatch; do not discard |
 
 ### BR-LAUNCH-01-C2-L3-A
@@ -690,12 +690,12 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L4 |
 | name | Expense Classification Lifecycle |
 | parent | BR-LAUNCH-01-C2-L |
-| status | SPEC-REGISTERED |
-| priority | P0 |
-| started_at | not started |
+| status | ACTIVE |
+| priority | P1 |
+| started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | unclassified then user fixed/variable; allow reclass; preserve amount/lineId/order |
-| next_action | Spec only. Do not start. |
+| next_action | Launch-safe implement complete. Human Smoke 1 UX block. Do not start L5 |
 | constraint | bucket and order independent; do not force unknown into fixed/variable |
 
 ### BR-LAUNCH-01-C2-L5
@@ -1059,14 +1059,13 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
-| `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | ACTIVE (Human Smoke) | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
-CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`  
+CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
@@ -1132,3 +1131,5 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-22 | **C2-L3 Phase 1 AUDIT** unknown raw is PARTIAL; recommend Option B-lite in existing pl_json (no new table, no auto-create). Wait for implement. Do not start C2-L4 |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L3-A CLOSED** unknown expense hold (catalog-outside, unk_ + fnv1a). CURRENT PATH stays C2-L3. Do not start L3-B / L4 / L5 |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L3-B CLOSED** persistent mapping record + user-scoped alias persistence (pl.expenseImportMapping). Preview UI not started. Do not start L4 / L5 |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L3 CLOSED**. **C2-L4 ACTIVE** Phase 1 AUDIT only (no classification UI / no amount move) |
+| 2026-09-22 | **C2-L4 launch-safe implement** custom-only setLineBucket; daily-data BLOCK; unknown hold → classified custom (hold resolved, not deleted). Human Smoke 1 UX block. Do not start L5 / L6 |
