@@ -118,8 +118,34 @@ function kpi_v1_entitlement_map_nonempty($map)
     return false;
 }
 
+function kpi_v1_entitlement_hold_nonempty($hold)
+{
+    if ($hold === null || (!is_object($hold) && !is_array($hold))) {
+        return false;
+    }
+    $records = is_object($hold)
+        ? (isset($hold->records) ? $hold->records : null)
+        : (isset($hold['records']) ? $hold['records'] : null);
+    return kpi_v1_entitlement_map_nonempty($records);
+}
+
+function kpi_v1_entitlement_mapping_nonempty($mapping)
+{
+    if ($mapping === null || (!is_object($mapping) && !is_array($mapping))) {
+        return false;
+    }
+    $records = is_object($mapping)
+        ? (isset($mapping->records) ? $mapping->records : null)
+        : (isset($mapping['records']) ? $mapping['records'] : null);
+    $aliases = is_object($mapping)
+        ? (isset($mapping->aliases) ? $mapping->aliases : null)
+        : (isset($mapping['aliases']) ? $mapping['aliases'] : null);
+    return kpi_v1_entitlement_map_nonempty($records) || kpi_v1_entitlement_map_nonempty($aliases);
+}
+
 /**
- * True when pl bundle carries Pro content (empty {} does not count).
+ * True when pl bundle carries retainable content (empty {} does not count).
+ * Includes L3/L4 hold + mapping so metadata-only is not treated as empty.
  */
 function kpi_v1_entitlement_pl_has_payload($pl)
 {
@@ -155,6 +181,20 @@ function kpi_v1_entitlement_pl_has_payload($pl)
         ? (property_exists($pl, 'targetCostRate') ? $pl->targetCostRate : null)
         : (array_key_exists('targetCostRate', $pl) ? $pl['targetCostRate'] : null);
     if ($rate !== null && $rate !== '' && is_numeric($rate)) {
+        return true;
+    }
+
+    $hold = is_object($pl)
+        ? (isset($pl->unknownHold) ? $pl->unknownHold : null)
+        : (isset($pl['unknownHold']) ? $pl['unknownHold'] : null);
+    if (kpi_v1_entitlement_hold_nonempty($hold)) {
+        return true;
+    }
+
+    $mapping = is_object($pl)
+        ? (isset($pl->expenseImportMapping) ? $pl->expenseImportMapping : null)
+        : (isset($pl['expenseImportMapping']) ? $pl['expenseImportMapping'] : null);
+    if (kpi_v1_entitlement_mapping_nonempty($mapping)) {
         return true;
     }
     return false;
@@ -221,6 +261,18 @@ function kpi_v1_entitlement_merge_store_preserving_pro($incoming, $existing)
         if ($exYears && isset($exYears->{$yk}) && is_object($exYears->{$yk})
             && isset($exYears->{$yk}->dailyExpenses)) {
             $rec->dailyExpenses = kpi_v1_entitlement_clone_json($exYears->{$yk}->dailyExpenses);
+        }
+    }
+
+    /* C2-L5-A: Basic PUT omitting a year must not drop that year's dailyExpenses. */
+    if ($exYears) {
+        foreach (get_object_vars($exYears) as $yk => $exRec) {
+            if (!is_object($exRec)) {
+                continue;
+            }
+            if (!isset($merged->years->{$yk})) {
+                $merged->years->{$yk} = kpi_v1_entitlement_clone_json($exRec);
+            }
         }
     }
 

@@ -133,7 +133,7 @@
     var p = String(data.plan).toLowerCase() === 'basic' ? 'basic' : 'pro';
     try {
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.applyServerPlan === 'function') {
-        window.__KPI_AUTH.applyServerPlan(p);
+        window.__KPI_AUTH.applyServerPlan(p, { source: 'hydrate' });
         return;
       }
     } catch (_e0) {}
@@ -144,7 +144,7 @@
       sessionStorage.setItem(TIER_KEY, p);
     } catch (_e2) {}
     try {
-      window.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: 'server' } }));
+      window.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: 'hydrate' } }));
     } catch (_e3) {}
   }
 
@@ -790,14 +790,16 @@
     };
     if (localTier() === 'basic') {
       body.store = stripProFromStore(storePayload);
-    } else {
-      body.pl = collectPlFromLocal();
+    } else if (!plRehydrateHold) {
+      var plLocal = collectPlFromLocal();
+      if (plHasLocalPayload(plLocal)) body.pl = plLocal;
     }
     return body;
   }
 
   function canStorePut(cfg) {
     if (!canSync(cfg) || userScopePutHold || hookQuiet || conflictPutHold) return false;
+    if (plRehydrateHold) return false;
     if (!hydrateComplete) return false;
     return true;
   }
@@ -1169,6 +1171,49 @@
     return hydrateAfterAuthBind(cfg);
   }
 
+  var lastSeenPlan = localTier();
+  var plRehydrateHold = false;
+  var planPullInFlight = null;
+
+  function requestProRehydrate() {
+    if (planPullInFlight) return planPullInFlight;
+    plRehydrateHold = true;
+    planPullInFlight = Promise.resolve(pullFromServerNow()).then(
+      function (v) {
+        plRehydrateHold = false;
+        planPullInFlight = null;
+        return v;
+      },
+      function () {
+        plRehydrateHold = false;
+        planPullInFlight = null;
+      }
+    );
+    return planPullInFlight;
+  }
+
+  function onPlanChangedForRehydrate(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    var next = String(detail.plan || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    var prev = lastSeenPlan;
+    lastSeenPlan = next;
+    if (detail.source === 'hydrate') return;
+    if (next === 'pro' && prev === 'basic') requestProRehydrate();
+  }
+
+  function onTierStorageForRehydrate(e) {
+    if (!e || e.key !== TIER_KEY) return;
+    var next = String(e.newValue || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    var prev = String(e.oldValue || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    lastSeenPlan = next;
+    if (next === 'pro' && prev === 'basic') requestProRehydrate();
+  }
+
+  try {
+    window.addEventListener('kpi:planChanged', onPlanChangedForRehydrate);
+    window.addEventListener('storage', onTierStorageForRehydrate);
+  } catch (_ePlanEv) {}
+
   function installLocalStorageHooks() {
     Storage.prototype.setItem = function (key, value) {
       origSetItem.apply(this, arguments);
@@ -1281,6 +1326,7 @@
     pullFromServer: function () {
       return pullFromServerNow();
     },
+    requestProRehydrate: requestProRehydrate,
     pushToServerNow: function () {
       cfg = readSyncConfig();
       return flushPut();
@@ -1296,7 +1342,7 @@
             resolve({ ok: false, skipped: true });
             return;
           }
-          if (hydrateComplete) {
+          if (hydrateComplete && !plRehydrateHold) {
             Promise.resolve(flushPut()).then(resolve, function () {
               resolve({ ok: false, error: 'put_failed' });
             });

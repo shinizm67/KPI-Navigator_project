@@ -77,6 +77,8 @@ function kpi_v1_apply_store_put_body($blob, $body, $plan)
     if (property_exists($body, 'pl')) {
         if ($plan === 'basic') {
             $blob->pl = kpi_v1_entitlement_merge_pl_preserving($body->pl, $blob->pl);
+        } elseif (!kpi_v1_entitlement_pl_has_payload($body->pl)) {
+            /* C2-L5-A: empty Pro PUT must not replace existing pl_json. reset-user-kpi is separate. */
         } else {
             $blob->pl = $body->pl;
         }

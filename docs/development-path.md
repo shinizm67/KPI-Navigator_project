@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L4
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L5
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,11 +24,10 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L4 (Expense Classification Lifecycle) P1 Human Smoke 1 block
+- BR-LAUNCH-01-C2-L5 (Plan-independent Expense Storage + Basic / Pro Visibility) P1
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
-- BR-LAUNCH-01-C2-L5 Plan-independent Import / Storage + Basic/Pro Expense Visibility
 - BR-LAUNCH-01-C2-L6 Flexible Translator Expansion (POST-LAUNCH / LARGE)
 
 CLOSED (under BR-LAUNCH-01):
@@ -50,6 +49,8 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L3-A (Unknown Expense Hold Foundation) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L3-B (Persistent Mapping Record + Alias Server Persistence) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P1 closed 2026-09-22
+- BR-LAUNCH-01-C2-L4 (Expense Classification Lifecycle) P1 closed 2026-09-22
+- BR-LAUNCH-01-C2-L5-A (Plan-independent Expense Storage / Upgrade Safety) P1 closed 2026-09-22
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -59,6 +60,9 @@ PAUSED (under TRUNK-06):
 DEFERRED:
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
   note: Stripe / billing ????????????????? assessment ????
+- BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS P2
+  parent: BR-LAUNCH-01-C2
+  reason: Feature works; discoverability is weak. Do not block CSV/Excel launch path.
 - BR-UI-PL-INSIGHT-FIRSTOPEN-PERF P3
   return when: Final Performance / Speed Optimization phase
 
@@ -66,7 +70,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L4 launch-safe implement complete (setLineBucket + unknown→classified). Human Smoke 1 UX block (科目編集 bucket / 科目管理 分類). Do not start L5 / L6.
+C2-L5-A CLOSED. Return to C2-L5. UI entitlement is L5-B. Do not start L6.
 ```
 
 ### Git snapshot????????
@@ -74,7 +78,7 @@ BR-LAUNCH-01-C2-L4 launch-safe implement complete (setLineBucket + unknown→cla
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | ?wrap commit SHA? |
+| HEAD | `eb1a05d` (C2-L4 launch-safe classify) |
 | origin sync | ?????? |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -525,9 +529,9 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 ACTIVE (Phase 1 AUDIT); L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
-| next_action | C2-L4 launch-safe implement complete. Human Smoke 1 UX block. Do not start L5 |
-| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L4-L6 spec only until L3 returns |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 ACTIVE; L5-A CLOSED; L6 POST-LAUNCH / LARGE |
+| next_action | C2-L5-A CLOSED. UI entitlement is L5-B. Do not start L6 |
+| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L6 spec only; tooltips DEFERRED |
 
 #### C2-L canonical product principle (2026-09-22)
 
@@ -690,12 +694,12 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L4 |
 | name | Expense Classification Lifecycle |
 | parent | BR-LAUNCH-01-C2-L |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | unclassified then user fixed/variable; allow reclass; preserve amount/lineId/order |
-| next_action | Launch-safe implement complete. Human Smoke 1 UX block. Do not start L5 |
+| next_action | CLOSED 2026-09-22 Human Smoke PASS. Do not reopen unless regression. Tooltip UX registered as BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED). |
 | constraint | bucket and order independent; do not force unknown into fixed/variable |
 
 ### BR-LAUNCH-01-C2-L5
@@ -703,15 +707,32 @@ Guide to KPN Template only when the file is still uninterpretable.
 | Field | Value |
 |-------|-------|
 | id | BR-LAUNCH-01-C2-L5 |
-| name | Plan-independent Import / Storage + Basic/Pro Expense Visibility |
+| name | Plan-independent Expense Storage + Basic / Pro Visibility |
 | parent | BR-LAUNCH-01-C2-L |
-| status | SPEC-REGISTERED |
-| priority | P0 |
-| started_at | not started |
+| status | ACTIVE |
+| priority | P1 |
+| started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
-| reason | Store expense regardless of plan; hide UI on Basic; show on Pro without delete/migration |
-| next_action | Spec only. Do not start. |
-| constraint | import/storage plan-independent; visualization plan-dependent |
+| reason | Expense data must survive plan change on the server. Basic hides analysis UI. Pro hydrates existing expense without migration. Mixed CSV is L6. |
+| next_action | C2-L5-A CLOSED. UI entitlement is L5-B. Do not implement L5-B / L6 now. |
+| constraint | no mixed parser; no horizontal CSV; no new DB/schema; no tooltips; no Stripe; no excel/; no Demo fixture |
+| phase | 1 AUDIT complete; L5-A implement storage |
+
+### BR-LAUNCH-01-C2-L5-A
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L5-A |
+| name | Plan-independent Expense Storage / Upgrade Safety |
+| parent | BR-LAUNCH-01-C2-L5 |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-22 |
+| closed_at | 2026-09-22 |
+| return_to | BR-LAUNCH-01-C2-L5 |
+| reason | Pro→Basic→Pro must not lose Expense. Option A: server retain, Basic no hydrate, Pro GET hydrate. |
+| next_action | CLOSED. Return to C2-L5. UI entitlement is L5-B. |
+| constraint | no PL/MEP/Monthly UI gates; no tooltips; no mixed CSV; no schema; no excel/; no Demo fixture |
 
 ### BR-LAUNCH-01-C2-L6
 
@@ -1034,6 +1055,21 @@ Guide to KPN Template only when the file is still uninterpretable.
 
 ## 8. DEFERRED BRANCHES????
 
+### BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS
+
+| Field | Value |
+|-------|-------|
+| id | `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` |
+| name | Expense Classification Discoverability / Tooltips |
+| parent | `BR-LAUNCH-01-C2` |
+| status | DEFERRED |
+| priority | P2 |
+| started_at | not started |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | C2-L4 feature works; discoverability is weak. Do not block current CSV/Excel launch path. |
+| scope | expense row label hover: 「クリックして科目設定を編集」; 科目管理: 「未分類の取込費目を分類できます」; fixed/variable selection preserves amount when safe; daily data prevents fixed classification — explain why blocked |
+| next_action | REGISTER ONLY. Do not implement tooltips now. |
+
 ### BR-UI-PL-INSIGHT-FIRSTOPEN-PERF
 
 | ????? | ? |
@@ -1059,17 +1095,19 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | ACTIVE (Human Smoke) | P1 | `BR-LAUNCH-01-C2-L` |
-| `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L5-A` | Plan-independent Expense Storage / Upgrade Safety | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
-CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`  
+CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`  
+CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
-DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
+DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
+DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`
 
 ---
 
@@ -1133,3 +1171,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-22 | **BR-LAUNCH-01-C2-L3-B CLOSED** persistent mapping record + user-scoped alias persistence (pl.expenseImportMapping). Preview UI not started. Do not start L4 / L5 |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L3 CLOSED**. **C2-L4 ACTIVE** Phase 1 AUDIT only (no classification UI / no amount move) |
 | 2026-09-22 | **C2-L4 launch-safe implement** custom-only setLineBucket; daily-data BLOCK; unknown hold → classified custom (hold resolved, not deleted). Human Smoke 1 UX block. Do not start L5 / L6 |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L4 CLOSED** Human Smoke PASS (custom 販促費 → 固定費 amount kept; unknown 予約媒体利用料 → 変動費 6789). Tooltip discoverability follow-up not started. CURRENT PATH -> C2-L |

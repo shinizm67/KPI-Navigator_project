@@ -14,7 +14,7 @@
   var loginLink = document.getElementById('reset-login-link');
   if (!form || !pwEl || !confirmEl || !btn) return;
   if (!window.__KPI_AUTH) {
-    console.warn('[KPI Auth] kpi-auth-client.js?v=20260919-2 not loaded');
+    console.warn('[KPI Auth] kpi-auth-client.js?v=20260922-c2l5a not loaded');
     return;
   }
 

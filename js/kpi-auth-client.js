@@ -222,16 +222,23 @@
   }
 
   /** Server plan → localStorage/sessionStorage (display gate). Dispatches kpi:planChanged. */
-  function applyServerPlan(plan) {
+  function applyServerPlan(plan, opts) {
     var p = normalizePlan(plan);
+    var prevRaw = '';
+    try {
+      prevRaw = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '';
+    } catch (_ePrev) {}
+    var prev = String(prevRaw || '').toLowerCase() === 'basic' ? 'basic' : prevRaw ? 'pro' : '';
     try {
       localStorage.setItem(TIER_KEY, p);
     } catch (_e0) {}
     try {
       sessionStorage.setItem(TIER_KEY, p);
     } catch (_e1) {}
+    var source = opts && opts.source ? String(opts.source) : 'server';
+    if (prev === p) return p;
     try {
-      global.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: 'server' } }));
+      global.dispatchEvent(new CustomEvent('kpi:planChanged', { detail: { plan: p, source: source } }));
     } catch (_e2) {}
     return p;
   }
@@ -344,7 +351,23 @@
     if (opts.adminToken) headers['X-KPI-Plan-Admin-Token'] = opts.adminToken;
     return request('POST', '/auth/set-plan.php', body, headers).then(function (r) {
       if (r.status === 200 && r.data && r.data.ok && r.data.plan) {
+        var wasBasic = isBasicPlan();
         applyServerPlan(r.data.plan);
+        if (normalizePlan(r.data.plan) === 'pro' && wasBasic) {
+          try {
+            var gw = global.__KPI_DATA_GATEWAY;
+            if (gw && typeof gw.requestProRehydrate === 'function') {
+              return Promise.resolve(gw.requestProRehydrate()).then(function () {
+                return r;
+              });
+            }
+            if (gw && typeof gw.pullFromServer === 'function') {
+              return Promise.resolve(gw.pullFromServer()).then(function () {
+                return r;
+              });
+            }
+          } catch (_ePull) {}
+        }
       }
       return r;
     });
