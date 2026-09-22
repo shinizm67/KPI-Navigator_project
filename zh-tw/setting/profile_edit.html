@@ -608,6 +608,8 @@
       var timezoneInput = document.getElementById('profile-timezone');
       var currencyInput = document.getElementById('profile-currency');
       var currencyUserSet = false;
+      var industryUserDirty = false;
+      var retainedRestaurantGenre = '';
 
       if (window.KpiProfileLocation && window.KpiProfileLocation.bindCandidateField) {
         /* KPI-PROFILE-LOCATION-CANDIDATE-DROPDOWN */
@@ -774,8 +776,22 @@
         other: { label: '業種詳情（選填）', suggestions: ['顧問', '教育', '其他服務'] }
       };
 
+      function rememberRestaurantGenre(val) {
+        var g = String(val == null ? '' : val).trim();
+        if (g && !isGenrePrompt(g)) retainedRestaurantGenre = g;
+      }
+
+      function isRestaurantSuggestion(val) {
+        var g = String(val == null ? '' : val).trim();
+        if (!g) return false;
+        var rest = GENRE_BY_TYPE.restaurant;
+        var list = (rest && rest.suggestions) || [];
+        return list.indexOf(g) >= 0;
+      }
+
       function syncGenreField() {
         /* KPI-PROFILE-GENRE-PLACEHOLDER */
+        /* BR-LAUNCH-01-C2-L1-A: retain stored genre; UI inactive unless BT is restaurant. */
         if (genreGroup) genreGroup.hidden = false;
         var rawType = industrySelect ? String(industrySelect.value || '').trim() : '';
         var type = rawType ? normalizeIndustry(rawType) : '';
@@ -784,7 +800,28 @@
         if (labelText && rec) labelText.textContent = rec.label;
         if (genreInput) {
           if (isGenrePrompt(genreInput.value)) genreInput.value = '';
-          genreInput.placeholder = type ? GENRE_PLACEHOLDER_READY : GENRE_PLACEHOLDER_NEED_TYPE;
+          var visible = String(genreInput.value || '').trim();
+          if (!type) {
+            rememberRestaurantGenre(visible);
+            genreInput.value = '';
+            genreInput.disabled = true;
+            genreInput.placeholder = GENRE_PLACEHOLDER_NEED_TYPE;
+          } else if (type === 'restaurant') {
+            genreInput.disabled = false;
+            genreInput.placeholder = GENRE_PLACEHOLDER_READY;
+            if (!visible) {
+              if (retainedRestaurantGenre) genreInput.value = retainedRestaurantGenre;
+            } else {
+              rememberRestaurantGenre(visible);
+            }
+          } else {
+            if (visible && (visible === retainedRestaurantGenre || isRestaurantSuggestion(visible))) {
+              rememberRestaurantGenre(visible);
+              genreInput.value = '';
+            }
+            genreInput.disabled = false;
+            genreInput.placeholder = GENRE_PLACEHOLDER_READY;
+          }
           if (rec) genreInput.setAttribute('aria-label', rec.label);
         }
         var list = document.getElementById('profile-genre-suggestions');
@@ -801,7 +838,10 @@
       }
 
       if (industrySelect) {
-        industrySelect.addEventListener('change', syncGenreField);
+        industrySelect.addEventListener('change', function () {
+          industryUserDirty = true;
+          syncGenreField();
+        });
       }
 
       var genreTipBtn = document.getElementById('profile-genre-tip-btn');
@@ -869,6 +909,7 @@
               var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
               var savedGenre = lastProfile && lastProfile.genre;
               if (isGenrePrompt(savedGenre)) savedGenre = '';
+              retainedRestaurantGenre = savedGenre || '';
               genreInput.value = savedGenre;
             } catch (_eGenre) {
               genreInput.value = '';
@@ -897,6 +938,11 @@
           syncGenreField();
         }
       }
+      document.addEventListener('kpi:storeHydratedFromServer', function () {
+        if (industryUserDirty) return;
+        syncIndustrySelectFromMeta();
+        syncGenreField();
+      });
       var scopeBind =
         window.__KPI_AUTH && typeof window.__KPI_AUTH.ensureUserScopeBound === 'function'
           ? window.__KPI_AUTH.ensureUserScopeBound()

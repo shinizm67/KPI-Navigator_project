@@ -522,16 +522,18 @@
       setText('fixed-business-name', data.businessName);
       setText('fixed-company', data.company);
       var industryValue = data.businessType || data.industry;
+      var canonical = null;
       var industryLabel = '';
       if (window.KpiBusinessType) {
-        var canonical =
+        canonical =
           typeof window.KpiBusinessType.readMetaBusinessType === 'function'
             ? window.KpiBusinessType.readMetaBusinessType()
             : window.KpiBusinessType.normalizeBusinessType(industryValue);
         industryLabel = canonical ? window.KpiBusinessType.label(canonical) : '';
       }
       setText('fixed-industry', industryLabel);
-      setText('fixed-genre', data.genre);
+      /* BR-LAUNCH-01-C2-L1-A: Genre is active only when canonical BT is restaurant. Storage untouched. */
+      setText('fixed-genre', canonical === 'restaurant' ? data.genre : '');
       var GENRE_VIEW_LABELS = {
         restaurant: 'Cuisine / Genre (Optional) :',
         retail: 'Retail Genre (Optional) :',

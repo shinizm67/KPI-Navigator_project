@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L1
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L1 -> BR-LAUNCH-01-C2-L1-A
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -25,6 +25,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
 - BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0
+- BR-LAUNCH-01-C2-L1-A (Profile Business Type / Genre Sync) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 CLOSED (under BR-LAUNCH-01):
@@ -56,7 +57,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L1 Business Type Import Gate - Human Smoke pending (do not start C2-L2)
+BR-LAUNCH-01-C2-L1-A Profile Business Type / Genre Sync - Human Smoke pending (do not close C2-L1; do not start C2-L2)
 ```
 
 ### Git snapshot????????
@@ -515,7 +516,7 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible; only when translation fails, guide to KPN Template. |
-| next_action | C2-L1 Human Smoke pending; then continue C2-L |
+| next_action | C2-L1-A Human Smoke pending; then C2-L1; then continue C2-L |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved |
 
 ### BR-LAUNCH-01-C2-L1
@@ -530,8 +531,23 @@ CLOSED node ? **?????**??????????????
 | started_at | 2026-09-21 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Import must start only after explicit Profile Business Type; do not use restaurant fallback as "set" |
-| next_action | Human Smoke (unset blocks Sales/PL/MEP file picker; explicit BT including restaurant allows import) |
+| next_action | C2-L1-A Human Smoke pending; then remaining C2-L1 smoke; do not start C2-L2 |
 | constraint | isBusinessTypeSet only; no getBusinessType; no parser/mapping/seed/fallback change; no excel/ touch |
+
+### BR-LAUNCH-01-C2-L1-A
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L1-A |
+| name | Profile Business Type / Genre Sync |
+| parent | BR-LAUNCH-01-C2-L1 |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-22 |
+| return_to | BR-LAUNCH-01-C2-L1 |
+| reason | Profile confirmation/edit can show Genre as active while canonical Business Type is unset |
+| next_action | Human Smoke (BT unset -> Genre inactive / dash; restaurant restores retained Genre; storage not deleted) |
+| constraint | Option 1 retain+inactive UI; no genre storage delete; no import gate / taxonomy / fallback change; no excel/ touch |
 
 ### BR-LAUNCH-01-C2-K
 
@@ -865,6 +881,7 @@ CLOSED node ? **?????**??????????????
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L1` | Business Type Import Gate | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L1-A` | Profile Business Type / Genre Sync | ACTIVE | P0 | `BR-LAUNCH-01-C2-L1` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
@@ -924,3 +941,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-21 | **BR-LAUNCH-01-C2-K CLOSED** Persist BT meta + restore PL expense rows; return C2 |
 | 2026-09-21 | **BR-LAUNCH-01-C2-L** Flexible CSV / Excel Import Foundation ACTIVE (handoff fixed; CURRENT PATH -> C2-L) |
 | 2026-09-21 | **BR-LAUNCH-01-C2-L1** Business Type Import Gate ACTIVE ? Sales/PL/MEP import blocked until explicit BT; Human Smoke pending |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L1-A** Profile Business Type / Genre Sync ACTIVE (Option 1 retain+inactive UI; Human Smoke pending; do not close C2-L1 / start C2-L2) |
