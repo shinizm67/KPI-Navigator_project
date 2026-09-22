@@ -28,6 +28,13 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C2-L1-A (Profile Business Type / Genre Sync) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
+REGISTERED (C2-L children; spec only; do not start):
+- BR-LAUNCH-01-C2-L2 High-confidence Expense Synonyms
+- BR-LAUNCH-01-C2-L3 Unknown Label Preservation + Persistent Import Mapping Record
+- BR-LAUNCH-01-C2-L4 Expense Classification Lifecycle
+- BR-LAUNCH-01-C2-L5 Plan-independent Import / Storage + Basic/Pro Expense Visibility
+- BR-LAUNCH-01-C2-L6 Flexible Translator Expansion (POST-LAUNCH / LARGE)
+
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 ? closed 2026-09-20
 - BR-LAUNCH-01-B (New User Smoke Reset / Account Reuse) P0 ? closed 2026-09-20
@@ -515,9 +522,65 @@ CLOSED node ? **?????**??????????????
 | started_at | 2026-09-21 |
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
-| principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible; only when translation fails, guide to KPN Template. |
-| next_action | C2-L1-A Human Smoke pending; then C2-L1; then continue C2-L |
-| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved |
+| principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
+| children | L1 ACTIVE; L1-A ACTIVE (smoke); L2-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
+| next_action | C2-L1-A Human Smoke pending; then remaining C2-L1; do not start C2-L2 |
+| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L3-L6 spec only until L1 returns |
+
+#### C2-L canonical product principle (2026-09-22)
+
+KPN does not require KPN-form CSV.
+Translate the user's CSV / Excel into KPN form as far as possible.
+Do not discard data that cannot yet be translated; keep it so the user can later assign meaning / classification.
+Guide to KPN Template only when the file is still uninterpretable.
+
+#### C2-L canonical contract (2026-09-22)
+
+1. Business Type source of truth is Profile (`store.meta.businessType`).
+2. Import must not start while Business Type is unset.
+3. CSV must not auto-change Business Type.
+4. Known labels map to canonical lines.
+5. Unknown labels are not discarded.
+6. Unknown labels receive a stable internal ID.
+7. Source / original label is retained.
+8. Import Mapping / Preview is persisted.
+9. Unknown expense initial bucket is `unclassified`.
+10. User may later assign `fixed` / `variable`.
+11. Reclassification `fixed` <-> `variable` is allowed.
+12. Bucket change must not lose existing amount / lineId.
+13. Existing row ▲▼ order remains.
+14. Bucket and order are independent attributes.
+15. KPN Template is the Golden Path.
+16. Templates will exist for both Vertical and Horizontal (future).
+17. Try user native CSV / Excel before Template.
+18. Mixed income + expense input is a future target.
+19. Daily / Monthly classification is interpreted by KPN when possible.
+20. Import / Storage is plan-independent.
+21. Visualization / Analysis is plan-dependent.
+22. Basic should be able to store in-file Expense (direction).
+23. Basic hides Expense UI.
+24. Pro upgrade visualizes existing Expense immediately.
+25. Pro -> Basic must not delete Expense.
+26. Basic -> Pro restores without migration.
+27. Reject only a clear Business Type mismatch.
+28. An unknown label by itself is not a Business Type mismatch.
+
+#### C2-L superseded ideas (not canonical)
+
+- A. User writes `restaurant` / `retail` into CSV A1 (or similar). Rejected. Business Type is Profile source of truth.
+- B. Force-store unknown expense into `fixed` or `variable`. Rejected. Use `unclassified`, then user classification.
+
+#### C2-L children
+
+| id | name | status | note |
+|----|------|--------|------|
+| C2-L1 | Business Type Import Gate | ACTIVE | parent smoke still open; do not close without evidence |
+| C2-L1-A | Profile Business Type / Genre Sync | ACTIVE | Human Smoke pending |
+| C2-L2 | High-confidence Expense Synonyms | SPEC-REGISTERED | do not start until L1 returns |
+| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | SPEC-REGISTERED | spec only |
+| C2-L4 | Expense Classification Lifecycle | SPEC-REGISTERED | unclassified / fixed-variable / order; spec only |
+| C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | SPEC-REGISTERED | spec only |
+| C2-L6 | Flexible Translator Expansion | POST-LAUNCH / LARGE | vertical/horizontal, mixed, inference, preview, template fallback |
 
 ### BR-LAUNCH-01-C2-L1
 
@@ -548,6 +611,81 @@ CLOSED node ? **?????**??????????????
 | reason | Profile confirmation/edit can show Genre as active while canonical Business Type is unset |
 | next_action | Human Smoke (BT unset -> Genre inactive / dash; restaurant restores retained Genre; storage not deleted) |
 | constraint | Option 1 retain+inactive UI; no genre storage delete; no import gate / taxonomy / fallback change; no excel/ touch |
+
+### BR-LAUNCH-01-C2-L2
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L2 |
+| name | High-confidence Expense Synonyms |
+| parent | BR-LAUNCH-01-C2-L |
+| status | SPEC-REGISTERED |
+| priority | P0 |
+| started_at | not started |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | Map known expense labels to canonical lines after BT gate |
+| next_action | Do not start until C2-L1 returns |
+| constraint | no BT auto-change; unknown labels not discarded (that is L3) |
+
+### BR-LAUNCH-01-C2-L3
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L3 |
+| name | Unknown Label Preservation + Persistent Import Mapping Record |
+| parent | BR-LAUNCH-01-C2-L |
+| status | SPEC-REGISTERED |
+| priority | P0 |
+| started_at | not started |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | Keep unknown labels with stable IDs, source labels, and persisted mapping/preview |
+| next_action | Spec only. Do not start. |
+| constraint | unknown is not BT mismatch; do not discard |
+
+### BR-LAUNCH-01-C2-L4
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L4 |
+| name | Expense Classification Lifecycle |
+| parent | BR-LAUNCH-01-C2-L |
+| status | SPEC-REGISTERED |
+| priority | P0 |
+| started_at | not started |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | unclassified then user fixed/variable; allow reclass; preserve amount/lineId/order |
+| next_action | Spec only. Do not start. |
+| constraint | bucket and order independent; do not force unknown into fixed/variable |
+
+### BR-LAUNCH-01-C2-L5
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L5 |
+| name | Plan-independent Import / Storage + Basic/Pro Expense Visibility |
+| parent | BR-LAUNCH-01-C2-L |
+| status | SPEC-REGISTERED |
+| priority | P0 |
+| started_at | not started |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | Store expense regardless of plan; hide UI on Basic; show on Pro without delete/migration |
+| next_action | Spec only. Do not start. |
+| constraint | import/storage plan-independent; visualization plan-dependent |
+
+### BR-LAUNCH-01-C2-L6
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L6 |
+| name | Flexible Translator Expansion |
+| parent | BR-LAUNCH-01-C2-L |
+| status | POST-LAUNCH / LARGE |
+| priority | P2 |
+| started_at | not started |
+| return_to | BR-LAUNCH-01-C2-L |
+| reason | Vertical/horizontal, mixed income+expense, date inference, richer preview, template fallback |
+| next_action | Post-launch candidate. Do not start. |
+| constraint | native CSV/Excel before Template; Template remains Golden Path |
 
 ### BR-LAUNCH-01-C2-K
 
@@ -882,6 +1020,11 @@ CLOSED node ? **?????**??????????????
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L1` | Business Type Import Gate | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L1-A` | Profile Business Type / Genre Sync | ACTIVE | P0 | `BR-LAUNCH-01-C2-L1` |
+| `BR-LAUNCH-01-C2-L2` | High-confidence Expense Synonyms | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
@@ -942,3 +1085,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-21 | **BR-LAUNCH-01-C2-L** Flexible CSV / Excel Import Foundation ACTIVE (handoff fixed; CURRENT PATH -> C2-L) |
 | 2026-09-21 | **BR-LAUNCH-01-C2-L1** Business Type Import Gate ACTIVE ? Sales/PL/MEP import blocked until explicit BT; Human Smoke pending |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L1-A** Profile Business Type / Genre Sync ACTIVE (Option 1 retain+inactive UI; Human Smoke pending; do not close C2-L1 / start C2-L2) |
+| 2026-09-22 | **C2-L Specification Consolidated** canonical translate-not-require + 28-point contract + superseded A/B; register L2-L5 spec-only and L6 POST-LAUNCH; CURRENT PATH unchanged (L1-A Human Smoke) |
