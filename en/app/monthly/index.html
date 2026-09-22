@@ -5484,6 +5484,17 @@
       top: var(--monthly-data-group3-outer-top);
       height: var(--monthly-data-group3-outer-h);
     }
+    /* C2-L5-B: Basic hides Monthly Expense section (UI only; storage unchanged). */
+    body.kpi-plan-basic .monthly-table-window__vlabel--expenses,
+    body.kpi-plan-basic #monthly-scroll-track-group3,
+    body.kpi-plan-basic .monthly-table-window__expenses-col,
+    body.kpi-plan-basic [data-kpi-expense-ui] {
+      display: none !important;
+    }
+    body.kpi-plan-basic {
+      --monthly-data-group3-rows: 0;
+      --monthly-data-group3-outer-h: 0px;
+    }
     .monthly-table-window__vlabel .monthly-table-window__vlabel-inner {
       display: block;
       white-space: nowrap;
@@ -12904,7 +12915,7 @@
         </div>
       </div>
     </div>
-    <script src="../../../js/kpi-auth-client.js?v=20260922-c2l5a"></script>
+    <script src="../../../js/kpi-auth-client.js?v=20260923-c2l5b"></script>
     <script src="../../../js/kpi-seasonality-allocator.js?v=20260919-pr7"></script>
     <script src="../../../js/kpi-planning-readiness.js?v=20260920-pr8"></script>
 
@@ -13416,6 +13427,7 @@
               <div
                 class="monthly-scroll-data__track monthly-scroll-data__track--group"
                 id="monthly-scroll-track-group3"
+                data-kpi-expense-ui
               ></div>
               <div class="monthly-scroll-data__between monthly-scroll-data__between--profit" aria-hidden="true"></div>
               <div
@@ -13439,13 +13451,13 @@
             <p class="monthly-table-window__metric-line">P/C</p>
             <p class="monthly-table-window__metric-line">Lunch</p>
             <p class="monthly-table-window__metric-line">Dinner</p>
-            <p class="monthly-table-window__metric-line" aria-hidden="true">&nbsp;</p>
-            <p class="monthly-table-window__metric-line">Food</p>
-            <p class="monthly-table-window__metric-line">Beverage</p>
-            <p class="monthly-table-window__metric-line">Misc</p>
-            <p class="monthly-table-window__metric-line">Fixed</p>
-            <p class="monthly-table-window__metric-line">Expected</p>
-            <p class="monthly-table-window__metric-line">Total</p>
+            <p class="monthly-table-window__metric-line" aria-hidden="true" data-kpi-expense-ui>&nbsp;</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Food</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Beverage</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Misc</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Fixed</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Expected</p>
+            <p class="monthly-table-window__metric-line" data-kpi-expense-ui>Total</p>
           </div>
           <p class="monthly-table-window__col-text monthly-table-window__col-text--profit">Profit</p>
           <div class="monthly-vertical-focus-bar" aria-hidden="true">
@@ -19648,6 +19660,9 @@ Cumulative Target Annual Sales</p>
       }
       function applyPlanUi(tier) {
         var isPro = tier === 'pro';
+        try {
+          document.body.classList.toggle('kpi-plan-basic', !isPro);
+        } catch (_eCls) {}
         if (isPro) {
           // UNLOCKED is a status badge only: remove href so it is not clickable
           lockLink.classList.remove('monthly-access-btn--locked');
@@ -19684,6 +19699,10 @@ Cumulative Target Annual Sales</p>
 
       window.addEventListener('storage', function (e) {
         if (e && e.key === TIER_KEY) applyPlanUi(resolveTier());
+      });
+      document.addEventListener('kpi:planChanged', function (e) {
+        var p = e && e.detail && e.detail.plan;
+        applyPlanUi(p ? normalizeTier(p) : resolveTier());
       });
 
       topEditBtn.addEventListener('click', function () {

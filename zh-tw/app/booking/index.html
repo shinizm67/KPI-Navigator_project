@@ -4,15 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>預約台帳 | Key Performance Navigator | FORGE LABORATORY</title>
+  <style id="kpi-pro-pending-style">html[data-kpi-pro-pending]{visibility:hidden !important;}</style>
   <script>
-    /* Basic 方案入場防護：直接開啟預約台帳時導向變更方案（UX；正式防護在伺服器） */
+    /* C2-L5-B: Pro page pending until server plan. Do not treat unset as pro. */
     (function () {
       try {
-        var k = 'kpiNavigator.subscriptionTier';
-        var tier = sessionStorage.getItem(k) || localStorage.getItem(k) || 'pro';
-        if (String(tier).trim().toLowerCase() === 'basic') {
-          window.location.replace('../../setting/change_plan.html');
-        }
+        document.documentElement.setAttribute('data-kpi-pro-pending', '1');
       } catch (_e) {}
     })();
   </script>
@@ -193,7 +190,7 @@
         </div>
       </div>
     </div>
-    <script src="../../../js/kpi-auth-client.js?v=20260922-c2l5a"></script>
+    <script src="../../../js/kpi-auth-client.js?v=20260923-c2l5b"></script>
     <script src="../../../js/kpi-business-type.js"></script>
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../js/kpi-csv-templates.js"></script>

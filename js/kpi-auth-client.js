@@ -732,13 +732,32 @@
   }
 
   /**
-   * Page entry guard (Booking / similar Pro-only surfaces).
-   * Syncs plan from server then redirects Basic → Change Plan.
+   * Page entry guard (Booking / MEP / PL).
+   * Always resolves plan from the server so stale localStorage cannot open or bounce wrongly.
+   * Unset local tier is not treated as Pro.
    */
+  function ensureProPendingStyle() {
+    if (document.getElementById('kpi-pro-pending-style')) return;
+    var s = document.createElement('style');
+    s.id = 'kpi-pro-pending-style';
+    s.textContent = 'html[data-kpi-pro-pending]{visibility:hidden !important;}';
+    try {
+      (document.head || document.documentElement).appendChild(s);
+    } catch (_eStyle) {}
+  }
+
+  function setProPending(on) {
+    try {
+      if (on) document.documentElement.setAttribute('data-kpi-pro-pending', '1');
+      else document.documentElement.removeAttribute('data-kpi-pro-pending');
+    } catch (_ePend) {}
+  }
+
   function guardProPage(changePlanHref) {
     var href = changePlanHref || resolveChangePlanHref();
-    function bounceIfBasic() {
-      if (!isBasicPlan()) return false;
+    ensureProPendingStyle();
+    setProPending(true);
+    function bounce() {
       try {
         global.location.replace(href);
       } catch (_e) {
@@ -746,16 +765,19 @@
       }
       return true;
     }
-    if (bounceIfBasic()) {
-      return Promise.resolve({ redirected: true });
-    }
     return syncPlanFromServer()
       .then(function (r) {
         if (isSessionUnauthorized(r)) {
           handleUnauthorizedSession(r);
           return { redirected: true, reason: 'unauthorized' };
         }
-        return { redirected: bounceIfBasic() };
+        var tier = String(readStoredTier() || '').toLowerCase();
+        if (tier !== 'pro') {
+          bounce();
+          return { redirected: true };
+        }
+        setProPending(false);
+        return { redirected: false };
       })
       .catch(function () {
         handleUnauthorizedSession(null);

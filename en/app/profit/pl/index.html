@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profit & Loss (PL) | KPI Pilot</title>
+  <style id="kpi-pro-pending-style">html[data-kpi-pro-pending]{visibility:hidden !important;}</style>
+  <script>
+    /* C2-L5-B: Pro page pending until server plan. Do not treat unset as pro. */
+    (function () {
+      try {
+        document.documentElement.setAttribute('data-kpi-pro-pending', '1');
+      } catch (_e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -4279,7 +4288,18 @@
         </div>
       </div>
     </div>
-    <script src="../../../../js/kpi-auth-client.js?v=20260922-c2l5a"></script>
+    <script src="../../../../js/kpi-auth-client.js?v=20260923-c2l5b"></script>
+    <script>
+      (function () {
+        function run() {
+          if (window.__KPI_AUTH && typeof window.__KPI_AUTH.guardProPage === 'function') {
+            window.__KPI_AUTH.guardProPage('../../../setting/change_plan.html');
+          }
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+        else run();
+      })();
+    </script>
     <script src="../../../../js/kpi-business-type.js"></script>
     <script src="../../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../../js/kpi-csv-templates.js"></script>

@@ -51,6 +51,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L4 (Expense Classification Lifecycle) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L5-A (Plan-independent Expense Storage / Upgrade Safety) P1 closed 2026-09-22
+- BR-LAUNCH-01-C2-L5-B (Basic / Pro Expense UI Entitlement) P1 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -70,7 +71,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-L5-A CLOSED. Return to C2-L5. UI entitlement is L5-B. Do not start L6.
+C2-L5-B CLOSED. Return to C2-L5. Do not start L6.
 ```
 
 ### Git snapshot????????
@@ -529,8 +530,8 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 ACTIVE; L5-A CLOSED; L6 POST-LAUNCH / LARGE |
-| next_action | C2-L5-A CLOSED. UI entitlement is L5-B. Do not start L6 |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 ACTIVE; L5-A CLOSED; L5-B CLOSED; L6 POST-LAUNCH / LARGE |
+| next_action | C2-L5-B CLOSED. Return to C2-L5. Do not start L6 |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L6 spec only; tooltips DEFERRED |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -714,7 +715,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Expense data must survive plan change on the server. Basic hides analysis UI. Pro hydrates existing expense without migration. Mixed CSV is L6. |
-| next_action | C2-L5-A CLOSED. UI entitlement is L5-B. Do not implement L5-B / L6 now. |
+| next_action | C2-L5-B CLOSED. Remaining parent closeout of C2-L5. Do not start L6. |
 | constraint | no mixed parser; no horizontal CSV; no new DB/schema; no tooltips; no Stripe; no excel/; no Demo fixture |
 | phase | 1 AUDIT complete; L5-A implement storage |
 
@@ -733,6 +734,22 @@ Guide to KPN Template only when the file is still uninterpretable.
 | reason | Pro→Basic→Pro must not lose Expense. Option A: server retain, Basic no hydrate, Pro GET hydrate. |
 | next_action | CLOSED. Return to C2-L5. UI entitlement is L5-B. |
 | constraint | no PL/MEP/Monthly UI gates; no tooltips; no mixed CSV; no schema; no excel/; no Demo fixture |
+
+### BR-LAUNCH-01-C2-L5-B
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L5-B |
+| name | Basic / Pro Expense UI Entitlement |
+| parent | BR-LAUNCH-01-C2-L5 |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-23 |
+| closed_at | 2026-09-23 |
+| return_to | BR-LAUNCH-01-C2-L5 |
+| reason | Storage vs UI entitlement split. Basic keeps Expense on server, hides Monthly Expense, gates MEP/PL via existing guardProPage. |
+| next_action | CLOSED. Return to C2-L5. Do not start L6. |
+| constraint | no L5-A storage change; no new auth framework; no Stripe; no schema; no excel/; no Demo fixture |
 
 ### BR-LAUNCH-01-C2-L6
 
@@ -1097,6 +1114,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5-A` | Plan-independent Expense Storage / Upgrade Safety | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
+| `BR-LAUNCH-01-C2-L5-B` | Basic / Pro Expense UI Entitlement | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
