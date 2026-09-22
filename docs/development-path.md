@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L2
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L3
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,11 +24,10 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L2 (High-confidence Expense Synonyms) P1
+- BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P0
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
-- BR-LAUNCH-01-C2-L3 Unknown Label Preservation + Persistent Import Mapping Record
 - BR-LAUNCH-01-C2-L4 Expense Classification Lifecycle
 - BR-LAUNCH-01-C2-L5 Plan-independent Import / Storage + Basic/Pro Expense Visibility
 - BR-LAUNCH-01-C2-L6 Flexible Translator Expansion (POST-LAUNCH / LARGE)
@@ -48,6 +47,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-K (PL Expense Rows Missing After BT Set) P0 closed 2026-09-21
 - BR-LAUNCH-01-C2-L1-A (Profile Business Type / Genre Sync) P0 closed 2026-09-22
 - BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0 closed 2026-09-22
+- BR-LAUNCH-01-C2-L2 (High-confidence Expense Synonyms) P1 closed 2026-09-22
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -64,7 +64,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L2 High-confidence Expense Synonyms - Human Smoke pending (do not start C2-L3)
+BR-LAUNCH-01-C2-L3 Unknown Label Preservation + Persistent Import Mapping - Phase 1 audit first; do not start C2-L4
 ```
 
 ### Git snapshot????????
@@ -523,9 +523,9 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 ACTIVE (Human Smoke); L3-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
-| next_action | C2-L2 Human Smoke pending; do not start C2-L3 |
-| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L3-L6 spec only until L1 returns |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 ACTIVE; L4-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
+| next_action | C2-L3 Phase 1 audit first; do not start C2-L4 |
+| constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L4-L6 spec only until L3 returns |
 
 #### C2-L canonical product principle (2026-09-22)
 
@@ -576,8 +576,8 @@ Guide to KPN Template only when the file is still uninterpretable.
 |----|------|--------|------|
 | C2-L1 | Business Type Import Gate | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L1-A | Profile Business Type / Genre Sync | CLOSED | Human Smoke PASS 2026-09-22 |
-| C2-L2 | High-confidence Expense Synonyms | ACTIVE | implemented; Human Smoke pending |
-| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | SPEC-REGISTERED | spec only |
+| C2-L2 | High-confidence Expense Synonyms | CLOSED | Automated production smoke PASS 2026-09-22 |
+| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | ACTIVE | Phase 1 audit first |
 | C2-L4 | Expense Classification Lifecycle | SPEC-REGISTERED | unclassified / fixed-variable / order; spec only |
 | C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | SPEC-REGISTERED | spec only |
 | C2-L6 | Flexible Translator Expansion | POST-LAUNCH / LARGE | vertical/horizontal, mixed, inference, preview, template fallback |
@@ -623,13 +623,14 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L2 |
 | name | High-confidence Expense Synonyms |
 | parent | BR-LAUNCH-01-C2-L |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-22 |
+| closed_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Map known expense labels to canonical lines after BT gate |
-| next_action | Human Smoke (restaurant synonyms auto-map; forbidden labels stay unmatched; retail food labels do not map to exp_food_cost). Do not start C2-L3 |
-| evidence | shared resolver synonym after alias; restaurant-only via readMetaBusinessType; target must be importable |
+| evidence | Automated production smoke PASS: prod JS LF-normalized SHA matches d320fd7; 6C C2-L2 contract 63/63; restaurant synonyms; retail isolation; alias>synonym; unmatched 人件費/手数料/その他; orphan/inactive fail-closed. Human visual smoke not required |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2-L |
 | smoke_retail | `kpn_smoke_retail_pro01@trial.forge-laboratory.com` / `u_719d9f9880dc925d` / plan=pro / BT=retail / empty store |
 | constraint | high-confidence exact synonyms only; restaurant-scoped food/drink; no fuzzy/AI/unknown auto-create; no excel/ touch |
 
@@ -640,12 +641,12 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L3 |
 | name | Unknown Label Preservation + Persistent Import Mapping Record |
 | parent | BR-LAUNCH-01-C2-L |
-| status | SPEC-REGISTERED |
+| status | ACTIVE |
 | priority | P0 |
-| started_at | not started |
+| started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Keep unknown labels with stable IDs, source labels, and persisted mapping/preview |
-| next_action | Spec only. Do not start. |
+| next_action | Phase 1 audit first. Do not start C2-L4 |
 | constraint | unknown is not BT mismatch; do not discard |
 
 ### BR-LAUNCH-01-C2-L4
@@ -1024,15 +1025,14 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L2` | High-confidence Expense Synonyms | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
-| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
-CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`  
+CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
@@ -1096,3 +1096,4 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-22 | **BR-LAUNCH-01-C2-L1 CLOSED** Human Smoke PASS (unset blocks Sales/Expense; BT set opens picker; no restaurant-fallback bypass). CURRENT PATH -> C2-L2. Phase 1 audit only |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L2** high-confidence expense synonyms in shared resolver (alias-first; restaurant-only food/drink; Human Smoke pending) |
 | 2026-09-22 | Retail smoke Pro account created: `kpn_smoke_retail_pro01@trial.forge-laboratory.com` / `u_719d9f9880dc925d` / BT=retail / empty. Demo restaurant accounts untouched |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L2 CLOSED** automated production smoke PASS (prod JS matches d320fd7; 6C contract). CURRENT PATH -> C2-L3. Human visual smoke not required |
