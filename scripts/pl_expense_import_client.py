@@ -403,9 +403,10 @@ def pl_expense_import_client_js() -> str:
             var line = resolver(item);
             if (!line) {
               var uk = normText(item);
-              if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false };
+              if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false, rowsByPeriod: {} };
               unmatched[uk].count++;
               if (isDaily) unmatched[uk].hasDaily = true; else unmatched[uk].hasMonthly = true;
+              unmatched[uk].rowsByPeriod[date] = (unmatched[uk].rowsByPeriod[date] || 0) + amount;
               continue;
             }
             var lineId = String(line.lineId);
@@ -609,16 +610,29 @@ def pl_expense_import_client_js() -> str:
           return lines.join('\\n');
         }
 
-        function finalizeImport(plan, useConfirm, policy) {
+        function persistUnmatchedFromPlan(plan, policy, meta) {
+          if (!window.KpiExpenseUnknownHold || typeof window.KpiExpenseUnknownHold.ingestUnmatched !== 'function') return;
+          if (!plan || !plan.unmatched) return;
+          window.KpiExpenseUnknownHold.ingestUnmatched(plan.unmatched, {
+            policy: policy,
+            importBatchId: meta && meta.importBatchId,
+            importedAt: meta && meta.importedAt,
+            sourceFilename: meta && meta.sourceFilename
+          });
+        }
+
+        function finalizeImport(plan, useConfirm, policy, meta) {
           policy = (policy === 'add' || policy === 'skip') ? policy : 'replace';
           var hasWrites = Object.keys(plan.monthlyByYear).length || Object.keys(plan.dailyByYear).length;
           if (!hasWrites) {
+            persistUnmatchedFromPlan(plan, policy, meta || {});
             window.alert(summarize(plan, policy, null) + '\\n\\n' + tt('取り込める行がありませんでした。',
                                                         'No importable rows were found.'));
             return false;
           }
           var conflicts = analyzeConflicts(plan);
           if (useConfirm && !window.confirm(summarize(plan, policy, conflicts))) return false;
+          persistUnmatchedFromPlan(plan, policy, meta || {});
           applyPlan(plan, policy);
           window.alert(tt('取り込みが完了しました。', 'Import complete.'));
           return true;
@@ -658,7 +672,7 @@ def pl_expense_import_client_js() -> str:
           if (e.key === 'Escape' || e.keyCode === 27) closeMappingModal();
         }
 
-        function openMappingModal(rows, cols) {
+        function openMappingModal(rows, cols, importMeta) {
           closeMappingModal();
           var lines = loadCatalogLines();
           var colLabels = columnLabels(rows, cols);
@@ -871,7 +885,7 @@ def pl_expense_import_client_js() -> str:
             var plan2 = buildPlan(rows, cols2, makeResolver(loadCatalogLines(), next));
             closeMappingModal();
             // The modal itself was the confirmation step, so import without a second confirm.
-            finalizeImport(plan2, false, policy);
+            finalizeImport(plan2, false, policy, importMeta);
           });
           actions.appendChild(cancel);
           actions.appendChild(doImport);
@@ -884,6 +898,11 @@ def pl_expense_import_client_js() -> str:
         }
 
         function runExpenseImport(file) {
+          var importMeta = {
+            sourceFilename: file && file.name ? String(file.name) : '',
+            importedAt: Date.now(),
+            importBatchId: 'imp_' + Date.now().toString(36)
+          };
           parseFile(file).then(function (rows) {
             if (!rows || !rows.length) {
               window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。',
@@ -904,10 +923,10 @@ def pl_expense_import_client_js() -> str:
             // existing data (nothing to decide). Otherwise open the modal so the
             // user consciously handles mapping and/or the duplicate policy.
             if (cols.confident && unmatchedCount === 0 && conflicts.total === 0) {
-              finalizeImport(plan, true, 'replace');
+              finalizeImport(plan, true, 'replace', importMeta);
               return;
             }
-            openMappingModal(rows, cols);
+            openMappingModal(rows, cols, importMeta);
           }).catch(function () {
             window.alert(tt('Excel の読み込みに失敗しました。CSV でお試しください（オフライン時は .xlsx を読めません）。',
                             'Failed to read Excel. Try CSV instead (.xlsx needs to be online).'));

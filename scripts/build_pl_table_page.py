@@ -8833,6 +8833,7 @@ def render_page(lang: str, lang_switch: str) -> str:
   <script src="{"../../../js/kpi-pl-expense-presets.js" if lang == "ja" else "../../../../js/kpi-pl-expense-presets.js"}"></script>
   <script src="{"../../../js/kpi-csv-templates.js" if lang == "ja" else "../../../../js/kpi-csv-templates.js"}"></script>
   <script src="{"../../../js/kpi-expense-csv-import.js" if lang == "ja" else "../../../../js/kpi-expense-csv-import.js"}"></script>
+  <script src="{"../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a" if lang == "ja" else "../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a"}"></script>
   <!-- KPI-CURRENCY-JS:END -->
 {header}
   <div class="page-wrap profile-wrap">

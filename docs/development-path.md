@@ -24,7 +24,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P0
+- BR-LAUNCH-01-C2-L3 (Unknown Label Preservation + Persistent Import Mapping Record) P1
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
@@ -48,6 +48,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L1-A (Profile Business Type / Genre Sync) P0 closed 2026-09-22
 - BR-LAUNCH-01-C2-L1 (Business Type Import Gate) P0 closed 2026-09-22
 - BR-LAUNCH-01-C2-L2 (High-confidence Expense Synonyms) P1 closed 2026-09-22
+- BR-LAUNCH-01-C2-L3-A (Unknown Expense Hold Foundation) P1 closed 2026-09-22
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -64,7 +65,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2-L3 Unknown Label Preservation + Persistent Import Mapping - Phase 1 audit first; do not start C2-L4
+BR-LAUNCH-01-C2-L3 ACTIVE. C2-L3-A CLOSED. Do not start C2-L3-B / C2-L4 / C2-L5.
 ```
 
 ### Git snapshot????????
@@ -524,7 +525,7 @@ CLOSED node ? **?????**??????????????
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
 | children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 ACTIVE; L4-L5 SPEC-REGISTERED (do not start); L6 POST-LAUNCH / LARGE |
-| next_action | C2-L3 Phase 1 audit first; do not start C2-L4 |
+| next_action | C2-L3-A CLOSED. Do not start C2-L3-B / C2-L4 / C2-L5 |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L4-L6 spec only until L3 returns |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -577,7 +578,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | C2-L1 | Business Type Import Gate | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L1-A | Profile Business Type / Genre Sync | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L2 | High-confidence Expense Synonyms | CLOSED | Automated production smoke PASS 2026-09-22 |
-| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | ACTIVE | Phase 1 audit first |
+| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | ACTIVE | L3-A CLOSED; mapping record is L3-B (do not start) |
 | C2-L4 | Expense Classification Lifecycle | SPEC-REGISTERED | unclassified / fixed-variable / order; spec only |
 | C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | SPEC-REGISTERED | spec only |
 | C2-L6 | Flexible Translator Expansion | POST-LAUNCH / LARGE | vertical/horizontal, mixed, inference, preview, template fallback |
@@ -642,12 +643,28 @@ Guide to KPN Template only when the file is still uninterpretable.
 | name | Unknown Label Preservation + Persistent Import Mapping Record |
 | parent | BR-LAUNCH-01-C2-L |
 | status | ACTIVE |
-| priority | P0 |
+| priority | P1 |
 | started_at | 2026-09-22 |
 | return_to | BR-LAUNCH-01-C2-L |
 | reason | Keep unknown labels with stable IDs, source labels, and persisted mapping/preview |
-| next_action | Phase 1 audit first. Do not start C2-L4 |
+| next_action | C2-L3-A CLOSED. Mapping record / alias persistence is L3-B (do not start). Do not start C2-L4 |
 | constraint | unknown is not BT mismatch; do not discard |
+
+### BR-LAUNCH-01-C2-L3-A
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L3-A |
+| name | Unknown Expense Hold Foundation |
+| parent | BR-LAUNCH-01-C2-L3 |
+| status | CLOSED |
+| priority | P1 |
+| started_at | 2026-09-22 |
+| return_to | BR-LAUNCH-01-C2-L3 |
+| reason | Keep unknown expense label/amount/date in catalog-outside hold; no auto custom line |
+| evidence | Automated tests scripts/_test_expense_unknown_hold_c2l3a.py; 6C/6H green; Option B-lite in pl.unknownHold |
+| next_action | N/A (CLOSED) -> return BR-LAUNCH-01-C2-L3 |
+| constraint | no preview UI; no L3-B aliases; no L4 bucket; no new DB table |
 
 ### BR-LAUNCH-01-C2-L4
 
@@ -1025,7 +1042,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | ACTIVE | P0 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L3` | Unknown Label Preservation + Persistent Import Mapping | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L4` | Expense Classification Lifecycle | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Import / Storage + Expense Visibility | SPEC-REGISTERED | P0 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
@@ -1033,10 +1050,8 @@ Guide to KPN Template only when the file is still uninterpretable.
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
 CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`  
+CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
-DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
-CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 
@@ -1097,3 +1112,5 @@ DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`
 | 2026-09-22 | **BR-LAUNCH-01-C2-L2** high-confidence expense synonyms in shared resolver (alias-first; restaurant-only food/drink; Human Smoke pending) |
 | 2026-09-22 | Retail smoke Pro account created: `kpn_smoke_retail_pro01@trial.forge-laboratory.com` / `u_719d9f9880dc925d` / BT=retail / empty. Demo restaurant accounts untouched |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L2 CLOSED** automated production smoke PASS (prod JS matches d320fd7; 6C contract). CURRENT PATH -> C2-L3. Human visual smoke not required |
+| 2026-09-22 | **C2-L3 Phase 1 AUDIT** unknown raw is PARTIAL; recommend Option B-lite in existing pl_json (no new table, no auto-create). Wait for implement. Do not start C2-L4 |
+| 2026-09-22 | **BR-LAUNCH-01-C2-L3-A CLOSED** unknown expense hold (catalog-outside, unk_ + fnv1a). CURRENT PATH stays C2-L3. Do not start L3-B / L4 / L5 |

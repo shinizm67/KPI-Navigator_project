@@ -40,6 +40,7 @@
     'kpiNavigator.annualNav',
     'kpiNavigator.dailySalesInputPath',
     'kpiNavigator.plLineCatalog',
+    'kpiNavigator.plExpenseUnknownHold',
     'kpiNavigator.plTargetCostRate',
     'kpiNavigator.monthlyLast',
     'kpi-profile-last',

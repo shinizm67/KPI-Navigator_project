@@ -4341,7 +4341,7 @@
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
   <script src="../../../../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="../../../../js/kpi-data-gateway.js?v=20260919-2"></script>
+  <script src="../../../../js/kpi-data-gateway.js?v=20260922-c2l3a"></script>
 
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
@@ -4352,6 +4352,7 @@
   <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
+  <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a"></script>
   <!-- KPI-CURRENCY-JS:END -->
   <header class="site-header pl-site-header">
     <div class="header-inner">
@@ -12665,9 +12666,10 @@
             var line = resolver(item);
             if (!line) {
               var uk = normText(item);
-              if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false };
+              if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false, rowsByPeriod: {} };
               unmatched[uk].count++;
               if (isDaily) unmatched[uk].hasDaily = true; else unmatched[uk].hasMonthly = true;
+              unmatched[uk].rowsByPeriod[date] = (unmatched[uk].rowsByPeriod[date] || 0) + amount;
               continue;
             }
             var lineId = String(line.lineId);
@@ -12872,15 +12874,28 @@
           return lines.join('\n');
         }
 
-        function finalizeImport(plan, useConfirm, policy) {
+        function persistUnmatchedFromPlan(plan, policy, meta) {
+          if (!window.KpiExpenseUnknownHold || typeof window.KpiExpenseUnknownHold.ingestUnmatched !== 'function') return;
+          if (!plan || !plan.unmatched) return;
+          window.KpiExpenseUnknownHold.ingestUnmatched(plan.unmatched, {
+            policy: policy,
+            importBatchId: meta && meta.importBatchId,
+            importedAt: meta && meta.importedAt,
+            sourceFilename: meta && meta.sourceFilename
+          });
+        }
+
+        function finalizeImport(plan, useConfirm, policy, meta) {
           policy = (policy === 'add' || policy === 'skip') ? policy : 'replace';
           var hasWrites = Object.keys(plan.monthlyByYear).length || Object.keys(plan.dailyByYear).length;
           if (!hasWrites) {
+            persistUnmatchedFromPlan(plan, policy, meta || {});
             window.alert(summarize(plan, policy, null) + '\n\n' + tt('取り込める行がありませんでした。', 'No importable rows were found.', '沒有可匯入的列。'));
             return false;
           }
           var conflicts = analyzeConflicts(plan);
           if (useConfirm && !window.confirm(summarize(plan, policy, conflicts))) return false;
+          persistUnmatchedFromPlan(plan, policy, meta || {});
           applyPlan(plan, policy);
           window.alert(tt('取り込みが完了しました。', 'Import complete.', '匯入完成。'));
           return true;
@@ -12920,7 +12935,7 @@
           if (e.key === 'Escape' || e.keyCode === 27) closeMappingModal();
         }
 
-        function openMappingModal(rows, cols) {
+        function openMappingModal(rows, cols, importMeta) {
           closeMappingModal();
           var lines = loadCatalogLines();
           var colLabels = columnLabels(rows, cols);
@@ -13134,7 +13149,7 @@
             var plan2 = buildPlan(rows, cols2, makeResolver(loadCatalogLines(), next));
             closeMappingModal();
             // The modal itself was the confirmation step, so import without a second confirm.
-            finalizeImport(plan2, false, policy);
+            finalizeImport(plan2, false, policy, importMeta);
           });
           actions.appendChild(cancel);
           actions.appendChild(doImport);
@@ -13147,6 +13162,11 @@
         }
 
         function runExpenseImport(file) {
+          var importMeta = {
+            sourceFilename: file && file.name ? String(file.name) : '',
+            importedAt: Date.now(),
+            importBatchId: 'imp_' + Date.now().toString(36)
+          };
           parseFile(file).then(function (rows) {
             if (!rows || !rows.length) {
               window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。', 'Could not read the file (empty or invalid format).', '無法讀取檔案（空白或格式不正確）。'));
@@ -13165,10 +13185,10 @@
             // existing data (nothing to decide). Otherwise open the modal so the
             // user consciously handles mapping and/or the duplicate policy.
             if (cols.confident && unmatchedCount === 0 && conflicts.total === 0) {
-              finalizeImport(plan, true, 'replace');
+              finalizeImport(plan, true, 'replace', importMeta);
               return;
             }
-            openMappingModal(rows, cols);
+            openMappingModal(rows, cols, importMeta);
           }).catch(function () {
             window.alert(tt('Excel の読み込みに失敗しました。CSV でお試しください（オフライン時は .xlsx を読めません）。', 'Failed to read Excel. Try CSV instead (.xlsx needs to be online).', 'Excel 讀取失敗。請改用 CSV 再試（離線時無法讀取 .xlsx）。'));
           });

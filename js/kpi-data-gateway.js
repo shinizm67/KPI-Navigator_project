@@ -30,6 +30,7 @@
   var PL_EXP_PREFIX = 'kpi-pl-expenses-v1:';
   var PL_ADJ_PREFIX = 'kpi-pl-expense-adjustments-v1:';
   var PL_RATE_KEY = 'kpiNavigator.plTargetCostRate';
+  var PL_UNKNOWN_HOLD_KEY = 'kpiNavigator.plExpenseUnknownHold';
 
   var putTimer = null;
   /** GET started (dedupe hydrateFromServer). */
@@ -157,7 +158,7 @@
 
   function isPlSyncKey(key) {
     if (!key) return false;
-    if (key === PL_CATALOG_KEY || key === PL_RATE_KEY) return true;
+    if (key === PL_CATALOG_KEY || key === PL_RATE_KEY || key === PL_UNKNOWN_HOLD_KEY) return true;
     if (String(key).indexOf(PL_EXP_PREFIX) === 0) return true;
     if (String(key).indexOf(PL_ADJ_PREFIX) === 0) return true;
     return false;
@@ -607,6 +608,7 @@
       expensesByYear: {},
       adjustmentsByYear: {},
       targetCostRate: null,
+      unknownHold: localGet(PL_UNKNOWN_HOLD_KEY) || {},
     };
     try {
       var rateRaw = origGetItem.call(localStorage, PL_RATE_KEY);
@@ -644,6 +646,10 @@
       if (ay[yk] && typeof ay[yk] === 'object' && Object.keys(ay[yk]).length) return true;
     }
     if (pl.targetCostRate != null && isFinite(Number(pl.targetCostRate))) return true;
+    var hold = pl.unknownHold;
+    if (hold && typeof hold === 'object' && hold.records && typeof hold.records === 'object') {
+      if (Object.keys(hold.records).length) return true;
+    }
     return false;
   }
 
@@ -721,6 +727,13 @@
     }
     if (pl.targetCostRate != null && isFinite(Number(pl.targetCostRate))) {
       localSetRaw(PL_RATE_KEY, String(Number(pl.targetCostRate)));
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(pl, 'unknownHold')) {
+      localSet(PL_UNKNOWN_HOLD_KEY, pl.unknownHold && typeof pl.unknownHold === 'object' ? pl.unknownHold : {});
+      changed = true;
+    } else if (serverWins) {
+      localRemoveRaw(PL_UNKNOWN_HOLD_KEY);
       changed = true;
     }
     return changed;
@@ -1217,6 +1230,7 @@
       hydrated = false;
       hydrateComplete = false;
       hookQuiet = true;
+      localRemoveRaw(PL_UNKNOWN_HOLD_KEY);
     },
     endLocalUserScopeReset: function () {
       if (putTimer != null) {

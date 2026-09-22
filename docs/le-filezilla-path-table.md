@@ -2681,6 +2681,38 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## C2-L3-A Unknown Expense Hold（2026-09-22）
+
+`js/` を先に。HTML は言語で完結（annual → monthly → monthly/edit → profit/pl → booking）。Profile は最後。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| L3A1 | `C:\Users\funki\kpi-navigator\js\kpi-expense-unknown-hold.js` | `public_html/kpi-navigator/js/kpi-expense-unknown-hold.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-expense-unknown-hold.js |
+| L3A2 | `C:\Users\funki\kpi-navigator\js\kpi-data-gateway.js` | `public_html/kpi-navigator/js/kpi-data-gateway.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-data-gateway.js |
+| L3A3 | `C:\Users\funki\kpi-navigator\js\kpi-auth-client.js` | `public_html/kpi-navigator/js/kpi-auth-client.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-auth-client.js |
+| L3A4 | `C:\Users\funki\kpi-navigator\app\annual\index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| L3A5 | `C:\Users\funki\kpi-navigator\app\monthly\index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| L3A6 | `C:\Users\funki\kpi-navigator\app\monthly\edit\index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| L3A7 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| L3A8 | `C:\Users\funki\kpi-navigator\app\booking\index.html` | `public_html/kpi-navigator/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/app/booking/index.html |
+| L3A9 | `C:\Users\funki\kpi-navigator\en\app\annual\index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| L3A10 | `C:\Users\funki\kpi-navigator\en\app\monthly\index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| L3A11 | `C:\Users\funki\kpi-navigator\en\app\monthly\edit\index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+| L3A12 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| L3A13 | `C:\Users\funki\kpi-navigator\en\app\booking\index.html` | `public_html/kpi-navigator/en/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/booking/index.html |
+| L3A14 | `C:\Users\funki\kpi-navigator\zh-tw\app\annual\index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| L3A15 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| L3A16 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\edit\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+| L3A17 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+| L3A18 | `C:\Users\funki\kpi-navigator\zh-tw\app\booking\index.html` | `public_html/kpi-navigator/zh-tw/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/booking/index.html |
+| L3A19 | `C:\Users\funki\kpi-navigator\setting\profile_edit.html` | `public_html/kpi-navigator/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/profile_edit.html |
+| L3A20 | `C:\Users\funki\kpi-navigator\en\setting\profile_edit.html` | `public_html/kpi-navigator/en/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/en/setting/profile_edit.html |
+| L3A21 | `C:\Users\funki\kpi-navigator\zh-tw\setting\profile_edit.html` | `public_html/kpi-navigator/zh-tw/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/profile_edit.html |
+
+確認: `kpi-expense-unknown-hold.js` に `KpiExpenseUnknownHold` / `unk_`。gateway に `unknownHold`。PL/MEP HTML に `persistUnmatchedFromPlan` または `unknownHoldRows`。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

@@ -146,7 +146,7 @@ def test_mep_expense_confirm() -> None:
         assert_true(MEP_WARN_ZH in handler, f"{rel} MEP ZH replace warning")
         assert_true("window.confirm(mepExpenseText(" in handler, f"{rel} MEP uses confirm")
         confirm_at = handler.find("window.confirm(mepExpenseText(")
-        apply_at = handler.find("applyExpenseRows(rows)")
+        apply_at = handler.find("applyExpenseRows(rows")
         assert_true(apply_at > confirm_at >= 0, f"{rel} apply runs after confirm")
         assert_true("))) return;" in handler, f"{rel} Cancel returns before apply")
         assert_true("labelMap.resolve" in html, f"{rel} lineId resolver kept")
