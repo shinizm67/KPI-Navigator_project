@@ -31,6 +31,7 @@
   var PL_ADJ_PREFIX = 'kpi-pl-expense-adjustments-v1:';
   var PL_RATE_KEY = 'kpiNavigator.plTargetCostRate';
   var PL_UNKNOWN_HOLD_KEY = 'kpiNavigator.plExpenseUnknownHold';
+  var PL_IMPORT_MAPPING_KEY = 'kpiNavigator.plExpenseImportMapping';
 
   var putTimer = null;
   /** GET started (dedupe hydrateFromServer). */
@@ -158,7 +159,7 @@
 
   function isPlSyncKey(key) {
     if (!key) return false;
-    if (key === PL_CATALOG_KEY || key === PL_RATE_KEY || key === PL_UNKNOWN_HOLD_KEY) return true;
+    if (key === PL_CATALOG_KEY || key === PL_RATE_KEY || key === PL_UNKNOWN_HOLD_KEY || key === PL_IMPORT_MAPPING_KEY) return true;
     if (String(key).indexOf(PL_EXP_PREFIX) === 0) return true;
     if (String(key).indexOf(PL_ADJ_PREFIX) === 0) return true;
     return false;
@@ -609,6 +610,7 @@
       adjustmentsByYear: {},
       targetCostRate: null,
       unknownHold: localGet(PL_UNKNOWN_HOLD_KEY) || {},
+      expenseImportMapping: localGet(PL_IMPORT_MAPPING_KEY) || {},
     };
     try {
       var rateRaw = origGetItem.call(localStorage, PL_RATE_KEY);
@@ -649,6 +651,11 @@
     var hold = pl.unknownHold;
     if (hold && typeof hold === 'object' && hold.records && typeof hold.records === 'object') {
       if (Object.keys(hold.records).length) return true;
+    }
+    var map = pl.expenseImportMapping;
+    if (map && typeof map === 'object') {
+      if (map.records && typeof map.records === 'object' && Object.keys(map.records).length) return true;
+      if (map.aliases && typeof map.aliases === 'object' && Object.keys(map.aliases).length) return true;
     }
     return false;
   }
@@ -734,6 +741,16 @@
       changed = true;
     } else if (serverWins) {
       localRemoveRaw(PL_UNKNOWN_HOLD_KEY);
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(pl, 'expenseImportMapping')) {
+      localSet(
+        PL_IMPORT_MAPPING_KEY,
+        pl.expenseImportMapping && typeof pl.expenseImportMapping === 'object' ? pl.expenseImportMapping : {}
+      );
+      changed = true;
+    } else if (serverWins) {
+      localRemoveRaw(PL_IMPORT_MAPPING_KEY);
       changed = true;
     }
     return changed;
@@ -1231,6 +1248,10 @@
       hydrateComplete = false;
       hookQuiet = true;
       localRemoveRaw(PL_UNKNOWN_HOLD_KEY);
+      localRemoveRaw(PL_IMPORT_MAPPING_KEY);
+      try {
+        origRemoveItem.call(localStorage, 'kpiNavigator.plExpenseImportAliases');
+      } catch (_eAlias) {}
     },
     endLocalUserScopeReset: function () {
       if (putTimer != null) {

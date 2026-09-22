@@ -41,6 +41,8 @@
     'kpiNavigator.dailySalesInputPath',
     'kpiNavigator.plLineCatalog',
     'kpiNavigator.plExpenseUnknownHold',
+    'kpiNavigator.plExpenseImportMapping',
+    'kpiNavigator.plExpenseImportAliases',
     'kpiNavigator.plTargetCostRate',
     'kpiNavigator.monthlyLast',
     'kpi-profile-last',

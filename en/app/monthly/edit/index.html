@@ -2521,7 +2521,7 @@
   <script src="../../../../js/kpi-editable-grid-keys.js?v=20260921-2"></script>
   <script src="../../../../js/kpi-daily-facts-sync.js"></script>
   <script src="../../../../js/kpi-daily-inputs-sync.js"></script>
-  <script src="../../../../js/kpi-data-gateway.js?v=20260922-c2l3a"></script>
+  <script src="../../../../js/kpi-data-gateway.js?v=20260922-c2l3b"></script>
   <script src="../../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../../js/kpi-business-type.js"></script>
   <script src="../../../../js/kpi-pl-expense-presets.js"></script>
@@ -2693,6 +2693,7 @@
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a"></script>
+    <script src="../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -15204,7 +15205,11 @@
             .concat(state.fixedItems || [])
             .concat(state.variableItems || []);
           if (window.KpiExpenseCsvImport && typeof window.KpiExpenseCsvImport.makeResolver === 'function') {
-            var resolve = window.KpiExpenseCsvImport.makeResolver(all, {});
+            var aliases = {};
+            if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.loadAliases === 'function') {
+              try { aliases = window.KpiExpenseImportMapping.loadAliases() || {}; } catch (_eAlias) {}
+            }
+            var resolve = window.KpiExpenseCsvImport.makeResolver(all, aliases);
             return { resolve: resolve };
           }
           var map = {};
@@ -15322,6 +15327,7 @@
           var monthlyTouched = 0;
           var skipped = 0;
           var unknownHoldRows = [];
+          var mappingDraft = {};
           var monthlyByYear = {};
           var importedDailyByYear = {};
           for (var r = cols.start; r < rows.length; r++) {
@@ -15332,6 +15338,27 @@
             var line = labelMap.resolve ? labelMap.resolve(item) : labelMap[normText(item)];
             var year = Number(date.slice(0, 4));
             var amt = parseAmount(row[cols.amtCol]);
+            var nk = normText(item);
+            if (nk) {
+              var aliasesForVia = {};
+              if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.loadAliases === 'function') {
+                try { aliasesForVia = window.KpiExpenseImportMapping.loadAliases() || {}; } catch (_eA) {}
+              }
+              var via = 'none';
+              if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.classifyVia === 'function') {
+                via = window.KpiExpenseImportMapping.classifyVia(item, line, aliasesForVia);
+              } else if (line) {
+                via = 'auto';
+              }
+              if (!mappingDraft[nk]) {
+                mappingDraft[nk] = { originalLabel: item, resolvedLineId: line ? String(line.lineId) : '', via: via, periods: {} };
+              }
+              mappingDraft[nk].periods[date] = true;
+              if (line) {
+                mappingDraft[nk].resolvedLineId = String(line.lineId);
+                mappingDraft[nk].via = via;
+              }
+            }
             if (!line) {
               skipped++;
               if (Number.isFinite(year)) {
@@ -15417,6 +15444,27 @@
               sourceFilename: importMeta && importMeta.sourceFilename
             });
           }
+          if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.upsertEntries === 'function') {
+            var mapEntries = [];
+            Object.keys(mappingDraft).forEach(function (k) {
+              var d = mappingDraft[k] || {};
+              var periods = Object.keys(d.periods || {}).sort();
+              var resolvedLineId = d.resolvedLineId ? String(d.resolvedLineId) : '';
+              var via = d.via || (resolvedLineId ? 'auto' : 'none');
+              mapEntries.push({
+                originalLabel: d.originalLabel || k,
+                normalizedLabel: k,
+                resolvedLineId: resolvedLineId,
+                via: via,
+                status: resolvedLineId ? (via === 'alias' ? 'user-assigned' : 'auto') : 'unknown',
+                skipped: false,
+                unknownId: resolvedLineId ? '' : ((window.KpiExpenseUnknownHold && window.KpiExpenseUnknownHold.unknownIdFor)
+                  ? window.KpiExpenseUnknownHold.unknownIdFor(k) : ''),
+                dateRange: periods.length ? { from: periods[0], to: periods[periods.length - 1] } : null
+              });
+            });
+            window.KpiExpenseImportMapping.upsertEntries(mapEntries, importMeta || {});
+          }
           return { dailyTouched: dailyTouched, monthlyTouched: monthlyTouched, skipped: skipped };
         }
         var expenseFileInput = null;
@@ -15456,7 +15504,9 @@
                 var res = applyExpenseRows(rows, {
                   sourceFilename: file && file.name ? String(file.name) : '',
                   importedAt: Date.now(),
-                  importBatchId: 'imp_' + Date.now().toString(36)
+                  importBatchId: (window.KpiExpenseImportMapping && window.KpiExpenseImportMapping.nextImportBatchId)
+                    ? window.KpiExpenseImportMapping.nextImportBatchId()
+                    : ('imp_' + Date.now().toString(36))
                 });
                 window.alert(
                   mepExpenseText(

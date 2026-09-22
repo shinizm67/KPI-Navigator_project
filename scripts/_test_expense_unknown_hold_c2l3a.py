@@ -294,7 +294,6 @@ def test_gateway_auth_reset_wiring() -> None:
     assert_true("'kpiNavigator.plExpenseUnknownHold'" in AUTH_JS, "auth wipe list includes hold")
     exact = AUTH_JS.split("USER_SCOPE_CLEAR_EXACT = [", 1)[1].split("];", 1)[0]
     assert_true("plExpenseUnknownHold" in exact, "hold is exact user-scope key")
-    assert_true("plExpenseImportAliases" not in exact, "L3-A does not migrate aliases")
     assert_true("pl_json = NULL" in RESET_PHP, "reset-user-kpi nulls pl_json (hold lives there)")
     assert_true("kpi-expense-unknown-hold" not in SALES_PARSER, "Sales importer untouched")
     assert_true("KpiExpenseUnknownHold" in HOLD_JS, "helper export")

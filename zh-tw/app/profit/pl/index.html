@@ -4341,7 +4341,7 @@
 <body class="si-fi profile-page pl-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
   <script src="../../../../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="../../../../js/kpi-data-gateway.js?v=20260922-c2l3a"></script>
+  <script src="../../../../js/kpi-data-gateway.js?v=20260922-c2l3b"></script>
 
   <script src="../../../../js/kpi-currency.js"></script>
   <script src="../../../../js/kpi-overlay-scrollbar.js?v=20260920-4"></script>
@@ -4353,6 +4353,7 @@
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
   <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l3a"></script>
+  <script src="../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"></script>
   <!-- KPI-CURRENCY-JS:END -->
   <header class="site-header pl-site-header">
     <div class="header-inner">
@@ -12473,6 +12474,12 @@
           }
         }
         function loadAliases() {
+          if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.loadAliases === 'function') {
+            try {
+              var via = window.KpiExpenseImportMapping.loadAliases();
+              if (via && typeof via === 'object') return via;
+            } catch (_eMap) {}
+          }
           try {
             var raw = localStorage.getItem(ALIAS_KEY);
             var m = raw ? JSON.parse(raw) : null;
@@ -12482,6 +12489,12 @@
           }
         }
         function saveAliases(m) {
+          if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.saveAliases === 'function') {
+            try {
+              window.KpiExpenseImportMapping.saveAliases(m || {});
+              return;
+            } catch (_eMap) {}
+          }
           try { localStorage.setItem(ALIAS_KEY, JSON.stringify(m || {})); } catch (_e) {}
         }
         function buildLabelIndex(lines) {
@@ -12635,15 +12648,42 @@
           if (!rows || !rows.length) throw new Error('empty');
           var dateCol = cols.dateCol, itemCol = cols.itemCol, amtCol = cols.amtCol;
           var start = cols.start || 0;
+          var lines = arguments.length > 3 ? (arguments[3] || []) : [];
+          var aliases = arguments.length > 4 ? (arguments[4] || {}) : {};
 
           var monthlyByYear = {};   // year -> { "lineId:month0": amount }
           var dailyByYear = {};     // year -> { lineId -> { iso -> amount } }
           var matchedLines = {};
           var unmatched = {};       // normName -> { display, count, hasDaily, hasMonthly }
           var mismatched = [];      // monthly data hitting a daily-style line
+          var mappingDraft = {};
           var years = {};
           var parsed = 0;
           var skippedNoData = 0;
+
+          function noteDraft(item, line, date) {
+            var k = normText(item);
+            if (!k) return;
+            var via = 'none';
+            if (window.KpiExpenseImportMapping && typeof window.KpiExpenseImportMapping.classifyVia === 'function') {
+              via = window.KpiExpenseImportMapping.classifyVia(item, line, aliases);
+            } else if (line) {
+              via = 'auto';
+            }
+            if (!mappingDraft[k]) {
+              mappingDraft[k] = {
+                originalLabel: item,
+                resolvedLineId: line ? String(line.lineId) : '',
+                via: via,
+                periods: {}
+              };
+            }
+            mappingDraft[k].periods[date] = true;
+            if (line) {
+              mappingDraft[k].resolvedLineId = String(line.lineId);
+              mappingDraft[k].via = via;
+            }
+          }
 
           for (var r = start; r < rows.length; r++) {
             var row = rows[r] || [];
@@ -12664,6 +12704,7 @@
             parsed++;
             var isDaily = date.length === 10;
             var line = resolver(item);
+            noteDraft(item, line, date);
             if (!line) {
               var uk = normText(item);
               if (!unmatched[uk]) unmatched[uk] = { display: item, count: 0, hasDaily: false, hasMonthly: false, rowsByPeriod: {} };
@@ -12703,12 +12744,15 @@
             years: Object.keys(years).map(Number).sort(function (a, b) { return a - b; }),
             parsed: parsed,
             skippedNoData: skippedNoData,
+            mappingDraft: mappingDraft,
             cols: cols
           };
         }
         function buildPlanAuto(rows) {
           var cols = detectColumns(rows);
-          return buildPlan(rows, cols, makeResolver(loadCatalogLines(), loadAliases()));
+          var lines = loadCatalogLines();
+          var aliases = loadAliases();
+          return buildPlan(rows, cols, makeResolver(lines, aliases), lines, aliases);
         }
 
         /* ---------- conflict analysis (重複ポリシー) ---------- */
@@ -12874,6 +12918,40 @@
           return lines.join('\n');
         }
 
+        function persistMappingFromPlan(plan, meta, skippedNorms) {
+          if (!window.KpiExpenseImportMapping || typeof window.KpiExpenseImportMapping.upsertEntries !== 'function') return;
+          if (!plan || !plan.mappingDraft) return;
+          var skipped = skippedNorms || {};
+          var entries = [];
+          Object.keys(plan.mappingDraft).forEach(function (k) {
+            var d = plan.mappingDraft[k] || {};
+            var periods = Object.keys(d.periods || {}).sort();
+            var resolvedLineId = d.resolvedLineId ? String(d.resolvedLineId) : '';
+            var via = d.via || (resolvedLineId ? 'auto' : 'none');
+            var isSkipped = !!skipped[k];
+            var status = window.KpiExpenseImportMapping.statusFor
+              ? window.KpiExpenseImportMapping.statusFor(via, isSkipped ? '' : resolvedLineId, isSkipped)
+              : (isSkipped ? 'skipped' : (resolvedLineId ? (via === 'alias' ? 'user-assigned' : 'auto') : 'unknown'));
+            var unknownId = '';
+            if (status === 'unknown' || status === 'skipped') {
+              unknownId = (window.KpiExpenseUnknownHold && window.KpiExpenseUnknownHold.unknownIdFor)
+                ? window.KpiExpenseUnknownHold.unknownIdFor(k)
+                : '';
+            }
+            entries.push({
+              originalLabel: d.originalLabel || k,
+              normalizedLabel: k,
+              resolvedLineId: isSkipped ? '' : resolvedLineId,
+              via: via,
+              status: status,
+              skipped: isSkipped,
+              unknownId: unknownId,
+              dateRange: periods.length ? { from: periods[0], to: periods[periods.length - 1] } : null
+            });
+          });
+          window.KpiExpenseImportMapping.upsertEntries(entries, meta || {});
+        }
+
         function persistUnmatchedFromPlan(plan, policy, meta) {
           if (!window.KpiExpenseUnknownHold || typeof window.KpiExpenseUnknownHold.ingestUnmatched !== 'function') return;
           if (!plan || !plan.unmatched) return;
@@ -12885,17 +12963,19 @@
           });
         }
 
-        function finalizeImport(plan, useConfirm, policy, meta) {
+        function finalizeImport(plan, useConfirm, policy, meta, skippedNorms) {
           policy = (policy === 'add' || policy === 'skip') ? policy : 'replace';
           var hasWrites = Object.keys(plan.monthlyByYear).length || Object.keys(plan.dailyByYear).length;
           if (!hasWrites) {
             persistUnmatchedFromPlan(plan, policy, meta || {});
+            persistMappingFromPlan(plan, meta || {}, skippedNorms);
             window.alert(summarize(plan, policy, null) + '\n\n' + tt('取り込める行がありませんでした。', 'No importable rows were found.', '沒有可匯入的列。'));
             return false;
           }
           var conflicts = analyzeConflicts(plan);
           if (useConfirm && !window.confirm(summarize(plan, policy, conflicts))) return false;
           persistUnmatchedFromPlan(plan, policy, meta || {});
+          persistMappingFromPlan(plan, meta || {}, skippedNorms);
           applyPlan(plan, policy);
           window.alert(tt('取り込みが完了しました。', 'Import complete.', '匯入完成。'));
           return true;
@@ -13095,7 +13175,7 @@
               : tt('既存データとの重複はありません。', 'No overlap with existing data.', '與既有資料沒有重複。');
           }
           function renderUnmatched() {
-            var plan = buildPlan(rows, currentCols(), makeResolver(loadCatalogLines(), loadAliases()));
+            var plan = buildPlan(rows, currentCols(), makeResolver(loadCatalogLines(), loadAliases()), loadCatalogLines(), loadAliases());
             refreshConflictNote(plan);
             var keys = Object.keys(plan.unmatched);
             unBody.innerHTML = '';
@@ -13125,13 +13205,17 @@
             var aliases = loadAliases();
             var next = {};
             Object.keys(aliases).forEach(function (k) { next[k] = aliases[k]; });
+            var skippedNorms = {};
             var urows = unBody.querySelectorAll('.pl-import-map__urow');
             for (var i = 0; i < urows.length; i++) {
               var uEl = urows[i];
               var k = uEl.getAttribute('data-norm');
               var display = uEl.getAttribute('data-display');
               var val = uEl.querySelector('.pl-import-map__uaction').value;
-              if (val === 'skip') continue;
+              if (val === 'skip') {
+                skippedNorms[k] = true;
+                continue;
+              }
               if (val.indexOf('assign:') === 0) {
                 next[k] = val.slice('assign:'.length);
               } else if (val === '__create') {
@@ -13146,10 +13230,11 @@
             saveAliases(next);
             var cols2 = currentCols();
             var policy = currentPolicy();
-            var plan2 = buildPlan(rows, cols2, makeResolver(loadCatalogLines(), next));
+            var lines2 = loadCatalogLines();
+            var plan2 = buildPlan(rows, cols2, makeResolver(lines2, next), lines2, next);
             closeMappingModal();
             // The modal itself was the confirmation step, so import without a second confirm.
-            finalizeImport(plan2, false, policy, importMeta);
+            finalizeImport(plan2, false, policy, importMeta, skippedNorms);
           });
           actions.appendChild(cancel);
           actions.appendChild(doImport);
@@ -13165,7 +13250,9 @@
           var importMeta = {
             sourceFilename: file && file.name ? String(file.name) : '',
             importedAt: Date.now(),
-            importBatchId: 'imp_' + Date.now().toString(36)
+            importBatchId: (window.KpiExpenseImportMapping && window.KpiExpenseImportMapping.nextImportBatchId)
+              ? window.KpiExpenseImportMapping.nextImportBatchId()
+              : ('imp_' + Date.now().toString(36))
           };
           parseFile(file).then(function (rows) {
             if (!rows || !rows.length) {
@@ -13174,7 +13261,11 @@
             }
             var cols = detectColumns(rows);
             var plan;
-            try { plan = buildPlan(rows, cols, makeResolver(loadCatalogLines(), loadAliases())); }
+            try {
+              var lines0 = loadCatalogLines();
+              var aliases0 = loadAliases();
+              plan = buildPlan(rows, cols, makeResolver(lines0, aliases0), lines0, aliases0);
+            }
             catch (e) {
               window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。', 'Could not read the file (empty or invalid format).', '無法讀取檔案（空白或格式不正確）。'));
               return;
