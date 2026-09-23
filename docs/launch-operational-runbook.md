@@ -307,4 +307,4 @@ Browser: `window.__KPI_AUTH.clearUserScopedLocalData()` → logout → login。`
 
 02-B 成果物 = 本ファイル。  
 `BR-LAUNCH-02-A` CLOSED 2026-09-24（production automated PASS）。  
-`BR-LAUNCH-02` は parent audit 待ち。`BR-LAUNCH-03` は開始しない。
+`BR-LAUNCH-02` CLOSED 2026-09-24. Return `TRUNK-06`. `BR-LAUNCH-03` は開始しない。

@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-02
+TRUNK-06
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -20,7 +20,6 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
-- BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -28,12 +27,12 @@ REGISTERED (POST-LAUNCH importer; do not start):
 - Mixed income+expense parser (POST-LAUNCH; not a Launch blocker)
 - Advanced date/year inference (POST-LAUNCH; not a Launch blocker)
 - Import Preview expansion (POST-LAUNCH; not a Launch blocker)
-- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (CLOSED 2026-09-24)
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED P2)
 
 CLOSED (under TRUNK-06):
 - BR-LAUNCH-01 (Demo / New User State) P0 closed 2026-09-23
+- BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1 closed 2026-09-24
 
 CLOSED (under BR-LAUNCH-02):
 - BR-LAUNCH-02-A (Launch Regression Smoke / Cross-feature Regression) P1 closed 2026-09-24
@@ -99,7 +98,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-02-A` CLOSED. Parent `BR-LAUNCH-02` READY FOR AUDIT. Do not start `BR-LAUNCH-03`.
+`BR-LAUNCH-02` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`.
 ```
 
 ### Git snapshot????????
@@ -470,7 +469,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | `BR-LAUNCH-02` READY FOR AUDIT (02-A/02-B CLOSED). Do not start `BR-LAUNCH-03`. |
+| next_action | `BR-LAUNCH-02` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -1160,14 +1159,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-02` |
 | name | Production Smoke / Operational Runbook |
 | parent | `TRUNK-06` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-24 |
 | return_to | `TRUNK-06` |
 | reason | Production smoke / operational runbook after Demo / New-user (01) CLOSED. |
-| evidence | `BR-LAUNCH-02-B` CLOSED (runbook). `BR-LAUNCH-02-A` CLOSED (production regression PASS, Demo Pro rev 54 unchanged, no Launch blocker). READY FOR AUDIT. |
-| next_action | READY FOR AUDIT. Children 02-B / 02-A CLOSED. `close_when` met. Do not start `BR-LAUNCH-03`. |
-| close_when | Launch ops runbook contract exists AND `BR-LAUNCH-02-A` CLOSED. Then return `TRUNK-06`. |
+| evidence | Children 02-A/02-B CLOSED. Production regression PASS (Demo Pro rev 54 unchanged; Human Smoke NONE; founder/empty-state SKIP = ops password, not product FAIL). Runbook [`docs/launch-operational-runbook.md`](./launch-operational-runbook.md). Restore API not Launch-required. Launch blocker 0. |
+| next_action | N/A CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`. |
+| close_when | Launch ops runbook contract exists AND `BR-LAUNCH-02-A` CLOSED. Then return `TRUNK-06`. MET 2026-09-24. |
 
 ### BR-LAUNCH-02-A
 
@@ -1183,7 +1183,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-02` |
 | reason | After parent C remaining Launch-required children close, run cross-feature production smoke before Launch: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching. |
 | evidence | Production automated regression PASS 2026-09-24. Demo Pro revision 54 unchanged. Basic sales/BT match. Entitlement / picker z=20120 / 3-lang / stale_account 403 / registration_disabled / Template fallback PASS. Founder/empty-state login SKIP (ops password absent). Human Smoke NONE. Rollback not needed. No data mutation. |
-| next_action | N/A CLOSED. Return `BR-LAUNCH-02` (READY FOR AUDIT). Do not start `BR-LAUNCH-03`. |
+| next_action | N/A CLOSED. Parent `BR-LAUNCH-02` CLOSED. Do not start `BR-LAUNCH-03`. |
 | constraint | no product feature work in this node; smoke only |
 
 ### BR-LAUNCH-02-B
@@ -1306,7 +1306,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | name | status | priority | parent |
 |----|------|--------|----------|--------|
 | `BR-LAUNCH-01` | Demo / New User State | CLOSED | P0 | `TRUNK-06` |
-| `BR-LAUNCH-02` | Production Smoke / Operational Runbook | ACTIVE | P1 | `TRUNK-06` |
+| `BR-LAUNCH-02` | Production Smoke / Operational Runbook | CLOSED | P1 | `TRUNK-06` |
 | `BR-LAUNCH-02-B` | Launch Operational Runbook Inventory | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | CLOSED | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | CLOSED | P0 | `BR-LAUNCH-01-C` |
@@ -1322,7 +1322,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
-CLOSED under `TRUNK-06`: `BR-LAUNCH-01`  
+CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`, `BR-LAUNCH-01-C`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C1`, `BR-LAUNCH-01-C2`  
@@ -1333,7 +1333,7 @@ CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-03`, `BR-LAUNCH-04`  
-ACTIVE under `BR-LAUNCH-02`: none (`BR-LAUNCH-02-B` CLOSED)  
+ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -1422,3 +1422,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **BR-LAUNCH-02 parent audit** Purpose = Production Smoke + Operational Runbook. Direct child only `02-A` (REGISTER ONLY). Production evidence PARTIAL (01/C2 feature smokes, not Launch-wide). Runbook PARTIAL (FileZilla/deploy, Demo pack, free-trial ops, blob backup, C2-C stale_account; no single Launch ops contract for rollback/error/OCC restore). Registered `BR-LAUNCH-02-B` ACTIVE. Do not start `02-A`. Do not close 02. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-02 -> BR-LAUNCH-02-B`. |
 | 2026-09-24 | **BR-LAUNCH-02-B CLOSED** Launch ops inventory + contract [`docs/launch-operational-runbook.md`](./launch-operational-runbook.md). Demo/Account COMPLETE enough. Deploy/Backup/OCC/stale PARTIAL. Data restore API MISSING (Launch = no data rollback). Implementation Needed NO. Return `BR-LAUNCH-02`. `02-A` REGISTER ONLY (gate clear; do not auto-start). Do not close 02. |
 | 2026-09-24 | **BR-LAUNCH-02-A CLOSED** Production Launch regression automated PASS. Demo Pro revision 54 unchanged; Basic sales/BT match; no C2L4 on Demo. Entitlement / picker `elementFromPoint` z=20120 / 3-lang / stale_account 403 / registration_disabled / Template fallback PASS. Founder/empty-state login SKIP (ops password absent). Human Smoke NONE. Rollback not needed. Return `BR-LAUNCH-02` READY FOR AUDIT. Do not start `BR-LAUNCH-03`. |
+| 2026-09-24 | **BR-LAUNCH-02 CLOSED** Parent closeout: 02-A/02-B CLOSED; `close_when` met. Production smoke COMPLETE. Runbook Launch-complete (restore API not required). Founder/empty-state SKIP is not a Launch blocker. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`. |
