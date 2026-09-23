@@ -98,7 +98,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-02` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`.
+Next Launch phase = `BR-LAUNCH-03` (PAUSED). Do not start until owner opens. `BR-LAUNCH-04` stays PAUSED. `BR-LAUNCH-05` remains DEFERRED.
 ```
 
 ### Git snapshot????????
@@ -469,7 +469,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | `BR-LAUNCH-02` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`. |
+| next_action | Next Launch phase = `BR-LAUNCH-03` (PAUSED). Do not start until owner opens. `BR-LAUNCH-04` stays PAUSED. `BR-LAUNCH-05` remains DEFERRED. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -1215,8 +1215,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW ???????????? |
-| evidence | TRUNK-06 child?PAUSED? |
-| next_action | ???????? ACTIVE |
+| evidence | TRUNK-06 next-branch audit 2026-09-24: 01/02 CLOSED. Identified next Launch-required child. Not started. |
+| next_action | PAUSED. Next after 01/02. Do not start until owner opens `BR-LAUNCH-03`. |
 
 ### BR-LAUNCH-04
 
@@ -1231,7 +1231,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | ?????????????/?????? |
 | evidence | `pl-table-v1-implementation-spec.md`?B???UX ????; TRUNK-06 child?PAUSED? |
-| next_action | BR-LAUNCH-01 ?? ACTIVE ???? |
+| next_action | PAUSED. After `BR-LAUNCH-03`. Do not start now. |
 
 ### BR-LAUNCH-05
 
@@ -1423,3 +1423,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-02-B CLOSED** Launch ops inventory + contract [`docs/launch-operational-runbook.md`](./launch-operational-runbook.md). Demo/Account COMPLETE enough. Deploy/Backup/OCC/stale PARTIAL. Data restore API MISSING (Launch = no data rollback). Implementation Needed NO. Return `BR-LAUNCH-02`. `02-A` REGISTER ONLY (gate clear; do not auto-start). Do not close 02. |
 | 2026-09-24 | **BR-LAUNCH-02-A CLOSED** Production Launch regression automated PASS. Demo Pro revision 54 unchanged; Basic sales/BT match; no C2L4 on Demo. Entitlement / picker `elementFromPoint` z=20120 / 3-lang / stale_account 403 / registration_disabled / Template fallback PASS. Founder/empty-state login SKIP (ops password absent). Human Smoke NONE. Rollback not needed. Return `BR-LAUNCH-02` READY FOR AUDIT. Do not start `BR-LAUNCH-03`. |
 | 2026-09-24 | **BR-LAUNCH-02 CLOSED** Parent closeout: 02-A/02-B CLOSED; `close_when` met. Production smoke COMPLETE. Runbook Launch-complete (restore API not required). Founder/empty-state SKIP is not a Launch blocker. Return `TRUNK-06`. Do not start `BR-LAUNCH-03`. |
+| 2026-09-24 | **TRUNK-06 next Launch branch audit** 01/02 CLOSED. Remaining Launch-required = `BR-LAUNCH-03`, `BR-LAUNCH-04` (both PAUSED P1). `BR-LAUNCH-05` DEFERRED. Next phase = `BR-LAUNCH-03` by numeric order. Not started. CURRENT PATH stays `TRUNK-06`. Do not start 03/04/05. |
