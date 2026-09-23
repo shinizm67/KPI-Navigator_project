@@ -3,7 +3,7 @@
 更新日: 2026-09-24  
 枝: **BR-LAUNCH-02-B**  
 状態: Launch 運用契約 + 既存 docs の index。新機能は無い。  
-親: `BR-LAUNCH-02`。回帰スモーク `BR-LAUNCH-02-A` は別 node（REGISTER ONLY のあいだは実行しない）。
+親: `BR-LAUNCH-02`。回帰スモーク `BR-LAUNCH-02-A` は **CLOSED 2026-09-24**（production automated PASS。Demo Pro 不変。Human Smoke NONE）。
 
 本番 URL: `https://forge-laboratory.com/kpi-navigator/`  
 FTP 玄関: `public_html/kpi-navigator/`  
@@ -277,6 +277,20 @@ Browser: `window.__KPI_AUTH.clearUserScopedLocalData()` → logout → login。`
 | smoke | §4 最小の PASS/FAIL。02-A ならその表 |
 | Demo Pro | revision + 年商。触っていないこと |
 
+### 13.1 BR-LAUNCH-02-A evidence（2026-09-24）
+
+| 項目 | 値 |
+|------|-----|
+| git HEAD | `5518a8b`（runbook closeout; smoke did not deploy） |
+| accounts | Demo Basic / Demo Pro / Retail Smoke |
+| skipped | Founder / empty-state（ops に password なし） |
+| smoke | automated Launch regression PASS |
+| Demo Pro | revision **54** unchanged |
+| Demo Basic | sales 37,815,980 / 43,448,660 / 47,736,800; BT restaurant; expenses 0 |
+| mutation | NO |
+| rollback | not needed |
+| Human Smoke | NONE |
+
 ---
 
 ## 14. Human vs automatable
@@ -292,4 +306,5 @@ Browser: `window.__KPI_AUTH.clearUserScopedLocalData()` → logout → login。`
 ## 15. Close / next
 
 02-B 成果物 = 本ファイル。  
-`BR-LAUNCH-02` を閉じない。`BR-LAUNCH-02-A` は owner が開くまで REGISTER ONLY。
+`BR-LAUNCH-02-A` CLOSED 2026-09-24（production automated PASS）。  
+`BR-LAUNCH-02` は parent audit 待ち。`BR-LAUNCH-03` は開始しない。
