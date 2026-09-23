@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L5
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L6
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -24,11 +24,12 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
-- BR-LAUNCH-01-C2-L5 (Plan-independent Expense Storage + Basic / Pro Visibility) P1
+- BR-LAUNCH-01-C2-L6 (Flexible Translator Expansion — Launch Scope Audit) P1 audit only
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
-- BR-LAUNCH-01-C2-L6 Flexible Translator Expansion (POST-LAUNCH / LARGE)
+- BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
+- BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 
 CLOSED (under BR-LAUNCH-01):
 - BR-LAUNCH-01-A (New User Empty-State Contract) P0 ? closed 2026-09-20
@@ -52,6 +53,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L4 (Expense Classification Lifecycle) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L5-A (Plan-independent Expense Storage / Upgrade Safety) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L5-B (Basic / Pro Expense UI Entitlement) P1 closed 2026-09-23
+- BR-LAUNCH-01-C2-L5 (Plan-independent Expense Storage + Basic / Pro Visibility) P1 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -66,12 +68,16 @@ DEFERRED:
   reason: Feature works; discoverability is weak. Do not block CSV/Excel launch path.
 - BR-UI-PL-INSIGHT-FIRSTOPEN-PERF P3
   return when: Final Performance / Speed Optimization phase
+- BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile P2 POST-LAUNCH / DEFERRED
+  parent: BR-LAUNCH-01-C2-L6. REGISTER ONLY.
+- BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger P2 DEFERRED
+  parent: BR-LAUNCH-01-C2. REGISTER ONLY. Not an Excel clone.
 
 RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-L5-B CLOSED. Return to C2-L5. Do not start L6.
+C2-L5 CLOSED. C2-L6 Launch Scope Audit recorded 2026-09-23. Wait for explicit SMALL-subset implement. Do not implement now.
 ```
 
 ### Git snapshot????????
@@ -79,8 +85,8 @@ C2-L5-B CLOSED. Return to C2-L5. Do not start L6.
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `eb1a05d` (C2-L4 launch-safe classify) |
-| origin sync | ?????? |
+| HEAD | `80ae48c` (C2-L5-B first-load fail-closed docs) |
+| origin sync | in sync with origin before this checkpoint |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -530,8 +536,8 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 ACTIVE; L5-A CLOSED; L5-B CLOSED; L6 POST-LAUNCH / LARGE |
-| next_action | C2-L5-B CLOSED. Return to C2-L5. Do not start L6 |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 CLOSED; L5-A CLOSED; L5-B CLOSED; L6 ACTIVE (audit only); L6-A DEFERRED |
+| next_action | C2-L6 Launch Scope Audit recorded. Wait for explicit SMALL-subset implement. Do not implement now |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L6 spec only; tooltips DEFERRED |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -584,10 +590,11 @@ Guide to KPN Template only when the file is still uninterpretable.
 | C2-L1 | Business Type Import Gate | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L1-A | Profile Business Type / Genre Sync | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L2 | High-confidence Expense Synonyms | CLOSED | Automated production smoke PASS 2026-09-22 |
-| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | ACTIVE | L3-A CLOSED; mapping record is L3-B (do not start) |
-| C2-L4 | Expense Classification Lifecycle | SPEC-REGISTERED | unclassified / fixed-variable / order; spec only |
-| C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | SPEC-REGISTERED | spec only |
-| C2-L6 | Flexible Translator Expansion | POST-LAUNCH / LARGE | vertical/horizontal, mixed, inference, preview, template fallback |
+| C2-L3 | Unknown Label Preservation + Persistent Import Mapping Record | CLOSED | L3-A/L3-B CLOSED 2026-09-22 |
+| C2-L4 | Expense Classification Lifecycle | CLOSED | Human Smoke PASS 2026-09-22 |
+| C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | CLOSED | L5-A/L5-B + first-load PASS 2026-09-23 |
+| C2-L6 | Flexible Translator Expansion | ACTIVE | Launch Scope Audit only. Do not implement. |
+| C2-L6-A | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | reuse workbook sheet-role mapping |
 
 ### BR-LAUNCH-01-C2-L1
 
@@ -710,14 +717,16 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L5 |
 | name | Plan-independent Expense Storage + Basic / Pro Visibility |
 | parent | BR-LAUNCH-01-C2-L |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-22 |
+| closed_at | 2026-09-23 |
 | return_to | BR-LAUNCH-01-C2-L |
-| reason | Expense data must survive plan change on the server. Basic hides analysis UI. Pro hydrates existing expense without migration. Mixed CSV is L6. |
-| next_action | C2-L5-B CLOSED. Remaining parent closeout of C2-L5. Do not start L6. |
+| reason | Expense data must survive plan change on the server. Basic hides analysis UI. Pro hydrates existing expense without migration. |
+| evidence | L5-A storage PASS; L5-B gates PASS; Monthly first-load fail-closed production PASS (`151d736`). Human Smoke NO. |
+| next_action | CLOSED. Return to BR-LAUNCH-01-C2-L. |
 | constraint | no mixed parser; no horizontal CSV; no new DB/schema; no tooltips; no Stripe; no excel/; no Demo fixture |
-| phase | 1 AUDIT complete; L5-A implement storage |
+| phase | L5-A storage + L5-B UI entitlement + first-load fix CLOSED |
 
 ### BR-LAUNCH-01-C2-L5-A
 
@@ -748,7 +757,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | closed_at | 2026-09-23 |
 | return_to | BR-LAUNCH-01-C2-L5 |
 | reason | Storage vs UI entitlement split. Basic keeps Expense on server, hides Monthly Expense, gates MEP/PL via existing guardProPage. First-load fail-closed: Expense hidden until server-confirmed Pro (`151d736`). |
-| next_action | CLOSED. Return to C2-L5. Do not start L6. |
+| next_action | CLOSED. Return to C2-L5 (parent then CLOSED to C2-L). |
 | constraint | no L5-A storage change; no new auth framework; no Stripe; no schema; no excel/; no Demo fixture |
 
 ### BR-LAUNCH-01-C2-L6
@@ -758,13 +767,57 @@ Guide to KPN Template only when the file is still uninterpretable.
 | id | BR-LAUNCH-01-C2-L6 |
 | name | Flexible Translator Expansion |
 | parent | BR-LAUNCH-01-C2-L |
-| status | POST-LAUNCH / LARGE |
+| status | ACTIVE |
+| priority | P1 (audit only) |
+| started_at | 2026-09-23 |
+| return_to | BR-LAUNCH-01-C2-L |
+| phase | Launch Scope Audit |
+| reason | Decide whether any translator subset must enter October Launch. Not a full Excel clone. |
+| next_action | Audit recorded 2026-09-23. Wait for explicit implement of agreed SMALL subset. Do not implement now. |
+| constraint | no product code; no excel/; no Demo fixture; no real-world workbook in repo |
+
+#### C2-L6 canonical principles (2026-09-23)
+
+1. Do not reproduce every Excel/CSV feature in KPN. Prefer data that maps to Daily / Monthly / MEP / PL.
+2. Do not drop a valid expense the user has, if KPN can hold that line. Unused-looking extras are not the same as discard-by-policy.
+3. Granularity: keep daily when daily exists; accept monthly when only monthly exists. Do not coarsen daily just to simplify. Do not reject monthly for being coarse. Example: part-time labor monthly total -> monthly expense; daily labor cost -> daily expense.
+4. Complex workbooks: do not auto-understand all sheets. Preferred direction is Workbook -> sheet list -> user picks a sheet -> existing translator.
+5. Later, one workbook may name several sources (Sales, Monthly Expense, Daily Expense, Labor). Launch does not commit to a full Multi-sheet Import Profile.
+6. KPN limits sheet purpose. Candidates: Sales data / Monthly Expense / Daily Expense / Ignore. Do not turn the importer into an accounting suite.
+
+#### C2-L6 Launch Scope Audit (2026-09-23)
+
+Product boundary: translate business data into Daily / Monthly / MEP / PL. Do not recreate Excel.
+
+| Candidate | Class | Note |
+|-----------|-------|------|
+| Sheet Picker (list → user pick → existing translator) | LAUNCH-SHOULD | Separate from multi-sheet auto-analysis. SheetJS `SheetNames` already available. Current importer is first-sheet-only. |
+| Sheet Purpose Mapping UI | POST-LAUNCH | Launch purpose is implicit via upload surface (Sales vs Expense). Unified mapping UI is not required yet. |
+| Horizontal unpivot | POST-LAUNCH | Template fallback. Parser redesign + false-positive risk. |
+| Mixed income+expense on one sheet | POST-LAUNCH | Not the same as multi-sheet merge. Split in Excel or Template. |
+| Granularity preservation | LAUNCH-MUST (policy) | Daily source stays daily; monthly stays monthly. Auto source-priority engine is POST-LAUNCH; user chooses by which sheet/file they import. |
+| Formula cached values | LAUNCH-MUST (contract) | Read `cell.v` only. No formula engine. Cross-sheet OK if Excel cached. External / missing cache = skip or fail that cell. |
+| Advanced date/year inference (M/D, sheet name, filename) | POST-LAUNCH | Keep YYYY-MM-DD / YYYY-MM / Excel serial. Avoid false positives. |
+| Multi-sheet Import Profile (L6-A) | POST-LAUNCH / DEFERRED | Depends on Picker + Purpose. Do not build before Launch. |
+| Template fallback | LAUNCH-MUST (golden path) | Sufficient for unsupported layout. PARTIAL for ~20-sheet real workbooks. |
+| Auto-understand all sheets / formula reimplementation / accounting suite | REJECT | Out of KPN boundary. |
+
+Recommended Launch subset: SMALL (current vertical translator + Template). Optional SHOULD: Sheet Picker only, if 3-language UX is agreed in a later implement task. Do not implement now.
+
+### BR-LAUNCH-01-C2-L6-A
+
+| Field | Value |
+|-------|-------|
+| id | BR-LAUNCH-01-C2-L6-A |
+| name | Multi-sheet Import Profile |
+| parent | BR-LAUNCH-01-C2-L6 |
+| status | POST-LAUNCH / DEFERRED |
 | priority | P2 |
 | started_at | not started |
-| return_to | BR-LAUNCH-01-C2-L |
-| reason | Vertical/horizontal, mixed income+expense, date inference, richer preview, template fallback |
-| next_action | Post-launch candidate. Do not start. |
-| constraint | native CSV/Excel before Template; Template remains Golden Path |
+| return_to | BR-LAUNCH-01-C2-L6 |
+| reason | Save sheet-role mapping for the same workbook layout and reuse next month. Depends on Sheet Picker + Purpose Mapping. |
+| next_action | REGISTER ONLY. Do not implement. |
+| constraint | no auto multi-sheet analysis; no product code now |
 
 ### BR-LAUNCH-01-C2-K
 
@@ -1087,6 +1140,22 @@ Guide to KPN Template only when the file is still uninterpretable.
 | scope | expense row label hover: 「クリックして科目設定を編集」; 科目管理: 「未分類の取込費目を分類できます」; fixed/variable selection preserves amount when safe; daily data prevents fixed classification — explain why blocked |
 | next_action | REGISTER ONLY. Do not implement tooltips now. |
 
+
+### BR-POST-EXPENSE-LEDGER
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-EXPENSE-LEDGER` |
+| name | Purchase / Expense Ledger to MEP / PL |
+| parent | `BR-LAUNCH-01-C2` |
+| status | DEFERRED |
+| priority | P2 |
+| started_at | not started |
+| return_to | `BR-LAUNCH-01-C2` |
+| reason | Primary spend ledger (date, vendor, genre, amount, pay method, account) feeding Daily Expense -> MEP -> PL. Restaurant food/drink purchase; retail stock; beauty materials; hotel amenity. Input from receipts/invoices/delivery slips. |
+| next_action | REGISTER ONLY. Do not implement. Not an Excel accounting clone. |
+| constraint | no Launch parser work; no Demo fixture; no excel/ |
+
 ### BR-UI-PL-INSIGHT-FIRSTOPEN-PERF
 
 | ????? | ? |
@@ -1112,20 +1181,23 @@ Guide to KPN Template only when the file is still uninterpretable.
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
-| `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | CLOSED | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5-A` | Plan-independent Expense Storage / Upgrade Safety | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
 | `BR-LAUNCH-01-C2-L5-B` | Basic / Pro Expense UI Entitlement | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
-| `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | POST-LAUNCH / LARGE | P2 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | ACTIVE (audit only) | P1 | `BR-LAUNCH-01-C2-L` |
+| `BR-LAUNCH-01-C2-L6-A` | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | P2 | `BR-LAUNCH-01-C2-L6` |
+| `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
-CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`  
-CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`  
+CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`, `BR-LAUNCH-01-C2-L5`  
+CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
-DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`
+DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
+DEFERRED importer: `BR-LAUNCH-01-C2-L6-A` (parent L6), `BR-POST-EXPENSE-LEDGER` (parent C2)
 
 ---
 
@@ -1190,3 +1262,5 @@ DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2)
 | 2026-09-22 | **BR-LAUNCH-01-C2-L3 CLOSED**. **C2-L4 ACTIVE** Phase 1 AUDIT only (no classification UI / no amount move) |
 | 2026-09-22 | **C2-L4 launch-safe implement** custom-only setLineBucket; daily-data BLOCK; unknown hold → classified custom (hold resolved, not deleted). Human Smoke 1 UX block. Do not start L5 / L6 |
 | 2026-09-22 | **BR-LAUNCH-01-C2-L4 CLOSED** Human Smoke PASS (custom 販促費 → 固定費 amount kept; unknown 予約媒体利用料 → 変動費 6789). Tooltip discoverability follow-up not started. CURRENT PATH -> C2-L |
+| 2026-09-23 | **BR-LAUNCH-01-C2-L5 CLOSED** L5-A storage + L5-B entitlement + Monthly first-load fail-closed production PASS (`151d736`). Human Smoke NO. Return C2-L. |
+| 2026-09-23 | **BR-LAUNCH-01-C2-L6 ACTIVE** Launch Scope Audit only. Canonical principles registered. L6-A Multi-sheet Import Profile and BR-POST-EXPENSE-LEDGER DEFERRED. CURRENT PATH -> C2-L6. Do not implement. |
