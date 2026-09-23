@@ -69,7 +69,7 @@ PAUSED (under TRUNK-06):
 
 DEFERRED:
 - BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression P1 DEFERRED / ACTIVE-LATER
-  parent: BR-LAUNCH-02. REGISTER ONLY. Do not start while `BR-LAUNCH-01-C1` is ACTIVE. Run before Launch after parent C Launch-required children close.
+  parent: BR-LAUNCH-02. REGISTER ONLY. Parent C / C1 CLOSED. Do not start until owner opens `BR-LAUNCH-01` remaining / Launch Regression.
   covers: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
   note: Stripe / billing ????????????????? assessment ????
@@ -92,7 +92,7 @@ DEFERRED:
   parent: BR-LAUNCH-01-C2. REGISTER ONLY. Not an Excel clone.
 
 RETURN TARGET:
-BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
+BR-LAUNCH-01 -> TRUNK-06
 
 NEXT ACTION:
 BR-LAUNCH-01-C CLOSED (C0/C1/C2). Return `BR-LAUNCH-01`. Do not start `BR-LAUNCH-02-A`.
@@ -103,7 +103,7 @@ BR-LAUNCH-01-C CLOSED (C0/C1/C2). Return `BR-LAUNCH-01`. Do not start `BR-LAUNCH
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `e02096a` (C1 audit) |
+| HEAD | `10e04d4` (C1 CLOSED: restaurant-v1 tracked + Demo Basic sales-only) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1161,7 +1161,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | ?????????????? |
 | evidence | TRUNK-06 child?PAUSED until BR-LAUNCH-01? |
-| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). Do not start until parent C remaining Launch-required children close (`BR-LAUNCH-01-C1` still ACTIVE). |
+| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). Parent C / C1 CLOSED. Do not start until owner opens `BR-LAUNCH-01` remaining / Launch Regression. |
 
 ### BR-LAUNCH-02-A
 
