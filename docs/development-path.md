@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -22,7 +22,6 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01 (Demo / New User State) P0
 - BR-LAUNCH-01-C (Demo Seed / Demo Reset) P0
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
-- BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -61,6 +60,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L6 (Flexible Translator Expansion) P1 closed 2026-09-23
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0 closed 2026-09-23
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0 closed 2026-09-23
+- BR-LAUNCH-01-C2 (Demo Operation Pack) P0 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -92,10 +92,10 @@ DEFERRED:
   parent: BR-LAUNCH-01-C2. REGISTER ONLY. Not an Excel clone.
 
 RETURN TARGET:
-BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
+BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2 final production import smoke: importer routing PASS; remaining 1 BLOCK = Annual/Past Sales Sheet Picker under host modal (z-index 13000 vs 20055). Human visual not required. Do not close C2.
+BR-LAUNCH-01-C2 CLOSED. Return BR-LAUNCH-01-C. Human Smoke NONE. Do not start BR-LAUNCH-02-A.
 ```
 
 ### Git snapshot????????
@@ -103,7 +103,7 @@ C2 final production import smoke: importer routing PASS; remaining 1 BLOCK = Ann
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `9db939e` (Annual BT hydrate closeout) |
+| HEAD | `751ce10` (Sheet Picker layering) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1099,13 +1099,14 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-01-C2` |
 | name | Demo Operation Pack |
 | parent | `BR-LAUNCH-01-C` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-23 |
 | return_to | `BR-LAUNCH-01-C` |
 | reason | ???????????? 3 ?????Demo Reset / Sales CSV / Expenses CSV? |
-| evidence | fixtures/demo/restaurant-v1 ?? CSV ????integrity OK??docs/demo-operation-pack.md?Reset=reuse reset-user-kpi?runtime ???????? |
-| next_action | Final production import smoke: MEP/PL/BT/3-lang/data-unchanged PASS. Remaining 1 BLOCK: Annual/Past Sales Sheet Picker z-index 13000 under host modal 20055 (pointer hits sales grid). Human visual not required. Do not close C2. |
+| evidence | fixtures/demo/restaurant-v1 ?? CSV ????integrity OK??docs/demo-operation-pack.md?Reset=reuse reset-user-kpi?runtime ???????? Sheet Picker z-index 20120 production pointer smoke PASS `751ce10` |
+| next_action | N/A CLOSED. Return BR-LAUNCH-01-C. Human Smoke NONE. Do not start BR-LAUNCH-02-A. |
 | pack | Reset + sales_2024|2025|2026 + expenses daily/monthly |
 | demo_basic | `kpn_demo_restaurant_basic01@?` / `u_7aac8cb5cbb0f607` |
 | demo_pro | `kpn_demo_restaurant_pro01@?` / `u_a57d33d6ae864d99` |
@@ -1380,3 +1381,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **C2 pre-Human automated import smoke** local 6 PASS; production MEP/PL picker+mapping+cancel PASS; 3-lang picker/fallback PASS; Basic entitlement PASS; stale 403 PASS. FAIL: Annual client BT gap (server restaurant/retail, Annual isBusinessTypeSet=false). Human visual 1 BLOCK (4 screens). Registered `BR-LAUNCH-02-A`. Do not close C2. |
 | 2026-09-23 | **Annual client BT hydration gap fix** `045c648`. Cause: Annual never called `enableSessionStoreSyncIfAuthed` so cookie-auth Playwright skipped store GET. Fix: Annual-only (JP/EN/ZH-TW) same MEP helper; explicit server BT hydrates before import gate; restaurant fallback does not satisfy `isBusinessTypeSet()`. Production A-E PASS (restaurant/retail/unset/reload/3-lang). MEP/PL still PASS. Do not close C2 (Human visual 1 BLOCK remains). |
 | 2026-09-23 | **C2 final production Demo Import smoke** BT hydrate + MEP/PL picker/mapping/confirm/cancel + 3-lang + stale 403 + Demo Pro/Retail data unchanged PASS. Remaining 1 BLOCK: Annual/Past Sales Sheet Picker z-index 13000 under host modal 20055 (`elementFromPoint` hits sales grid). Human visual not required. Do not close C2. `BR-LAUNCH-02-A` not started. |
+| 2026-09-23 | **C2 CLOSED** Sheet Picker layering `751ce10`: shared picker z-index 13000→20120 (above host 20055, below leave-close 20150). Production pointer smoke PASS (Annual/Past Sales `elementFromPoint` hits picker; MEP/PL/3-lang/fallback/BT gate; Demo data unchanged). Human Smoke NONE. Return BR-LAUNCH-01-C. Do not start `BR-LAUNCH-02-A`. |
