@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C1
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -95,7 +95,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2 CLOSED. Parent C remains ACTIVE because `BR-LAUNCH-01-C1` is still P0 ACTIVE. Next = `BR-LAUNCH-01-C1`. Do not close C. Do not start `BR-LAUNCH-02-A`.
+C1 audit evidence COMPLETE. Fixture restaurant-v1 PASS. Demo Pro persistable fields MATCH. Demo Basic is empty BT-unset (not the sales-only pack). Do not close C1/C. Do not reset/reseed Demo Pro. Do not start `BR-LAUNCH-02-A`.
 ```
 
 ### Git snapshot????????
@@ -103,7 +103,7 @@ C2 CLOSED. Parent C remains ACTIVE because `BR-LAUNCH-01-C1` is still P0 ACTIVE.
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `ca273c3` (C2 closeout) |
+| HEAD | `4b1e1c6` (post-C2 parent C audit) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -534,7 +534,7 @@ CLOSED node ? **?????**??????????????
 | return_to | `BR-LAUNCH-01` |
 | reason | New User Empty-State / Smoke Reset ? CLOSED????????????????????? |
 | evidence | 01-A/01-B CLOSED; New User Reset ? Demo Reset; ??: wipe API ????user store inject API ???; meal/customers ? `years[].dailyMeal`?daily-inputs ? sales/BD ???; ?? `excel/*_official*` + `tests/generated-fixtures/`; Founder User Detail ??? UI ?? |
-| next_action | C2 CLOSED. Child `BR-LAUNCH-01-C1` still ACTIVE P0. Do not close C. Do not start `BR-LAUNCH-02-A`. |
+| next_action | C1 fixture audit COMPLETE (PASS). Remaining Launch gap under C = Demo Basic not seeded. Do not reset Demo Pro. Do not start `BR-LAUNCH-02-A`. |
 | constraint | ?????? UI ??????Founder/Admin ??????random ???01-B empty reset ??? |
 | audit_note | Demo Reset = wipe?reuse `reset-user-kpi`?? apply seed ? `__KPI_AUTH.clear` ? re-login |
 | confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
@@ -1142,8 +1142,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | 2026-09-20 |
 | return_to | `BR-LAUNCH-01-C` |
 | reason | Demo Seed API ?? generated-fixtures ???? restaurant Demo v1 ? deterministic dataset ??????? |
-| evidence | `tests/generated-fixtures/` = CSV smoke?`csv_smoke_fixture_generator.py`??L/D ???????????????? expense?plan/PR ?????? PARTIAL |
-| next_action | C2 CLOSED. Resume C1 (dataset contract still PARTIAL). Do not close C. Do not start `BR-LAUNCH-02-A`. |
+| evidence | 2026-09-23 GET-only audit. Canonical pack = `fixtures/demo/restaurant-v1` (not `tests/generated-fixtures`). Fixture integrity PASS (2024-2026 sales/expense, Sunday closed, L/D/F/Dr splits, catalog lineIds). Demo Pro GET MATCH persistable: BT restaurant, plan pro, sales/BD/daily-inputs exact, expenses daily+monthly totals exact, dinner/customers/groups persisted, no C2L4 smoke. Lunch_* validation-only (empty on server, product 6a). food/drink sales not in dailyIncome via Annual import path. `pl.catalog` empty (runtime presets). Demo Basic: plan basic, BT unset, store empty (C2-L entitlement smoke reuse; pack sales-only dataset NOT applied). |
+| next_action | Stay ACTIVE. Remaining Launch gap = Demo Basic not seeded. Do not reset Demo Pro. Do not start `BR-LAUNCH-02-A`. |
 | constraint | runtime????; dataset??????????; excel untouched |
 
 ### BR-LAUNCH-02
@@ -1383,3 +1383,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **C2 final production Demo Import smoke** BT hydrate + MEP/PL picker/mapping/confirm/cancel + 3-lang + stale 403 + Demo Pro/Retail data unchanged PASS. Remaining 1 BLOCK: Annual/Past Sales Sheet Picker z-index 13000 under host modal 20055 (`elementFromPoint` hits sales grid). Human visual not required. Do not close C2. `BR-LAUNCH-02-A` not started. |
 | 2026-09-23 | **C2 CLOSED** Sheet Picker layering `751ce10`: shared picker z-index 13000→20120 (above host 20055, below leave-close 20150). Production pointer smoke PASS (Annual/Past Sales `elementFromPoint` hits picker; MEP/PL/3-lang/fallback/BT gate; Demo data unchanged). Human Smoke NONE. Return BR-LAUNCH-01-C. Do not start `BR-LAUNCH-02-A`. |
 | 2026-09-23 | **Post-C2 parent path audit** C remains ACTIVE. Remaining Launch-required child = `BR-LAUNCH-01-C1` (P0, dataset contract PARTIAL). C0/C2 CLOSED. `BR-LAUNCH-02-A` still REGISTER ONLY. Do not close C. |
+| 2026-09-23 | **BR-LAUNCH-01-C1 audit** restaurant-v1 fixture PASS (integrity+seasonality+YoY). generated-fixtures classified as test/smoke, distinct SHA. Production Demo Pro GET MATCH persistable totals; lunch validation-only; no C2L4 contamination (those labels live on Retail Smoke). Demo Basic empty BT-unset. C1 remains ACTIVE. No reset/reseed/import. `BR-LAUNCH-02-A` not started. |
