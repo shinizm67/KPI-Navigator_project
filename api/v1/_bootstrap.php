@@ -7,7 +7,7 @@ function kpi_v1_send_cors($origin)
 {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token');
+    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token, X-KPI-Expected-User');
     header('Access-Control-Max-Age: 86400');
 }
 

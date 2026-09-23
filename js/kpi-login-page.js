@@ -1,6 +1,6 @@
 /**
  * Login page submit wiring (JA / EN / zh-tw).
- * Requires kpi-auth-client.js?v=20260923-c2l5b loaded first.
+ * Requires kpi-auth-client.js?v=20260923-c2c loaded first.
  */
 (function () {
   'use strict';
@@ -11,7 +11,7 @@
   var btnLogin = document.getElementById('btn-login');
   if (!form || !userId || !password || !btnLogin) return;
   if (!window.__KPI_AUTH) {
-    console.warn('[KPI Auth] kpi-auth-client.js?v=20260923-c2l5b not loaded');
+    console.warn('[KPI Auth] kpi-auth-client.js?v=20260923-c2c not loaded');
     return;
   }
 

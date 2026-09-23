@@ -95,11 +95,11 @@ def main() -> int:
     for rel in APP_PAGES + SETTING_PAGES:
         html = read(rel)
         check(f"{rel}: auth-client present", "kpi-auth-client.js" in html)
-        check(f"{rel}: auth-client cache-bust", "kpi-auth-client.js?v=20260923-c2l5b" in html)
+        check(f"{rel}: auth-client cache-bust", "kpi-auth-client.js?v=20260923-c2c" in html)
 
     for rel in PUBLIC_PAGES:
         html = read(rel)
-        check(f"{rel}: auth-client cache-bust", "kpi-auth-client.js?v=20260923-c2l5b" in html)
+        check(f"{rel}: auth-client cache-bust", "kpi-auth-client.js?v=20260923-c2c" in html)
 
     # Profile identity contract still wired
     check(

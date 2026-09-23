@@ -60,6 +60,102 @@
   var pendingUserScopeStoreReset = false;
   /** Skip migrateLegacy / reconcile on next KpiYearStore init after user switch. */
   var pendingUserScopeLegacySkip = false;
+  /** Tab-lifetime identity snapshot. Marker: KPI-C2-C-STALE-ACCOUNT */
+  var pageUserId = '';
+  var staleAccount = false;
+
+  function getPageUserId() {
+    return pageUserId || '';
+  }
+
+  function isStaleAccount() {
+    if (staleAccount) return true;
+    if (!pageUserId) return false;
+    var last = readLastKpiUserId();
+    return !!(last && last !== pageUserId);
+  }
+
+  function snapshotPageUserId(userId) {
+    var uid = userId != null ? String(userId) : '';
+    if (!uid) return;
+    pageUserId = uid;
+    staleAccount = false;
+  }
+
+  function staleAccountMessage() {
+    var raw = '';
+    try {
+      raw = String((document.documentElement && document.documentElement.getAttribute('lang')) || '');
+    } catch (_eLang) {}
+    var l = raw.toLowerCase();
+    if (l.indexOf('zh') === 0) {
+      return '其他分頁的登入帳號已變更。請重新載入此畫面後再操作。';
+    }
+    if (l.indexOf('ja') === 0) {
+      return '別のタブでログイン中のアカウントが変更されました。この画面を再読み込みしてから操作してください。';
+    }
+    return 'The signed-in account changed in another tab. Reload this page before continuing.';
+  }
+
+  function markStaleAccount() {
+    staleAccount = true;
+    try {
+      var gw = global.__KPI_DATA_GATEWAY;
+      if (gw && typeof gw.holdPutsForStaleAccount === 'function') {
+        gw.holdPutsForStaleAccount();
+      }
+    } catch (_eHold) {}
+    try {
+      global.dispatchEvent(
+        new CustomEvent('kpi:staleAccount', { detail: { pageUserId: pageUserId || null } })
+      );
+    } catch (_eEv) {}
+  }
+
+  function showStaleAccountWarning() {
+    var msg = staleAccountMessage();
+    try {
+      global.alert(msg);
+    } catch (_eAlert) {}
+  }
+
+  /**
+   * Block user-data mutations when this tab's snapshot disagrees with the shared last user.
+   * Does not silent-reload. notify=false for automatic PUT timers.
+   */
+  function assertCanMutateUserData(opts) {
+    opts = opts || {};
+    var notify = opts.notify !== false;
+    if (!isStaleAccount()) return true;
+    if (!staleAccount) markStaleAccount();
+    if (notify) showStaleAccountWarning();
+    return false;
+  }
+
+  function attachExpectedUser(headers, body) {
+    headers = headers && typeof headers === 'object' ? headers : {};
+    var uid = pageUserId || '';
+    if (uid) {
+      headers['X-KPI-Expected-User'] = uid;
+      if (body && typeof body === 'object' && !Array.isArray(body)) {
+        body.expectedUserId = uid;
+      }
+    }
+    return { headers: headers, body: body };
+  }
+
+  function onLastKpiUserStorage(ev) {
+    if (!ev || ev.key !== LAST_USER_KEY) return;
+    var next = ev.newValue != null ? String(ev.newValue) : '';
+    if (!pageUserId || !next) return;
+    if (next !== pageUserId) markStaleAccount();
+  }
+
+  try {
+    global.addEventListener('storage', onLastKpiUserStorage);
+  } catch (_eSto) {}
+  /** Skip migrateLegacy / reconcile on next KpiYearStore init after user switch. */
+  var pendingUserScopeLegacySkip = false;
 
   function resolveAppRoot() {
     var path = global.location.pathname || '';
@@ -205,6 +301,7 @@
       pendingUserScopeLegacySkip = true;
       clearUserScopedLocalData();
       writeLastKpiUserId(uid);
+      snapshotPageUserId(uid);
       try {
         global.dispatchEvent(
           new CustomEvent('kpi:localUserScopeChanged', {
@@ -214,6 +311,7 @@
       } catch (_eEv) {}
       return { switched: true, cleared: true, previousUserId: prev, userId: uid };
     }
+    snapshotPageUserId(uid);
     return { switched: false, cleared: false, previousUserId: prev, userId: uid };
   }
 
@@ -245,6 +343,23 @@
 
   function request(method, path, body, extraHeaders) {
     var url = resolveAuthBase() + path;
+    var mutating =
+      method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+    var publicPath =
+      String(path).indexOf('/auth/login') >= 0 ||
+      String(path).indexOf('/auth/register') >= 0 ||
+      String(path).indexOf('/auth/forgot') >= 0 ||
+      String(path).indexOf('/auth/reset') >= 0;
+    var logoutPath = String(path).indexOf('/auth/logout') >= 0;
+    if (mutating && !publicPath) {
+      if (!assertCanMutateUserData({ notify: !logoutPath })) {
+        return Promise.resolve({ status: 403, data: { ok: false, error: 'stale_account' } });
+      }
+      extraHeaders = extraHeaders && typeof extraHeaders === 'object' ? extraHeaders : {};
+      var attached = attachExpectedUser(extraHeaders, body);
+      extraHeaders = attached.headers;
+      body = attached.body;
+    }
     var opts = {
       method: method,
       credentials: 'include',
@@ -824,6 +939,9 @@
       if (isZh) return '目前暫停接受新註冊。';
       return 'New registrations are temporarily unavailable.';
     }
+    if (code === 'stale_account') {
+      return staleAccountMessage();
+    }
     if (code === 'entitlement_required' || status === 403) {
       if (isJa) return 'この機能には Pro プランが必要です。';
       if (isZh) return '此功能需要 Pro 方案。';
@@ -869,6 +987,13 @@
     consumePendingUserScopeReset: consumePendingUserScopeReset,
     consumeUserScopeLegacySkip: consumeUserScopeLegacySkip,
     readLastKpiUserId: readLastKpiUserId,
+    getPageUserId: getPageUserId,
+    isStaleAccount: isStaleAccount,
+    markStaleAccount: markStaleAccount,
+    assertCanMutateUserData: assertCanMutateUserData,
+    attachExpectedUser: attachExpectedUser,
+    staleAccountMessage: staleAccountMessage,
+    showStaleAccountWarning: showStaleAccountWarning,
     errorMessage: errorMessage,
   };
 

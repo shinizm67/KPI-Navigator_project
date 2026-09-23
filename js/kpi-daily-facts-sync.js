@@ -61,7 +61,34 @@
       var o = raw ? JSON.parse(raw) : null;
       if (o && o.token) headers['X-KPI-Store-Token'] = String(o.token);
     } catch (_e) {}
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+        headers = window.__KPI_AUTH.attachExpectedUser(headers, null).headers;
+      }
+    } catch (_eExp) {}
     return headers;
+  }
+
+  function blockedUserMutation(notify) {
+    try {
+      if (
+        window.__KPI_AUTH &&
+        typeof window.__KPI_AUTH.assertCanMutateUserData === 'function' &&
+        !window.__KPI_AUTH.assertCanMutateUserData({ notify: !!notify })
+      ) {
+        return true;
+      }
+    } catch (_e) {}
+    return false;
+  }
+
+  function withExpectedUser(payload) {
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+        return window.__KPI_AUTH.attachExpectedUser({}, payload).body || payload;
+      }
+    } catch (_e) {}
+    return payload;
   }
 
   function shiftMonth(year, month0, delta) {
@@ -163,6 +190,7 @@
 
   function putYear(year) {
     if (!readSyncEnabled()) return;
+    if (blockedUserMutation(false)) return;
     var y = Number(year);
     if (!Number.isFinite(y)) return;
     var rows = collectYearRows(y);
@@ -171,7 +199,7 @@
       method: 'PUT',
       headers: buildHeaders(),
       credentials: 'include',
-      body: JSON.stringify({ rows: rows }),
+      body: JSON.stringify(withExpectedUser({ rows: rows })),
     }).catch(function () {});
   }
 
@@ -220,11 +248,14 @@
     var REBUILD_TIMEOUT_MS = 60000;
     var controller = typeof AbortController === 'function' ? new AbortController() : null;
     var timer = null;
+    if (blockedUserMutation(false)) {
+      return Promise.resolve({ ok: false, error: 'stale_account' });
+    }
     var fetchOpts = {
       method: 'POST',
       headers: buildHeaders(),
       credentials: 'include',
-      body: JSON.stringify({ year: y }),
+      body: JSON.stringify(withExpectedUser({ year: y })),
     };
     if (controller) fetchOpts.signal = controller.signal;
     var timed = new Promise(function (resolve) {

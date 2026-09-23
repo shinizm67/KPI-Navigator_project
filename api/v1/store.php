@@ -118,6 +118,7 @@ if ($method === 'PUT') {
     if (!is_object($body)) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_json']);
     }
+    kpi_v1_require_expected_user($userId, $body);
     $expectedParsed = kpi_v1_parse_expected_revision($body);
     if (isset($expectedParsed['error'])) {
         if ($expectedParsed['error'] === 'precondition_required') {

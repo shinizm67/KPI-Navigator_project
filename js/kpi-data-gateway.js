@@ -553,6 +553,11 @@
     if (cfg.token && (cfg.authMode === 'token' || cfg.authMode === 'dual')) {
       headers['X-KPI-Store-Token'] = cfg.token;
     }
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+        headers = window.__KPI_AUTH.attachExpectedUser(headers, null).headers;
+      }
+    } catch (_eExp) {}
     return headers;
   }
 
@@ -777,10 +782,16 @@
   function buildPutBody(cfg) {
     var expected = serverRevision === undefined ? null : serverRevision;
     if (pendingPutKind === 'nav') {
-      return {
+      var navBody = {
         annualNav: localGet(NAV_KEY),
         expectedRevision: expected,
       };
+      try {
+        if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+          navBody = window.__KPI_AUTH.attachExpectedUser({}, navBody).body || navBody;
+        }
+      } catch (_eNavExp) {}
+      return navBody;
     }
     var storePayload = storePayloadForPut();
     var body = {
@@ -788,6 +799,11 @@
       annualNav: localGet(NAV_KEY),
       expectedRevision: expected,
     };
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+        body = window.__KPI_AUTH.attachExpectedUser({}, body).body || body;
+      }
+    } catch (_eExpBody) {}
     if (localTier() === 'basic') {
       body.store = stripProFromStore(storePayload);
     } else if (!plRehydrateHold) {
@@ -801,6 +817,18 @@
     if (!canSync(cfg) || userScopePutHold || hookQuiet || conflictPutHold) return false;
     if (plRehydrateHold) return false;
     if (!hydrateComplete) return false;
+    try {
+      if (
+        window.__KPI_AUTH &&
+        typeof window.__KPI_AUTH.assertCanMutateUserData === 'function' &&
+        !window.__KPI_AUTH.assertCanMutateUserData({ notify: false })
+      ) {
+        return false;
+      }
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.getPageUserId === 'function') {
+        if (!window.__KPI_AUTH.getPageUserId()) return false;
+      }
+    } catch (_eStale) {}
     return true;
   }
 
@@ -835,6 +863,22 @@
             data = data && typeof data === 'object' ? data : {};
             if (res.status === 409 || data.error === 'conflict') {
               return handlePutConflict(data);
+            }
+            if (data.error === 'stale_account') {
+              try {
+                if (window.__KPI_AUTH && typeof window.__KPI_AUTH.markStaleAccount === 'function') {
+                  window.__KPI_AUTH.markStaleAccount();
+                }
+                if (window.__KPI_AUTH && typeof window.__KPI_AUTH.showStaleAccountWarning === 'function') {
+                  window.__KPI_AUTH.showStaleAccountWarning();
+                }
+              } catch (_eStaleRes) {}
+              return {
+                ok: false,
+                conflict: false,
+                status: res.status,
+                error: 'stale_account',
+              };
             }
             if (!res.ok) {
               return {
@@ -882,6 +926,15 @@
 
   function flushPut() {
     cfg = readSyncConfig();
+    try {
+      if (
+        window.__KPI_AUTH &&
+        typeof window.__KPI_AUTH.assertCanMutateUserData === 'function' &&
+        !window.__KPI_AUTH.assertCanMutateUserData({ notify: true })
+      ) {
+        return Promise.resolve({ ok: false, error: 'stale_account' });
+      }
+    } catch (_eFlushStale) {}
     if (putTimer != null) {
       window.clearTimeout(putTimer);
       putTimer = null;
@@ -1281,6 +1334,14 @@
         baseUrl: cfg.baseUrl,
         hasToken: !!cfg.token,
       };
+    },
+    /** Hold PUTs after cross-tab account switch. Do not hydrate or wipe local edits. */
+    holdPutsForStaleAccount: function () {
+      if (putTimer != null) {
+        window.clearTimeout(putTimer);
+        putTimer = null;
+      }
+      userScopePutHold = true;
     },
     /** Suppress LS→PUT while auth clears another account's keys (KPI-LS-USER-SCOPE-7). */
     beginLocalUserScopeReset: function () {

@@ -11,7 +11,7 @@ function kpi_v1_auth_cors($cfg)
     $origin = isset($cfg['corsOrigin']) ? (string) $cfg['corsOrigin'] : '*';
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Plan-Admin-Token');
+    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Plan-Admin-Token, X-KPI-Expected-User');
     header('Access-Control-Max-Age: 86400');
     if ($origin !== '*') {
         header('Access-Control-Allow-Credentials: true');
@@ -156,6 +156,46 @@ function kpi_v1_auth_read_json_body()
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_json']);
     }
     return $body;
+}
+
+/**
+ * Stale-tab guard (C2-C). Does not choose the save target.
+ * Target remains session/token user. expectedUserId / X-KPI-Expected-User
+ * only rejects mutations when the page snapshot disagrees with the session.
+ */
+function kpi_v1_expected_user_from_request($body = null)
+{
+    $header = '';
+    if (!empty($_SERVER['HTTP_X_KPI_EXPECTED_USER'])) {
+        $header = trim((string) $_SERVER['HTTP_X_KPI_EXPECTED_USER']);
+    }
+    $fromBody = '';
+    if (is_object($body) && isset($body->expectedUserId)) {
+        $fromBody = trim((string) $body->expectedUserId);
+    } elseif (is_array($body) && array_key_exists('expectedUserId', $body)) {
+        $fromBody = trim((string) $body['expectedUserId']);
+    }
+    if ($header !== '') {
+        return $header;
+    }
+    return $fromBody;
+}
+
+function kpi_v1_require_expected_user($sessionUserId, $body = null)
+{
+    $expected = kpi_v1_expected_user_from_request($body);
+    if ($expected === '') {
+        kpi_v1_json_out(428, [
+            'ok' => false,
+            'error' => 'precondition_required',
+        ]);
+    }
+    if ((string) $expected !== (string) $sessionUserId) {
+        kpi_v1_json_out(403, [
+            'ok' => false,
+            'error' => 'stale_account',
+        ]);
+    }
 }
 
 function kpi_v1_auth_normalize_email($email)
@@ -304,7 +344,7 @@ function kpi_v1_store_boot($cfg)
     $origin = isset($cfg['corsOrigin']) ? (string) $cfg['corsOrigin'] : '*';
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token, X-KPI-Plan-Admin-Token');
+    header('Access-Control-Allow-Headers: Content-Type, X-KPI-Store-Token, X-KPI-Plan-Admin-Token, X-KPI-Expected-User');
     header('Access-Control-Max-Age: 86400');
     if ($origin !== '*') {
         header('Access-Control-Allow-Credentials: true');

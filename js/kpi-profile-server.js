@@ -204,10 +204,27 @@
         return skipped;
       }
       var payload = buildPayload(data);
+      if (
+        global.__KPI_AUTH &&
+        typeof global.__KPI_AUTH.assertCanMutateUserData === 'function' &&
+        !global.__KPI_AUTH.assertCanMutateUserData({ notify: true })
+      ) {
+        var blocked = { ok: false, skipped: true, status: 403, error: 'stale_account' };
+        stashSyncResult(blocked);
+        return blocked;
+      }
+      var headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+      try {
+        if (global.__KPI_AUTH && typeof global.__KPI_AUTH.attachExpectedUser === 'function') {
+          var attached = global.__KPI_AUTH.attachExpectedUser(headers, payload);
+          headers = attached.headers;
+          payload = attached.body || payload;
+        }
+      } catch (_eExp) {}
       return fetch(resolveProfileApi(), {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: headers,
         body: JSON.stringify(payload),
       })
         .then(function (r) {

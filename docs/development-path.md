@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-C
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -91,7 +91,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-L6 CLOSED. C2-L CLOSED. Return to BR-LAUNCH-01-C2. Launch importer contract LOCKED. Do not close C2 (C2-C + Human Import Smoke remain).
+C2-C Launch blocker fix implementing (client stale-tab + server expectedUserId). Production smoke pending.
 ```
 
 ### Git snapshot????????
@@ -99,8 +99,8 @@ C2-L6 CLOSED. C2-L CLOSED. Return to BR-LAUNCH-01-C2. Launch importer contract L
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `9918176` (C2-L6-B closeout docs) |
-| origin sync | in sync with origin before this closeout |
+| HEAD | `e72c8b8` (C2-L / C2-L6 closeout) |
+| origin sync | in sync with origin before this C2-C audit |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1047,10 +1047,11 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | priority | P0 |
 | started_at | 2026-09-20 |
 | return_to | `BR-LAUNCH-01-C2` |
-| reason | ?? Chrome profile ??? account tab ????????? login ?? tab ? identity ?????Sales Data ?????????? |
-| evidence | Cookie `KPISESSID` path=/ ? profile ???login ? session user ??????LS `lastKpiUserId` + store ? profile ??????? LS `kpiEditLeases`???????1 lease?????? save ??? lease lost ? SECONDARY?concurrent multi-account ???????? |
-| next_action | Case??: Bug?????????? profile / Incognito???????? session redesign ? DEFER ??? |
-| constraint | auth architecture / session redesign / Sales save / OCC / runtime ?????????? audit? |
+| phase | Phase 1 AUDIT complete 2026-09-23. Launch blocker fix implementing. |
+| reason | Same Chrome profile = one KPN session cookie. Stale tab must not PUT account A payload into account B store. |
+| evidence | Phase 1 AUDIT 2026-09-23: server identity = KPISESSID session only (store.php / daily-inputs.php / profile.php ignore client userId). kpi:localUserScopeChanged is same-tab CustomEvent only. kpi-auth-client has no storage listener on lastKpiUserId. daily-inputs PUT has no OCC. store.php OCC is revision-number match, not user match. sessionStorage plan is per-tab stale. Launch blocker. |
+| next_action | Deploy + production Playwright smoke. Do not close until automated smoke PASS. |
+| constraint | no multi-account same profile; no new auth framework; no excel/; no Demo data; no password change |
 
 ### BR-LAUNCH-01-C2-B
 
@@ -1099,7 +1100,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-01-C` |
 | reason | ???????????? 3 ?????Demo Reset / Sales CSV / Expenses CSV? |
 | evidence | fixtures/demo/restaurant-v1 ?? CSV ????integrity OK??docs/demo-operation-pack.md?Reset=reuse reset-user-kpi?runtime ???????? |
-| next_action | C2-L CLOSED. Remaining: Human Import Smoke (Demo Basic Sales / Demo Pro Sales+Expenses) + C2-C. Do not close C2. |
+| next_action | C2-C Phase 1 AUDIT: Launch blocker (stale-tab wrong-account PUT). Human Import Smoke still pending. Do not close C2. |
 | pack | Reset + sales_2024|2025|2026 + expenses daily/monthly |
 | demo_basic | `kpn_demo_restaurant_basic01@?` / `u_7aac8cb5cbb0f607` |
 | demo_pro | `kpn_demo_restaurant_pro01@?` / `u_a57d33d6ae864d99` |
@@ -1351,3 +1352,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **BR-LAUNCH-01-C2-L6-B CLOSED** picker + template fallback `b36bbf7`. Local 102 PASS. Production MEP picker+cancel 3-lang PASS. Human Smoke NO. Return C2-L6. |
 | 2026-09-23 | **C2-L6 CLOSED** Launch subset complete (picker + template fallback). Horizontal/Mixed/L6-A/date inference/Preview remain POST-LAUNCH. Not Launch blockers. |
 | 2026-09-23 | **C2-L CLOSED** All launch-required children CLOSED. Launch importer contract LOCKED. CURRENT PATH -> BR-LAUNCH-01-C2. Do not close C2 (C2-C + Human Import Smoke remain). |
+| 2026-09-23 | **C2-C Launch blocker fix implementing** pageUserId snapshot + lastKpiUserId storage stale + server expectedUserId (403 stale_account). Destination remains session. OCC unchanged. |

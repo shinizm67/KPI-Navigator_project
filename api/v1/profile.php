@@ -29,6 +29,7 @@ if ($method === 'GET') {
 
 if ($method === 'PUT' || $method === 'POST') {
     $body = kpi_v1_auth_read_json_body();
+    kpi_v1_require_expected_user($uid, $body);
     // Ignore any client-supplied user id — session user only.
     unset($body['userId'], $body['user_id'], $body['id']);
     $fields = [

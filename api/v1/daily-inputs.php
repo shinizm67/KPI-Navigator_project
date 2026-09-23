@@ -70,6 +70,7 @@ if ($method === 'PUT') {
     if (!is_array($body) || !isset($body['rows']) || !is_array($body['rows'])) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'missing_rows']);
     }
+    kpi_v1_require_expected_user($userId, $body);
     if (count($body['rows']) > $MAX_PUT_ROWS) {
         kpi_v1_json_out(400, [
             'ok' => false,

@@ -465,7 +465,7 @@ def build_header(
         </div>
       </div>
     </div>
-    <script src="{img}js/kpi-auth-client.js"></script>
+    <script src="{img}js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="{img}js/kpi-business-type.js"></script>
     <script src="{img}js/kpi-pl-expense-presets.js"></script>
     <script src="{img}js/kpi-csv-templates.js"></script>

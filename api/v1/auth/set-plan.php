@@ -56,6 +56,7 @@ if ($isAdmin && !empty($body['email'])) {
     if ($uid === null) {
         kpi_v1_json_out(401, ['ok' => false, 'error' => 'unauthorized']);
     }
+    kpi_v1_require_expected_user($uid, $body);
     $user = kpi_v1_auth_read_user($uid);
 }
 

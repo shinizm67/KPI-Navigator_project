@@ -743,6 +743,7 @@ if ($method === 'POST') {
     if (!is_array($body) || !isset($body['year'])) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'missing_year']);
     }
+    kpi_v1_require_expected_user($userId, $body);
     $year = (int) $body['year'];
     if ($year < 2000 || $year > 2100) {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_year']);

@@ -88,7 +88,25 @@
       var o = raw ? JSON.parse(raw) : null;
       if (o && o.token) headers['X-KPI-Store-Token'] = String(o.token);
     } catch (_e) {}
+    try {
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+        headers = window.__KPI_AUTH.attachExpectedUser(headers, null).headers;
+      }
+    } catch (_eExp) {}
     return headers;
+  }
+
+  function blockedUserMutation(notify) {
+    try {
+      if (
+        window.__KPI_AUTH &&
+        typeof window.__KPI_AUTH.assertCanMutateUserData === 'function' &&
+        !window.__KPI_AUTH.assertCanMutateUserData({ notify: !!notify })
+      ) {
+        return true;
+      }
+    } catch (_e) {}
+    return false;
   }
 
   function shiftMonth(year, month0, delta) {
@@ -282,6 +300,7 @@
 
   function putRows(rows) {
     if (!readSyncEnabled()) return Promise.resolve({ ok: false, error: 'sync_off' });
+    if (blockedUserMutation(true)) return Promise.resolve({ ok: false, error: 'stale_account' });
     if (!rows || !rows.length) return Promise.resolve({ ok: true, written: 0 });
     var chunks = [];
     for (var i = 0; i < rows.length; i += 366) {
@@ -294,7 +313,17 @@
           method: 'PUT',
           headers: buildHeaders(),
           credentials: 'include',
-          body: JSON.stringify({ rows: chunk }),
+          body: JSON.stringify(
+            (function () {
+              var payload = { rows: chunk };
+              try {
+                if (window.__KPI_AUTH && typeof window.__KPI_AUTH.attachExpectedUser === 'function') {
+                  payload = window.__KPI_AUTH.attachExpectedUser({}, payload).body || payload;
+                }
+              } catch (_eB) {}
+              return payload;
+            })()
+          ),
         })
           .then(function (res) {
             return res.json().then(
