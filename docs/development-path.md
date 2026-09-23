@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-C
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -23,7 +23,6 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C (Demo Seed / Demo Reset) P0
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
-- BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -59,6 +58,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L5 (Plan-independent Expense Storage + Basic / Pro Visibility) P1 closed 2026-09-23
 - BR-LAUNCH-01-C2-L6-B (Excel Sheet Picker — Launch) P1 closed 2026-09-23
 - BR-LAUNCH-01-C2-L6 (Flexible Translator Expansion) P1 closed 2026-09-23
+- BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0 closed 2026-09-23
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
@@ -91,7 +91,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-C Launch blocker fix implementing (client stale-tab + server expectedUserId). Production smoke pending.
+C2-C CLOSED (production stale-tab smoke PASS). Human Import Smoke still pending. Do not close C2.
 ```
 
 ### Git snapshot????????
@@ -99,8 +99,8 @@ C2-C Launch blocker fix implementing (client stale-tab + server expectedUserId).
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `e72c8b8` (C2-L / C2-L6 closeout) |
-| origin sync | in sync with origin before this C2-C audit |
+| HEAD | `d935bbb` (C2-C implement; docs closeout on top) |
+| origin sync | implement pushed; docs closeout follows |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1043,14 +1043,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-01-C2-C` |
 | name | Cross-Tab Account Session Collision |
 | parent | `BR-LAUNCH-01-C2` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-23 |
 | return_to | `BR-LAUNCH-01-C2` |
-| phase | Phase 1 AUDIT complete 2026-09-23. Launch blocker fix implementing. |
+| phase | CLOSED 2026-09-23. Production Playwright smoke PASS. |
 | reason | Same Chrome profile = one KPN session cookie. Stale tab must not PUT account A payload into account B store. |
-| evidence | Phase 1 AUDIT 2026-09-23: server identity = KPISESSID session only (store.php / daily-inputs.php / profile.php ignore client userId). kpi:localUserScopeChanged is same-tab CustomEvent only. kpi-auth-client has no storage listener on lastKpiUserId. daily-inputs PUT has no OCC. store.php OCC is revision-number match, not user match. sessionStorage plan is per-tab stale. Launch blocker. |
-| next_action | Deploy + production Playwright smoke. Do not close until automated smoke PASS. |
+| evidence | implement `d935bbb`; FTPS 101 files RETR+HTTP markers OK; prod smoke store/daily/profile 403 stale_account; B store/profile unchanged; missing expected 428; same-user PUT 200; logout PUT 401; Tab A stale after B login; JP alert; same-account two tabs not stale. Destination remains session. OCC 409 unchanged. |
+| next_action | N/A CLOSED. Return BR-LAUNCH-01-C2. Human Import Smoke still pending. Do not close C2. |
 | constraint | no multi-account same profile; no new auth framework; no excel/; no Demo data; no password change |
 
 ### BR-LAUNCH-01-C2-B
@@ -1100,7 +1101,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-01-C` |
 | reason | ???????????? 3 ?????Demo Reset / Sales CSV / Expenses CSV? |
 | evidence | fixtures/demo/restaurant-v1 ?? CSV ????integrity OK??docs/demo-operation-pack.md?Reset=reuse reset-user-kpi?runtime ???????? |
-| next_action | C2-C Phase 1 AUDIT: Launch blocker (stale-tab wrong-account PUT). Human Import Smoke still pending. Do not close C2. |
+| next_action | C2-C CLOSED. Human Import Smoke still pending. Do not close C2. |
 | pack | Reset + sales_2024|2025|2026 + expenses daily/monthly |
 | demo_basic | `kpn_demo_restaurant_basic01@?` / `u_7aac8cb5cbb0f607` |
 | demo_pro | `kpn_demo_restaurant_pro01@?` / `u_a57d33d6ae864d99` |
@@ -1260,7 +1261,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | ACTIVE | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
-| `BR-LAUNCH-01-C2-C` | Cross-Tab Account Session Collision | ACTIVE | P0 | `BR-LAUNCH-01-C2` |
+| `BR-LAUNCH-01-C2-C` | Cross-Tab Account Session Collision | CLOSED | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | CLOSED | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | CLOSED | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L5-A` | Plan-independent Expense Storage / Upgrade Safety | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
@@ -1272,7 +1273,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
-CLOSED under `BR-LAUNCH-01-C2`: `BR-LAUNCH-01-C2-L` (Launch importer)  
+CLOSED under `BR-LAUNCH-01-C2`: `BR-LAUNCH-01-C2-C` (stale-tab), `BR-LAUNCH-01-C2-L` (Launch importer)  
 CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`, `BR-LAUNCH-01-C2-L5`, `BR-LAUNCH-01-C2-L6`  
 CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`  
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
@@ -1353,3 +1354,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **C2-L6 CLOSED** Launch subset complete (picker + template fallback). Horizontal/Mixed/L6-A/date inference/Preview remain POST-LAUNCH. Not Launch blockers. |
 | 2026-09-23 | **C2-L CLOSED** All launch-required children CLOSED. Launch importer contract LOCKED. CURRENT PATH -> BR-LAUNCH-01-C2. Do not close C2 (C2-C + Human Import Smoke remain). |
 | 2026-09-23 | **C2-C Launch blocker fix implementing** pageUserId snapshot + lastKpiUserId storage stale + server expectedUserId (403 stale_account). Destination remains session. OCC unchanged. |
+| 2026-09-23 | **C2-C CLOSED** `d935bbb` deploy + production Playwright smoke PASS (wrong-account store/daily/profile BLOCKED; same-user multi-tab OK; logout 401). Launch blocker RESOLVED. CURRENT PATH -> C2. Human Import Smoke still pending. Do not close C2. |
