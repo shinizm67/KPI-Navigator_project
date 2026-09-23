@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06
+TRUNK-06 -> BR-LAUNCH-02
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -20,6 +20,7 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
+- BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -27,7 +28,7 @@ REGISTERED (POST-LAUNCH importer; do not start):
 - Mixed income+expense parser (POST-LAUNCH; not a Launch blocker)
 - Advanced date/year inference (POST-LAUNCH; not a Launch blocker)
 - Import Preview expansion (POST-LAUNCH; not a Launch blocker)
-- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (DEFERRED / ACTIVE-LATER P1; `BR-LAUNCH-01` CLOSED; do not start)
+- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (DEFERRED / ACTIVE-LATER P1; parent `BR-LAUNCH-02` ACTIVE; do not start)
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED P2)
 
@@ -66,13 +67,12 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
-- BR-LAUNCH-02 Production Smoke / Operational Runbook P1
 - BR-LAUNCH-03 UI Consistency Audit P1
 - BR-LAUNCH-04 PL Editable Cell Visual Finish P1
 
 DEFERRED:
 - BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression P1 DEFERRED / ACTIVE-LATER
-  parent: BR-LAUNCH-02. REGISTER ONLY. `BR-LAUNCH-01` CLOSED. Do not start until owner opens `TRUNK-06` remaining / Launch Regression.
+  parent: BR-LAUNCH-02. REGISTER ONLY. Parent `BR-LAUNCH-02` is ACTIVE. Do not start `BR-LAUNCH-02-A` until owner opens Launch Regression.
   covers: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
   note: Stripe / billing ????????????????? assessment ????
@@ -98,7 +98,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01 CLOSED (A/B/C). Return `TRUNK-06`. Do not start `BR-LAUNCH-02-A`.
+Open `BR-LAUNCH-02`. Do not start `BR-LAUNCH-02-A`. `BR-LAUNCH-03` / `BR-LAUNCH-04` stay PAUSED.
 ```
 
 ### Git snapshot????????
@@ -106,7 +106,7 @@ BR-LAUNCH-01 CLOSED (A/B/C). Return `TRUNK-06`. Do not start `BR-LAUNCH-02-A`.
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `9c481c3` (C1/C closed; 01 parent audit) |
+| HEAD | `0433aa4` (BR-LAUNCH-01 CLOSED; TRUNK-06 next-child audit) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -469,7 +469,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | `BR-LAUNCH-01` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-02-A`. |
+| next_action | Next child `BR-LAUNCH-02` opened. Do not start `BR-LAUNCH-02-A`. `BR-LAUNCH-03` / `BR-LAUNCH-04` stay PAUSED. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -1159,13 +1159,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-02` |
 | name | Production Smoke / Operational Runbook |
 | parent | `TRUNK-06` |
-| status | PAUSED |
+| status | ACTIVE |
 | priority | P1 |
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
-| reason | ?????????????? |
-| evidence | TRUNK-06 child?PAUSED until BR-LAUNCH-01? |
-| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). `BR-LAUNCH-01` CLOSED. Do not start until owner opens `TRUNK-06` remaining / Launch Regression. |
+| reason | Production smoke / operational runbook after Demo / New-user (01) CLOSED. |
+| evidence | TRUNK-06 next-child audit 2026-09-23. Gate `PAUSED until BR-LAUNCH-01` now satisfied. Numeric order 02 before 03/04. |
+| next_action | ACTIVE. Parent work only. Child `BR-LAUNCH-02-A` remains REGISTER ONLY. Do not start `BR-LAUNCH-02-A`. |
 
 ### BR-LAUNCH-02-A
 
@@ -1180,7 +1180,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-02` |
 | reason | After parent C remaining Launch-required children close, run cross-feature production smoke before Launch: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching. |
 | evidence | Registered 2026-09-23 from C2 pre-Human automated smoke. Do not start now. |
-| next_action | REGISTER ONLY. `BR-LAUNCH-01` CLOSED. Do not start until owner opens `TRUNK-06` remaining / Launch Regression. |
+| next_action | REGISTER ONLY. Parent `BR-LAUNCH-02` is ACTIVE. Do not start until owner opens Launch Regression. |
 | constraint | no product feature work in this node; smoke only |
 
 ### BR-LAUNCH-03
@@ -1286,6 +1286,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | name | status | priority | parent |
 |----|------|--------|----------|--------|
 | `BR-LAUNCH-01` | Demo / New User State | CLOSED | P0 | `TRUNK-06` |
+| `BR-LAUNCH-02` | Production Smoke / Operational Runbook | ACTIVE | P1 | `TRUNK-06` |
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | CLOSED | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | CLOSED | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2` | Demo Operation Pack | CLOSED | P0 | `BR-LAUNCH-01-C` |
@@ -1309,7 +1310,7 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
+PAUSED under `TRUNK-06`: `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 DEFERRED / ACTIVE-LATER: `BR-LAUNCH-02-A` (parent `BR-LAUNCH-02`, P1 before Launch; REGISTER ONLY)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -1394,3 +1395,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **BR-LAUNCH-01-C1 audit** restaurant-v1 fixture PASS (integrity+seasonality+YoY). generated-fixtures classified as test/smoke, distinct SHA. Production Demo Pro GET MATCH persistable totals; lunch validation-only; no C2L4 contamination (those labels live on Retail Smoke). Demo Basic empty BT-unset. C1 remains ACTIVE. No reset/reseed/import. `BR-LAUNCH-02-A` not started. |
 | 2026-09-23 | **C1 CLOSED** Track `fixtures/demo/restaurant-v1` in git. Demo Basic sales-only seed via production Annual import persist path (BT restaurant, plan basic, 2024–2026 sales/BD match, expenses absent). Demo Pro revision 54 unchanged. MEP/PL → change_plan. **C CLOSED** (C0/C1/C2). Return `BR-LAUNCH-01`. Do not start `BR-LAUNCH-02-A`. |
 | 2026-09-23 | **BR-LAUNCH-01 CLOSED** Post-C parent audit: direct children A/B/C all CLOSED; remaining 01-lineage = POST-LAUNCH/DEFERRED only (L6-A, Horizontal/Mixed/date/Preview, Expense Ledger, tooltips). No Launch blocker. Return `TRUNK-06`. Do not start `BR-LAUNCH-02-A`. |
+| 2026-09-23 | **TRUNK-06 next-child audit** 01 CLOSED. Direct remaining: 02/03/04 PAUSED P1, 05 DEFERRED. Next Launch phase = `BR-LAUNCH-02` (numeric order; gate until 01 now clear). `BR-LAUNCH-03` / `BR-LAUNCH-04` stay PAUSED. `BR-LAUNCH-02-A` REGISTER ONLY, not started. POST-LAUNCH items not blockers. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-02`. |
