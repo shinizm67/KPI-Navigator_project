@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L6 -> BR-LAUNCH-01-C2-L6-B
+TRUNK-06 -> BR-LAUNCH-01 -> BR-LAUNCH-01-C -> BR-LAUNCH-01-C2 -> BR-LAUNCH-01-C2-L -> BR-LAUNCH-01-C2-L6
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -25,7 +25,6 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-01-C2 (Demo Operation Pack) P0
 - BR-LAUNCH-01-C2-L (Flexible CSV / Excel Import Foundation) P0
 - BR-LAUNCH-01-C2-L6 (Flexible Translator Expansion) P1
-- BR-LAUNCH-01-C2-L6-B (Excel Sheet Picker — Launch) P1
 - BR-LAUNCH-01-C2-C (Cross-Tab Account Session Collision) P0
 
 REGISTERED (C2-L children; spec only; do not start):
@@ -55,6 +54,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C2-L5-A (Plan-independent Expense Storage / Upgrade Safety) P1 closed 2026-09-22
 - BR-LAUNCH-01-C2-L5-B (Basic / Pro Expense UI Entitlement) P1 closed 2026-09-23
 - BR-LAUNCH-01-C2-L5 (Plan-independent Expense Storage + Basic / Pro Visibility) P1 closed 2026-09-23
+- BR-LAUNCH-01-C2-L6-B (Excel Sheet Picker — Launch) P1 closed 2026-09-23
 
 PAUSED (under TRUNK-06):
 - BR-LAUNCH-02 Production Smoke / Operational Runbook P1
@@ -78,7 +78,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-L6-B Excel Sheet Picker + Template fallback ACTIVE. Do not start Horizontal/Mixed/L6-A.
+C2-L6-B CLOSED. Return to C2-L6. Horizontal/Mixed/L6-A remain POST-LAUNCH.
 ```
 
 ### Git snapshot????????
@@ -537,8 +537,8 @@ CLOSED node ? **?????**??????????????
 | return_to | BR-LAUNCH-01-C2 |
 | reason | User CSV/Excel should translate into KPN form; only untranslatable cases guide to KPN Template |
 | principle | KPN does not require KPN-form CSV. Translate user CSV/Excel into KPN form as far as possible. Keep untranslated data for later user meaning/classification. Guide to KPN Template only when still uninterpretable. |
-| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 CLOSED; L5-A CLOSED; L5-B CLOSED; L6 ACTIVE; L6-A DEFERRED; L6-B ACTIVE |
-| next_action | C2-L6-B Sheet Picker ACTIVE. Horizontal/Mixed/L6-A remain POST-LAUNCH |
+| children | L1 CLOSED; L1-A CLOSED; L2 CLOSED; L3 CLOSED; L4 CLOSED; L5 CLOSED; L5-A CLOSED; L5-B CLOSED; L6 ACTIVE; L6-A DEFERRED; L6-B CLOSED |
+| next_action | C2-L6-B CLOSED. Horizontal/Mixed/L6-A remain POST-LAUNCH |
 | constraint | no excel/ touch; no Demo Reset; no unilateral UX; BT unset Option B preserved; L6 spec only; tooltips DEFERRED |
 
 #### C2-L canonical product principle (2026-09-22)
@@ -595,7 +595,7 @@ Guide to KPN Template only when the file is still uninterpretable.
 | C2-L4 | Expense Classification Lifecycle | CLOSED | Human Smoke PASS 2026-09-22 |
 | C2-L5 | Plan-independent Import / Storage + Basic/Pro Expense Visibility | CLOSED | L5-A/L5-B + first-load PASS 2026-09-23 |
 | C2-L6 | Flexible Translator Expansion | ACTIVE | Launch subset: Sheet Picker + Template fallback |
-| C2-L6-B | Excel Sheet Picker — Launch | ACTIVE | multi-sheet pick one; single-sheet no modal |
+| C2-L6-B | Excel Sheet Picker — Launch | CLOSED | multi-sheet pick one; single-sheet no modal |
 | C2-L6-A | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | reuse workbook sheet-role mapping |
 
 ### BR-LAUNCH-01-C2-L1
@@ -813,12 +813,14 @@ Recommended Launch subset: SMALL. 2026-09-23 implement: Sheet Picker + Template 
 | id | BR-LAUNCH-01-C2-L6-B |
 | name | Excel Sheet Picker — Launch |
 | parent | BR-LAUNCH-01-C2-L6 |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-23 |
+| closed_at | 2026-09-23 |
 | return_to | BR-LAUNCH-01-C2-L6 |
 | reason | Multi-sheet Excel: user picks one sheet. Single-sheet: no picker. Cached values only. Template fallback on unreadable. Purpose from existing import entry. |
-| next_action | Implement + automated smoke. Do not add Horizontal/Mixed/Import Profile. |
+| evidence | Local picker tests 102 PASS. Production MEP picker+cancel 3-lang PASS (`b36bbf7`). Human Smoke NO. |
+| next_action | CLOSED. Return to C2-L6. Horizontal/Mixed/L6-A remain POST-LAUNCH. |
 | constraint | Excel only; no first-sheet auto-import when sheet count>1; no recommended-sheet AI; no excel/ touch; no real restaurant workbook |
 
 ### BR-LAUNCH-01-C2-L6-A
@@ -1202,13 +1204,14 @@ Recommended Launch subset: SMALL. 2026-09-23 implement: Sheet Picker + Template 
 | `BR-LAUNCH-01-C2-L5-A` | Plan-independent Expense Storage / Upgrade Safety | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
 | `BR-LAUNCH-01-C2-L5-B` | Basic / Pro Expense UI Entitlement | CLOSED | P1 | `BR-LAUNCH-01-C2-L5` |
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | ACTIVE | P1 | `BR-LAUNCH-01-C2-L` |
-| `BR-LAUNCH-01-C2-L6-B` | Excel Sheet Picker — Launch | ACTIVE | P1 | `BR-LAUNCH-01-C2-L6` |
+| `BR-LAUNCH-01-C2-L6-B` | Excel Sheet Picker — Launch | CLOSED | P1 | `BR-LAUNCH-01-C2-L6` |
 | `BR-LAUNCH-01-C2-L6-A` | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | P2 | `BR-LAUNCH-01-C2-L6` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
 CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`, `BR-LAUNCH-01-C2-L5`  
+CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`  
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
@@ -1283,3 +1286,4 @@ DEFERRED importer: `BR-LAUNCH-01-C2-L6-A` (parent L6), `BR-POST-EXPENSE-LEDGER` 
 | 2026-09-23 | **BR-LAUNCH-01-C2-L5 CLOSED** L5-A storage + L5-B entitlement + Monthly first-load fail-closed production PASS (`151d736`). Human Smoke NO. Return C2-L. |
 | 2026-09-23 | **BR-LAUNCH-01-C2-L6 ACTIVE** Launch Scope Audit only. Canonical principles registered. L6-A Multi-sheet Import Profile and BR-POST-EXPENSE-LEDGER DEFERRED. CURRENT PATH -> C2-L6. Do not implement. |
 | 2026-09-23 | **BR-LAUNCH-01-C2-L6-B ACTIVE** Excel Sheet Picker + Template fallback. CURRENT PATH -> L6-B. Horizontal/Mixed/L6-A remain POST-LAUNCH. |
+| 2026-09-23 | **BR-LAUNCH-01-C2-L6-B CLOSED** picker + template fallback `b36bbf7`. Local 102 PASS. Production MEP picker+cancel 3-lang PASS. Human Smoke NO. Return C2-L6. |
