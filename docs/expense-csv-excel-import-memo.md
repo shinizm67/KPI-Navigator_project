@@ -1,7 +1,7 @@
 # 支出（費目）CSV / Excel 取り込み設計メモ
 
-更新日: 2026-07-17  
-ステータス: **会話ベースの設計メモ（未実装・要フェーズ設計）** — Tars 発信の新機能候補。元の仕様書には無いため、着手前に本メモで方向性を固める。
+更新日: 2026-09-23（Launch 契約固定。本文の歴史的設計は 2026-07-17）  
+ステータス: **Launch 契約は [development-path.md](./development-path.md) の C2-L Launch importer contract（LOCKED 2026-09-23）が正本。** 本メモは 2026-07-17 の設計メモ。Horizontal / mixed / auto-all-sheets / formula engine / Excel 再構築は POST-LAUNCH であり、Launch 約束ではない。
 
 関連:
 

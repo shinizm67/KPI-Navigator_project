@@ -1,5 +1,7 @@
 # CSV アップロードによる入力簡略化（POS 前提）メモ
 
+> **2026-09-23:** Launch importer contract is LOCKED in [development-path.md](./development-path.md) (C2-L). This memo remains POS/sales design notes. Horizontal / mixed / reconstruction are not Launch promises.
+
 > 本メモは**売上（POS）**取り込みが対象。**支出（費目）の CSV/Excel 取り込み**は姉妹メモ [expense-csv-excel-import-memo.md](./expense-csv-excel-import-memo.md) を参照（費目名マッピング・雛形DL・日次/月次の論点）。
 
 ## フォント（プロダクト共通）
