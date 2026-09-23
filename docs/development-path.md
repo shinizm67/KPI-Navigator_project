@@ -30,6 +30,7 @@ REGISTERED (POST-LAUNCH importer; do not start):
 - Mixed income+expense parser (POST-LAUNCH; not a Launch blocker)
 - Advanced date/year inference (POST-LAUNCH; not a Launch blocker)
 - Import Preview expansion (POST-LAUNCH; not a Launch blocker)
+- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (DEFERRED / ACTIVE-LATER P1; after C2 close)
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED P2)
 
@@ -67,6 +68,9 @@ PAUSED (under TRUNK-06):
 - BR-LAUNCH-04 PL Editable Cell Visual Finish P1
 
 DEFERRED:
+- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression P1 DEFERRED / ACTIVE-LATER
+  parent: BR-LAUNCH-02. REGISTER ONLY. Run after C2 close, before Launch.
+  covers: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
   note: Stripe / billing ????????????????? assessment ????
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS P2
@@ -91,7 +95,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C2 ? BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-C2-C CLOSED (production stale-tab smoke PASS). Human Import Smoke still pending. Do not close C2.
+C2 pre-Human automated import smoke: 1 FAIL (Annual client BT gap). Human visual 1 BLOCK (4 screens). Do not close C2.
 ```
 
 ### Git snapshot????????
@@ -99,8 +103,8 @@ C2-C CLOSED (production stale-tab smoke PASS). Human Import Smoke still pending.
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `d935bbb` (C2-C implement; docs closeout on top) |
-| origin sync | implement pushed; docs closeout follows |
+| HEAD | `54a1761` (C2-C closeout) |
+| origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1101,7 +1105,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-01-C` |
 | reason | ???????????? 3 ?????Demo Reset / Sales CSV / Expenses CSV? |
 | evidence | fixtures/demo/restaurant-v1 ?? CSV ????integrity OK??docs/demo-operation-pack.md?Reset=reuse reset-user-kpi?runtime ???????? |
-| next_action | C2-C CLOSED. Human Import Smoke still pending. Do not close C2. |
+| next_action | Pre-Human automated smoke: 1 FAIL Annual client BT gap (server has BT; Annual isBusinessTypeSet=false). Human visual 1 BLOCK (4 import screens). Do not close C2. |
 | pack | Reset + sales_2024|2025|2026 + expenses daily/monthly |
 | demo_basic | `kpn_demo_restaurant_basic01@?` / `u_7aac8cb5cbb0f607` |
 | demo_pro | `kpn_demo_restaurant_pro01@?` / `u_a57d33d6ae864d99` |
@@ -1154,7 +1158,23 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | ?????????????? |
 | evidence | TRUNK-06 child?PAUSED until BR-LAUNCH-01? |
-| next_action | BR-LAUNCH-01 ???? ACTIVE ???? |
+| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). Do not start until C2 CLOSED. |
+
+### BR-LAUNCH-02-A
+
+| Field | Value |
+|-------|-------|
+| id | `BR-LAUNCH-02-A` |
+| name | Launch Regression Smoke / Cross-feature Regression |
+| parent | `BR-LAUNCH-02` |
+| status | DEFERRED / ACTIVE-LATER |
+| priority | P1 |
+| started_at | not started |
+| return_to | `BR-LAUNCH-02` |
+| reason | After C2 close, run cross-feature production smoke before Launch: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching. |
+| evidence | Registered 2026-09-23 from C2 pre-Human automated smoke. Do not start now. |
+| next_action | REGISTER ONLY. Start after C2 CLOSED, as P1 before Launch. |
+| constraint | no product feature work in this node; smoke only |
 
 ### BR-LAUNCH-03
 
@@ -1269,6 +1289,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-01-C2-L6` | Flexible Translator Expansion | CLOSED | P1 | `BR-LAUNCH-01-C2-L` |
 | `BR-LAUNCH-01-C2-L6-B` | Excel Sheet Picker — Launch | CLOSED | P1 | `BR-LAUNCH-01-C2-L6` |
 | `BR-LAUNCH-01-C2-L6-A` | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | P2 | `BR-LAUNCH-01-C2-L6` |
+| `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | DEFERRED / ACTIVE-LATER | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
@@ -1280,6 +1301,7 @@ CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
+DEFERRED / ACTIVE-LATER: `BR-LAUNCH-02-A` (parent `BR-LAUNCH-02`, P1 before Launch; REGISTER ONLY)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
@@ -1355,3 +1377,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **C2-L CLOSED** All launch-required children CLOSED. Launch importer contract LOCKED. CURRENT PATH -> BR-LAUNCH-01-C2. Do not close C2 (C2-C + Human Import Smoke remain). |
 | 2026-09-23 | **C2-C Launch blocker fix implementing** pageUserId snapshot + lastKpiUserId storage stale + server expectedUserId (403 stale_account). Destination remains session. OCC unchanged. |
 | 2026-09-23 | **C2-C CLOSED** `d935bbb` deploy + production Playwright smoke PASS (wrong-account store/daily/profile BLOCKED; same-user multi-tab OK; logout 401). Launch blocker RESOLVED. CURRENT PATH -> C2. Human Import Smoke still pending. Do not close C2. |
+| 2026-09-23 | **C2 pre-Human automated import smoke** local 6 PASS; production MEP/PL picker+mapping+cancel PASS; 3-lang picker/fallback PASS; Basic entitlement PASS; stale 403 PASS. FAIL: Annual client BT gap (server restaurant/retail, Annual isBusinessTypeSet=false). Human visual 1 BLOCK (4 screens). Registered `BR-LAUNCH-02-A`. Do not close C2. |
