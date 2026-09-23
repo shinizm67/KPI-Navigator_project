@@ -29,7 +29,7 @@ REGISTERED (POST-LAUNCH importer; do not start):
 - Mixed income+expense parser (POST-LAUNCH; not a Launch blocker)
 - Advanced date/year inference (POST-LAUNCH; not a Launch blocker)
 - Import Preview expansion (POST-LAUNCH; not a Launch blocker)
-- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (DEFERRED / ACTIVE-LATER P1; after C2 close)
+- BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression (DEFERRED / ACTIVE-LATER P1; after parent C remaining Launch children close; do not start)
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED P2)
 
@@ -69,7 +69,7 @@ PAUSED (under TRUNK-06):
 
 DEFERRED:
 - BR-LAUNCH-02-A Launch Regression Smoke / Cross-feature Regression P1 DEFERRED / ACTIVE-LATER
-  parent: BR-LAUNCH-02. REGISTER ONLY. Run after C2 close, before Launch.
+  parent: BR-LAUNCH-02. REGISTER ONLY. Do not start while `BR-LAUNCH-01-C1` is ACTIVE. Run before Launch after parent C Launch-required children close.
   covers: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
   note: Stripe / billing ????????????????? assessment ????
@@ -95,7 +95,7 @@ RETURN TARGET:
 BR-LAUNCH-01-C ? BR-LAUNCH-01 ? TRUNK-06
 
 NEXT ACTION:
-BR-LAUNCH-01-C2 CLOSED. Return BR-LAUNCH-01-C. Human Smoke NONE. Do not start BR-LAUNCH-02-A.
+C2 CLOSED. Parent C remains ACTIVE because `BR-LAUNCH-01-C1` is still P0 ACTIVE. Next = `BR-LAUNCH-01-C1`. Do not close C. Do not start `BR-LAUNCH-02-A`.
 ```
 
 ### Git snapshot????????
@@ -103,7 +103,7 @@ BR-LAUNCH-01-C2 CLOSED. Return BR-LAUNCH-01-C. Human Smoke NONE. Do not start BR
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `751ce10` (Sheet Picker layering) |
+| HEAD | `ca273c3` (C2 closeout) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -466,7 +466,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | `BR-LAUNCH-01-C` Demo Seed / Demo Reset??????? |
+| next_action | `BR-LAUNCH-01-C` remains ACTIVE. Next child = `BR-LAUNCH-01-C1`. Do not close C. Do not start `BR-LAUNCH-02-A`. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -482,7 +482,7 @@ CLOSED node ? **?????**??????????????
 | return_to | `TRUNK-06` |
 | reason | ????????????????????????? |
 | evidence | TRUNK-06 ?????2026-09-20? |
-| next_action | `BR-LAUNCH-01-C` ACTIVE?Demo Seed / Reset ????? |
+| next_action | `BR-LAUNCH-01-C` remains ACTIVE. Next child = `BR-LAUNCH-01-C1`. Do not close C. Do not start `BR-LAUNCH-02-A`. |
 
 ### BR-LAUNCH-01-A
 
@@ -534,7 +534,7 @@ CLOSED node ? **?????**??????????????
 | return_to | `BR-LAUNCH-01` |
 | reason | New User Empty-State / Smoke Reset ? CLOSED????????????????????? |
 | evidence | 01-A/01-B CLOSED; New User Reset ? Demo Reset; ??: wipe API ????user store inject API ???; meal/customers ? `years[].dailyMeal`?daily-inputs ? sales/BD ???; ?? `excel/*_official*` + `tests/generated-fixtures/`; Founder User Detail ??? UI ?? |
-| next_action | C2 Demo Operation Pack ??????Reset + Sales/Expenses CSV? |
+| next_action | C2 CLOSED. Child `BR-LAUNCH-01-C1` still ACTIVE P0. Do not close C. Do not start `BR-LAUNCH-02-A`. |
 | constraint | ?????? UI ??????Founder/Admin ??????random ???01-B empty reset ??? |
 | audit_note | Demo Reset = wipe?reuse `reset-user-kpi`?? apply seed ? `__KPI_AUTH.clear` ? re-login |
 | confirmed_v1 | loader+dataset; restaurant; Pro; JPY; 2 past + operating; deterministic; Founder/Admin only |
@@ -1143,7 +1143,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `BR-LAUNCH-01-C` |
 | reason | Demo Seed API ?? generated-fixtures ???? restaurant Demo v1 ? deterministic dataset ??????? |
 | evidence | `tests/generated-fixtures/` = CSV smoke?`csv_smoke_fixture_generator.py`??L/D ???????????????? expense?plan/PR ?????? PARTIAL |
-| next_action | Case??? ? C2 dataset ???? or HOLD |
+| next_action | C2 CLOSED. Resume C1 (dataset contract still PARTIAL). Do not close C. Do not start `BR-LAUNCH-02-A`. |
 | constraint | runtime????; dataset??????????; excel untouched |
 
 ### BR-LAUNCH-02
@@ -1159,7 +1159,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | ?????????????? |
 | evidence | TRUNK-06 child?PAUSED until BR-LAUNCH-01? |
-| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). Do not start until C2 CLOSED. |
+| next_action | PAUSED. Child `BR-LAUNCH-02-A` registered (ACTIVE-LATER). Do not start until parent C remaining Launch-required children close (`BR-LAUNCH-01-C1` still ACTIVE). |
 
 ### BR-LAUNCH-02-A
 
@@ -1172,9 +1172,9 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | priority | P1 |
 | started_at | not started |
 | return_to | `BR-LAUNCH-02` |
-| reason | After C2 close, run cross-feature production smoke before Launch: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching. |
+| reason | After parent C remaining Launch-required children close, run cross-feature production smoke before Launch: Login, Annual, Monthly, MEP, PL, Booking, Profile, Subscription, Session, Import, 3-lang, plan entitlement, account switching. |
 | evidence | Registered 2026-09-23 from C2 pre-Human automated smoke. Do not start now. |
-| next_action | REGISTER ONLY. Start after C2 CLOSED, as P1 before Launch. |
+| next_action | REGISTER ONLY. Do not start while parent C still has Launch-required child `BR-LAUNCH-01-C1` ACTIVE. |
 | constraint | no product feature work in this node; smoke only |
 
 ### BR-LAUNCH-03
@@ -1281,7 +1281,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 |----|------|--------|----------|--------|
 | `BR-LAUNCH-01-C` | Demo Seed / Demo Reset | ACTIVE | P0 | `BR-LAUNCH-01` |
 | `BR-LAUNCH-01-C1` | Demo Dataset Contract & Existing Fixture Audit | ACTIVE | P0 | `BR-LAUNCH-01-C` |
-| `BR-LAUNCH-01-C2` | Demo Operation Pack | ACTIVE | P0 | `BR-LAUNCH-01-C` |
+| `BR-LAUNCH-01-C2` | Demo Operation Pack | CLOSED | P0 | `BR-LAUNCH-01-C` |
 | `BR-LAUNCH-01-C2-C` | Cross-Tab Account Session Collision | CLOSED | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L` | Flexible CSV / Excel Import Foundation | CLOSED | P0 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-01-C2-L5` | Plan-independent Expense Storage + Basic / Pro Visibility | CLOSED | P1 | `BR-LAUNCH-01-C2-L` |
@@ -1294,7 +1294,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`  
-CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2-K`  
+CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C2`  
 CLOSED under `BR-LAUNCH-01-C2`: `BR-LAUNCH-01-C2-C` (stale-tab), `BR-LAUNCH-01-C2-L` (Launch importer)  
 CLOSED under `BR-LAUNCH-01-C2-L`: `BR-LAUNCH-01-C2-L1`, `BR-LAUNCH-01-C2-L2`, `BR-LAUNCH-01-C2-L3`, `BR-LAUNCH-01-C2-L4`, `BR-LAUNCH-01-C2-L5`, `BR-LAUNCH-01-C2-L6`  
 CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`  
@@ -1382,3 +1382,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-23 | **Annual client BT hydration gap fix** `045c648`. Cause: Annual never called `enableSessionStoreSyncIfAuthed` so cookie-auth Playwright skipped store GET. Fix: Annual-only (JP/EN/ZH-TW) same MEP helper; explicit server BT hydrates before import gate; restaurant fallback does not satisfy `isBusinessTypeSet()`. Production A-E PASS (restaurant/retail/unset/reload/3-lang). MEP/PL still PASS. Do not close C2 (Human visual 1 BLOCK remains). |
 | 2026-09-23 | **C2 final production Demo Import smoke** BT hydrate + MEP/PL picker/mapping/confirm/cancel + 3-lang + stale 403 + Demo Pro/Retail data unchanged PASS. Remaining 1 BLOCK: Annual/Past Sales Sheet Picker z-index 13000 under host modal 20055 (`elementFromPoint` hits sales grid). Human visual not required. Do not close C2. `BR-LAUNCH-02-A` not started. |
 | 2026-09-23 | **C2 CLOSED** Sheet Picker layering `751ce10`: shared picker z-index 13000→20120 (above host 20055, below leave-close 20150). Production pointer smoke PASS (Annual/Past Sales `elementFromPoint` hits picker; MEP/PL/3-lang/fallback/BT gate; Demo data unchanged). Human Smoke NONE. Return BR-LAUNCH-01-C. Do not start `BR-LAUNCH-02-A`. |
+| 2026-09-23 | **Post-C2 parent path audit** C remains ACTIVE. Remaining Launch-required child = `BR-LAUNCH-01-C1` (P0, dataset contract PARTIAL). C0/C2 CLOSED. `BR-LAUNCH-02-A` still REGISTER ONLY. Do not close C. |
