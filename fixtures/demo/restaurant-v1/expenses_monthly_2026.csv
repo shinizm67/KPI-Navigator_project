@@ -1,0 +1,133 @@
+month,item,label,amount
+2026-01,exp_rent,Rent,396774
+2026-01,exp_fixed_labor,Fixed Labor,1055214
+2026-01,exp_non_life_insurance,Non-life insurance,30498
+2026-01,exp_supplies,Supplies,48712
+2026-01,exp_misc,Misc,37884
+2026-01,exp_electric,Electric,94241
+2026-01,exp_gas,Gas,47277
+2026-01,exp_water,Water,27535
+2026-01,exp_telecom,Telecom,18791
+2026-01,exp_advertising,Advertising,59500
+2026-01,exp_payment_fees,Payment fees,59930
+2026-02,exp_rent,Rent,399407
+2026-02,exp_fixed_labor,Fixed Labor,1035761
+2026-02,exp_non_life_insurance,Non-life insurance,30201
+2026-02,exp_supplies,Supplies,47103
+2026-02,exp_misc,Misc,37661
+2026-02,exp_electric,Electric,88300
+2026-02,exp_gas,Gas,47376
+2026-02,exp_water,Water,27336
+2026-02,exp_telecom,Telecom,18807
+2026-02,exp_advertising,Advertising,59500
+2026-02,exp_payment_fees,Payment fees,57534
+2026-03,exp_rent,Rent,406553
+2026-03,exp_fixed_labor,Fixed Labor,1032914
+2026-03,exp_non_life_insurance,Non-life insurance,29698
+2026-03,exp_supplies,Supplies,48926
+2026-03,exp_misc,Misc,38062
+2026-03,exp_electric,Electric,80122
+2026-03,exp_gas,Gas,41371
+2026-03,exp_water,Water,23879
+2026-03,exp_telecom,Telecom,19089
+2026-03,exp_advertising,Advertising,70000
+2026-03,exp_payment_fees,Payment fees,67601
+2026-04,exp_rent,Rent,406883
+2026-04,exp_fixed_labor,Fixed Labor,1042737
+2026-04,exp_non_life_insurance,Non-life insurance,29677
+2026-04,exp_supplies,Supplies,48560
+2026-04,exp_misc,Misc,38633
+2026-04,exp_electric,Electric,75946
+2026-04,exp_gas,Gas,39565
+2026-04,exp_water,Water,23310
+2026-04,exp_telecom,Telecom,19101
+2026-04,exp_advertising,Advertising,70000
+2026-04,exp_payment_fees,Payment fees,73914
+2026-05,exp_rent,Rent,405046
+2026-05,exp_fixed_labor,Fixed Labor,1032363
+2026-05,exp_non_life_insurance,Non-life insurance,29975
+2026-05,exp_supplies,Supplies,47582
+2026-05,exp_misc,Misc,37847
+2026-05,exp_electric,Electric,72886
+2026-05,exp_gas,Gas,38992
+2026-05,exp_water,Water,22534
+2026-05,exp_telecom,Telecom,19284
+2026-05,exp_advertising,Advertising,70000
+2026-05,exp_payment_fees,Payment fees,73132
+2026-06,exp_rent,Rent,401314
+2026-06,exp_fixed_labor,Fixed Labor,1026973
+2026-06,exp_non_life_insurance,Non-life insurance,30334
+2026-06,exp_supplies,Supplies,47942
+2026-06,exp_misc,Misc,37506
+2026-06,exp_electric,Electric,78622
+2026-06,exp_gas,Gas,41691
+2026-06,exp_water,Water,22865
+2026-06,exp_telecom,Telecom,18773
+2026-06,exp_advertising,Advertising,70000
+2026-06,exp_payment_fees,Payment fees,67085
+2026-07,exp_rent,Rent,402561
+2026-07,exp_fixed_labor,Fixed Labor,1057606
+2026-07,exp_non_life_insurance,Non-life insurance,29833
+2026-07,exp_supplies,Supplies,47472
+2026-07,exp_misc,Misc,37613
+2026-07,exp_electric,Electric,94319
+2026-07,exp_gas,Gas,50660
+2026-07,exp_water,Water,28687
+2026-07,exp_telecom,Telecom,19186
+2026-07,exp_advertising,Advertising,87500
+2026-07,exp_payment_fees,Payment fees,79466
+2026-08,exp_rent,Rent,401697
+2026-08,exp_fixed_labor,Fixed Labor,1036439
+2026-08,exp_non_life_insurance,Non-life insurance,29754
+2026-08,exp_supplies,Supplies,47784
+2026-08,exp_misc,Misc,38147
+2026-08,exp_electric,Electric,97659
+2026-08,exp_gas,Gas,51597
+2026-08,exp_water,Water,29026
+2026-08,exp_telecom,Telecom,18929
+2026-08,exp_advertising,Advertising,87500
+2026-08,exp_payment_fees,Payment fees,77984
+2026-09,exp_rent,Rent,407851
+2026-09,exp_fixed_labor,Fixed Labor,1033158
+2026-09,exp_non_life_insurance,Non-life insurance,30248
+2026-09,exp_supplies,Supplies,48636
+2026-09,exp_misc,Misc,37773
+2026-09,exp_electric,Electric,79859
+2026-09,exp_gas,Gas,42903
+2026-09,exp_water,Water,23292
+2026-09,exp_telecom,Telecom,18944
+2026-09,exp_advertising,Advertising,59500
+2026-09,exp_payment_fees,Payment fees,64699
+2026-10,exp_rent,Rent,405082
+2026-10,exp_fixed_labor,Fixed Labor,1021035
+2026-10,exp_non_life_insurance,Non-life insurance,30456
+2026-10,exp_supplies,Supplies,48539
+2026-10,exp_misc,Misc,37875
+2026-10,exp_electric,Electric,77215
+2026-10,exp_gas,Gas,40464
+2026-10,exp_water,Water,22414
+2026-10,exp_telecom,Telecom,18722
+2026-10,exp_advertising,Advertising,70000
+2026-10,exp_payment_fees,Payment fees,76892
+2026-11,exp_rent,Rent,407355
+2026-11,exp_fixed_labor,Fixed Labor,1058297
+2026-11,exp_non_life_insurance,Non-life insurance,29877
+2026-11,exp_supplies,Supplies,47897
+2026-11,exp_misc,Misc,38716
+2026-11,exp_electric,Electric,79928
+2026-11,exp_gas,Gas,41254
+2026-11,exp_water,Water,23946
+2026-11,exp_telecom,Telecom,18973
+2026-11,exp_advertising,Advertising,87500
+2026-11,exp_payment_fees,Payment fees,71957
+2026-12,exp_rent,Rent,394863
+2026-12,exp_fixed_labor,Fixed Labor,1060066
+2026-12,exp_non_life_insurance,Non-life insurance,30551
+2026-12,exp_supplies,Supplies,48831
+2026-12,exp_misc,Misc,38503
+2026-12,exp_electric,Electric,86998
+2026-12,exp_gas,Gas,46743
+2026-12,exp_water,Water,25656
+2026-12,exp_telecom,Telecom,18670
+2026-12,exp_advertising,Advertising,87500
+2026-12,exp_payment_fees,Payment fees,89068

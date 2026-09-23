@@ -1,0 +1,212 @@
+{
+  "id": "demo-restaurant-v1",
+  "version": 1,
+  "businessType": "restaurant",
+  "currency": "JPY",
+  "locale": "machine-key",
+  "years": [
+    2024,
+    2025,
+    2026
+  ],
+  "closedWeekday": "Sunday",
+  "notes": [
+    "Finished fixed Demo CSVs for Human import — not a runtime generator.",
+    "Same pack for Demo Basic (sales only) and Demo Pro (sales+expenses).",
+    "L/D/customers/groups/food/drink are completed values in CSV."
+  ],
+  "accounts": {
+    "demo_basic": {
+      "email": "kpn_demo_restaurant_basic01@trial.forge-laboratory.com",
+      "userId": "u_7aac8cb5cbb0f607",
+      "plan": "basic"
+    },
+    "demo_pro": {
+      "email": "kpn_demo_restaurant_pro01@trial.forge-laboratory.com",
+      "userId": "u_a57d33d6ae864d99",
+      "plan": "pro"
+    }
+  },
+  "reset": {
+    "endpoint": "/api/v1/admin/reset-user-kpi.php",
+    "confirm": "RESET_KPN_DATA",
+    "allowlist": "demo basic/pro emails + userIds only"
+  },
+  "files": [
+    "sales_2024.csv",
+    "expenses_daily_2024.csv",
+    "expenses_monthly_2024.csv",
+    "sales_2025.csv",
+    "expenses_daily_2025.csv",
+    "expenses_monthly_2025.csv",
+    "sales_2026.csv",
+    "expenses_daily_2026.csv",
+    "expenses_monthly_2026.csv"
+  ],
+  "summaries": [
+    {
+      "year": 2024,
+      "annual_sales": 37815980,
+      "customers": 9532,
+      "open_days": 314,
+      "closed_days": 52,
+      "strongest_months": [
+        [
+          12,
+          3770390
+        ],
+        [
+          8,
+          3581740
+        ],
+        [
+          7,
+          3460100
+        ]
+      ],
+      "weakest_months": [
+        [
+          1,
+          2607700
+        ],
+        [
+          2,
+          2632040
+        ],
+        [
+          9,
+          2635640
+        ]
+      ],
+      "monthly_sales": {
+        "1": 2607700,
+        "2": 2632040,
+        "3": 3048880,
+        "4": 3214810,
+        "5": 3303350,
+        "6": 2882010,
+        "7": 3460100,
+        "8": 3581740,
+        "9": 2635640,
+        "10": 3327390,
+        "11": 3351930,
+        "12": 3770390
+      },
+      "expenses_daily": 15039779,
+      "expenses_monthly": 20112435,
+      "expenses_total": 35152214,
+      "rough_profit": 2663766,
+      "rough_margin_pct": 7.04
+    },
+    {
+      "year": 2025,
+      "annual_sales": 43448660,
+      "customers": 10932,
+      "open_days": 313,
+      "closed_days": 52,
+      "strongest_months": [
+        [
+          12,
+          4511520
+        ],
+        [
+          8,
+          3993460
+        ],
+        [
+          7,
+          3957980
+        ]
+      ],
+      "weakest_months": [
+        [
+          2,
+          2899390
+        ],
+        [
+          1,
+          3033050
+        ],
+        [
+          9,
+          3193150
+        ]
+      ],
+      "monthly_sales": {
+        "1": 3033050,
+        "2": 2899390,
+        "3": 3484270,
+        "4": 3727730,
+        "5": 3818900,
+        "6": 3295060,
+        "7": 3957980,
+        "8": 3993460,
+        "9": 3193150,
+        "10": 3864760,
+        "11": 3669390,
+        "12": 4511520
+      },
+      "expenses_daily": 17352841,
+      "expenses_monthly": 21434075,
+      "expenses_total": 38786916,
+      "rough_profit": 4661744,
+      "rough_margin_pct": 10.73
+    },
+    {
+      "year": 2026,
+      "annual_sales": 47736800,
+      "customers": 12004,
+      "open_days": 313,
+      "closed_days": 52,
+      "strongest_months": [
+        [
+          12,
+          4948240
+        ],
+        [
+          7,
+          4414760
+        ],
+        [
+          8,
+          4332470
+        ]
+      ],
+      "weakest_months": [
+        [
+          2,
+          3196360
+        ],
+        [
+          1,
+          3329420
+        ],
+        [
+          9,
+          3594410
+        ]
+      ],
+      "monthly_sales": {
+        "1": 3329420,
+        "2": 3196360,
+        "3": 3755620,
+        "4": 4106310,
+        "5": 4062890,
+        "6": 3726950,
+        "7": 4414760,
+        "8": 4332470,
+        "9": 3594410,
+        "10": 4271780,
+        "11": 3997590,
+        "12": 4948240
+      },
+      "expenses_daily": 19075686,
+      "expenses_monthly": 22524754,
+      "expenses_total": 41600440,
+      "rough_profit": 6136360,
+      "rough_margin_pct": 12.85
+    }
+  ],
+  "integrity_errors": [],
+  "integrity_ok": true
+}

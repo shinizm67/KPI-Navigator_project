@@ -1,0 +1,133 @@
+month,item,label,amount
+2025-01,exp_rent,Rent,390234
+2025-01,exp_fixed_labor,Fixed Labor,999125
+2025-01,exp_non_life_insurance,Non-life insurance,28816
+2025-01,exp_supplies,Supplies,45176
+2025-01,exp_misc,Misc,35950
+2025-01,exp_electric,Electric,87962
+2025-01,exp_gas,Gas,46606
+2025-01,exp_water,Water,26348
+2025-01,exp_telecom,Telecom,18108
+2025-01,exp_advertising,Advertising,52700
+2025-01,exp_payment_fees,Payment fees,54595
+2025-02,exp_rent,Rent,397311
+2025-02,exp_fixed_labor,Fixed Labor,989385
+2025-02,exp_non_life_insurance,Non-life insurance,29373
+2025-02,exp_supplies,Supplies,44987
+2025-02,exp_misc,Misc,36314
+2025-02,exp_electric,Electric,83337
+2025-02,exp_gas,Gas,44495
+2025-02,exp_water,Water,26305
+2025-02,exp_telecom,Telecom,18062
+2025-02,exp_advertising,Advertising,52700
+2025-02,exp_payment_fees,Payment fees,52189
+2025-03,exp_rent,Rent,397532
+2025-03,exp_fixed_labor,Fixed Labor,988408
+2025-03,exp_non_life_insurance,Non-life insurance,28998
+2025-03,exp_supplies,Supplies,45681
+2025-03,exp_misc,Misc,35975
+2025-03,exp_electric,Electric,74294
+2025-03,exp_gas,Gas,39492
+2025-03,exp_water,Water,22849
+2025-03,exp_telecom,Telecom,17901
+2025-03,exp_advertising,Advertising,62000
+2025-03,exp_payment_fees,Payment fees,62717
+2025-04,exp_rent,Rent,396532
+2025-04,exp_fixed_labor,Fixed Labor,995738
+2025-04,exp_non_life_insurance,Non-life insurance,29321
+2025-04,exp_supplies,Supplies,45040
+2025-04,exp_misc,Misc,35912
+2025-04,exp_electric,Electric,74030
+2025-04,exp_gas,Gas,37232
+2025-04,exp_water,Water,21639
+2025-04,exp_telecom,Telecom,17973
+2025-04,exp_advertising,Advertising,62000
+2025-04,exp_payment_fees,Payment fees,67099
+2025-05,exp_rent,Rent,392885
+2025-05,exp_fixed_labor,Fixed Labor,970676
+2025-05,exp_non_life_insurance,Non-life insurance,28594
+2025-05,exp_supplies,Supplies,45738
+2025-05,exp_misc,Misc,35452
+2025-05,exp_electric,Electric,71949
+2025-05,exp_gas,Gas,35736
+2025-05,exp_water,Water,21546
+2025-05,exp_telecom,Telecom,18232
+2025-05,exp_advertising,Advertising,62000
+2025-05,exp_payment_fees,Payment fees,68740
+2025-06,exp_rent,Rent,395838
+2025-06,exp_fixed_labor,Fixed Labor,990621
+2025-06,exp_non_life_insurance,Non-life insurance,29352
+2025-06,exp_supplies,Supplies,44718
+2025-06,exp_misc,Misc,36650
+2025-06,exp_electric,Electric,76650
+2025-06,exp_gas,Gas,39818
+2025-06,exp_water,Water,23133
+2025-06,exp_telecom,Telecom,18206
+2025-06,exp_advertising,Advertising,62000
+2025-06,exp_payment_fees,Payment fees,59311
+2025-07,exp_rent,Rent,395259
+2025-07,exp_fixed_labor,Fixed Labor,988801
+2025-07,exp_non_life_insurance,Non-life insurance,29111
+2025-07,exp_supplies,Supplies,45151
+2025-07,exp_misc,Misc,35448
+2025-07,exp_electric,Electric,87847
+2025-07,exp_gas,Gas,48347
+2025-07,exp_water,Water,27334
+2025-07,exp_telecom,Telecom,18215
+2025-07,exp_advertising,Advertising,77500
+2025-07,exp_payment_fees,Payment fees,71244
+2025-08,exp_rent,Rent,395650
+2025-08,exp_fixed_labor,Fixed Labor,979271
+2025-08,exp_non_life_insurance,Non-life insurance,29322
+2025-08,exp_supplies,Supplies,44436
+2025-08,exp_misc,Misc,35994
+2025-08,exp_electric,Electric,94940
+2025-08,exp_gas,Gas,50098
+2025-08,exp_water,Water,28091
+2025-08,exp_telecom,Telecom,18217
+2025-08,exp_advertising,Advertising,77500
+2025-08,exp_payment_fees,Payment fees,71882
+2025-09,exp_rent,Rent,395351
+2025-09,exp_fixed_labor,Fixed Labor,990185
+2025-09,exp_non_life_insurance,Non-life insurance,29194
+2025-09,exp_supplies,Supplies,44319
+2025-09,exp_misc,Misc,35705
+2025-09,exp_electric,Electric,74968
+2025-09,exp_gas,Gas,39121
+2025-09,exp_water,Water,23556
+2025-09,exp_telecom,Telecom,17733
+2025-09,exp_advertising,Advertising,52700
+2025-09,exp_payment_fees,Payment fees,57477
+2025-10,exp_rent,Rent,391215
+2025-10,exp_fixed_labor,Fixed Labor,973557
+2025-10,exp_non_life_insurance,Non-life insurance,29341
+2025-10,exp_supplies,Supplies,45641
+2025-10,exp_misc,Misc,36650
+2025-10,exp_electric,Electric,72175
+2025-10,exp_gas,Gas,38824
+2025-10,exp_water,Water,22355
+2025-10,exp_telecom,Telecom,17669
+2025-10,exp_advertising,Advertising,62000
+2025-10,exp_payment_fees,Payment fees,69566
+2025-11,exp_rent,Rent,395711
+2025-11,exp_fixed_labor,Fixed Labor,983004
+2025-11,exp_non_life_insurance,Non-life insurance,29470
+2025-11,exp_supplies,Supplies,45751
+2025-11,exp_misc,Misc,36231
+2025-11,exp_electric,Electric,77416
+2025-11,exp_gas,Gas,39055
+2025-11,exp_water,Water,22390
+2025-11,exp_telecom,Telecom,17945
+2025-11,exp_advertising,Advertising,77500
+2025-11,exp_payment_fees,Payment fees,66049
+2025-12,exp_rent,Rent,392738
+2025-12,exp_fixed_labor,Fixed Labor,995445
+2025-12,exp_non_life_insurance,Non-life insurance,28845
+2025-12,exp_supplies,Supplies,45572
+2025-12,exp_misc,Misc,35378
+2025-12,exp_electric,Electric,82088
+2025-12,exp_gas,Gas,45294
+2025-12,exp_water,Water,26007
+2025-12,exp_telecom,Telecom,18233
+2025-12,exp_advertising,Advertising,77500
+2025-12,exp_payment_fees,Payment fees,81207

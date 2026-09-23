@@ -1,8 +1,8 @@
 # Demo Operation Pack — restaurant-v1
 
-更新日: 2026-09-20  
-枝: **BR-LAUNCH-01-C2**  
-状態: 固定 CSV 正本（Human import 用）。KPN runtime に生成ロジックは無い。
+更新日: 2026-09-23  
+枝: **BR-LAUNCH-01-C1** (pack registered under C2; dataset contract closed on C1)  
+状態: 固定 CSV 正本。KPN runtime に生成ロジックは無い。Git 正本: `fixtures/demo/restaurant-v1/`。
 
 関連アカウント（C0）:
 
@@ -124,3 +124,25 @@ Monthly: `month,item,label,amount` — restaurant preset lineId（rent, fixed la
 ## 7. 再ビルド（メンテ用・任意）
 
 営業用正本は **fixtures 内の CSV**。再生成が必要な場合のみ、repo 外/一時スクリプトで CSV を書き直して検証する。アプリからは呼ばない。
+
+---
+
+## 8. Git 正本
+
+`fixtures/demo/restaurant-v1/` の 10 ファイル（manifest + sales 3 + expenses daily 3 + expenses monthly 3）を repo に置く。`tests/generated-fixtures/` は CSV smoke 用で別物。
+
+`excel/` は使わない。
+
+---
+
+## 9. Demo Basic の Sales-only seed（C1）
+
+Demo Basic が空のときだけ。**Demo Pro は reset / reseed / overwrite しない。** Retail Smoke も触らない。Expenses は Basic に入れない。
+
+1. Profile: Business Type = `restaurant`（plan は basic のまま）
+2. Annual に既存 CSV import 経路で `sales_2024.csv` → `sales_2025.csv` → `sales_2026.csv` のみ
+3. 期待値: 年商 37,815,980 / 43,448,660 / 47,736,800。営業日 314 / 313 / 313
+4. GET で `pl` は Basic entitlement により省略。`years[].dailyExpenses` は空
+5. MEP / PL は `guardProPage` → `setting/change_plan.html`
+
+再現に必要なもの: clone + `fixtures/demo/restaurant-v1` + 本手順（既存 importer。新しい seed フレームワークは無い）。
