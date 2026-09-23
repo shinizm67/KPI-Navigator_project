@@ -28340,6 +28340,29 @@
           releaseEditLease: releaseEditLease,
         };
 
+        function resolveStoreSyncBaseUrl() {
+          try {
+            if (window.__KPI_AUTH && typeof window.__KPI_AUTH.resolveAppRoot === 'function') {
+              return window.__KPI_AUTH.resolveAppRoot() + '/api/v1/store.php';
+            }
+          } catch (_eRoot) {}
+          return '/api/v1/store.php';
+        }
+
+        function enableSessionStoreSyncIfAuthed(meResult) {
+          var r = meResult;
+          if (!r || r.status !== 200 || !r.data || !r.data.ok) return;
+          var baseUrl = resolveStoreSyncBaseUrl();
+          try {
+            if (
+              window.__KPI_DATA_GATEWAY &&
+              typeof window.__KPI_DATA_GATEWAY.enableSessionSync === 'function'
+            ) {
+              window.__KPI_DATA_GATEWAY.enableSessionSync(baseUrl);
+            }
+          } catch (_eSync) {}
+        }
+
         function markUserScopeReady() {
           window.KpiYearStore.__userScopeReady = true;
           try {
@@ -28348,32 +28371,39 @@
         }
 
         function startInitAfterUserScopeBound() {
-          function run() {
+          function run(meResult) {
+            enableSessionStoreSyncIfAuthed(meResult);
             init();
             markUserScopeReady();
           }
           var auth = window.__KPI_AUTH;
           if (auth && typeof auth.ensureUserScopeBound === 'function') {
             Promise.resolve(auth.ensureUserScopeBound())
-              .then(run)
-              .catch(run);
+              .then(function (r) {
+                run(r);
+              })
+              .catch(function () {
+                run(null);
+              });
             return;
           }
           if (auth && typeof auth.syncPlanFromServer === 'function') {
             Promise.resolve(auth.syncPlanFromServer())
-              .then(run)
-              .catch(run);
+              .then(function (r) {
+                run(r);
+              })
+              .catch(function () {
+                run(null);
+              });
             return;
           }
-          run();
+          run(null);
         }
 
         try {
           window.addEventListener('kpi:localUserScopeChanged', function () {
             window.KpiYearStore.__userScopeReady = false;
-            resetForUserScope();
-            init();
-            markUserScopeReady();
+            startInitAfterUserScopeBound();
           });
         } catch (_eScopeEv) {}
 
