@@ -73,10 +73,11 @@
     if (!global.document || global.document.getElementById(STYLE_ID)) return;
     var css = global.document.createElement('style');
     css.id = STYLE_ID;
+    /* 20120: above Sales/Past Sales host 20055 and graph popover 20100; below leave-close 20150. */
     css.textContent =
       '#' +
       ROOT_ID +
-      '{position:fixed;inset:0;z-index:13000;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}' +
+      '{position:fixed;inset:0;z-index:20120;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;pointer-events:auto;}' +
       '#' +
       ROOT_ID +
       ' .kpi-sheet-picker__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);}' +

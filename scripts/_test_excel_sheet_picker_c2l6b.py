@@ -169,11 +169,14 @@ def test_static_wiring() -> None:
     assert_true("Select the sheet to import" in js, "EN title")
     assert_true("選擇要匯入的工作表" in js, "ZH-TW title")
     assert_true("showTemplateFallback" in js, "template fallback helper")
+    assert_true("z-index:20120" in js, "picker above host modal 20055")
+    assert_true("z-index:13000" not in js, "old picker z-index removed")
     assert_true("おすすめシート" not in js, "no recommended-sheet scan")
     for path in SALES_PAGES + PL_PAGES:
         html = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
         assert_true("kpi-excel-sheet-picker.js" in html, f"{rel} loads picker")
+        assert_true("c2picker" in html, f"{rel} cache-bust picker z-index")
         assert_true("SheetNames[0]" not in html, f"{rel} no first-sheet auto import")
         assert_true("rowsFromWorkbook" in html, f"{rel} uses picker rowsFromWorkbook")
         assert_true("picker-required" in html, f"{rel} fail-closed without picker")
@@ -258,6 +261,8 @@ def test_playwright_picker() -> None:
             }"""
         )
         page.wait_for_selector("#kpi-excel-sheet-picker")
+        z = page.evaluate("() => getComputedStyle(document.getElementById('kpi-excel-sheet-picker')).zIndex")
+        assert_true(str(z) == "20120", "computed picker z-index 20120")
         labels = page.locator(".kpi-sheet-picker__sheet").all_text_contents()
         assert_true(labels == ["README", "売上", "納品書"], "all sheet names shown")
         title_jp = page.locator("#kpi-excel-sheet-picker-title").inner_text().strip()
@@ -324,7 +329,7 @@ def test_playwright_picker() -> None:
 
 def test_production_artifacts() -> None:
     urls = [
-        f"{HTTP_ROOT}/js/kpi-excel-sheet-picker.js?v=20260923-c2l6b",
+        f"{HTTP_ROOT}/js/kpi-excel-sheet-picker.js?v=20260923-c2picker",
         f"{HTTP_ROOT}/app/annual/index.html",
         f"{HTTP_ROOT}/en/app/annual/index.html",
         f"{HTTP_ROOT}/zh-tw/app/annual/index.html",
