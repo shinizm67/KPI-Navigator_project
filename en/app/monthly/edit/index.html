@@ -2699,6 +2699,7 @@
     <script src="../../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
+    <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2l6b"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"></script>
     <script src="../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"></script>
@@ -6075,17 +6076,29 @@
           });
         }
 
-        function sheetToRows(wb) {
-          var name = wb.SheetNames && wb.SheetNames[0];
+        function sheetToRows(wb, name) {
           if (!name) return [];
-          var sheet = wb.Sheets[name];
+          var sheet = wb.Sheets && wb.Sheets[name];
+          if (!sheet) return [];
           return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
         }
 
         function parseWorkbookBuffer(buf) {
           return ensureXlsx().then(function () {
             var wb = window.XLSX.read(buf, { type: 'array' });
-            return sheetToRows(wb);
+            var picker = window.KpiExcelSheetPicker;
+            if (picker && typeof picker.rowsFromWorkbook === 'function') {
+              return picker.rowsFromWorkbook(wb).then(function (picked) {
+                return picked && picked.rows ? picked.rows : [];
+              });
+            }
+            var names = (wb.SheetNames || []);
+            if (names.length > 1) {
+              var err = new Error('picker-required');
+              err.code = 'picker-required';
+              throw err;
+            }
+            return sheetToRows(wb, names[0]);
           });
         }
 
@@ -6700,6 +6713,7 @@
                     window.__KPI_BUSY.hide();
                   }
                   var code = err && err.message;
+                  if (window.KpiExcelSheetPicker && window.KpiExcelSheetPicker.isCancelled(err)) return;
                   if (code === 'xlsx') {
                     window.alert(
                       t(
@@ -6709,26 +6723,22 @@
                     );
                     return;
                   }
-                  if (code === 'empty') {
-                    window.alert(
-                      t('ファイルが空です。', 'The file is empty.')
-                    );
-                    return;
-                  }
-                  if (code === 'columns') {
-                    window.alert(
-                      t(
-                        '列を認識できませんでした。1行目に「日付」「店舗売上」（任意で「フード売上」「ドリンク売上」）などの列名が必要です。',
-                        'Could not detect columns. Row 1 needs headers such as Date, Store Sales (optional Food Sales / Drink Sales).'
-                      )
-                    );
-                    return;
-                  }
-                  if (code === 'rows') {
+                  if (
+                    code === 'empty' ||
+                    code === 'columns' ||
+                    code === 'rows' ||
+                    code === 'unreadable' ||
+                    code === 'picker-required'
+                  ) {
+                    if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+                      window.KpiExcelSheetPicker.showTemplateFallback('sales');
+                      return;
+                    }
                     window.alert(
                       t(
-                        '有効な日付行がありません。日付列（YYYY-MM-DD など）を確認してください。',
-                        'No valid date rows found. Check the date column (YYYY-MM-DD, etc.).'
+                        'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                        'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                        '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
                       )
                     );
                     return;
@@ -15187,13 +15197,32 @@
             return ensureXlsx().then(function () {
               return readBuffer(file).then(function (buf) {
                 var wb = window.XLSX.read(buf, { type: 'array' });
-                var first = wb.SheetNames[0];
-                var sheet = wb.Sheets[first];
+                var picker = window.KpiExcelSheetPicker;
+                if (picker && typeof picker.rowsFromWorkbook === 'function') {
+                  return picker.rowsFromWorkbook(wb).then(function (picked) {
+                    return picked && picked.rows ? picked.rows : [];
+                  });
+                }
+                var names = (wb.SheetNames || []);
+                if (names.length > 1) {
+                  var err = new Error('picker-required');
+                  err.code = 'picker-required';
+                  throw err;
+                }
+                var sheet = wb.Sheets[names[0]];
                 return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, blankrows: false });
               });
             });
           }
           return readText(file).then(parseTextRows);
+        }
+        function expenseRowsReadable(rows) {
+          if (!rows || !rows.length) return false;
+          var cols = detectCols(rows);
+          for (var r = cols.start; r < rows.length; r++) {
+            if (normDate((rows[r] || [])[cols.dateCol])) return true;
+          }
+          return false;
         }
         function detectCols(rows) {
           var header = (rows[0] || []).map(normText);
@@ -15503,6 +15532,7 @@
             if (!file) return;
             parseFileRows(file)
               .then(function (rows) {
+                if (!expenseRowsReadable(rows)) throw new Error('unreadable');
                 /* KPI-CSV-IMPORT-SAFETY-6H */
                 if (!window.confirm(mepExpenseText(
                   '同じ日付・費目の既存値は、取込値で置き換えられます。\\n取り込みますか？',
@@ -15524,12 +15554,17 @@
                   )
                 );
               })
-              .catch(function () {
+              .catch(function (err) {
+                if (window.KpiExcelSheetPicker && window.KpiExcelSheetPicker.isCancelled(err)) return;
+                if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+                  window.KpiExcelSheetPicker.showTemplateFallback('expense');
+                  return;
+                }
                 window.alert(
                   mepExpenseText(
-                    '支出CSVを読み込めませんでした。ヘッダー（日付,費目,金額）を確認してください。',
-                    'Could not import expense CSV. Check headers (date, item, amount).',
-                    '無法匯入支出 CSV。請確認欄位（日期、費目、金額）。'
+                    'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                    'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                    '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
                   )
                 );
               });

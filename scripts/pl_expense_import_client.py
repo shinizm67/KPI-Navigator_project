@@ -174,8 +174,19 @@ def pl_expense_import_client_js() -> str:
             return ensureXlsx().then(function () {
               return readBuffer(file).then(function (buf) {
                 var wb = window.XLSX.read(buf, { type: 'array' });
-                var first = wb.SheetNames[0];
-                var sheet = wb.Sheets[first];
+                var picker = window.KpiExcelSheetPicker;
+                if (picker && typeof picker.rowsFromWorkbook === 'function') {
+                  return picker.rowsFromWorkbook(wb).then(function (picked) {
+                    return picked && picked.rows ? picked.rows : [];
+                  });
+                }
+                var names = (wb.SheetNames || []);
+                if (names.length > 1) {
+                  var err = new Error('picker-required');
+                  err.code = 'picker-required';
+                  throw err;
+                }
+                var sheet = wb.Sheets[names[0]];
                 return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, blankrows: false });
               });
             });

@@ -4304,6 +4304,7 @@
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../js/kpi-csv-templates.js"></script>
     <script src="../../../js/kpi-excel-templates.js"></script>
+    <script src="../../../js/kpi-excel-sheet-picker.js?v=20260923-c2l6b"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -12247,8 +12248,19 @@
             return ensureXlsx().then(function () {
               return readBuffer(file).then(function (buf) {
                 var wb = window.XLSX.read(buf, { type: 'array' });
-                var first = wb.SheetNames[0];
-                var sheet = wb.Sheets[first];
+                var picker = window.KpiExcelSheetPicker;
+                if (picker && typeof picker.rowsFromWorkbook === 'function') {
+                  return picker.rowsFromWorkbook(wb).then(function (picked) {
+                    return picked && picked.rows ? picked.rows : [];
+                  });
+                }
+                var names = (wb.SheetNames || []);
+                if (names.length > 1) {
+                  var err = new Error('picker-required');
+                  err.code = 'picker-required';
+                  throw err;
+                }
+                var sheet = wb.Sheets[names[0]];
                 return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, blankrows: false });
               });
             });
@@ -13065,11 +13077,30 @@
           };
           parseFile(file).then(function (rows) {
             if (!rows || !rows.length) {
-              window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。',
-                              'Could not read the file (empty or invalid format).'));
+              if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+                window.KpiExcelSheetPicker.showTemplateFallback('expense');
+                return;
+              }
+              window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                              'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
               return;
             }
             var cols = detectColumns(rows);
+            if (!cols.confident) {
+              var hasDate = false;
+              for (var ri = cols.start; ri < rows.length; ri++) {
+                if (normDate((rows[ri] || [])[cols.dateCol])) { hasDate = true; break; }
+              }
+              if (!hasDate) {
+                if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+                  window.KpiExcelSheetPicker.showTemplateFallback('expense');
+                  return;
+                }
+                window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                                'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
+                return;
+              }
+            }
             var plan;
             try {
               var lines0 = loadCatalogLines();
@@ -13091,9 +13122,14 @@
               return;
             }
             openMappingModal(rows, cols, importMeta);
-          }).catch(function () {
-            window.alert(tt('Excel の読み込みに失敗しました。CSV でお試しください（オフライン時は .xlsx を読めません）。',
-                            'Failed to read Excel. Try CSV instead (.xlsx needs to be online).'));
+          }).catch(function (err) {
+            if (window.KpiExcelSheetPicker && window.KpiExcelSheetPicker.isCancelled(err)) return;
+            if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+              window.KpiExcelSheetPicker.showTemplateFallback('expense');
+              return;
+            }
+            window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                            'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
           });
         }
 

@@ -15059,6 +15059,7 @@
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
     <script src="../../js/kpi-excel-templates.js"></script>
+    <script src="../../js/kpi-excel-sheet-picker.js?v=20260923-c2l6b"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -29619,17 +29620,29 @@
           });
         }
 
-        function sheetToRows(wb) {
-          var name = wb.SheetNames && wb.SheetNames[0];
+        function sheetToRows(wb, name) {
           if (!name) return [];
-          var sheet = wb.Sheets[name];
+          var sheet = wb.Sheets && wb.Sheets[name];
+          if (!sheet) return [];
           return window.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
         }
 
         function parseWorkbookBuffer(buf) {
           return ensureXlsx().then(function () {
             var wb = window.XLSX.read(buf, { type: 'array' });
-            return sheetToRows(wb);
+            var picker = window.KpiExcelSheetPicker;
+            if (picker && typeof picker.rowsFromWorkbook === 'function') {
+              return picker.rowsFromWorkbook(wb).then(function (picked) {
+                return picked && picked.rows ? picked.rows : [];
+              });
+            }
+            var names = (wb.SheetNames || []);
+            if (names.length > 1) {
+              var err = new Error('picker-required');
+              err.code = 'picker-required';
+              throw err;
+            }
+            return sheetToRows(wb, names[0]);
           });
         }
 
@@ -30244,6 +30257,7 @@
                     window.__KPI_BUSY.hide();
                   }
                   var code = err && err.message;
+                  if (window.KpiExcelSheetPicker && window.KpiExcelSheetPicker.isCancelled(err)) return;
                   if (code === 'xlsx') {
                     window.alert(
                       t(
@@ -30253,26 +30267,22 @@
                     );
                     return;
                   }
-                  if (code === 'empty') {
-                    window.alert(
-                      t('ファイルが空です。', 'The file is empty.')
-                    );
-                    return;
-                  }
-                  if (code === 'columns') {
-                    window.alert(
-                      t(
-                        '列を認識できませんでした。1行目に「日付」「店舗売上」（任意で「フード売上」「ドリンク売上」）などの列名が必要です。',
-                        'Could not detect columns. Row 1 needs headers such as Date, Store Sales (optional Food Sales / Drink Sales).'
-                      )
-                    );
-                    return;
-                  }
-                  if (code === 'rows') {
+                  if (
+                    code === 'empty' ||
+                    code === 'columns' ||
+                    code === 'rows' ||
+                    code === 'unreadable' ||
+                    code === 'picker-required'
+                  ) {
+                    if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
+                      window.KpiExcelSheetPicker.showTemplateFallback('sales');
+                      return;
+                    }
                     window.alert(
                       t(
-                        '有効な日付行がありません。日付列（YYYY-MM-DD など）を確認してください。',
-                        'No valid date rows found. Check the date column (YYYY-MM-DD, etc.).'
+                        'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                        'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                        '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
                       )
                     );
                     return;
