@@ -126,3 +126,20 @@ Estimated fix: **SMALL**.
 | BR-LAUNCH-07 | **ACTIVE** |
 | Next Task | **BR-LAUNCH-07 Phase 2 Repair** |
 | excel untouched | **YES** |
+
+---
+
+## Phase 2 Repair — CLOSED 2026-09-25
+
+Shared `en/setting/style.css` tokens:
+
+- `--kpi-header-actions-reserve: 368px` (was `padding-right: 260px`)
+- `--kpi-header-nav-gap: 20px` (was 28px; required so 4×120px tabs fit remaining 1200 after reserve)
+
+No calendar absolute offset. No per-language/mode/page header hacks. `site_chrome.py` markup unchanged.
+
+SHA: `bbe3907`  
+FileZilla: C71–C83  
+Production: `scripts/_tmp_c7_phase2_smoke.json` **113/114 PASS**. ZH-TW PL has no `#header-booking-btn` (pre-existing markup; pad 368px confirmed). Basic redirect PASS.
+
+Insight–booking gap after: Sci-Fi **49–56px**, Office **12.1–12.5px**. Overlap 0. overflowX 0. 1200 Mode `Office` still in-flow (03-A).

@@ -2911,6 +2911,30 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-07 Global Menu / Booking collision（2026-09-25）
+
+`js/` `api/` なし。日本語 `app/`（annual → monthly → monthly/edit → profit/pl）→ 英語 `en/app/` 同順 → 繁中 `zh-tw/app/` 同順。その後 `en/setting/style.css`。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C71 | `C:\Users\funki\kpi-navigator\app\annual\index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| C72 | `C:\Users\funki\kpi-navigator\app\monthly\index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| C73 | `C:\Users\funki\kpi-navigator\app\monthly\edit\index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| C74 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C75 | `C:\Users\funki\kpi-navigator\en\app\annual\index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| C76 | `C:\Users\funki\kpi-navigator\en\app\monthly\index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| C77 | `C:\Users\funki\kpi-navigator\en\app\monthly\edit\index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+| C78 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| C79 | `C:\Users\funki\kpi-navigator\zh-tw\app\annual\index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| C80 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| C81 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\edit\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+| C82 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+| C83 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+
+確認: `--kpi-header-actions-reserve: 368px`。`.header-inner` の `padding-right` が 260px でない。HTML が `style.css?v=20260925-c7`。Insight と `#header-booking-btn` が重ならない。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
