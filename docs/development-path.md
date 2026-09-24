@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06
+TRUNK-06 -> BR-LAUNCH-06
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -83,7 +83,10 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- (none)
+- BR-LAUNCH-06 PL Excel Download Repair P1
+
+PAUSED / REGISTER ONLY (under TRUNK-06):
+- BR-LAUNCH-07 Global Menu Spacing / Reservation Button Collision P1
 
 DEFERRED:
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
@@ -110,7 +113,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-04` CLOSED. Remaining Launch-required child `BR-LAUNCH-05` is DEFERRED (not a Launch blocker). Do not start `BR-LAUNCH-05`.
+`BR-LAUNCH-06` ACTIVE. Phase 1 audit COMPLETE. Next = `BR-LAUNCH-06 Phase 2 Repair` (restore current PL Excel/CSV download; blob lifecycle). Do not start `BR-LAUNCH-05` / `BR-LAUNCH-07`.
 ```
 
 ### Git snapshot????????
@@ -1359,6 +1362,36 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | ?????Stripe / ???????????? assessment ? ???????? |
 | note | **????????**?readiness assessment only?? |
 
+### BR-LAUNCH-06
+
+| Field | Value |
+|-------|-------|
+| id | `BR-LAUNCH-06` |
+| name | PL Excel Download Repair |
+| parent | `TRUNK-06` |
+| status | ACTIVE |
+| priority | P1 |
+| started_at | 2026-09-24 |
+| return_to | `TRUNK-06` |
+| reason | Visible PL 「Excelダウンロード」 navigates to blob: URL then Chrome ERR_FILE_NOT_FOUND. Restore current intended download. Not a new workbook. |
+| evidence | Phase 1: [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). Payload is UTF-8 CSV (BOM, size > 0). Immediate `revokeObjectURL` + blob navigation. |
+| next_action | Phase 2 Repair — keep blob alive; do not navigate. No MEP/Raw Data/template redesign. Do not start `BR-LAUNCH-07`. |
+| constraint | Launch repair of current button only; excel/ untouched; BR-LAUNCH-05 stays DEFERRED |
+
+### BR-LAUNCH-07
+
+| Field | Value |
+|-------|-------|
+| id | `BR-LAUNCH-07` |
+| name | Global Menu Spacing / Reservation Button Collision |
+| parent | `TRUNK-06` |
+| status | PAUSED |
+| priority | P1 |
+| started_at | not started |
+| return_to | `TRUNK-06` |
+| reason | Launch-required chrome spacing / reservation button collision. REGISTER ONLY. |
+| next_action | REGISTER ONLY. Do not start. After `BR-LAUNCH-06`. |
+
 ---
 
 ## 8. DEFERRED BRANCHES????
@@ -1442,9 +1475,9 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: none (04 CLOSED)  
+ACTIVE under `TRUNK-06`: `BR-LAUNCH-06`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
-PAUSED under `TRUNK-06`: none  
+PAUSED under `TRUNK-06`: `BR-LAUNCH-07` (REGISTER ONLY)  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
@@ -1556,3 +1589,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **TRUNK-06 next Launch branch audit** 01/02/03 CLOSED. Remaining Launch-required = `BR-LAUNCH-04` (PAUSED P1). `BR-LAUNCH-05` DEFERRED (billing assessment; registration already disabled; not a Launch blocker). Next phase = `BR-LAUNCH-04` by numeric order. Not started. CURRENT PATH stays `TRUNK-06`. Do not start 04/05. Do not reopen 01/02/03. |
 | 2026-09-24 | **BR-LAUNCH-04 START / Phase 1 audit COMPLETE** Production Playwright + computedStyle + screenshots. Contract PARTIAL. P0=0. P1=5 (rest fill missing, unused monthly-editable class, no amount hover, Office focus Sci-Fi `#152a32`, Office daily dim lost). P2=3. Human visual YES. Fix size SMALL. [`docs/pl-editable-cell-audit-04.md`](./pl-editable-cell-audit-04.md). No CSS/code. excel untouched. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-04 CLOSED** Phase 2 CSS visual contract. Production smoke 7/7 PASS (JA/EN/ZH-TW × Sci-Fi/Office + Basic redirect). Rest/hover/focus distinct; Office focus `#c8c8c8` (no `#152a32`); daily dim restored. nEditable=132 unchanged. P1=0 remaining. P2=3 deferred (empty `—`, label vs amount hover, first-load hydrate). Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| 2026-09-24 | **BR-LAUNCH-06 REGISTER + START / Phase 1 audit COMPLETE**. **BR-LAUNCH-07 REGISTER ONLY** (PAUSED). `BR-LAUNCH-05` stays DEFERRED. PL `#pl-excel-download` builds UTF-8 CSV then immediate `revokeObjectURL`; Chrome navigates to blob: → ERR_FILE_NOT_FOUND. CSV bytes PASS (JA 8612). XLSX PK FAIL. Fix SMALL. [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). No code. excel untouched. Do not start 07 / 05. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-06`. |
