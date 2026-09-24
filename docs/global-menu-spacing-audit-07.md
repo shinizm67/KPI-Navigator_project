@@ -1,7 +1,7 @@
 # BR-LAUNCH-07 Global Menu Spacing / Reservation Button Collision — Phase 1 Audit
 
 Date: 2026-09-25  
-Status: ACTIVE (audit only; no product change)  
+Status: CLOSED (Phase 2 production smoke 113/114)  
 Production: `https://forge-laboratory.com/kpi-navigator`  
 excel/: untouched
 
@@ -143,3 +143,20 @@ FileZilla: C71–C83
 Production: `scripts/_tmp_c7_phase2_smoke.json` **113/114 PASS**. ZH-TW PL has no `#header-booking-btn` (pre-existing markup; pad 368px confirmed). Basic redirect PASS.
 
 Insight–booking gap after: Sci-Fi **49–56px**, Office **12.1–12.5px**. Overlap 0. overflowX 0. 1200 Mode `Office` still in-flow (03-A).
+
+---
+
+## Trunk closeout note (2026-09-25) — ZH-TW PL booking
+
+The 113/114 miss is **not** a 07 geometry miss. It is an **accidental language/page parity omission**.
+
+| Surface | `#header-booking-btn` | Header source |
+|---------|------------------------|---------------|
+| JP PL `app/profit/pl/index.html` | present | `build_pl_table_page.py` → `site_chrome.build_header` (no KPI-SITE-HEADER markers) |
+| EN PL `en/app/profit/pl/index.html` | present | same generator |
+| ZH-TW PL `zh-tw/app/profit/pl/index.html` | **absent** | forked unmarked `<header>` (Mode then DL) |
+| ZH-TW Annual / Monthly / MEP / profit landing / booking / settings | present | `build_site_chrome.py` + `site_chrome.py` |
+
+`scripts/build_site_chrome.py` explicitly excludes PL (`owned by build_pl_table_page.py`). That generator `main()` writes JA + EN only. ZH-TW PL never received the shared booking control.
+
+Registered **BR-LAUNCH-08** (REGISTER ONLY). Do not repair in 07.
