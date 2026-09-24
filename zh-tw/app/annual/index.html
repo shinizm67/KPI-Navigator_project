@@ -15183,7 +15183,7 @@
             <span class="annual-tw-toggle-label annual-tw-toggle-label--close">關閉</span>
           </div>
         </div>
-        <button type="button" class="annual-focus-jump-btn" id="annual-focus-jump-btn" aria-label="移至 Focus Bar">▼ Focus Bar</button>
+        <button type="button" class="annual-focus-jump-btn" id="annual-focus-jump-btn" aria-label="移至焦點列">▼ 焦點列</button>
         <div class="annual-kpi-group5-labels-row" aria-hidden="true">
           <div class="annual-kpi-group5-row-label-col" aria-hidden="true"></div>
           <div class="annual-kpi-strip-labels">
@@ -15443,11 +15443,11 @@
               </div>
               <img src="../../../images/focus_bar.svg" alt="" class="annual-daily-focus-bar-img" id="annual-daily-focus-bar-img" width="757" height="91" decoding="async" aria-hidden="true">
             </div>
-            <button type="button" class="focus-bar-back-to-cockpit" id="annual-back-to-cockpit" aria-label="返回 Area1 Cockpit">
+            <button type="button" class="focus-bar-back-to-cockpit" id="annual-back-to-cockpit" aria-label="返回主畫面">
               <span class="focus-bar-back-to-cockpit__label">
                 <span class="focus-bar-back-to-cockpit__arrow" aria-hidden="true">▲</span>
                 <span class="focus-bar-back-to-cockpit__line">返回</span>
-                <span class="focus-bar-back-to-cockpit__line">Cockpit</span>
+                <span class="focus-bar-back-to-cockpit__line">主畫面</span>
               </span>
             </button>
           </div>
@@ -31214,7 +31214,7 @@
       var useCjkDow = langJa || langZh;
       dateInput.setAttribute('lang', langJa ? 'ja' : langZh ? 'zh-TW' : 'en');
       var dowEn = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-      var dowCjk = ['日', '月', '火', '水', '木', '金', '土'];
+      var dowCjk = langZh ? ['日', '一', '二', '三', '四', '五', '六'] : ['日', '月', '火', '水', '木', '金', '土'];
 
       function toISODateLocal(d) {
         var y = d.getFullYear();
@@ -32705,6 +32705,7 @@
         .indexOf('zh') === 0;
       var useCjkMonths = isJa || isZh;
       var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
       var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
       function fmtMoney(n) {
@@ -33414,6 +33415,12 @@
           var dateLabel;
           if (isJa) {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
+            if (!isBusiness) dateLabel += ' OFF';
+          } else if (typeof isZh !== 'undefined' && isZh) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_ZH[dow];
+            if (!isBusiness) dateLabel += ' OFF';
+          } else if (typeof useZh !== 'undefined' && useZh) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + ((typeof WD_ZH !== 'undefined' ? WD_ZH : WEEKDAYS_ZH)[dow]);
             if (!isBusiness) dateLabel += ' OFF';
           } else {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
@@ -35827,6 +35834,7 @@
         'December'
       ];
       var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
       var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
       var state = {
@@ -36602,7 +36610,7 @@
         var dow = d.getDay();
         var useCjk = (typeof useCjkMonths !== 'undefined' ? useCjkMonths : isJa) ||
           (typeof isZh !== 'undefined' && isZh);
-        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow]);
+        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? ((typeof isZh !== 'undefined' && isZh) ? WEEKDAYS_ZH[dow] : WEEKDAYS_JA[dow]) : WEEKDAYS_EN[dow]);
         if (off) label += useCjk ? ' 公休' : ' OFF';
         return label;
       }
@@ -37862,6 +37870,7 @@
         'December'
       ];
       var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
       var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
       var state = {
@@ -38800,7 +38809,7 @@
         var dow = d.getDay();
         var useCjk = (typeof useCjkMonths !== 'undefined' ? useCjkMonths : isJa) ||
           (typeof isZh !== 'undefined' && isZh);
-        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow]);
+        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? ((typeof isZh !== 'undefined' && isZh) ? WEEKDAYS_ZH[dow] : WEEKDAYS_JA[dow]) : WEEKDAYS_EN[dow]);
         if (off) label += useCjk ? ' 公休' : ' OFF';
         return label;
       }
@@ -40566,6 +40575,7 @@
         'December'
       ];
       var WEEKDAYS_EN = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      var WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
       var WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
       var state = {
@@ -40761,7 +40771,7 @@
         var dow = d.getDay();
         var useCjk = (typeof useCjkMonths !== 'undefined' ? useCjkMonths : isJa) ||
           (typeof isZh !== 'undefined' && isZh);
-        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? WEEKDAYS_JA[dow] : WEEKDAYS_EN[dow]);
+        var label = m0 + 1 + '/' + day + ' ' + (useCjk ? ((typeof isZh !== 'undefined' && isZh) ? WEEKDAYS_ZH[dow] : WEEKDAYS_JA[dow]) : WEEKDAYS_EN[dow]);
         if (off) label += useCjk ? ' 公休' : ' OFF';
         return label;
       }

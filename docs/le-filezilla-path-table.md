@@ -2788,6 +2788,47 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-03-B Chrome i18n R2（2026-09-24）
+
+`js/` `api/` なし。日本語 `app/` → 繁中 `zh-tw/app/`（EN app 変更なし）。各言語内 `annual` → `monthly` → `monthly/edit` → 他。その後 `setting/` 日→台湾。最後に `register/`。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C3B1 | `C:\Users\funki\kpi-navigator\app\annual\index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| C3B2 | `C:\Users\funki\kpi-navigator\app\monthly\index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| C3B3 | `C:\Users\funki\kpi-navigator\app\monthly\edit\index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| C3B4 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C3B5 | `C:\Users\funki\kpi-navigator\app\profit\index.html` | `public_html/kpi-navigator/app/profit/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/index.html |
+| C3B6 | `C:\Users\funki\kpi-navigator\zh-tw\app\annual\index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| C3B7 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| C3B8 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\edit\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+| C3B9 | `C:\Users\funki\kpi-navigator\setting\profile.html` | `public_html/kpi-navigator/setting/profile.html` | https://forge-laboratory.com/kpi-navigator/setting/profile.html |
+| C3B10 | `C:\Users\funki\kpi-navigator\setting\profile_edit.html` | `public_html/kpi-navigator/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/profile_edit.html |
+| C3B11 | `C:\Users\funki\kpi-navigator\setting\change_plan.html` | `public_html/kpi-navigator/setting/change_plan.html` | https://forge-laboratory.com/kpi-navigator/setting/change_plan.html |
+| C3B12 | `C:\Users\funki\kpi-navigator\setting\change_email.html` | `public_html/kpi-navigator/setting/change_email.html` | https://forge-laboratory.com/kpi-navigator/setting/change_email.html |
+| C3B13 | `C:\Users\funki\kpi-navigator\setting\change_email_edit.html` | `public_html/kpi-navigator/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/change_email_edit.html |
+| C3B14 | `C:\Users\funki\kpi-navigator\setting\change_password.html` | `public_html/kpi-navigator/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password.html |
+| C3B15 | `C:\Users\funki\kpi-navigator\setting\change_password_success.html` | `public_html/kpi-navigator/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password_success.html |
+| C3B16 | `C:\Users\funki\kpi-navigator\setting\plan_details.html` | `public_html/kpi-navigator/setting/plan_details.html` | https://forge-laboratory.com/kpi-navigator/setting/plan_details.html |
+| C3B17 | `C:\Users\funki\kpi-navigator\setting\preferences.html` | `public_html/kpi-navigator/setting/preferences.html` | https://forge-laboratory.com/kpi-navigator/setting/preferences.html |
+| C3B18 | `C:\Users\funki\kpi-navigator\setting\session_management.html` | `public_html/kpi-navigator/setting/session_management.html` | https://forge-laboratory.com/kpi-navigator/setting/session_management.html |
+| C3B19 | `C:\Users\funki\kpi-navigator\setting\feedback.html` | `public_html/kpi-navigator/setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/setting/feedback.html |
+| C3B20 | `C:\Users\funki\kpi-navigator\setting\delete_account1.html` | `public_html/kpi-navigator/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account1.html |
+| C3B21 | `C:\Users\funki\kpi-navigator\setting\delete_account2.html` | `public_html/kpi-navigator/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account2.html |
+| C3B22 | `C:\Users\funki\kpi-navigator\setting\delete_account3.html` | `public_html/kpi-navigator/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account3.html |
+| C3B23 | `C:\Users\funki\kpi-navigator\setting\delete_account4-1.html` | `public_html/kpi-navigator/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-1.html |
+| C3B24 | `C:\Users\funki\kpi-navigator\setting\delete_account4-2.html` | `public_html/kpi-navigator/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-2.html |
+| C3B25 | `C:\Users\funki\kpi-navigator\setting\delete_account5.html` | `public_html/kpi-navigator/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account5.html |
+| C3B26 | `C:\Users\funki\kpi-navigator\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account_accomplished.html |
+| C3B27 | `C:\Users\funki\kpi-navigator\zh-tw\setting\profile.html` | `public_html/kpi-navigator/zh-tw/setting/profile.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/profile.html |
+| C3B28 | `C:\Users\funki\kpi-navigator\zh-tw\setting\profile_edit.html` | `public_html/kpi-navigator/zh-tw/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/profile_edit.html |
+| C3B29 | `C:\Users\funki\kpi-navigator\zh-tw\setting\feedback.html` | `public_html/kpi-navigator/zh-tw/setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/feedback.html |
+| C3B30 | `C:\Users\funki\kpi-navigator\register\registration_si-fi_jp\registration_si-fi_jp.html` | `public_html/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html` | https://forge-laboratory.com/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html |
+
+確認: JA に可視 `Focus Bar` / `Workspace : Personal` / `LOCKED` / `UNDO` / `Download Excel` / `Change Plan` 字幕 / `Annual Progress` / `Auto Calc` / `Early Access` なし。ZH-TW Annual に `Focus Bar` なし、曜日が `sun`/`mon` でない。EN Annual は `Focus Bar` のまま。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

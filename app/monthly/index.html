@@ -12922,11 +12922,11 @@
           <span class="profile-workspace-icon" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
           </span>
-          <span class="profile-workspace-label">Workspace : Personal</span>
+          <span class="profile-workspace-label">ワークスペース : 個人</span>
         </button>
         <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="ワークスペース一覧" hidden>
           <div class="workspace-popup-inner">
-            <div class="workspace-popup-item is-current">Workspace : Personal</div>
+            <div class="workspace-popup-item is-current">ワークスペース : 個人</div>
           </div>
         </div>
       </div>
@@ -12947,7 +12947,7 @@
             decoding="async"
             aria-hidden="true"
           >
-          <span class="monthly-access-btn__label" id="monthly-plan-lock-label">LOCKED</span>
+          <span class="monthly-access-btn__label" id="monthly-plan-lock-label">ロック</span>
         </a>
         <button
           type="button"
@@ -12998,7 +12998,7 @@
           <div class="annual-history-dialog" role="document">
             <div class="annual-history-header">
               <h3 class="annual-history-title">History</h3>
-              <button type="button" class="annual-history-close" id="annual-history-close">Close</button>
+              <button type="button" class="annual-history-close" id="annual-history-close">閉じる</button>
             </div>
             <div class="annual-history-body">
               <table class="annual-history-table" aria-label="Annual history records">
@@ -13065,7 +13065,7 @@
             </div>
           </div>
         </div>
-        <a class="annual-focus-jump-btn" id="monthly-focus-jump-btn" aria-label="フォーカスバーへ移動" href="#monthly-focus-jump-target">▼ Focus Bar</a>
+        <a class="annual-focus-jump-btn" id="monthly-focus-jump-btn" aria-label="フォーカスバーへ移動" href="#monthly-focus-jump-target">▼ フォーカスバー</a>
         <div class="annual-kpi-group5-labels-row" aria-hidden="true">
           <div class="annual-kpi-group5-row-label-col" aria-hidden="true"></div>
           <div class="annual-kpi-strip-labels">
@@ -13346,8 +13346,8 @@
             <span class="focus-bar-back-to-cockpit__label">
               <span class="focus-bar-back-to-cockpit__mark" aria-hidden="true">▲</span>
               <span class="focus-bar-back-to-cockpit__copy">
-                <span class="focus-bar-back-to-cockpit__line">Back to</span>
-                <span class="focus-bar-back-to-cockpit__line">Cockpit</span>
+                <span class="focus-bar-back-to-cockpit__line">コックピット</span>
+                <span class="focus-bar-back-to-cockpit__line">戻る</span>
               </span>
             </span>
           </button>
@@ -13764,7 +13764,7 @@
     </div>
   </div>
   <section class="tutorial-toggle-float" id="tutorial-toggle-float" aria-label="チュートリアル表示設定">
-    <h2 class="tutorial-toggle-float__title">Tutorial</h2>
+    <h2 class="tutorial-toggle-float__title">チュートリアル</h2>
     <div class="tutorial-toggle-float__row">
       <p class="tutorial-toggle-float__hint" id="tutorial-toggle-on">on</p>
       <button
@@ -19634,10 +19634,10 @@
         } else {
           lockLink.classList.add('monthly-access-btn--locked');
           lockLink.setAttribute('href', CHANGE_PLAN_HREF);
-          lockLink.setAttribute('aria-label', 'Change Plan');
+          lockLink.setAttribute('aria-label', 'プラン変更');
           lockLink.removeAttribute('aria-disabled');
           lockLink.style.cursor = '';
-          lockLabel.textContent = 'LOCKED';
+          lockLabel.textContent = 'ロック';
           lockFrame.setAttribute('src', FRAME_LOCKED);
           topEditBtn.style.display = 'none';
         }

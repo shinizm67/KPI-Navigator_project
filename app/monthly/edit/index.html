@@ -2791,7 +2791,7 @@
       >
         支出CSV取込
       </button>
-      <button type="button" class="monthly-edit-float__confirm" id="monthly-edit-float-confirm">Save</button>
+      <button type="button" class="monthly-edit-float__confirm" id="monthly-edit-float-confirm">保存</button>
       <div class="monthly-edit-float__pl-wrap">
         <button type="button" class="monthly-edit-float__pl-btn" id="monthly-edit-float-profit-loss" aria-label="PL表を見る" title="PL表を見る">
           PL表を見る
@@ -2875,8 +2875,8 @@
     <div class="memo-float-modal__panel">
       <button type="button" class="memo-float-modal__close" id="memo-float-close" aria-label="閉じる">×</button>
       <div class="memo-float-modal__toolbar">
-        <button type="button" class="memo-float-modal__undo" id="memo-float-undo" disabled>UNDO</button>
-        <button type="button" class="memo-float-modal__save" id="memo-float-save">Save</button>
+        <button type="button" class="memo-float-modal__undo" id="memo-float-undo" disabled>元に戻す</button>
+        <button type="button" class="memo-float-modal__save" id="memo-float-save">保存</button>
       </div>
       <h2 class="memo-float-modal__title" id="memo-float-title">日次メモ</h2>
       <div class="memo-float-modal__month-nav">
@@ -2996,7 +2996,7 @@
   </div>
 
   <section class="tutorial-toggle-float" id="tutorial-toggle-float" aria-label="チュートリアル表示設定">
-    <h2 class="tutorial-toggle-float__title">Tutorial</h2>
+    <h2 class="tutorial-toggle-float__title">チュートリアル</h2>
     <div class="tutorial-toggle-float__row">
       <p class="tutorial-toggle-float__hint" id="tutorial-toggle-on">on</p>
       <button
@@ -12843,14 +12843,14 @@
         }
         var labels = useJa
           ? {
-              annualProgress: 'Annual Progress',
-              monthlyProgress: 'Monthly Progress',
-              annualTotal: 'Annual Total Sales',
-              monthlyTotal: 'Monthly Total Sales',
-              annualTarget: 'Annual Target Sales',
-              monthlyTarget: 'Monthly Target Sales',
-              annualDiff: 'Difference',
-              monthlyDiff: 'Difference'
+              annualProgress: '年次進捗',
+              monthlyProgress: '月次進捗',
+              annualTotal: '年次売上合計',
+              monthlyTotal: '月次売上合計',
+              annualTarget: '年次目標売上',
+              monthlyTarget: '月次目標売上',
+              annualDiff: '差額',
+              monthlyDiff: '差額'
             }
           : {
               annualProgress: 'Annual Progress',
@@ -13638,7 +13638,7 @@
         if (item.autoCalc) {
           var prefix = document.createElement('span');
           prefix.className = 'monthly-edit-float__label-prefix';
-          prefix.textContent = 'Auto Calc';
+          prefix.textContent = t('自動計算', 'Auto Calc');
           prefix.setAttribute('title', item.autoCalcTitle || item.autoCalcHint || autoCalcHint());
           main.appendChild(prefix);
         }

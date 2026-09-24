@@ -11762,6 +11762,12 @@
           if (isJa) {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_JA[dow];
             if (!isBusiness) dateLabel += ' OFF';
+          } else if (typeof isZh !== 'undefined' && isZh) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_ZH[dow];
+            if (!isBusiness) dateLabel += ' OFF';
+          } else if (typeof useZh !== 'undefined' && useZh) {
+            dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + ((typeof WD_ZH !== 'undefined' ? WD_ZH : WEEKDAYS_ZH)[dow]);
+            if (!isBusiness) dateLabel += ' OFF';
           } else {
             dateLabel = d.getMonth() + 1 + '/' + d.getDate() + ' ' + WEEKDAYS_EN[dow];
             if (!isBusiness) dateLabel += ' OFF';
@@ -12873,24 +12879,24 @@
         }
         var labels = useJa
           ? {
-              annualProgress: 'Annual Progress',
-              monthlyProgress: 'Monthly Progress',
-              annualTotal: 'Annual Total Sales',
-              monthlyTotal: 'Monthly Total Sales',
-              annualTarget: 'Annual Target Sales',
-              monthlyTarget: 'Monthly Target Sales',
-              annualDiff: 'Difference',
-              monthlyDiff: 'Difference'
+              annualProgress: '年次進捗',
+              monthlyProgress: '月次進捗',
+              annualTotal: '年次売上合計',
+              monthlyTotal: '月次売上合計',
+              annualTarget: '年次目標売上',
+              monthlyTarget: '月次目標売上',
+              annualDiff: '差額',
+              monthlyDiff: '差額'
             }
           : {
-              annualProgress: 'Annual Progress',
-              monthlyProgress: 'Monthly Progress',
-              annualTotal: 'Annual Total Sales',
-              monthlyTotal: 'Monthly Total Sales',
-              annualTarget: 'Annual Target Sales',
-              monthlyTarget: 'Monthly Target Sales',
-              annualDiff: 'Difference',
-              monthlyDiff: 'Difference'
+              annualProgress: '年度進度',
+              monthlyProgress: '月度進度',
+              annualTotal: '年度營業額合計',
+              monthlyTotal: '月度營業額合計',
+              annualTarget: '年度目標營業額',
+              monthlyTarget: '月度目標營業額',
+              annualDiff: '差額',
+              monthlyDiff: '差額'
             };
         if (MEF_KPI_STRIP_USE_DUMMY) {
           labels = {
