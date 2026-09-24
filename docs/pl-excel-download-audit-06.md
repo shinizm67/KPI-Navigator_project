@@ -136,3 +136,28 @@ ZH-TW English month tokens in the CSV header are existing; leave unless they blo
 | Next Task | **BR-LAUNCH-06 Phase 2 Repair** |
 | BR-LAUNCH-07 | PAUSED / REGISTER ONLY |
 | excel untouched | **YES** |
+
+---
+
+## Phase 2 Repair — CLOSED 2026-09-24
+
+Exact fix: `downloadPlExcel()` keeps `URL.createObjectURL` + temporary `<a download="PL_{year}.csv">`. Remove immediate `revokeObjectURL`. Revoke after 1000ms (`kpi-csv-templates.js` pattern). Button labels: JP `CSVダウンロード` / EN `Download CSV` / ZH-TW `下載 CSV`. CSV builder unchanged.
+
+SHA: `0b8a323`  
+FileZilla: C61–C63  
+Production smoke: `scripts/_tmp_c6_phase2_smoke.json` **10/10 PASS**
+
+| Check | Result |
+|-------|--------|
+| Download event | 1 per click |
+| Stay on PL | yes (`hrefAfter` still `/profit/pl/`) |
+| blob: / chrome-error | none |
+| Size | JA 8612 / EN 8572 / ZH-TW 8602 |
+| Sci-Fi vs Office | equal per locale |
+| BOM | yes |
+| Filename attribute | `PL_2026.csv` |
+| nEditable | 132 |
+| Basic redirect | `change_plan.html` |
+| Console errors | none on click |
+
+True XLSX / PL Report Export registered as `BR-POST-XLSX-REPORT` (POST-LAUNCH HIGH). Not implemented.

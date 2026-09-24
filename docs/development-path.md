@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-06
+TRUNK-06
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -32,12 +32,14 @@ REGISTERED (POST-LAUNCH importer; do not start):
 - Import Preview expansion (POST-LAUNCH; not a Launch blocker)
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger (DEFERRED P2)
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS (DEFERRED P2)
+- BR-POST-XLSX-REPORT True XLSX / PL Report Export (POST-LAUNCH HIGH)
 
 CLOSED (under TRUNK-06):
 - BR-LAUNCH-01 (Demo / New User State) P0 closed 2026-09-23
 - BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1 closed 2026-09-24
 - BR-LAUNCH-03 (UI Consistency Audit) P1 closed 2026-09-24
 - BR-LAUNCH-04 (PL Editable Cell Visual Finish) P1 closed 2026-09-24
+- BR-LAUNCH-06 (PL Excel Download Repair) P1 closed 2026-09-24
 
 CLOSED (under BR-LAUNCH-03):
 - BR-LAUNCH-03-A Shared Header 1200 (R1) P1 closed 2026-09-24
@@ -83,7 +85,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- BR-LAUNCH-06 PL Excel Download Repair P1
+- (none)
 
 PAUSED / REGISTER ONLY (under TRUNK-06):
 - BR-LAUNCH-07 Global Menu Spacing / Reservation Button Collision P1
@@ -108,12 +110,14 @@ DEFERRED:
   not a Launch blocker. Persistent mapping exists; Preview UI expansion is later.
 - BR-POST-EXPENSE-LEDGER Purchase / Expense Ledger P2 DEFERRED
   parent: BR-LAUNCH-01-C2. REGISTER ONLY. Not an Excel clone.
+- BR-POST-XLSX-REPORT True XLSX / PL Report Export HIGH POST-LAUNCH
+  parent: TRUNK-06. REGISTER ONLY. Not BR-LAUNCH-06. Accountant/archive workbook.
 
 RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-06` ACTIVE. Phase 1 audit COMPLETE. Next = `BR-LAUNCH-06 Phase 2 Repair` (restore current PL Excel/CSV download; blob lifecycle). Do not start `BR-LAUNCH-05` / `BR-LAUNCH-07`.
+`TRUNK-06`. `BR-LAUNCH-06` CLOSED. Do not auto-start `BR-LAUNCH-07`. `BR-LAUNCH-05` stays DEFERRED. `BR-POST-XLSX-REPORT` REGISTER ONLY.
 ```
 
 ### Git snapshot????????
@@ -121,7 +125,7 @@ NEXT ACTION:
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `a6f72b7` (BR-LAUNCH-03 parent CLOSED) |
+| HEAD | `0b8a323` (BR-LAUNCH-06 Phase 2 repair; closeout docs follow) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1369,13 +1373,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-06` |
 | name | PL Excel Download Repair |
 | parent | `TRUNK-06` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-24 |
 | return_to | `TRUNK-06` |
 | reason | Visible PL 「Excelダウンロード」 navigates to blob: URL then Chrome ERR_FILE_NOT_FOUND. Restore current intended download. Not a new workbook. |
-| evidence | Phase 1: [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). Payload is UTF-8 CSV (BOM, size > 0). Immediate `revokeObjectURL` + blob navigation. |
-| next_action | Phase 2 Repair — keep blob alive; do not navigate. No MEP/Raw Data/template redesign. Do not start `BR-LAUNCH-07`. |
+| evidence | Phase 1: [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). Phase 2: delay `revokeObjectURL` 1000ms + button CSV labels. Production smoke 10/10 PASS. SHA `0b8a323`. |
+| next_action | N/A CLOSED. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-07`. True XLSX is `BR-POST-XLSX-REPORT` (REGISTER ONLY). |
 | constraint | Launch repair of current button only; excel/ untouched; BR-LAUNCH-05 stays DEFERRED |
 
 ### BR-LAUNCH-07
@@ -1391,6 +1395,21 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | Launch-required chrome spacing / reservation button collision. REGISTER ONLY. |
 | next_action | REGISTER ONLY. Do not start. After `BR-LAUNCH-06`. |
+
+### BR-POST-XLSX-REPORT
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-XLSX-REPORT` |
+| name | True XLSX / PL Report Export |
+| parent | `TRUNK-06` |
+| status | DEFERRED |
+| priority | HIGH |
+| started_at | not started |
+| return_to | `TRUNK-06` |
+| reason | Post-launch workbook: PL / MEP report export, accountant sharing, local archive, Balca 18th-period style annual workbook, Report Sheet + machine-readable KPN Data sheet, future re-upload compatibility. |
+| next_action | REGISTER ONLY. Do not implement in Launch. Do not expand `BR-LAUNCH-06`. |
+| constraint | excel/ untouched; not CSV download repair |
 
 ---
 
@@ -1464,8 +1483,11 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-01-C2-L6-A` | Multi-sheet Import Profile | POST-LAUNCH / DEFERRED | P2 | `BR-LAUNCH-01-C2-L6` |
 | `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
+| `BR-LAUNCH-06` | PL Excel Download Repair | CLOSED | P1 | `TRUNK-06` |
+| `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | PAUSED | P1 | `TRUNK-06` |
+| `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
 
-CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
+CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`, `BR-LAUNCH-01-C`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C1`, `BR-LAUNCH-01-C2`  
@@ -1475,12 +1497,12 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: `BR-LAUNCH-06`  
+ACTIVE under `TRUNK-06`: none (`BR-LAUNCH-06` CLOSED)  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-07` (REGISTER ONLY)  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
+DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`, `BR-POST-XLSX-REPORT`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
@@ -1590,3 +1612,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-04 START / Phase 1 audit COMPLETE** Production Playwright + computedStyle + screenshots. Contract PARTIAL. P0=0. P1=5 (rest fill missing, unused monthly-editable class, no amount hover, Office focus Sci-Fi `#152a32`, Office daily dim lost). P2=3. Human visual YES. Fix size SMALL. [`docs/pl-editable-cell-audit-04.md`](./pl-editable-cell-audit-04.md). No CSS/code. excel untouched. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-04 CLOSED** Phase 2 CSS visual contract. Production smoke 7/7 PASS (JA/EN/ZH-TW × Sci-Fi/Office + Basic redirect). Rest/hover/focus distinct; Office focus `#c8c8c8` (no `#152a32`); daily dim restored. nEditable=132 unchanged. P1=0 remaining. P2=3 deferred (empty `—`, label vs amount hover, first-load hydrate). Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-24 | **BR-LAUNCH-06 REGISTER + START / Phase 1 audit COMPLETE**. **BR-LAUNCH-07 REGISTER ONLY** (PAUSED). `BR-LAUNCH-05` stays DEFERRED. PL `#pl-excel-download` builds UTF-8 CSV then immediate `revokeObjectURL`; Chrome navigates to blob: → ERR_FILE_NOT_FOUND. CSV bytes PASS (JA 8612). XLSX PK FAIL. Fix SMALL. [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). No code. excel untouched. Do not start 07 / 05. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-06`. |
+| 2026-09-24 | **BR-LAUNCH-06 CLOSED** Phase 2 CSV download repair. Delay `revokeObjectURL` 1000ms; button JP `CSVダウンロード` / EN `Download CSV` / ZH-TW `下載 CSV`. Production smoke 10/10 PASS (3 langs × Sci-Fi/Office + Basic redirect). Filename `PL_2026.csv`. BOM retained. nEditable=132. SHA `0b8a323`. Human Review NO. `BR-POST-XLSX-REPORT` REGISTER ONLY. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-07`. |

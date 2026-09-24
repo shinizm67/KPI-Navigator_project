@@ -2897,6 +2897,20 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-06 PL CSV Download Repair（2026-09-24）
+
+`js/` `api/` なし。日本語 `app/profit/pl` → 英語 `en/app/profit/pl` → 繁中 `zh-tw/app/profit/pl`。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C61 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C62 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| C63 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+
+確認: `downloadPlExcel` が `setTimeout(..., 1000)` 後に `revokeObjectURL`。ボタン表記 `CSVダウンロード` / `Download CSV` / `下載 CSV`。クリック後も PL URL のまま。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
