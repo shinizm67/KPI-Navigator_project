@@ -6,6 +6,10 @@
   background: var(--si-fi-bg);
   color: var(--si-fi-cyan);
   font-family: 'Orbitron', sans-serif;
+  /* BR-LAUNCH-07: one shared reserve for absolute .header-actions.
+     Office actions ~337px + right:24px inset + 8px nav clearance. */
+  --kpi-header-actions-reserve: 368px;
+  --kpi-header-nav-gap: 20px;
 }
 
 html[lang="ja"] .si-fi.profile-page {
@@ -19,8 +23,8 @@ html[lang="ja"] .si-fi.profile-page {
   justify-content: flex-start;
   gap: 40px;
   box-sizing: border-box;
-  /* Reserve room for absolute-positioned right actions (gear + mode toggle). */
-  padding-right: 260px;
+  /* Reserve room for absolute-positioned right actions (Mode / booking / DL / gear). */
+  padding-right: var(--kpi-header-actions-reserve);
 }
 
 /* グローバルメニュー固定（sticky + 透過）: register/style.css の `.si-fi.profile-page .site-header` を参照 */
@@ -1053,16 +1057,16 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-a
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: var(--kpi-header-nav-gap, 20px);
   list-style: none;
   padding: 0;
   margin: 0;
 }
 html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list {
-  gap: 28px !important;
+  gap: var(--kpi-header-nav-gap, 20px) !important;
 }
 html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
-  gap: 28px !important;
+  gap: var(--kpi-header-nav-gap, 20px) !important;
 }
 
 .global-nav-item {
@@ -1153,12 +1157,12 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
   padding: 0;
 }
 
-/* Office Mode: Global Menu spacing by language */
+/* Office Mode: Global Menu spacing (shared token; not per-language) */
 html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list {
-  gap: 28px !important;
+  gap: var(--kpi-header-nav-gap, 20px) !important;
 }
 html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
-  gap: 28px !important;
+  gap: var(--kpi-header-nav-gap, 20px) !important;
 }
 
 .si-fi.office-mode.profile-page .nav-btn-text {
@@ -1340,7 +1344,7 @@ html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list {
   }
   .si-fi.profile-page .header-inner {
     gap: 24px;
-    padding-right: 220px;
+    padding-right: var(--kpi-header-actions-reserve);
   }
   .profile-title-main {
     font-size: 22px;
