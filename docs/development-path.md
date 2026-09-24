@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-A
+TRUNK-06 -> BR-LAUNCH-03
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -21,7 +21,6 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
 - BR-LAUNCH-03 (UI Consistency Audit) P1
-- BR-LAUNCH-03-A Shared Header 1200 (R1) P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
 - BR-LAUNCH-03-B Chrome i18n JA/ZH-TW (R2) P1
@@ -40,6 +39,9 @@ REGISTERED (POST-LAUNCH importer; do not start):
 CLOSED (under TRUNK-06):
 - BR-LAUNCH-01 (Demo / New User State) P0 closed 2026-09-23
 - BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1 closed 2026-09-24
+
+CLOSED (under BR-LAUNCH-03):
+- BR-LAUNCH-03-A Shared Header 1200 (R1) P1 closed 2026-09-24
 
 CLOSED (under BR-LAUNCH-02):
 - BR-LAUNCH-02-A (Launch Regression Smoke / Cross-feature Regression) P1 closed 2026-09-24
@@ -104,7 +106,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03-A` R1 header 1200. Do not start `BR-LAUNCH-03-B` / `BR-LAUNCH-04`.
+`BR-LAUNCH-03` R1 CLOSED. Next = `BR-LAUNCH-03-B` REGISTER ONLY. Do not start `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -1221,8 +1223,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW UI consistency before Launch. Inventory first. No redesign. |
-| evidence | Phase 1 inventory + Phase 2 repair plan 2026-09-24. [`docs/ui-consistency-audit-03.md`](./ui-consistency-audit-03.md) [`docs/ui-consistency-repair-plan-03.md`](./ui-consistency-repair-plan-03.md). 10 P1 → 4 roots (R1 header, R2 i18n, R3 Basic layout, R4 MEP overlap). |
-| next_action | ACTIVE. Phase 2 plan COMPLETE. Next child `BR-LAUNCH-03-A` REGISTER ONLY (R1). Do not start until owner opens. Do not start `BR-LAUNCH-04`. |
+| evidence | Phase 1 + Phase 2 + R1 CLOSED 2026-09-24 (`7d3fe9e`/`989681c`, production 48/48). Remaining R2/R3/R4 REGISTER ONLY. |
+| next_action | ACTIVE. R1 CLOSED. Next child `BR-LAUNCH-03-B` REGISTER ONLY. Do not start until owner opens. Do not start `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-A
 
@@ -1231,11 +1233,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03-A` |
 | name | Shared Header 1200 Repair |
 | parent | `BR-LAUNCH-03` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | return_to | `BR-LAUNCH-03` |
 | reason | R1. `#btn-mode-text::after` Office hang at 1200px. |
-| next_action | ACTIVE. Implement R1 only. Do not start R2 / `BR-LAUNCH-04`. |
+| closed_at | 2026-09-24 |
+| evidence | `7d3fe9e` CSS + `989681c` cache-bust. Production smoke 48/48 PASS (1200/1201/1280/1440 × JA/EN/ZH-TW × Annual/Monthly/MEP/PL). overflowX=0. Office in-flow. |
+| next_action | N/A CLOSED. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-B`. |
 
 ### BR-LAUNCH-03-B
 
@@ -1391,7 +1395,7 @@ CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
-ACTIVE under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`  
+CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`  
 REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
@@ -1488,3 +1492,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03 START / Phase 1 inventory COMPLETE** Production Playwright 56 probes + screenshots. P0=0. P1=10 (1200 header clip, JA/ZH mixed EN chrome, MEP overlap, Basic Monthly LOCKED). P2=10. Human visual review YES. Fix size MEDIUM. [`docs/ui-consistency-audit-03.md`](./ui-consistency-audit-03.md). No CSS/code/copy. excel untouched. Do not start `BR-LAUNCH-04`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03`. |
 | 2026-09-24 | **BR-LAUNCH-03 Phase 2 repair plan COMPLETE** 10 P1 → 4 roots R1 header / R2 i18n (JA+ZH-TW combined) / R3 Basic layout / R4 MEP overlap. Button tokens + KPI Pilot stay P2 (titles may piggyback R2). Order R1→R2→R3→R4. Human blocks 4. First repair `BR-LAUNCH-03-A` REGISTER ONLY. [`docs/ui-consistency-repair-plan-03.md`](./ui-consistency-repair-plan-03.md). No CSS/code/copy. Do not start 03-A/04. |
 | 2026-09-24 | **BR-LAUNCH-03-A START** R1 header 1200. `Office` moved from `#btn-mode-text::after` hang to in-flow `.btn-mode::after`. Inject smoke 48/48 PASS. Do not start R2 / `BR-LAUNCH-04`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-A`. |
+| 2026-09-24 | **BR-LAUNCH-03-A CLOSED** R1 production smoke 48/48 PASS. 1200/1201/1280/1440 × JA/EN/ZH-TW × Annual/Monthly/MEP/PL. overflowX=0. Mode Office in-flow. SHA `7d3fe9e` / `989681c`. Human Review NO. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-B`. Do not start `BR-LAUNCH-04`. |
