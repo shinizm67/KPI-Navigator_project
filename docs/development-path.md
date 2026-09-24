@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03
+TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-F
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -23,7 +23,7 @@ ACTIVE BRANCHES:
 - BR-LAUNCH-03 (UI Consistency Audit) P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
-- BR-LAUNCH-03-F Office Mode Focus Bar Color Consistency P1 (REGISTER ONLY / PAUSED)
+- (none — 03-F is ACTIVE)
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -108,7 +108,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` E CLOSED. Remaining `BR-LAUNCH-03-F` REGISTER ONLY. Do not start `BR-LAUNCH-04`.
+`BR-LAUNCH-03-F` ACTIVE. Office Focus Bar gray outer / lighter cells / black text. Do not start `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -1315,12 +1315,12 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03-F` |
 | name | Office Mode Focus Bar Color Consistency |
 | parent | `BR-LAUNCH-03` |
-| status | REGISTER ONLY / PAUSED |
+| status | ACTIVE |
 | priority | P1 Launch polish |
 | return_to | `BR-LAUNCH-03` |
 | reason | Office Mode Focus Bar stays Sci-Fi black on Monthly ZH-TW (likely shared). Desired: outer medium-light gray, cells lighter gray, black text, Office borders. No cyan/white Sci-Fi text. Audit Monthly + Annual/MEP/PL shared component; JP/EN/ZH-TW; shared vs lang CSS. Do not ZH-only patch. |
-| next_action | REGISTER ONLY. Do not start now. After R4 unless owner reorders. Do not start `BR-LAUNCH-04`. |
-| constraint | no implementation in this register; no Focus Bar CSS in R4; excel/ untouched |
+| next_action | ACTIVE. Shared Monthly Office CSS: fill `#d2d2d2`, chrome text `#111`. Sci-Fi unchanged. Do not start `BR-LAUNCH-04`. |
+| constraint | Sci-Fi unchanged; no Focus Bar behavior/layout/font change; excel/ untouched; do not start BR-LAUNCH-04 |
 
 ### BR-LAUNCH-04
 
@@ -1438,7 +1438,7 @@ CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`  
-REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-F`  
+ACTIVE under `BR-LAUNCH-03`: `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
@@ -1545,3 +1545,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-D CLOSED** R4 production smoke 18/18 PASS. AABB overlapN=0. 1200/1280/1440 × JA/EN/ZH-TW × Sci-Fi/Office. SHA `d54bbe6`. Human Review NO. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-E START** Responsive Eligibility Gate. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-E`. Audit: KPN lower bound = 1200 CSS px (R1 header contract). CSS `@media (max-width: 1199.98px)` on login-page/profile-page. No UA. Do not start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-E CLOSED** Production smoke 37/37 PASS. Min width 1200 CSS px. Phone/tablet portrait + landscape <1200 → guidance; 1200+ and iPad Pro landscape → KPN. SHA `ad1654d`. Human Review NO. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-03-F START** Office Mode Focus Bar Color Consistency. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-F`. Audit: Monthly vfocus is page-local × 3 langs (not ZH-only). Office fill was `#2a2a2a` + chrome `#ffffff`. Annual already gray/`#111`. MEP/PL have no this bar. Do not start `BR-LAUNCH-04`. |
