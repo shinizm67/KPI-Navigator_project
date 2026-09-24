@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03
+TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-C
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -21,9 +21,9 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
 - BR-LAUNCH-03 (UI Consistency Audit) P1
+- BR-LAUNCH-03-C Basic Monthly layout (R3) P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
-- BR-LAUNCH-03-C Basic Monthly layout (R3) P1
 - BR-LAUNCH-03-D MEP Tutorial overlap (R4) P1
 - BR-LAUNCH-03-E Responsive Eligibility Gate / Unsupported Viewport Guidance P1 (REGISTER ONLY / PAUSED)
 
@@ -107,7 +107,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` R2 CLOSED. Next = `BR-LAUNCH-03-C` REGISTER ONLY. `BR-LAUNCH-03-E` remains REGISTER ONLY. Do not start `BR-LAUNCH-04`.
+`BR-LAUNCH-03-C` START (R3 Basic Monthly layout). Do not start `BR-LAUNCH-03-D` / `BR-LAUNCH-03-E` / `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -1225,7 +1225,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW UI consistency before Launch. Inventory first. No redesign. |
 | evidence | Phase 1 + Phase 2 + R1 CLOSED + R2 CLOSED 2026-09-24 (`8f11df5`/`9f12b5f`, production i18n 17/17). Remaining R3/R4/`03-E` REGISTER ONLY. |
-| next_action | ACTIVE. R1/R2 CLOSED. Next child `BR-LAUNCH-03-C` REGISTER ONLY. Do not start until owner opens. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
+| next_action | ACTIVE. R1/R2 CLOSED. Child `BR-LAUNCH-03-C` START (R3). Do not start `BR-LAUNCH-03-D` / `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-A
 
@@ -1265,11 +1265,12 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03-C` |
 | name | Basic Monthly Layout Collapse |
 | parent | `BR-LAUNCH-03` |
-| status | REGISTER ONLY |
+| status | ACTIVE |
 | priority | P1 |
+| started_at | 2026-09-24 |
 | return_to | `BR-LAUNCH-03` |
-| reason | R3. space-between hole when 編集 hidden. After R2 copy. |
-| next_action | REGISTER ONLY. After `BR-LAUNCH-03-B`. Do not start now. |
+| reason | R3. space-between hole when 編集 hidden. CSS-only collapse. Do not change entitlement. |
+| next_action | START NOW. After `BR-LAUNCH-03-B`. Do not start `BR-LAUNCH-03-D` / `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-D
 
@@ -1414,7 +1415,8 @@ CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`  
-REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`  
+ACTIVE under `BR-LAUNCH-03`: `BR-LAUNCH-03-C`  
+REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
@@ -1514,3 +1516,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-E REGISTER ONLY** Responsive Eligibility Gate / Unsupported Viewport Guidance. P1 Launch-required. Parent `BR-LAUNCH-03`. Status PAUSED. Desktop-first: smartphone / tablet portrait / too-narrow landscape → guidance page, not broken KPN. Viewport+orientation (not UA). Min-width deferred to implementation audit vs 1200px contract. Do not implement now. Do not start `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-B START** R2 chrome i18n. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-B`. Do not start `BR-LAUNCH-03-E` / R3 / R4 / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-B CLOSED** R2 production smoke 17/17 PASS. JA chrome leftovers localized; ZH-TW Focus Bar + weekdays; EN retained. SHA `8f11df5` / `9f12b5f`. Human Review NO. Return `BR-LAUNCH-03`. Next `BR-LAUNCH-03-C` REGISTER ONLY. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-03-C START** R3 Basic Monthly layout collapse. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-C`. Do not start `BR-LAUNCH-03-D` / `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
