@@ -32,6 +32,7 @@
     body.monthly-edit-page .monthly-edit-float {
       padding: 0;
       min-height: calc(100vh - 72px);
+      --mef-label-w: calc(320px + var(--mef-tutorial-slot));
     }
     body.monthly-edit-page .monthly-edit-float__panel {
       width: 100%;
@@ -54,6 +55,7 @@
     /* Toolbar inset: move control groups inward; background stays full-bleed */
     body.monthly-edit-page {
       --mef-page-inset: 50px;
+      --mef-tutorial-slot: 124px;
     }
     body.monthly-edit-page .monthly-edit-float__close {
       left: calc(12px + var(--mef-page-inset));
@@ -1954,6 +1956,11 @@
     .office-mode .tutorial-toggle-float__knob {
       background: #5a5a5a;
       box-shadow: none;
+    }
+    /* BR-LAUNCH-03-D R4: Tutorial slot stays left of AUTO CALC; do not restyle the switch. */
+    body.monthly-edit-page .monthly-edit-float__labels,
+    body.monthly-edit-page .monthly-edit-float__date-rail-corner {
+      padding-left: var(--mef-tutorial-slot, 124px);
     }
 
     /* MEMO-FLOAT-MODAL */

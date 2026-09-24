@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03
+TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-D
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -21,10 +21,11 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
 - BR-LAUNCH-03 (UI Consistency Audit) P1
+- BR-LAUNCH-03-D MEP Tutorial overlap (R4) P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
-- BR-LAUNCH-03-D MEP Tutorial overlap (R4) P1
 - BR-LAUNCH-03-E Responsive Eligibility Gate / Unsupported Viewport Guidance P1 (REGISTER ONLY / PAUSED)
+- BR-LAUNCH-03-F Office Mode Focus Bar Color Consistency P1 (REGISTER ONLY / PAUSED)
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -107,7 +108,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` R3 CLOSED. Next = `BR-LAUNCH-03-D` REGISTER ONLY. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`.
+`BR-LAUNCH-03-D` R4 ACTIVE. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -1224,8 +1225,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW UI consistency before Launch. Inventory first. No redesign. |
-| evidence | Phase 1 + Phase 2 + R1/R2/R3 CLOSED 2026-09-24 (`61d23a8` R3 21/21). Remaining R4/`03-E` REGISTER ONLY. |
-| next_action | ACTIVE. R1/R2/R3 CLOSED. Next child `BR-LAUNCH-03-D` REGISTER ONLY. Do not start until owner opens. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
+| evidence | Phase 1 + Phase 2 + R1/R2/R3 CLOSED 2026-09-24 (`61d23a8` R3 21/21). R4/`03-D` ACTIVE. `03-E`/`03-F` REGISTER ONLY. |
+| next_action | ACTIVE. R1/R2/R3 CLOSED. Child `BR-LAUNCH-03-D` ACTIVE. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-A
 
@@ -1281,11 +1282,12 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03-D` |
 | name | MEP Tutorial / AUTO CALC Overlap |
 | parent | `BR-LAUNCH-03` |
-| status | REGISTER ONLY |
+| status | ACTIVE |
 | priority | P1 |
+| started_at | 2026-09-24 |
 | return_to | `BR-LAUNCH-03` |
-| reason | R4. `#tutorial-toggle-float` vs `.monthly-edit-float__label-prefix`. |
-| next_action | REGISTER ONLY. After `BR-LAUNCH-03-B`. Do not start now. |
+| reason | R4. `#tutorial-toggle-float` vs `.monthly-edit-float__label-prefix`. Left gutter = float width + left offset. Do not restyle switch. Do not start `03-E` / `03-F`. |
+| next_action | Implement CSS gutter → smoke 1200/1280/1440 × JA/EN/ZH-TW × Sci-Fi/Office. |
 
 ### BR-LAUNCH-03-E
 
@@ -1300,6 +1302,20 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | reason | Desktop-first. Smartphone / tablet portrait / landscape below KPN minimum width must not show broken app UI. Show dedicated guidance (JP/EN/ZH-TW). Viewport + orientation; do not use User-Agent as source of truth. Min-width not frozen at register — measure in implementation audit vs 1200px contract. Do not build a mobile KPN. |
 | next_action | REGISTER ONLY. Do not start now. After R2–R4 unless owner reorders. Do not start `BR-LAUNCH-04`. |
 | constraint | no implementation in this register; no min-width guess; no hamburger; excel/ untouched |
+
+### BR-LAUNCH-03-F
+
+| field | value |
+|-------|-------|
+| id | `BR-LAUNCH-03-F` |
+| name | Office Mode Focus Bar Color Consistency |
+| parent | `BR-LAUNCH-03` |
+| status | REGISTER ONLY / PAUSED |
+| priority | P1 Launch polish |
+| return_to | `BR-LAUNCH-03` |
+| reason | Office Mode Focus Bar stays Sci-Fi black on Monthly ZH-TW (likely shared). Desired: outer medium-light gray, cells lighter gray, black text, Office borders. No cyan/white Sci-Fi text. Audit Monthly + Annual/MEP/PL shared component; JP/EN/ZH-TW; shared vs lang CSS. Do not ZH-only patch. |
+| next_action | REGISTER ONLY. Do not start now. After R4 unless owner reorders. Do not start `BR-LAUNCH-04`. |
+| constraint | no implementation in this register; no Focus Bar CSS in R4; excel/ untouched |
 
 ### BR-LAUNCH-04
 
@@ -1417,7 +1433,8 @@ CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`  
-REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`  
+ACTIVE under `BR-LAUNCH-03`: `BR-LAUNCH-03-D`  
+REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
@@ -1519,3 +1536,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-B CLOSED** R2 production smoke 17/17 PASS. JA chrome leftovers localized; ZH-TW Focus Bar + weekdays; EN retained. SHA `8f11df5` / `9f12b5f`. Human Review NO. Return `BR-LAUNCH-03`. Next `BR-LAUNCH-03-C` REGISTER ONLY. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-C START** R3 Basic Monthly layout collapse. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-C`. Do not start `BR-LAUNCH-03-D` / `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-C CLOSED** R3 production smoke 21/21 PASS. Basic Edit hidden gapRight=0; Pro Edit visible gapRight=908. 1200/1280/1440 × JA/EN/ZH-TW. SHA `61d23a8`. Human Review NO. Return `BR-LAUNCH-03`. Next `BR-LAUNCH-03-D` REGISTER ONLY. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-03-F REGISTER ONLY** Office Mode Focus Bar Color Consistency. P1 Launch polish. Parent `BR-LAUNCH-03`. Status PAUSED. Observed Monthly ZH-TW Office Focus Bar still black. Desired medium-light gray outer / lighter cells / black text / Office borders. Shared-root audit when started; do not ZH-only patch. Do not implement now. |
+| 2026-09-24 | **BR-LAUNCH-03-D START** R4 MEP Tutorial / AUTO CALC overlap. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-D`. Left gutter `--mef-tutorial-slot: 124px` on MEP label column. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
