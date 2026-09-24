@@ -109,7 +109,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-04`.
+`BR-LAUNCH-03` CLOSED. Remaining Launch-required = `BR-LAUNCH-04` (PAUSED P1). `BR-LAUNCH-05` DEFERRED (not a Launch blocker). Next phase = `BR-LAUNCH-04` by numeric order. Not started. Do not start `BR-LAUNCH-04` / `BR-LAUNCH-05`.
 ```
 
 ### Git snapshot????????
@@ -117,7 +117,7 @@ NEXT ACTION:
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `0ad4cb7` (03-F closeout; parent 03 closeout follows) |
+| HEAD | `a6f72b7` (BR-LAUNCH-03 parent CLOSED) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -480,7 +480,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | Child `BR-LAUNCH-03` CLOSED. Remaining Launch-required P1 = `BR-LAUNCH-04` (PAUSED). Do not start `BR-LAUNCH-04`. |
+| next_action | Remaining Launch-required P1 = `BR-LAUNCH-04` (PAUSED). `BR-LAUNCH-05` DEFERRED, not a Launch blocker. Do not start `BR-LAUNCH-04`. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -1552,3 +1552,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-F START** Office Mode Focus Bar Color Consistency. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-F`. Audit: Monthly vfocus is page-local × 3 langs (not ZH-only). Office fill was `#2a2a2a` + chrome `#ffffff`. Annual already gray/`#111`. MEP/PL have no this bar. Do not start `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-F CLOSED** Production smoke 16/16 PASS. Monthly Office fill `#d2d2d2` / cells `#e8e8e8` / text `#111`. Sci-Fi unchanged. SHA `09b8338`. Human Review NO. Return `BR-LAUNCH-03` READY FOR AUDIT. Do not auto-start `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03 CLOSED** Parent closeout: children A–F CLOSED; `close_when` met. R1–R5 + Office Focus Bar production smoke PASS. Remaining P2 U11–U20 deferred. Human Smoke NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-04`. |
+| 2026-09-24 | **TRUNK-06 next Launch branch audit** 01/02/03 CLOSED. Remaining Launch-required = `BR-LAUNCH-04` (PAUSED P1). `BR-LAUNCH-05` DEFERRED (billing assessment; registration already disabled; not a Launch blocker). Next phase = `BR-LAUNCH-04` by numeric order. Not started. CURRENT PATH stays `TRUNK-06`. Do not start 04/05. Do not reopen 01/02/03. |
