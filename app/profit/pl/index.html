@@ -4400,7 +4400,7 @@
             <div class="pl-toolbar__actions-col">
               <div class="pl-toolbar__actions">
                 <button type="button" class="pl-toolbar__btn" id="pl-excel-download"
-                  aria-label="PL表を Excel 用 CSV でダウンロード">Excelダウンロード</button>
+                  aria-label="PL表を CSV でダウンロード">CSVダウンロード</button>
                 <button type="button" class="pl-toolbar__btn" id="pl-csv-upload"
                   aria-label="支出CSV取込"
                   title="支出をCSV/Excel（.xlsx）で取り込みます。雛形は右上「DL」からダウンロードできます（費目名は雛形＝カタログのラベルに合わせてください）。"
@@ -11586,10 +11586,16 @@
         var link = document.createElement('a');
         link.href = url;
         link.download = 'PL_' + plYear + '.csv';
+        link.rel = 'noopener';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        if (link.parentNode) link.parentNode.removeChild(link);
+        // BR-LAUNCH-06: delay revokeObjectURL until Chrome consumes the blob download
+        setTimeout(function () {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (_eRev) {}
+        }, 1000);
       }
 
       if (btnExcel) {

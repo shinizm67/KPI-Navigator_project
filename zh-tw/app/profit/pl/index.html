@@ -4581,7 +4581,7 @@
             <div class="pl-toolbar__actions-col">
               <div class="pl-toolbar__actions">
                 <button type="button" class="pl-toolbar__btn" id="pl-excel-download"
-                  aria-label="下載 PL 表為 Excel 用 CSV">下載 Excel</button>
+                  aria-label="下載 PL 表為 CSV">下載 CSV</button>
                 <button type="button" class="pl-toolbar__btn" id="pl-csv-upload"
                   aria-label="匯入支出"
                   title="以 CSV/Excel（.xlsx）匯入支出。範本可從右上「DL」下載；科目名稱請與目錄標籤一致。"
@@ -12000,10 +12000,16 @@
         var link = document.createElement('a');
         link.href = url;
         link.download = 'PL_' + plYear + '.csv';
+        link.rel = 'noopener';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        if (link.parentNode) link.parentNode.removeChild(link);
+        // BR-LAUNCH-06: delay revokeObjectURL until Chrome consumes the blob download
+        setTimeout(function () {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (_eRev) {}
+        }, 1000);
       }
 
       if (btnExcel) {
