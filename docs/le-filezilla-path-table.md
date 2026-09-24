@@ -2883,6 +2883,20 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-04 PL editable cell visual finish（2026-09-24）
+
+`js/` `api/` なし。日本語 `app/profit/pl` → 英語 `en/app/profit/pl` → 繁中 `zh-tw/app/profit/pl`。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C41 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C42 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| C43 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+
+確認: 月次 editable REST が Sci-Fi `rgba(88,225,243,0.10)` / Office `#e8e8e8`。hover / focus が rest より強い。Office focus は `#c8c8c8`（`#152a32` なし）。日次 readonly は dim。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

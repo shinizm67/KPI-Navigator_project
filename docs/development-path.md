@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-04
+TRUNK-06
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -37,6 +37,7 @@ CLOSED (under TRUNK-06):
 - BR-LAUNCH-01 (Demo / New User State) P0 closed 2026-09-23
 - BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1 closed 2026-09-24
 - BR-LAUNCH-03 (UI Consistency Audit) P1 closed 2026-09-24
+- BR-LAUNCH-04 (PL Editable Cell Visual Finish) P1 closed 2026-09-24
 
 CLOSED (under BR-LAUNCH-03):
 - BR-LAUNCH-03-A Shared Header 1200 (R1) P1 closed 2026-09-24
@@ -82,7 +83,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- BR-LAUNCH-04 PL Editable Cell Visual Finish P1
+- (none)
 
 DEFERRED:
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
@@ -109,7 +110,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-04` ACTIVE. Phase 1 audit COMPLETE. Next = `BR-LAUNCH-04 Phase 2 Repair` (CSS visual contract only). Do not start `BR-LAUNCH-05`.
+`BR-LAUNCH-04` CLOSED. Remaining Launch-required child `BR-LAUNCH-05` is DEFERRED (not a Launch blocker). Do not start `BR-LAUNCH-05`.
 ```
 
 ### Git snapshot????????
@@ -1334,13 +1335,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-04` |
 | name | PL Editable Cell Visual Finish |
 | parent | `TRUNK-06` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-24 |
 | return_to | `TRUNK-06` |
 | reason | PL editable cells must be visually distinct from read-only / label / total; Sci-Fi/Office and JP/EN/ZH-TW consistent. Visual finish only. |
-| evidence | Phase 1: [`docs/pl-editable-cell-audit-04.md`](./pl-editable-cell-audit-04.md). Spec B UX 入力可能セルだけ色付き still 未着手. Contract PARTIAL. P0=0 P1=5 P2=3. |
-| next_action | Phase 2 Repair — CSS rest/hover/focus for monthly editable cells + Office daily dim. No calc/save/model. Do not start `BR-LAUNCH-05`. |
+| evidence | Phase 1: [`docs/pl-editable-cell-audit-04.md`](./pl-editable-cell-audit-04.md). Phase 2 production smoke 7/7 PASS. CSS rest/hover/focus + Office daily dim. |
+| next_action | N/A CLOSED. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 
 ### BR-LAUNCH-05
 
@@ -1431,7 +1432,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
-CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`  
+CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`, `BR-LAUNCH-01-C`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C1`, `BR-LAUNCH-01-C2`  
@@ -1441,9 +1442,9 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: `BR-LAUNCH-04`  
+ACTIVE under `TRUNK-06`: none (04 CLOSED)  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
-PAUSED under `TRUNK-06`: none (04 ACTIVE)  
+PAUSED under `TRUNK-06`: none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`  
@@ -1554,3 +1555,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03 CLOSED** Parent closeout: children A–F CLOSED; `close_when` met. R1–R5 + Office Focus Bar production smoke PASS. Remaining P2 U11–U20 deferred. Human Smoke NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-04`. |
 | 2026-09-24 | **TRUNK-06 next Launch branch audit** 01/02/03 CLOSED. Remaining Launch-required = `BR-LAUNCH-04` (PAUSED P1). `BR-LAUNCH-05` DEFERRED (billing assessment; registration already disabled; not a Launch blocker). Next phase = `BR-LAUNCH-04` by numeric order. Not started. CURRENT PATH stays `TRUNK-06`. Do not start 04/05. Do not reopen 01/02/03. |
 | 2026-09-24 | **BR-LAUNCH-04 START / Phase 1 audit COMPLETE** Production Playwright + computedStyle + screenshots. Contract PARTIAL. P0=0. P1=5 (rest fill missing, unused monthly-editable class, no amount hover, Office focus Sci-Fi `#152a32`, Office daily dim lost). P2=3. Human visual YES. Fix size SMALL. [`docs/pl-editable-cell-audit-04.md`](./pl-editable-cell-audit-04.md). No CSS/code. excel untouched. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-04 CLOSED** Phase 2 CSS visual contract. Production smoke 7/7 PASS (JA/EN/ZH-TW × Sci-Fi/Office + Basic redirect). Rest/hover/focus distinct; Office focus `#c8c8c8` (no `#152a32`); daily dim restored. nEditable=132 unchanged. P1=0 remaining. P2=3 deferred (empty `—`, label vs amount hover, first-load hydrate). Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |

@@ -1,7 +1,7 @@
 # BR-LAUNCH-04 PL Editable Cell Visual Finish — Phase 1 Audit
 
 Date: 2026-09-24  
-Status: ACTIVE (audit only; no CSS / calc / save / classifier / entitlement / importer change)  
+Status: CLOSED (Phase 2 CSS visual contract; production smoke 7/7 PASS)  
 Production: `https://forge-laboratory.com/kpi-navigator`  
 Viewport: 1440×900  
 Plans: Demo Pro (grid), Demo Basic (redirect)  
@@ -21,19 +21,19 @@ This is not a redesign. Findings are Launch visual-contract gaps.
 
 | Field | Value |
 |-------|--------|
-| Editable Cell Contract | **PARTIAL** |
-| Sci-Fi | issues |
-| Office | issues |
-| JP | issues (CSS same as EN/ZH-TW) |
-| EN | issues (CSS same as JA/ZH-TW) |
-| ZH-TW | issues (live 132 monthly + 36 daily cells measured) |
+| Editable Cell Contract | **CLEAR** (after Phase 2) |
+| Sci-Fi | PASS |
+| Office | PASS |
+| JP | PASS |
+| EN | PASS |
+| ZH-TW | PASS |
 | P0 | **0** |
-| P1 | **5** |
-| P2 | **3** |
-| Human Visual Review Needed | **YES** |
-| Estimated Fix Size | **SMALL** |
-| BR-LAUNCH-04 | **ACTIVE** |
-| Next Task | **BR-LAUNCH-04 Phase 2 Repair** (CSS visual contract only) |
+| P1 | **0** remaining (5 repaired) |
+| P2 | **3** (not pulled into repair) |
+| Human Visual Review Needed | **NO** (computedStyle + screenshots prove rest/hover/focus) |
+| Estimated Fix Size | **SMALL** (done) |
+| BR-LAUNCH-04 | **CLOSED** |
+| Next Task | **TRUNK-06** (do not start `BR-LAUNCH-05`) |
 | excel untouched | **YES** |
 
 PARTIAL, not UNCLEAR: focus fill + `cursor:text` exist on monthly amount cells. Resting look does **not** tell editable from income / total / ratio / empty `—`. Spec required fill-on-editable-only is not implemented.
@@ -119,16 +119,17 @@ No P0: users can still type in monthly cells; totals are not writable. This is L
 
 ---
 
-## Repair scope (Phase 2 — do not start extra branches)
+## Repair scope (Phase 2 — COMPLETE)
 
-CSS only on PL (JA / EN / ZH-TW):
+CSS only on PL (JA / EN / ZH-TW), deployed C41–C43:
 
-- Rest fill/border on `[data-pl-editable="1"]` (and/or `.pl-amt-cell--pl-monthly-editable`) so monthly cells read as input.
-- Hover on those cells.
-- Office focus that is Office, not `#152a32`.
-- Restore Office daily-readonly dim vs monthly editable.
+- Sci-Fi REST `rgba(88,225,243,0.10)` / HOVER `0.18` / FOCUS `#152a32` + cyan inset
+- Office REST `#e8e8e8` / HOVER `#d8d8d8` / FOCUS `#c8c8c8` + `#333` inset (no `#152a32`)
+- Daily readonly dim restored in Office (`rgba(17,17,17,0.45)`)
 
-Do **not** change: PL calculation, save, expense classification, fixed/variable, data model, entitlement, importer, Monthly (spec mentions Monthly; this branch is PL only).
+Production smoke 7/7 PASS. nEditable=132 unchanged. Behavior unchanged.
+
+P2 left recorded: empty `—` (C4-06), label vs amount hover language (C4-07), first-load hydrate listener (C4-08).
 
 Do **not** start `BR-LAUNCH-05`.
 
@@ -136,4 +137,4 @@ Do **not** start `BR-LAUNCH-05`.
 
 ## Human visual review
 
-**YES.** Rest vs total vs daily is a contrast/affordance call. Screenshots: Sci-Fi focus is the only obvious paint; Office focus looks like a Sci-Fi leftover; empty `—` matches readonly.
+**NO** after Phase 2. computedStyle + rest/hover/focus screenshots prove the contract. One visual block captured (`scripts/_tmp_c4_phase2_shots/`).
