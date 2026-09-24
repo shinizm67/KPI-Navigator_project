@@ -2766,13 +2766,25 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ## BR-LAUNCH-03-A Header 1200 Mode clip（2026-09-24）
 
-共有 CSS のみ。`js/` `api/` `app/` なし。英語 `en/setting/` で完結（3言語の app がこの1本を読む）。
+`js/` `api/` なし。日本語 `app/` → 英語 `en/app/` → 繁中 `zh-tw/app/`（各言語 `annual` → `monthly` → `monthly/edit` → `profit/pl`）。その後 `en/setting/`。
 
 | # | ローカル | サーバ | 確認 URL |
 |---|---------|--------|----------|
-| C3A1 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+| C3A1 | `C:\Users\funki\kpi-navigator\app\annual\index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| C3A2 | `C:\Users\funki\kpi-navigator\app\monthly\index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| C3A3 | `C:\Users\funki\kpi-navigator\app\monthly\edit\index.html` | `public_html/kpi-navigator/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/edit/index.html |
+| C3A4 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C3A5 | `C:\Users\funki\kpi-navigator\en\app\annual\index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| C3A6 | `C:\Users\funki\kpi-navigator\en\app\monthly\index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| C3A7 | `C:\Users\funki\kpi-navigator\en\app\monthly\edit\index.html` | `public_html/kpi-navigator/en/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/edit/index.html |
+| C3A8 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| C3A9 | `C:\Users\funki\kpi-navigator\zh-tw\app\annual\index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| C3A10 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| C3A11 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\edit\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/edit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/edit/index.html |
+| C3A12 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+| C3A13 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
 
-確認: `.si-fi.profile-page .btn-mode::after` が `Office`。`#btn-mode-text::after` は `content: none`。1200px で Mode が切れない。excel/ 未使用。
+確認: HTML が `setting/style.css?v=20260924-c3a`。CSS に `.btn-mode::after` / `#btn-mode-text::after { content: none }`。1200px で Mode が切れない。excel/ 未使用。
 
 ---
 
