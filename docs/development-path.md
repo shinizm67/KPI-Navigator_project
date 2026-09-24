@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06
+TRUNK-06 -> BR-LAUNCH-07
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -85,10 +85,10 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- (none)
+- BR-LAUNCH-07 Global Menu Spacing / Reservation Button Collision P1
 
 PAUSED / REGISTER ONLY (under TRUNK-06):
-- BR-LAUNCH-07 Global Menu Spacing / Reservation Button Collision P1
+- (none)
 
 DEFERRED:
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
@@ -117,7 +117,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`TRUNK-06`. `BR-LAUNCH-06` CLOSED. Do not auto-start `BR-LAUNCH-07`. `BR-LAUNCH-05` stays DEFERRED. `BR-POST-XLSX-REPORT` REGISTER ONLY.
+`BR-LAUNCH-07` ACTIVE. Phase 1 audit COMPLETE. Next = `BR-LAUNCH-07 Phase 2 Repair`. Do not start `BR-LAUNCH-05`.
 ```
 
 ### Git snapshot????????
@@ -1389,12 +1389,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-07` |
 | name | Global Menu Spacing / Reservation Button Collision |
 | parent | `TRUNK-06` |
-| status | PAUSED |
+| status | ACTIVE |
 | priority | P1 |
-| started_at | not started |
+| started_at | 2026-09-25 |
 | return_to | `TRUNK-06` |
-| reason | Launch-required chrome spacing / reservation button collision. REGISTER ONLY. |
-| next_action | REGISTER ONLY. Do not start. After `BR-LAUNCH-06`. |
+| reason | Launch-required chrome spacing / reservation button collision. |
+| evidence | Phase 1: [`docs/global-menu-spacing-audit-07.md`](./global-menu-spacing-audit-07.md). Insight AABB overlaps `#header-booking-btn` on JP/EN/ZH-TW × Sci-Fi/Office × 1200–1440. Absolute `.header-actions` vs `padding-right: 260px` (actions 295/337). |
+| next_action | Phase 2 Repair — shared reserved width for actions; do not absolute-offset calendar. Do not start `BR-LAUNCH-05`. |
 
 ### BR-POST-XLSX-REPORT
 
@@ -1484,7 +1485,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-06` | PL Excel Download Repair | CLOSED | P1 | `TRUNK-06` |
-| `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | PAUSED | P1 | `TRUNK-06` |
+| `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | ACTIVE | P1 | `TRUNK-06` |
 | `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`  
@@ -1497,9 +1498,9 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: none (`BR-LAUNCH-06` CLOSED)  
+ACTIVE under `TRUNK-06`: `BR-LAUNCH-07`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
-PAUSED under `TRUNK-06`: `BR-LAUNCH-07` (REGISTER ONLY)  
+PAUSED under `TRUNK-06`: none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`, `BR-POST-XLSX-REPORT`  
@@ -1613,3 +1614,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-04 CLOSED** Phase 2 CSS visual contract. Production smoke 7/7 PASS (JA/EN/ZH-TW × Sci-Fi/Office + Basic redirect). Rest/hover/focus distinct; Office focus `#c8c8c8` (no `#152a32`); daily dim restored. nEditable=132 unchanged. P1=0 remaining. P2=3 deferred (empty `—`, label vs amount hover, first-load hydrate). Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-24 | **BR-LAUNCH-06 REGISTER + START / Phase 1 audit COMPLETE**. **BR-LAUNCH-07 REGISTER ONLY** (PAUSED). `BR-LAUNCH-05` stays DEFERRED. PL `#pl-excel-download` builds UTF-8 CSV then immediate `revokeObjectURL`; Chrome navigates to blob: → ERR_FILE_NOT_FOUND. CSV bytes PASS (JA 8612). XLSX PK FAIL. Fix SMALL. [`docs/pl-excel-download-audit-06.md`](./pl-excel-download-audit-06.md). No code. excel untouched. Do not start 07 / 05. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-06`. |
 | 2026-09-24 | **BR-LAUNCH-06 CLOSED** Phase 2 CSV download repair. Delay `revokeObjectURL` 1000ms; button JP `CSVダウンロード` / EN `Download CSV` / ZH-TW `下載 CSV`. Production smoke 10/10 PASS (3 langs × Sci-Fi/Office + Basic redirect). Filename `PL_2026.csv`. BOM retained. nEditable=132. SHA `0b8a323`. Human Review NO. `BR-POST-XLSX-REPORT` REGISTER ONLY. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-07`. |
+| 2026-09-25 | **BR-LAUNCH-07 START / Phase 1 audit COMPLETE**. Production Playwright AABB. Insight overlaps `#header-booking-btn` on JP/EN/ZH-TW × Sci-Fi/Office × Annual/Monthly/MEP/PL/profile × 1200–1440 (geometry locked to inner 1200). Live gap 24/28px not dead 80/50. Actions 295/337 vs pad-right 260. P0=0 P1=1 P2=2. Fix SMALL. [`docs/global-menu-spacing-audit-07.md`](./global-menu-spacing-audit-07.md). No CSS/code. excel untouched. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-07`. |
