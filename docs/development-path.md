@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03
+TRUNK-06
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -20,10 +20,9 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
-- BR-LAUNCH-03 (UI Consistency Audit) P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
-- (none — 03-A through 03-F CLOSED)
+- (none — parent CLOSED)
 
 REGISTERED (POST-LAUNCH importer; do not start):
 - BR-LAUNCH-01-C2-L6-A Multi-sheet Import Profile (POST-LAUNCH / DEFERRED P2)
@@ -37,6 +36,7 @@ REGISTERED (POST-LAUNCH importer; do not start):
 CLOSED (under TRUNK-06):
 - BR-LAUNCH-01 (Demo / New User State) P0 closed 2026-09-23
 - BR-LAUNCH-02 (Production Smoke / Operational Runbook) P1 closed 2026-09-24
+- BR-LAUNCH-03 (UI Consistency Audit) P1 closed 2026-09-24
 
 CLOSED (under BR-LAUNCH-03):
 - BR-LAUNCH-03-A Shared Header 1200 (R1) P1 closed 2026-09-24
@@ -109,7 +109,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` READY FOR AUDIT. Children A–F CLOSED. Do not start `BR-LAUNCH-04`.
+`BR-LAUNCH-03` CLOSED. Return `TRUNK-06`. Do not start `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -117,7 +117,7 @@ NEXT ACTION:
 | ?? | ? |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `162423a` (registered 02-B) |
+| HEAD | `0ad4cb7` (03-F closeout; parent 03 closeout follows) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -480,7 +480,7 @@ CLOSED node ? **?????**??????????????
 | return_to | N/A |
 | reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
 | evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | Child `BR-LAUNCH-03` opened (Phase 1 inventory). Do not start `BR-LAUNCH-04`. |
+| next_action | Child `BR-LAUNCH-03` CLOSED. Remaining Launch-required P1 = `BR-LAUNCH-04` (PAUSED). Do not start `BR-LAUNCH-04`. |
 | docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
 
 ### BR-LAUNCH-01
@@ -1221,13 +1221,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03` |
 | name | UI Consistency Audit |
 | parent | `TRUNK-06` |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P1 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-24 |
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW UI consistency before Launch. Inventory first. No redesign. |
-| evidence | Phase 1 + Phase 2 + R1–R5 + `03-F` CLOSED 2026-09-24 (`09b8338` F 16/16). No remaining Launch-required P1 children. |
-| next_action | READY FOR AUDIT. Do not auto-start `BR-LAUNCH-04`. |
+| evidence | Children A–F CLOSED. R1 48/48, R2 17/17, R3 21/21, R4 18/18, R5/03-E 37/37, 03-F 16/16 production smoke PASS. Human Review NO on all children. No remaining Launch-required P1 under 03. P2 U11–U20 deferred. |
+| close_when | Launch-required P1 children A–F CLOSED (R1–R5 + Office Focus Bar). Then return `TRUNK-06`. MET 2026-09-24. |
+| next_action | N/A CLOSED. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-A
 
@@ -1429,7 +1431,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-02-A` | Launch Regression Smoke / Cross-feature Regression | CLOSED | P1 | `BR-LAUNCH-02` |
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 
-CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`  
+CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
 CLOSED under `BR-LAUNCH-01`: `BR-LAUNCH-01-A`, `BR-LAUNCH-01-B`, `BR-LAUNCH-01-C`  
 CLOSED under `BR-LAUNCH-01-C`: `BR-LAUNCH-01-C0`, `BR-LAUNCH-01-C1`, `BR-LAUNCH-01-C2`  
@@ -1439,7 +1441,7 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
+ACTIVE under `TRUNK-06`: none (03 CLOSED; 04 remains PAUSED)  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
@@ -1549,3 +1551,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-E CLOSED** Production smoke 37/37 PASS. Min width 1200 CSS px. Phone/tablet portrait + landscape <1200 → guidance; 1200+ and iPad Pro landscape → KPN. SHA `ad1654d`. Human Review NO. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-F START** Office Mode Focus Bar Color Consistency. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-F`. Audit: Monthly vfocus is page-local × 3 langs (not ZH-only). Office fill was `#2a2a2a` + chrome `#ffffff`. Annual already gray/`#111`. MEP/PL have no this bar. Do not start `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-F CLOSED** Production smoke 16/16 PASS. Monthly Office fill `#d2d2d2` / cells `#e8e8e8` / text `#111`. Sci-Fi unchanged. SHA `09b8338`. Human Review NO. Return `BR-LAUNCH-03` READY FOR AUDIT. Do not auto-start `BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-03 CLOSED** Parent closeout: children A–F CLOSED; `close_when` met. R1–R5 + Office Focus Bar production smoke PASS. Remaining P2 U11–U20 deferred. Human Smoke NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-04`. |
