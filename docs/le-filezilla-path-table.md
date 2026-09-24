@@ -2764,6 +2764,18 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-03-A Header 1200 Mode clip（2026-09-24）
+
+共有 CSS のみ。`js/` `api/` `app/` なし。英語 `en/setting/` で完結（3言語の app がこの1本を読む）。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C3A1 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+
+確認: `.si-fi.profile-page .btn-mode::after` が `Office`。`#btn-mode-text::after` は `content: none`。1200px で Mode が切れない。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

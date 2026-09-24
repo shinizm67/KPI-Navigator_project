@@ -28,8 +28,9 @@ html[lang="ja"] .si-fi.profile-page {
 /* Profile ヘッダー: モード切替トグル（Global Menu 右端） */
 .si-fi.profile-page .btn-mode {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+  gap: 4px;
   text-decoration: none;
   color: var(--si-fi-cyan);
   margin-left: 4px;
@@ -110,16 +111,20 @@ html[lang="ja"] .si-fi.profile-page {
   transition: left 0.18s ease;
 }
 
-.si-fi.profile-page .btn-mode #btn-mode-text::after {
+/* BR-LAUNCH-03-A: Office is in-flow on .btn-mode so it cannot hang past the viewport
+   at the 1200px lower bound. Do not absolutely position it off #btn-mode-text. */
+.si-fi.profile-page .btn-mode::after {
   content: "Office";
-  position: absolute;
-  left: calc(100% + 4px);
-  top: 50%;
-  transform: translateY(-50%);
   font-size: 12px;
   line-height: 1;
-  color: rgba(88, 225, 243, 0.45);
   white-space: nowrap;
+  color: rgba(88, 225, 243, 0.45);
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+.si-fi.profile-page .btn-mode #btn-mode-text::after {
+  content: none;
 }
 
 .profile-wrap {
@@ -1021,7 +1026,7 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-a
   color: rgba(255, 255, 255, 0.5);
 }
 
-.si-fi.office-mode.profile-page .btn-mode #btn-mode-text::after {
+.si-fi.office-mode.profile-page .btn-mode::after {
   color: #fff;
 }
 
