@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06 -> BR-LAUNCH-03
+TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-E
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -21,9 +21,9 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
 - BR-LAUNCH-03 (UI Consistency Audit) P1
+- BR-LAUNCH-03-E Responsive Eligibility Gate / Unsupported Viewport Guidance P1
 
 REGISTERED (under BR-LAUNCH-03; do not start):
-- BR-LAUNCH-03-E Responsive Eligibility Gate / Unsupported Viewport Guidance P1 (REGISTER ONLY / PAUSED)
 - BR-LAUNCH-03-F Office Mode Focus Bar Color Consistency P1 (REGISTER ONLY / PAUSED)
 
 REGISTERED (POST-LAUNCH importer; do not start):
@@ -108,7 +108,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-03` R4 CLOSED. Remaining `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` REGISTER ONLY. Do not start `BR-LAUNCH-04`.
+`BR-LAUNCH-03-E` ACTIVE. Do not start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`.
 ```
 
 ### Git snapshot????????
@@ -1225,8 +1225,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | Annual / Monthly / FW UI consistency before Launch. Inventory first. No redesign. |
-| evidence | Phase 1 + Phase 2 + R1/R2/R3/R4 CLOSED 2026-09-24 (`d54bbe6` R4 18/18). Remaining `03-E`/`03-F` REGISTER ONLY. |
-| next_action | ACTIVE. R1–R4 CLOSED. Do not auto-start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
+| evidence | Phase 1 + Phase 2 + R1/R2/R3/R4 CLOSED 2026-09-24 (`d54bbe6` R4 18/18). `03-E` ACTIVE. `03-F` REGISTER ONLY. |
+| next_action | ACTIVE. Child `BR-LAUNCH-03-E` ACTIVE. Do not start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 
 ### BR-LAUNCH-03-A
 
@@ -1298,12 +1298,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-03-E` |
 | name | Responsive Eligibility Gate / Unsupported Viewport Guidance |
 | parent | `BR-LAUNCH-03` |
-| status | REGISTER ONLY / PAUSED |
+| status | ACTIVE |
 | priority | P1 / Launch required |
+| started_at | 2026-09-24 |
 | return_to | `BR-LAUNCH-03` |
 | reason | Desktop-first. Smartphone / tablet portrait / landscape below KPN minimum width must not show broken app UI. Show dedicated guidance (JP/EN/ZH-TW). Viewport + orientation; do not use User-Agent as source of truth. Min-width not frozen at register — measure in implementation audit vs 1200px contract. Do not build a mobile KPN. |
-| next_action | REGISTER ONLY. Do not start now. After R2–R4 unless owner reorders. Do not start `BR-LAUNCH-04`. |
-| constraint | no implementation in this register; no min-width guess; no hamburger; excel/ untouched |
+| next_action | Implement CSS media-query gate at 1200px (R1 measured lower bound). Do not start `03-F` / `BR-LAUNCH-04`. |
+| constraint | no mobile layout; no UA; no excel/; no 03-F |
 
 ### BR-LAUNCH-03-F
 
@@ -1435,7 +1436,8 @@ CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
 ACTIVE under `TRUNK-06`: `BR-LAUNCH-03`  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`  
-REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
+ACTIVE under `BR-LAUNCH-03`: `BR-LAUNCH-03-E`  
+REGISTERED under `BR-LAUNCH-03`: `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06`: `BR-LAUNCH-04`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
@@ -1540,3 +1542,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-24 | **BR-LAUNCH-03-F REGISTER ONLY** Office Mode Focus Bar Color Consistency. P1 Launch polish. Parent `BR-LAUNCH-03`. Status PAUSED. Observed Monthly ZH-TW Office Focus Bar still black. Desired medium-light gray outer / lighter cells / black text / Office borders. Shared-root audit when started; do not ZH-only patch. Do not implement now. |
 | 2026-09-24 | **BR-LAUNCH-03-D START** R4 MEP Tutorial / AUTO CALC overlap. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-D`. Left gutter `--mef-tutorial-slot: 124px` on MEP label column. Do not start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
 | 2026-09-24 | **BR-LAUNCH-03-D CLOSED** R4 production smoke 18/18 PASS. AABB overlapN=0. 1200/1280/1440 × JA/EN/ZH-TW × Sci-Fi/Office. SHA `d54bbe6`. Human Review NO. Return `BR-LAUNCH-03`. Do not auto-start `BR-LAUNCH-03-E` / `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |
+| 2026-09-24 | **BR-LAUNCH-03-E START** Responsive Eligibility Gate. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-03 -> BR-LAUNCH-03-E`. Audit: KPN lower bound = 1200 CSS px (R1 header contract). CSS `@media (max-width: 1199.98px)` on login-page/profile-page. No UA. Do not start `BR-LAUNCH-03-F` / `BR-LAUNCH-04`. |

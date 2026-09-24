@@ -2857,6 +2857,18 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-03-E Viewport eligibility gate（2026-09-24）
+
+`js/` `api/` なし。`register/style.css` のみ（login / app / settings が head で読む共有CSS）。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C3E1 | `C:\Users\funki\kpi-navigator\register\style.css` | `public_html/kpi-navigator/register/style.css` | https://forge-laboratory.com/kpi-navigator/register/style.css |
+
+確認: `@media (max-width: 1199.98px)` で `body.login-page` / `body.profile-page` の通常UIが `display:none`、`::before` 案内が出る。1200px以上では案内 `content:none`。User-Agent なし。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

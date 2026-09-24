@@ -1312,3 +1312,53 @@ body.office-mode .kpi-busy-overlay__msg {
 .si-fi.office-mode .registration-disabled-notice {
   border-color: #333;
 }
+
+/* BR-LAUNCH-03-E: unsupported viewport guidance.
+   Measured lower bound = 1200 CSS px (R1 header contract; 03-A/C/D smoke).
+   Width-only (no User-Agent). Portrait phones/tablets are < 1200.
+   Wide tablet landscape (e.g. iPad Pro 12.9 = 1366) stays on normal KPN.
+   Login / app / settings (body.login-page | body.profile-page) only.
+   LP / legal / registration stay readable on a phone. */
+@media (max-width: 1199.98px) {
+  body.login-page > *,
+  body.profile-page > * {
+    display: none !important;
+  }
+  body.login-page::before,
+  body.profile-page::before {
+    content: "KPN\306F\30B9\30DE\30FC\30C8\30D5\30A9\30F3\304A\3088\3073\30BF\30D6\30EC\30C3\30C8\7E26\5411\304D\3067\306E\5229\7528\3092\63A8\5968\3057\3066\3044\307E\305B\3093\3002\A\30D1\30BD\30B3\30F3\3001\307E\305F\306F\30BF\30D6\30EC\30C3\30C8\3092\6A2A\5411\304D\306B\3057\3066\3054\5229\7528\304F\3060\3055\3044\3002";
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    box-sizing: border-box;
+    background: #111111;
+    color: #58e1f3;
+    font-family: "BIZ UDPGothic", "Noto Sans JP", sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    text-align: center;
+    white-space: pre-wrap;
+    pointer-events: auto;
+  }
+  html[lang="en"] body.login-page::before,
+  html[lang="en"] body.profile-page::before {
+    content: "KPN is not recommended on smartphones or tablets in portrait.\APlease use a computer, or rotate your tablet to landscape.";
+  }
+  html[lang="zh-TW"] body.login-page::before,
+  html[lang="zh-TW"] body.profile-page::before,
+  html[lang^="zh"] body.login-page::before,
+  html[lang^="zh"] body.profile-page::before {
+    content: "KPN \4E0D\5EFA\8B70\5728\667A\6167\578B\624B\6A5F\6216\76F4\5411\5E73\677F\96FB\8166\4E0A\4F7F\7528\3002\A\8ACB\6539\7528\96FB\8166\FF0C\6216\5C07\5E73\677F\96FB\8166\8F49\70BA\6A6B\5411\3002";
+  }
+  body.office-mode.login-page::before,
+  body.office-mode.profile-page::before {
+    background: #f4f4f4;
+    color: #111111;
+  }
+}
