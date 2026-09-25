@@ -4895,7 +4895,7 @@ def render_page(lang: str, lang_switch: str) -> str:
       flex: 0 0 auto;
     }}
     .profile-page.office-mode .global-nav-list {{
-      gap: 28px !important;
+      gap: var(--kpi-header-nav-gap, 20px) !important;
     }}
     .profile-page.office-mode .global-nav-list .nav-frame-btn {{
       display: inline-block !important;

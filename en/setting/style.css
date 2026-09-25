@@ -1062,6 +1062,7 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-a
   padding: 0;
   margin: 0;
 }
+.si-fi.office-mode.profile-page .global-nav-list,
 html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list,
 html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list,
 html[lang="zh-TW"] .si-fi.office-mode.profile-page .global-nav-list,
@@ -1158,6 +1159,7 @@ html[lang="en"] .si-fi.profile-page:not(.office-mode) .nav-btn-text {
 }
 
 /* Office Mode: Global Menu spacing (shared token; not per-language) */
+.si-fi.office-mode.profile-page .global-nav-list,
 html[lang="en"] .si-fi.office-mode.profile-page .global-nav-list,
 html[lang="ja"] .si-fi.office-mode.profile-page .global-nav-list,
 html[lang="zh-TW"] .si-fi.office-mode.profile-page .global-nav-list,
