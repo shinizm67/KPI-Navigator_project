@@ -122,8 +122,9 @@ PAGES_PUBLIC = [
 
 # Generated pages that are updated in place here (their own generators are not
 # re-runnable / already stripped their source). Header-only (no footer). PL
-# `index.html` is owned by build_pl_table_page.py and the PL `shell.html`
-# prototype is intentionally left alone, so neither is listed here.
+# `index.html` (JA / EN / ZH-TW header) is owned by build_pl_table_page.py
+# and scripts/pl_chrome.py (`pl_header` / `--sync-zh-tw-header`). The PL `shell.html` prototype is
+# intentionally left alone, so neither is listed here.
 # monthly-edit is a Monthly page (active=monthly) whose Daily/Insight nav are
 # deep links back to the Monthly page.
 PAGES_GENERATED = [

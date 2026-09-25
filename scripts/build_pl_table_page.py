@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Generate JA/EN PL table mock pages from embedded template."""
+"""Generate JA/EN PL table pages from embedded template.
+
+ZH-TW PL has no full label tables in this generator, so the page body is not
+rewritten. Its Global Menu header is synced from the same `pl_header()` →
+`site_chrome.build_header()` path used by JA/EN `render_page()`.
+"""
 
 from __future__ import annotations
 
@@ -15,7 +20,12 @@ from kpi_leave_close_chooser import (  # noqa: E402
     CLOSE_CHOOSER_HTML,
     close_chooser_js,
 )
-from site_chrome import build_header  # noqa: E402
+from pl_chrome import (  # noqa: E402
+    PL_PAGE_PATHS,
+    apply_pl_header,
+    page_paths,
+    pl_header,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -4668,41 +4678,6 @@ def month_headers(lang: str) -> str:
     return "".join(parts)
 
 
-def page_paths(lang: str) -> dict[str, str]:
-    """Asset root + app URLs from profit/pl/index.html."""
-    if lang == "en":
-        return {
-            "asset": "../../../../",
-            "annual": "../../annual/index.html",
-            "monthly": "../../monthly/index.html",
-            "daily": "#",
-            "insight": "../../monthly/index.html?open=insight",
-            "insight_basic": "../../../setting/change_plan.html",
-            "profit_hub": "../index.html",
-            "pl_self": "index.html",
-            "monthly_edit": "../../monthly/edit/index.html",
-            "lang_en": "index.html",
-            "lang_ja": "../../../../app/profit/pl/index.html",
-            "setting": "../../../../en/setting/",
-            "forge_url": "https://forge-laboratory.com/en",
-        }
-    return {
-        "asset": "../../../",
-        "annual": "../../annual/index.html",
-        "monthly": "../../monthly/index.html",
-        "daily": "#",
-        "insight": "../../monthly/index.html?open=insight",
-        "insight_basic": "../../../setting/change_plan.html",
-        "profit_hub": "../index.html",
-        "pl_self": "index.html",
-        "monthly_edit": "../../monthly/edit/index.html",
-        "lang_en": "../../../en/app/profit/pl/index.html",
-        "lang_ja": "index.html",
-        "setting": "../../../en/setting/",
-        "forge_url": "https://forge-laboratory.com",
-    }
-
-
 def header_nav_html(lang: str, p: dict[str, str], L: dict) -> str:
     if lang == "ja":
         labels = ("年次", "月次", "日次", L["nav_insight"])
@@ -4892,19 +4867,10 @@ def render_page(lang: str, lang_switch: str) -> str:
     )
     insight_data_js = pl_insight_data_client_js()
     html_lang = "en" if lang == "en" else "ja"
-    # Canonical Global Menu (single source: scripts/site_chrome.py). PL keeps its
-    # page-specific wiring via overrides: pl-* classes for the PL CSS, a
-    # data-pl-nav="1" leave-guard on every nav item, and the Insight deep link.
-    # base is the language-root prefix (JA=repo root, EN=en/) — both 3 levels up
-    # from app/profit/pl/. This also fixes the old JA→en/setting popup drift.
-    header = build_header(
-        lang, "../../../", p["asset"], None,
-        daily_mode="overlay",
-        header_class="pl-site-header",
-        nav_class="pl-header-global-nav",
-        nav_attr=' data-pl-nav="1"',
-        profit_href=p["insight"],
-    )
+    # Canonical Global Menu (single source: scripts/site_chrome.py via pl_header).
+    # PL keeps page-specific wiring: pl-* classes, data-pl-nav="1", Insight deep link.
+    # Language-root prefix is 3 levels up from app/profit/pl/ for JA / EN / ZH-TW.
+    header = pl_header(lang)
     if lang == "ja":
         office_aria_off = "Office Mode に切り替え"
         office_aria_on = "Sci-Fi Mode に切り替え"
@@ -10197,12 +10163,23 @@ def render_page(lang: str, lang_switch: str) -> str:
 """
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    zh_path = ROOT / PL_PAGE_PATHS["zh-tw"]
+    if argv == ["--sync-zh-tw-header"]:
+        apply_pl_header(zh_path, "zh-tw")
+        return
+    if argv == ["--sync-headers"]:
+        for lang, rel in PL_PAGE_PATHS.items():
+            apply_pl_header(ROOT / rel, lang)
+        return
+
+    # Full page regen remains JA/EN only (no ZH-TW label tables).
     # Keep PL pages in sync with Global Menu DL export client after rebuild.
     from apply_kpi_pl_mep_export import inject_script  # noqa: WPS433
 
-    ja_path = ROOT / "app/profit/pl/index.html"
-    en_path = ROOT / "en/app/profit/pl/index.html"
+    ja_path = ROOT / PL_PAGE_PATHS["ja"]
+    en_path = ROOT / PL_PAGE_PATHS["en"]
     ja_path.parent.mkdir(parents=True, exist_ok=True)
     en_path.parent.mkdir(parents=True, exist_ok=True)
     ja_path.write_text(
@@ -10223,7 +10200,8 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    print("Wrote", ja_path, en_path)
+    apply_pl_header(zh_path, "zh-tw")
+    print("Wrote", ja_path, en_path, "+ ZH-TW header")
 
 
 if __name__ == "__main__":

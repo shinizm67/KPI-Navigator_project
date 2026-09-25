@@ -4413,7 +4413,7 @@
       <nav class="global-nav pl-header-global-nav" aria-label="主要導覽">
         <ul class="global-nav-list">
           <li class="global-nav-item">
-            <a href="../../../app/annual/index.html" class="nav-frame-btn" data-pl-nav="1" aria-label="前往年度檢視">
+            <a href="../../../app/annual/index.html" class="nav-frame-btn" data-pl-nav="1" aria-label="年度檢視">
               <span class="btn-mode-frame">
                 <img src="../../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">年度</span>
@@ -4421,7 +4421,7 @@
             </a>
           </li>
           <li class="global-nav-item">
-            <a href="../../../app/monthly/index.html" class="nav-frame-btn" data-pl-nav="1" aria-label="前往月度檢視">
+            <a href="../../../app/monthly/index.html" class="nav-frame-btn" data-pl-nav="1" aria-label="月度檢視">
               <span class="btn-mode-frame">
                 <img src="../../../../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
                 <span class="btn-mode-text nav-btn-text">月度</span>
@@ -4461,9 +4461,42 @@
             <span class="btn-mode-text" id="btn-mode-text">OFFICE MODE</span>
           </span>
         </a>
+        <a
+          href="../../../app/booking/index.html"
+          class="header-booking-btn kpi-chrome-tip"
+          id="header-booking-btn"
+          data-href-pro="../../../app/booking/index.html"
+          data-href-basic="../../../setting/change_plan.html"
+          data-kpi-pro-gate
+          aria-label="開啟預約台帳（專業方案）。基本方案請前往變更方案"
+          data-kpi-tutorial-tip
+          data-tooltip="預約"
+        >
+          <img
+            src="../../../../images/booking_sci-fi.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--scifi"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+          <img
+            src="../../../../images/booking_office.svg"
+            alt=""
+            class="header-booking-btn__img header-booking-btn__img--office"
+            aria-hidden="true"
+            width="24"
+            height="24"
+          >
+        </a>
         <details class="header-dl" id="header-dl">
-          <summary class="header-dl-btn" aria-label="下載範本與收支資料">DL</summary>
-                    <div class="template-dl-menu" role="menu" aria-label="下載選單">
+          <summary
+            class="header-dl-btn kpi-chrome-tip"
+            aria-label="下載範本與收支資料"
+            data-kpi-tutorial-tip
+            data-tooltip="下載"
+          >DL</summary>
+          <div class="template-dl-menu" role="menu" aria-label="下載選單">
             <p class="template-dl-heading">範本</p>
             <button type="button" class="template-dl-item" id="kpi-dl-csv-sales" role="menuitem" data-kpi-csv-template="sales">下載銷售範本</button>
             <button type="button" class="template-dl-item" id="kpi-dl-csv-expense-daily" role="menuitem" data-kpi-csv-template="expense-daily">下載支出範本（每日）</button>
@@ -4471,13 +4504,22 @@
             <button type="button" class="template-dl-item" id="kpi-dl-excel-template" role="menuitem" data-kpi-excel-template="workbook">下載 Excel 範本</button>
             <hr class="template-dl-sep" aria-hidden="true">
             <p class="template-dl-heading">資料匯出</p>
-            <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../../setting/change_plan.html" aria-label="下載 MEP 與 PL 活頁簿為 Excel（專業方案）">損益資料（MEP＋PL）</button>
+            <button type="button" class="template-dl-item template-dl-item--export" id="kpi-export-pl-mep" role="menuitem" data-kpi-change-plan="../../../setting/change_plan.html" aria-label="下載 MEP 與 PL 的 Excel（專業方案）">損益資料（MEP＋PL）</button>
           </div>
         </details>
         <button type="button" class="icon-button icon-button-menu" aria-label="開啟導覽選單">
           <img src="../../../../images/dropdown_menu.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
-        <button type="button" class="icon-button icon-button-settings" id="btn-account-settings" aria-label="帳戶設定" aria-expanded="false" aria-haspopup="true">
+        <button
+          type="button"
+          class="icon-button icon-button-settings kpi-chrome-tip"
+          id="btn-account-settings"
+          aria-label="帳戶設定"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-kpi-tutorial-tip
+          data-tooltip="設定"
+        >
           <img src="../../../../images/setting_gear.svg" alt="" class="icon-img" aria-hidden="true">
         </button>
       </div>
@@ -4491,6 +4533,7 @@
             <a href="../../../setting/change_email.html" class="account-settings-item" role="menuitem">變更電子信箱</a>
             <a href="../../../setting/change_password.html" class="account-settings-item" role="menuitem">變更密碼</a>
             <a href="../../../setting/session_management.html" class="account-settings-item" role="menuitem">登入工作階段</a>
+            <a href="#" id="account-settings-logout" class="account-settings-item" role="menuitem">登出</a>
           </nav>
         </section>
         <section class="account-settings-section">
@@ -4498,12 +4541,6 @@
           <nav class="account-settings-nav">
             <a href="../../../setting/plan_details.html" class="account-settings-item" role="menuitem">方案詳情</a>
             <a href="../../../setting/change_plan.html" class="account-settings-item" role="menuitem">變更方案</a>
-          </nav>
-        </section>
-        <section class="account-settings-section" data-kpi-feedback-nav="1">
-          <h4 class="account-settings-heading">支援</h4>
-          <nav class="account-settings-nav">
-            <a href="../../../zh-tw/setting/feedback.html" class="account-settings-item" role="menuitem">意見與請求</a>
           </nav>
         </section>
         <div class="account-settings-sep"></div>
@@ -4526,6 +4563,11 @@
         </div>
       </div>
     </div>
+    <script src="../../../../js/kpi-auth-client.js?v=20260923-c2c"></script>
+    <script src="../../../../js/kpi-business-type.js"></script>
+    <script src="../../../../js/kpi-pl-expense-presets.js"></script>
+    <script src="../../../../js/kpi-csv-templates.js"></script>
+    <script src="../../../../js/kpi-excel-templates.js"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -4539,6 +4581,20 @@
         var dl = document.getElementById('header-dl');
         if (dl && dl.open) dl.removeAttribute('open');
       });
+    })();
+    (function () {
+      if (!window.__KPI_AUTH) return;
+      try {
+        if (typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
+          window.__KPI_AUTH.syncPlanFromServer().catch(function () {});
+        }
+        if (typeof window.__KPI_AUTH.bindInsightNavGate === 'function') {
+          window.__KPI_AUTH.bindInsightNavGate(document);
+        }
+        if (typeof window.__KPI_AUTH.bindAccountSettingsLogout === 'function') {
+          window.__KPI_AUTH.bindAccountSettingsLogout(document);
+        }
+      } catch (_e) {}
     })();
     </script>
   </header>

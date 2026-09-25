@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-TRUNK-06
+TRUNK-06 -> BR-LAUNCH-08
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -22,7 +22,7 @@ ACTIVE BRANCHES:
 - TRUNK-06 (Launch / Demo / New-user Readiness) P0
 
 REGISTERED (under TRUNK-06; do not start):
-- BR-LAUNCH-08 ZH-TW PL Global Menu Parity Repair P1 (REGISTER ONLY / PAUSED)
+- (none — BR-LAUNCH-08 START)
 
 REGISTERED (under BR-LAUNCH-03; do not start):
 - (none — parent CLOSED)
@@ -89,11 +89,10 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- (none)
+- BR-LAUNCH-08 ZH-TW PL Global Menu Parity Repair P1
 
 PAUSED / REGISTER ONLY (under TRUNK-06):
-- BR-LAUNCH-08 ZH-TW PL Global Menu Parity Repair P1
-  note: accidental ZH-TW PL header drift (`#header-booking-btn` absent). Not started.
+- (none)
 
 DEFERRED:
 - BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
@@ -122,7 +121,7 @@ RETURN TARGET:
 TRUNK-06
 
 NEXT ACTION:
-`BR-LAUNCH-08` REGISTER ONLY. Do not implement until START. Do not close `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+`BR-LAUNCH-08` START. Do not auto-start `BR-LAUNCH-05`. Do not close `TRUNK-06` until 08 CLOSED.
 ```
 
 ### Git snapshot
@@ -1409,13 +1408,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-08` |
 | name | ZH-TW PL Global Menu Parity Repair |
 | parent | `TRUNK-06` |
-| status | PAUSED / REGISTER ONLY |
+| status | ACTIVE |
 | priority | P1 Launch-required |
-| started_at | not started |
+| started_at | 2026-09-25 |
 | return_to | `TRUNK-06` |
 | reason | Accidental locale/page omission. Shared Global Menu contract includes `#header-booking-btn` for JP / EN / ZH-TW. `zh-tw/app/profit/pl/index.html` is a forked unmarked header (Mode then DL; no booking). JP PL and EN PL include booking via `build_pl_table_page.py` → `site_chrome.build_header`. Other ZH-TW site_chrome pages (Annual / Monthly / MEP / profit landing / booking / settings) include booking. Not contractual exclusion. |
 | evidence | Local markup: ZH-TW PL has no `KPI-SITE-HEADER` markers and no `#header-booking-btn`. `scripts/build_site_chrome.py` PAGES_GENERATED lists monthly/edit × 3 langs, not PL. `scripts/build_pl_table_page.py` `main()` writes JA + EN only (`html_lang` ja/en; no zh-tw). Production 07 smoke `pl-zh-tw-nav-timeout`. |
-| next_action | REGISTER ONLY. Do not implement until START. Restore shared header on ZH-TW PL from `site_chrome.py` (prefer generator, not a page-local hack). Do not change booking behavior. Do not start `BR-LAUNCH-05`. |
+| next_action | START. Sync ZH-TW PL header via `scripts/pl_chrome.py --sync-zh-tw-header` (`pl_header` → `site_chrome.build_header`). Do not full-regen ZH-TW PL body. Do not start `BR-LAUNCH-05`. |
 | constraint | excel/ untouched; no booking feature change; no 07 geometry reopen unless regression; 3-lang chrome parity only |
 
 ### BR-POST-XLSX-REPORT
@@ -1507,7 +1506,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-EXPENSE-LEDGER` | Purchase / Expense Ledger | DEFERRED | P2 | `BR-LAUNCH-01-C2` |
 | `BR-LAUNCH-06` | PL Excel Download Repair | CLOSED | P1 | `TRUNK-06` |
 | `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | CLOSED | P1 | `TRUNK-06` |
-| `BR-LAUNCH-08` | ZH-TW PL Global Menu Parity Repair | PAUSED / REGISTER ONLY | P1 | `TRUNK-06` |
+| `BR-LAUNCH-08` | ZH-TW PL Global Menu Parity Repair | ACTIVE | P1 | `TRUNK-06` |
 | `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`  
@@ -1520,8 +1519,8 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: none  
-PAUSED / REGISTER ONLY under `TRUNK-06`: `BR-LAUNCH-08` (do not start)  
+ACTIVE under `TRUNK-06`: `BR-LAUNCH-08`  
+PAUSED / REGISTER ONLY under `TRUNK-06`: none  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06` (legacy): none besides `BR-LAUNCH-08`  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
@@ -1640,3 +1639,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **BR-LAUNCH-07 START / Phase 1 audit COMPLETE**. Production Playwright AABB. Insight overlaps `#header-booking-btn` on JP/EN/ZH-TW × Sci-Fi/Office × Annual/Monthly/MEP/PL/profile × 1200–1440 (geometry locked to inner 1200). Live gap 24/28px not dead 80/50. Actions 295/337 vs pad-right 260. P0=0 P1=1 P2=2. Fix SMALL. [`docs/global-menu-spacing-audit-07.md`](./global-menu-spacing-audit-07.md). No CSS/code. excel untouched. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-07`. |
 | 2026-09-25 | **BR-LAUNCH-07 CLOSED** Phase 2 shared header reserve. `--kpi-header-actions-reserve: 368px` (was 260). `--kpi-header-nav-gap: 20px` (was 28; required to fit 1200). Insight–booking gap Sci-Fi 49–56 / Office 12. Production 113/114 PASS; ZH-TW PL missing booking is pre-existing not 07. SHA `bbe3907`. Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-25 | **TRUNK-06 closeout audit** 01/02/03/04/06/07 CLOSED. `BR-LAUNCH-05` remains DEFERRED (billing assessment; not a Launch blocker). Post-launch items do not block. 1200 contract still valid. **Cannot close TRUNK-06:** ZH-TW PL `#header-booking-btn` is **ACCIDENTAL** (forked unmarked header; `build_pl_table_page.py` JA+EN only). Registered `BR-LAUNCH-08` REGISTER ONLY. Do not implement. Do not start 05. CURRENT PATH stays `TRUNK-06`. |
+| 2026-09-25 | **BR-LAUNCH-08 START** ZH-TW PL Global Menu parity. Shared `pl_header()` in `scripts/pl_chrome.py` → `site_chrome.build_header`. Full ZH-TW PL body not regenerated. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-08`. |
