@@ -2935,6 +2935,19 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-LAUNCH-08 ZH-TW PL Global Menu parity（2026-09-25）
+
+`js/` `api/` なし。繁中 `zh-tw/app/profit/pl` のあと `en/setting/style.css`。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C84 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+| C85 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+
+確認: `#header-booking-btn` と「預約」。Office `gap` が `--kpi-header-nav-gap`（28px でない）。HTML が `style.css?v=20260925-c9`。洞察と予約が重ならない。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
