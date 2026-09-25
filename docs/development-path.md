@@ -11,18 +11,19 @@
 
 ```
 CURRENT PATH:
-TRUNK-06
+(none — TRUNK-06 CLOSED)
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
 -> Planning Readiness -> Automatic Seasonality / Baseline
 -> UI/UX branches closeout
+-> TRUNK-06 (Launch / Demo / New-user Readiness)
 
 ACTIVE BRANCHES:
-- TRUNK-06 (Launch / Demo / New-user Readiness) P0
+- (none — TRUNK-06 CLOSED)
 
 REGISTERED (under TRUNK-06; do not start):
-- (none — BR-LAUNCH-08 CLOSED)
+- (none — trunk CLOSED)
 
 REGISTERED (under BR-LAUNCH-03; do not start):
 - (none — parent CLOSED)
@@ -90,7 +91,7 @@ CLOSED (under BR-LAUNCH-01-C):
 - BR-LAUNCH-01-C1 (Demo Dataset Contract & Existing Fixture Audit) P0 closed 2026-09-23
 
 ACTIVE (under TRUNK-06):
-- (none — BR-LAUNCH-08 CLOSED)
+- (none — trunk CLOSED)
 
 PAUSED / REGISTER ONLY (under TRUNK-06):
 - (none)
@@ -119,10 +120,10 @@ DEFERRED:
   parent: TRUNK-06. REGISTER ONLY. Not BR-LAUNCH-06. Accountant/archive workbook.
 
 RETURN TARGET:
-TRUNK-06
+N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-`BR-LAUNCH-08` CLOSED. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+NONE. Do not auto-start `BR-LAUNCH-05`. Do not start post-launch work.
 ```
 
 ### Git snapshot
@@ -130,7 +131,7 @@ NEXT ACTION:
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `369c036` (ZH-TW PL Office gap token; 08 chrome SHA `90468d9`) |
+| HEAD | `56e96f0` (BR-LAUNCH-08 closeout; product `369c036`) |
 | origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -478,23 +479,24 @@ CLOSED node ? **?????**??????????????
 
 ---
 
-## 7. ACTIVE TRUNK ? TRUNK-06 Launch / Demo / New-user Readiness
+## 7. CLOSED TRUNK — TRUNK-06 Launch / Demo / New-user Readiness
 
 ### TRUNK-06
 
-| ????? | ? |
-|------------|-----|
+| Field | Value |
+|-------|-------|
 | id | `TRUNK-06` |
 | name | Launch / Demo / New-user Readiness |
 | parent | KPN Development |
-| status | ACTIVE |
+| status | CLOSED |
 | priority | P0 |
 | started_at | 2026-09-20 |
+| closed_at | 2026-09-25 |
 | return_to | N/A |
-| reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / ?? UI/UX closeout ?????KPN ?????????????????????????????????? |
-| evidence | `docs/development-path.md` Next Trunk Selection Audit?2026-09-20?; HEAD `dffeb8e` UI/UX closeout; Shin/Case ??????? |
-| next_action | `BR-LAUNCH-08` CLOSED. Remaining DEFERRED = `BR-LAUNCH-05` (billing assessment; not a Launch blocker). Do not auto-start 05. |
-| docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md)????????? |
+| reason | Unit 5C / Floating Window Functional Audit / Planning Readiness / Automatic Seasonality / UI/UX closeout の次。KPN Launch / Demo / New-user Readiness。 |
+| evidence | Direct Launch-required children 01/02/03/04/06/07/08 CLOSED. No remaining Launch-required P0/P1. `BR-LAUNCH-05` DEFERRED (registration already disabled `af07bf7`; billing assessment not a Launch blocker). Latest production: 08 25/25 PASS. Human Smoke not required for remaining Launch contract. |
+| next_action | N/A CLOSED. Do not auto-start `BR-LAUNCH-05`. Do not start post-launch work. |
+| docs | [`free-trial-account-ops.md`](./free-trial-account-ops.md) |
 
 ### BR-LAUNCH-01
 
@@ -1520,7 +1522,7 @@ CLOSED under `BR-LAUNCH-01-C2-L6`: `BR-LAUNCH-01-C2-L6-B`
 CLOSED under `BR-LAUNCH-01-C2-L5`: `BR-LAUNCH-01-C2-L5-A`, `BR-LAUNCH-01-C2-L5-B`  
 CLOSED under `BR-LAUNCH-01-C2-L3`: `BR-LAUNCH-01-C2-L3-A`, `BR-LAUNCH-01-C2-L3-B`  
 CLOSED under `BR-LAUNCH-01-C2-L1`: `BR-LAUNCH-01-C2-L1-A`  
-ACTIVE under `TRUNK-06`: none  
+ACTIVE under `TRUNK-06`: none (trunk CLOSED)  
 PAUSED / REGISTER ONLY under `TRUNK-06`: none  
 CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C`, `BR-LAUNCH-03-D`, `BR-LAUNCH-03-E`, `BR-LAUNCH-03-F`  
 PAUSED under `TRUNK-06` (legacy): none  
@@ -1642,3 +1644,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **TRUNK-06 closeout audit** 01/02/03/04/06/07 CLOSED. `BR-LAUNCH-05` remains DEFERRED (billing assessment; not a Launch blocker). Post-launch items do not block. 1200 contract still valid. **Cannot close TRUNK-06:** ZH-TW PL `#header-booking-btn` is **ACCIDENTAL** (forked unmarked header; `build_pl_table_page.py` JA+EN only). Registered `BR-LAUNCH-08` REGISTER ONLY. Do not implement. Do not start 05. CURRENT PATH stays `TRUNK-06`. |
 | 2026-09-25 | **BR-LAUNCH-08 START** ZH-TW PL Global Menu parity. Shared `pl_header()` in `scripts/pl_chrome.py` → `site_chrome.build_header`. Full ZH-TW PL body not regenerated. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-08`. |
 | 2026-09-25 | **BR-LAUNCH-08 CLOSED** ZH-TW PL `#header-booking-btn` via shared `pl_header()`. Office nav gap `--kpi-header-nav-gap` (page-local 28px removed). Production smoke 25/25 PASS. SHA `369c036`. Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| 2026-09-25 | **TRUNK-06 CLOSED** Final Launch closeout. 01/02/03/04/06/07/08 CLOSED. Launch-required P0=0 P1=0. `BR-LAUNCH-05` DEFERRED (registration disabled; billing assessment not blocking). Post-launch / 03 P2 U11–U20 / Simple Mode remain outside Launch. Human Smoke NO. Do not auto-start 05 or post-launch. CURRENT PATH = (none). |
