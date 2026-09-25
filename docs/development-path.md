@@ -134,8 +134,8 @@ NONE. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start u
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `414b164` (BR-POST-BOOKING-ICON-COLOR product; docs closeout pending) |
-| origin sync | product in sync; docs closeout pending |
+| HEAD | `0d23a76` (BR-POST-BOOKING-ICON-COLOR closeout; product `414b164`) |
+| origin sync | pushing |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
