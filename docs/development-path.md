@@ -11,7 +11,7 @@
 
 ```
 CURRENT PATH:
-(none — TRUNK-06 CLOSED)
+(none)
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -19,8 +19,11 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 -> UI/UX branches closeout
 -> TRUNK-06 (Launch / Demo / New-user Readiness)
 
+CLOSED (post-launch polish; do not reopen TRUNK-06):
+- BR-POST-BOOKING-ICON-COLOR (Office booking icon #fff) P2 closed 2026-09-25
+
 ACTIVE BRANCHES:
-- (none — TRUNK-06 CLOSED)
+- (none)
 
 REGISTERED (under TRUNK-06; do not start):
 - (none — trunk CLOSED)
@@ -123,7 +126,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-NONE. Do not auto-start `BR-LAUNCH-05`. Do not start post-launch work.
+NONE. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start unrelated post-launch work.
 ```
 
 ### Git snapshot
@@ -131,8 +134,8 @@ NONE. Do not auto-start `BR-LAUNCH-05`. Do not start post-launch work.
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `56e96f0` (BR-LAUNCH-08 closeout; product `369c036`) |
-| origin sync | in sync |
+| HEAD | `414b164` (BR-POST-BOOKING-ICON-COLOR product; docs closeout pending) |
+| origin sync | product in sync; docs closeout pending |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1420,6 +1423,22 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | N/A CLOSED. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | constraint | excel/ untouched; no booking feature change; no 07 geometry reopen unless regression; 3-lang chrome parity only |
 
+### BR-POST-BOOKING-ICON-COLOR
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-BOOKING-ICON-COLOR` |
+| name | Booking Icon Office Mode Color |
+| parent | KPN Development (post-launch polish; do not reopen `TRUNK-06`) |
+| status | CLOSED |
+| priority | P2 Post-launch polish |
+| started_at | 2026-09-25 |
+| return_to | NONE |
+| reason | Office `#header-booking-btn` calendar icon is black because `images/booking_office.svg` hardcodes `fill="#000000"`. Rendered via `<img>`, so CSS `currentColor` cannot recolor it. Desired Office fill `#fff`. Sci-Fi `booking_sci-fi.svg` (`#59e1f3`) unchanged. |
+| evidence | Shared SVG fill `#000000` → `#ffffff`. Production Playwright 30/30 PASS (Annual/Monthly/MEP/PL/profile × JA/EN/ZH-TW × Sci-Fi/Office @1200). Office fill `#ffffff`. Sci-Fi fill `#59e1f3`. Booking 30×30. pad-right 368px. overflowX=0. overlapArea=0. Hits booking/DL/settings/mode/Insight all ok. SHA `414b164`. |
+| next_action | N/A CLOSED. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| constraint | color-only; no header geometry / booking routing / 07 spacing |
+
 ### BR-POST-XLSX-REPORT
 
 | Field | Value |
@@ -1511,6 +1530,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | CLOSED | P1 | `TRUNK-06` |
 | `BR-LAUNCH-08` | ZH-TW PL Global Menu Parity Repair | CLOSED | P1 | `TRUNK-06` |
 | `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
+| `BR-POST-BOOKING-ICON-COLOR` | Booking Icon Office Mode Color | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1529,6 +1549,7 @@ PAUSED under `TRUNK-06` (legacy): none
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`, `BR-POST-XLSX-REPORT`  
+CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
@@ -1645,3 +1666,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **BR-LAUNCH-08 START** ZH-TW PL Global Menu parity. Shared `pl_header()` in `scripts/pl_chrome.py` → `site_chrome.build_header`. Full ZH-TW PL body not regenerated. Do not start `BR-LAUNCH-05`. CURRENT PATH = `TRUNK-06 -> BR-LAUNCH-08`. |
 | 2026-09-25 | **BR-LAUNCH-08 CLOSED** ZH-TW PL `#header-booking-btn` via shared `pl_header()`. Office nav gap `--kpi-header-nav-gap` (page-local 28px removed). Production smoke 25/25 PASS. SHA `369c036`. Human Review NO. Return `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-25 | **TRUNK-06 CLOSED** Final Launch closeout. 01/02/03/04/06/07/08 CLOSED. Launch-required P0=0 P1=0. `BR-LAUNCH-05` DEFERRED (registration disabled; billing assessment not blocking). Post-launch / 03 P2 U11–U20 / Simple Mode remain outside Launch. Human Smoke NO. Do not auto-start 05 or post-launch. CURRENT PATH = (none). |
+| 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR START** Office booking icon `#fff`. Root: `<img>` → `images/booking_office.svg` `fill="#000000"`. `currentColor` not applicable. Do not reopen `TRUNK-06`. |
+| 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR CLOSED** Office SVG fill `#ffffff`. Sci-Fi `#59e1f3` unchanged. Production smoke 30/30 PASS. SHA `414b164`. Human Review NO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |

@@ -2948,6 +2948,18 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-POST-BOOKING-ICON-COLOR Office booking icon white（2026-09-25）
+
+`js/` `api/` `app/` なし。`images/` のみ。Sci-Fi SVG は上げない。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C86 | `C:\Users\funki\kpi-navigator\images\booking_office.svg` | `public_html/kpi-navigator/images/booking_office.svg` | https://forge-laboratory.com/kpi-navigator/images/booking_office.svg |
+
+確認: Office SVG `fill="#ffffff"`。Sci-Fi `booking_sci-fi.svg` は変更なし。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
