@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 DAILY_SALES_IMPORT_MARKER = "/* KPI-DAILY-SALES-IMPORT */"
+_LAYOUT_JS = Path(__file__).resolve().parents[1] / "js" / "kpi-workbook-layout.js"
 
 
 def daily_sales_import_js() -> str:
-    return f"""      {DAILY_SALES_IMPORT_MARKER}
+    layout = _LAYOUT_JS.read_text(encoding="utf-8") if _LAYOUT_JS.is_file() else ""
+    js = f"""      {DAILY_SALES_IMPORT_MARKER}
       (function () {{
         var XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
 
@@ -482,6 +486,14 @@ def daily_sales_import_js() -> str:
 
         function rowsToMaps(rows) {{
           if (!rows || !rows.length) throw new Error('empty');
+          var unmatchedMetrics = [];
+          var detectedLayout = 'vertical';
+          if (window.KpiWorkbookLayout && typeof window.KpiWorkbookLayout.prepare === 'function') {{
+            var prepared = window.KpiWorkbookLayout.prepare(rows, 'sales');
+            if (prepared && prepared.layout) detectedLayout = prepared.layout;
+            if (prepared && prepared.unknown) unmatchedMetrics = prepared.unknown;
+            if (prepared && prepared.rows && prepared.rows.length) rows = prepared.rows;
+          }}
           var header = rows[0].map(function (c) {{ return String(c == null ? '' : c); }});
           var cols = detectColumns(header);
           if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
@@ -619,6 +631,8 @@ def daily_sales_import_js() -> str:
             mismatchCount: mismatchCount,
             hasFoodCol: allowRestaurant && cols.foodIdx >= 0,
             hasDrinkCol: allowRestaurant && cols.drinkIdx >= 0,
+            layout: detectedLayout,
+            unmatchedMetrics: unmatchedMetrics,
           }};
         }}
 
@@ -1065,6 +1079,11 @@ def daily_sales_import_js() -> str:
           parseDelimitedText: parseDelimitedText,
           rowsToMaps: rowsToMaps,
           detectColumns: detectColumns,
+          detectLayout: function (rows) {{
+            return window.KpiWorkbookLayout && typeof window.KpiWorkbookLayout.detectLayout === 'function'
+              ? window.KpiWorkbookLayout.detectLayout(rows)
+              : 'vertical';
+          }},
           parseBizCell: parseBizCell,
           salesCsvAllowsRestaurantFields: salesCsvAllowsRestaurantFields,
           persistDailyMealFromMaps: persistDailyMealFromMaps,
@@ -1081,3 +1100,8 @@ def daily_sales_import_js() -> str:
         }};
       }})();
 """
+    return js.replace(
+        "      (function () {\n        var XLSX_CDN",
+        "      (function () {\n" + layout + "\n        var XLSX_CDN",
+        1,
+    )

@@ -4331,6 +4331,7 @@
     <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
+    <script src="../../../../js/kpi-workbook-layout.js?v=20260926-hwb"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -12463,6 +12464,12 @@
           }
           return -1;
         }
+        function prepareExpenseMatrix(rows) {
+          if (!window.KpiWorkbookLayout || typeof window.KpiWorkbookLayout.prepare !== 'function') return rows;
+          var prepared = window.KpiWorkbookLayout.prepare(rows, 'expense');
+          if (prepared && prepared.rows && prepared.rows.length) return prepared.rows;
+          return rows;
+        }
         function detectColumns(rows) {
           var header = (rows[0] || []).map(normText);
           var dateCol = findCol(header, DATE_KEYS);
@@ -13112,6 +13119,7 @@
               : ('imp_' + Date.now().toString(36))
           };
           parseFile(file).then(function (rows) {
+            rows = prepareExpenseMatrix(rows);
             if (!rows || !rows.length) {
               if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
                 window.KpiExcelSheetPicker.showTemplateFallback('expense');

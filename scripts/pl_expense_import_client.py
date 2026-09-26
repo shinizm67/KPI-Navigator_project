@@ -353,6 +353,12 @@ def pl_expense_import_client_js() -> str:
           }
           return -1;
         }
+        function prepareExpenseMatrix(rows) {
+          if (!window.KpiWorkbookLayout || typeof window.KpiWorkbookLayout.prepare !== 'function') return rows;
+          var prepared = window.KpiWorkbookLayout.prepare(rows, 'expense');
+          if (prepared && prepared.rows && prepared.rows.length) return prepared.rows;
+          return rows;
+        }
         function detectColumns(rows) {
           var header = (rows[0] || []).map(normText);
           var dateCol = findCol(header, DATE_KEYS);
@@ -1002,6 +1008,7 @@ def pl_expense_import_client_js() -> str:
               : ('imp_' + Date.now().toString(36))
           };
           parseFile(file).then(function (rows) {
+            rows = prepareExpenseMatrix(rows);
             if (!rows || !rows.length) {
               window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。',
                               'Could not read the file (empty or invalid format).'));
