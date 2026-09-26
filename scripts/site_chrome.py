@@ -189,7 +189,18 @@ LABELS = {
     },
 }
 
-FOOTER_COPY = "© 2025 Forge-Laboratory. All rights reserved."
+FOOTER_PRODUCT = "Key Performance Navigator"
+FOOTER_VERSION = "Version 1.0.0"
+FOOTER_COPY = "© 2025 Forge Laboratory"
+
+
+def build_footer_brand() -> str:
+    """Centered product / version / copyright. Year 2025 is Forge Laboratory start year."""
+    return f"""    <div class="footer-brand">
+      <p class="footer-product">{FOOTER_PRODUCT}</p>
+      <p class="footer-version">{FOOTER_VERSION}</p>
+      <p class="footer-copy">{FOOTER_COPY}</p>
+    </div>"""
 
 # Public (pre-login) pages — login / register / plan / legal — share a *minimal*
 # chrome: logo + a Sci-Fi/Office mode toggle, no app nav and no account popup.
@@ -514,7 +525,7 @@ def build_footer(lang: str, img: str) -> str:
         <img src="{img}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
-    <p class="footer-copy">{FOOTER_COPY}</p>
+{build_footer_brand()}
   </footer>"""
 
 
@@ -557,5 +568,5 @@ def build_public_footer(lang: str, img: str) -> str:
         <img src="{img}images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
       </a>
     </div>
-    <p class="footer-copy">{FOOTER_COPY}</p>
+{build_footer_brand()}
   </footer>"""

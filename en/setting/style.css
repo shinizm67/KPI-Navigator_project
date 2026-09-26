@@ -274,6 +274,8 @@ html[lang="ja"] .si-fi.profile-page .profile-workspace-label {
   padding-top: 0;
 }
 
+.si-fi.office-mode.profile-page .footer-product,
+.si-fi.office-mode.profile-page .footer-version,
 .si-fi.office-mode.profile-page .footer-copy {
   color: #fff;
 }
@@ -959,7 +961,7 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-a
 }
 
 /* Profile のフッター下にも余白を少し増やす */
-.si-fi.profile-page .footer-copy {
+.si-fi.profile-page .footer-brand {
   margin-bottom: 30px;
 }
 

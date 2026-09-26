@@ -188,6 +188,8 @@ html[lang^="zh"] .si-fi.terms-page {
   color: #1557b0;
 }
 
+.si-fi.office-mode .footer-product,
+.si-fi.office-mode .footer-version,
 .si-fi.office-mode .footer-copy {
   color: #000;
 }
