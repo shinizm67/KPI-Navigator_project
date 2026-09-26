@@ -2960,6 +2960,119 @@ CZ が CSV の Import オーバーレイを **サーバ rebuild / flushPut 完�
 
 ---
 
+## BR-POST-FOOTER-VERSION + BR-POST-COCKPIT-GAP（2026-09-26）
+
+js/ pi/ なし。日本語 pp/ → 英語 en/app/ → 繁中 zh-tw/app/（annual → monthly → profit/pl → profit → booking）。その後 
+egister/ login/ plan/ legal/ setting/ 等を日→英→台湾。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C88 | `C:\Users\funki\kpi-navigator\app\annual\index.html` | `public_html/kpi-navigator/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/app/annual/index.html |
+| C89 | `C:\Users\funki\kpi-navigator\app\monthly\index.html` | `public_html/kpi-navigator/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/app/monthly/index.html |
+| C90 | `C:\Users\funki\kpi-navigator\app\profit\pl\index.html` | `public_html/kpi-navigator/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/pl/index.html |
+| C91 | `C:\Users\funki\kpi-navigator\app\profit\index.html` | `public_html/kpi-navigator/app/profit/index.html` | https://forge-laboratory.com/kpi-navigator/app/profit/index.html |
+| C92 | `C:\Users\funki\kpi-navigator\app\booking\index.html` | `public_html/kpi-navigator/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/app/booking/index.html |
+| C93 | `C:\Users\funki\kpi-navigator\en\app\annual\index.html` | `public_html/kpi-navigator/en/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/annual/index.html |
+| C94 | `C:\Users\funki\kpi-navigator\en\app\monthly\index.html` | `public_html/kpi-navigator/en/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/monthly/index.html |
+| C95 | `C:\Users\funki\kpi-navigator\en\app\profit\pl\index.html` | `public_html/kpi-navigator/en/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/pl/index.html |
+| C96 | `C:\Users\funki\kpi-navigator\en\app\profit\index.html` | `public_html/kpi-navigator/en/app/profit/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/profit/index.html |
+| C97 | `C:\Users\funki\kpi-navigator\en\app\booking\index.html` | `public_html/kpi-navigator/en/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/en/app/booking/index.html |
+| C98 | `C:\Users\funki\kpi-navigator\zh-tw\app\annual\index.html` | `public_html/kpi-navigator/zh-tw/app/annual/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/annual/index.html |
+| C99 | `C:\Users\funki\kpi-navigator\zh-tw\app\monthly\index.html` | `public_html/kpi-navigator/zh-tw/app/monthly/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/monthly/index.html |
+| C100 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\pl\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/pl/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/pl/index.html |
+| C101 | `C:\Users\funki\kpi-navigator\zh-tw\app\profit\index.html` | `public_html/kpi-navigator/zh-tw/app/profit/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/profit/index.html |
+| C102 | `C:\Users\funki\kpi-navigator\zh-tw\app\booking\index.html` | `public_html/kpi-navigator/zh-tw/app/booking/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/app/booking/index.html |
+| C103 | `C:\Users\funki\kpi-navigator\register\registration_si-fi_jp\registration_si-fi_jp.html` | `public_html/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html` | https://forge-laboratory.com/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html |
+| C104 | `C:\Users\funki\kpi-navigator\register\style.css` | `public_html/kpi-navigator/register/style.css` | https://forge-laboratory.com/kpi-navigator/register/style.css |
+| C105 | `C:\Users\funki\kpi-navigator\login\index.html` | `public_html/kpi-navigator/login/index.html` | https://forge-laboratory.com/kpi-navigator/login/index.html |
+| C106 | `C:\Users\funki\kpi-navigator\plan\index.html` | `public_html/kpi-navigator/plan/index.html` | https://forge-laboratory.com/kpi-navigator/plan/index.html |
+| C107 | `C:\Users\funki\kpi-navigator\plan\style.css` | `public_html/kpi-navigator/plan/style.css` | https://forge-laboratory.com/kpi-navigator/plan/style.css |
+| C108 | `C:\Users\funki\kpi-navigator\legal\privacy\index.html` | `public_html/kpi-navigator/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/legal/privacy/index.html |
+| C109 | `C:\Users\funki\kpi-navigator\legal\terms\index.html` | `public_html/kpi-navigator/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/legal/terms/index.html |
+| C110 | `C:\Users\funki\kpi-navigator\legal\terms\style.css` | `public_html/kpi-navigator/legal/terms/style.css` | https://forge-laboratory.com/kpi-navigator/legal/terms/style.css |
+| C111 | `C:\Users\funki\kpi-navigator\setting\change_email.html` | `public_html/kpi-navigator/setting/change_email.html` | https://forge-laboratory.com/kpi-navigator/setting/change_email.html |
+| C112 | `C:\Users\funki\kpi-navigator\setting\change_email_edit.html` | `public_html/kpi-navigator/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/change_email_edit.html |
+| C113 | `C:\Users\funki\kpi-navigator\setting\change_password.html` | `public_html/kpi-navigator/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password.html |
+| C114 | `C:\Users\funki\kpi-navigator\setting\change_password_success.html` | `public_html/kpi-navigator/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password_success.html |
+| C115 | `C:\Users\funki\kpi-navigator\setting\change_plan.html` | `public_html/kpi-navigator/setting/change_plan.html` | https://forge-laboratory.com/kpi-navigator/setting/change_plan.html |
+| C116 | `C:\Users\funki\kpi-navigator\setting\delete_account1.html` | `public_html/kpi-navigator/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account1.html |
+| C117 | `C:\Users\funki\kpi-navigator\setting\delete_account2.html` | `public_html/kpi-navigator/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account2.html |
+| C118 | `C:\Users\funki\kpi-navigator\setting\delete_account3.html` | `public_html/kpi-navigator/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account3.html |
+| C119 | `C:\Users\funki\kpi-navigator\setting\delete_account4-1.html` | `public_html/kpi-navigator/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-1.html |
+| C120 | `C:\Users\funki\kpi-navigator\setting\delete_account4-2.html` | `public_html/kpi-navigator/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-2.html |
+| C121 | `C:\Users\funki\kpi-navigator\setting\delete_account5.html` | `public_html/kpi-navigator/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account5.html |
+| C122 | `C:\Users\funki\kpi-navigator\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account_accomplished.html |
+| C123 | `C:\Users\funki\kpi-navigator\setting\feedback.html` | `public_html/kpi-navigator/setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/setting/feedback.html |
+| C124 | `C:\Users\funki\kpi-navigator\setting\plan_details.html` | `public_html/kpi-navigator/setting/plan_details.html` | https://forge-laboratory.com/kpi-navigator/setting/plan_details.html |
+| C125 | `C:\Users\funki\kpi-navigator\setting\preferences.html` | `public_html/kpi-navigator/setting/preferences.html` | https://forge-laboratory.com/kpi-navigator/setting/preferences.html |
+| C126 | `C:\Users\funki\kpi-navigator\setting\profile.html` | `public_html/kpi-navigator/setting/profile.html` | https://forge-laboratory.com/kpi-navigator/setting/profile.html |
+| C127 | `C:\Users\funki\kpi-navigator\setting\profile_edit.html` | `public_html/kpi-navigator/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/profile_edit.html |
+| C128 | `C:\Users\funki\kpi-navigator\setting\session_management.html` | `public_html/kpi-navigator/setting/session_management.html` | https://forge-laboratory.com/kpi-navigator/setting/session_management.html |
+| C129 | `C:\Users\funki\kpi-navigator\forgot-password\index.html` | `public_html/kpi-navigator/forgot-password/index.html` | https://forge-laboratory.com/kpi-navigator/forgot-password/index.html |
+| C130 | `C:\Users\funki\kpi-navigator\reset-password\index.html` | `public_html/kpi-navigator/reset-password/index.html` | https://forge-laboratory.com/kpi-navigator/reset-password/index.html |
+| C131 | `C:\Users\funki\kpi-navigator\account_protection\defensive_protocol.html` | `public_html/kpi-navigator/account_protection/defensive_protocol.html` | https://forge-laboratory.com/kpi-navigator/account_protection/defensive_protocol.html |
+| C132 | `C:\Users\funki\kpi-navigator\en\register\registration_si-fi_en.html` | `public_html/kpi-navigator/en/register/registration_si-fi_en.html` | https://forge-laboratory.com/kpi-navigator/en/register/registration_si-fi_en.html |
+| C133 | `C:\Users\funki\kpi-navigator\en\register\style.css` | `public_html/kpi-navigator/en/register/style.css` | https://forge-laboratory.com/kpi-navigator/en/register/style.css |
+| C134 | `C:\Users\funki\kpi-navigator\en\login\index.html` | `public_html/kpi-navigator/en/login/index.html` | https://forge-laboratory.com/kpi-navigator/en/login/index.html |
+| C135 | `C:\Users\funki\kpi-navigator\en\login\style.css` | `public_html/kpi-navigator/en/login/style.css` | https://forge-laboratory.com/kpi-navigator/en/login/style.css |
+| C136 | `C:\Users\funki\kpi-navigator\en\plan\index.html` | `public_html/kpi-navigator/en/plan/index.html` | https://forge-laboratory.com/kpi-navigator/en/plan/index.html |
+| C137 | `C:\Users\funki\kpi-navigator\en\plan\style.css` | `public_html/kpi-navigator/en/plan/style.css` | https://forge-laboratory.com/kpi-navigator/en/plan/style.css |
+| C138 | `C:\Users\funki\kpi-navigator\en\legal\privacy\index.html` | `public_html/kpi-navigator/en/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/en/legal/privacy/index.html |
+| C139 | `C:\Users\funki\kpi-navigator\en\legal\terms\index.html` | `public_html/kpi-navigator/en/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/en/legal/terms/index.html |
+| C140 | `C:\Users\funki\kpi-navigator\en\legal\terms\style.css` | `public_html/kpi-navigator/en/legal/terms/style.css` | https://forge-laboratory.com/kpi-navigator/en/legal/terms/style.css |
+| C141 | `C:\Users\funki\kpi-navigator\en\setting\change_email.html` | `public_html/kpi-navigator/en/setting/change_email.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_email.html |
+| C142 | `C:\Users\funki\kpi-navigator\en\setting\change_email_edit.html` | `public_html/kpi-navigator/en/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_email_edit.html |
+| C143 | `C:\Users\funki\kpi-navigator\en\setting\change_password.html` | `public_html/kpi-navigator/en/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_password.html |
+| C144 | `C:\Users\funki\kpi-navigator\en\setting\change_password_success.html` | `public_html/kpi-navigator/en/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_password_success.html |
+| C145 | `C:\Users\funki\kpi-navigator\en\setting\change_plan.html` | `public_html/kpi-navigator/en/setting/change_plan.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_plan.html |
+| C146 | `C:\Users\funki\kpi-navigator\en\setting\delete_account1.html` | `public_html/kpi-navigator/en/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account1.html |
+| C147 | `C:\Users\funki\kpi-navigator\en\setting\delete_account2.html` | `public_html/kpi-navigator/en/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account2.html |
+| C148 | `C:\Users\funki\kpi-navigator\en\setting\delete_account3.html` | `public_html/kpi-navigator/en/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account3.html |
+| C149 | `C:\Users\funki\kpi-navigator\en\setting\delete_account4-1.html` | `public_html/kpi-navigator/en/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account4-1.html |
+| C150 | `C:\Users\funki\kpi-navigator\en\setting\delete_account4-2.html` | `public_html/kpi-navigator/en/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account4-2.html |
+| C151 | `C:\Users\funki\kpi-navigator\en\setting\delete_account5.html` | `public_html/kpi-navigator/en/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account5.html |
+| C152 | `C:\Users\funki\kpi-navigator\en\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/en/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account_accomplished.html |
+| C153 | `C:\Users\funki\kpi-navigator\en\setting\feedback.html` | `public_html/kpi-navigator/en/setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/en/setting/feedback.html |
+| C154 | `C:\Users\funki\kpi-navigator\en\setting\plan_details.html` | `public_html/kpi-navigator/en/setting/plan_details.html` | https://forge-laboratory.com/kpi-navigator/en/setting/plan_details.html |
+| C155 | `C:\Users\funki\kpi-navigator\en\setting\preferences.html` | `public_html/kpi-navigator/en/setting/preferences.html` | https://forge-laboratory.com/kpi-navigator/en/setting/preferences.html |
+| C156 | `C:\Users\funki\kpi-navigator\en\setting\profile.html` | `public_html/kpi-navigator/en/setting/profile.html` | https://forge-laboratory.com/kpi-navigator/en/setting/profile.html |
+| C157 | `C:\Users\funki\kpi-navigator\en\setting\profile_edit.html` | `public_html/kpi-navigator/en/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/en/setting/profile_edit.html |
+| C158 | `C:\Users\funki\kpi-navigator\en\setting\session_management.html` | `public_html/kpi-navigator/en/setting/session_management.html` | https://forge-laboratory.com/kpi-navigator/en/setting/session_management.html |
+| C159 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+| C160 | `C:\Users\funki\kpi-navigator\en\forgot-password\index.html` | `public_html/kpi-navigator/en/forgot-password/index.html` | https://forge-laboratory.com/kpi-navigator/en/forgot-password/index.html |
+| C161 | `C:\Users\funki\kpi-navigator\en\reset-password\index.html` | `public_html/kpi-navigator/en/reset-password/index.html` | https://forge-laboratory.com/kpi-navigator/en/reset-password/index.html |
+| C162 | `C:\Users\funki\kpi-navigator\en\account_protection\defensive_protocol.html` | `public_html/kpi-navigator/en/account_protection/defensive_protocol.html` | https://forge-laboratory.com/kpi-navigator/en/account_protection/defensive_protocol.html |
+| C163 | `C:\Users\funki\kpi-navigator\zh-tw\register\registration_si-fi_zh-tw.html` | `public_html/kpi-navigator/zh-tw/register/registration_si-fi_zh-tw.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/register/registration_si-fi_zh-tw.html |
+| C164 | `C:\Users\funki\kpi-navigator\zh-tw\login\index.html` | `public_html/kpi-navigator/zh-tw/login/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/login/index.html |
+| C165 | `C:\Users\funki\kpi-navigator\zh-tw\plan\index.html` | `public_html/kpi-navigator/zh-tw/plan/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/plan/index.html |
+| C166 | `C:\Users\funki\kpi-navigator\zh-tw\legal\privacy\index.html` | `public_html/kpi-navigator/zh-tw/legal/privacy/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/legal/privacy/index.html |
+| C167 | `C:\Users\funki\kpi-navigator\zh-tw\legal\terms\index.html` | `public_html/kpi-navigator/zh-tw/legal/terms/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/legal/terms/index.html |
+| C168 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_email.html` | `public_html/kpi-navigator/zh-tw/setting/change_email.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_email.html |
+| C169 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_email_edit.html` | `public_html/kpi-navigator/zh-tw/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_email_edit.html |
+| C170 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_password.html` | `public_html/kpi-navigator/zh-tw/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_password.html |
+| C171 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_password_success.html` | `public_html/kpi-navigator/zh-tw/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_password_success.html |
+| C172 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_plan.html` | `public_html/kpi-navigator/zh-tw/setting/change_plan.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_plan.html |
+| C173 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account1.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account1.html |
+| C174 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account2.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account2.html |
+| C175 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account3.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account3.html |
+| C176 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account4-1.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account4-1.html |
+| C177 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account4-2.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account4-2.html |
+| C178 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account5.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account5.html |
+| C179 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account_accomplished.html |
+| C180 | `C:\Users\funki\kpi-navigator\zh-tw\setting\feedback.html` | `public_html/kpi-navigator/zh-tw/setting/feedback.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/feedback.html |
+| C181 | `C:\Users\funki\kpi-navigator\zh-tw\setting\plan_details.html` | `public_html/kpi-navigator/zh-tw/setting/plan_details.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/plan_details.html |
+| C182 | `C:\Users\funki\kpi-navigator\zh-tw\setting\preferences.html` | `public_html/kpi-navigator/zh-tw/setting/preferences.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/preferences.html |
+| C183 | `C:\Users\funki\kpi-navigator\zh-tw\setting\profile.html` | `public_html/kpi-navigator/zh-tw/setting/profile.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/profile.html |
+| C184 | `C:\Users\funki\kpi-navigator\zh-tw\setting\profile_edit.html` | `public_html/kpi-navigator/zh-tw/setting/profile_edit.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/profile_edit.html |
+| C185 | `C:\Users\funki\kpi-navigator\zh-tw\setting\session_management.html` | `public_html/kpi-navigator/zh-tw/setting/session_management.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/session_management.html |
+| C186 | `C:\Users\funki\kpi-navigator\zh-tw\forgot-password\index.html` | `public_html/kpi-navigator/zh-tw/forgot-password/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/forgot-password/index.html |
+| C187 | `C:\Users\funki\kpi-navigator\zh-tw\reset-password\index.html` | `public_html/kpi-navigator/zh-tw/reset-password/index.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/reset-password/index.html |
+| C188 | `C:\Users\funki\kpi-navigator\zh-tw\account_protection\defensive_protocol.html` | `public_html/kpi-navigator/zh-tw/account_protection/defensive_protocol.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/account_protection/defensive_protocol.html |
+
+確認: フッター Version 1.0.0 / © 2025 Forge Laboratory。Cockpit 目標ボックスと営業日ボックスの gap は Sci-Fi 30px / Office 17px。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

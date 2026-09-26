@@ -21,6 +21,8 @@ Unit 5B -> Unit 5C -> Floating Window Functional Audit
 
 CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-BOOKING-ICON-COLOR (Office booking icon #fff) P2 closed 2026-09-25
+- BR-POST-FOOTER-VERSION (footer Version 1.0.0 / © 2025) P2 closed 2026-09-26
+- BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
 - (none)
@@ -134,8 +136,8 @@ NONE. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start u
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `0d23a76` (BR-POST-BOOKING-ICON-COLOR closeout; product `414b164`) |
-| origin sync | pushing |
+| HEAD | `deabb85` (BR-POST-COCKPIT-GAP; footer `900bfc3`) |
+| origin sync | in sync |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1439,6 +1441,38 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | N/A CLOSED. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | constraint | color-only; no header geometry / booking routing / 07 spacing |
 
+### BR-POST-FOOTER-VERSION
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-FOOTER-VERSION` |
+| name | Footer Version Display |
+| parent | KPN Development (post-launch polish; do not reopen `TRUNK-06`) |
+| status | CLOSED |
+| priority | P2 Post-launch polish |
+| started_at | 2026-09-26 |
+| return_to | NONE |
+| reason | Shared footer showed only `© 2025 Forge-Laboratory. All rights reserved.` Source: `scripts/site_chrome.py` `build_footer` / `build_public_footer`. Tutorial and language selector are `position: fixed`, outside the footer. |
+| evidence | Static 3-line brand: Key Performance Navigator / Version 1.0.0 / © 2025 Forge Laboratory. Logo kept. Production footer smoke 24/24 PASS. SHA `900bfc3`. |
+| next_action | N/A CLOSED. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| constraint | no SHA; no dynamic year; 2025 is Forge Laboratory start year |
+
+### BR-POST-COCKPIT-GAP
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-COCKPIT-GAP` |
+| name | Cockpit Annual Target / Business Day layout parity |
+| parent | KPN Development (post-launch polish; do not reopen `TRUNK-06`) |
+| status | CLOSED |
+| priority | P2 Post-launch polish |
+| started_at | 2026-09-26 |
+| return_to | NONE |
+| reason | EN BD label `Total Business Day` widened `.annual-total-bd-group`, centering the 79px box ~19px right. JP/ZH-TW short labels left the box at group left, so Office boxes overlapped. JS `today.right+45` also shifted Sci-Fi target left by locale. Not a viewport-size limit (parent 1020px at 1200–1440). No `@media`. |
+| evidence | Shared CSS tokens: BD box `left: calc(100% - 228px)`, gap Sci-Fi 30px / Office 17px (EN reference). JS no longer sets inline left. Production 24/24 cockpit PASS. SHA `deabb85`. |
+| next_action | N/A CLOSED. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| constraint | visual/layout only; no KPI math / Today / History behavior |
+
 ### BR-POST-XLSX-REPORT
 
 | Field | Value |
@@ -1531,6 +1565,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-08` | ZH-TW PL Global Menu Parity Repair | CLOSED | P1 | `TRUNK-06` |
 | `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
 | `BR-POST-BOOKING-ICON-COLOR` | Booking Icon Office Mode Color | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-COCKPIT-GAP` | Cockpit Annual Target / Business Day gap | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1549,7 +1585,7 @@ PAUSED under `TRUNK-06` (legacy): none
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`, `BR-POST-XLSX-REPORT`  
-CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`  
+CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
@@ -1668,3 +1704,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **TRUNK-06 CLOSED** Final Launch closeout. 01/02/03/04/06/07/08 CLOSED. Launch-required P0=0 P1=0. `BR-LAUNCH-05` DEFERRED (registration disabled; billing assessment not blocking). Post-launch / 03 P2 U11–U20 / Simple Mode remain outside Launch. Human Smoke NO. Do not auto-start 05 or post-launch. CURRENT PATH = (none). |
 | 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR START** Office booking icon `#fff`. Root: `<img>` → `images/booking_office.svg` `fill="#000000"`. `currentColor` not applicable. Do not reopen `TRUNK-06`. |
 | 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR CLOSED** Office SVG fill `#ffffff`. Sci-Fi `#59e1f3` unchanged. Production smoke 30/30 PASS. SHA `414b164`. Human Review NO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
+| 2026-09-26 | **BR-POST-FOOTER-VERSION CLOSED** Shared footer brand: Key Performance Navigator / Version 1.0.0 / © 2025 Forge Laboratory. SHA `900bfc3`. |
+| 2026-09-26 | **BR-POST-COCKPIT-GAP CLOSED** Shared Cockpit box gap Sci-Fi 30px / Office 17px (EN reference). JP/ZH-TW match EN. Production 48/48 PASS. SHA `deabb85`. Human Review NO. Do not reopen `TRUNK-06`. |
