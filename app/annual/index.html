@@ -393,6 +393,11 @@
       cursor: pointer;
       z-index: 3;
     }
+    /* KPI-HISTORY-PLACEHOLDER-HIDE: dummy audit rows must not reach users */
+    .annual-history-btn,
+    .annual-history-panel {
+      display: none !important;
+    }
     .annual-history-btn:hover,
     .annual-history-btn:focus-visible {
       background: rgba(88, 225, 243, 0.24);
