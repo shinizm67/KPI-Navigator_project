@@ -344,6 +344,46 @@
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
 
+  var DIALOG_HOST_SELECTORS = [
+    '.sales-data-modal',
+    '.past-sales-modal',
+    '.annual-edit-modal',
+  ];
+
+  function isVisibleHost(el) {
+    if (!el || el.nodeType !== 1) return false;
+    if (el.hidden) return false;
+    try {
+      var cs = global.getComputedStyle(el);
+      if (!cs || cs.display === 'none' || cs.visibility === 'hidden') return false;
+    } catch (_eCs) {
+      return false;
+    }
+    return true;
+  }
+
+  function resolveDialogHost(opts) {
+    opts = opts || {};
+    if (isVisibleHost(opts.host)) return opts.host;
+    var best = null;
+    var bestZ = -Infinity;
+    var i;
+    for (i = 0; i < DIALOG_HOST_SELECTORS.length; i++) {
+      var el = document.querySelector(DIALOG_HOST_SELECTORS[i]);
+      if (!isVisibleHost(el)) continue;
+      var z = 0;
+      try {
+        z = parseInt(global.getComputedStyle(el).zIndex, 10);
+      } catch (_eZ) {}
+      if (!Number.isFinite(z)) z = 0;
+      if (z >= bestZ) {
+        bestZ = z;
+        best = el;
+      }
+    }
+    return best || document.body;
+  }
+
   function openDialog(opts) {
     opts = opts || {};
     var existing = document.getElementById('kpi-bt-dialog-overlay');
@@ -380,7 +420,12 @@
     box.appendChild(body);
     box.appendChild(actions);
     overlay.appendChild(box);
-    document.body.appendChild(overlay);
+    var host = resolveDialogHost(opts);
+    if (!host) host = document.body;
+    if (host !== document.body) {
+      overlay.className += ' kpi-bt-dialog-overlay--hosted';
+    }
+    host.appendChild(overlay);
     function finish(ok) {
       closeDialog(overlay);
       if (ok) {
@@ -516,6 +561,7 @@
     confirmChange: confirmChange,
     promptIndustryRequiredForImport: promptIndustryRequiredForImport,
     resolveProfileEditHref: resolveProfileEditHref,
+    resolveDialogHost: resolveDialogHost,
     detectLang: detectLang,
   };
 })(typeof window !== 'undefined' ? window : this);

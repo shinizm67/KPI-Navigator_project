@@ -628,6 +628,11 @@ html[lang^="zh"] .si-fi .form-group select {
   background: rgba(8, 18, 22, 0.78);
 }
 
+.kpi-bt-dialog-overlay.kpi-bt-dialog-overlay--hosted {
+  position: absolute;
+  z-index: 40;
+}
+
 .kpi-bt-dialog {
   width: 100%;
   max-width: 520px;
