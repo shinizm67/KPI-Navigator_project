@@ -679,21 +679,30 @@ MEP_APPLY_IMPORT_NEW = """      function applyDailyImportMapsToOpenYear(maps, ye
       }"""
 
 
+def _replace_import_iife(text: str, block: str) -> str:
+    marker = DAILY_SALES_IMPORT_MARKER
+    start = text.find(marker)
+    if start < 0:
+        raise SystemExit("daily sales import marker missing")
+    line_start = text.rfind("\n", 0, start) + 1
+    export_at = text.find("window.__KPI_DAILY_IMPORT = {", start)
+    if export_at < 0:
+        raise SystemExit("window.__KPI_DAILY_IMPORT export missing")
+    close = text.find("\n      })();\n", export_at)
+    if close < 0:
+        raise SystemExit("daily sales import IIFE close missing after export")
+    end = close + len("\n      })();\n")
+    return text[:line_start] + block.rstrip() + "\n" + text[end:]
+
+
 def inject_import_js(text: str) -> str:
     block = daily_sales_import_js().rstrip() + "\n"
     if DAILY_SALES_IMPORT_MARKER in text:
-        pattern = r"[ \t]*" + re.escape(DAILY_SALES_IMPORT_MARKER) + r"[\s\S]*?\}\)\(\);\n"
-        if re.search(pattern, text):
-            return re.sub(pattern, lambda _m: block.rstrip() + "\n", text, count=1)
-        raise SystemExit("daily sales import marker found but block boundary missing")
-    anchor = "/* KPI-YEAR-STORE */"
-    if anchor not in text:
-        raise SystemExit(f"inject anchor missing: {anchor}")
-    m = re.search(re.escape(anchor) + r"[\s\S]*?\}\)\(\);\n", text)
-    if not m:
-        raise SystemExit("KpiYearStore block end not found")
-    insert_at = m.end()
-    return text[:insert_at] + "\n" + block + text[insert_at:]
+        return _replace_import_iife(text, block)
+    lease = text.find("      /* KPI-EDIT-LEASE-HOOKS */")
+    if lease < 0:
+        raise SystemExit("KPI-EDIT-LEASE-HOOKS missing; refuse to splice import into year-store init()")
+    return text[:lease] + block.rstrip() + "\n" + text[lease:]
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:

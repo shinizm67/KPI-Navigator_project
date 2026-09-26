@@ -398,8 +398,11 @@ SELECTED_DATE_PATCH_NEW = ""
 def inject_store(text: str, anchor: str) -> str:
     block = kpi_year_store_js().rstrip() + "\n\n"
     if KPI_YEAR_STORE_MARKER in text:
+        # Match the export assign, never a property read like window.KpiYearStore.persist...
+        # inside KPI-DAILY-SALES-IMPORT (that truncates the store at the import IIFE close).
         pattern = (
-            re.escape(KPI_YEAR_STORE_MARKER) + r"[\s\S]*?window\.KpiYearStore[\s\S]*?\}\)\(\);\n"
+            re.escape(KPI_YEAR_STORE_MARKER)
+            + r"[\s\S]*?window\.KpiYearStore = \{[\s\S]*?\}\)\(\);\n"
         )
         if re.search(pattern, text):
             return re.sub(pattern, lambda _m: block.rstrip() + "\n", text, count=1)
