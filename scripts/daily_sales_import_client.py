@@ -891,10 +891,20 @@ def daily_sales_import_js() -> str:
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
             /* KPI-BIZDAY-IMPORT-DD: never treat missing/0 as open via !== false */
             var bizMap0 = maps.businessDayByDate || {{}};
-            var biz = Object.prototype.hasOwnProperty.call(bizMap0, iso)
-              ? !!bizMap0[iso]
-              : Number(maps.salesByDate[iso]) > 0;
+            var hasBiz = Object.prototype.hasOwnProperty.call(bizMap0, iso);
             var sales = Number(maps.salesByDate[iso]);
+            if (hasBiz) {{
+              if (!bizMap0[iso]) {{
+                rowStateByIso[iso] = {{ off: true, last: '0' }};
+              }} else {{
+                rowStateByIso[iso] = {{
+                  off: false,
+                  last: String(Number.isFinite(sales) ? Math.round(sales) : 0),
+                }};
+              }}
+              return;
+            }}
+            var biz = Number(maps.salesByDate[iso]) > 0;
             if (!biz || !Number.isFinite(sales) || sales <= 0) {{
               rowStateByIso[iso] = {{ off: true, last: '0' }};
             }} else {{
@@ -981,6 +991,23 @@ def daily_sales_import_js() -> str:
                       ? options.getYear()
                       : null;
                   var persistByCsvYear = !!(options && options.persistByCsvYear);
+                  /* BR-POST-HISTORICAL-IMPORT-CALENDAR-COMPLETION:
+                     Past Sales only. Reconstruct 1..lastDay + 営業日 after parse. */
+                  if (
+                    persistByCsvYear &&
+                    window.KpiWorkbookLayout &&
+                    typeof window.KpiWorkbookLayout.completeHistoricalImport === 'function'
+                  ) {{
+                    var oyHist =
+                      window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+                        ? Number(KpiYearStore.getOperatingYear())
+                        : NaN;
+                    maps =
+                      window.KpiWorkbookLayout.completeHistoricalImport(maps, {{
+                        operatingYear: oyHist,
+                        today: new Date(),
+                      }}) || maps;
+                  }}
                   if (!confirmImport(maps, targetYear, {{ persistByCsvYear: persistByCsvYear }})) return;
                   if (
                     !persistByCsvYear &&

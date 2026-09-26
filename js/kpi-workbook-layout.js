@@ -592,6 +592,200 @@
     return toVerticalSalesRows(rows);
   }
 
+  function hasOwn(obj, key) {
+    return !!(obj && Object.prototype.hasOwnProperty.call(obj, key));
+  }
+
+  function positiveAmount(map, iso) {
+    if (!hasOwn(map, iso)) return false;
+    var n = Number(map[iso]);
+    return Number.isFinite(n) && n > 0;
+  }
+
+  function ensureMap(maps, key) {
+    if (!maps[key] || typeof maps[key] !== 'object' || Array.isArray(maps[key])) {
+      maps[key] = {};
+    }
+    return maps[key];
+  }
+
+  function resolveToday(opts) {
+    if (opts && opts.today instanceof Date && !isNaN(opts.today.getTime())) {
+      return opts.today;
+    }
+    if (opts && typeof opts.today === 'string') {
+      var parsed = parseDateCell(opts.today) || String(opts.today).trim();
+      var m = String(parsed).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    return new Date();
+  }
+
+  function lastDayOfMonth(y, m) {
+    var d;
+    for (d = 31; d >= 28; d--) {
+      if (isoFromYmd(y, m, d)) return d;
+    }
+    return 0;
+  }
+
+  function isoParts(iso) {
+    var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    var y = Number(m[1]);
+    var mo = Number(m[2]);
+    var d = Number(m[3]);
+    if (!isoFromYmd(y, mo, d)) return null;
+    return { y: y, m: mo, d: d };
+  }
+
+  function expensePositive(maps, iso) {
+    if (positiveAmount(maps.expenseByDate, iso)) return true;
+    if (positiveAmount(maps.expenseAmountByDate, iso)) return true;
+    var list = maps.unmatchedMetrics || maps.unknown || [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      var u = list[i];
+      if (!u || u.iso !== iso) continue;
+      if (u.kind === 'expense' || expenseLikeUnknown(u)) {
+        var n = Number(u.amount);
+        if (Number.isFinite(n) && n > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function inferHistoricalBusinessDay(maps, iso) {
+    if (!maps || !iso) return false;
+    return (
+      positiveAmount(maps.salesByDate, iso) ||
+      positiveAmount(maps.totalCustomersByDate, iso) ||
+      positiveAmount(maps.lunchCustomersByDate, iso) ||
+      positiveAmount(maps.dinnerCustomersByDate, iso) ||
+      positiveAmount(maps.totalGroupsByDate, iso) ||
+      positiveAmount(maps.lunchGroupsByDate, iso) ||
+      positiveAmount(maps.dinnerGroupsByDate, iso) ||
+      positiveAmount(maps.lunchSalesByDate, iso) ||
+      positiveAmount(maps.dinnerSalesByDate, iso) ||
+      positiveAmount(maps.foodByDate, iso) ||
+      positiveAmount(maps.drinkByDate, iso) ||
+      expensePositive(maps, iso)
+    );
+  }
+
+  function isCompletableHistoricalMonth(y, m, opts) {
+    var oy = opts && opts.operatingYear != null ? Number(opts.operatingYear) : NaN;
+    if (Number.isFinite(oy) && y >= oy) return false;
+    var today = resolveToday(opts);
+    var ty = today.getFullYear();
+    var tm = today.getMonth() + 1;
+    if (y > ty) return false;
+    if (y === ty && m >= tm) return false;
+    return true;
+  }
+
+  var MEAL_ZERO_KEYS = [
+    'lunchSalesByDate',
+    'dinnerSalesByDate',
+    'totalCustomersByDate',
+    'lunchCustomersByDate',
+    'dinnerCustomersByDate',
+    'totalGroupsByDate',
+    'lunchGroupsByDate',
+    'dinnerGroupsByDate',
+    'foodByDate',
+    'drinkByDate',
+  ];
+
+  function zeroClosedDay(maps, iso) {
+    maps.salesByDate[iso] = 0;
+    var i;
+    for (i = 0; i < MEAL_ZERO_KEYS.length; i++) {
+      var key = MEAL_ZERO_KEYS[i];
+      if (!maps[key] || typeof maps[key] !== 'object') continue;
+      maps[key][iso] = 0;
+    }
+  }
+
+  function collectMonthsFromMaps(maps) {
+    var months = {};
+    function addIso(iso) {
+      var p = isoParts(iso);
+      if (!p) return;
+      months[p.y + '-' + pad2(p.m)] = { y: p.y, m: p.m };
+    }
+    function addFrom(map) {
+      if (!map || typeof map !== 'object') return;
+      Object.keys(map).forEach(addIso);
+    }
+    addFrom(maps.salesByDate);
+    addFrom(maps.businessDayByDate);
+    addFrom(maps.totalCustomersByDate);
+    addFrom(maps.totalGroupsByDate);
+    addFrom(maps.lunchSalesByDate);
+    addFrom(maps.dinnerSalesByDate);
+    addFrom(maps.expenseByDate);
+    var list = maps.unmatchedMetrics || maps.unknown || [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (list[i] && list[i].iso) addIso(list[i].iso);
+    }
+    return months;
+  }
+
+  function recountImportMeta(maps) {
+    var years = {};
+    var n = 0;
+    Object.keys(maps.salesByDate || {}).forEach(function (iso) {
+      var p = isoParts(iso);
+      if (!p) return;
+      years[p.y] = true;
+      n++;
+    });
+    maps.imported = n;
+    maps.years = Object.keys(years)
+      .map(Number)
+      .filter(Number.isFinite)
+      .sort(function (a, b) {
+        return a - b;
+      });
+  }
+
+  /**
+   * Past-month Historical Import only.
+   * parse → canonical daily records → this step → apply.
+   * Reconstructs 1..lastDay and infers 営業日 from activity.
+   * Never rolls invalid dates into the next month.
+   */
+  function completeHistoricalImport(maps, opts) {
+    if (!maps || typeof maps !== 'object') return maps;
+    opts = opts || {};
+    ensureMap(maps, 'salesByDate');
+    ensureMap(maps, 'businessDayByDate');
+    var months = collectMonthsFromMaps(maps);
+    var keys = Object.keys(months);
+    var i;
+    for (i = 0; i < keys.length; i++) {
+      var rec = months[keys[i]];
+      if (!isCompletableHistoricalMonth(rec.y, rec.m, opts)) continue;
+      var last = lastDayOfMonth(rec.y, rec.m);
+      var d;
+      for (d = 1; d <= last; d++) {
+        var iso = isoFromYmd(rec.y, rec.m, d);
+        if (!iso) continue;
+        var present = hasOwn(maps.salesByDate, iso);
+        if (!present) {
+          maps.salesByDate[iso] = 0;
+        }
+        var open = inferHistoricalBusinessDay(maps, iso);
+        maps.businessDayByDate[iso] = open;
+        if (!open) zeroClosedDay(maps, iso);
+      }
+    }
+    recountImportMeta(maps);
+    return maps;
+  }
+
   global.KpiWorkbookLayout = {
     __ready: true,
     detectLayout: detectLayout,
@@ -600,5 +794,8 @@
     prepare: prepare,
     parseDateCell: parseDateCell,
     isoFromYmd: isoFromYmd,
+    lastDayOfMonth: lastDayOfMonth,
+    inferHistoricalBusinessDay: inferHistoricalBusinessDay,
+    completeHistoricalImport: completeHistoricalImport,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);

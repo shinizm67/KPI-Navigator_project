@@ -154,12 +154,22 @@ def hook_maps(page):
           const orig = api.parseFile.bind(api);
           api.parseFile = function (file) {
             return orig(file).then(function (maps) {
+              var oy = window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+                ? Number(KpiYearStore.getOperatingYear())
+                : NaN;
+              if (window.KpiWorkbookLayout && typeof window.KpiWorkbookLayout.completeHistoricalImport === 'function') {
+                maps = window.KpiWorkbookLayout.completeHistoricalImport(maps, {
+                  operatingYear: oy,
+                  today: new Date()
+                }) || maps;
+              }
               const unknown = maps.unmatchedMetrics || [];
               window.__HWB_LAST_MAPS = {
                 layout: maps.layout || '',
                 imported: maps.imported || 0,
                 years: maps.years || [],
                 salesByDate: maps.salesByDate || {},
+                businessDayByDate: maps.businessDayByDate || {},
                 totalCustomersByDate: maps.totalCustomersByDate || {},
                 totalGroupsByDate: maps.totalGroupsByDate || {},
                 lunchSalesByDate: maps.lunchSalesByDate || {},
@@ -273,6 +283,19 @@ def check_nov1(maps: dict) -> list[str]:
         "2025-11-05": {"sales": 195550, "customers": 30, "parties": 4},
         "2025-11-06": {"sales": 339960, "customers": 31, "parties": 3},
     }
+    biz = maps.get("businessDayByDate") or {}
+    if biz.get("2025-11-01") is not True:
+        fails.append("nov1_not_open")
+    if biz.get("2025-11-02") is not False:
+        fails.append("nov2_not_closed")
+    if biz.get("2025-11-03") is not False:
+        fails.append("nov3_not_closed")
+    if biz.get("2025-11-04") is not True:
+        fails.append("nov4_not_open")
+    if (maps.get("salesByDate") or {}).get("2025-11-03") != 0:
+        fails.append(f"nov3_sales:{(maps.get('salesByDate') or {}).get('2025-11-03')}")
+    if maps.get("imported") != 30:
+        fails.append(f"imported:{maps.get('imported')}")
     for day, want in extra.items():
         got_s = (maps.get("salesByDate") or {}).get(day)
         if got_s != want["sales"]:

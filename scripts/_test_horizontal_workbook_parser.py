@@ -180,7 +180,7 @@ def main() -> int:
     ]
     for path in html_needles:
         text = path.read_text(encoding="utf-8")
-        assert_true("kpi-workbook-layout.js?v=20260926-hwb2" in text, f"{path.name} loads layout script")
+        assert_true("kpi-workbook-layout.js?v=20260926-hcc1" in text, f"{path.name} loads layout script")
 
     cal_cells = run_maps(
         None,
