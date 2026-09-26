@@ -918,6 +918,172 @@ def daily_sales_import_js() -> str:
           return n;
         }}
 
+        function readExistingImportState() {{
+          var empty = {{ salesByDate: {{}}, businessDays: {{}}, businessDayUnresolved: {{}} }};
+          try {{
+            if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return empty;
+            var store = KpiYearStore.getStore() || {{}};
+            var tl = store.timeline || {{}};
+            return {{
+              salesByDate: Object.assign({{}}, tl.dailySales || {{}}),
+              businessDays: Object.assign({{}}, tl.businessDays || {{}}),
+              businessDayUnresolved: Object.assign({{}}, tl.businessDayUnresolved || {{}}),
+            }};
+          }} catch (_eEx) {{
+            return empty;
+          }}
+        }}
+
+        function diffAgainstExisting(maps, existing) {{
+          if (
+            window.KpiWorkbookLayout &&
+            typeof window.KpiWorkbookLayout.diffHistoricalImport === 'function'
+          ) {{
+            return window.KpiWorkbookLayout.diffHistoricalImport(maps, existing || readExistingImportState());
+          }}
+          return [];
+        }}
+
+        function importClassLabel(code) {{
+          if (code === 'open') return t('営業日', 'Open', '營業日');
+          if (code === 'closed') return t('店休日', 'Closed', '店休日');
+          if (code === 'unresolved') return t('未確定', 'Unresolved', '未確定');
+          return t('未設定', 'Unset', '未設定');
+        }}
+
+        function formatDiffYen(n) {{
+          if (n == null || !Number.isFinite(Number(n))) return '—';
+          var x = Math.round(Number(n));
+          var sign = x < 0 ? '-' : '';
+          return sign + '¥' + String(Math.abs(x)).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ',');
+        }}
+
+        function ensureImportDialogCss() {{
+          if (document.getElementById('kpi-import-diff-css')) return;
+          var style = document.createElement('style');
+          style.id = 'kpi-import-diff-css';
+          style.textContent =
+            '.kpi-import-dialog-back {{ position: fixed; inset: 0; z-index: 14000; background: rgba(0,0,0,0.35); }}' +
+            '.kpi-import-dialog {{ position: fixed; z-index: 14001; left: 50%; top: 50%; transform: translate(-50%,-50%);' +
+            '  width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow: auto;' +
+            '  background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); color: #222; }}' +
+            'body:not(.office-mode) .kpi-import-dialog {{ background: #0a0f12; border: 1px solid #3dff3d; color: #58e1f3; }}' +
+            '.kpi-import-dialog h3 {{ margin: 0 0 8px; font-size: 16px; }}' +
+            '.kpi-import-dialog p {{ margin: 0 0 14px; white-space: pre-line; font-size: 14px; line-height: 1.45; }}' +
+            '.kpi-import-dialog__actions {{ display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }}' +
+            '.kpi-import-dialog button {{ cursor: pointer; border-radius: 6px; border: 1px solid #888; background: #fff; padding: 6px 12px; }}' +
+            '.kpi-import-dialog button.primary {{ border-color: #c65a32; background: #c65a32; color: #fff; }}' +
+            'body:not(.office-mode) .kpi-import-dialog button {{ border-color: #3dff3d; background: #1a1f24; color: #58e1f3; }}' +
+            'body:not(.office-mode) .kpi-import-dialog button.primary {{ background: #16301a; color: #9eff9e; }}' +
+            '.kpi-import-diff-table {{ width: 100%; border-collapse: collapse; font-size: 12px; margin: 0 0 14px; }}' +
+            '.kpi-import-diff-table th, .kpi-import-diff-table td {{ text-align: left; padding: 4px 6px; border-bottom: 1px solid rgba(0,0,0,0.12); }}' +
+            'body:not(.office-mode) .kpi-import-diff-table th, body:not(.office-mode) .kpi-import-diff-table td {{ border-bottom-color: rgba(61,255,61,0.25); }}';
+          document.head.appendChild(style);
+        }}
+
+        function promptOverwriteDiffs(diffs) {{
+          ensureImportDialogCss();
+          diffs = diffs || [];
+          return new Promise(function (resolve) {{
+            var back = document.createElement('div');
+            back.className = 'kpi-import-dialog-back';
+            var dlg = document.createElement('div');
+            dlg.className = 'kpi-import-dialog';
+            dlg.setAttribute('role', 'dialog');
+            dlg.setAttribute('data-kpi-import-diff', '1');
+            function close(ok) {{
+              back.remove();
+              dlg.remove();
+              resolve(!!ok);
+            }}
+            function renderChoice() {{
+              dlg.innerHTML =
+                '<h3></h3><p></p><div class="kpi-import-dialog__actions">' +
+                '<button type="button" data-imp-act="cancel"></button>' +
+                '<button type="button" data-imp-act="review"></button>' +
+                '<button type="button" class="primary" data-imp-act="overwrite"></button></div>';
+              dlg.querySelector('h3').textContent = t(
+                '既存データとの差異があります',
+                'Differences from existing data',
+                '與既有資料有差異'
+              );
+              dlg.querySelector('p').textContent = t(
+                '取り込みデータと現在のKPNデータで ' + diffs.length + '日分の差異があります。',
+                'The import differs from current KPN data on ' + diffs.length + ' day(s).',
+                '匯入資料與目前 KPN 資料有 ' + diffs.length + ' 日差異。'
+              );
+              dlg.querySelector('[data-imp-act="overwrite"]').textContent = t(
+                '上書きして続行',
+                'Overwrite and continue',
+                '覆寫並繼續'
+              );
+              dlg.querySelector('[data-imp-act="review"]').textContent = t(
+                '差異を確認',
+                'Review differences',
+                '查看差異'
+              );
+              dlg.querySelector('[data-imp-act="cancel"]').textContent = t('キャンセル', 'Cancel', '取消');
+            }}
+            function renderReview() {{
+              var rows = diffs
+                .map(function (d) {{
+                  return (
+                    '<tr><td>' +
+                    String(d.iso || '').replace(/-/g, '/') +
+                    '</td><td>' +
+                    formatDiffYen(d.existingSales) +
+                    '</td><td>' +
+                    formatDiffYen(d.importedSales) +
+                    '</td><td>' +
+                    importClassLabel(d.existingClass) +
+                    '</td><td>' +
+                    importClassLabel(d.importedClass) +
+                    '</td></tr>'
+                  );
+                }})
+                .join('');
+              dlg.innerHTML =
+                '<h3></h3><p></p><table class="kpi-import-diff-table"><thead><tr>' +
+                '<th>' + t('日付', 'Date', '日期') + '</th>' +
+                '<th>' + t('既存売上', 'Existing sales', '既有銷售') + '</th>' +
+                '<th>' + t('取込売上', 'Imported sales', '匯入銷售') + '</th>' +
+                '<th>' + t('既存営業日', 'Existing day', '既有營業日') + '</th>' +
+                '<th>' + t('取込判定', 'Imported class', '匯入判定') + '</th>' +
+                '</tr></thead><tbody></tbody></table>' +
+                '<div class="kpi-import-dialog__actions">' +
+                '<button type="button" data-imp-act="cancel"></button>' +
+                '<button type="button" class="primary" data-imp-act="overwrite"></button></div>';
+              dlg.querySelector('h3').textContent = t('差異を確認', 'Review differences', '查看差異');
+              dlg.querySelector('p').textContent = t(
+                diffs.length + '日分の上書き対象です。編集はできません。',
+                diffs.length + ' day(s) will be overwritten. This view is review-only.',
+                diffs.length + ' 日將被覆寫。此畫面僅供確認。'
+              );
+              dlg.querySelector('tbody').innerHTML = rows;
+              dlg.querySelector('[data-imp-act="overwrite"]').textContent = t(
+                '上書きして続行',
+                'Overwrite and continue',
+                '覆寫並繼續'
+              );
+              dlg.querySelector('[data-imp-act="cancel"]').textContent = t('キャンセル', 'Cancel', '取消');
+            }}
+            dlg.onclick = function (ev) {{
+              var btn = ev.target && ev.target.closest ? ev.target.closest('[data-imp-act]') : null;
+              if (!btn) return;
+              var act = btn.getAttribute('data-imp-act');
+              if (act === 'cancel') close(false);
+              if (act === 'overwrite') close(true);
+              if (act === 'review') renderReview();
+            }};
+            back.addEventListener('click', function () {{
+              close(false);
+            }});
+            renderChoice();
+            document.body.appendChild(back);
+            document.body.appendChild(dlg);
+          }});
+        }}
+
         var fileInput = null;
         function ensureFileInput() {{
           if (fileInput) return fileInput;
@@ -1003,7 +1169,6 @@ def daily_sales_import_js() -> str:
                         today: new Date(),
                       }}) || maps;
                   }}
-                  if (!confirmImport(maps, targetYear, {{ persistByCsvYear: persistByCsvYear }})) return;
                   if (
                     !persistByCsvYear &&
                     targetYear != null &&
@@ -1016,6 +1181,10 @@ def daily_sales_import_js() -> str:
                       )
                     );
                     return;
+                  }}
+                  var diffs = diffAgainstExisting(maps);
+                  if (!diffs.length) {{
+                    if (!confirmImport(maps, targetYear, {{ persistByCsvYear: persistByCsvYear }})) return;
                   }}
                   if (options && typeof options.applyMaps !== 'function') return;
                   var apply = function () {{
@@ -1031,10 +1200,19 @@ def daily_sales_import_js() -> str:
                       return result;
                     }});
                   }};
-                  if (busy && typeof busy.run === 'function') {{
-                    return busy.run('import', apply, {{ count: maps.imported }});
+                  var runApply = function () {{
+                    if (busy && typeof busy.run === 'function') {{
+                      return busy.run('import', apply, {{ count: maps.imported }});
+                    }}
+                    return apply();
+                  }};
+                  if (diffs.length) {{
+                    return promptOverwriteDiffs(diffs).then(function (ok) {{
+                      if (!ok) return;
+                      return runApply();
+                    }});
                   }}
-                  return apply();
+                  return runApply();
                 }})
                 .catch(function (err) {{
                   if (window.__KPI_BUSY && typeof window.__KPI_BUSY.hide === 'function') {{
@@ -1120,6 +1298,8 @@ def daily_sales_import_js() -> str:
           salesCsvAllowsRestaurantFields: salesCsvAllowsRestaurantFields,
           persistDailyMealFromMaps: persistDailyMealFromMaps,
           applyToRowState: applyToRowState,
+          diffAgainstExisting: diffAgainstExisting,
+          promptOverwriteDiffs: promptOverwriteDiffs,
           getDailyImportApi: getDailyImportApi,
           beginImport: beginImport,
           bindButton: bindButton,

@@ -12,7 +12,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-PORT = 8878
+PORT = 8879
 OUT = ROOT / "scripts" / "_tmp_bdr_ui_smoke.json"
 
 PAGES = [
@@ -20,6 +20,11 @@ PAGES = [
     ("en", "/en/app/annual/index.html", "Past business days", "days unconfirmed", "Review", "All closed days", "Review one by one", "Later", "Open", "Closed"),
     ("zh", "/zh-tw/app/annual/index.html", "過去營業日確認", "日未確定", "確認", "全部設為店休日", "逐日確認", "稍後", "營業日", "店休日"),
 ]
+
+
+class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True
+    allow_reuse_address = True
 
 
 class H(http.server.SimpleHTTPRequestHandler):
@@ -201,8 +206,86 @@ def run_page(page, path: str, copy: tuple, office: bool) -> dict:
     }
 
 
+def run_overwrite_dialog(page) -> dict:
+    errs: list[str] = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    page.goto(f"http://127.0.0.1:{PORT}/app/annual/index.html", wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_function(
+        "() => !!(window.KpiWorkbookLayout && window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.promptOverwriteDiffs)",
+        timeout=30000,
+    )
+    page.wait_for_timeout(400)
+    payload = page.evaluate(
+        """() => {
+          const maps = window.KpiWorkbookLayout.completeHistoricalImport(
+            { salesByDate: { '2025-11-03': 0 } },
+            { operatingYear: 2026, today: '2026-09-26' }
+          );
+          const diffs = window.KpiWorkbookLayout.diffHistoricalImport(maps, {
+            salesByDate: { '2025-11-03': 120227 },
+            businessDays: { '2025-11-03': true }
+          });
+          return {
+            closed: maps.businessDayByDate && maps.businessDayByDate['2025-11-03'] === false,
+            sales: maps.salesByDate && maps.salesByDate['2025-11-03'],
+            diffCount: (diffs || []).length,
+            importedClass: diffs && diffs[0] && diffs[0].importedClass
+          };
+        }"""
+    )
+    page.evaluate(
+        """() => {
+          window.__kpiOverwriteResult = null;
+          window.__KPI_DAILY_IMPORT.promptOverwriteDiffs([{
+            iso: '2025-11-03',
+            existingSales: 120227,
+            importedSales: 0,
+            existingClass: 'open',
+            importedClass: 'closed'
+          }]).then((ok) => { window.__kpiOverwriteResult = ok; });
+        }"""
+    )
+    page.wait_for_selector('[data-kpi-import-diff="1"]', timeout=10000)
+    page.locator('[data-imp-act="review"]').click()
+    page.wait_for_timeout(80)
+    reviewed = page.evaluate("() => !!(document.querySelector('.kpi-import-diff-table'))")
+    page.locator('[data-imp-act="cancel"]').click()
+    page.wait_for_timeout(80)
+    cancelled = page.evaluate("() => window.__kpiOverwriteResult === false")
+    page.evaluate(
+        """() => {
+          window.__kpiOverwriteResult = null;
+          window.__KPI_DAILY_IMPORT.promptOverwriteDiffs([{
+            iso: '2025-11-03',
+            existingSales: 120227,
+            importedSales: 0,
+            existingClass: 'open',
+            importedClass: 'closed'
+          }]).then((ok) => { window.__kpiOverwriteResult = ok; });
+        }"""
+    )
+    page.wait_for_selector('[data-kpi-import-diff="1"]', timeout=10000)
+    page.locator('[data-imp-act="overwrite"]').click()
+    page.wait_for_timeout(80)
+    overwritten = page.evaluate("() => window.__kpiOverwriteResult === true")
+    fails = []
+    if not payload.get("closed") or payload.get("sales") != 0:
+        fails.append(f"barca_class={payload}")
+    if payload.get("diffCount") != 1:
+        fails.append(f"diff_count={payload.get('diffCount')}")
+    if payload.get("importedClass") != "closed":
+        fails.append("imported_class")
+    if not reviewed:
+        fails.append("review_table")
+    if not cancelled:
+        fails.append("cancel_not_false")
+    if not overwritten:
+        fails.append("overwrite_not_true")
+    return {"fails": fails, "page_errors": errs[:8]}
+
+
 def main() -> int:
-    httpd = socketserver.TCPServer(("127.0.0.1", PORT), H)
+    httpd = ThreadingHTTPServer(("127.0.0.1", PORT), H)
     httpd.allow_reuse_address = True
     t = threading.Thread(target=httpd.serve_forever, daemon=True)
     t.start()
@@ -222,6 +305,15 @@ def main() -> int:
                         print("FAIL", copy[0], "office" if office else "scifi", rec["fails"], rec["page_errors"])
                     else:
                         print("OK", copy[0], "office" if office else "scifi")
+            ow_page = browser.new_page()
+            ow = run_overwrite_dialog(ow_page)
+            ow_page.close()
+            results.append({"path": "overwrite-dialog", **ow})
+            if ow["fails"] or ow["page_errors"]:
+                failed += 1
+                print("FAIL overwrite-dialog", ow["fails"], ow["page_errors"])
+            else:
+                print("OK overwrite-dialog")
             browser.close()
     finally:
         httpd.shutdown()

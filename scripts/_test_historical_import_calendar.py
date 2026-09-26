@@ -117,6 +117,10 @@ try {
     const rowState = c.rowState || {};
     api.applyToRowState(rowState, c.maps, c.yearFilter);
     out.rowState = rowState;
+  } else if (c.op === 'diff') {
+    const maps = layout.completeHistoricalImport(c.maps, c.opts || {});
+    out.maps = maps;
+    out.diffs = layout.diffHistoricalImport(maps, c.existing || {});
   }
 } catch (e) {
   out.error = e && (e.message || String(e));
@@ -222,8 +226,20 @@ def main() -> int:
     assert_true(has_biz(t6.get("maps"), "2025-11-02"), "6 present zero writes BD key")
     assert_true(biz(t6.get("maps"), "2025-11-02") is False, "6 present zero auto-close")
     assert_true(unresolved(t6.get("maps"), "2025-11-02") is None, "6 present zero not unresolved")
-    assert_true((t6.get("persisted") or {}).get("biz", {}).get("2025-11-02") is False, "6 persist writes closed")
+    assert_true((t6.get("persisted") or {}).get("biz", {}).get("2025-11-02") is False, "6 persist overwrites existing open to closed")
     assert_true((t6.get("persisted") or {}).get("sales", {}).get("2025-11-02") == 0, "6 sales 0 overwrites independently")
+
+    t6b = run_case(
+        {
+            "op": "completeMaps",
+            "opts": OPTS,
+            "maps": {"salesByDate": {"2025-11-04": 144600}},
+            "existingBiz": {"2025-11-04": False},
+            "existingSales": {"2025-11-04": 0},
+        }
+    )
+    assert_true(biz(t6b.get("maps"), "2025-11-04") is True, "2 existing closed → imported open")
+    assert_true((t6b.get("persisted") or {}).get("biz", {}).get("2025-11-04") is True, "2 persist overwrites closed to open")
 
     # 7. present closed stays closed (auto-close)
     t7 = run_case(
@@ -243,11 +259,11 @@ def main() -> int:
         {
             "op": "applyToRowState",
             "rowState": {"2025-11-03": {"off": False, "last": "120227"}},
-            "maps": {"salesByDate": {"2025-11-03": 0}, "businessDayByDate": {}},
+            "maps": {"salesByDate": {"2025-11-03": 0}, "businessDayByDate": {"2025-11-03": False}},
         }
     )
     rs_open = (row_open.get("rowState") or {}).get("2025-11-03") or {}
-    assert_true(rs_open.get("off") is False and rs_open.get("last") == "0", "7 grid preserves open, sales last=0")
+    assert_true(rs_open.get("off") is True and rs_open.get("last") == "0", "7 grid overwrite open → closed, sales last=0")
 
     row_closed = run_case(
         {
@@ -325,8 +341,8 @@ def main() -> int:
     assert_true(after12.get("imported") == 31, "12 vertical current-year Jan fills calendar axis")
     assert_true((after12.get("salesByDate") or {}).get("2026-01-03") == 120000, "12 vertical sales intact after fill")
     assert_true(biz(after12, "2026-01-03") is True, "12 Jan 3 inferred open")
-    assert_true(biz(after12, "2026-01-02") is not True, "12 missing Jan 2 not forced open")
-    assert_true(not has_biz(after12, "2026-01-02"), "12 missing Jan 2 BD omitted")
+    assert_true(biz(after12, "2026-01-02") is False, "12 missing Jan 2 closed by replace contract")
+    assert_true(has_biz(after12, "2026-01-02"), "12 missing Jan 2 BD written closed")
 
     t12past = run_case(
         {
@@ -339,7 +355,7 @@ def main() -> int:
     assert_true((t12past.get("after") or {}).get("imported") == 31, "12 past vertical fills March")
     assert_true((t12past.get("after") or {}).get("salesByDate", {}).get("2025-03-02") == 12345, "12 past vertical sales kept")
     assert_true(biz(t12past.get("after"), "2025-03-02") is True, "12 past vertical inferred open")
-    assert_true(not has_biz(t12past.get("after"), "2025-03-01"), "12 Mar 1 BD omitted")
+    assert_true(biz(t12past.get("after"), "2025-03-01") is False, "12 Mar 1 closed by replace contract")
 
     # 13. Horizontal Import regression + Barca
     t13 = run_case({"op": "parseThenComplete", "csvText": BARCA.read_text(encoding="utf-8"), "opts": OPTS})
@@ -363,6 +379,56 @@ def main() -> int:
         assert_true(biz(after13, "2025-11-03") is False, "Barca 11/3 present zero auto-close")
     assert_true((after13.get("salesByDate") or {}).get("2025-11-03") == 0, "Barca 11/3 sales 0 independent of BD")
     assert_true("2025-12-01" not in (after13.get("salesByDate") or {}), "Barca no Dec overflow")
+
+    stale = run_case(
+        {
+            "op": "completeMaps",
+            "opts": OPTS,
+            "maps": {"salesByDate": {"2025-11-03": 0}},
+            "existingBiz": {"2025-11-03": True},
+            "existingSales": {"2025-11-03": 120227},
+        }
+    )
+    assert_true((stale.get("persisted") or {}).get("sales", {}).get("2025-11-03") == 0, "3 stale sales replaced by 0")
+    assert_true((stale.get("persisted") or {}).get("biz", {}).get("2025-11-03") is False, "1 existing open overwritten to closed")
+
+    d_conflict = run_case(
+        {
+            "op": "diff",
+            "opts": OPTS,
+            "maps": {"salesByDate": {"2025-11-03": 0}},
+            "existing": {
+                "salesByDate": {"2025-11-03": 120227},
+                "businessDays": {"2025-11-03": True},
+            },
+        }
+    )
+    diffs = d_conflict.get("diffs") or []
+    assert_true(len(diffs) == 1, "4 one meaningful conflict row")
+    assert_true(diffs[0].get("importedClass") == "closed", "4 imported class closed")
+    assert_true(diffs[0].get("existingSales") == 120227, "4 existing sales in diff")
+
+    d_none = run_case(
+        {
+            "op": "diff",
+            "opts": OPTS,
+            "maps": {"salesByDate": {"2025-11-01": 60930}},
+            "existing": {
+                "salesByDate": {"2025-11-01": 60930},
+                "businessDays": {"2025-11-01": True},
+            },
+        }
+    )
+    same = [x for x in (d_none.get("diffs") or []) if x.get("iso") == "2025-11-01"]
+    assert_true(len(same) == 0, "4 matching day is not a conflict")
+
+    src = daily_sales_import_js()
+    assert_true("上書きして続行" in src, "4 overwrite dialog copy JP")
+    assert_true("差異を確認" in src, "4 review diffs copy JP")
+    assert_true("promptOverwriteDiffs" in src, "4 single overwrite dialog")
+    begin = src.split("function beginImport(options)", 1)[-1]
+    assert_true("if (!ok) return;" in begin, "5 cancel skips persist")
+    assert_true("ingestHistoricalBusinessDayReview" in begin, "6 overwrite then ingest")
 
     print(f"PASSED={PASSED} FAILED={FAILED}")
     return 0 if FAILED == 0 else 1

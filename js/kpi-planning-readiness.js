@@ -99,7 +99,6 @@
         histBdCount: '日未確定',
         histBdReview: '確認する',
         histBdLater: 'あとで',
-        histBdGuess: '推定どおり一括確定',
         histBdAllClosed: 'すべて店休日',
         histBdAllOpen: 'すべて営業日',
         histBdOneByOne: '個別に確認',
@@ -152,7 +151,6 @@
         histBdCount: ' days unconfirmed',
         histBdReview: 'Review',
         histBdLater: 'Later',
-        histBdGuess: 'Confirm estimated values',
         histBdAllClosed: 'All closed days',
         histBdAllOpen: 'All business days',
         histBdOneByOne: 'Review one by one',
@@ -202,7 +200,6 @@
         histBdCount: ' 日未確定',
         histBdReview: '確認',
         histBdLater: '稍後',
-        histBdGuess: '依推定一次確認',
         histBdAllClosed: '全部設為店休日',
         histBdAllOpen: '全部設為營業日',
         histBdOneByOne: '逐日確認',
@@ -242,19 +239,6 @@
       return api.listUnresolvedBusinessDays() || [];
     }
     return [];
-  }
-
-  function allUnresolvedGuessable() {
-    var api = storeApi();
-    if (!api || typeof api.getUnresolvedBusinessDay !== 'function') return false;
-    var isos = listUnresolvedBusinessDays();
-    if (!isos.length) return false;
-    var i;
-    for (i = 0; i < isos.length; i++) {
-      var rec = api.getUnresolvedBusinessDay(isos[i]) || {};
-      if (rec.reason !== 'expense-only') return false;
-    }
-    return true;
   }
 
   function formatYen(n) {
@@ -1403,7 +1387,6 @@
         dismissHistReview();
         return;
       }
-      if (act === 'hist-guess') applyBulkUnresolved(false);
       if (act === 'hist-all-closed') applyBulkUnresolved(false);
       if (act === 'hist-all-open') applyBulkUnresolved(true);
       if (act === 'hist-one') startHistOneByOne();
@@ -1471,13 +1454,8 @@
       '<div class="kpi-pr-alert__section" data-pr-section="hist-choose">' +
       '<p class="kpi-pr-alert__section-title"></p>' +
       '<p class="kpi-pr-alert__note" data-pr-note="hist-count"></p>' +
-      '<div class="kpi-pr-alert__row">';
-    if (allUnresolvedGuessable()) {
-      html +=
-        '<button type="button" class="kpi-pr-alert__primary" data-pr-act="hist-guess"></button>';
-    }
-    html +=
-      '<button type="button" data-pr-act="hist-all-closed"></button>' +
+      '<div class="kpi-pr-alert__row">' +
+      '<button type="button" class="kpi-pr-alert__primary" data-pr-act="hist-all-closed"></button>' +
       '<button type="button" data-pr-act="hist-all-open"></button>' +
       '<button type="button" data-pr-act="hist-one"></button>' +
       '</div></div>';
@@ -1489,8 +1467,6 @@
     el.querySelector('.kpi-pr-alert__body').textContent = t('alertBody');
     el.querySelector('.kpi-pr-alert__section-title').textContent = t('reasonHistBd');
     el.querySelector('[data-pr-note="hist-count"]').textContent = histCountLabel(snap.unresolvedCount);
-    var guessBtn = el.querySelector('[data-pr-act="hist-guess"]');
-    if (guessBtn) guessBtn.textContent = t('histBdGuess');
     el.querySelector('[data-pr-act="hist-all-closed"]').textContent = t('histBdAllClosed');
     el.querySelector('[data-pr-act="hist-all-open"]').textContent = t('histBdAllOpen');
     el.querySelector('[data-pr-act="hist-one"]').textContent = t('histBdOneByOne');

@@ -386,8 +386,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260926-bdr1" in html,
-            f"{rel} cache-bust bdr1",
+            "kpi-planning-readiness.js?v=20260926-bdr2" in html,
+            f"{rel} cache-bust bdr2",
         )
 
     # regression markers still present

@@ -140,8 +140,10 @@ def main() -> int:
     assert_true("startHistChoose" in js, "choose flow")
     assert_true("startHistOneByOne" in js, "one-by-one flow")
     assert_true("hist-all-closed" in js and "hist-all-open" in js, "bulk actions")
-    assert_true("histBdGuess" in js, "guess bulk available")
-    assert_true("expense-only" in js, "guess gated on expense-only")
+    assert_true("hist-guess" not in js, "no fabricated recommendation bulk")
+    assert_true("推定どおり一括確定" not in js, "guess copy removed")
+    assert_true("diffHistoricalImport" in importer, "replace-contract diff helper")
+    assert_true("上書きして続行" in importer, "overwrite confirm JP")
     assert_true("body:not(.office-mode) .kpi-pr-alert.is-hist-done" in js, "Sci-Fi done styling")
     assert_true("kpi-pr-alert-fw" in js, "reuses existing alert id")
 
@@ -231,20 +233,20 @@ def main() -> int:
         }
     )
     assert_true((t_miss.get("maps") or {}).get("salesByDate", {}).get("2025-11-05") == 0, "missing filled 0")
-    assert_true(not has_biz(t_miss.get("maps"), "2025-11-05"), "missing not auto-closed")
+    assert_true(biz(t_miss.get("maps"), "2025-11-05") is False, "imported calendar zero → closed")
     assert_true(unresolved(t_miss.get("maps"), "2025-11-05") is None, "missing not unresolved")
 
     for path in HOSTS:
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
-        assert_true("kpi-planning-readiness.js?v=20260926-bdr1" in text, f"{rel} readiness cache bdr1")
+        assert_true("kpi-planning-readiness.js?v=20260926-bdr2" in text, f"{rel} readiness cache bdr2")
         assert_true("ingestHistoricalBusinessDayReview" in text, f"{rel} store ingest injected")
         assert_true("businessDayUnresolved" in text, f"{rel} unresolved map injected")
 
     for path in LAYOUT_HOSTS:
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
-        assert_true("kpi-workbook-layout.js?v=20260926-bdr1" in text, f"{rel} layout cache bdr1")
+        assert_true("kpi-workbook-layout.js?v=20260926-bdr2" in text, f"{rel} layout cache bdr2")
 
     print(f"PASSED={PASSED} FAILED={FAILED}")
     return 0 if FAILED == 0 else 1

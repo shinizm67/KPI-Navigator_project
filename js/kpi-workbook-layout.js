@@ -748,11 +748,12 @@
   }
 
   /**
-   * Shared post-parse calendar + business-day classification.
+   * Shared post-parse calendar + business-day classification (Replace contract).
+   * For dates in the imported calendar (importable months, up to today):
    * Open: operational activity non-zero.
-   * Closed: date present in file, all operational activity 0/blank, no expense.
+   * Closed: all operational activity 0/blank, no expense — overwrites existing KPN state.
    * Unresolved: no operational activity but expense (or other unsafe signal).
-   * Missing dates: fill sales 0 for the axis; do not force BD; do not mark unresolved.
+   * Future dates: do not classify; do not modify.
    */
   function completeHistoricalImport(maps, opts) {
     if (!maps || typeof maps !== 'object') return maps;
@@ -760,16 +761,6 @@
     ensureMap(maps, 'salesByDate');
     ensureMap(maps, 'businessDayByDate');
     ensureMap(maps, 'unresolvedBusinessDayByDate');
-    var presentBefore = {};
-    Object.keys(maps.salesByDate).forEach(function (iso) {
-      presentBefore[iso] = true;
-    });
-    Object.keys(maps.totalCustomersByDate || {}).forEach(function (iso) {
-      presentBefore[iso] = true;
-    });
-    Object.keys(maps.totalGroupsByDate || {}).forEach(function (iso) {
-      presentBefore[iso] = true;
-    });
     var limitIso = todayIso(opts);
     var months = collectMonthsFromMaps(maps);
     var keys = Object.keys(months);
@@ -796,7 +787,6 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
-        var wasPresent = !!presentBefore[iso];
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }
@@ -813,18 +803,74 @@
           maps.unresolvedBusinessDayByDate[iso] = snapshotUnresolvedDay(maps, iso, 'expense-only');
           continue;
         }
-        if (wasPresent) {
-          maps.businessDayByDate[iso] = false;
-          if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
-            delete maps.unresolvedBusinessDayByDate[iso];
-          }
-        } else if (hasOwn(maps.businessDayByDate, iso)) {
-          delete maps.businessDayByDate[iso];
+        maps.businessDayByDate[iso] = false;
+        if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+          delete maps.unresolvedBusinessDayByDate[iso];
         }
       }
     }
     recountImportMeta(maps);
     return maps;
+  }
+
+  function importedClassification(maps, iso) {
+    if (!maps || !iso) return 'omit';
+    if (maps.unresolvedBusinessDayByDate && hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+      return 'unresolved';
+    }
+    if (maps.businessDayByDate && hasOwn(maps.businessDayByDate, iso)) {
+      return maps.businessDayByDate[iso] ? 'open' : 'closed';
+    }
+    return 'omit';
+  }
+
+  function existingClassification(existing, iso) {
+    if (!existing || !iso) return null;
+    var unresolved = existing.businessDayUnresolved || existing.unresolvedBusinessDayByDate || {};
+    if (hasOwn(unresolved, iso)) return 'unresolved';
+    var biz = existing.businessDays || existing.businessDayByDate || {};
+    if (hasOwn(biz, iso)) return biz[iso] ? 'open' : 'closed';
+    return null;
+  }
+
+  function salesNumber(map, iso) {
+    if (!map || !hasOwn(map, iso)) return null;
+    var n = Number(map[iso]);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /**
+   * Meaningful conflicts between classified import maps and current KPN state.
+   * Unset existing + imported fill is not a conflict (first write).
+   */
+  function diffHistoricalImport(maps, existing) {
+    var diffs = [];
+    if (!maps || typeof maps !== 'object') return diffs;
+    existing = existing || {};
+    var existingSales = existing.salesByDate || existing.dailySales || {};
+    var salesMap = maps.salesByDate || {};
+    Object.keys(salesMap).forEach(function (iso) {
+      var importedSales = salesNumber(salesMap, iso);
+      if (importedSales == null) importedSales = 0;
+      var existingAmt = salesNumber(existingSales, iso);
+      var importedClass = importedClassification(maps, iso);
+      if (importedClass === 'omit') return;
+      var existingClass = existingClassification(existing, iso);
+      var salesDiff = existingAmt != null && existingAmt !== importedSales;
+      var classDiff = existingClass != null && existingClass !== importedClass;
+      if (!salesDiff && !classDiff) return;
+      diffs.push({
+        iso: iso,
+        existingSales: existingAmt,
+        importedSales: importedSales,
+        existingClass: existingClass,
+        importedClass: importedClass,
+      });
+    });
+    diffs.sort(function (a, b) {
+      return String(a.iso).localeCompare(String(b.iso));
+    });
+    return diffs;
   }
 
   global.KpiWorkbookLayout = {
@@ -838,5 +884,7 @@
     lastDayOfMonth: lastDayOfMonth,
     inferHistoricalBusinessDay: inferHistoricalBusinessDay,
     completeHistoricalImport: completeHistoricalImport,
+    diffHistoricalImport: diffHistoricalImport,
+    importedClassification: importedClassification,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);
