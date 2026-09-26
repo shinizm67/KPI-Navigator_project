@@ -291,6 +291,7 @@ def main() -> int:
     check("isAllocTotalOk" in js, "alloc total 100% helper")
     check("Math.abs(total - 100) < 0.01" in js, "alloc total epsilon 0.01")
     check("var warn = !isAllocTotalOk(weights);" in js, "Cockpit warn uses alloc total, not year-pattern")
+    check("querySelectorAll('.kpi-pr-anomaly-mark')" in js, "cluster-wide leftover mark cleanup")
     fn = js.split("function refreshSeasonalityAnomalyUi()")[1].split("function reasonLabels")[0]
     check("assessSeasonalityAnomalies" not in fn, "Cockpit cluster does not use year-pattern anomaly")
     check("anySelectedFlagged" not in fn, "Cockpit cluster does not use selected-year flag")
@@ -332,8 +333,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260926-alloc1" in html,
-            f"{rel} cache-bust alloc1",
+            "kpi-planning-readiness.js?v=20260926-alloc2" in html,
+            f"{rel} cache-bust alloc2",
         )
 
     # regression markers still present

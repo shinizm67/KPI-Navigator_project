@@ -1039,24 +1039,26 @@
     for (var i = 0; i < clusters.length; i++) {
       var cluster = clusters[i];
       cluster.classList.toggle('is-seasonality-anomaly', warn);
+      var leftover = cluster.querySelectorAll('.kpi-pr-anomaly-mark');
       var label = cluster.querySelector('.annual-kpi-strip-label--allocation');
-      if (!label) continue;
-      var mark = label.querySelector('.kpi-pr-anomaly-mark');
-      if (warn) {
-        if (!mark) {
-          mark = document.createElement('span');
-          mark.className = 'kpi-pr-anomaly-mark';
-          mark.setAttribute('data-kpi-tutorial-tip', '');
-          mark.setAttribute('tabindex', '0');
-          mark.textContent = '⚠';
-          label.appendChild(mark);
-        }
-        mark.setAttribute('data-tooltip', t('anomalyAllocTip'));
-        mark.setAttribute('aria-label', t('anomalyAllocAria'));
-        mark.removeAttribute('hidden');
-      } else if (mark) {
-        mark.remove();
+      if (!warn) {
+        for (var j = 0; j < leftover.length; j++) leftover[j].remove();
+        continue;
       }
+      var mark = label ? label.querySelector('.kpi-pr-anomaly-mark') : null;
+      if (!mark && leftover.length) mark = leftover[0];
+      if (!mark && label) {
+        mark = document.createElement('span');
+        mark.className = 'kpi-pr-anomaly-mark';
+        mark.setAttribute('data-kpi-tutorial-tip', '');
+        mark.setAttribute('tabindex', '0');
+        mark.textContent = '⚠';
+        label.appendChild(mark);
+      }
+      if (!mark) continue;
+      mark.setAttribute('data-tooltip', t('anomalyAllocTip'));
+      mark.setAttribute('aria-label', t('anomalyAllocAria'));
+      mark.removeAttribute('hidden');
     }
   }
 
@@ -1447,6 +1449,7 @@
       try {
         migrateSeasonalityMode(operatingYear());
       } catch (_m2) {}
+      applyBodyState();
       showPageEntryAlert(false);
       refreshTooltips();
       refreshSeasonalityModeBadge();
