@@ -3292,6 +3292,24 @@
     .annual-kpi-strip-label.annual-kpi-strip-label--allocation {
       color: #58e1f3;
     }
+    /* KPI-ALLOC-VALID-NEUTRAL: exact 100% is a healthy allocation, never a warning state. */
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation,
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-allocation-percent {
+      color: #58e1f3 !important;
+    }
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation {
+      background: none !important;
+    }
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation::before,
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation::after,
+    .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation > * {
+      content: none !important;
+      display: none !important;
+    }
+    .office-mode .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-kpi-strip-label--allocation,
+    .office-mode .annual-kpi-allocation-cluster.kpi-allocation-valid .annual-allocation-percent {
+      color: #111 !important;
+    }
     .annual-kpi-strip-label.annual-kpi-strip-label--sales {
       color: #58e1f3;
     }
@@ -24738,7 +24756,29 @@
           var parsed = parsePercentText(cell.textContent);
           sum += Number.isFinite(parsed) ? parsed : 100;
         });
-        monthlyAllocationWidget.setPercent(sum / 12);
+        var total = sum / 12;
+        monthlyAllocationWidget.setPercent(total);
+
+        /* KPI-ALLOC-VALID-NEUTRAL: 100% is normal, so clear any warning presentation. */
+        var cluster = document.querySelector('.annual-kpi-allocation-cluster');
+        if (cluster) {
+          var isValid = Number.isFinite(total) && Math.abs(total - 100) < 0.01;
+          cluster.classList.toggle('kpi-allocation-valid', isValid);
+          cluster.classList.toggle('kpi-allocation-warning', !isValid);
+          cluster.setAttribute('data-allocation-total-state', isValid ? 'valid' : 'warning');
+
+          if (isValid) {
+            var label = cluster.querySelector('.annual-kpi-strip-label--allocation');
+            if (label) {
+              if (!label.getAttribute('data-kpi-allocation-base-label')) {
+                label.setAttribute('data-kpi-allocation-base-label', String(label.textContent || '').trim());
+              }
+              label.textContent = label.getAttribute('data-kpi-allocation-base-label') || '';
+              label.removeAttribute('title');
+              label.removeAttribute('data-tooltip');
+            }
+          }
+        }
       }
       function refreshHlPlanFromStore() {
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.syncCockpitForCalendarYear === 'function') {
