@@ -893,22 +893,19 @@ def daily_sales_import_js() -> str:
             var bizMap0 = maps.businessDayByDate || {{}};
             var hasBiz = Object.prototype.hasOwnProperty.call(bizMap0, iso);
             var sales = Number(maps.salesByDate[iso]);
-            if (hasBiz) {{
-              if (!bizMap0[iso]) {{
-                rowStateByIso[iso] = {{ off: true, last: '0' }};
-              }} else {{
-                rowStateByIso[iso] = {{
-                  off: false,
-                  last: String(Number.isFinite(sales) ? Math.round(sales) : 0),
-                }};
-              }}
+            var last = String(Number.isFinite(sales) ? Math.round(sales) : 0);
+            if (hasBiz && bizMap0[iso]) {{
+              rowStateByIso[iso] = {{ off: false, last: last }};
               return;
             }}
-            var biz = Number(maps.salesByDate[iso]) > 0;
-            if (!biz || !Number.isFinite(sales) || sales <= 0) {{
+            if (hasBiz) {{
               rowStateByIso[iso] = {{ off: true, last: '0' }};
+              return;
+            }}
+            if (Object.prototype.hasOwnProperty.call(rowStateByIso, iso) && rowStateByIso[iso]) {{
+              rowStateByIso[iso].last = last;
             }} else {{
-              rowStateByIso[iso] = {{ off: false, last: String(Math.round(sales)) }};
+              rowStateByIso[iso] = {{ off: false, last: last }};
             }}
           }});
         }}
@@ -992,19 +989,17 @@ def daily_sales_import_js() -> str:
                       : null;
                   var persistByCsvYear = !!(options && options.persistByCsvYear);
                   /* BR-POST-HISTORICAL-IMPORT-CALENDAR-COMPLETION:
-                     Past Sales only. Reconstruct 1..lastDay + 営業日 after parse. */
+                     Date-based inference after parse. Entry point does not define 営業日. */
                   if (
-                    persistByCsvYear &&
                     window.KpiWorkbookLayout &&
                     typeof window.KpiWorkbookLayout.completeHistoricalImport === 'function'
                   ) {{
-                    var oyHist =
-                      window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
-                        ? Number(KpiYearStore.getOperatingYear())
-                        : NaN;
                     maps =
                       window.KpiWorkbookLayout.completeHistoricalImport(maps, {{
-                        operatingYear: oyHist,
+                        operatingYear:
+                          window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+                            ? Number(KpiYearStore.getOperatingYear())
+                            : NaN,
                         today: new Date(),
                       }}) || maps;
                   }}

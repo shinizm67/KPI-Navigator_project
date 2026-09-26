@@ -596,10 +596,10 @@
     return !!(obj && Object.prototype.hasOwnProperty.call(obj, key));
   }
 
-  function positiveAmount(map, iso) {
+  function nonzeroAmount(map, iso) {
     if (!hasOwn(map, iso)) return false;
     var n = Number(map[iso]);
-    return Number.isFinite(n) && n > 0;
+    return Number.isFinite(n) && n !== 0;
   }
 
   function ensureMap(maps, key) {
@@ -639,72 +639,18 @@
     return { y: y, m: mo, d: d };
   }
 
-  function expensePositive(maps, iso) {
-    if (positiveAmount(maps.expenseByDate, iso)) return true;
-    if (positiveAmount(maps.expenseAmountByDate, iso)) return true;
-    var list = maps.unmatchedMetrics || maps.unknown || [];
-    var i;
-    for (i = 0; i < list.length; i++) {
-      var u = list[i];
-      if (!u || u.iso !== iso) continue;
-      if (u.kind === 'expense' || expenseLikeUnknown(u)) {
-        var n = Number(u.amount);
-        if (Number.isFinite(n) && n > 0) return true;
-      }
-    }
-    return false;
+  function todayIso(opts) {
+    var today = resolveToday(opts);
+    return isoFromYmd(today.getFullYear(), today.getMonth() + 1, today.getDate());
   }
 
-  function inferHistoricalBusinessDay(maps, iso) {
-    if (!maps || !iso) return false;
-    return (
-      positiveAmount(maps.salesByDate, iso) ||
-      positiveAmount(maps.totalCustomersByDate, iso) ||
-      positiveAmount(maps.lunchCustomersByDate, iso) ||
-      positiveAmount(maps.dinnerCustomersByDate, iso) ||
-      positiveAmount(maps.totalGroupsByDate, iso) ||
-      positiveAmount(maps.lunchGroupsByDate, iso) ||
-      positiveAmount(maps.dinnerGroupsByDate, iso) ||
-      positiveAmount(maps.lunchSalesByDate, iso) ||
-      positiveAmount(maps.dinnerSalesByDate, iso) ||
-      positiveAmount(maps.foodByDate, iso) ||
-      positiveAmount(maps.drinkByDate, iso) ||
-      expensePositive(maps, iso)
-    );
-  }
-
-  function isCompletableHistoricalMonth(y, m, opts) {
-    var oy = opts && opts.operatingYear != null ? Number(opts.operatingYear) : NaN;
-    if (Number.isFinite(oy) && y >= oy) return false;
+  function isImportableMonth(y, m, opts) {
     var today = resolveToday(opts);
     var ty = today.getFullYear();
     var tm = today.getMonth() + 1;
     if (y > ty) return false;
-    if (y === ty && m >= tm) return false;
+    if (y === ty && m > tm) return false;
     return true;
-  }
-
-  var MEAL_ZERO_KEYS = [
-    'lunchSalesByDate',
-    'dinnerSalesByDate',
-    'totalCustomersByDate',
-    'lunchCustomersByDate',
-    'dinnerCustomersByDate',
-    'totalGroupsByDate',
-    'lunchGroupsByDate',
-    'dinnerGroupsByDate',
-    'foodByDate',
-    'drinkByDate',
-  ];
-
-  function zeroClosedDay(maps, iso) {
-    maps.salesByDate[iso] = 0;
-    var i;
-    for (i = 0; i < MEAL_ZERO_KEYS.length; i++) {
-      var key = MEAL_ZERO_KEYS[i];
-      if (!maps[key] || typeof maps[key] !== 'object') continue;
-      maps[key][iso] = 0;
-    }
   }
 
   function collectMonthsFromMaps(maps) {
@@ -724,6 +670,8 @@
     addFrom(maps.totalGroupsByDate);
     addFrom(maps.lunchSalesByDate);
     addFrom(maps.dinnerSalesByDate);
+    addFrom(maps.foodByDate);
+    addFrom(maps.drinkByDate);
     addFrom(maps.expenseByDate);
     var list = maps.unmatchedMetrics || maps.unknown || [];
     var i;
@@ -731,6 +679,23 @@
       if (list[i] && list[i].iso) addIso(list[i].iso);
     }
     return months;
+  }
+
+  function inferHistoricalBusinessDay(maps, iso) {
+    if (!maps || !iso) return false;
+    return (
+      nonzeroAmount(maps.salesByDate, iso) ||
+      nonzeroAmount(maps.totalCustomersByDate, iso) ||
+      nonzeroAmount(maps.lunchCustomersByDate, iso) ||
+      nonzeroAmount(maps.dinnerCustomersByDate, iso) ||
+      nonzeroAmount(maps.totalGroupsByDate, iso) ||
+      nonzeroAmount(maps.lunchGroupsByDate, iso) ||
+      nonzeroAmount(maps.dinnerGroupsByDate, iso) ||
+      nonzeroAmount(maps.lunchSalesByDate, iso) ||
+      nonzeroAmount(maps.dinnerSalesByDate, iso) ||
+      nonzeroAmount(maps.foodByDate, iso) ||
+      nonzeroAmount(maps.drinkByDate, iso)
+    );
   }
 
   function recountImportMeta(maps) {
@@ -752,34 +717,51 @@
   }
 
   /**
-   * Past-month Historical Import only.
-   * parse → canonical daily records → this step → apply.
-   * Reconstructs 1..lastDay and infers 営業日 from activity.
-   * Never rolls invalid dates into the next month.
+   * Shared post-parse calendar + business-day inference.
+   * Completes the date axis for importable months (sales 0 on missing days).
+   * Positive operational activity → businessDay = true.
+   * No activity → omit the key so persist preserves existing KPN state.
+   * Expense-only is not operational evidence. Future dates are left untouched.
    */
   function completeHistoricalImport(maps, opts) {
     if (!maps || typeof maps !== 'object') return maps;
     opts = opts || {};
     ensureMap(maps, 'salesByDate');
     ensureMap(maps, 'businessDayByDate');
+    var limitIso = todayIso(opts);
     var months = collectMonthsFromMaps(maps);
     var keys = Object.keys(months);
     var i;
     for (i = 0; i < keys.length; i++) {
       var rec = months[keys[i]];
-      if (!isCompletableHistoricalMonth(rec.y, rec.m, opts)) continue;
+      if (!isImportableMonth(rec.y, rec.m, opts)) {
+        var lastSkip = lastDayOfMonth(rec.y, rec.m);
+        var ds;
+        for (ds = 1; ds <= lastSkip; ds++) {
+          var skipIso = isoFromYmd(rec.y, rec.m, ds);
+          if (skipIso && hasOwn(maps.businessDayByDate, skipIso)) {
+            delete maps.businessDayByDate[skipIso];
+          }
+        }
+        continue;
+      }
       var last = lastDayOfMonth(rec.y, rec.m);
       var d;
       for (d = 1; d <= last; d++) {
         var iso = isoFromYmd(rec.y, rec.m, d);
         if (!iso) continue;
-        var present = hasOwn(maps.salesByDate, iso);
-        if (!present) {
+        if (limitIso && iso > limitIso) {
+          if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
+          continue;
+        }
+        if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }
-        var open = inferHistoricalBusinessDay(maps, iso);
-        maps.businessDayByDate[iso] = open;
-        if (!open) zeroClosedDay(maps, iso);
+        if (inferHistoricalBusinessDay(maps, iso)) {
+          maps.businessDayByDate[iso] = true;
+        } else if (hasOwn(maps.businessDayByDate, iso)) {
+          delete maps.businessDayByDate[iso];
+        }
       }
     }
     recountImportMeta(maps);

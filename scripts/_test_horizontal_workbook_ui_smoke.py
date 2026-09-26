@@ -286,12 +286,12 @@ def check_nov1(maps: dict) -> list[str]:
     biz = maps.get("businessDayByDate") or {}
     if biz.get("2025-11-01") is not True:
         fails.append("nov1_not_open")
-    if biz.get("2025-11-02") is not False:
-        fails.append("nov2_not_closed")
-    if biz.get("2025-11-03") is not False:
-        fails.append("nov3_not_closed")
     if biz.get("2025-11-04") is not True:
         fails.append("nov4_not_open")
+    if biz.get("2025-11-02") is True:
+        fails.append("nov2_forced_open")
+    if biz.get("2025-11-03") is True:
+        fails.append("nov3_forced_open")
     if (maps.get("salesByDate") or {}).get("2025-11-03") != 0:
         fails.append(f"nov3_sales:{(maps.get('salesByDate') or {}).get('2025-11-03')}")
     if maps.get("imported") != 30:
