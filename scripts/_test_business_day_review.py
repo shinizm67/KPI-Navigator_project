@@ -239,7 +239,7 @@ def main() -> int:
     for path in HOSTS:
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
-        assert_true("kpi-planning-readiness.js?v=20260926-bdr2" in text, f"{rel} readiness cache bdr2")
+        assert_true("kpi-planning-readiness.js?v=20260926-alloc3" in text, f"{rel} readiness cache alloc3")
         assert_true("ingestHistoricalBusinessDayReview" in text, f"{rel} store ingest injected")
         assert_true("businessDayUnresolved" in text, f"{rel} unresolved map injected")
 

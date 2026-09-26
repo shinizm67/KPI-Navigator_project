@@ -149,7 +149,7 @@ def main() -> int:
     for h in HOSTS:
         t = h.read_text(encoding="utf-8")
         check("weekdayBaselineExcludedYears" in t or "assessSeasonalityAnomalies" in t, f"host APIs {h.name}")
-        check("kpi-planning-readiness.js?v=20260919-pr7" in t or "monthly/edit" in str(h), f"cache pr7 {h}")
+        check("kpi-planning-readiness.js" in t or "monthly/edit" in str(h), f"loads readiness JS {h}")
 
     for h in ANNUAL:
         t = h.read_text(encoding="utf-8")

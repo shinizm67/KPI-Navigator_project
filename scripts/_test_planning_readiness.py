@@ -343,9 +343,13 @@ def main() -> int:
     check("confirmSeasonalityDeviation" in js, "deviation confirm")
     check("isAllocTotalOk" in js, "alloc total 100% helper")
     check("Math.abs(total - 100) < 0.01" in js, "alloc total epsilon 0.01")
-    check("var warn = !isAllocTotalOk(weights);" in js, "Cockpit warn uses alloc total, not year-pattern")
+    check("function isDisplayedAllocTotalOk()" in js, "Cockpit warn uses displayed 1-decimal total")
+    check("var warn = !isDisplayedAllocTotalOk();" in js, "Cockpit warn tracks displayed 100%, not 2-decimal helper")
+    check("var warn = !isAllocTotalOk(weights);" not in js, "Cockpit warn no longer uses isAllocTotalOk directly")
     check("querySelectorAll('.kpi-pr-anomaly-mark')" in js, "cluster-wide leftover mark cleanup")
     fn = js.split("function refreshSeasonalityAnomalyUi()")[1].split("function reasonLabels")[0]
+    check("isDisplayedAllocTotalOk" in fn, "refresh uses displayed-total contract")
+    check("isAllocTotalOk" not in fn, "refresh does not call 2-decimal isAllocTotalOk")
     check("assessSeasonalityAnomalies" not in fn, "Cockpit cluster does not use year-pattern anomaly")
     check("anySelectedFlagged" not in fn, "Cockpit cluster does not use selected-year flag")
     check("月次配分率合計が 100% ではありません" in js, "JP alloc-total warn copy")
@@ -386,8 +390,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260926-bdr2" in html,
-            f"{rel} cache-bust bdr2",
+            "kpi-planning-readiness.js?v=20260926-alloc3" in html,
+            f"{rel} cache-bust alloc3",
         )
 
     # regression markers still present

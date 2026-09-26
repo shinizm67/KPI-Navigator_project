@@ -387,6 +387,59 @@
     return total != null && Math.abs(total - 100) < 0.01;
   }
 
+  /* Cockpit display year: same source as H/L cells (calendarYear), not operatingYear. */
+  function cockpitDisplayYear() {
+    var cy = Number(global.__ANNUAL_DATA && global.__ANNUAL_DATA.calendarYear);
+    if (Number.isFinite(cy)) return cy;
+    return operatingYear();
+  }
+
+  /* Raw store weights as painted into H/L cells. Do not fall back to DEFAULT
+     when the store has a 12-length array (normalizeHlWeights 5%-grid would
+     otherwise swap in DEFAULT 101.67 while cells still show ~100%). */
+  function readCockpitHlWeights() {
+    var year = cockpitDisplayYear();
+    var api = storeApi();
+    if (api && typeof api.readMonthlyHlWeights === 'function') {
+      var w = api.readMonthlyHlWeights(year);
+      if (w && w.length === 12) return w;
+    }
+    return DEFAULT_HL_WEIGHTS.slice();
+  }
+
+  /* Match page formatPercentText: Math.round(percent * 10) / 10 (1 decimal). */
+  function displayedAllocAvg(weights) {
+    if (!weights || weights.length !== 12) return null;
+    var sum = 0;
+    for (var i = 0; i < 12; i++) {
+      var n = Number(weights[i]);
+      sum += Number.isFinite(n) ? n : 100;
+    }
+    return Math.round((sum / 12) * 10) / 10;
+  }
+
+  function parseDisplayedAllocPercent() {
+    var el =
+      document.querySelector('.annual-kpi-allocation-cluster .annual-allocation-percent') ||
+      document.getElementById('annual-allocation-percent');
+    if (!el) return null;
+    var raw = String(el.textContent || '')
+      .replace('%', '')
+      .replace(/,/g, '')
+      .trim();
+    if (!raw || raw === '—' || raw === '–' || raw === '-' || raw === '−') return null;
+    var n = Number(raw);
+    if (!Number.isFinite(n)) return null;
+    return Math.round(n * 10) / 10;
+  }
+
+  function isDisplayedAllocTotalOk() {
+    var shown = parseDisplayedAllocPercent();
+    if (shown != null) return shown === 100;
+    var avg = displayedAllocAvg(readCockpitHlWeights());
+    return avg != null && avg === 100;
+  }
+
   function weightsEqual(a, b) {
     if (!a || !b || a.length !== 12 || b.length !== 12) return false;
     for (var i = 0; i < 12; i++) {
@@ -1139,12 +1192,22 @@
       '.kpi-pr-sdm-bar { display: none !important; }';
   }
 
+  function watchAllocPercentEl() {
+    if (watchAllocPercentEl._obs) return;
+    var el = document.getElementById('annual-allocation-percent');
+    if (!el || typeof MutationObserver === 'undefined') return;
+    watchAllocPercentEl._obs = new MutationObserver(function () {
+      refreshSeasonalityAnomalyUi();
+    });
+    watchAllocPercentEl._obs.observe(el, { childList: true, characterData: true, subtree: true });
+  }
+
   function refreshSeasonalityAnomalyUi() {
-    /* Cockpit 月次配分率合計: warn only when 12-month average is not 100%.
-       Reuses allocTotal / isAllocTotalOk (2-decimal + 0.01 epsilon).
-       Past-year pattern flags stay on SDM weekday-baseline rows, not here. */
-    var weights = readHlWeights(operatingYear());
-    var warn = !isAllocTotalOk(weights);
+    /* Cockpit 月次配分率合計: warning tracks the DISPLAYED 1-decimal total.
+       100% → off; anything else → on. Do not reuse the 2-decimal seasonality
+       validity helper here. SDM weekday flags stay on weekday-baseline rows. */
+    watchAllocPercentEl();
+    var warn = !isDisplayedAllocTotalOk();
     var clusters = document.querySelectorAll('.annual-kpi-allocation-cluster');
     for (var i = 0; i < clusters.length; i++) {
       var cluster = clusters[i];
@@ -1722,6 +1785,7 @@
       'annual:salesDataSaved',
       'annual:pastSalesSaved',
       'kpi:planningReadinessChanged',
+      'annual:calendarYearChanged',
     ].forEach(function (ev) {
       document.addEventListener(ev, onDataChanged);
     });
@@ -1742,6 +1806,7 @@
     applyBodyState();
     refreshTooltips();
     refreshSeasonalityModeBadge();
+    watchAllocPercentEl();
     bindListeners();
     setTimeout(function () {
       try {
@@ -1778,6 +1843,8 @@
     seasonalitySignature: seasonalitySignature,
     isDefaultSeasonality: isDefaultSeasonality,
     isAllocTotalOk: isAllocTotalOk,
+    isDisplayedAllocTotalOk: isDisplayedAllocTotalOk,
+    displayedAllocAvg: displayedAllocAvg,
     normalizeHlWeights: normalizeHlWeights,
     showPageEntryAlert: showPageEntryAlert,
     renderAlertFw: renderAlertFw,
