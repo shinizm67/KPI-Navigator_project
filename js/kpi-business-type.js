@@ -253,9 +253,67 @@
     return readPersistedBusinessType() || DEFAULT_TYPE;
   }
 
-  /** UI / PL seed: meta.businessType only (legacy profile does not count as set). */
+  /* Session cache of GET /profile.php businessType. '' = fetched empty; null = not fetched. */
+  var serverProfileType = null;
+  var serverProfileHydrateInflight = null;
+
+  function resolveProfileApi() {
+    if (global.__KPI_AUTH && typeof global.__KPI_AUTH.resolveAuthBase === 'function') {
+      try {
+        return global.__KPI_AUTH.resolveAuthBase().replace(/\/?$/, '') + '/profile.php';
+      } catch (_e) {}
+    }
+    return '/kpi-navigator/api/v1/profile.php';
+  }
+
+  /** Set when store.meta or a synced server profile has a canonical industry. */
   function isBusinessTypeSet() {
-    return !!readMetaBusinessType();
+    return !!(readMetaBusinessType() || normalizeBusinessType(serverProfileType));
+  }
+
+  /**
+   * Bridge kpi_user_profiles.businessType → store.meta.businessType.
+   * Profile save already writes profile.php; Import/Profile view used to read meta only,
+   * so a successful profile PUT left the gate and Profile view blank after hydrate.
+   */
+  function hydrateFromServerProfile() {
+    var metaNow = readMetaBusinessType();
+    if (metaNow) {
+      serverProfileType = metaNow;
+      return Promise.resolve({ ok: true, applied: false, type: metaNow });
+    }
+    if (serverProfileHydrateInflight) return serverProfileHydrateInflight;
+    serverProfileHydrateInflight = fetch(resolveProfileApi(), {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+      .then(function (r) {
+        return r.json().catch(function () {
+          return { ok: false };
+        }).then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        var p = res && res.data && res.data.profile ? res.data.profile : null;
+        var type = p && p.synced ? normalizeBusinessType(p.businessType || p.industry) : null;
+        serverProfileType = type || '';
+        if (type && !readMetaBusinessType()) {
+          try {
+            setBusinessType(type);
+          } catch (_eSet) {}
+        }
+        return { ok: !!(res && res.data && res.data.ok), applied: !!type, type: type || null, genre: p && p.genre ? String(p.genre) : '' };
+      })
+      .catch(function () {
+        return { ok: false, applied: false, type: null, genre: '' };
+      })
+      .then(function (out) {
+        serverProfileHydrateInflight = null;
+        return out;
+      });
+    return serverProfileHydrateInflight;
   }
 
 
@@ -560,8 +618,19 @@
     confirmRegistration: confirmRegistration,
     confirmChange: confirmChange,
     promptIndustryRequiredForImport: promptIndustryRequiredForImport,
+    hydrateFromServerProfile: hydrateFromServerProfile,
     resolveProfileEditHref: resolveProfileEditHref,
     resolveDialogHost: resolveDialogHost,
     detectLang: detectLang,
   };
+
+  try {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        hydrateFromServerProfile();
+      });
+    } else {
+      hydrateFromServerProfile();
+    }
+  } catch (_eBoot) {}
 })(typeof window !== 'undefined' ? window : this);

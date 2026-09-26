@@ -183,7 +183,8 @@
     </div>
     <script src="../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../js/kpi-currency.js"></script>
-    <script src="../js/kpi-business-type.js"></script>
+    <script src="../js/kpi-business-type.js?v=20260927-bt1"></script>
+    <script src="../js/kpi-profile-server.js?v=20260927-bt1"></script>
     <script src="../js/kpi-pl-expense-presets.js"></script>
     <script src="../js/kpi-csv-templates.js"></script>
     <script src="../js/kpi-excel-templates.js"></script>
@@ -528,15 +529,26 @@
       var industryValue = data.businessType || data.industry;
       var canonical = null;
       var industryLabel = '';
+      function paintIndustry(nextCanonical, genreVal) {
+        canonical = nextCanonical || null;
+        industryLabel = canonical && window.KpiBusinessType ? window.KpiBusinessType.label(canonical) : '';
+        setText('fixed-industry', industryLabel);
+        setText('fixed-genre', canonical === 'restaurant' ? (genreVal || '') : '');
+        var viewType = canonical || 'other';
+        if (genreViewLabel) {
+          genreViewLabel.textContent = GENRE_VIEW_LABELS[viewType] || GENRE_VIEW_LABELS.other;
+        }
+      }
       if (window.KpiBusinessType) {
         canonical =
-          typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+          (typeof window.KpiBusinessType.readMetaBusinessType === 'function'
             ? window.KpiBusinessType.readMetaBusinessType()
-            : window.KpiBusinessType.normalizeBusinessType(industryValue);
+            : null) ||
+          window.KpiBusinessType.normalizeBusinessType(industryValue);
         industryLabel = canonical ? window.KpiBusinessType.label(canonical) : '';
       }
       setText('fixed-industry', industryLabel);
-      /* BR-LAUNCH-01-C2-L1-A: Genre is active only when canonical BT is restaurant. Storage untouched. */
+      /* Genre is active only when canonical BT is restaurant. */
       setText('fixed-genre', canonical === 'restaurant' ? data.genre : '');
       var GENRE_VIEW_LABELS = {
         restaurant: '料理ジャンル（任意）:',
@@ -556,6 +568,17 @@
       if (genreGroup) genreGroup.hidden = false;
       if (genreViewLabel) {
         genreViewLabel.textContent = GENRE_VIEW_LABELS[viewType] || GENRE_VIEW_LABELS.other;
+      }
+      if (window.KpiBusinessType && typeof window.KpiBusinessType.hydrateFromServerProfile === 'function') {
+        window.KpiBusinessType.hydrateFromServerProfile().then(function (res) {
+          var next =
+            (typeof window.KpiBusinessType.readMetaBusinessType === 'function'
+              ? window.KpiBusinessType.readMetaBusinessType()
+              : null) ||
+            (res && res.type) ||
+            canonical;
+          paintIndustry(next, (res && res.genre) || data.genre);
+        });
       }
       setText('fixed-country', data.country);
       setText('fixed-state', data.state);

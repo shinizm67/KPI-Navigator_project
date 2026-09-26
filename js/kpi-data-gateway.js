@@ -1134,6 +1134,11 @@
               } catch (_ePresPut) {}
             }, 0);
           }
+          try {
+            if (window.KpiBusinessType && typeof window.KpiBusinessType.hydrateFromServerProfile === 'function') {
+              window.KpiBusinessType.hydrateFromServerProfile();
+            }
+          } catch (_eBtHyd) {}
         }
         if (data.annualNav && typeof data.annualNav === 'object') {
           localSet(NAV_KEY, data.annualNav);

@@ -40,10 +40,12 @@ def main() -> int:
         check("promptIndustryRequiredForImport" in html, f"{rel} import gate offers Profile edit")
     bt = BT_JS.read_text(encoding="utf-8")
     check("function isBusinessTypeSet()" in bt, "isBusinessTypeSet exists")
-    check("return !!readMetaBusinessType();" in bt, "isSet is meta-only")
+    check("function hydrateFromServerProfile()" in bt, "BT hydrates from server profile")
+    check("normalizeBusinessType(serverProfileType)" in bt, "isSet also honors fetched profile.php type")
     check("readPersistedBusinessType() || DEFAULT_TYPE" in bt, "getBusinessType fallback kept")
     gw = GW.read_text(encoding="utf-8")
     check("fullStore.meta.businessType" in gw, "gateway still applies server BT")
+    check("hydrateFromServerProfile" in gw, "gateway bridges profile.php BT after store hydrate")
     check("Do not invent a default" in gw, "gateway does not invent restaurant")
     print("PASS" if FAILED == 0 else "FAIL", PASSED, "ok", FAILED, "fail")
     return 0 if FAILED == 0 else 1

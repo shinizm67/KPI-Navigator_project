@@ -185,10 +185,10 @@
       </div>
     </div>
     <script src="../js/kpi-auth-client.js?v=20260923-c2c"></script>
-    <script src="../js/kpi-data-gateway.js?v=20260923-c2c"></script>
-    <script src="../js/kpi-business-type.js"></script>
+    <script src="../js/kpi-data-gateway.js?v=20260927-bt1"></script>
+    <script src="../js/kpi-business-type.js?v=20260927-bt1"></script>
     <script src="../js/kpi-profile-location.js"></script>
-    <script src="../js/kpi-profile-server.js?v=20260923-c2c"></script>
+    <script src="../js/kpi-profile-server.js?v=20260927-bt1"></script>
     <script src="../js/kpi-pl-expense-presets.js"></script>
     <script src="../js/kpi-csv-templates.js"></script>
     <script src="../js/kpi-excel-templates.js"></script>
@@ -951,7 +951,21 @@
            Industry select is always re-synced from store.meta only (Option B). */
         if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.hydrateEditForm === 'function') {
           window.__KPI_PROFILE_SERVER.hydrateEditForm({
-            onDone: function () {
+            onDone: function (res) {
+              var merged = res && res.profile ? res.profile : null;
+              var fromServer = merged
+                ? (window.KpiBusinessType
+                    ? window.KpiBusinessType.normalizeBusinessType(merged.businessType || merged.industry)
+                    : (merged.businessType || merged.industry || ''))
+                : '';
+              if (
+                fromServer &&
+                window.KpiBusinessType &&
+                typeof window.KpiBusinessType.setBusinessType === 'function' &&
+                !window.KpiBusinessType.readMetaBusinessType()
+              ) {
+                window.KpiBusinessType.setBusinessType(fromServer);
+              }
               syncIndustrySelectFromMeta();
               syncGenreField();
               if (typeof syncLocationLists === 'function') syncLocationLists();
@@ -971,9 +985,15 @@
       }
       document.addEventListener('kpi:storeHydratedFromServer', function () {
         if (industryUserDirty) return;
-        syncIndustrySelectFromMeta();
-        syncGenreField();
-        maybeFocusIndustryFromHash();
+        var hyd = window.KpiBusinessType && typeof window.KpiBusinessType.hydrateFromServerProfile === 'function'
+          ? window.KpiBusinessType.hydrateFromServerProfile()
+          : Promise.resolve();
+        Promise.resolve(hyd).then(function () {
+          if (industryUserDirty) return;
+          syncIndustrySelectFromMeta();
+          syncGenreField();
+          maybeFocusIndustryFromHash();
+        });
       });
       var scopeBind =
         window.__KPI_AUTH && typeof window.__KPI_AUTH.ensureUserScopeBound === 'function'
