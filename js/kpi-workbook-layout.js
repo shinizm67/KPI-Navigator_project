@@ -698,6 +698,37 @@
     );
   }
 
+  function expenseAmountOnIso(maps, iso) {
+    var total = 0;
+    if (nonzeroAmount(maps.expenseByDate, iso)) total += Number(maps.expenseByDate[iso]);
+    if (nonzeroAmount(maps.expenseAmountByDate, iso)) total += Number(maps.expenseAmountByDate[iso]);
+    var list = maps.unmatchedMetrics || maps.unknown || [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      var u = list[i];
+      if (!u || u.iso !== iso) continue;
+      if (u.kind === 'expense' || expenseLikeUnknown(u)) {
+        var n = Number(u.amount);
+        if (Number.isFinite(n) && n !== 0) total += n;
+      }
+    }
+    return total;
+  }
+
+  function snapshotUnresolvedDay(maps, iso, reason) {
+    return {
+      sales: hasOwn(maps.salesByDate, iso) ? Number(maps.salesByDate[iso]) || 0 : 0,
+      customers: hasOwn(maps.totalCustomersByDate, iso) ? Number(maps.totalCustomersByDate[iso]) || 0 : 0,
+      parties: hasOwn(maps.totalGroupsByDate, iso) ? Number(maps.totalGroupsByDate[iso]) || 0 : 0,
+      lunch: hasOwn(maps.lunchSalesByDate, iso) ? Number(maps.lunchSalesByDate[iso]) || 0 : 0,
+      dinner: hasOwn(maps.dinnerSalesByDate, iso) ? Number(maps.dinnerSalesByDate[iso]) || 0 : 0,
+      food: hasOwn(maps.foodByDate, iso) ? Number(maps.foodByDate[iso]) || 0 : 0,
+      drink: hasOwn(maps.drinkByDate, iso) ? Number(maps.drinkByDate[iso]) || 0 : 0,
+      expense: expenseAmountOnIso(maps, iso),
+      reason: reason || 'unresolved',
+    };
+  }
+
   function recountImportMeta(maps) {
     var years = {};
     var n = 0;
@@ -717,17 +748,28 @@
   }
 
   /**
-   * Shared post-parse calendar + business-day inference.
-   * Completes the date axis for importable months (sales 0 on missing days).
-   * Positive operational activity → businessDay = true.
-   * No activity → omit the key so persist preserves existing KPN state.
-   * Expense-only is not operational evidence. Future dates are left untouched.
+   * Shared post-parse calendar + business-day classification.
+   * Open: operational activity non-zero.
+   * Closed: date present in file, all operational activity 0/blank, no expense.
+   * Unresolved: no operational activity but expense (or other unsafe signal).
+   * Missing dates: fill sales 0 for the axis; do not force BD; do not mark unresolved.
    */
   function completeHistoricalImport(maps, opts) {
     if (!maps || typeof maps !== 'object') return maps;
     opts = opts || {};
     ensureMap(maps, 'salesByDate');
     ensureMap(maps, 'businessDayByDate');
+    ensureMap(maps, 'unresolvedBusinessDayByDate');
+    var presentBefore = {};
+    Object.keys(maps.salesByDate).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
+    Object.keys(maps.totalCustomersByDate || {}).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
+    Object.keys(maps.totalGroupsByDate || {}).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
     var limitIso = todayIso(opts);
     var months = collectMonthsFromMaps(maps);
     var keys = Object.keys(months);
@@ -754,11 +796,28 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        var wasPresent = !!presentBefore[iso];
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }
         if (inferHistoricalBusinessDay(maps, iso)) {
           maps.businessDayByDate[iso] = true;
+          if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+            delete maps.unresolvedBusinessDayByDate[iso];
+          }
+          continue;
+        }
+        var expenseN = expenseAmountOnIso(maps, iso);
+        if (expenseN !== 0) {
+          if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
+          maps.unresolvedBusinessDayByDate[iso] = snapshotUnresolvedDay(maps, iso, 'expense-only');
+          continue;
+        }
+        if (wasPresent) {
+          maps.businessDayByDate[iso] = false;
+          if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+            delete maps.unresolvedBusinessDayByDate[iso];
+          }
         } else if (hasOwn(maps.businessDayByDate, iso)) {
           delete maps.businessDayByDate[iso];
         }

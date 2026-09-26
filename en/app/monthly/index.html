@@ -12958,7 +12958,7 @@
     </div>
     <script src="../../../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../../../js/kpi-seasonality-allocator.js?v=20260919-pr7"></script>
-    <script src="../../../js/kpi-planning-readiness.js?v=20260926-alloc2"></script>
+    <script src="../../../js/kpi-planning-readiness.js?v=20260926-bdr1"></script>
 
     <script src="../../../js/kpi-business-type.js"></script>
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
@@ -19955,7 +19955,7 @@ Cumulative Target Annual Sales</p>
         }
       };
 
-                                                                                                                                                                                                                                                                                                            /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                                                                                  /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -19995,26 +19995,12 @@ Cumulative Target Annual Sales</p>
               legacyMigrated: false,
               selectedDate: null,
             },
-            timeline: { dailySales: {}, businessDays: {} },
+            timeline: { dailySales: {}, businessDays: {}, businessDayUnresolved: {} },
             years: {},
           };
         }
 
         var store = emptyStore();
-
-        function resetForUserScope() {
-          store = emptyStore();
-        }
-
-        function readStorePayloadFromLocal() {
-          try {
-            var raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return null;
-            return JSON.parse(raw);
-          } catch (_eRaw) {
-            return null;
-          }
-        }
 
         function isoYear(iso) {
           if (!iso || iso.length < 4) return NaN;
@@ -20046,11 +20032,9 @@ Cumulative Target Annual Sales</p>
         }
 
         function loadStore() {
-          var preservedMepYears = snapshotMepYearRecords(store && store.years);
-          var parsed = readStorePayloadFromLocal();
+          var parsed = gw().getJson(STORE_KEY);
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
-            restoreMepYearRecords(preservedMepYears);
             return;
           }
           store = emptyStore();
@@ -20066,22 +20050,28 @@ Cumulative Target Annual Sales</p>
               {},
               parsed.timeline.businessDays || {}
             );
+            store.timeline.businessDayUnresolved = Object.assign(
+              {},
+              parsed.timeline.businessDayUnresolved || {}
+            );
           }
-          var needPersist = sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {
+            persistStore();
+          }
           if (parsed.years && typeof parsed.years === 'object') {
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
-          restoreMepYearRecords(preservedMepYears);
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
-            needPersist = true;
+            persistStore();
           } else {
+            var hadFacts = false;
             Object.keys(store.years || {}).forEach(function (yk) {
-              if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
+              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
             });
+            if (hadFacts) persistStore();
           }
-          if (needPersist) persistStoreIfYearMepSafe();
         }
 
         function persistableStore() {
@@ -20154,7 +20144,7 @@ Cumulative Target Annual Sales</p>
           if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          persistStoreIfYearMepSafe();
+          persistStore();
         }
 
         /** timeline に無い ISO のみ legacy キーから補完（リセット後の CSV 再取込前の復旧用） */
@@ -20214,128 +20204,58 @@ Cumulative Target Annual Sales</p>
           return store.years[year];
         }
 
-        function cloneMepJson(value) {
-          try {
-            return JSON.parse(JSON.stringify(value));
-          } catch (_eClone) {
-            return null;
-          }
-        }
-
-        function mepStreamMapHasData(map) {
-          if (!map || typeof map !== 'object') return false;
-          var keys = Object.keys(map);
-          for (var i = 0; i < keys.length; i++) {
-            var byIso = map[keys[i]];
-            if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
-          }
-          return false;
-        }
-
-        function mepDailyMetaHasData(meta) {
-          if (!meta || typeof meta !== 'object') return false;
-          if (mepStreamMapHasData(meta.memos)) return true;
-          if (meta.weather && typeof meta.weather === 'object' && Object.keys(meta.weather).length) {
-            return true;
-          }
-          if (meta.flags && typeof meta.flags === 'object' && Object.keys(meta.flags).length) {
-            return true;
-          }
-          return false;
-        }
-
-        function mepNotesHasData(notes) {
-          if (!notes || typeof notes !== 'object') return false;
-          var keys = Object.keys(notes);
-          for (var i = 0; i < keys.length; i++) {
-            if (String(notes[keys[i]] == null ? '' : notes[keys[i]]).trim()) return true;
-          }
-          return false;
-        }
-
-        var MEP_YEAR_PRESERVE_KEYS = [
-          'dailyIncome',
-          'dailyExpenses',
-          'dailyMeta',
-          'mepMemoRows',
-          'monthlyStrategyUserNotes',
-          'mepUpdatedAt',
+        var DAILY_MEAL_FIELDS = [
+          'lunch_sales',
+          'dinner_sales',
+          'total_customers',
+          'lunch_customers',
+          'dinner_customers',
+          'total_groups',
+          'lunch_groups',
+          'dinner_groups',
         ];
 
-        function yearMepFieldHasData(rec, key) {
-          if (!rec || typeof rec !== 'object') return false;
-          if (key === 'dailyIncome' || key === 'dailyExpenses') return mepStreamMapHasData(rec[key]);
-          if (key === 'dailyMeta') return mepDailyMetaHasData(rec[key]);
-          if (key === 'monthlyStrategyUserNotes') return mepNotesHasData(rec[key]);
-          if (key === 'mepMemoRows') return Array.isArray(rec[key]) && rec[key].length > 0;
-          if (key === 'mepUpdatedAt') return rec.mepUpdatedAt != null && rec.mepUpdatedAt !== '';
-          return rec[key] != null;
+        function isDailyMealField(field) {
+          return DAILY_MEAL_FIELDS.indexOf(String(field || '')) >= 0;
         }
 
-        function yearRecordHasMepData(rec) {
-          if (!rec || typeof rec !== 'object') return false;
-          return (
-            mepStreamMapHasData(rec.dailyIncome) ||
-            mepStreamMapHasData(rec.dailyExpenses) ||
-            mepDailyMetaHasData(rec.dailyMeta) ||
-            mepNotesHasData(rec.monthlyStrategyUserNotes) ||
-            (Array.isArray(rec.mepMemoRows) && rec.mepMemoRows.length > 0)
-          );
-        }
-
-        function snapshotMepYearRecords(years) {
-          var out = {};
-          if (!years || typeof years !== 'object') return out;
-          Object.keys(years).forEach(function (yk) {
-            var rec = years[yk];
-            if (!rec || typeof rec !== 'object') return;
-            var snap = {};
-            var has = false;
-            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
-              if (!yearMepFieldHasData(rec, key)) return;
-              var cloned = cloneMepJson(rec[key]);
-              if (cloned == null) return;
-              snap[key] = cloned;
-              has = true;
-            });
-            if (has) out[String(yk)] = snap;
-          });
-          return out;
-        }
-
-        function restoreMepYearRecords(preserved) {
-          if (!preserved || typeof preserved !== 'object') return;
-          if (!store.years || typeof store.years !== 'object') store.years = {};
-          Object.keys(preserved).forEach(function (yk) {
-            var src = preserved[yk];
-            if (!src || typeof src !== 'object') return;
-            var yn = Number(yk);
-            if (!Number.isFinite(yn)) return;
-            var rec = ensureYearMepData(yn);
-            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
-              if (!yearMepFieldHasData(src, key)) return;
-              if (yearMepFieldHasData(rec, key)) return;
-              var cloned = cloneMepJson(src[key]);
-              if (cloned == null) return;
-              rec[key] = cloned;
-            });
-          });
-        }
-
-        function storeWouldPutHollowYearMep() {
-          var years = store.years || {};
-          var yks = Object.keys(years);
-          if (!yks.length) return true;
-          for (var i = 0; i < yks.length; i++) {
-            if (!yearRecordHasMepData(years[yks[i]])) return true;
+        function ensureDailyMealMaps(rec) {
+          if (!rec || typeof rec !== 'object') return null;
+          if (!rec.dailyMeal || typeof rec.dailyMeal !== 'object' || Array.isArray(rec.dailyMeal)) {
+            rec.dailyMeal = {};
           }
-          return false;
+          DAILY_MEAL_FIELDS.forEach(function (field) {
+            var map = rec.dailyMeal[field];
+            if (!map || typeof map !== 'object' || Array.isArray(map)) {
+              rec.dailyMeal[field] = {};
+            }
+          });
+          return rec.dailyMeal;
         }
 
-        /** Timeline/schema persist: keep year MEP maps; never PUT empty shells. */
-        function persistStoreIfYearMepSafe() {
-          if (storeWouldPutHollowYearMep()) return false;
-          persistStore();
+        function readDailyMeal(field, iso) {
+          if (!isDailyMealField(field) || !validIso(iso)) return null;
+          var rec = store.years[isoYear(iso)];
+          if (!rec || !rec.dailyMeal || typeof rec.dailyMeal !== 'object') return null;
+          var map = rec.dailyMeal[field];
+          if (!map || typeof map !== 'object') return null;
+          if (!Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          var n = Number(map[iso]);
+          if (!Number.isFinite(n)) return null;
+          return n;
+        }
+
+        /* Memory only. Callers persist via existing persistStore() full PUT. */
+        function writeDailyMeal(field, iso, value) {
+          if (!isDailyMealField(field) || !validIso(iso)) return false;
+          var rec = ensureYearMepData(isoYear(iso));
+          var map = rec.dailyMeal[field];
+          if (value === undefined || value === null) {
+            if (Object.prototype.hasOwnProperty.call(map, iso)) delete map[iso];
+            return true;
+          }
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return false;
+          map[iso] = Math.round(value);
           return true;
         }
 
@@ -20343,6 +20263,7 @@ Cumulative Target Annual Sales</p>
           var rec = ensureYearRecord(year);
           if (!rec.dailyExpenses || typeof rec.dailyExpenses !== 'object') rec.dailyExpenses = {};
           if (!rec.dailyIncome || typeof rec.dailyIncome !== 'object') rec.dailyIncome = {};
+          ensureDailyMealMaps(rec);
           if (!rec.dailyMeta || typeof rec.dailyMeta !== 'object') {
             rec.dailyMeta = { memos: {}, flags: {}, weather: {} };
           }
@@ -20423,6 +20344,7 @@ Cumulative Target Annual Sales</p>
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
+            persistStore();
           }
         }
 
@@ -20435,6 +20357,7 @@ Cumulative Target Annual Sales</p>
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
+          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -20501,8 +20424,7 @@ Cumulative Target Annual Sales</p>
           var tabId = getTabId();
           var cur = leases[key];
           if (cur && cur.tabId !== tabId && cur.expiresAt >= now) {
-            /* KPI-MEP-LEASE-CF: 今開いている編集面が引き継ぐ */
-            if (!(meta && meta.steal)) return { ok: false, holder: cur };
+            return { ok: false, holder: cur };
           }
           leases[key] = {
             tabId: tabId,
@@ -20554,6 +20476,7 @@ Cumulative Target Annual Sales</p>
           var next = !!enabled;
           if (!!store.meta.pastSalesEditEnabled === next) return;
           store.meta.pastSalesEditEnabled = next;
+          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:pastSalesEditChanged', {
               detail: { enabled: next },
@@ -20582,6 +20505,12 @@ Cumulative Target Annual Sales</p>
         function canWriteDailySalesFrom(source, iso) {
           if (!validIso(iso)) return false;
           var src = String(source || '');
+          if (String(src).toLowerCase().indexOf('csv-import') >= 0) {
+            if (isPastSalesSource(src)) {
+              return isoYear(iso) < getOperatingYear();
+            }
+            return true;
+          }
           if (isPastSalesSource(src)) {
             if (
               isoYear(iso) < getOperatingYear() &&
@@ -20614,62 +20543,25 @@ Cumulative Target Annual Sales</p>
           return canWriteDailySalesFrom(source, iso);
         }
 
-        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
-        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
-        var PLAN_USER_SAVED_SOURCES = {
-          'sales-data-save': true
-        };
-
-        function isUserSavedAnnualPlanSource(source) {
-          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
-        }
-
-        function hasSavedAnnualPlanTarget(year) {
-          var y = Number(year);
-          if (!Number.isFinite(y)) return false;
-          var rec = store.years[y];
-          if (!rec || !rec.plan) return false;
-          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
-          var n = Number(rec.plan.targetSales);
-          return Number.isFinite(n) && n > 0;
-        }
-
-        function readSavedAnnualPlanTarget(year) {
-          if (!hasSavedAnnualPlanTarget(year)) return null;
-          return Number(store.years[Number(year)].plan.targetSales);
-        }
-
-        function readBusinessDayFlag(iso) {
-          if (!validIso(iso)) return null;
+        /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
+        function isCalendarBusinessDay(y, m0, day) {
+          var d = new Date(y, m0, day);
+          if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
+          var dow = d.getDay();
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
           var bmap = store.timeline.businessDays;
+          var smap = store.timeline.dailySales;
+          var isWk = dow === 0 || dow === 6;
           if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
             return !!bmap[iso];
           }
-          return null;
-        }
-
-        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
-        function isUiBusinessDay(iso) {
-          if (!validIso(iso)) return false;
-          return readBusinessDayFlag(iso) !== false;
-        }
-
-        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
-        function isBaselineActualDay(iso) {
-          if (!validIso(iso)) return false;
-          var flag = readBusinessDayFlag(iso);
-          if (flag === false) return false;
-          if (flag === true) return true;
-          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
-          var n = Number(store.timeline.dailySales[iso]);
-          return Number.isFinite(n) && n > 0;
-        }
-
-        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
-        function isPlanningBusinessDay(iso) {
-          if (!validIso(iso)) return false;
-          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
-          return readBusinessDayFlag(iso) !== false;
+          if (smap && Object.prototype.hasOwnProperty.call(smap, iso)) {
+            var n = Number(smap[iso]);
+            if (!Number.isFinite(n)) return !isWk;
+            if (n === 0) return false;
+            return true;
+          }
+          return !isWk;
         }
 
         function computeObserved(year) {
@@ -20682,8 +20574,8 @@ Cumulative Target Annual Sales</p>
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
+              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -20777,7 +20669,7 @@ Cumulative Target Annual Sales</p>
           document.dispatchEvent(new CustomEvent('kpi:annualPlanChanged', { detail: extra }));
         }
 
-        function rebuildOneYearFromServer(year, reason) {
+        function rebuildOneYearFromServer(year, reason, opts) {
           var y = Number(year);
           if (!Number.isFinite(y)) return Promise.resolve();
           function fallbackJs() {
@@ -20786,7 +20678,8 @@ Cumulative Target Annual Sales</p>
               planChanged: true,
               reason: reason || 'plan-rebuild-fallback',
             });
-            persistStore();
+            if (!(opts && opts.singlePut)) persistStore();
+            if (opts && opts.singlePut) throw new Error('daily-facts-rebuild-failed');
           }
           if (
             !window.__KPI_DAILY_FACTS_SYNC ||
@@ -20795,16 +20688,17 @@ Cumulative Target Annual Sales</p>
             fallbackJs();
             return Promise.resolve();
           }
-          return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y)
+          return Promise.resolve().then(function () {
+            return window.__KPI_DAILY_FACTS_SYNC.rebuildYear(y);
+          })
             .then(function (data) {
               if (!data || !data.ok) fallbackJs();
-            })
-            .catch(function () {
+            }, function () {
               fallbackJs();
             });
         }
 
-        function flushThenRebuildYears(years, reason) {
+        function flushThenRebuildYears(years, reason, opts) {
           var list = (years || [])
             .map(Number)
             .filter(Number.isFinite)
@@ -20813,8 +20707,10 @@ Cumulative Target Annual Sales</p>
           var gwObj = window.__KPI_DATA_GATEWAY;
           var flush =
             gwObj && typeof gwObj.flushPut === 'function' ? gwObj.flushPut() : Promise.resolve();
-          return Promise.resolve(flush).then(function (putResult) {
-            if (putResult && (putResult.conflict || putResult.status === 428)) return putResult;
+          return Promise.resolve(flush).then(function (result) {
+            if (opts && opts.singlePut && !(result && result.ok)) {
+              throw new Error('store-save-failed');
+            }
             var total = list.length;
             var p = Promise.resolve();
             list.forEach(function (y, idx) {
@@ -20828,7 +20724,7 @@ Cumulative Target Annual Sales</p>
                     total: total,
                   });
                 }
-                return rebuildOneYearFromServer(y, reason);
+                return rebuildOneYearFromServer(y, reason, opts);
               });
             });
             return p;
@@ -20855,8 +20751,9 @@ Cumulative Target Annual Sales</p>
               });
             });
           };
-          /* KPI-BUSY-NAV-OFF-CX: background year rebuild must NOT show Saving/Rebuilding.
-             Overlay stays only on explicit Save/CSV button handlers. */
+          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
+            return window.__KPI_BUSY.run('save', work).catch(function () {});
+          }
           return work();
         }
 
@@ -20914,7 +20811,7 @@ Cumulative Target Annual Sales</p>
             persistStore();
             return true;
           }
-          scheduleServerYearRebuild(y, 'hl-weights', {
+          if (!(meta && meta.deferRebuild)) scheduleServerYearRebuild(y, 'hl-weights', {
             monthlyHlWeights: normalized.slice(),
             source: srcHl,
           });
@@ -20983,7 +20880,7 @@ Cumulative Target Annual Sales</p>
           return obs;
         }
 
-        function maybeRefreshObservedAfterTimelineChange(yearsAll) {
+        function maybeRefreshObservedAfterTimelineChange(yearsAll, opts) {
           if (!yearsAll || typeof yearsAll !== 'object') return;
           var oy = getOperatingYear();
           var affected = [];
@@ -20994,10 +20891,13 @@ Cumulative Target Annual Sales</p>
             if (obs) affected.push(y);
           });
           if (affected.some(function (y) { return y < oy; })) {
-            applyObservedBaselineToPlan(oy, { force: false, maxYears: 2 });
+            var baseline = applyObservedBaselineToPlan(oy, {
+              force: false, maxYears: 2, deferRebuild: !!(opts && opts.deferRebuild),
+            });
+            if (opts && opts.deferRebuild && baseline && baseline.ok) yearsAll[oy] = true;
           }
           if (affected.length) {
-            persistStore();
+            if (!(opts && opts.skipPersist)) persistStore();
             document.dispatchEvent(
               new CustomEvent('kpi:observedChanged', {
                 detail: { years: affected, operatingYear: oy },
@@ -21128,6 +21028,7 @@ Cumulative Target Annual Sales</p>
           var written = writeMonthlyHlWeights(y, baseline, {
             source: 'observed-baseline',
             hlBaselineYears: yearsUsed,
+            deferRebuild: !!opts.deferRebuild,
           });
           return {
             ok: written,
@@ -21236,7 +21137,7 @@ Cumulative Target Annual Sales</p>
           }
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
-            persistStoreIfYearMepSafe();
+            persistStore();
             try {
               document.dispatchEvent(
                 new CustomEvent('kpi:yearRolloverCompleted', {
@@ -21318,6 +21219,9 @@ Cumulative Target Annual Sales</p>
         function writeBusinessDay(iso, isOpen, meta) {
           if (!canWriteBusinessDayFrom((meta && meta.source) || '', iso)) return false;
           store.timeline.businessDays[iso] = !!isOpen;
+          try {
+            delete ensureUnresolvedMap()[iso];
+          } catch (_eU) {}
           invalidateDailyFacts({
             year: isoYear(iso),
             fromIso: iso,
@@ -21362,10 +21266,13 @@ Cumulative Target Annual Sales</p>
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
-            return isPlanningBusinessDay(iso);
+          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
+            return !!store.timeline.businessDays[iso];
           }
-          return isBaselineActualDay(iso);
+          var d = new Date(iso + 'T00:00:00');
+          if (!isFinite(d.getTime())) return false;
+          var dow = d.getDay();
+          return dow !== 0 && dow !== 6;
         }
 
         function snapshotSalesAmt(iso) {
@@ -21471,7 +21378,7 @@ Cumulative Target Annual Sales</p>
             };
           }
           rec.annualFacts = {
-            annualTarget: readSavedAnnualPlanTarget(year),
+            annualTarget: readAnnualTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -21494,13 +21401,13 @@ Cumulative Target Annual Sales</p>
           };
         }
 
-        function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged) {
-          return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year');
+        function invalidateDailyFactsForTouchedYears(yearsMap, reason, planChanged, opts) {
+          return rebuildTouchedYearsOnServer(yearsMap, reason || 'touched-year', opts);
         }
 
         /* KPI-BULK-YEAR-REBUILD-AK */
 
-        function rebuildTouchedYearsOnServer(yearsMap, reason) {
+        function rebuildTouchedYearsOnServer(yearsMap, reason, opts) {
           var years = Object.keys(yearsMap || {})
             .map(Number)
             .filter(Number.isFinite)
@@ -21515,7 +21422,7 @@ Cumulative Target Annual Sales</p>
                 total: years.length,
               });
             }
-            return flushThenRebuildYears(years, reason).then(function () {
+            return flushThenRebuildYears(years, reason, opts).then(function () {
               var focus = getOperatingYear();
               var hyd =
                 window.__KPI_DAILY_FACTS_SYNC &&
@@ -21612,6 +21519,7 @@ Cumulative Target Annual Sales</p>
           var yearsBiz = {};
           function matchesLimit(iso) {
             if (!validIso(iso)) return false;
+            if (isoYear(iso) >= getOperatingYear()) return false;
             if (limitY == null || !Number.isFinite(limitY)) return true;
             return isoYear(iso) === limitY;
           }
@@ -21642,17 +21550,32 @@ Cumulative Target Annual Sales</p>
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
-          if (yearsList.length) persistStore();
+          var dualError = null;
+          if (yearsList.length) {
+            var pastGateway = gw();
+            if (typeof pastGateway.setJsonLocalOnly !== 'function' ||
+                !pastGateway.setJsonLocalOnly(STORE_KEY, persistableStore())) {
+              throw new Error('store-local-save-failed');
+            }
+          }
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
-          var dual =
-            window.__KPI_DAILY_INPUTS_SYNC &&
-            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
-              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
-              : Promise.resolve();
+          var dual = Promise.resolve().then(function () {
+            return window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+                ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+                : { ok: true, skipped: true };
+          });
           return Promise.resolve(dual)
-            .catch(function () {})
+            .then(function (result) {
+              if (yearsList.length && !(result && result.ok)) {
+                dualError = new Error('daily-inputs-save-failed');
+              }
+            }, function (err) {
+              dualError = err || new Error('daily-inputs-save-failed');
+            })
             .then(function () {
-              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales');
+              maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true, deferRebuild: true });
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-past-sales', false, { singlePut: true });
             })
             .then(function () {
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) to avoid TW/Cockpit storms */
@@ -21673,17 +21596,24 @@ Cumulative Target Annual Sales</p>
                 });
               }
             }
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
+            if (dualError) throw dualError;
           });
         }
 
         function mergeDailyMaps(salesMap, bizMap, meta) {
           var src = (meta && meta.source) || 'kpi-year-store';
+          var limitY =
+            meta && meta.limitToYear != null ? Number(meta.limitToYear) : null;
           var yearsSales = {};
           var yearsBiz = {};
+          function matchesLimit(iso) {
+            if (!validIso(iso)) return false;
+            if (limitY == null || !Number.isFinite(limitY)) return true;
+            return isoYear(iso) === limitY;
+          }
           if (salesMap && typeof salesMap === 'object') {
             Object.keys(salesMap).forEach(function (iso) {
-              if (!validIso(iso) || !canWriteDailySalesFrom(src, iso)) return;
+              if (!matchesLimit(iso) || !canWriteDailySalesFrom(src, iso)) return;
               var n = Number(salesMap[iso]);
               if (isLegacyPlaceholderSales(n)) {
                 delete store.timeline.dailySales[iso];
@@ -21695,29 +21625,70 @@ Cumulative Target Annual Sales</p>
           }
           if (bizMap && typeof bizMap === 'object') {
             Object.keys(bizMap).forEach(function (iso) {
-              if (!validIso(iso) || !canWriteBusinessDayFrom(src, iso)) return;
+              if (!matchesLimit(iso) || !canWriteBusinessDayFrom(src, iso)) return;
               store.timeline.businessDays[iso] = !!bizMap[iso];
               yearsBiz[isoYear(iso)] = true;
             });
           }
           var yearsAll = {};
-          Object.keys(yearsSales).forEach(function (y) { yearsAll[y] = true; });
-          Object.keys(yearsBiz).forEach(function (y) { yearsAll[y] = true; });
+          if (limitY != null && Number.isFinite(limitY)) {
+            if (yearsSales[limitY] || yearsSales[String(limitY)] ||
+                yearsBiz[limitY] || yearsBiz[String(limitY)]) {
+              yearsAll[String(limitY)] = true;
+            }
+          } else {
+            Object.keys(yearsSales).forEach(function (y) { yearsAll[y] = true; });
+            Object.keys(yearsBiz).forEach(function (y) { yearsAll[y] = true; });
+          }
           var yearsList = Object.keys(yearsAll)
             .map(Number)
             .filter(Number.isFinite)
             .sort(function (a, b) { return a - b; });
-          if (yearsList.length) persistStore();
+          var singlePut = !(src === 'monthly-edit-float' && !(meta && meta.serverRebuild));
+          var dualError = null;
+          if (yearsList.length) {
+            if (singlePut) {
+              /* Keep a recovery copy without arming the gateway's 400ms PUT timer.
+                 The full save belongs to flushThenRebuildYears, after observed. */
+              var gateway = gw();
+              if (typeof gateway.setJsonLocalOnly !== 'function' ||
+                  !gateway.setJsonLocalOnly(STORE_KEY, persistableStore())) {
+                throw new Error('store-local-save-failed');
+              }
+            } else {
+              persistStore();
+            }
+          }
           /* KPI-DAILY-INPUTS-DUAL-WRITE-AN */
-          var dual =
-            window.__KPI_DAILY_INPUTS_SYNC &&
-            typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
-              ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
-              : Promise.resolve();
+          var dual = Promise.resolve().then(function () {
+            return window.__KPI_DAILY_INPUTS_SYNC &&
+              typeof window.__KPI_DAILY_INPUTS_SYNC.putYearsMap === 'function'
+                ? window.__KPI_DAILY_INPUTS_SYNC.putYearsMap(yearsAll)
+                : { ok: true, skipped: true };
+          });
           return Promise.resolve(dual)
-            .catch(function () {})
+            .then(function (result) {
+              if (singlePut && yearsList.length && !(result && result.ok)) {
+                dualError = new Error('daily-inputs-save-failed');
+              }
+            }, function (err) {
+              if (singlePut) dualError = err || new Error('daily-inputs-save-failed');
+            })
             .then(function () {
-              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily');
+              /* KPI-MEP-CELL-QUIET-CU: cell edits keep local facts only — no busy rebuild.
+                 Confirm / CSV pass meta.serverRebuild to rebuild once with overlay. */
+              if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {
+                yearsList.forEach(function (y) {
+                  invalidateDailyFacts({
+                    year: y,
+                    fromIso: yearStartIso(y),
+                    reason: 'merge-daily-mep-cell',
+                  });
+                });
+                return Promise.resolve();
+              }
+              maybeRefreshObservedAfterTimelineChange(yearsAll, { skipPersist: true, deferRebuild: true });
+              return invalidateDailyFactsForTouchedYears(yearsAll, 'merge-daily', false, { singlePut: true });
             })
             .then(function () {
             /* KPI-BULK-REFRESH-PERF: one event per merge (not per year) */
@@ -21738,7 +21709,10 @@ Cumulative Target Annual Sales</p>
                 });
               }
             }
-            maybeRefreshObservedAfterTimelineChange(yearsAll);
+            if (src === 'monthly-edit-float' && !(meta && meta.serverRebuild)) {
+              maybeRefreshObservedAfterTimelineChange(yearsAll);
+            }
+            if (dualError) throw dualError;
           });
         }
 
@@ -21823,41 +21797,8 @@ Cumulative Target Annual Sales</p>
           if (store.meta.selectedDate) daily.selectedDate = store.meta.selectedDate;
           var oy = getOperatingYear();
           var yr = store.years[oy];
-          var planN =
-            yr && yr.plan && yr.plan.targetSales != null
-              ? Number(yr.plan.targetSales)
-              : NaN;
-          if (Number.isFinite(planN) && planN > 0) {
-            window.__ANNUAL_DATA.targetSales = planN;
-          } else {
-            /* KPI-SALES-DATA-TARGET-PERSIST-CT: memory-only heal — never persistStore here
-               (CS wrote on every nav → Saving/Rebuilding noise). */
-            try {
-              var refN = NaN;
-              if (daily.referenceAnnualSales != null) {
-                refN = Number(daily.referenceAnnualSales);
-              }
-              if (!(Number.isFinite(refN) && refN > 0)) {
-                var gwR = window.__KPI_DATA_GATEWAY;
-                var shared =
-                  gwR && typeof gwR.getJson === 'function'
-                    ? gwR.getJson('kpiNavigator.annualDailyShared')
-                    : null;
-                if (shared && shared.referenceAnnualSales != null) {
-                  refN = Number(shared.referenceAnnualSales);
-                }
-              }
-              if (Number.isFinite(refN) && refN > 0) {
-                daily.referenceAnnualSales = Math.round(refN);
-                window.__ANNUAL_DATA.targetSales = Math.round(refN);
-                var recHeal = ensureYearRecord(oy);
-                if (!recHeal.plan) recHeal.plan = {};
-                if (!(Number(recHeal.plan.targetSales) > 0)) {
-                  recHeal.plan.targetSales = Math.round(refN);
-                  recHeal.plan.source = 'memory-reference-heal';
-                }
-              }
-            } catch (_eSyncRef) {}
+          if (yr && yr.plan && yr.plan.targetSales != null && Number.isFinite(Number(yr.plan.targetSales))) {
+            window.__ANNUAL_DATA.targetSales = Number(yr.plan.targetSales);
           }
           syncToPastSalesMemory();
         }
@@ -21926,6 +21867,97 @@ Cumulative Target Annual Sales</p>
           return merged;
         }
 
+        function ensureUnresolvedMap() {
+          if (!store.timeline.businessDayUnresolved || typeof store.timeline.businessDayUnresolved !== 'object') {
+            store.timeline.businessDayUnresolved = {};
+          }
+          return store.timeline.businessDayUnresolved;
+        }
+
+        function ingestHistoricalBusinessDayReview(maps) {
+          if (!maps || typeof maps !== 'object') return { ok: false };
+          var unresolved = ensureUnresolvedMap();
+          var bizMap = maps.businessDayByDate || {};
+          var openMap = maps.unresolvedBusinessDayByDate || {};
+          Object.keys(bizMap).forEach(function (iso) {
+            if (!validIso(iso)) return;
+            if (!Object.prototype.hasOwnProperty.call(bizMap, iso)) return;
+            store.timeline.businessDays[iso] = !!bizMap[iso];
+            delete unresolved[iso];
+          });
+          Object.keys(openMap).forEach(function (iso) {
+            if (!validIso(iso)) return;
+            unresolved[iso] = openMap[iso] && typeof openMap[iso] === 'object' ? openMap[iso] : { reason: 'unresolved' };
+            if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
+              delete store.timeline.businessDays[iso];
+            }
+          });
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { source: 'historical-bd-review', action: 'ingest-hist-bd', bulk: true },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'ingest-hist-bd' },
+            }));
+          } catch (_eEv) {}
+          return { ok: true, unresolved: Object.keys(unresolved).length };
+        }
+
+        function listUnresolvedBusinessDays() {
+          var map = ensureUnresolvedMap();
+          return Object.keys(map)
+            .filter(validIso)
+            .sort();
+        }
+
+        function getUnresolvedBusinessDay(iso) {
+          var map = ensureUnresolvedMap();
+          if (!validIso(iso) || !Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          return map[iso];
+        }
+
+        function unresolvedBusinessDayCount() {
+          return listUnresolvedBusinessDays().length;
+        }
+
+        function resolveUnresolvedBusinessDay(iso, isOpen) {
+          if (!validIso(iso)) return false;
+          var map = ensureUnresolvedMap();
+          store.timeline.businessDays[iso] = !!isOpen;
+          delete map[iso];
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { iso: iso, year: isoYear(iso), businessDay: !!isOpen, source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+          } catch (_eR) {}
+          return true;
+        }
+
+        function resolveAllUnresolvedBusinessDays(isOpen) {
+          var isos = listUnresolvedBusinessDays();
+          var map = ensureUnresolvedMap();
+          var i;
+          for (i = 0; i < isos.length; i++) {
+            store.timeline.businessDays[isos[i]] = !!isOpen;
+            delete map[isos[i]];
+          }
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd', bulk: true },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+          } catch (_eAll) {}
+          return isos.length;
+        }
+
         function hydrateNavFromStorage() {
           var nav = gw().getJson(SELECTED_DATE_KEY);
           if (!nav || typeof nav !== 'object') return;
@@ -21941,14 +21973,10 @@ Cumulative Target Annual Sales</p>
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
           try {
-            var prevNav = gw().getJson(SELECTED_DATE_KEY);
-            if (!prevNav || typeof prevNav !== 'object' || Array.isArray(prevNav)) prevNav = {};
-            var nextNav = {
+            gw().setJson(SELECTED_DATE_KEY, {
               calendarYear: isoYear(iso),
               selectedIso: iso,
-            };
-            if (isoYear(iso) === getOperatingYear()) nextNav.operatingSelectedIso = iso;
-            gw().setJson(SELECTED_DATE_KEY, Object.assign({}, prevNav, nextNav));
+            });
           } catch (_e) {}
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
@@ -21998,15 +22026,8 @@ Cumulative Target Annual Sales</p>
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
           }
-          /* KPI-SALES-DATA-TARGET-PERSIST-CT:
-             Persist plan on Sales Data Save. Do not emit/rebuild here —
-             that caused nav Saving/Rebuilding (CS regression). */
-          if (meta && meta.source === 'sales-data-save') {
-            persistStore();
-            return;
-          }
-          if (meta && meta.skipRebuild) {
-            persistStore();
+          if (meta && (meta.skipRebuild || meta.source === 'sales-data-save')) {
+            if (meta.skipRebuild) persistStore();
             return;
           }
           scheduleServerYearRebuild(y, 'annual-target', {
@@ -22062,6 +22083,7 @@ Cumulative Target Annual Sales</p>
           return {
             dailyExpenses: JSON.parse(JSON.stringify(rec.dailyExpenses || {})),
             dailyIncome: JSON.parse(JSON.stringify(rec.dailyIncome || {})),
+            dailyMeal: JSON.parse(JSON.stringify(ensureDailyMealMaps(rec) || {})),
             dailyMeta: JSON.parse(
               JSON.stringify(rec.dailyMeta || { memos: {}, flags: {}, weather: {} })
             ),
@@ -22084,7 +22106,8 @@ Cumulative Target Annual Sales</p>
         function bulkPersistMepYear(year, payload, meta) {
           var y = Number(year);
           if (!Number.isFinite(y)) return false;
-          var allowFull = canWriteMepYear(y);
+          var csvImport = !!(meta && meta.allowLockedYearImport === true);
+          var allowFull = canWriteMepYear(y) || csvImport;
           var allowMeta = canWriteMepMetaYear(y);
           if (!allowFull && !allowMeta) return false;
           var rec = ensureYearMepData(y);
@@ -22092,29 +22115,31 @@ Cumulative Target Annual Sales</p>
             if (!validIso(iso) || isoYear(iso) !== y) return false;
             return allowFull ? canEditIso(iso) : true;
           }
+          var forceExp = !!(meta && meta.forceExpenses);
+          var forceInc = !!(meta && meta.forceIncome);
           var srcExp = payload && payload.dailyExpenses;
-          if (allowFull && srcExp && typeof srcExp === 'object') {
+          if ((allowFull || forceExp) && srcExp && typeof srcExp === 'object') {
             Object.keys(srcExp).forEach(function (lineId) {
               if (!rec.dailyExpenses[lineId]) rec.dailyExpenses[lineId] = {};
               var byIso = srcExp[lineId];
               if (!byIso || typeof byIso !== 'object') return;
               Object.keys(byIso).forEach(function (iso) {
                 if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!csvImport && !forceExp && !canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 rec.dailyExpenses[lineId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
               });
             });
           }
           var srcInc = payload && payload.dailyIncome;
-          if (allowFull && srcInc && typeof srcInc === 'object') {
+          if ((allowFull || forceInc) && srcInc && typeof srcInc === 'object') {
             Object.keys(srcInc).forEach(function (streamId) {
               if (!rec.dailyIncome[streamId]) rec.dailyIncome[streamId] = {};
               var byIso = srcInc[streamId];
               if (!byIso || typeof byIso !== 'object') return;
               Object.keys(byIso).forEach(function (iso) {
                 if (!validIso(iso) || isoYear(iso) !== y) return;
-                if (!canEditIso(iso)) return;
+                if (!csvImport && !forceInc && !canEditIso(iso)) return;
                 var n = Number(byIso[iso]);
                 if (!Number.isFinite(n) || n === 0) {
                   delete rec.dailyIncome[streamId][iso];
@@ -22123,6 +22148,18 @@ Cumulative Target Annual Sales</p>
                 }
               });
             });
+            /* Scrub stale 0 keys left by older saves (block PL drink+food fallback). */
+            if (forceInc) {
+              Object.keys(rec.dailyIncome).forEach(function (streamId) {
+                var map = rec.dailyIncome[streamId];
+                if (!map || typeof map !== 'object') return;
+                Object.keys(map).forEach(function (iso) {
+                  if (!validIso(iso) || isoYear(iso) !== y) return;
+                  var n = Number(map[iso]);
+                  if (!Number.isFinite(n) || n <= 0) delete map[iso];
+                });
+              });
+            }
           }
           var srcMeta = payload && payload.dailyMeta;
           if (allowMeta && srcMeta && typeof srcMeta === 'object') {
@@ -22185,33 +22222,21 @@ Cumulative Target Annual Sales</p>
           }
           rec.mepUpdatedAt = Date.now();
           store.meta.schemaVersion = SCHEMA_VERSION;
-          persistStore();
-          document.dispatchEvent(
-            new CustomEvent('kpi:mepDataChanged', {
-              detail: { year: y, source: (meta && meta.source) || 'mep' },
-            })
-          );
+          if (!(meta && meta.deferPersist)) {
+            persistStore();
+            document.dispatchEvent(
+              new CustomEvent('kpi:mepDataChanged', {
+                detail: { year: y, source: (meta && meta.source) || 'mep' },
+              })
+            );
+          }
           return true;
         }
 
         function init() {
-          var auth = window.__KPI_AUTH;
-          if (
-            auth &&
-            typeof auth.consumePendingUserScopeReset === 'function' &&
-            auth.consumePendingUserScopeReset()
-          ) {
-            resetForUserScope();
-          }
-          var skipLegacyMerge =
-            auth &&
-            typeof auth.consumeUserScopeLegacySkip === 'function' &&
-            auth.consumeUserScopeLegacySkip();
           loadStore();
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
-          if (!skipLegacyMerge) {
-            migrateLegacy();
-          }
+          migrateLegacy();
           enforceSubscriptionTierDefaults();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
@@ -22246,9 +22271,6 @@ Cumulative Target Annual Sales</p>
         }
 
 
-        
-        
-        
         /* KPI-WEEKDAY-TARGET (Phase 11) */
         var WEEKDAY_SHARE_FALLBACK = 1 / 7;
 
@@ -23181,10 +23203,8 @@ Cumulative Target Annual Sales</p>
           };
         }
 
-                window.KpiYearStore = {
+        window.KpiYearStore = {
           init: init,
-          resetForUserScope: resetForUserScope,
-          __userScopeReady: false,
           reload: function () {
             loadStore();
             hydrateNavFromStorage();
@@ -23210,6 +23230,8 @@ Cumulative Target Annual Sales</p>
           readAnnualFacts: readAnnualFacts,
           writeDailyIncome: writeDailyIncome,
           readDailyIncome: readDailyIncome,
+          readDailyMeal: readDailyMeal,
+          writeDailyMeal: writeDailyMeal,
           readDailySales: readDailySales,
           readBusinessDay: readBusinessDay,
           readRange: readRange,
@@ -23217,6 +23239,12 @@ Cumulative Target Annual Sales</p>
           syncToAnnualDaily: syncToAnnualDaily,
           persistFromAnnualDaily: persistFromAnnualDaily,
           persistFromPastSales: persistFromPastSales,
+          ingestHistoricalBusinessDayReview: ingestHistoricalBusinessDayReview,
+          listUnresolvedBusinessDays: listUnresolvedBusinessDays,
+          getUnresolvedBusinessDay: getUnresolvedBusinessDay,
+          unresolvedBusinessDayCount: unresolvedBusinessDayCount,
+          resolveUnresolvedBusinessDay: resolveUnresolvedBusinessDay,
+          resolveAllUnresolvedBusinessDays: resolveAllUnresolvedBusinessDays,
           syncLegacyKeys: syncLegacyKeys,
           setSelectedDate: setSelectedDate,
           getSelectedDate: getSelectedDate,
@@ -23237,11 +23265,6 @@ Cumulative Target Annual Sales</p>
           canWriteDailySalesFrom: canWriteDailySalesFrom,
           canWriteBusinessDayFrom: canWriteBusinessDayFrom,
           salesSourceToPath: salesSourceToPath,
-          hasSavedAnnualPlanTarget: hasSavedAnnualPlanTarget,
-          readSavedAnnualPlanTarget: readSavedAnnualPlanTarget,
-          isUiBusinessDay: isUiBusinessDay,
-          isBaselineActualDay: isBaselineActualDay,
-          isPlanningBusinessDay: isPlanningBusinessDay,
           computeObserved: computeObserved,
           refreshObservedForYear: refreshObservedForYear,
           observedForPastYear: observedForPastYear,
@@ -23298,44 +23321,7 @@ Cumulative Target Annual Sales</p>
           releaseEditLease: releaseEditLease,
         };
 
-        function markUserScopeReady() {
-          window.KpiYearStore.__userScopeReady = true;
-          try {
-            window.dispatchEvent(new CustomEvent('kpi:yearStoreUserScopeReady'));
-          } catch (_eReady) {}
-        }
-
-        function startInitAfterUserScopeBound() {
-          function run() {
-            init();
-            markUserScopeReady();
-          }
-          var auth = window.__KPI_AUTH;
-          if (auth && typeof auth.ensureUserScopeBound === 'function') {
-            Promise.resolve(auth.ensureUserScopeBound())
-              .then(run)
-              .catch(run);
-            return;
-          }
-          if (auth && typeof auth.syncPlanFromServer === 'function') {
-            Promise.resolve(auth.syncPlanFromServer())
-              .then(run)
-              .catch(run);
-            return;
-          }
-          run();
-        }
-
-        try {
-          window.addEventListener('kpi:localUserScopeChanged', function () {
-            window.KpiYearStore.__userScopeReady = false;
-            resetForUserScope();
-            init();
-            markUserScopeReady();
-          });
-        } catch (_eScopeEv) {}
-
-        startInitAfterUserScopeBound();
+        init();
 
         window.addEventListener('storage', function (ev) {
           if (ev.key === EDIT_LEASE_KEY) {

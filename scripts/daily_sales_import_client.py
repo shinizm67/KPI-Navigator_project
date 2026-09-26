@@ -1019,7 +1019,17 @@ def daily_sales_import_js() -> str:
                   }}
                   if (options && typeof options.applyMaps !== 'function') return;
                   var apply = function () {{
-                    return Promise.resolve(options.applyMaps(maps, targetYear));
+                    return Promise.resolve(options.applyMaps(maps, targetYear)).then(function (result) {{
+                      try {{
+                        if (
+                          window.KpiYearStore &&
+                          typeof KpiYearStore.ingestHistoricalBusinessDayReview === 'function'
+                        ) {{
+                          KpiYearStore.ingestHistoricalBusinessDayReview(maps);
+                        }}
+                      }} catch (_eIng) {{}}
+                      return result;
+                    }});
                   }};
                   if (busy && typeof busy.run === 'function') {{
                     return busy.run('import', apply, {{ count: maps.imported }});

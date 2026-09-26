@@ -112,6 +112,47 @@ def main() -> int:
     )
     check(r["state"] == STATE_READY, "A5 both confirmed → READY")
 
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=hl,
+        pr={
+            "businessDaysConfirmedSignature": bd_sig,
+            "seasonalityConfirmedSignature": hl_sig,
+        },
+        unresolved_count=1,
+    )
+    check(r["state"] == STATE_PROVISIONAL, "A5b unresolved 1 → PROVISIONAL")
+    check(r["unresolvedCount"] == 1, "A5b count 1")
+    check(r["needsHistBdAction"] is True, "A5b hist action")
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=hl,
+        pr={
+            "businessDaysConfirmedSignature": bd_sig,
+            "seasonalityConfirmedSignature": hl_sig,
+        },
+        unresolved_count=10,
+    )
+    check(r["unresolvedCount"] == 10, "A5c count 10")
+    check("historicalBusinessDays" in r["provisionalReasons"], "A5c hist reason")
+    r = evaluate(
+        year=y,
+        annual_target=10_000_000,
+        business_days_map=bd,
+        hl_weights=hl,
+        pr={
+            "businessDaysConfirmedSignature": bd_sig,
+            "seasonalityConfirmedSignature": hl_sig,
+        },
+        unresolved_count=0,
+    )
+    check(r["state"] == STATE_READY, "A5d unresolved 0 → READY")
+    check(r["needsHistBdAction"] is False, "A5d no hist item")
+
     # A6 BD change → PROVISIONAL
     bd2 = dict(bd)
     bd2["2026-01-01"] = False
@@ -267,6 +308,18 @@ def main() -> int:
     check("kpi-pr-provisional" in js, "warning body class")
     check("showPageEntryAlert" in js, "page entry alert")
     check("次回から表示しない" not in js, "login reminder deferred (no permanent suppress UI)")
+    check("kpi-pr-alert-dismissed" in js, "sessionStorage dismiss key")
+    check("reasonHistBd" in js, "hist BD readiness item")
+    check("過去営業日確認" in js, "JP hist BD item copy")
+    check("Past business days" in js, "EN hist BD item copy")
+    check("過去營業日確認" in js, "ZH-TW hist BD item copy")
+    check('data-pr-act="hist-review"' in js, "hist review action")
+    check('data-pr-act="hist-all-closed"' in js, "bulk closed action")
+    check('data-pr-act="hist-all-open"' in js, "bulk open action")
+    check('data-pr-act="hist-one"' in js, "one-by-one action")
+    check('data-pr-act="hist-later"' in js, "later action")
+    check("Business Day Calendar Confirmed" in js, "hist complete copy")
+    check("needsHistBdAction" in js, "hist action flag")
 
     # Confirm actions live only in Alert FW (not Sales Data chrome)
     check("mountSdmConfirmBar" not in js, "1/7 no mountSdmConfirmBar")
@@ -333,8 +386,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260926-alloc2" in html,
-            f"{rel} cache-bust alloc2",
+            "kpi-planning-readiness.js?v=20260926-bdr1" in html,
+            f"{rel} cache-bust bdr1",
         )
 
     # regression markers still present

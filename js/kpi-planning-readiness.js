@@ -25,8 +25,27 @@
   var BODY_NOT_READY = 'kpi-pr-not-ready';
   var CSS_ID = 'kpi-planning-readiness-css';
   var ALERT_ID = 'kpi-pr-alert-fw';
+  var DISMISS_KEY = 'kpi-pr-alert-dismissed';
   var pageAlertDismissed = false;
   var completeTimer = null;
+  var histReview = { mode: null, index: 0, total: 0 };
+
+  function isAlertDismissed() {
+    if (pageAlertDismissed) return true;
+    try {
+      return sessionStorage.getItem(DISMISS_KEY) === '1';
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function setAlertDismissed(v) {
+    pageAlertDismissed = !!v;
+    try {
+      if (v) sessionStorage.setItem(DISMISS_KEY, '1');
+      else sessionStorage.removeItem(DISMISS_KEY);
+    } catch (_e2) {}
+  }
 
   function pageLang() {
     try {
@@ -76,6 +95,23 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: '閉じる',
+        reasonHistBd: '過去営業日確認',
+        histBdCount: '日未確定',
+        histBdReview: '確認する',
+        histBdLater: 'あとで',
+        histBdGuess: '推定どおり一括確定',
+        histBdAllClosed: 'すべて店休日',
+        histBdAllOpen: 'すべて営業日',
+        histBdOneByOne: '個別に確認',
+        histBdReviewTitle: '過去営業日の確認',
+        histBdOpen: '営業日',
+        histBdClosed: '店休日',
+        histBdSales: '売上',
+        histBdCustomers: '客数',
+        histBdParties: '組数',
+        histBdExpense: '支出',
+        histBdDone: 'Business Day Calendar Confirmed',
+        histBdProgress: ' / ',
         anomalyAllocTip:
           '月次配分率合計が 100% ではありません。\n各月の繁閑期%を調整して合計を 100% にしてください。',
         anomalyAllocAria: '月次配分率合計の警告',
@@ -112,6 +148,23 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: 'Close',
+        reasonHistBd: 'Past business days',
+        histBdCount: ' days unconfirmed',
+        histBdReview: 'Review',
+        histBdLater: 'Later',
+        histBdGuess: 'Confirm estimated values',
+        histBdAllClosed: 'All closed days',
+        histBdAllOpen: 'All business days',
+        histBdOneByOne: 'Review one by one',
+        histBdReviewTitle: 'Review past business days',
+        histBdOpen: 'Open',
+        histBdClosed: 'Closed',
+        histBdSales: 'Sales',
+        histBdCustomers: 'Customers',
+        histBdParties: 'Parties',
+        histBdExpense: 'Expenses',
+        histBdDone: 'Business Day Calendar Confirmed',
+        histBdProgress: ' / ',
         anomalyAllocTip:
           'Monthly allocation total is not 100%.\nAdjust monthly H/L % until the total is 100%.',
         anomalyAllocAria: 'Monthly allocation total warning',
@@ -145,6 +198,23 @@
         seasonModeAuto: 'AUTO',
         seasonModeManual: 'MANUAL',
         dismiss: '關閉',
+        reasonHistBd: '過去營業日確認',
+        histBdCount: ' 日未確定',
+        histBdReview: '確認',
+        histBdLater: '稍後',
+        histBdGuess: '依推定一次確認',
+        histBdAllClosed: '全部設為店休日',
+        histBdAllOpen: '全部設為營業日',
+        histBdOneByOne: '逐日確認',
+        histBdReviewTitle: '確認過去營業日',
+        histBdOpen: '營業日',
+        histBdClosed: '店休日',
+        histBdSales: '銷售',
+        histBdCustomers: '客數',
+        histBdParties: '組數',
+        histBdExpense: '支出',
+        histBdDone: 'Business Day Calendar Confirmed',
+        histBdProgress: ' / ',
         anomalyAllocTip:
           '月度分配率合計不是 100%。\n請調整各月淡旺季%，使合計為 100%。',
         anomalyAllocAria: '月度分配率合計警告',
@@ -155,6 +225,50 @@
 
   function storeApi() {
     return global.KpiYearStore || null;
+  }
+
+  function unresolvedBusinessDayCount() {
+    var api = storeApi();
+    if (api && typeof api.unresolvedBusinessDayCount === 'function') {
+      var n = Number(api.unresolvedBusinessDayCount());
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+    return 0;
+  }
+
+  function listUnresolvedBusinessDays() {
+    var api = storeApi();
+    if (api && typeof api.listUnresolvedBusinessDays === 'function') {
+      return api.listUnresolvedBusinessDays() || [];
+    }
+    return [];
+  }
+
+  function allUnresolvedGuessable() {
+    var api = storeApi();
+    if (!api || typeof api.getUnresolvedBusinessDay !== 'function') return false;
+    var isos = listUnresolvedBusinessDays();
+    if (!isos.length) return false;
+    var i;
+    for (i = 0; i < isos.length; i++) {
+      var rec = api.getUnresolvedBusinessDay(isos[i]) || {};
+      if (rec.reason !== 'expense-only') return false;
+    }
+    return true;
+  }
+
+  function formatYen(n) {
+    var x = Math.round(Number(n) || 0);
+    var sign = x < 0 ? '-' : '';
+    return sign + '¥' + String(Math.abs(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function formatIsoSlash(iso) {
+    return String(iso || '').replace(/-/g, '/');
+  }
+
+  function histCountLabel(n) {
+    return String(n) + t('histBdCount');
   }
 
   function operatingYear() {
@@ -527,6 +641,7 @@
     var missingReasons = [];
     var provisionalReasons = [];
     var state = STATE.READY;
+    var histCount = unresolvedBusinessDayCount();
 
     if (!annualOk) {
       state = STATE.NOT_READY;
@@ -542,6 +657,10 @@
         else provisionalReasons.push('seasonality');
       }
       if (provisionalReasons.length) state = STATE.PROVISIONAL;
+    }
+    if (histCount > 0) {
+      provisionalReasons.push('historicalBusinessDays');
+      if (state === STATE.READY) state = STATE.PROVISIONAL;
     }
 
     return {
@@ -565,6 +684,8 @@
       openDayCount: countOpenDays(y),
       needsBdAction: annualOk && bdStatus !== 'confirmed',
       needsSeasonAction: annualOk && !!seasonEval.needsSeasonAction,
+      unresolvedCount: histCount,
+      needsHistBdAction: histCount > 0,
     };
   }
 
@@ -764,7 +885,7 @@
       persistStoreQuiet();
       emitChanged(y);
       if (document.getElementById(ALERT_ID)) {
-        pageAlertDismissed = false;
+        setAlertDismissed(false);
         renderAlertFw({ force: true, afterAction: true });
       }
       return { ok: true, confirmed: false, reason: 'invalid', mode: 'manual' };
@@ -778,7 +899,7 @@
         clearDeviation: true,
       });
       if (document.getElementById(ALERT_ID)) {
-        pageAlertDismissed = false;
+        setAlertDismissed(false);
         renderAlertFw({ force: true, afterAction: true });
       }
       return { ok: !!res.ok, confirmed: true, mode: 'manual', matchRecommended: true };
@@ -790,7 +911,7 @@
     persistStoreQuiet();
     emitChanged(y);
     if (document.getElementById(ALERT_ID)) {
-      pageAlertDismissed = false;
+      setAlertDismissed(false);
       renderAlertFw({ force: true, afterAction: true });
     }
     return {
@@ -985,6 +1106,11 @@
       'body:not(.office-mode) .kpi-pr-dialog button.primary { background: #16301a; color: #9eff9e; }' +
       '.kpi-pr-season-mode { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; opacity: 0.85; letter-spacing: 0.04em; }' +
       '.kpi-pr-alert__note { margin: 0 0 8px; font-size: 13px; opacity: 0.95; }' +
+      '.kpi-pr-alert__progress { font-weight: 700; margin: 0 0 8px; font-variant-numeric: tabular-nums; }' +
+      'body:not(.office-mode) .kpi-pr-alert__progress { color: #9eff9e; }' +
+      'body:not(.office-mode) .kpi-pr-alert.is-hist-done .kpi-pr-alert__title { color: #9eff9e; letter-spacing: 0.04em; }' +
+      '.kpi-pr-alert__facts { margin: 0 0 10px; padding: 0; list-style: none; }' +
+      '.kpi-pr-alert__facts li { margin: 0 0 2px; }' +
       /* Seasonality anomaly — marker stays; detailed tip respects Tutorial */ '' +
       '.annual-kpi-allocation-cluster.is-seasonality-anomaly .annual-kpi-strip-label--allocation,' +
       '.annual-kpi-allocation-cluster.is-seasonality-anomaly .annual-allocation-percent {' +
@@ -1067,6 +1193,7 @@
     if (snap.annualTarget === 'missing') labels.push(t('reasonAnnual'));
     if (snap.businessDays !== 'confirmed') labels.push(t('reasonBd'));
     if (snap.seasonality !== 'confirmed') labels.push(t('reasonSeason'));
+    if (snap.unresolvedCount > 0) labels.push(t('reasonHistBd'));
     return labels;
   }
 
@@ -1188,13 +1315,16 @@
     }
   }
 
-  function showCompleteThenClose() {
+  function showCompleteThenClose(opts) {
+    opts = opts || {};
     var el = document.getElementById(ALERT_ID) || document.createElement('div');
     el.id = ALERT_ID;
-    el.className = 'kpi-pr-alert';
+    el.className = 'kpi-pr-alert' + (opts.histBdDone ? ' is-hist-done' : '');
     el.setAttribute('role', 'status');
     el.innerHTML = '<p class="kpi-pr-alert__title"></p>';
-    el.querySelector('.kpi-pr-alert__title').textContent = t('alertDone');
+    el.querySelector('.kpi-pr-alert__title').textContent = opts.histBdDone
+      ? t('histBdDone')
+      : t('alertDone');
     if (!el.parentNode) document.body.appendChild(el);
     if (completeTimer) clearTimeout(completeTimer);
     completeTimer = setTimeout(function () {
@@ -1204,8 +1334,168 @@
   }
 
   function afterConfirmRefresh() {
-    pageAlertDismissed = false;
+    setAlertDismissed(false);
     renderAlertFw({ force: true, afterAction: true });
+  }
+
+  function finishHistReview(didResolve) {
+    histReview = { mode: null, index: 0, total: 0 };
+    var snap = evaluate(operatingYear());
+    setAlertDismissed(false);
+    renderAlertFw({
+      force: true,
+      afterAction: !!didResolve,
+      histBdDone: !!didResolve && snap.unresolvedCount === 0 && snap.state === STATE.READY,
+    });
+  }
+
+  function applyBulkUnresolved(isOpen) {
+    var api = storeApi();
+    if (!api || typeof api.resolveAllUnresolvedBusinessDays !== 'function') return;
+    api.resolveAllUnresolvedBusinessDays(!!isOpen);
+    finishHistReview(true);
+  }
+
+  function startHistChoose() {
+    histReview = { mode: 'choose', index: 0, total: unresolvedBusinessDayCount() };
+    setAlertDismissed(false);
+    renderAlertFw({ force: true });
+  }
+
+  function startHistOneByOne() {
+    var n = unresolvedBusinessDayCount();
+    histReview = { mode: 'one', index: 0, total: n };
+    setAlertDismissed(false);
+    renderAlertFw({ force: true });
+  }
+
+  function resolveCurrentHistDay(isOpen) {
+    var api = storeApi();
+    if (!api || typeof api.resolveUnresolvedBusinessDay !== 'function') return;
+    var isos = listUnresolvedBusinessDays();
+    var iso = isos[histReview.index] || isos[0];
+    if (!iso) {
+      finishHistReview(true);
+      return;
+    }
+    api.resolveUnresolvedBusinessDay(iso, !!isOpen);
+    var left = listUnresolvedBusinessDays();
+    if (!left.length) {
+      finishHistReview(true);
+      return;
+    }
+    if (histReview.index >= left.length) histReview.index = 0;
+    renderAlertFw({ force: true });
+  }
+
+  function dismissHistReview() {
+    histReview = { mode: null, index: 0, total: 0 };
+    setAlertDismissed(true);
+    closeAlertFw();
+  }
+
+  function bindHistReviewActions(el) {
+    el.onclick = function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('[data-pr-act]') : null;
+      if (!btn) return;
+      var act = btn.getAttribute('data-pr-act');
+      if (act === 'dismiss' || act === 'hist-later') {
+        dismissHistReview();
+        return;
+      }
+      if (act === 'hist-guess') applyBulkUnresolved(false);
+      if (act === 'hist-all-closed') applyBulkUnresolved(false);
+      if (act === 'hist-all-open') applyBulkUnresolved(true);
+      if (act === 'hist-one') startHistOneByOne();
+      if (act === 'hist-open') resolveCurrentHistDay(true);
+      if (act === 'hist-closed') resolveCurrentHistDay(false);
+    };
+  }
+
+  function renderHistReviewFw(el, snap) {
+    var html = '';
+    html += '<p class="kpi-pr-alert__title"></p>';
+    html += '<p class="kpi-pr-alert__body"></p>';
+    if (histReview.mode === 'one') {
+      var api = storeApi();
+      var isos = listUnresolvedBusinessDays();
+      if (!isos.length) {
+        finishHistReview(true);
+        return;
+      }
+      if (histReview.index >= isos.length) histReview.index = 0;
+      var iso = isos[histReview.index];
+      var rec = (api && typeof api.getUnresolvedBusinessDay === 'function'
+        ? api.getUnresolvedBusinessDay(iso)
+        : null) || {};
+      var currentNum = Math.max(1, (histReview.total || isos.length) - isos.length + 1);
+      html +=
+        '<div class="kpi-pr-alert__section" data-pr-section="hist-one">' +
+        '<p class="kpi-pr-alert__progress"></p>' +
+        '<p class="kpi-pr-alert__section-title"></p>' +
+        '<ul class="kpi-pr-alert__facts">' +
+        '<li data-pr-fact="sales"></li>' +
+        '<li data-pr-fact="customers"></li>' +
+        '<li data-pr-fact="parties"></li>' +
+        '<li data-pr-fact="expense"></li>' +
+        '</ul>' +
+        '<div class="kpi-pr-alert__row">' +
+        '<button type="button" class="kpi-pr-alert__primary" data-pr-act="hist-open"></button>' +
+        '<button type="button" data-pr-act="hist-closed"></button>' +
+        '</div></div>';
+      html +=
+        '<div class="kpi-pr-alert__actions">' +
+        '<button type="button" data-pr-act="hist-later"></button></div>';
+      el.innerHTML = html;
+      el.querySelector('.kpi-pr-alert__title').textContent = t('histBdReviewTitle');
+      el.querySelector('.kpi-pr-alert__body').textContent = histCountLabel(snap.unresolvedCount);
+      el.querySelector('.kpi-pr-alert__progress').textContent =
+        String(currentNum) + t('histBdProgress') + String(histReview.total || snap.unresolvedCount);
+      el.querySelector('.kpi-pr-alert__section-title').textContent = formatIsoSlash(iso);
+      el.querySelector('[data-pr-fact="sales"]').textContent =
+        t('histBdSales') + ' ' + formatYen(rec.sales);
+      el.querySelector('[data-pr-fact="customers"]').textContent =
+        t('histBdCustomers') + ' ' + String(Number(rec.customers) || 0);
+      el.querySelector('[data-pr-fact="parties"]').textContent =
+        t('histBdParties') + ' ' + String(Number(rec.parties) || 0);
+      el.querySelector('[data-pr-fact="expense"]').textContent =
+        t('histBdExpense') + ' ' + formatYen(rec.expense);
+      el.querySelector('[data-pr-act="hist-open"]').textContent = t('histBdOpen');
+      el.querySelector('[data-pr-act="hist-closed"]').textContent = t('histBdClosed');
+      el.querySelector('[data-pr-act="hist-later"]').textContent = t('histBdLater');
+      bindHistReviewActions(el);
+      return;
+    }
+
+    html +=
+      '<div class="kpi-pr-alert__section" data-pr-section="hist-choose">' +
+      '<p class="kpi-pr-alert__section-title"></p>' +
+      '<p class="kpi-pr-alert__note" data-pr-note="hist-count"></p>' +
+      '<div class="kpi-pr-alert__row">';
+    if (allUnresolvedGuessable()) {
+      html +=
+        '<button type="button" class="kpi-pr-alert__primary" data-pr-act="hist-guess"></button>';
+    }
+    html +=
+      '<button type="button" data-pr-act="hist-all-closed"></button>' +
+      '<button type="button" data-pr-act="hist-all-open"></button>' +
+      '<button type="button" data-pr-act="hist-one"></button>' +
+      '</div></div>';
+    html +=
+      '<div class="kpi-pr-alert__actions">' +
+      '<button type="button" data-pr-act="hist-later"></button></div>';
+    el.innerHTML = html;
+    el.querySelector('.kpi-pr-alert__title').textContent = t('histBdReviewTitle');
+    el.querySelector('.kpi-pr-alert__body').textContent = t('alertBody');
+    el.querySelector('.kpi-pr-alert__section-title').textContent = t('reasonHistBd');
+    el.querySelector('[data-pr-note="hist-count"]').textContent = histCountLabel(snap.unresolvedCount);
+    var guessBtn = el.querySelector('[data-pr-act="hist-guess"]');
+    if (guessBtn) guessBtn.textContent = t('histBdGuess');
+    el.querySelector('[data-pr-act="hist-all-closed"]').textContent = t('histBdAllClosed');
+    el.querySelector('[data-pr-act="hist-all-open"]').textContent = t('histBdAllOpen');
+    el.querySelector('[data-pr-act="hist-one"]').textContent = t('histBdOneByOne');
+    el.querySelector('[data-pr-act="hist-later"]').textContent = t('histBdLater');
+    bindHistReviewActions(el);
   }
 
   function runConfirmBusinessDays() {
@@ -1275,18 +1565,19 @@
   function renderAlertFw(opts) {
     opts = opts || {};
     var snap = evaluate(operatingYear());
+    if (snap.unresolvedCount === 0) histReview.mode = null;
 
     if (snap.state === STATE.READY) {
-      if (opts.afterAction) showCompleteThenClose();
+      if (opts.afterAction) showCompleteThenClose({ histBdDone: !!opts.histBdDone });
       else closeAlertFw();
       return;
     }
 
-    if (snap.state === STATE.NOT_READY && !snap.needsBdAction && !snap.needsSeasonAction) {
+    if (snap.state === STATE.NOT_READY && !snap.needsBdAction && !snap.needsSeasonAction && !snap.needsHistBdAction) {
       // annual missing only — still show message without confirm actions
     }
 
-    if (!opts.force && !opts.afterAction && pageAlertDismissed) return;
+    if (!opts.force && !opts.afterAction && isAlertDismissed()) return;
 
     var el = document.getElementById(ALERT_ID);
     if (!el) {
@@ -1298,9 +1589,23 @@
       document.body.appendChild(el);
     }
 
+    if (histReview.mode === 'choose' || histReview.mode === 'one') {
+      renderHistReviewFw(el, snap);
+      return;
+    }
+
     var html = '';
     html += '<p class="kpi-pr-alert__title"></p>';
     html += '<p class="kpi-pr-alert__body"></p>';
+    if (snap.needsHistBdAction) {
+      html +=
+        '<div class="kpi-pr-alert__section" data-pr-section="hist-bd">' +
+        '<p class="kpi-pr-alert__section-title"></p>' +
+        '<p class="kpi-pr-alert__note" data-pr-note="hist-count"></p>' +
+        '<div class="kpi-pr-alert__row">' +
+        '<button type="button" class="kpi-pr-alert__primary" data-pr-act="hist-review"></button>' +
+        '</div></div>';
+    }
     if (snap.needsBdAction) {
       html +=
         '<div class="kpi-pr-alert__section" data-pr-section="bd">' +
@@ -1346,6 +1651,12 @@
     el.querySelector('.kpi-pr-alert__title').textContent = t('alertTitle');
     el.querySelector('.kpi-pr-alert__body').textContent = t('alertBody');
 
+    var histSec = el.querySelector('[data-pr-section="hist-bd"]');
+    if (histSec) {
+      histSec.querySelector('.kpi-pr-alert__section-title').textContent = t('reasonHistBd');
+      histSec.querySelector('[data-pr-note="hist-count"]').textContent = histCountLabel(snap.unresolvedCount);
+      histSec.querySelector('[data-pr-act="hist-review"]').textContent = t('histBdReview');
+    }
     var bdSec = el.querySelector('[data-pr-section="bd"]');
     if (bdSec) {
       bdSec.querySelector('.kpi-pr-alert__section-title').textContent = t('reasonBd');
@@ -1378,10 +1689,11 @@
       if (!btn) return;
       var act = btn.getAttribute('data-pr-act');
       if (act === 'dismiss') {
-        pageAlertDismissed = true;
+        setAlertDismissed(true);
         closeAlertFw();
         return;
       }
+      if (act === 'hist-review') startHistChoose();
       if (act === 'confirm-bd') runConfirmBusinessDays();
       if (act === 'edit-bd' || act === 'edit-annual') openSalesDataModal(false);
       if (act === 'confirm-season' || act === 'confirm-season-override') runConfirmSeasonality();
@@ -1391,12 +1703,21 @@
   }
 
   function showPageEntryAlert(force) {
-    if (!force && pageAlertDismissed) return;
+    if (!force && isAlertDismissed()) return;
     renderAlertFw({ force: !!force });
   }
 
   function bindListeners() {
     function onDataChanged(ev) {
+      var action = ev && ev.detail ? ev.detail.action : '';
+      if (action === 'ingest-hist-bd') {
+        setAlertDismissed(false);
+        applyBodyState();
+        refreshTooltips();
+        refreshSeasonalityModeBadge();
+        renderAlertFw({ force: true });
+        return;
+      }
       // Avoid re-entry loops from our own emitChanged
       if (ev && ev.type === 'kpi:planningReadinessChanged') {
         applyBodyState();
@@ -1410,8 +1731,9 @@
       applyBodyState();
       refreshTooltips();
       refreshSeasonalityModeBadge();
+      if (histReview.mode) return;
       if (document.getElementById(ALERT_ID)) {
-        pageAlertDismissed = false;
+        setAlertDismissed(false);
         renderAlertFw({ force: true });
       }
     }

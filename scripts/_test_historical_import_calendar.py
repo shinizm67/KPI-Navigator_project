@@ -146,11 +146,16 @@ def has_biz(maps: dict, iso: str) -> bool:
     return iso in ((maps or {}).get("businessDayByDate") or {})
 
 
+def unresolved(maps: dict, iso: str):
+    return ((maps or {}).get("unresolvedBusinessDayByDate") or {}).get(iso)
+
+
 def main() -> int:
     src = daily_sales_import_js()
     assert_true("completeHistoricalImport" in src, "importer embed includes completion")
     begin = src.split("function beginImport(options)", 1)[-1]
     assert_true("completeHistoricalImport" in begin, "beginImport calls completion")
+    assert_true("ingestHistoricalBusinessDayReview" in begin, "beginImport ingests unresolved days")
     assert_true(
         "persistByCsvYear &&" not in begin.split("completeHistoricalImport", 1)[0],
         "BD inference is not entry-point gated",
@@ -185,7 +190,7 @@ def main() -> int:
     )
     assert_true(biz(t4.get("maps"), "2025-11-12") is True, "4 parties>0 open")
 
-    # 5. expense only → does NOT force business day
+    # 5. expense only → unresolved, not open
     t5 = run_case(
         {
             "op": "completeMaps",
@@ -200,8 +205,11 @@ def main() -> int:
     )
     assert_true(biz(t5.get("maps"), "2025-11-10") is not True, "5 expense-only does not open")
     assert_true(not has_biz(t5.get("maps"), "2025-11-10"), "5 expense-only omits BD key")
+    u5 = unresolved(t5.get("maps"), "2025-11-10") or {}
+    assert_true(u5.get("reason") == "expense-only", "5 expense-only marked unresolved")
+    assert_true(u5.get("expense") == 18000, "5 expense snapshot kept")
 
-    # 6. no activity + existing business day → preserve
+    # 6. present zero + no expense → auto-close
     t6 = run_case(
         {
             "op": "completeMaps",
@@ -211,11 +219,13 @@ def main() -> int:
             "existingSales": {"2025-11-02": 88000},
         }
     )
-    assert_true(not has_biz(t6.get("maps"), "2025-11-02"), "6 inference omits BD when no activity")
-    assert_true((t6.get("persisted") or {}).get("biz", {}).get("2025-11-02") is True, "6 persist preserves open")
-    assert_true((t6.get("persisted") or {}).get("sales", {}).get("2025-11-02") == 0, "6 sales 0 overwrites stale independently")
+    assert_true(has_biz(t6.get("maps"), "2025-11-02"), "6 present zero writes BD key")
+    assert_true(biz(t6.get("maps"), "2025-11-02") is False, "6 present zero auto-close")
+    assert_true(unresolved(t6.get("maps"), "2025-11-02") is None, "6 present zero not unresolved")
+    assert_true((t6.get("persisted") or {}).get("biz", {}).get("2025-11-02") is False, "6 persist writes closed")
+    assert_true((t6.get("persisted") or {}).get("sales", {}).get("2025-11-02") == 0, "6 sales 0 overwrites independently")
 
-    # 7. no activity + existing closed day → preserve
+    # 7. present closed stays closed (auto-close)
     t7 = run_case(
         {
             "op": "completeMaps",
@@ -225,8 +235,8 @@ def main() -> int:
             "existingSales": {"2025-11-03": 120227},
         }
     )
-    assert_true(not has_biz(t7.get("maps"), "2025-11-03"), "7 inference omits BD when no activity")
-    assert_true((t7.get("persisted") or {}).get("biz", {}).get("2025-11-03") is False, "7 persist preserves closed")
+    assert_true(biz(t7.get("maps"), "2025-11-03") is False, "7 present zero auto-close")
+    assert_true((t7.get("persisted") or {}).get("biz", {}).get("2025-11-03") is False, "7 persist stays closed")
     assert_true((t7.get("persisted") or {}).get("sales", {}).get("2025-11-03") == 0, "7 stale sales cleared independently")
 
     row_open = run_case(
@@ -343,8 +353,14 @@ def main() -> int:
     assert_true(biz(after13, "2025-11-04") is True, "Barca 11/4 business day")
     assert_true(biz(after13, "2025-11-02") is not True, "Barca 11/2 not forced open")
     assert_true(biz(after13, "2025-11-03") is not True, "Barca 11/3 not forced open")
-    assert_true(not has_biz(after13, "2025-11-02"), "Barca 11/2 BD omitted (preserve existing)")
-    assert_true(not has_biz(after13, "2025-11-03"), "Barca 11/3 BD omitted (preserve existing)")
+    if unresolved(after13, "2025-11-02"):
+        assert_true(not has_biz(after13, "2025-11-02"), "Barca 11/2 expense-only unresolved omits BD")
+    else:
+        assert_true(biz(after13, "2025-11-02") is False, "Barca 11/2 present zero auto-close")
+    if unresolved(after13, "2025-11-03"):
+        assert_true(not has_biz(after13, "2025-11-03"), "Barca 11/3 expense-only unresolved omits BD")
+    else:
+        assert_true(biz(after13, "2025-11-03") is False, "Barca 11/3 present zero auto-close")
     assert_true((after13.get("salesByDate") or {}).get("2025-11-03") == 0, "Barca 11/3 sales 0 independent of BD")
     assert_true("2025-12-01" not in (after13.get("salesByDate") or {}), "Barca no Dec overflow")
 

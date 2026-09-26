@@ -137,6 +137,7 @@ def evaluate(
     business_days_map: dict[str, bool],
     hl_weights: list[int],
     pr: dict[str, Any] | None,
+    unresolved_count: int = 0,
 ) -> dict[str, Any]:
     pr = pr or {}
     annual_ok = annual_target is not None and float(annual_target) > 0
@@ -164,6 +165,9 @@ def evaluate(
 
     missing: list[str] = []
     provisional: list[str] = []
+    hist_count = int(unresolved_count or 0)
+    if hist_count < 0:
+        hist_count = 0
     if not annual_ok:
         state = STATE_NOT_READY
         missing.append("annualTarget")
@@ -180,6 +184,10 @@ def evaluate(
             else:
                 provisional.append("seasonality")
         state = STATE_PROVISIONAL if provisional else STATE_READY
+    if hist_count > 0:
+        provisional.append("historicalBusinessDays")
+        if state == STATE_READY:
+            state = STATE_PROVISIONAL
 
     return {
         "state": state,
@@ -191,4 +199,6 @@ def evaluate(
         "provisionalReasons": provisional,
         "businessDaysCurrentSignature": bd_cur,
         "seasonalityCurrentSignature": hl_cur,
+        "unresolvedCount": hist_count,
+        "needsHistBdAction": hist_count > 0,
     }

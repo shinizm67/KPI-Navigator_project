@@ -55,7 +55,7 @@ def kpi_year_store_js() -> str:
               legacyMigrated: false,
               selectedDate: null,
             }},
-            timeline: {{ dailySales: {{}}, businessDays: {{}} }},
+            timeline: {{ dailySales: {{}}, businessDays: {{}}, businessDayUnresolved: {{}} }},
             years: {{}},
           }};
         }}
@@ -109,6 +109,10 @@ def kpi_year_store_js() -> str:
             store.timeline.businessDays = Object.assign(
               {{}},
               parsed.timeline.businessDays || {{}}
+            );
+            store.timeline.businessDayUnresolved = Object.assign(
+              {{}},
+              parsed.timeline.businessDayUnresolved || {{}}
             );
           }}
           if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {{
@@ -1275,6 +1279,9 @@ def kpi_year_store_js() -> str:
         function writeBusinessDay(iso, isOpen, meta) {{
           if (!canWriteBusinessDayFrom((meta && meta.source) || '', iso)) return false;
           store.timeline.businessDays[iso] = !!isOpen;
+          try {{
+            delete ensureUnresolvedMap()[iso];
+          }} catch (_eU) {{}}
           invalidateDailyFacts({{
             year: isoYear(iso),
             fromIso: iso,
@@ -1920,6 +1927,97 @@ def kpi_year_store_js() -> str:
           return merged;
         }}
 
+        function ensureUnresolvedMap() {{
+          if (!store.timeline.businessDayUnresolved || typeof store.timeline.businessDayUnresolved !== 'object') {{
+            store.timeline.businessDayUnresolved = {{}};
+          }}
+          return store.timeline.businessDayUnresolved;
+        }}
+
+        function ingestHistoricalBusinessDayReview(maps) {{
+          if (!maps || typeof maps !== 'object') return {{ ok: false }};
+          var unresolved = ensureUnresolvedMap();
+          var bizMap = maps.businessDayByDate || {{}};
+          var openMap = maps.unresolvedBusinessDayByDate || {{}};
+          Object.keys(bizMap).forEach(function (iso) {{
+            if (!validIso(iso)) return;
+            if (!Object.prototype.hasOwnProperty.call(bizMap, iso)) return;
+            store.timeline.businessDays[iso] = !!bizMap[iso];
+            delete unresolved[iso];
+          }});
+          Object.keys(openMap).forEach(function (iso) {{
+            if (!validIso(iso)) return;
+            unresolved[iso] = openMap[iso] && typeof openMap[iso] === 'object' ? openMap[iso] : {{ reason: 'unresolved' }};
+            if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {{
+              delete store.timeline.businessDays[iso];
+            }}
+          }});
+          persistStore();
+          try {{
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {{
+              detail: {{ source: 'historical-bd-review', action: 'ingest-hist-bd', bulk: true }},
+            }}));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {{
+              detail: {{ source: 'historical-bd-review', action: 'ingest-hist-bd' }},
+            }}));
+          }} catch (_eEv) {{}}
+          return {{ ok: true, unresolved: Object.keys(unresolved).length }};
+        }}
+
+        function listUnresolvedBusinessDays() {{
+          var map = ensureUnresolvedMap();
+          return Object.keys(map)
+            .filter(validIso)
+            .sort();
+        }}
+
+        function getUnresolvedBusinessDay(iso) {{
+          var map = ensureUnresolvedMap();
+          if (!validIso(iso) || !Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          return map[iso];
+        }}
+
+        function unresolvedBusinessDayCount() {{
+          return listUnresolvedBusinessDays().length;
+        }}
+
+        function resolveUnresolvedBusinessDay(iso, isOpen) {{
+          if (!validIso(iso)) return false;
+          var map = ensureUnresolvedMap();
+          store.timeline.businessDays[iso] = !!isOpen;
+          delete map[iso];
+          persistStore();
+          try {{
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {{
+              detail: {{ iso: iso, year: isoYear(iso), businessDay: !!isOpen, source: 'historical-bd-review', action: 'resolve-hist-bd' }},
+            }}));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {{
+              detail: {{ source: 'historical-bd-review', action: 'resolve-hist-bd' }},
+            }}));
+          }} catch (_eR) {{}}
+          return true;
+        }}
+
+        function resolveAllUnresolvedBusinessDays(isOpen) {{
+          var isos = listUnresolvedBusinessDays();
+          var map = ensureUnresolvedMap();
+          var i;
+          for (i = 0; i < isos.length; i++) {{
+            store.timeline.businessDays[isos[i]] = !!isOpen;
+            delete map[isos[i]];
+          }}
+          persistStore();
+          try {{
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {{
+              detail: {{ source: 'historical-bd-review', action: 'resolve-hist-bd', bulk: true }},
+            }}));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {{
+              detail: {{ source: 'historical-bd-review', action: 'resolve-hist-bd' }},
+            }}));
+          }} catch (_eAll) {{}}
+          return isos.length;
+        }}
+
         function hydrateNavFromStorage() {{
           var nav = gw().getJson(SELECTED_DATE_KEY);
           if (!nav || typeof nav !== 'object') return;
@@ -2269,6 +2367,12 @@ def kpi_year_store_js() -> str:
           syncToAnnualDaily: syncToAnnualDaily,
           persistFromAnnualDaily: persistFromAnnualDaily,
           persistFromPastSales: persistFromPastSales,
+          ingestHistoricalBusinessDayReview: ingestHistoricalBusinessDayReview,
+          listUnresolvedBusinessDays: listUnresolvedBusinessDays,
+          getUnresolvedBusinessDay: getUnresolvedBusinessDay,
+          unresolvedBusinessDayCount: unresolvedBusinessDayCount,
+          resolveUnresolvedBusinessDay: resolveUnresolvedBusinessDay,
+          resolveAllUnresolvedBusinessDays: resolveAllUnresolvedBusinessDays,
           syncLegacyKeys: syncLegacyKeys,
           setSelectedDate: setSelectedDate,
           getSelectedDate: getSelectedDate,

@@ -2701,7 +2701,7 @@
     <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
-    <script src="../../../../js/kpi-workbook-layout.js?v=20260926-hcc2"></script>
+    <script src="../../../../js/kpi-workbook-layout.js?v=20260926-bdr1"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"></script>
     <script src="../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"></script>
@@ -3247,7 +3247,7 @@
         }
       };
 
-                                                                                                                                                                                                                                                                                                      /* KPI-YEAR-STORE */
+                                                                                                                                                                                                                                                                                                            /* KPI-YEAR-STORE */
       (function () {
         var STORE_KEY = 'kpiNavigator.kpiYearStore';
         var LEGACY_DAILY_KEY = 'kpiNavigator.annualDailyShared';
@@ -3287,7 +3287,7 @@
               legacyMigrated: false,
               selectedDate: null,
             },
-            timeline: { dailySales: {}, businessDays: {} },
+            timeline: { dailySales: {}, businessDays: {}, businessDayUnresolved: {} },
             years: {},
           };
         }
@@ -3323,22 +3323,10 @@
           return changed;
         }
 
-        function readStorePayloadFromLocal() {
-          try {
-            var raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return null;
-            return JSON.parse(raw);
-          } catch (_eRaw) {
-            return null;
-          }
-        }
-
         function loadStore() {
-          var preservedMepYears = snapshotMepYearRecords(store && store.years);
-          var parsed = readStorePayloadFromLocal();
+          var parsed = gw().getJson(STORE_KEY);
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
-            restoreMepYearRecords(preservedMepYears);
             return;
           }
           store = emptyStore();
@@ -3354,22 +3342,28 @@
               {},
               parsed.timeline.businessDays || {}
             );
+            store.timeline.businessDayUnresolved = Object.assign(
+              {},
+              parsed.timeline.businessDayUnresolved || {}
+            );
           }
-          var needPersist = sanitizePlaceholderSalesMap(store.timeline.dailySales);
+          if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {
+            persistStore();
+          }
           if (parsed.years && typeof parsed.years === 'object') {
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
-          restoreMepYearRecords(preservedMepYears);
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
-            needPersist = true;
+            persistStore();
           } else {
+            var hadFacts = false;
             Object.keys(store.years || {}).forEach(function (yk) {
-              if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
+              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
             });
+            if (hadFacts) persistStore();
           }
-          if (needPersist) persistStoreIfYearMepSafe();
         }
 
         function persistableStore() {
@@ -3442,7 +3436,7 @@
           if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          persistStoreIfYearMepSafe();
+          persistStore();
         }
 
         /** timeline に無い ISO のみ legacy キーから補完（リセット後の CSV 再取込前の復旧用） */
@@ -3500,131 +3494,6 @@
           if (!store.years[year]) store.years[year] = { year: year, status: 'open', plan: {} };
           if (!store.years[year].plan) store.years[year].plan = {};
           return store.years[year];
-        }
-
-        function cloneMepJson(value) {
-          try {
-            return JSON.parse(JSON.stringify(value));
-          } catch (_eClone) {
-            return null;
-          }
-        }
-
-        function mepStreamMapHasData(map) {
-          if (!map || typeof map !== 'object') return false;
-          var keys = Object.keys(map);
-          for (var i = 0; i < keys.length; i++) {
-            var byIso = map[keys[i]];
-            if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
-          }
-          return false;
-        }
-
-        function mepDailyMetaHasData(meta) {
-          if (!meta || typeof meta !== 'object') return false;
-          if (mepStreamMapHasData(meta.memos)) return true;
-          if (meta.weather && typeof meta.weather === 'object' && Object.keys(meta.weather).length) {
-            return true;
-          }
-          if (meta.flags && typeof meta.flags === 'object' && Object.keys(meta.flags).length) {
-            return true;
-          }
-          return false;
-        }
-
-        function mepNotesHasData(notes) {
-          if (!notes || typeof notes !== 'object') return false;
-          var keys = Object.keys(notes);
-          for (var i = 0; i < keys.length; i++) {
-            if (String(notes[keys[i]] == null ? '' : notes[keys[i]]).trim()) return true;
-          }
-          return false;
-        }
-
-        var MEP_YEAR_PRESERVE_KEYS = [
-          'dailyIncome',
-          'dailyExpenses',
-          'dailyMeta',
-          'mepMemoRows',
-          'monthlyStrategyUserNotes',
-          'mepUpdatedAt',
-        ];
-
-        function yearMepFieldHasData(rec, key) {
-          if (!rec || typeof rec !== 'object') return false;
-          if (key === 'dailyIncome' || key === 'dailyExpenses') return mepStreamMapHasData(rec[key]);
-          if (key === 'dailyMeta') return mepDailyMetaHasData(rec[key]);
-          if (key === 'monthlyStrategyUserNotes') return mepNotesHasData(rec[key]);
-          if (key === 'mepMemoRows') return Array.isArray(rec[key]) && rec[key].length > 0;
-          if (key === 'mepUpdatedAt') return rec.mepUpdatedAt != null && rec.mepUpdatedAt !== '';
-          return rec[key] != null;
-        }
-
-        function yearRecordHasMepData(rec) {
-          if (!rec || typeof rec !== 'object') return false;
-          return (
-            mepStreamMapHasData(rec.dailyIncome) ||
-            mepStreamMapHasData(rec.dailyExpenses) ||
-            mepDailyMetaHasData(rec.dailyMeta) ||
-            mepNotesHasData(rec.monthlyStrategyUserNotes) ||
-            (Array.isArray(rec.mepMemoRows) && rec.mepMemoRows.length > 0)
-          );
-        }
-
-        function snapshotMepYearRecords(years) {
-          var out = {};
-          if (!years || typeof years !== 'object') return out;
-          Object.keys(years).forEach(function (yk) {
-            var rec = years[yk];
-            if (!rec || typeof rec !== 'object') return;
-            var snap = {};
-            var has = false;
-            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
-              if (!yearMepFieldHasData(rec, key)) return;
-              var cloned = cloneMepJson(rec[key]);
-              if (cloned == null) return;
-              snap[key] = cloned;
-              has = true;
-            });
-            if (has) out[String(yk)] = snap;
-          });
-          return out;
-        }
-
-        function restoreMepYearRecords(preserved) {
-          if (!preserved || typeof preserved !== 'object') return;
-          if (!store.years || typeof store.years !== 'object') store.years = {};
-          Object.keys(preserved).forEach(function (yk) {
-            var src = preserved[yk];
-            if (!src || typeof src !== 'object') return;
-            var yn = Number(yk);
-            if (!Number.isFinite(yn)) return;
-            var rec = ensureYearMepData(yn);
-            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
-              if (!yearMepFieldHasData(src, key)) return;
-              if (yearMepFieldHasData(rec, key)) return;
-              var cloned = cloneMepJson(src[key]);
-              if (cloned == null) return;
-              rec[key] = cloned;
-            });
-          });
-        }
-
-        function storeWouldPutHollowYearMep() {
-          var years = store.years || {};
-          var yks = Object.keys(years);
-          if (!yks.length) return true;
-          for (var i = 0; i < yks.length; i++) {
-            if (!yearRecordHasMepData(years[yks[i]])) return true;
-          }
-          return false;
-        }
-
-        /** Timeline/schema persist: keep year MEP maps; never PUT empty shells. */
-        function persistStoreIfYearMepSafe() {
-          if (storeWouldPutHollowYearMep()) return false;
-          persistStore();
-          return true;
         }
 
         var DAILY_MEAL_FIELDS = [
@@ -3743,7 +3612,6 @@
         }
 
         var EDIT_LEASE_KEY = 'kpiNavigator.kpiEditLeases';
-        var DAILY_SALES_INPUT_PATH_KEY = 'kpiNavigator.dailySalesInputPath';
         var TAB_ID_SESSION_KEY = 'kpiNavigator.kpiTabId';
         var SUBSCRIPTION_TIER_KEY = 'kpiNavigator.subscriptionTier';
         var EDIT_LEASE_TTL_MS = 120000;
@@ -3768,6 +3636,7 @@
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
+            persistStore();
           }
         }
 
@@ -3775,80 +3644,12 @@
           return normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual');
         }
 
-        function parseDailySalesInputPathValue(raw) {
-          if (raw == null || raw === '') return null;
-          var v = raw;
-          if (typeof raw === 'string') {
-            try {
-              v = JSON.parse(raw);
-            } catch (_eParse) {
-              v = raw;
-            }
-          }
-          if (v === 'annual' || v === 'mep') return v;
-          if (v && typeof v === 'object' && (v.path === 'annual' || v.path === 'mep')) {
-            return v.path;
-          }
-          return null;
-        }
-
-        function readDailySalesInputPathLightKey() {
-          try {
-            var fromGw = parseDailySalesInputPathValue(gw().getJson(DAILY_SALES_INPUT_PATH_KEY));
-            if (fromGw) return fromGw;
-          } catch (_eGw) {}
-          try {
-            return parseDailySalesInputPathValue(localStorage.getItem(DAILY_SALES_INPUT_PATH_KEY));
-          } catch (_eRaw) {
-            return null;
-          }
-        }
-
-        function writeDailySalesInputPathLightKey(path) {
-          try {
-            gw().setJson(DAILY_SALES_INPUT_PATH_KEY, {
-              path: path === 'mep' ? 'mep' : 'annual',
-              updatedAt: Date.now(),
-            });
-          } catch (_eWrite) {}
-        }
-
-        function applyDailySalesInputPathFromLightKey(opts) {
-          var next = readDailySalesInputPathLightKey();
-          if (!next) return false;
-          if (!isProSubscription()) next = 'annual';
-          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return false;
-          store.meta.dailySalesInputPath = next;
-          if (opts && opts.dispatch) {
-            document.dispatchEvent(
-              new CustomEvent('kpi:dailySalesInputPathChanged', {
-                detail: { path: next, source: 'storage' },
-              })
-            );
-          }
-          return true;
-        }
-
-        function applyDailySalesInputPathFromStorageRaw(raw) {
-          var next = parseDailySalesInputPathValue(raw);
-          if (raw == null || raw === '') next = 'annual';
-          if (!next) return;
-          if (!isProSubscription()) next = 'annual';
-          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return;
-          store.meta.dailySalesInputPath = next;
-          document.dispatchEvent(
-            new CustomEvent('kpi:dailySalesInputPathChanged', {
-              detail: { path: next, source: 'storage' },
-            })
-          );
-        }
-
         function setDailySalesInputPath(path) {
           if (!isProSubscription()) return;
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
-          writeDailySalesInputPathLightKey(next);
+          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -3915,8 +3716,7 @@
           var tabId = getTabId();
           var cur = leases[key];
           if (cur && cur.tabId !== tabId && cur.expiresAt >= now) {
-            /* KPI-MEP-LEASE-CF: 今開いている編集面が引き継ぐ */
-            if (!(meta && meta.steal)) return { ok: false, holder: cur };
+            return { ok: false, holder: cur };
           }
           leases[key] = {
             tabId: tabId,
@@ -3968,6 +3768,7 @@
           var next = !!enabled;
           if (!!store.meta.pastSalesEditEnabled === next) return;
           store.meta.pastSalesEditEnabled = next;
+          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:pastSalesEditChanged', {
               detail: { enabled: next },
@@ -4034,62 +3835,25 @@
           return canWriteDailySalesFrom(source, iso);
         }
 
-        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
-        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
-        var PLAN_USER_SAVED_SOURCES = {
-          'sales-data-save': true
-        };
-
-        function isUserSavedAnnualPlanSource(source) {
-          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
-        }
-
-        function hasSavedAnnualPlanTarget(year) {
-          var y = Number(year);
-          if (!Number.isFinite(y)) return false;
-          var rec = store.years[y];
-          if (!rec || !rec.plan) return false;
-          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
-          var n = Number(rec.plan.targetSales);
-          return Number.isFinite(n) && n > 0;
-        }
-
-        function readSavedAnnualPlanTarget(year) {
-          if (!hasSavedAnnualPlanTarget(year)) return null;
-          return Number(store.years[Number(year)].plan.targetSales);
-        }
-
-        function readBusinessDayFlag(iso) {
-          if (!validIso(iso)) return null;
+        /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
+        function isCalendarBusinessDay(y, m0, day) {
+          var d = new Date(y, m0, day);
+          if (d.getFullYear() !== y || d.getMonth() !== m0 || d.getDate() !== day) return false;
+          var dow = d.getDay();
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
           var bmap = store.timeline.businessDays;
+          var smap = store.timeline.dailySales;
+          var isWk = dow === 0 || dow === 6;
           if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
             return !!bmap[iso];
           }
-          return null;
-        }
-
-        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
-        function isUiBusinessDay(iso) {
-          if (!validIso(iso)) return false;
-          return readBusinessDayFlag(iso) !== false;
-        }
-
-        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
-        function isBaselineActualDay(iso) {
-          if (!validIso(iso)) return false;
-          var flag = readBusinessDayFlag(iso);
-          if (flag === false) return false;
-          if (flag === true) return true;
-          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
-          var n = Number(store.timeline.dailySales[iso]);
-          return Number.isFinite(n) && n > 0;
-        }
-
-        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
-        function isPlanningBusinessDay(iso) {
-          if (!validIso(iso)) return false;
-          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
-          return readBusinessDayFlag(iso) !== false;
+          if (smap && Object.prototype.hasOwnProperty.call(smap, iso)) {
+            var n = Number(smap[iso]);
+            if (!Number.isFinite(n)) return !isWk;
+            if (n === 0) return false;
+            return true;
+          }
+          return !isWk;
         }
 
         function computeObserved(year) {
@@ -4102,8 +3866,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
+              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
-              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -4225,6 +3989,7 @@
               fallbackJs();
             });
         }
+
         function flushThenRebuildYears(years, reason, opts) {
           var list = (years || [])
             .map(Number)
@@ -4257,6 +4022,7 @@
             return p;
           });
         }
+
         function runServerYearRebuild(year, reason, extra) {
           extra = extra || {};
           var y = Number(year);
@@ -4277,8 +4043,9 @@
               });
             });
           };
-          /* KPI-BUSY-NAV-OFF-CX: background year rebuild must NOT show Saving/Rebuilding.
-             Overlay stays only on explicit Save/CSV button handlers. */
+          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
+            return window.__KPI_BUSY.run('save', work).catch(function () {});
+          }
           return work();
         }
 
@@ -4342,6 +4109,7 @@
           });
           return true;
         }
+
         function snapHlWeightFromObserved(n) {
           if (n == null || !Number.isFinite(Number(n))) return 100;
           var snapped = Math.round(Number(n) / 5) * 5;
@@ -4429,6 +4197,7 @@
             );
           }
         }
+
         function listEligiblePastYearsForBaseline(operatingYear, maxYears) {
           var oy = Number(operatingYear);
           if (!Number.isFinite(oy)) return [];
@@ -4559,6 +4328,7 @@
             yearsUsed: yearsUsed,
           };
         }
+
         function ensureOperatingYearPlanDefaults() {
           var oy = getOperatingYear();
           var rec = ensureYearRecord(oy);
@@ -4659,7 +4429,7 @@
           }
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
-            persistStoreIfYearMepSafe();
+            persistStore();
             try {
               document.dispatchEvent(
                 new CustomEvent('kpi:yearRolloverCompleted', {
@@ -4741,6 +4511,9 @@
         function writeBusinessDay(iso, isOpen, meta) {
           if (!canWriteBusinessDayFrom((meta && meta.source) || '', iso)) return false;
           store.timeline.businessDays[iso] = !!isOpen;
+          try {
+            delete ensureUnresolvedMap()[iso];
+          } catch (_eU) {}
           invalidateDailyFacts({
             year: isoYear(iso),
             fromIso: iso,
@@ -4785,10 +4558,13 @@
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
-            return isPlanningBusinessDay(iso);
+          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
+            return !!store.timeline.businessDays[iso];
           }
-          return isBaselineActualDay(iso);
+          var d = new Date(iso + 'T00:00:00');
+          if (!isFinite(d.getTime())) return false;
+          var dow = d.getDay();
+          return dow !== 0 && dow !== 6;
         }
 
         function snapshotSalesAmt(iso) {
@@ -4894,7 +4670,7 @@
             };
           }
           rec.annualFacts = {
-            annualTarget: readSavedAnnualPlanTarget(year),
+            annualTarget: readAnnualTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -4922,6 +4698,7 @@
         }
 
         /* KPI-BULK-YEAR-REBUILD-AK */
+
         function rebuildTouchedYearsOnServer(yearsMap, reason, opts) {
           var years = Object.keys(yearsMap || {})
             .map(Number)
@@ -4973,14 +4750,12 @@
             rec.dailyIncome[streamId][iso] = Math.round(n);
           }
           rec.mepUpdatedAt = Date.now();
-          if (!(meta && meta.deferPersist)) {
-            persistStore();
-            document.dispatchEvent(
-              new CustomEvent('kpi:mepDataChanged', {
-                detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
-              })
-            );
-          }
+          persistStore();
+          document.dispatchEvent(
+            new CustomEvent('kpi:mepDataChanged', {
+              detail: { year: y, source: (meta && meta.source) || 'kpi-year-store' },
+            })
+          );
           return true;
         }
 
@@ -5116,6 +4891,7 @@
             if (dualError) throw dualError;
           });
         }
+
         function mergeDailyMaps(salesMap, bizMap, meta) {
           var src = (meta && meta.source) || 'kpi-year-store';
           var limitY =
@@ -5231,6 +5007,7 @@
             if (dualError) throw dualError;
           });
         }
+
         function syncLegacyKeys() {
           var oy = getOperatingYear();
           var annualSales = {};
@@ -5318,53 +5095,6 @@
           syncToPastSalesMemory();
         }
 
-        /** Sales Data / CSV Save: timeline総売上に合わせて dailyIncome の Store/A/B を同期 */
-        function syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix) {
-          if (!salesMap || typeof salesMap !== 'object') return;
-          Object.keys(salesMap).forEach(function (iso) {
-            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
-            if (!canEditIso(iso)) return;
-            var newTotal = Number(salesMap[iso]);
-            if (isLegacyPlaceholderSales(newTotal)) return;
-            if (!Number.isFinite(newTotal)) newTotal = 0;
-            newTotal = Math.round(newTotal);
-            var y = isoYear(iso);
-            var rec = ensureYearMepData(y);
-            var di = rec.dailyIncome;
-            function readStream(id) {
-              if (!di[id] || !Object.prototype.hasOwnProperty.call(di[id], iso)) return 0;
-              var v = Number(di[id][iso]);
-              return Number.isFinite(v) ? Math.round(v) : 0;
-            }
-            function writeStream(id, val) {
-              if (!di[id] || typeof di[id] !== 'object') di[id] = {};
-              var n = Math.round(Number(val) || 0);
-              if (!n) delete di[id][iso];
-              else di[id][iso] = n;
-            }
-            var a = readStream('sales_a');
-            var b = readStream('sales_b');
-            var streams = a + b;
-            if (streams > newTotal) {
-              try {
-                console.warn(
-                  '[kpi] annual total < A+B; clearing A/B',
-                  iso,
-                  newTotal,
-                  a,
-                  b
-                );
-              } catch (_eWarn) {}
-              writeStream('sales_a', 0);
-              writeStream('sales_b', 0);
-              writeStream('store_sales', newTotal);
-            } else {
-              writeStream('store_sales', newTotal - streams);
-            }
-            rec.mepUpdatedAt = Date.now();
-          });
-        }
-
         function persistSalesDataModalSave(daily, meta) {
           if (!daily) return;
           if (getDailySalesInputPath() !== 'annual') return;
@@ -5391,7 +5121,6 @@
             yearTouched = true;
           });
           if (!yearTouched) return Promise.resolve();
-          syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix);
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           persistStore();
           syncLegacyKeys();
@@ -5430,6 +5159,97 @@
           return merged;
         }
 
+        function ensureUnresolvedMap() {
+          if (!store.timeline.businessDayUnresolved || typeof store.timeline.businessDayUnresolved !== 'object') {
+            store.timeline.businessDayUnresolved = {};
+          }
+          return store.timeline.businessDayUnresolved;
+        }
+
+        function ingestHistoricalBusinessDayReview(maps) {
+          if (!maps || typeof maps !== 'object') return { ok: false };
+          var unresolved = ensureUnresolvedMap();
+          var bizMap = maps.businessDayByDate || {};
+          var openMap = maps.unresolvedBusinessDayByDate || {};
+          Object.keys(bizMap).forEach(function (iso) {
+            if (!validIso(iso)) return;
+            if (!Object.prototype.hasOwnProperty.call(bizMap, iso)) return;
+            store.timeline.businessDays[iso] = !!bizMap[iso];
+            delete unresolved[iso];
+          });
+          Object.keys(openMap).forEach(function (iso) {
+            if (!validIso(iso)) return;
+            unresolved[iso] = openMap[iso] && typeof openMap[iso] === 'object' ? openMap[iso] : { reason: 'unresolved' };
+            if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
+              delete store.timeline.businessDays[iso];
+            }
+          });
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { source: 'historical-bd-review', action: 'ingest-hist-bd', bulk: true },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'ingest-hist-bd' },
+            }));
+          } catch (_eEv) {}
+          return { ok: true, unresolved: Object.keys(unresolved).length };
+        }
+
+        function listUnresolvedBusinessDays() {
+          var map = ensureUnresolvedMap();
+          return Object.keys(map)
+            .filter(validIso)
+            .sort();
+        }
+
+        function getUnresolvedBusinessDay(iso) {
+          var map = ensureUnresolvedMap();
+          if (!validIso(iso) || !Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          return map[iso];
+        }
+
+        function unresolvedBusinessDayCount() {
+          return listUnresolvedBusinessDays().length;
+        }
+
+        function resolveUnresolvedBusinessDay(iso, isOpen) {
+          if (!validIso(iso)) return false;
+          var map = ensureUnresolvedMap();
+          store.timeline.businessDays[iso] = !!isOpen;
+          delete map[iso];
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { iso: iso, year: isoYear(iso), businessDay: !!isOpen, source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+          } catch (_eR) {}
+          return true;
+        }
+
+        function resolveAllUnresolvedBusinessDays(isOpen) {
+          var isos = listUnresolvedBusinessDays();
+          var map = ensureUnresolvedMap();
+          var i;
+          for (i = 0; i < isos.length; i++) {
+            store.timeline.businessDays[isos[i]] = !!isOpen;
+            delete map[isos[i]];
+          }
+          persistStore();
+          try {
+            document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd', bulk: true },
+            }));
+            document.dispatchEvent(new CustomEvent('kpi:planningReadinessChanged', {
+              detail: { source: 'historical-bd-review', action: 'resolve-hist-bd' },
+            }));
+          } catch (_eAll) {}
+          return isos.length;
+        }
+
         function hydrateNavFromStorage() {
           var nav = gw().getJson(SELECTED_DATE_KEY);
           if (!nav || typeof nav !== 'object') return;
@@ -5445,14 +5265,10 @@
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
           try {
-            var prevNav = gw().getJson(SELECTED_DATE_KEY);
-            if (!prevNav || typeof prevNav !== 'object' || Array.isArray(prevNav)) prevNav = {};
-            var nextNav = {
+            gw().setJson(SELECTED_DATE_KEY, {
               calendarYear: isoYear(iso),
               selectedIso: iso,
-            };
-            if (isoYear(iso) === getOperatingYear()) nextNav.operatingSelectedIso = iso;
-            gw().setJson(SELECTED_DATE_KEY, Object.assign({}, prevNav, nextNav));
+            });
           } catch (_e) {}
           document.dispatchEvent(
             new CustomEvent('kpi:selectedDateChanged', {
@@ -5714,7 +5530,6 @@
           if (!store.meta.operatingYear) store.meta.operatingYear = new Date().getFullYear();
           migrateLegacy();
           enforceSubscriptionTierDefaults();
-          applyDailySalesInputPathFromLightKey();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
             var yearsAll = {};
@@ -6428,6 +6243,37 @@
     );
   }
 
+  function expenseAmountOnIso(maps, iso) {
+    var total = 0;
+    if (nonzeroAmount(maps.expenseByDate, iso)) total += Number(maps.expenseByDate[iso]);
+    if (nonzeroAmount(maps.expenseAmountByDate, iso)) total += Number(maps.expenseAmountByDate[iso]);
+    var list = maps.unmatchedMetrics || maps.unknown || [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      var u = list[i];
+      if (!u || u.iso !== iso) continue;
+      if (u.kind === 'expense' || expenseLikeUnknown(u)) {
+        var n = Number(u.amount);
+        if (Number.isFinite(n) && n !== 0) total += n;
+      }
+    }
+    return total;
+  }
+
+  function snapshotUnresolvedDay(maps, iso, reason) {
+    return {
+      sales: hasOwn(maps.salesByDate, iso) ? Number(maps.salesByDate[iso]) || 0 : 0,
+      customers: hasOwn(maps.totalCustomersByDate, iso) ? Number(maps.totalCustomersByDate[iso]) || 0 : 0,
+      parties: hasOwn(maps.totalGroupsByDate, iso) ? Number(maps.totalGroupsByDate[iso]) || 0 : 0,
+      lunch: hasOwn(maps.lunchSalesByDate, iso) ? Number(maps.lunchSalesByDate[iso]) || 0 : 0,
+      dinner: hasOwn(maps.dinnerSalesByDate, iso) ? Number(maps.dinnerSalesByDate[iso]) || 0 : 0,
+      food: hasOwn(maps.foodByDate, iso) ? Number(maps.foodByDate[iso]) || 0 : 0,
+      drink: hasOwn(maps.drinkByDate, iso) ? Number(maps.drinkByDate[iso]) || 0 : 0,
+      expense: expenseAmountOnIso(maps, iso),
+      reason: reason || 'unresolved',
+    };
+  }
+
   function recountImportMeta(maps) {
     var years = {};
     var n = 0;
@@ -6447,17 +6293,28 @@
   }
 
   /**
-   * Shared post-parse calendar + business-day inference.
-   * Completes the date axis for importable months (sales 0 on missing days).
-   * Positive operational activity → businessDay = true.
-   * No activity → omit the key so persist preserves existing KPN state.
-   * Expense-only is not operational evidence. Future dates are left untouched.
+   * Shared post-parse calendar + business-day classification.
+   * Open: operational activity non-zero.
+   * Closed: date present in file, all operational activity 0/blank, no expense.
+   * Unresolved: no operational activity but expense (or other unsafe signal).
+   * Missing dates: fill sales 0 for the axis; do not force BD; do not mark unresolved.
    */
   function completeHistoricalImport(maps, opts) {
     if (!maps || typeof maps !== 'object') return maps;
     opts = opts || {};
     ensureMap(maps, 'salesByDate');
     ensureMap(maps, 'businessDayByDate');
+    ensureMap(maps, 'unresolvedBusinessDayByDate');
+    var presentBefore = {};
+    Object.keys(maps.salesByDate).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
+    Object.keys(maps.totalCustomersByDate || {}).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
+    Object.keys(maps.totalGroupsByDate || {}).forEach(function (iso) {
+      presentBefore[iso] = true;
+    });
     var limitIso = todayIso(opts);
     var months = collectMonthsFromMaps(maps);
     var keys = Object.keys(months);
@@ -6484,11 +6341,28 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        var wasPresent = !!presentBefore[iso];
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }
         if (inferHistoricalBusinessDay(maps, iso)) {
           maps.businessDayByDate[iso] = true;
+          if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+            delete maps.unresolvedBusinessDayByDate[iso];
+          }
+          continue;
+        }
+        var expenseN = expenseAmountOnIso(maps, iso);
+        if (expenseN !== 0) {
+          if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
+          maps.unresolvedBusinessDayByDate[iso] = snapshotUnresolvedDay(maps, iso, 'expense-only');
+          continue;
+        }
+        if (wasPresent) {
+          maps.businessDayByDate[iso] = false;
+          if (hasOwn(maps.unresolvedBusinessDayByDate, iso)) {
+            delete maps.unresolvedBusinessDayByDate[iso];
+          }
         } else if (hasOwn(maps.businessDayByDate, iso)) {
           delete maps.businessDayByDate[iso];
         }
@@ -7519,7 +7393,17 @@
                   }
                   if (options && typeof options.applyMaps !== 'function') return;
                   var apply = function () {
-                    return Promise.resolve(options.applyMaps(maps, targetYear));
+                    return Promise.resolve(options.applyMaps(maps, targetYear)).then(function (result) {
+                      try {
+                        if (
+                          window.KpiYearStore &&
+                          typeof KpiYearStore.ingestHistoricalBusinessDayReview === 'function'
+                        ) {
+                          KpiYearStore.ingestHistoricalBusinessDayReview(maps);
+                        }
+                      } catch (_eIng) {}
+                      return result;
+                    });
                   };
                   if (busy && typeof busy.run === 'function') {
                     return busy.run('import', apply, { count: maps.imported });
@@ -7620,6 +7504,1095 @@
             );
           },
         };
+      })();
+          hydrateNavFromStorage();
+          if (window.__ANNUAL_DATA) {
+            var navCy = gw().getJson(SELECTED_DATE_KEY);
+            if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
+            } else if (navCy && navCy.selectedIso && validIso(navCy.selectedIso)) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(navCy.selectedIso);
+            } else if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
+              window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
+            } else {
+              window.__ANNUAL_DATA.calendarYear = new Date().getFullYear();
+            }
+          }
+          ensureOperatingYearPlanDefaults();
+          syncToAnnualDaily();
+          try {
+            document.dispatchEvent(
+              new CustomEvent('kpi:readSurfacesRefresh', { detail: { source: 'init' } })
+            );
+          } catch (_eInit) {}
+        }
+
+
+        /* KPI-WEEKDAY-TARGET (Phase 11) */
+        var WEEKDAY_SHARE_FALLBACK = 1 / 7;
+
+        var __planMonthlyTargetsCache = {};
+        var __weekdayShareMatrixCache = {};
+        var __yearHasPositiveSalesCache = {};
+
+        function yearHasPositiveTimelineSales(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          if (Object.prototype.hasOwnProperty.call(__yearHasPositiveSalesCache, y)) {
+            return __yearHasPositiveSalesCache[y];
+          }
+          var has = false;
+          Object.keys(store.timeline.dailySales).forEach(function (iso) {
+            if (isoYear(iso) !== y) return;
+            var n = Number(store.timeline.dailySales[iso]);
+            if (Number.isFinite(n) && n > 0) has = true;
+          });
+          __yearHasPositiveSalesCache[y] = has;
+          return has;
+        }
+
+        function normalizeWeekdayBaselineYears(years, operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var seen = {};
+          var out = [];
+          (years || []).forEach(function (raw) {
+            var y = Number(raw);
+            if (!Number.isFinite(y) || y >= oy || seen[y]) return;
+            if (!yearHasPositiveTimelineSales(y)) return;
+            seen[y] = true;
+            out.push(y);
+          });
+          return out.sort(function (a, b) { return a - b; });
+        }
+
+        function listEligibleWeekdayBaselineYears(operatingYear, maxLookback) {
+          /* No fixed year limit: all past years with positive timeline sales.
+             maxLookback retained for API compat but ignored. */
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var seen = {};
+          var out = [];
+          function tryYear(y) {
+            if (!Number.isFinite(y) || y >= oy || seen[y]) return;
+            if (!yearHasPositiveTimelineSales(y)) return;
+            seen[y] = true;
+            out.push(y);
+          }
+          Object.keys(store.years).forEach(function (yk) {
+            tryYear(Number(yk));
+          });
+          listYearsWithData().forEach(function (y) {
+            tryYear(y);
+          });
+          Object.keys(store.timeline.dailySales || {}).forEach(function (iso) {
+            tryYear(isoYear(iso));
+          });
+          return out.sort(function (a, b) {
+            return a - b;
+          });
+        }
+
+        function getDefaultWeekdayBaselineYears(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var eligible = listEligibleWeekdayBaselineYears(oy);
+          var picked = [];
+          for (var i = eligible.length - 1; i >= 0 && picked.length < 2; i--) {
+            picked.unshift(eligible[i]);
+          }
+          return picked;
+        }
+
+        function normalizeWeekdayBaselineExcludedYears(years, operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var seen = {};
+          var out = [];
+          (years || []).forEach(function (raw) {
+            var y = Number(raw);
+            if (!Number.isFinite(y) || y >= oy || seen[y]) return;
+            seen[y] = true;
+            out.push(y);
+          });
+          return out.sort(function (a, b) {
+            return a - b;
+          });
+        }
+
+        function planHasWeekdayBaselineState(plan) {
+          if (!plan) return false;
+          if (Array.isArray(plan.weekdayBaselineExcludedYears)) return true;
+          if (
+            Array.isArray(plan.weekdayBaselineYears) &&
+            plan.weekdayBaselineYears.length
+          ) {
+            return true;
+          }
+          return false;
+        }
+
+        /* Legacy ON-list only → reconstruct explicit OFF among years that were
+           already candidates (≤ max selected). Newer eligible years auto-ON. */
+        function reconstructExcludedFromLegacySelection(selected, operatingYear) {
+          var oy = Number(operatingYear);
+          var selectedNorm = normalizeWeekdayBaselineYears(selected, oy);
+          if (!selectedNorm.length) return [];
+          var maxSel = selectedNorm[selectedNorm.length - 1];
+          var eligible = listEligibleWeekdayBaselineYears(oy);
+          var out = [];
+          eligible.forEach(function (y) {
+            if (y <= maxSel && selectedNorm.indexOf(y) < 0) out.push(y);
+          });
+          return out;
+        }
+
+        function findWeekdayBaselineStateRecord(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          for (var y = oy; y >= oy - 80; y--) {
+            var rec = store.years[y];
+            if (!rec || !rec.plan) continue;
+            if (!planHasWeekdayBaselineState(rec.plan)) continue;
+            return { year: y, plan: rec.plan };
+          }
+          return null;
+        }
+
+        function resolveWeekdayBaselineExcludedYears(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return [];
+          var found = findWeekdayBaselineStateRecord(oy);
+          if (!found) return [];
+          var plan = found.plan;
+          if (Array.isArray(plan.weekdayBaselineExcludedYears)) {
+            return normalizeWeekdayBaselineExcludedYears(
+              plan.weekdayBaselineExcludedYears,
+              oy
+            );
+          }
+          return reconstructExcludedFromLegacySelection(plan.weekdayBaselineYears, oy);
+        }
+
+        function materializeWeekdayBaselineState(operatingYear, selected, excluded, meta) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return false;
+          var selectedNorm = normalizeWeekdayBaselineYears(selected, oy);
+          if (!selectedNorm.length) return false;
+          var excludedNorm = normalizeWeekdayBaselineExcludedYears(excluded, oy);
+          var rec = ensureYearRecord(oy);
+          if (!rec.plan) rec.plan = {};
+          var prevSel = Array.isArray(rec.plan.weekdayBaselineYears)
+            ? rec.plan.weekdayBaselineYears.slice()
+            : null;
+          var prevEx = Array.isArray(rec.plan.weekdayBaselineExcludedYears)
+            ? rec.plan.weekdayBaselineExcludedYears.slice()
+            : null;
+          var sameSel =
+            prevSel &&
+            prevSel.length === selectedNorm.length &&
+            prevSel.every(function (y, i) {
+              return Number(y) === selectedNorm[i];
+            });
+          var sameEx =
+            prevEx &&
+            prevEx.length === excludedNorm.length &&
+            prevEx.every(function (y, i) {
+              return Number(y) === excludedNorm[i];
+            });
+          rec.plan.weekdayBaselineYears = selectedNorm.slice();
+          rec.plan.weekdayBaselineExcludedYears = excludedNorm.slice();
+          rec.plan.weekdayBaselineUpdatedAt = Date.now();
+          rec.plan.weekdayBaselineSource =
+            (meta && meta.source) || rec.plan.weekdayBaselineSource || 'kpi-year-store';
+          if (sameSel && sameEx) return true;
+          if (!(meta && meta.skipPersist)) persistStore();
+          clearDailyTargetDisplayCache();
+          if (!(meta && meta.silent)) {
+            document.dispatchEvent(
+              new CustomEvent('kpi:weekdayBaselineChanged', {
+                detail: {
+                  year: oy,
+                  weekdayBaselineYears: selectedNorm.slice(),
+                  weekdayBaselineExcludedYears: excludedNorm.slice(),
+                  source: rec.plan.weekdayBaselineSource,
+                  autoGrowth: !!(meta && meta.autoGrowth),
+                },
+              })
+            );
+          }
+          return true;
+        }
+
+        function readWeekdayBaselineExcludedYears(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) y = getOperatingYear();
+          return resolveWeekdayBaselineExcludedYears(y);
+        }
+
+        function readWeekdayBaselineYears(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) y = getOperatingYear();
+          var eligible = listEligibleWeekdayBaselineYears(y);
+          var found = findWeekdayBaselineStateRecord(y);
+          if (!found) {
+            return getDefaultWeekdayBaselineYears(y);
+          }
+          var excluded = resolveWeekdayBaselineExcludedYears(y);
+          var selected = [];
+          eligible.forEach(function (ey) {
+            if (excluded.indexOf(ey) < 0) selected.push(ey);
+          });
+          if (!selected.length) {
+            return getDefaultWeekdayBaselineYears(y);
+          }
+          /* Auto-growth: persist grown ON set onto operating year without flipping OFF. */
+          var rec = store.years[y];
+          var needsMaterialize =
+            !rec ||
+            !rec.plan ||
+            !Array.isArray(rec.plan.weekdayBaselineExcludedYears) ||
+            !Array.isArray(rec.plan.weekdayBaselineYears) ||
+            rec.plan.weekdayBaselineYears.length !== selected.length ||
+            selected.some(function (sy, i) {
+              return Number(rec.plan.weekdayBaselineYears[i]) !== sy;
+            });
+          if (needsMaterialize) {
+            var prevLen =
+              rec && rec.plan && Array.isArray(rec.plan.weekdayBaselineYears)
+                ? rec.plan.weekdayBaselineYears.length
+                : 0;
+            var grew = selected.length > prevLen;
+            materializeWeekdayBaselineState(y, selected, excluded, {
+              source: 'baseline-auto-growth',
+              autoGrowth: true,
+              silent: !grew,
+            });
+          }
+          return selected.slice();
+        }
+
+        function writeWeekdayBaselineYears(year, years, meta) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var normalized = normalizeWeekdayBaselineYears(years, y);
+          if (!normalized.length) return false;
+          var eligible = listEligibleWeekdayBaselineYears(y);
+          var excluded = [];
+          eligible.forEach(function (ey) {
+            if (normalized.indexOf(ey) < 0) excluded.push(ey);
+          });
+          /* Keep explicit OFF for years temporarily without data. */
+          resolveWeekdayBaselineExcludedYears(y).forEach(function (ey) {
+            if (ey >= y) return;
+            if (eligible.indexOf(ey) >= 0) return;
+            if (normalized.indexOf(ey) >= 0) return;
+            if (excluded.indexOf(ey) < 0) excluded.push(ey);
+          });
+          excluded.sort(function (a, b) {
+            return a - b;
+          });
+          return materializeWeekdayBaselineState(y, normalized, excluded, meta || {
+            source: 'kpi-year-store',
+          });
+        }
+
+        var SEASONALITY_ANOMALY_MAE = 12;
+        var SEASONALITY_ANOMALY_MAX_DEV = 25;
+
+        function seasonalityMedianMonths(rows) {
+          var out = [];
+          for (var m = 0; m < 12; m++) {
+            var col = [];
+            rows.forEach(function (row) {
+              var v = row && row[m] != null ? Number(row[m]) : NaN;
+              if (Number.isFinite(v)) col.push(v);
+            });
+            if (!col.length) {
+              out.push(null);
+              continue;
+            }
+            col.sort(function (a, b) {
+              return a - b;
+            });
+            var mid = Math.floor(col.length / 2);
+            out.push(
+              col.length % 2
+                ? col[mid]
+                : Math.round(((col[mid - 1] + col[mid]) / 2) * 100) / 100
+            );
+          }
+          return out;
+        }
+
+        function seasonalityDistance(a, b) {
+          if (!a || !b || a.length !== 12 || b.length !== 12) {
+            return { mae: null, maxDev: null };
+          }
+          var sum = 0;
+          var n = 0;
+          var maxDev = 0;
+          for (var i = 0; i < 12; i++) {
+            var av = Number(a[i]);
+            var bv = Number(b[i]);
+            if (!Number.isFinite(av) || !Number.isFinite(bv)) continue;
+            var d = Math.abs(av - bv);
+            sum += d;
+            n++;
+            if (d > maxDev) maxDev = d;
+          }
+          if (!n) return { mae: null, maxDev: null };
+          return {
+            mae: Math.round((sum / n) * 100) / 100,
+            maxDev: Math.round(maxDev * 100) / 100,
+          };
+        }
+
+        function assessSeasonalityAnomalies(operatingYear) {
+          /* Pattern-only: monthlyPct leave-one-out median vs peers among selected.
+             Never auto-OFF. Sales level alone is not used. */
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) oy = getOperatingYear();
+          var selected = readWeekdayBaselineYears(oy);
+          var eligible = listEligibleWeekdayBaselineYears(oy);
+          var vectors = {};
+          eligible.forEach(function (y) {
+            var obs =
+              typeof observedForPastYear === 'function' ? observedForPastYear(y) : null;
+            if (
+              !obs ||
+              !obs.monthlyPct ||
+              obs.monthlyPct.length !== 12
+            ) {
+              return;
+            }
+            var row = [];
+            var ok = true;
+            for (var i = 0; i < 12; i++) {
+              var v = Number(obs.monthlyPct[i]);
+              if (!Number.isFinite(v)) {
+                ok = false;
+                break;
+              }
+              row.push(v);
+            }
+            if (ok) vectors[y] = row;
+          });
+          var selectedSet = {};
+          selected.forEach(function (y) {
+            selectedSet[y] = true;
+          });
+          var details = [];
+          var flaggedYears = [];
+          Object.keys(vectors).forEach(function (yk) {
+            var y = Number(yk);
+            var peers = [];
+            selected.forEach(function (sy) {
+              if (sy === y) return;
+              if (vectors[sy]) peers.push(vectors[sy]);
+            });
+            if (peers.length < 1) {
+              details.push({
+                year: y,
+                flagged: false,
+                reason: 'insufficient-peers',
+                score: null,
+                maxDev: null,
+                selected: !!selectedSet[y],
+              });
+              return;
+            }
+            var ref = seasonalityMedianMonths(peers);
+            var dist = seasonalityDistance(vectors[y], ref);
+            var flagged =
+              dist.mae != null &&
+              (dist.mae >= SEASONALITY_ANOMALY_MAE ||
+                dist.maxDev >= SEASONALITY_ANOMALY_MAX_DEV);
+            if (flagged) flaggedYears.push(y);
+            details.push({
+              year: y,
+              flagged: flagged,
+              reason: flagged ? 'pattern-divergence' : 'ok',
+              score: dist.mae,
+              maxDev: dist.maxDev,
+              selected: !!selectedSet[y],
+            });
+          });
+          flaggedYears.sort(function (a, b) {
+            return a - b;
+          });
+          details.sort(function (a, b) {
+            return a.year - b.year;
+          });
+          var anySelectedFlagged = flaggedYears.some(function (y) {
+            return !!selectedSet[y];
+          });
+          return {
+            operatingYear: oy,
+            flaggedYears: flaggedYears,
+            details: details,
+            anyFlagged: flaggedYears.length > 0,
+            anySelectedFlagged: anySelectedFlagged,
+            maeThreshold: SEASONALITY_ANOMALY_MAE,
+            maxDevThreshold: SEASONALITY_ANOMALY_MAX_DEV,
+          };
+        }
+
+        function readTimelineSalesAmount(iso) {
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return 0;
+          var n = Number(store.timeline.dailySales[iso]);
+          return Number.isFinite(n) && n > 0 ? n : 0;
+        }
+
+        function isWeekdayBaselineDay(y, m0, day) {
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (typeof isBaselineActualDay === 'function') return isBaselineActualDay(iso);
+          return isCalendarBusinessDay(y, m0, day);
+        }
+
+        function isWeekdayPlanningDay(y, m0, day) {
+          var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (typeof isPlanningBusinessDay === 'function') return isPlanningBusinessDay(iso);
+          return isCalendarBusinessDay(y, m0, day);
+        }
+
+        function computeWeekdayMonthSalesTotal(y, m0) {
+          var year = Number(y);
+          var month = Number(m0);
+          if (!Number.isFinite(year) || !Number.isFinite(month) || month < 0 || month > 11) return 0;
+          var dc = new Date(year, month + 1, 0).getDate();
+          var total = 0;
+          for (var day = 1; day <= dc; day++) {
+            if (!isWeekdayBaselineDay(year, month, day)) continue;
+            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            total += readTimelineSalesAmount(iso);
+          }
+          return total;
+        }
+
+        function computeWeekdayDowSalesTotal(y, m0, dow) {
+          var year = Number(y);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(year) || !Number.isFinite(month) || month < 0 || month > 11) return 0;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return 0;
+          var dc = new Date(year, month + 1, 0).getDate();
+          var total = 0;
+          for (var day = 1; day <= dc; day++) {
+            if (!isWeekdayBaselineDay(year, month, day)) continue;
+            var dt = new Date(year, month, day);
+            if (dt.getDay() !== weekday) continue;
+            var iso = year + '-' + pad2(month + 1) + '-' + pad2(day);
+            total += readTimelineSalesAmount(iso);
+          }
+          return total;
+        }
+
+        function computeWeekdayShareForYear(y, m0, dow) {
+          var monthSales = computeWeekdayMonthSalesTotal(y, m0);
+          if (!(monthSales > 0)) return null;
+          var dowSales = computeWeekdayDowSalesTotal(y, m0, dow);
+          return dowSales / monthSales;
+        }
+
+        function computeWeekdayShareAvgUncached(operatingYear, m0, dow, baselineYears) {
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return null;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return null;
+          var years = normalizeWeekdayBaselineYears(
+            baselineYears || readWeekdayBaselineYears(oy),
+            oy
+          );
+          if (!years.length) return WEEKDAY_SHARE_FALLBACK;
+          var sum = 0;
+          var n = 0;
+          years.forEach(function (y) {
+            var share = computeWeekdayShareForYear(y, month, weekday);
+            if (share == null || !Number.isFinite(share)) return;
+            sum += share;
+            n++;
+          });
+          if (!n) return WEEKDAY_SHARE_FALLBACK;
+          return sum / n;
+        }
+
+        function weekdayShareMatrixCacheKey(oy, baselineYears) {
+          var yrs = (baselineYears || readWeekdayBaselineYears(oy)).join(',');
+          return oy + ':' + yrs;
+        }
+
+        function getWeekdayShareMatrixCached(operatingYear, baselineYears) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var key = weekdayShareMatrixCacheKey(oy, baselineYears);
+          if (__weekdayShareMatrixCache[key]) return __weekdayShareMatrixCache[key];
+          var matrix = computeWeekdayShareMatrix(oy, baselineYears);
+          __weekdayShareMatrixCache[key] = matrix;
+          return matrix;
+        }
+
+        function computeWeekdayShareAvg(operatingYear, m0, dow, baselineYears) {
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return null;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return null;
+          var matrix = getWeekdayShareMatrixCached(oy, baselineYears);
+          if (!matrix || !matrix.months || !matrix.months[month]) return WEEKDAY_SHARE_FALLBACK;
+          var share = matrix.months[month][weekday];
+          return share == null || !Number.isFinite(share) ? WEEKDAY_SHARE_FALLBACK : share;
+        }
+
+        function countOperatingWeekdaysInMonth(year, m0, dow) {
+          var y = Number(year);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(y) || !Number.isFinite(month) || month < 0 || month > 11) return 0;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return 0;
+          var dc = new Date(y, month + 1, 0).getDate();
+          var count = 0;
+          for (var day = 1; day <= dc; day++) {
+            if (!isWeekdayPlanningDay(y, month, day)) continue;
+            var dt = new Date(y, month, day);
+            if (dt.getDay() !== weekday) continue;
+            count++;
+          }
+          return count;
+        }
+
+        function computePlanMonthlyTargets(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return null;
+          if (__planMonthlyTargetsCache[y]) return __planMonthlyTargetsCache[y];
+          var annualTarget = readAnnualTarget(y);
+          if (annualTarget == null || !Number.isFinite(Number(annualTarget)) || Number(annualTarget) <= 0) {
+            return null;
+          }
+          var weights = readMonthlyHlWeights(y);
+          if (!weights || weights.length !== 12) weights = DEFAULT_HL_WEIGHTS.slice();
+          var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+          var totalBD = 0;
+          for (var m0 = 0; m0 < 12; m0++) {
+            var dc = new Date(y, m0 + 1, 0).getDate();
+            for (var day = 1; day <= dc; day++) {
+              if (!isWeekdayPlanningDay(y, m0, day)) continue;
+              monthlyBD[m0]++;
+              totalBD++;
+            }
+          }
+          if (totalBD <= 0) return null;
+          var monthlyTargets = [];
+          for (var mi = 0; mi < 12; mi++) {
+            var hl = Number(weights[mi]);
+            if (!Number.isFinite(hl)) hl = 100;
+            var bdCount = monthlyBD[mi];
+            if (bdCount <= 0) {
+              monthlyTargets.push(0);
+              continue;
+            }
+            var monthlyAvg = (Number(annualTarget) * bdCount) / totalBD;
+            monthlyTargets.push((monthlyAvg * hl) / 100);
+          }
+          var plan = {
+            year: y,
+            annualTarget: Number(annualTarget),
+            weights: weights.slice(),
+            monthlyBD: monthlyBD.slice(),
+            totalBD: totalBD,
+            monthlyTargets: monthlyTargets,
+          };
+          __planMonthlyTargetsCache[y] = plan;
+          return plan;
+        }
+
+        function computeWeekdayShareMatrix(operatingYear, baselineYears) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var years = normalizeWeekdayBaselineYears(
+            baselineYears || readWeekdayBaselineYears(oy),
+            oy
+          );
+          var months = [];
+          var fallbackMonths = [];
+          for (var m0 = 0; m0 < 12; m0++) {
+            var row = [];
+            var usedFallback = false;
+            for (var dow = 0; dow < 7; dow++) {
+              var share = computeWeekdayShareAvgUncached(oy, m0, dow, years);
+              if (share == null || !Number.isFinite(share)) {
+                share = WEEKDAY_SHARE_FALLBACK;
+                usedFallback = true;
+              }
+              row.push(share);
+            }
+            months.push(row);
+            if (usedFallback) fallbackMonths.push(m0);
+          }
+          return {
+            year: oy,
+            baselineYears: years.slice(),
+            months: months,
+            fallbackMonths: fallbackMonths,
+          };
+        }
+
+        function computeDailyKpiByMonthDow(operatingYear, m0, dow, baselineYears) {
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          var weekday = Number(dow);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return null;
+          if (!Number.isFinite(weekday) || weekday < 0 || weekday > 6) return null;
+          var plan = computePlanMonthlyTargets(oy);
+          if (!plan) return null;
+          var monthlyTarget = plan.monthlyTargets[month];
+          if (!(monthlyTarget > 0)) return 0;
+          var shareAvg = computeWeekdayShareAvg(oy, month, weekday, baselineYears);
+          if (shareAvg == null || !Number.isFinite(shareAvg)) return null;
+          var count = countOperatingWeekdaysInMonth(oy, month, weekday);
+          if (count <= 0) return 0;
+          return (monthlyTarget * shareAvg) / count;
+        }
+
+        function computeDailyTargetByIso(operatingYear, iso, baselineYears) {
+          if (!validIso(iso)) return null;
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var y = isoYear(iso);
+          if (y !== oy) return null;
+          var parts = iso.split('-');
+          var m0 = Number(parts[1]) - 1;
+          var day = Number(parts[2]);
+          if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
+          if (!isWeekdayPlanningDay(y, m0, day)) return 0;
+          var dt = new Date(y, m0, day);
+          return computeDailyKpiByMonthDow(oy, m0, dt.getDay(), baselineYears);
+        }
+
+        var DAILY_TARGET_MODE_FLAT = 'monthly-flat';
+        var DAILY_TARGET_MODE_WEEKDAY = 'weekday-weighted';
+        var DAILY_TARGET_MODE_DEFAULT = DAILY_TARGET_MODE_WEEKDAY;
+
+        function normalizeDailyTargetMode(mode) {
+          var m = String(mode || '');
+          if (m === DAILY_TARGET_MODE_FLAT || m === DAILY_TARGET_MODE_WEEKDAY) return m;
+          return DAILY_TARGET_MODE_DEFAULT;
+        }
+
+        function readDailyTargetMode(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) {
+            return normalizeDailyTargetMode(null);
+          }
+          var rec = store.years[y];
+          if (rec && rec.plan && rec.plan.dailyTargetMode) {
+            return normalizeDailyTargetMode(rec.plan.dailyTargetMode);
+          }
+          return DAILY_TARGET_MODE_DEFAULT;
+        }
+
+        function writeDailyTargetMode(year, mode, meta) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var next = normalizeDailyTargetMode(mode);
+          var rec = ensureYearRecord(y);
+          if (!rec.plan) rec.plan = {};
+          if (rec.plan.dailyTargetMode === next) return true;
+          rec.plan.dailyTargetMode = next;
+          rec.plan.dailyTargetModeUpdatedAt = Date.now();
+          rec.plan.dailyTargetModeSource = (meta && meta.source) || 'kpi-year-store';
+          clearDailyTargetDisplayCache();
+          scheduleServerYearRebuild(y, 'daily-target-mode', {
+            dailyTargetMode: next,
+            source: rec.plan.dailyTargetModeSource,
+          });
+          document.dispatchEvent(
+            new CustomEvent('kpi:dailyTargetModeChanged', {
+              detail: {
+                year: y,
+                dailyTargetMode: next,
+                source: rec.plan.dailyTargetModeSource,
+              },
+            })
+          );
+          return true;
+        }
+
+        function weekdayTargetDataReady(operatingYear) {
+          var years = readWeekdayBaselineYears(operatingYear);
+          return years && years.length > 0;
+        }
+
+        function assessWeekdayTargetQuality(operatingYear) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var mode = readDailyTargetMode(oy);
+          var dataReady = weekdayTargetDataReady(oy);
+          var usingFlatFallback = mode === DAILY_TARGET_MODE_WEEKDAY && !dataReady;
+          var matrix = null;
+          if (mode === DAILY_TARGET_MODE_WEEKDAY && dataReady) {
+            matrix = computeWeekdayShareMatrix(oy);
+          }
+          var fallbackMonths =
+            matrix && matrix.fallbackMonths ? matrix.fallbackMonths.slice() : [];
+          return {
+            year: oy,
+            mode: mode,
+            dataReady: dataReady,
+            usingFlatFallback: usingFlatFallback,
+            fallbackMonths: fallbackMonths,
+            baselineYears: matrix ? matrix.baselineYears.slice() : readWeekdayBaselineYears(oy).slice(),
+          };
+        }
+
+        function computeFlatDailyTargetByIso(operatingYear, iso) {
+          if (!validIso(iso)) return null;
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return null;
+          var y = isoYear(iso);
+          if (y !== oy) return null;
+          var parts = iso.split('-');
+          var m0 = Number(parts[1]) - 1;
+          var day = Number(parts[2]);
+          if (!Number.isFinite(m0) || !Number.isFinite(day)) return null;
+          if (!isWeekdayPlanningDay(y, m0, day)) return 0;
+          var plan = computePlanMonthlyTargets(oy);
+          if (!plan) return null;
+          var bdCount = plan.monthlyBD[m0];
+          if (!(bdCount > 0)) return 0;
+          var monthlyTarget = plan.monthlyTargets[m0];
+          if (!(monthlyTarget > 0)) return 0;
+          return monthlyTarget / bdCount;
+        }
+
+        /* KPI-WEEKDAY-TARGET-DISPLAY-11-6 */
+        var __dailyTargetDisplayCache = {};
+
+        function clearDailyTargetDisplayCache() {
+          __dailyTargetDisplayCache = {};
+          __planMonthlyTargetsCache = {};
+          __weekdayShareMatrixCache = {};
+          __yearHasPositiveSalesCache = {};
+        }
+
+        function dailyTargetDisplayCacheKey(oy, m0, mode, effectiveMode, fallback, monthlyTarget, baselineYears) {
+          var yrs = (baselineYears || readWeekdayBaselineYears(oy)).join(',');
+          return (
+            oy +
+            ':' +
+            m0 +
+            ':' +
+            mode +
+            ':' +
+            effectiveMode +
+            ':' +
+            (fallback ? '1' : '0') +
+            ':' +
+            Math.round(Number(monthlyTarget) || 0) +
+            ':' +
+            yrs
+          );
+        }
+
+        function resolveDailyTargetRawByIso(operatingYear, iso, opts) {
+          opts = opts || {};
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy) || !validIso(iso)) {
+            return { value: null, mode: null, effectiveMode: null, fallback: false };
+          }
+          var mode = normalizeDailyTargetMode(
+            opts.dailyTargetMode != null ? opts.dailyTargetMode : readDailyTargetMode(oy)
+          );
+          var effectiveMode = mode;
+          var fallback = false;
+          var value = null;
+          if (mode === DAILY_TARGET_MODE_WEEKDAY) {
+            if (weekdayTargetDataReady(oy)) {
+              value = computeDailyTargetByIso(oy, iso, opts.baselineYears);
+            }
+            if (value == null || !Number.isFinite(value)) {
+              effectiveMode = DAILY_TARGET_MODE_FLAT;
+              fallback = true;
+              value = computeFlatDailyTargetByIso(oy, iso);
+            }
+          } else {
+            value = computeFlatDailyTargetByIso(oy, iso);
+          }
+          return {
+            value: value,
+            mode: mode,
+            effectiveMode: effectiveMode,
+            fallback: fallback,
+          };
+        }
+
+        function buildDailyTargetDisplayMapForMonth(operatingYear, m0, opts) {
+          opts = opts || {};
+          var oy = Number(operatingYear);
+          var month = Number(m0);
+          if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return {};
+          var plan = computePlanMonthlyTargets(oy);
+          if (!plan) return {};
+          var monthlyTarget = plan.monthlyTargets[month];
+          if (!(monthlyTarget > 0)) return {};
+
+          var mode = normalizeDailyTargetMode(
+            opts.dailyTargetMode != null ? opts.dailyTargetMode : readDailyTargetMode(oy)
+          );
+          var baselineYears = opts.baselineYears;
+          var effectiveMode = mode;
+          var fallback = false;
+          if (mode === DAILY_TARGET_MODE_WEEKDAY && !weekdayTargetDataReady(oy)) {
+            effectiveMode = DAILY_TARGET_MODE_FLAT;
+            fallback = true;
+          }
+
+          var cacheKey = dailyTargetDisplayCacheKey(
+            oy,
+            month,
+            mode,
+            effectiveMode,
+            fallback,
+            monthlyTarget,
+            baselineYears
+          );
+          if (__dailyTargetDisplayCache[cacheKey]) return __dailyTargetDisplayCache[cacheKey];
+
+          var rows = [];
+          var dc = new Date(oy, month + 1, 0).getDate();
+          for (var day = 1; day <= dc; day++) {
+            if (!isWeekdayPlanningDay(oy, month, day)) continue;
+            var iso = oy + '-' + pad2(month + 1) + '-' + pad2(day);
+            var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
+            var raw = rawResult.value;
+            if (raw == null || !Number.isFinite(raw)) raw = 0;
+            rows.push({ iso: iso, raw: raw });
+          }
+
+          var targetSum = Math.round(Number(monthlyTarget));
+          var sumRounded = 0;
+          var map = {};
+          for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var display;
+            var adjusted = false;
+            if (i === rows.length - 1) {
+              display = targetSum - sumRounded;
+              adjusted = display !== Math.round(row.raw);
+            } else {
+              display = Math.round(row.raw);
+              sumRounded += display;
+            }
+            map[row.iso] = {
+              value: display,
+              rawValue: row.raw,
+              adjusted: adjusted,
+            };
+          }
+          __dailyTargetDisplayCache[cacheKey] = map;
+          return map;
+        }
+
+        function buildDailyTargetDisplayMapForYear(operatingYear, opts) {
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy)) return {};
+          var out = {};
+          for (var mi = 0; mi < 12; mi++) {
+            var monthMap = buildDailyTargetDisplayMapForMonth(oy, mi, opts);
+            Object.keys(monthMap).forEach(function (iso) {
+              out[iso] = monthMap[iso].value;
+            });
+          }
+          return out;
+        }
+
+        function resolveDailyTargetByIso(operatingYear, iso, opts) {
+          opts = opts || {};
+          var oy = Number(operatingYear);
+          if (!Number.isFinite(oy) || !validIso(iso)) {
+            return {
+              value: null,
+              rawValue: null,
+              adjusted: false,
+              mode: null,
+              effectiveMode: null,
+              fallback: false,
+            };
+          }
+          var rawResult = resolveDailyTargetRawByIso(oy, iso, opts);
+          var parts = iso.split('-');
+          var m0 = Number(parts[1]) - 1;
+          var day = Number(parts[2]);
+          if (!Number.isFinite(m0) || !Number.isFinite(day) || !isWeekdayPlanningDay(oy, m0, day)) {
+            return {
+              value: rawResult.value,
+              rawValue: rawResult.value,
+              adjusted: false,
+              mode: rawResult.mode,
+              effectiveMode: rawResult.effectiveMode,
+              fallback: rawResult.fallback,
+            };
+          }
+          var monthMap = buildDailyTargetDisplayMapForMonth(oy, m0, opts);
+          var entry = monthMap[iso];
+          if (!entry) {
+            var rounded =
+              rawResult.value != null && Number.isFinite(rawResult.value)
+                ? Math.round(rawResult.value)
+                : rawResult.value;
+            return {
+              value: rounded,
+              rawValue: rawResult.value,
+              adjusted: false,
+              mode: rawResult.mode,
+              effectiveMode: rawResult.effectiveMode,
+              fallback: rawResult.fallback,
+            };
+          }
+          return {
+            value: entry.value,
+            rawValue: entry.rawValue,
+            adjusted: entry.adjusted,
+            mode: rawResult.mode,
+            effectiveMode: rawResult.effectiveMode,
+            fallback: rawResult.fallback,
+          };
+        }
+
+        window.KpiYearStore = {
+          init: init,
+          reload: function () {
+            loadStore();
+            hydrateNavFromStorage();
+            enforceSubscriptionTierDefaults();
+            maybeRolloverYear();
+            syncToAnnualDaily();
+          },
+          reconcileTimelineFromLegacy: reconcileTimelineFromLegacy,
+          getStore: function () { return store; },
+          getOperatingYear: getOperatingYear,
+          setOperatingYear: function (y) {
+            y = Number(y);
+            if (!Number.isFinite(y)) return;
+            store.meta.operatingYear = y;
+            persistStore();
+            syncToAnnualDaily();
+          },
+          writeDailySales: writeDailySales,
+          writeBusinessDay: writeBusinessDay,
+          invalidateDailyFacts: invalidateDailyFacts,
+          readDailyFacts: readDailyFacts,
+          readMonthlyFacts: readMonthlyFacts,
+          readAnnualFacts: readAnnualFacts,
+          writeDailyIncome: writeDailyIncome,
+          readDailyIncome: readDailyIncome,
+          readDailyMeal: readDailyMeal,
+          writeDailyMeal: writeDailyMeal,
+          readDailySales: readDailySales,
+          readBusinessDay: readBusinessDay,
+          readRange: readRange,
+          mergeDailyMaps: mergeDailyMaps,
+          syncToAnnualDaily: syncToAnnualDaily,
+          persistFromAnnualDaily: persistFromAnnualDaily,
+          persistFromPastSales: persistFromPastSales,
+          ingestHistoricalBusinessDayReview: ingestHistoricalBusinessDayReview,
+          listUnresolvedBusinessDays: listUnresolvedBusinessDays,
+          getUnresolvedBusinessDay: getUnresolvedBusinessDay,
+          unresolvedBusinessDayCount: unresolvedBusinessDayCount,
+          resolveUnresolvedBusinessDay: resolveUnresolvedBusinessDay,
+          resolveAllUnresolvedBusinessDays: resolveAllUnresolvedBusinessDays,
+          syncLegacyKeys: syncLegacyKeys,
+          setSelectedDate: setSelectedDate,
+          getSelectedDate: getSelectedDate,
+          listYearsWithData: listYearsWithData,
+          writeAnnualTarget: writeAnnualTarget,
+          readAnnualTarget: readAnnualTarget,
+          readMonthlyHlWeights: readMonthlyHlWeights,
+          writeMonthlyHlWeights: writeMonthlyHlWeights,
+          flushServerYearRebuildNow: flushServerYearRebuildNow,
+          normalizeHlWeights: normalizeHlWeights,
+          getYearMeta: getYearMeta,
+          isYearLocked: isYearLocked,
+          canEditIso: canEditIso,
+          getDailySalesInputPath: getDailySalesInputPath,
+          setDailySalesInputPath: setDailySalesInputPath,
+          getPastSalesEditEnabled: getPastSalesEditEnabled,
+          setPastSalesEditEnabled: setPastSalesEditEnabled,
+          canWriteDailySalesFrom: canWriteDailySalesFrom,
+          canWriteBusinessDayFrom: canWriteBusinessDayFrom,
+          salesSourceToPath: salesSourceToPath,
+          computeObserved: computeObserved,
+          refreshObservedForYear: refreshObservedForYear,
+          observedForPastYear: observedForPastYear,
+          lockYear: lockYear,
+          maybeRolloverYear: maybeRolloverYear,
+          listCompletedYearsWithObserved: listCompletedYearsWithObserved,
+          listEligiblePastYearsForBaseline: listEligiblePastYearsForBaseline,
+          computeAverageSeasonalityPct: computeAverageSeasonalityPct,
+          computePastAverageDailySales: computePastAverageDailySales,
+          computeBaselineHlWeights: computeBaselineHlWeights,
+          applyObservedBaselineToPlan: applyObservedBaselineToPlan,
+          ensureOperatingYearPlanDefaults: ensureOperatingYearPlanDefaults,
+          readWeekdayBaselineYears: readWeekdayBaselineYears,
+          writeWeekdayBaselineYears: writeWeekdayBaselineYears,
+          readWeekdayBaselineExcludedYears: readWeekdayBaselineExcludedYears,
+          getDefaultWeekdayBaselineYears: getDefaultWeekdayBaselineYears,
+          listEligibleWeekdayBaselineYears: listEligibleWeekdayBaselineYears,
+          assessSeasonalityAnomalies: assessSeasonalityAnomalies,
+          computeWeekdayShareForYear: computeWeekdayShareForYear,
+          computeWeekdayShareAvg: computeWeekdayShareAvg,
+          computeWeekdayShareMatrix: computeWeekdayShareMatrix,
+          countOperatingWeekdaysInMonth: countOperatingWeekdaysInMonth,
+          computePlanMonthlyTargets: computePlanMonthlyTargets,
+          computeDailyKpiByMonthDow: computeDailyKpiByMonthDow,
+          computeDailyTargetByIso: computeDailyTargetByIso,
+          DAILY_TARGET_MODE_FLAT: DAILY_TARGET_MODE_FLAT,
+          DAILY_TARGET_MODE_WEEKDAY: DAILY_TARGET_MODE_WEEKDAY,
+          readDailyTargetMode: readDailyTargetMode,
+          writeDailyTargetMode: writeDailyTargetMode,
+          weekdayTargetDataReady: weekdayTargetDataReady,
+          assessWeekdayTargetQuality: assessWeekdayTargetQuality,
+          computeFlatDailyTargetByIso: computeFlatDailyTargetByIso,
+          resolveDailyTargetRawByIso: resolveDailyTargetRawByIso,
+          buildDailyTargetDisplayMapForMonth: buildDailyTargetDisplayMapForMonth,
+          buildDailyTargetDisplayMapForYear: buildDailyTargetDisplayMapForYear,
+          clearDailyTargetDisplayCache: clearDailyTargetDisplayCache,
+          resolveDailyTargetByIso: resolveDailyTargetByIso,
+          readDailyMemoFlagMapForYear: readDailyMemoFlagMapForYear,
+          hasDailyMemoForIso: hasDailyMemoForIso,
+          loadMepYearPayload: loadMepYearPayload,
+          readStrategyUserNote: readStrategyUserNote,
+          bulkPersistMepYear: bulkPersistMepYear,
+          canWriteMepYear: canWriteMepYear,
+          canWriteMepMetaYear: canWriteMepMetaYear,
+          ensureYearMepData: ensureYearMepData,
+          getSubscriptionTier: getSubscriptionTier,
+          isProSubscription: isProSubscription,
+          enforceSubscriptionTierDefaults: enforceSubscriptionTierDefaults,
+          getTabId: getTabId,
+          getEditLease: getEditLease,
+          holdsEditLease: holdsEditLease,
+          acquireEditLease: acquireEditLease,
+          heartbeatEditLease: heartbeatEditLease,
+          releaseEditLease: releaseEditLease,
+        };
+
+        init();
+
+        window.addEventListener('storage', function (ev) {
+          if (ev.key === EDIT_LEASE_KEY) {
+            document.dispatchEvent(new CustomEvent('kpi:editLeaseChanged', { detail: { source: 'storage' } }));
+            document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
+            return;
+          }
+          if (ev.key !== STORE_KEY && ev.key !== LEGACY_DAILY_KEY && ev.key !== LEGACY_PAST_KEY) return;
+          loadStore();
+          enforceSubscriptionTierDefaults();
+          maybeRolloverYear();
+          syncToAnnualDaily();
+          dispatchChange('dailySalesChanged', { source: 'storage' });
+        });
       })();
           hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
