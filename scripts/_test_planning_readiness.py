@@ -288,7 +288,15 @@ def main() -> int:
     check("KpiSeasonalityAllocator" in js, "allocator integration")
     check("migrateSeasonalityMode" in js, "migration")
     check("confirmSeasonalityDeviation" in js, "deviation confirm")
-    check("restoreRecommendedSeasonality" in js, "restore recommended")
+    check("isAllocTotalOk" in js, "alloc total 100% helper")
+    check("Math.abs(total - 100) < 0.01" in js, "alloc total epsilon 0.01")
+    check("var warn = !isAllocTotalOk(weights);" in js, "Cockpit warn uses alloc total, not year-pattern")
+    fn = js.split("function refreshSeasonalityAnomalyUi()")[1].split("function reasonLabels")[0]
+    check("assessSeasonalityAnomalies" not in fn, "Cockpit cluster does not use year-pattern anomaly")
+    check("anySelectedFlagged" not in fn, "Cockpit cluster does not use selected-year flag")
+    check("月次配分率合計が 100% ではありません" in js, "JP alloc-total warn copy")
+    check("Monthly allocation total is not 100%" in js, "EN alloc-total warn copy")
+    check("月度分配率合計不是 100%" in js, "ZH-TW alloc-total warn copy")
 
     # 365-open / default season confirm prompts
     check("年間365日すべて営業日として設定されています" in js, "BD 365 confirm copy JP")
@@ -324,8 +332,8 @@ def main() -> int:
         check("kpi-planning-readiness.js" in html, f"{rel} loads readiness JS")
         check("kpi-seasonality-allocator.js" in html, f"{rel} loads allocator")
         check(
-            "kpi-planning-readiness.js?v=20260920-pr8" in html,
-            f"{rel} cache-bust pr8",
+            "kpi-planning-readiness.js?v=20260926-alloc1" in html,
+            f"{rel} cache-bust alloc1",
         )
 
     # regression markers still present

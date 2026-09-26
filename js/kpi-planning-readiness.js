@@ -77,8 +77,8 @@
         seasonModeManual: 'MANUAL',
         dismiss: '閉じる',
         anomalyAllocTip:
-          '選択中のベースライン年に、過去の繁閑パターンから大きく乖離した年度があります。\nベースライン年設定を確認してください。',
-        anomalyAllocAria: '繁閑パターン乖離の警告',
+          '月次配分率合計が 100% ではありません。\n各月の繁閑期%を調整して合計を 100% にしてください。',
+        anomalyAllocAria: '月次配分率合計の警告',
       },
       en: {
         confirmBd: 'Confirm business days',
@@ -113,8 +113,8 @@
         seasonModeManual: 'MANUAL',
         dismiss: 'Close',
         anomalyAllocTip:
-          'A selected baseline year diverges sharply from past seasonality patterns.\nReview baseline year settings.',
-        anomalyAllocAria: 'Seasonality pattern divergence warning',
+          'Monthly allocation total is not 100%.\nAdjust monthly H/L % until the total is 100%.',
+        anomalyAllocAria: 'Monthly allocation total warning',
       },
       zh: {
         confirmBd: '確認營業日設定',
@@ -146,8 +146,8 @@
         seasonModeManual: 'MANUAL',
         dismiss: '關閉',
         anomalyAllocTip:
-          '選定的基準年中，有年度的淡旺季型態與過去差異很大。\n請確認基準年設定。',
-        anomalyAllocAria: '淡旺季型態差異警告',
+          '月度分配率合計不是 100%。\n請調整各月淡旺季%，使合計為 100%。',
+        anomalyAllocAria: '月度分配率合計警告',
       },
     };
     return (table[lang] || table.ja)[key] || (table.ja[key] || key);
@@ -1030,22 +1030,15 @@
   }
 
   function refreshSeasonalityAnomalyUi() {
-    var api = storeApi();
-    var y = operatingYear();
-    var pack = null;
-    if (api && typeof api.assessSeasonalityAnomalies === 'function') {
-      try {
-        pack = api.assessSeasonalityAnomalies(y);
-      } catch (_e) {
-        pack = null;
-      }
-    }
-    var warn = !!(pack && pack.anySelectedFlagged);
+    /* Cockpit 月次配分率合計: warn only when 12-month average is not 100%.
+       Reuses allocTotal / isAllocTotalOk (2-decimal + 0.01 epsilon).
+       Past-year pattern flags stay on SDM weekday-baseline rows, not here. */
+    var weights = readHlWeights(operatingYear());
+    var warn = !isAllocTotalOk(weights);
     var clusters = document.querySelectorAll('.annual-kpi-allocation-cluster');
     for (var i = 0; i < clusters.length; i++) {
       var cluster = clusters[i];
       cluster.classList.toggle('is-seasonality-anomaly', warn);
-      if (warn) cluster.removeAttribute('aria-hidden');
       var label = cluster.querySelector('.annual-kpi-strip-label--allocation');
       if (!label) continue;
       var mark = label.querySelector('.kpi-pr-anomaly-mark');
@@ -1062,8 +1055,7 @@
         mark.setAttribute('aria-label', t('anomalyAllocAria'));
         mark.removeAttribute('hidden');
       } else if (mark) {
-        mark.setAttribute('hidden', '');
-        mark.removeAttribute('data-tooltip');
+        mark.remove();
       }
     }
   }
