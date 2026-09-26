@@ -2706,7 +2706,7 @@
     <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
     <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
-    <script src="../../../../js/kpi-workbook-layout.js?v=20260926-hwb"></script>
+    <script src="../../../../js/kpi-workbook-layout.js?v=20260926-hwb2"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"></script>
     <script src="../../../../js/kpi-expense-import-mapping.js?v=20260922-c2l3b"></script>
@@ -5785,10 +5785,8 @@
     }
     var iso = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
     if (iso) return isoFromYmd(iso[1], iso[2], iso[3]);
-    var dt = new Date(s);
-    if (!isNaN(dt.getTime()) && /\d/.test(s) && (s.indexOf('/') >= 0 || s.indexOf('-') >= 0)) {
-      return isoFromYmd(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
-    }
+    var loose = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if (loose) return isoFromYmd(loose[1], loose[2], loose[3]);
     return null;
   }
 
@@ -5868,7 +5866,60 @@
       if (!best || cols.length > best.cols.length) best = { row: r, cols: cols };
     }
     if (!best || best.cols.length < MIN_DATE_TOKENS) return null;
+    best.cols = keepSheetMonthCols(best.cols, rows);
+    if (!best.cols.length || best.cols.length < MIN_DATE_TOKENS) return null;
     return best;
+  }
+
+  function yearMonthKey(iso) {
+    return String(iso || '').slice(0, 7);
+  }
+
+  function readLabeledYearMonth(rows) {
+    var year = 0;
+    var month = 0;
+    var limit = Math.min((rows && rows.length) || 0, 12);
+    for (var r = 0; r < limit; r++) {
+      var row = rows[r] || [];
+      for (var c = 0; c < Math.min(row.length, 4); c++) {
+        var t = cellText(row[c]);
+        var yHit = t.match(/^(\d{4})\s*年$/);
+        if (yHit) year = Number(yHit[1]);
+        var mHit = t.match(/^(\d{1,2})\s*月$/);
+        if (mHit) month = Number(mHit[1]);
+      }
+    }
+    if (year >= 1900 && month >= 1 && month <= 12) return year + '-' + pad2(month);
+    return '';
+  }
+
+  function dominantYearMonth(cols) {
+    var counts = {};
+    var best = '';
+    var bestN = 0;
+    for (var i = 0; i < cols.length; i++) {
+      var k = yearMonthKey(cols[i].iso);
+      if (!k) continue;
+      counts[k] = (counts[k] || 0) + 1;
+      if (counts[k] > bestN) {
+        bestN = counts[k];
+        best = k;
+      }
+    }
+    return best;
+  }
+
+  function keepSheetMonthCols(cols, rows) {
+    if (!cols || !cols.length) return cols || [];
+    var labeled = readLabeledYearMonth(rows);
+    var ym = labeled || dominantYearMonth(cols);
+    if (!ym) return cols;
+    var kept = [];
+    for (var i = 0; i < cols.length; i++) {
+      if (yearMonthKey(cols[i].iso) === ym) kept.push(cols[i]);
+    }
+    if (kept.length) return kept;
+    return labeled ? [] : cols;
   }
 
   function reconstructFromYearMonthDay(rows) {
@@ -5902,6 +5953,8 @@
       var iso = isoFromYmd(year, month, days[i].d);
       if (iso) cols.push({ c: days[i].c, iso: iso });
     }
+    if (cols.length < MIN_DATE_TOKENS) return null;
+    cols = keepSheetMonthCols(cols, rows);
     if (cols.length < MIN_DATE_TOKENS) return null;
     return { row: dayRow, cols: cols };
   }
@@ -6281,6 +6334,7 @@
     toVerticalExpenseRows: toVerticalExpenseRows,
     prepare: prepare,
     parseDateCell: parseDateCell,
+    isoFromYmd: isoFromYmd,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);
 

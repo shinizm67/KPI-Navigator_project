@@ -167,6 +167,8 @@ def hook_maps(page):
                 foodByDate: maps.foodByDate || {},
                 drinkByDate: maps.drinkByDate || {},
                 unmatchedCount: unknown.length,
+        foodCount: maps.foodCount || 0,
+        drinkCount: maps.drinkCount || 0,
                 expenseLabels: Array.from(new Set(unknown.filter(function (u) {
                   return u && u.kind === 'expense';
                 }).map(function (u) { return u.label; }))),
@@ -285,6 +287,19 @@ def check_nov1(maps: dict) -> list[str]:
         fails.append(f"layout:{maps.get('layout')}")
     if int(maps.get("imported") or 0) < 8:
         fails.append(f"imported:{maps.get('imported')}")
+    if int(maps.get("imported") or 0) > 30:
+        fails.append(f"nov_imported_gt_30:{maps.get('imported')}")
+    if (maps.get("salesByDate") or {}).get("2025-12-01") is not None:
+        fails.append("nov31_slot_became_dec1")
+    if (maps.get("salesByDate") or {}).get("2025-11-31") is not None:
+        fails.append("invalid_nov31")
+    for iso in maps.get("salesByDate") or {}:
+        if not str(iso).startswith("2025-11-"):
+            fails.append(f"outside_nov:{iso}")
+    if int(maps.get("foodCount") or 0) > 30:
+        fails.append(f"foodCount:{maps.get('foodCount')}")
+    if int(maps.get("drinkCount") or 0) > 30:
+        fails.append(f"drinkCount:{maps.get('drinkCount')}")
     return fails
 
 

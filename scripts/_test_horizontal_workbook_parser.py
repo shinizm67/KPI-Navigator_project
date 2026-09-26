@@ -50,11 +50,12 @@ def node_bin() -> str:
     raise SystemExit("node not found")
 
 
-def run_maps(csv_text: str | None, rows: list | None) -> dict:
+def run_maps(csv_text: str | None, rows: list | None, parse_cells: list[str] | None = None) -> dict:
     payload = {
         "importer": daily_sales_import_js(),
         "csvText": csv_text,
         "rows": rows,
+        "parseCells": parse_cells or [],
     }
     driver = r"""
 const fs = require('fs');
@@ -77,17 +78,24 @@ ctx.globalThis = ctx;
 vm.createContext(ctx);
 vm.runInContext(payload.importer, ctx);
 const api = ctx.__KPI_DAILY_IMPORT;
+const layoutApi = ctx.KpiWorkbookLayout || {};
 let rows = payload.rows;
 if (payload.csvText) rows = api.parseDelimitedText(payload.csvText);
-const layout = api.detectLayout(rows);
+const layout = rows ? api.detectLayout(rows) : null;
 let maps = null;
 let error = null;
-try {
-  maps = api.rowsToMaps(rows);
-} catch (e) {
-  error = e && (e.message || String(e));
+if (rows) {
+  try {
+    maps = api.rowsToMaps(rows);
+  } catch (e) {
+    error = e && (e.message || String(e));
+  }
 }
-const out = { layout, error, maps };
+const parsed = {};
+(payload.parseCells || []).forEach((s) => {
+  parsed[s] = layoutApi.parseDateCell ? layoutApi.parseDateCell(s) : null;
+});
+const out = { layout, error, maps, parsed };
 process.stdout.write(JSON.stringify(out));
 """
     result = subprocess.run(
@@ -149,6 +157,13 @@ def main() -> int:
     assert_true(drink.get("2025-11-01") == 24050, "Barca 11/1 drink 24050 got " + str(drink.get("2025-11-01")))
     lunch = bm.get("lunchSalesByDate") or {}
     assert_true(lunch.get("2025-11-01") == 0, "Barca 11/1 lunch sales 0")
+    assert_true("2025-12-01" not in sales, "Barca 31st slot is not 2025-12-01")
+    assert_true("2025-11-31" not in sales, "Barca does not emit invalid 2025-11-31")
+    assert_true(bm.get("imported", 0) <= 30, "Barca November imported <= 30 got " + str(bm.get("imported")))
+    assert_true(bm.get("foodCount", 0) <= 30, "Barca foodCount <= 30 got " + str(bm.get("foodCount")))
+    assert_true(bm.get("drinkCount", 0) <= 30, "Barca drinkCount <= 30 got " + str(bm.get("drinkCount")))
+    outside = [iso for iso in sales if not str(iso).startswith("2025-11-")]
+    assert_true(not outside, "Barca dates stay in 2025-11 got " + str(outside))
     unknown = bm.get("unmatchedMetrics") or []
     expense_labels = {u.get("label") for u in unknown if u.get("kind") == "expense"}
     assert_true("日次食材仕入額" in expense_labels, "Barca food purchase preserved as unmatched expense")
@@ -165,7 +180,81 @@ def main() -> int:
     ]
     for path in html_needles:
         text = path.read_text(encoding="utf-8")
-        assert_true("kpi-workbook-layout.js?v=20260926-hwb" in text, f"{path.name} loads layout script")
+        assert_true("kpi-workbook-layout.js?v=20260926-hwb2" in text, f"{path.name} loads layout script")
+
+    cal_cells = run_maps(
+        None,
+        None,
+        [
+            "2025/11/31",
+            "2025-11-31",
+            "2025/4/31",
+            "2025/02/29",
+            "2024/02/29",
+            "2025/1/31",
+            "2025/12/1",
+        ],
+    )
+    parsed = cal_cells.get("parsed") or {}
+    assert_true(parsed.get("2025/11/31") is None, "2025-11-31 rejected")
+    assert_true(parsed.get("2025-11-31") is None, "2025-11-31 iso rejected")
+    assert_true(parsed.get("2025/4/31") is None, "2025-04-31 rejected")
+    assert_true(parsed.get("2025/02/29") is None, "2025-02-29 rejected")
+    assert_true(parsed.get("2024/02/29") == "2024-02-29", "2024-02-29 accepted")
+    assert_true(parsed.get("2025/1/31") == "2025-01-31", "31-day month day 31 accepted")
+    assert_true(parsed.get("2025/12/1") == "2025-12-01", "valid Dec 1 still parses as itself")
+
+    overflow = [
+        ["", "", "2025/11/28", "", "2025/11/29", "", "2025/11/30", "", "2025/12/1"],
+        ["2025年", "", "28日", "", "29日", "", "30日", "", "31日"],
+        ["11月", "", "金", "", "土", "", "日", "", "月"],
+        ["", "", "Lunch", "Full Day", "Lunch", "Full Day", "Lunch", "Full Day", "Lunch", "Full Day"],
+        ["売上明細", "総売上", 0, 10, 0, 20, 0, 30, 0, 99],
+        ["", "組数", 0, 1, 0, 1, 0, 1, 0, 1],
+        ["", "客数", 0, 1, 0, 1, 0, 1, 0, 1],
+    ]
+    ov = run_maps(None, overflow)
+    ov_sales = (ov.get("maps") or {}).get("salesByDate") or {}
+    assert_true(ov.get("error") is None, "overflow sheet parses")
+    assert_true("2025-12-01" not in ov_sales, "labeled November drops Dec 1 overflow")
+    assert_true(ov_sales.get("2025-11-30") == 30, "Nov 30 kept")
+    assert_true((ov.get("maps") or {}).get("imported") == 3, "overflow imported 3 November days")
+
+    def reconstruct_sheet(year: int, month: int, days: list[int]) -> list[list]:
+        header = [f"{year}年", ""]
+        month_row = [f"{month}月", ""]
+        period = ["", ""]
+        sales = ["売上明細", "総売上"]
+        parties = ["", "組数"]
+        cust = ["", "客数"]
+        for d in days:
+            header.extend([f"{d}日", ""])
+            month_row.extend(["", ""])
+            period.extend(["Lunch", "Full Day"])
+            sales.extend([0, d * 10])
+            parties.extend([0, 1])
+            cust.extend([0, 1])
+        return [header, month_row, period, sales, parties, cust]
+
+    apr = run_maps(None, reconstruct_sheet(2025, 4, [28, 29, 30, 31]))
+    apr_s = (apr.get("maps") or {}).get("salesByDate") or {}
+    assert_true("2025-04-31" not in apr_s, "April 31 record rejected")
+    assert_true("2025-05-01" not in apr_s, "April 31 is not rolled to May 1")
+    assert_true(apr_s.get("2025-04-30") == 300, "April 30 kept")
+
+    feb_bad = run_maps(None, reconstruct_sheet(2025, 2, [26, 27, 28, 29]))
+    feb_s = (feb_bad.get("maps") or {}).get("salesByDate") or {}
+    assert_true("2025-02-29" not in feb_s, "2025-02-29 rejected")
+    assert_true("2025-03-01" not in feb_s, "Feb 29 is not rolled to March 1")
+    assert_true(feb_s.get("2025-02-28") == 280, "2025-02-28 kept")
+
+    feb_ok = run_maps(None, reconstruct_sheet(2024, 2, [27, 28, 29]))
+    feb_ok_s = (feb_ok.get("maps") or {}).get("salesByDate") or {}
+    assert_true(feb_ok_s.get("2024-02-29") == 290, "leap-year Feb 29 accepted")
+
+    jan = run_maps(None, reconstruct_sheet(2025, 1, [29, 30, 31]))
+    jan_s = (jan.get("maps") or {}).get("salesByDate") or {}
+    assert_true(jan_s.get("2025-01-31") == 310, "January 31 accepted")
 
     print(f"PASSED={PASSED} FAILED={FAILED}")
     return 1 if FAILED else 0
