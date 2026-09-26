@@ -37,7 +37,7 @@ def main() -> int:
         check(".then(function (r) {\n                run(r);" in html or "run(r)" in html, f"{rel} passes me() result")
         check("resetForUserScope();\n            init();" not in html, f"{rel} user-scope reuses startInit")
         check("isBusinessTypeSet()" in html, f"{rel} import gate still uses isBusinessTypeSet")
-        check("Please select your business type before importing data." in html, f"{rel} gate copy kept")
+        check("promptIndustryRequiredForImport" in html, f"{rel} import gate offers Profile edit")
     bt = BT_JS.read_text(encoding="utf-8")
     check("function isBusinessTypeSet()" in bt, "isBusinessTypeSet exists")
     check("return !!readMetaBusinessType();" in bt, "isSet is meta-only")

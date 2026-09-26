@@ -1126,11 +1126,9 @@ def daily_sales_import_js() -> str:
           }}
           var btApi = window.KpiBusinessType;
           if (!btApi || typeof btApi.isBusinessTypeSet !== 'function' || !btApi.isBusinessTypeSet()) {{
-            window.alert(t(
-              'データを取り込む前に業種を選択してください。',
-              'Please select your business type before importing data.',
-              '請先選擇業種類型，再匯入資料。'
-            ));
+            if (btApi && typeof btApi.promptIndustryRequiredForImport === 'function') {{
+              btApi.promptIndustryRequiredForImport();
+            }}
             return;
           }}
           if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;

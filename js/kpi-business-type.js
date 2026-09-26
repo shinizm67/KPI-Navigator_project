@@ -84,6 +84,11 @@
         'Change Business Type?\n\nChanging Business Type will change the default PL / MEP expense items and some KPI, Insight, PL Insight, and Floating Window displays.\n\nExisting data is not deleted, but some data entered under the previous Business Type may no longer fit the current display and analysis model.',
       changeCancel: 'Cancel',
       changeConfirm: 'Change Business Type',
+      importMissingTitle: 'Business type is not set.',
+      importMissingBody:
+        'To import data, first select a business type in your profile.',
+      importMissingEdit: 'Edit profile',
+      importMissingClose: 'Close',
     },
     ja: {
       restaurant: '飲食店',
@@ -107,6 +112,11 @@
         'Business Typeを変更しますか？\n\nBusiness Typeを変更すると、PL / MEPの標準費目、一部KPI、Insight、PL Insight、Floating Windowの表示内容が変更されます。\n\n既存データは削除されませんが、以前のBusiness Typeで入力されたデータの一部が現在の表示・分析モデルに適合しなくなる場合があります。',
       changeCancel: 'Cancel',
       changeConfirm: 'Change Business Type',
+      importMissingTitle: '業種が未設定です。',
+      importMissingBody:
+        'データを取り込むには、先にプロフィールで業種を選択してください。',
+      importMissingEdit: 'プロフィールを編集',
+      importMissingClose: '閉じる',
     },
     zh: {
       restaurant: '餐廳',
@@ -130,6 +140,10 @@
         '要變更業種嗎？\n\n變更業種後，PL / MEP 的標準費目、部分 KPI、Insight、PL Insight、Floating Window 的顯示內容會改變。\n\n既有資料不會被刪除，但先前業種所輸入的部分資料，可能不再符合目前的顯示與分析模型。',
       changeCancel: 'Cancel',
       changeConfirm: 'Change Business Type',
+      importMissingTitle: '尚未設定業種。',
+      importMissingBody: '要匯入資料，請先在個人資料中選擇業種。',
+      importMissingEdit: '編輯個人資料',
+      importMissingClose: '關閉',
     },
   };
 
@@ -339,6 +353,7 @@
     overlay.className = 'kpi-bt-dialog-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
+    if (opts.marker) overlay.setAttribute('data-kpi-bt-dialog', String(opts.marker));
     var box = document.createElement('div');
     box.className = 'kpi-bt-dialog';
     var title = document.createElement('p');
@@ -352,10 +367,12 @@
     var cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
     cancelBtn.className = 'kpi-bt-dialog__btn kpi-bt-dialog__btn--cancel';
+    cancelBtn.setAttribute('data-kpi-bt-act', 'cancel');
     cancelBtn.textContent = opts.cancelLabel || 'Cancel';
     var confirmBtn = document.createElement('button');
     confirmBtn.type = 'button';
     confirmBtn.className = 'kpi-bt-dialog__btn kpi-bt-dialog__btn--confirm';
+    confirmBtn.setAttribute('data-kpi-bt-act', 'confirm');
     confirmBtn.textContent = opts.confirmLabel || 'OK';
     actions.appendChild(cancelBtn);
     actions.appendChild(confirmBtn);
@@ -383,6 +400,77 @@
     });
     confirmBtn.focus();
     return overlay;
+  }
+
+  var INDUSTRY_FOCUS_HASH = '#profile-industry';
+
+  function resolveProfileViewHrefFromChrome() {
+    var nodes = document.querySelectorAll('a.account-settings-item[href]');
+    var i;
+    for (i = 0; i < nodes.length; i++) {
+      var href = String(nodes[i].getAttribute('href') || '');
+      if (href.indexOf('profile_edit') >= 0) continue;
+      if (/profile\.html(\?|#|$)/.test(href)) return href;
+    }
+    return '';
+  }
+
+  function viewHrefToEditHref(viewHref) {
+    if (!viewHref) return '';
+    var noHash = String(viewHref).split('#')[0];
+    var q = '';
+    var qi = noHash.indexOf('?');
+    if (qi >= 0) {
+      q = noHash.slice(qi);
+      noHash = noHash.slice(0, qi);
+    }
+    if (!/profile\.html$/.test(noHash)) return '';
+    return noHash.replace(/profile\.html$/, 'profile_edit.html') + q + INDUSTRY_FOCUS_HASH;
+  }
+
+  function resolveProfileEditHref() {
+    var fromChrome = viewHrefToEditHref(resolveProfileViewHrefFromChrome());
+    if (fromChrome) return fromChrome;
+    var root = '';
+    try {
+      if (global.__KPI_AUTH && typeof global.__KPI_AUTH.resolveAppRoot === 'function') {
+        root = String(global.__KPI_AUTH.resolveAppRoot() || '').replace(/\/$/, '');
+      }
+    } catch (_eRoot) {}
+    if (!root) return '';
+    var path = '';
+    try {
+      path = String((global.location && global.location.pathname) || '');
+    } catch (_ePath) {}
+    var langPrefix = '';
+    if (path.indexOf(root + '/zh-tw/') === 0 || path === root + '/zh-tw') langPrefix = '/zh-tw';
+    else if (path.indexOf(root + '/en/') === 0 || path === root + '/en') langPrefix = '/en';
+    return root + langPrefix + '/setting/profile_edit.html' + INDUSTRY_FOCUS_HASH;
+  }
+
+  function goToProfileEdit() {
+    var href = resolveProfileEditHref();
+    if (!href) return false;
+    try {
+      global.location.href = href;
+      return true;
+    } catch (_eGo) {
+      return false;
+    }
+  }
+
+  function promptIndustryRequiredForImport() {
+    var pack = copy();
+    return openDialog({
+      marker: 'industry-missing-import',
+      title: pack.importMissingTitle,
+      body: pack.importMissingBody,
+      cancelLabel: pack.importMissingClose,
+      confirmLabel: pack.importMissingEdit,
+      onConfirm: function () {
+        goToProfileEdit();
+      },
+    });
   }
 
   function confirmRegistration(onConfirm, onCancel) {
@@ -426,6 +514,8 @@
     applyHint: applyHint,
     confirmRegistration: confirmRegistration,
     confirmChange: confirmChange,
+    promptIndustryRequiredForImport: promptIndustryRequiredForImport,
+    resolveProfileEditHref: resolveProfileEditHref,
     detectLang: detectLang,
   };
 })(typeof window !== 'undefined' ? window : this);

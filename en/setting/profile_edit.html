@@ -893,6 +893,20 @@
         cityInput.addEventListener('change', maybeTimezone);
       }
 
+      function maybeFocusIndustryFromHash() {
+        if (!industrySelect) return;
+        var hash = '';
+        try {
+          hash = String((window.location && window.location.hash) || '');
+        } catch (_eHash) {}
+        if (hash !== '#profile-industry') return;
+        try {
+          if (typeof industrySelect.scrollIntoView === 'function') {
+            industrySelect.scrollIntoView({ block: 'center', inline: 'nearest' });
+          }
+          if (typeof industrySelect.focus === 'function') industrySelect.focus();
+        } catch (_eFocus) {}
+      }
       function syncIndustrySelectFromMeta() {
         if (!industrySelect || !window.KpiBusinessType) return '';
         var metaType =
@@ -941,6 +955,7 @@
               syncIndustrySelectFromMeta();
               syncGenreField();
               if (typeof syncLocationLists === 'function') syncLocationLists();
+              maybeFocusIndustryFromHash();
             }
           });
         } else if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.applyLocalShapeToForm === 'function') {
@@ -952,11 +967,13 @@
           syncIndustrySelectFromMeta();
           syncGenreField();
         }
+        maybeFocusIndustryFromHash();
       }
       document.addEventListener('kpi:storeHydratedFromServer', function () {
         if (industryUserDirty) return;
         syncIndustrySelectFromMeta();
         syncGenreField();
+        maybeFocusIndustryFromHash();
       });
       var scopeBind =
         window.__KPI_AUTH && typeof window.__KPI_AUTH.ensureUserScopeBound === 'function'
