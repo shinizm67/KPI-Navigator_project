@@ -18,6 +18,13 @@
       margin-top: 8px;
       align-self: center;
       overflow-x: visible;
+      --kpi-cockpit-bd-box-left: calc(100% - 228px);
+      --kpi-cockpit-target-box-w: 350px;
+      --kpi-cockpit-bd-box-w: 79px;
+      --kpi-cockpit-target-bd-gap: 30px;
+    }
+    .office-mode .annual-monthly-data {
+      --kpi-cockpit-target-bd-gap: 17px;
     }
     .annual-year-control {
       position: absolute;
@@ -224,15 +231,25 @@
     }
     .annual-total-bd-group {
       position: absolute;
-      left: calc(100% - 247px);
+      left: var(--kpi-cockpit-bd-box-left);
       top: 21px;
       z-index: 2;
+      width: var(--kpi-cockpit-bd-box-w);
+      box-sizing: border-box;
+      padding-top: 17px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
+      overflow: visible;
     }
     .annual-total-bd-label {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      width: max-content;
       margin: 0;
       color: #58e1f3;
       font-size: 11px;
@@ -258,14 +275,18 @@
     /* KPI-ANNUAL-DATE-IIFE-CV: hide until placed; default left near Total BD (not date) */
     .annual-target-sales-group {
       position: absolute;
-      left: calc(100% - 620px);
+      left: calc(var(--kpi-cockpit-bd-box-left) - var(--kpi-cockpit-target-bd-gap) - var(--kpi-cockpit-target-box-w));
       transform: none;
       top: 21px;
       z-index: 2;
+      width: var(--kpi-cockpit-target-box-w);
+      box-sizing: border-box;
+      padding-top: 17px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
+      overflow: visible;
       opacity: 0;
     }
     .annual-target-sales-group.annual-target-sales-group--positioned {
@@ -278,6 +299,12 @@
       text-underline-offset: 2px;
     }
     .annual-target-sales-label {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      width: max-content;
       margin: 0;
       color: #58e1f3;
       font-size: 11px;
@@ -31191,24 +31218,9 @@
       /* KPI-ANNUAL-PLACE-PERF */
       var __placeTargetSalesLeft = null;
       function placeTargetSalesGroup() {
-        /* KPI-ANNUAL-TARGET-BOX-CU: always keep visible even if geometry missing */
+        /* KPI-ANNUAL-TARGET-BOX-CU: CSS owns left (EN box-gap contract); keep visible */
         if (!targetGroup) return;
-        var root = document.getElementById('annual-monthly-data');
-        if (!root || !todayBtn) {
-          targetGroup.classList.add('annual-target-sales-group--positioned');
-          return;
-        }
-        var rootRect = root.getBoundingClientRect();
-        var todayRect = todayBtn.getBoundingClientRect();
-        var left = Math.round(todayRect.right - rootRect.left + 45);
-        if (__placeTargetSalesLeft === left) {
-          if (!targetGroup.classList.contains('annual-target-sales-group--positioned')) {
-            targetGroup.classList.add('annual-target-sales-group--positioned');
-          }
-          return;
-        }
-        __placeTargetSalesLeft = left;
-        targetGroup.style.left = left + 'px';
+        targetGroup.style.removeProperty('left');
         targetGroup.classList.add('annual-target-sales-group--positioned');
       }
 
