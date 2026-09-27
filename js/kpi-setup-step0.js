@@ -10,6 +10,9 @@
  * store.meta.setup writes: Step 01 save creates an empty object when opened with
  * startSetup (non-grandfathered only), so importing history cannot grandfather the user
  * mid-setup; STEP 02 Skip sets historicalSkipped only. setup.complete is never written here.
+ *
+ * Phase 4 — STEP 03 Current Year (openCurrentYear) follows STEP 02 in the same dialog.
+ * Its only write is currentYearAcknowledged = true, on an explicit click.
  */
 (function (global) {
   'use strict';
@@ -130,17 +133,45 @@
         confirmBack: '戻る',
         skipFailed: 'スキップを保存できませんでした。もう一度お試しください。',
         skipWarn: 'スキップの設定がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
-        doneTitle: {
-          present: 'HISTORICAL DATA READY',
-          skipped: 'HISTORICAL DATA SKIPPED',
-          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+      },
+      current: {
+        title: 'Current Year',
+        lead: '今年度のデータの状態を確認してください。売上がまだなくても続けられます。',
+        operatingYear: '運用年度',
+        start: '事業開始',
+        period: '対象期間',
+        detected: '登録済みの日数',
+        positive: '売上がある日数',
+        status: '状態',
+        days: '{n} 日',
+        rangeSep: ' 〜 ',
+        state: {
+          present: '今年度のデータがあります',
+          none: '今年度のデータはまだありません',
+          new_business: '今年開業（データはまだありません）',
+          invalid: '確認できません',
         },
-        doneLead: {
-          present: '過去データを確認しました。',
-          skipped: '過去データの登録をスキップしました。',
-          not_applicable: '過去データは必要ありません。',
+        msg: {
+          present: '登録済みのデータを確認してから次へ進んでください。追加の登録は後からでもできます。',
+          none: 'このまま続けて、今年度のデータは後から登録することもできます。',
+          new_business: '今年開業のため、データがまだなくても問題ありません。',
+          acknowledged: '今年度の状態は確認済みです。',
+          opening_future: '事業開始年月が今日より後の日付になっています。ビジネス情報を確認してください。',
+          no_period: '今年度の対象期間がまだ始まっていないため、確認できません。',
         },
-        doneBody: '次のステップは「今年度」です（準備中）。このまま KPN をご利用いただけます。',
+        ackPresent: '今年度データを確認しました',
+        ackNone: '現在の状態で続ける',
+        register: '今年度データを登録する',
+        addMore: '今年度データを追加する',
+        fixProfile: 'ビジネス情報を修正する',
+        close: '閉じる',
+        next: '次へ',
+        viaAnnual: '登録は年間ビューの「売上」で行います。',
+        ackFailed: '確認を保存できませんでした。もう一度お試しください。',
+        ackWarn: '確認の記録がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
+        doneTitle: 'CURRENT YEAR CONFIRMED',
+        doneLead: '今年度データの状態を確認しました。',
+        doneBody: '次のステップは「年間目標」です（準備中）。このまま KPN をご利用いただけます。',
       },
     },
     en: {
@@ -231,17 +262,45 @@
         confirmBack: 'Back',
         skipFailed: 'Could not save the skip. Please try again.',
         skipWarn: 'The skip has not reached the server yet. Reloading the page will retry.',
-        doneTitle: {
-          present: 'HISTORICAL DATA READY',
-          skipped: 'HISTORICAL DATA SKIPPED',
-          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+      },
+      current: {
+        title: 'Current Year',
+        lead: "Check the status of this year's data. You can continue even with no sales yet.",
+        operatingYear: 'Operating Year',
+        start: 'Business Start',
+        period: 'Data Period',
+        detected: 'Days Recorded',
+        positive: 'Days with Sales',
+        status: 'Status',
+        days: '{n} days',
+        rangeSep: ' – ',
+        state: {
+          present: 'Current-year data found',
+          none: 'No current-year data yet',
+          new_business: 'Opened this year (no data yet)',
+          invalid: 'Cannot be confirmed',
         },
-        doneLead: {
-          present: 'Your past data is confirmed.',
-          skipped: 'Past data is skipped for now.',
-          not_applicable: 'No past data is needed.',
+        msg: {
+          present: 'Review your recorded data, then continue. You can add more at any time.',
+          none: "You can continue now and add this year's data later.",
+          new_business: "Your business opened this year, so it's fine to have no data yet.",
+          acknowledged: 'This year has already been confirmed.',
+          opening_future: 'Your business start date is later than today. Please check your business information.',
+          no_period: "This year's data period has not started yet, so it cannot be confirmed.",
         },
-        doneBody: 'Next step: Current Year (coming soon). You can continue to KPN now.',
+        ackPresent: "I've Reviewed This Year's Data",
+        ackNone: 'Continue as Is',
+        register: "Add This Year's Data",
+        addMore: "Add More of This Year's Data",
+        fixProfile: 'Edit Business Information',
+        close: 'Close',
+        next: 'Next',
+        viaAnnual: "This year's data is added from Sales in Annual view.",
+        ackFailed: 'Could not save the confirmation. Please try again.',
+        ackWarn: 'The confirmation has not reached the server yet. Reloading the page will retry.',
+        doneTitle: 'CURRENT YEAR CONFIRMED',
+        doneLead: "This year's data status is confirmed.",
+        doneBody: 'Next step: Annual Target (coming soon). You can continue to KPN now.',
       },
     },
     zh: {
@@ -332,17 +391,45 @@
         confirmBack: '返回',
         skipFailed: '無法儲存略過設定，請再試一次。',
         skipWarn: '略過設定尚未傳送到伺服器。重新整理頁面後會再次傳送。',
-        doneTitle: {
-          present: 'HISTORICAL DATA READY',
-          skipped: 'HISTORICAL DATA SKIPPED',
-          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+      },
+      current: {
+        title: 'Current Year',
+        lead: '請確認本年度資料的狀態。即使尚無營業額也可以繼續。',
+        operatingYear: '營運年度',
+        start: '事業開始',
+        period: '對象期間',
+        detected: '已登錄天數',
+        positive: '有營業額的天數',
+        status: '狀態',
+        days: '{n} 天',
+        rangeSep: ' ～ ',
+        state: {
+          present: '已有本年度資料',
+          none: '尚無本年度資料',
+          new_business: '本年度開業（尚無資料）',
+          invalid: '無法確認',
         },
-        doneLead: {
-          present: '已確認過去資料。',
-          skipped: '已略過過去資料的登錄。',
-          not_applicable: '不需要過去資料。',
+        msg: {
+          present: '請確認已登錄的資料後再進入下一步。之後也可以隨時追加。',
+          none: '可以直接繼續，本年度資料之後再登錄也沒問題。',
+          new_business: '本年度開業，目前沒有資料也沒問題。',
+          acknowledged: '本年度的狀態已確認。',
+          opening_future: '事業開始年月晚於今天。請確認商家資訊。',
+          no_period: '本年度的對象期間尚未開始，因此無法確認。',
         },
-        doneBody: '下一步是「本年度」（準備中）。現在可以直接進入 KPN。',
+        ackPresent: '已確認本年度資料',
+        ackNone: '以目前狀態繼續',
+        register: '登錄本年度資料',
+        addMore: '追加本年度資料',
+        fixProfile: '修改商家資訊',
+        close: '關閉',
+        next: '下一步',
+        viaAnnual: '本年度資料請在年度檢視的「營業額」登錄。',
+        ackFailed: '無法儲存確認，請再試一次。',
+        ackWarn: '確認紀錄尚未傳送到伺服器。重新整理頁面後會再次傳送。',
+        doneTitle: 'CURRENT YEAR CONFIRMED',
+        doneLead: '已確認本年度資料的狀態。',
+        doneBody: '下一步是「年度目標」（準備中）。現在可以直接進入 KPN。',
       },
     },
   };
@@ -495,6 +582,20 @@
     var bag = store.meta.setup;
     if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
     bag.historicalSkipped = true;
+    return writeStoreJson(store);
+  }
+
+  /** Records that the user confirmed STEP 03. Refused while the current-year summary is invalid. */
+  function writeCurrentYearAcknowledged() {
+    var store = readStore();
+    if (!store) return false;
+    var r = readiness();
+    var sum = r && typeof r.currentYearSummary === 'function' ? r.currentYearSummary(store) : null;
+    if (!sum || sum.status === 'invalid') return false;
+    if (!store.meta || typeof store.meta !== 'object') store.meta = {};
+    var bag = store.meta.setup;
+    if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
+    bag.currentYearAcknowledged = true;
     return writeStoreJson(store);
   }
 
@@ -1203,9 +1304,11 @@
       onDone: opts && typeof opts.onDone === 'function' ? opts.onDone : null,
     };
     hist = null;
+    curYear = null;
     var card = el('kpi-s0-card');
     card.setAttribute('data-s0-view', 'profile');
     card.removeAttribute('data-s2-kind');
+    card.removeAttribute('data-s3-status');
     card.innerHTML = renderForm(c);
     root.hidden = false;
     bindForm();
@@ -1304,22 +1407,6 @@
     );
   }
 
-  function renderHistoryDone(c, kind) {
-    var h = c.history;
-    return (
-      '<div class="kpi-s0-head kpi-s0-saved-head">' +
-      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
-      renderStepRuler(c, { current: -1, states: ['completed', kind === 'skipped' ? 'skipped' : 'completed'], position: 2 }) +
-      '<div class="kpi-s0-saved" id="kpi-s0-hist-done-body">' +
-      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(h.doneTitle[kind] || '') + '</h2>' +
-      '<p class="kpi-s0-saved-lead">' + esc(h.doneLead[kind] || '') + '</p>' +
-      '<p class="kpi-s0-saved-body">' + esc(h.doneBody) + '</p></div></div>' +
-      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
-      '<div class="kpi-s0-actions">' +
-      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-hist-done">' + esc(c.next) + '</button></div>'
-    );
-  }
-
   function closeHistory() {
     if (rootEl) rootEl.hidden = true;
     hist = null;
@@ -1338,18 +1425,11 @@
     } catch (_e) {}
   }
 
-  function showHistoryDone(kind, warn) {
-    var c = t(hist.lang);
-    var card = el('kpi-s0-card');
-    if (!card) return;
-    hist.view = 'done';
-    card.setAttribute('data-s0-view', 'history-done');
-    card.setAttribute('data-s2-kind', kind);
-    card.innerHTML = renderHistoryDone(c, kind);
-    if (warn) setStatus(c.history.skipWarn, 'warn');
-    var btn = el('kpi-s0-hist-done');
-    if (btn) btn.addEventListener('click', finishHistory);
-    focusEl('kpi-s0-hist-done');
+  /** STEP 02 passes (present / skipped / not_applicable); STEP 03 opens in the same dialog. */
+  function goToCurrentYear(skipWarn) {
+    var done = hist && hist.onDone;
+    hist = null;
+    openCurrentYear({ entry: 'flow', onDone: done, skipWarn: !!skipWarn });
   }
 
   /** Reuses the existing Annual Past Sales dialog (CSV / Excel import included); STEP 02 returns when it closes. */
@@ -1427,7 +1507,7 @@
     pushStore().then(function (push) {
       if (hist !== session) return;
       hist.saving = false;
-      showHistoryDone('skipped', !(push && push.ok === true));
+      goToCurrentYear(!(push && push.ok === true));
     });
   }
 
@@ -1440,13 +1520,12 @@
     on('kpi-s0-hist-register', startHistoryImport);
     on('kpi-s0-hist-skip', showSkipConfirm);
     on('kpi-s0-hist-next', function () {
-      if (hist && hist.sum) showHistoryDone(hist.sum.state);
+      if (hist) goToCurrentYear(false);
     });
   }
 
   /**
-   * opts.entry: 'flow' shows STEP 02 itself; 'resume' goes past it when history is not absent
-   * (the next soft step is not built yet, so that is the done card).
+   * opts.entry: 'flow' shows STEP 02 itself; 'resume' goes on to STEP 03 when history is not absent.
    */
   function openHistory(opts) {
     var o = opts || {};
@@ -1458,19 +1537,267 @@
       return;
     }
     state = null;
+    curYear = null;
+    if (o.entry === 'resume' && sum.state !== 'absent') {
+      hist = null;
+      openCurrentYear({ entry: 'resume', onDone: done });
+      return;
+    }
     var lang = detectLang();
     hist = { lang: lang, opts: o, onDone: done, sum: sum, view: 'history', saving: false };
     var card = el('kpi-s0-card');
     root.hidden = false;
-    if (o.entry === 'resume' && sum.state !== 'absent') {
-      showHistoryDone(sum.state);
-      return;
-    }
     card.setAttribute('data-s0-view', 'history');
     card.setAttribute('data-s2-kind', sum.state);
+    card.removeAttribute('data-s3-status');
     card.innerHTML = renderHistory(t(lang), sum);
     bindHistory();
     focusEl(el('kpi-s0-hist-register') && sum.state === 'absent' ? 'kpi-s0-hist-register' : 'kpi-s0-hist-next');
+  }
+
+  /* ---------- STEP 03 Current Year ---------- */
+
+  var curYear = null;
+
+  function currentSummary() {
+    var r = readiness();
+    if (!r || typeof r.currentYearSummary !== 'function') return null;
+    return r.currentYearSummary(readStore());
+  }
+
+  function hasCurrentImporterHere() {
+    var r = readiness();
+    return !!(r && typeof r.hasCurrentYearImporter === 'function' && r.hasCurrentYearImporter());
+  }
+
+  /** STEP 02 as it stands now, for the ruler on STEP 03 screens. */
+  function historyRulerState() {
+    var sum = historySummary();
+    var st = sum ? sum.state : null;
+    if (st === 'skipped') return 'skipped';
+    if (st === 'present' || st === 'not_applicable') return 'completed';
+    return 'future';
+  }
+
+  function actionBtn(id, label, primary, left) {
+    return (
+      '<button type="button" class="kpi-s0-btn' + (primary ? ' is-primary' : '') + (left ? ' is-left' : '') +
+      '" id="' + id + '">' + esc(label) + '</button>'
+    );
+  }
+
+  function renderCurrentSummary(k, sum) {
+    var rows = [
+      ['operatingYear', k.operatingYear, String(sum.operatingYear)],
+      ['start', k.start, sum.openingYm],
+    ];
+    if (sum.status !== 'invalid') {
+      rows.push(['period', k.period, sum.rangeStart + k.rangeSep + sum.rangeEnd]);
+      rows.push(['detected', k.detected, fmt(k.days, { n: sum.detectedDays })]);
+      if (sum.detectedDays > 0) rows.push(['positive', k.positive, fmt(k.days, { n: sum.positiveDays })]);
+    }
+    rows.push(['status', k.status, k.state[sum.status] || '']);
+    return (
+      '<dl class="kpi-s0-summary" id="kpi-s0-cur-summary">' +
+      rows.map(function (r) {
+        return '<dt>' + esc(r[1]) + '</dt><dd data-s3-row="' + r[0] + '">' + esc(r[2]) + '</dd>';
+      }).join('') +
+      '</dl>'
+    );
+  }
+
+  function currentMessageKey(sum) {
+    if (sum.status === 'invalid') return sum.invalidReason || 'no_period';
+    if (sum.acknowledged) return 'acknowledged';
+    return sum.status;
+  }
+
+  function renderCurrent(c, sum) {
+    var k = c.current;
+    var msgKey = currentMessageKey(sum);
+    var noteClass = sum.status === 'invalid' ? ' is-strong' : msgKey === 'none' ? '' : ' is-ok';
+    var actions = actionBtn('kpi-s0-cur-close', k.close, false, true);
+    var hasRegister = false;
+    if (sum.status === 'invalid') {
+      if (sum.invalidReason === 'opening_future') actions += actionBtn('kpi-s0-cur-fix', k.fixProfile, true);
+    } else {
+      hasRegister = true;
+      actions += actionBtn('kpi-s0-cur-register', sum.status === 'present' ? k.addMore : k.register);
+      actions += actionBtn(
+        'kpi-s0-cur-ack',
+        sum.acknowledged ? k.next : sum.status === 'present' ? k.ackPresent : k.ackNone,
+        true
+      );
+    }
+    return (
+      '<div class="kpi-s0-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: 2, states: ['completed', historyRulerState(), 'active'] }) +
+      '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(k.title) + '</h2>' +
+      '<p class="kpi-s0-lead">' + esc(k.lead) + '</p></div>' +
+      renderCurrentSummary(k, sum) +
+      '<p class="kpi-s0-note' + noteClass + '" id="kpi-s0-cur-note" data-s3-msg="' + esc(msgKey) + '">' +
+      esc(k.msg[msgKey] || '') + '</p>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions" id="kpi-s0-cur-actions">' + actions + '</div>' +
+      (hasRegister && !hasCurrentImporterHere() ? '<p class="kpi-s0-via" id="kpi-s0-cur-via">' + esc(k.viaAnnual) + '</p>' : '')
+    );
+  }
+
+  function renderCurrentDone(c) {
+    var k = c.current;
+    return (
+      '<div class="kpi-s0-head kpi-s0-saved-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: -1, states: ['completed', historyRulerState(), 'completed'], position: 3 }) +
+      '<div class="kpi-s0-saved" id="kpi-s0-cur-done-body">' +
+      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(k.doneTitle) + '</h2>' +
+      '<p class="kpi-s0-saved-lead">' + esc(k.doneLead) + '</p>' +
+      '<p class="kpi-s0-saved-body">' + esc(k.doneBody) + '</p></div></div>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-cur-done">' + esc(c.next) + '</button></div>'
+    );
+  }
+
+  function closeCurrentYear() {
+    if (rootEl) rootEl.hidden = true;
+    curYear = null;
+  }
+
+  function finishCurrentYear() {
+    var done = curYear && curYear.onDone;
+    closeCurrentYear();
+    if (typeof done === 'function') done();
+  }
+
+  function showCurrentDone(warn) {
+    var c = t(curYear.lang);
+    var card = el('kpi-s0-card');
+    if (!card) return;
+    card.setAttribute('data-s0-view', 'current-done');
+    card.innerHTML = renderCurrentDone(c);
+    if (warn) setStatus(c.current.ackWarn, 'warn');
+    var btn = el('kpi-s0-cur-done');
+    if (btn) btn.addEventListener('click', finishCurrentYear);
+    focusEl('kpi-s0-cur-done');
+  }
+
+  function acknowledgeCurrentYear() {
+    if (!curYear || curYear.saving) return;
+    if (curYear.sum.acknowledged) {
+      showCurrentDone(false);
+      return;
+    }
+    var session = curYear;
+    var c = t(curYear.lang);
+    if (!writeCurrentYearAcknowledged()) {
+      setStatus(c.current.ackFailed, 'error');
+      return;
+    }
+    curYear.saving = true;
+    var box = el('kpi-s0-cur-actions');
+    if (box) {
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function (b) {
+        b.disabled = true;
+      });
+    }
+    pushStore().then(function (push) {
+      if (curYear !== session) return;
+      curYear.saving = false;
+      showCurrentDone(!(push && push.ok === true));
+    });
+  }
+
+  /** Reuses the existing Annual Sales Data dialog (operatingYear, CSV / Excel import included); STEP 03 returns when it closes. */
+  function openSalesDataFromSetup() {
+    var btn = global.document.getElementById('annual-current-sales-btn');
+    var modal = global.document.getElementById('sales-data-modal');
+    var opts = curYear ? curYear.opts : {};
+    var done = curYear ? curYear.onDone : null;
+    var reopen = function () {
+      openCurrentYear(Object.assign({}, opts, { entry: 'flow', onDone: done, skipWarn: false }));
+    };
+    closeCurrentYear();
+    btn.click();
+    if (!modal || modal.hasAttribute('hidden') || typeof global.MutationObserver !== 'function') {
+      reopen();
+      return;
+    }
+    var mo = new global.MutationObserver(function () {
+      if (!modal.hasAttribute('hidden')) return;
+      mo.disconnect();
+      reopen();
+    });
+    mo.observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+  }
+
+  function startCurrentImport() {
+    if (!curYear || curYear.saving) return;
+    if (hasCurrentImporterHere()) {
+      openSalesDataFromSetup();
+      return;
+    }
+    var r = readiness();
+    var url = r && typeof r.annualSetupUrl === 'function' ? r.annualSetupUrl() : '';
+    if (url) global.location.href = url;
+  }
+
+  /** Opening date later than today: back to Step 01, then STEP 02 and STEP 03 again. */
+  function fixProfileFromCurrent() {
+    var done = curYear && curYear.onDone;
+    closeCurrentYear();
+    open({
+      startSetup: true,
+      continueSetup: true,
+      onDone: function () {
+        openHistory({ entry: 'flow', onDone: done });
+      },
+    });
+  }
+
+  function bindCurrent() {
+    var on = function (id, fn) {
+      var n = el(id);
+      if (n) n.addEventListener('click', fn);
+    };
+    on('kpi-s0-cur-close', finishCurrentYear);
+    on('kpi-s0-cur-register', startCurrentImport);
+    on('kpi-s0-cur-ack', acknowledgeCurrentYear);
+    on('kpi-s0-cur-fix', fixProfileFromCurrent);
+  }
+
+  /**
+   * opts.entry: 'flow' shows STEP 03 itself; 'resume' shows the done card once acknowledged
+   * (STEP 04 is not built yet). opts.skipWarn: the STEP 02 skip push did not reach the server.
+   */
+  function openCurrentYear(opts) {
+    var o = opts || {};
+    var done = typeof o.onDone === 'function' ? o.onDone : null;
+    var root = ensureRoot();
+    var sum = currentSummary();
+    if (!root || !sum) {
+      if (root) root.hidden = true;
+      if (done) done();
+      return;
+    }
+    state = null;
+    hist = null;
+    var lang = detectLang();
+    curYear = { lang: lang, opts: o, onDone: done, sum: sum, saving: false };
+    var card = el('kpi-s0-card');
+    card.removeAttribute('data-s2-kind');
+    card.setAttribute('data-s3-status', sum.status);
+    root.hidden = false;
+    if (o.entry === 'resume' && sum.acknowledged) {
+      showCurrentDone(false);
+      return;
+    }
+    card.setAttribute('data-s0-view', 'current');
+    card.innerHTML = renderCurrent(t(lang), sum);
+    bindCurrent();
+    if (o.skipWarn) setStatus(t(lang).history.skipWarn, 'warn');
+    focusEl(el('kpi-s0-cur-ack') ? 'kpi-s0-cur-ack' : el('kpi-s0-cur-fix') ? 'kpi-s0-cur-fix' : 'kpi-s0-cur-close');
   }
 
   global.KpiSetupStep0 = {
@@ -1479,6 +1806,8 @@
     close: close,
     openHistory: openHistory,
     closeHistory: closeHistory,
+    openCurrentYear: openCurrentYear,
+    closeCurrentYear: closeCurrentYear,
     mergeProfile: mergeProfile,
     SETUP_STEPS: SETUP_STEPS.slice(),
     renderStepRuler: function (opts) {

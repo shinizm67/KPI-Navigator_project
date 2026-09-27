@@ -5,6 +5,7 @@
  * A successful GET with store:null is an empty business state, not PENDING.
  * Phase 2: businessProfileComplete is the 7-field Hard Required AND.
  * It does not widen phase1Block.
+ * Phase 4: currentYearSummary feeds STEP 03; completion is currentYearAcknowledged only.
  */
 (function (global) {
   'use strict';
@@ -228,6 +229,66 @@
       detectedYears: level === 'not_applicable' ? [] : historicalYears(s, oy, openingDate),
       level: level,
     };
+  }
+
+  function localTodayIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  /**
+   * STEP 03 summary. Range = max(openingDate, operatingYear-01-01) .. min(today, operatingYear-12-31).
+   * status: present | none | new_business | invalid (invalidReason opening_future | no_period).
+   * Counts never decide completion; only store.meta.setup.currentYearAcknowledged does.
+   * today is an optional YYYY-MM-DD override. Returns null while the opening date is invalid.
+   */
+  function currentYearSummary(store, today) {
+    var s = store && typeof store === 'object' ? store : {};
+    var oy = operatingYearOf(s);
+    var openingDate = s.meta ? trimmed(s.meta.openingDate) : '';
+    if (!isValidOpeningDate(openingDate)) return null;
+    var todayIso = isValidOpeningDate(today) ? String(today) : localTodayIso();
+    var yearStart = String(oy) + '-01-01';
+    var yearEnd = String(oy) + '-12-31';
+    var rangeStart = openingDate > yearStart ? openingDate : yearStart;
+    var rangeEnd = todayIso < yearEnd ? todayIso : yearEnd;
+    var bag = setupBag(s);
+    var out = {
+      operatingYear: oy,
+      openingDate: openingDate,
+      openingYm: openingDate.slice(0, 7),
+      today: todayIso,
+      startedThisYear: Number(openingDate.slice(0, 4)) === oy,
+      rangeStart: rangeStart,
+      rangeEnd: rangeEnd,
+      detectedDays: 0,
+      positiveDays: 0,
+      status: 'none',
+      invalidReason: null,
+      acknowledged: !!(bag && bag.currentYearAcknowledged === true),
+    };
+    if (openingDate > todayIso) {
+      out.status = 'invalid';
+      out.invalidReason = 'opening_future';
+      return out;
+    }
+    if (rangeStart > rangeEnd) {
+      out.status = 'invalid';
+      out.invalidReason = 'no_period';
+      return out;
+    }
+    var map = s.timeline ? s.timeline.dailySales : null;
+    if (map && typeof map === 'object') {
+      Object.keys(map).forEach(function (iso) {
+        if (!isCanonicalDailySales(iso, map[iso], oy)) return;
+        if (iso < rangeStart || iso > rangeEnd) return;
+        out.detectedDays++;
+        if (finiteSales(map[iso]) > 0) out.positiveDays++;
+      });
+    }
+    if (out.detectedDays > 0) out.status = 'present';
+    else if (out.startedThisYear) out.status = 'new_business';
+    return out;
   }
 
   function blankFacts() {
@@ -503,6 +564,14 @@
     return !!(global.document && global.document.getElementById('annual-past-sales-btn'));
   }
 
+  function hasCurrentYearImporter() {
+    return !!(
+      global.document &&
+      global.document.getElementById('annual-current-sales-btn') &&
+      global.document.getElementById('sales-data-modal')
+    );
+  }
+
   function applyResume(result) {
     if (!global.document || !global.document.body) return;
     var show = isSetupPending(result) && !result.phase1Block && hasHistoryImporter() && !!historyApi();
@@ -604,8 +673,10 @@
     evaluateSnapshot: evaluateSnapshot,
     evaluateBusinessProfile: evaluateBusinessProfile,
     historicalSummary: historicalSummary,
+    currentYearSummary: currentYearSummary,
     annualSetupUrl: annualSetupUrl,
     hasHistoryImporter: hasHistoryImporter,
+    hasCurrentYearImporter: hasCurrentYearImporter,
     resumeSetup: resumeSetup,
     buildOpeningDate: buildOpeningDate,
     isValidOpeningDate: isValidOpeningDate,
