@@ -129,6 +129,10 @@ N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
 NONE. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start unrelated post-launch work.
+
+BASELINE UX CONVENTION (not a work branch):
+- Unfinished / coming-soon full pages → Construction State
+  (`docs/kpn-construction-state.md`)
 ```
 
 ### Git snapshot
@@ -235,6 +239,18 @@ CLOSED node ? **?????**??????????????
 2. reconcile ??????  
 
 ??????????? **UNKNOWN**?????????
+
+### UX / UI convention: unfinished pages (baseline)
+
+Default for a **new full page** whose feature or content is not ready: Forge Lab / KPN **Construction State** (scramble / rotating placeholder).
+
+- Do **not** ship a plain empty page or raw static placeholder text unless there is a **documented exception**.
+- Main rotating phrases stay English on all locales: `COMING SOON` / `UNDER CONSTRUCTION` / `WORK IN PROGRESS`.
+- Localized subtitle is **required** (JP / EN / ZH-TW).
+- Sci-Fi: branded scramble. Office: calm freeze on `COMING SOON`.
+- Future unfinished pages: use this pattern unless an exception is written down.
+- Durable spec: [`docs/kpn-construction-state.md`](./kpn-construction-state.md)
+- Reuse: `js/kpi-construction-state.js` + `.kpn-construction-state`
 
 ---
 
@@ -1706,3 +1722,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR CLOSED** Office SVG fill `#ffffff`. Sci-Fi `#59e1f3` unchanged. Production smoke 30/30 PASS. SHA `414b164`. Human Review NO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-26 | **BR-POST-FOOTER-VERSION CLOSED** Shared footer brand: Key Performance Navigator / Version 1.0.0 / © 2025 Forge Laboratory. SHA `900bfc3`. |
 | 2026-09-26 | **BR-POST-COCKPIT-GAP CLOSED** Shared Cockpit box gap Sci-Fi 30px / Office 17px (EN reference). JP/ZH-TW match EN. Production 48/48 PASS. SHA `deabb85`. Human Review NO. Do not reopen `TRUNK-06`. |
+| 2026-09-27 | **Construction State baseline recorded.** Future unfinished full pages default to scramble placeholder unless a documented exception. Spec: `docs/kpn-construction-state.md`. Task Tree §3 Operating Rule. No product-code change. |

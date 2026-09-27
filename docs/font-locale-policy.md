@@ -20,9 +20,11 @@
 - EN Sci-Fi 向けに `font-family: 'Orbitron'` を置いた要素は、**JA / zh-TW 用に同セレクタへ `BIZ` 上書き**を付ける（既存の `html[lang='ja'] …` ルールに `html[lang='zh-TW']` / `html[lang^='zh']` を併記する）。
 - 表の金額セル（例: `.pl-amt-cell__text`）も例外なく BIZ。
 - Focus Bar など製品英語名の**文言内容**は英語のままでよいが、**非アルファベット言語ページでの字形は BIZ**（Orbitron にしない）。
+- **例外:** 未完成フルページの Construction State ヒーロー（`COMING SOON` 等の英語ブランドフレーズ）は Sci-Fi では全ロケール **Orbitron**。正本: [`kpn-construction-state.md`](./kpn-construction-state.md)。
 
 ## 参照
 
+- `docs/kpn-construction-state.md`（未完成フルページの英語ヒーローは Sci-Fi Orbitron）
 - `docs/fw-left-vertical-label-orientation-memo.md`（FW 左縦ラベルの CJK 天地向き）
 - `docs/local-dev-notes.md`（フォント節）
 - `docs/pl-table-v1-implementation-spec.md`
