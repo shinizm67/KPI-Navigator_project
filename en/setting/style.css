@@ -1496,6 +1496,41 @@ html[lang^="zh"] .si-fi.office-mode.profile-page .global-nav-list {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
+/* Booking Coming Soon: reuse Session Management scramble, scoped to booking-page */
+body.si-fi.booking-page .booking-coming-soon {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 220px);
+  box-sizing: border-box;
+}
+body.si-fi.booking-page .coming-soon-panel {
+  width: 100%;
+  max-width: 760px;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  margin-top: 14px;
+}
+body.si-fi.booking-page .coming-soon-text {
+  margin: 0;
+  font-size: 36px;
+  letter-spacing: 0.05em;
+  color: var(--si-fi-cyan);
+  text-align: center;
+}
+body.si-fi.office-mode.booking-page .coming-soon-panel {
+  border: none;
+}
+body.si-fi.office-mode.booking-page .coming-soon-text {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
 /* ========================================
    Plan Details (subscription overview)
    ======================================== */
