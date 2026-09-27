@@ -131,7 +131,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 Phase 2 only (Step 0 input + save). Do not enable the 7-field Hard Gate in production until Step 0 save smoke passes. Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+BR-ONBOARDING-01 Phase 2 only (Step 0 input + save). P0 `BR-ONBOARDING-01-R1` (store hydrate never reaches memory since `d6dced6`) needs Shin decision before Phase 2 deploy / close. Do not enable the 7-field Hard Gate in production until Step 0 save smoke passes. Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1506,7 +1506,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | reason | First-run navigation readiness for existing full_authorized stores. Flow B only. Registration stays on deferred `BR-LAUNCH-05`. |
 | phase_0 | CLOSED 2026-09-27. Grandfather, Opening Date, Flow B, Importer reuse, Navigation Readiness, and Setup Completion are frozen. `explicitKnownSeedState` has no store predicate. |
 | phase_1 | CLOSED 2026-09-27. Safe guard only: `!grandfathered && !businessTypeComplete` after hydrate. A successful GET with `store:null` is an empty business state (`kpi:storeHydrateSettled`); fetch / profile / Business Type hydrate failure stays PENDING. Commits `bdbc8aa`, `a35a0c7`, `d799395` deployed. Human Smoke PASS on `kpn_full_authorized00` Annual. |
-| phase_2 | ACTIVE 2026-09-27. Business Profile / Hard Required Step 0 (input + save only). |
+| phase_2 | ACTIVE 2026-09-27. Business Profile / Hard Required Step 0 (input + save only). Implemented `js/kpi-setup-step0.js`, opened from the Phase 1 guard button on Annual / Monthly JP / EN / ZH-TW. Not deployed. Not closed: blocked by `BR-ONBOARDING-01-R1`. |
+| blocker_r1 | `BR-ONBOARDING-01-R1` P0 (found 2026-09-27, not fixed). `d6dced6` removed `readStorePayloadFromLocal` and the user-scope init (`startInitAfterUserScopeBound` / `__userScopeReady`) from Annual / Monthly / Monthly Edit in 3 languages. `KpiYearStore.loadStore()` now reads the in-memory store via `__KPI_DATA_GATEWAY.getJson`, so localStorage and server store never reach memory; store hydrate also waits 8 s. Production Annual HTML matches. Effects: Navigation Readiness can guard grandfathered users with Business Type unset; `store.meta.openingDate` looks empty after reload; any store PUT from these pages sends the in-memory store. Needs Shin GO before any fix. |
 | hard_required | Business Profile Hard Complete = all 7: businessName (屋号 / サービス名 / 店名), companyName, businessType (canonical, never the restaurant fallback), openingDate (`store.meta.openingDate`, `YYYY-MM-DD`, year+month required, missing day = `01`), country, stateRegion (non-empty text; catalog match not required), currency (country may suggest, never lock). Business Name and Company Name are both required. |
 | optional | city, genre, KPI focus, other profile helpers. Never part of Hard Complete. |
 | profile_save_p0 | `profile.php` PUT overwrites every column. Step 0 must GET the current profile, keep existing values, merge only Step 0 changes, then PUT the full payload. Never partial-PUT. |

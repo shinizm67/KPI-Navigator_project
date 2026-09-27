@@ -3,6 +3,8 @@
  * Separate from KpiPlanningReadiness. Does not write store.meta.setup.
  * Phase 1 cockpit block: !grandfathered && !businessTypeComplete, after hydrate only.
  * A successful GET with store:null is an empty business state, not PENDING.
+ * Phase 2: businessProfileComplete is the 7-field Hard Required AND.
+ * It does not widen phase1Block.
  */
 (function (global) {
   'use strict';
@@ -18,6 +20,20 @@
     en: 'Business Type is not set, so this screen is not ready for normal use yet.',
     zh: '尚未設定業種，此畫面目前還不能進入一般使用。',
   };
+  var START_COPY = {
+    ja: 'Business Profile を入力する',
+    en: 'Enter Business Profile',
+    zh: '填寫 Business Profile',
+  };
+  var HARD_REQUIRED_FIELDS = [
+    'businessName',
+    'companyName',
+    'businessType',
+    'openingDate',
+    'country',
+    'stateRegion',
+    'currency',
+  ];
 
   function detectLang() {
     var raw = '';
@@ -103,6 +119,43 @@
     return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
   }
 
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  /** Year and month are required; a blank day is stored as 01. Invalid input returns ''. */
+  function buildOpeningDate(year, month, day) {
+    var y = Number(trimmed(year));
+    var m = Number(trimmed(month));
+    var dRaw = trimmed(day);
+    var d = dRaw ? Number(dRaw) : 1;
+    if (!Number.isInteger(y) || y < 1000 || y > 9999) return '';
+    if (!Number.isInteger(m) || !Number.isInteger(d)) return '';
+    var iso = String(y) + '-' + pad2(m) + '-' + pad2(d);
+    return isValidOpeningDate(iso) ? iso : '';
+  }
+
+  /**
+   * Pure 7-field Hard Required check.
+   * businessTypeSet must be a saved or explicitly selected canonical type, never the fallback.
+   */
+  function evaluateBusinessProfile(values) {
+    var v = values && typeof values === 'object' ? values : {};
+    var flags = {
+      businessName: !!trimmed(v.businessName),
+      companyName: !!trimmed(v.companyName),
+      businessType: v.businessTypeSet === true,
+      openingDate: isValidOpeningDate(v.openingDate),
+      country: !!trimmed(v.country),
+      stateRegion: !!trimmed(v.stateRegion),
+      currency: !!trimmed(v.currency),
+    };
+    var missing = HARD_REQUIRED_FIELDS.filter(function (k) {
+      return !flags[k];
+    });
+    return { complete: missing.length === 0, missing: missing, flags: flags };
+  }
+
   function setupBag(store) {
     var bag = store && store.meta && store.meta.setup;
     return bag && typeof bag === 'object' ? bag : null;
@@ -138,6 +191,7 @@
       grandfathered: false,
       explicitKnownSeedState: false,
       businessProfileComplete: false,
+      businessProfileMissing: HARD_REQUIRED_FIELDS.slice(),
       businessTypeComplete: false,
       openingDateComplete: false,
       initialDataState: null,
@@ -169,12 +223,21 @@
     var sales = hasCanonicalDailySales(store, oy);
     var target = hasUserAnnualTarget(store, oy);
     var grandfathered = setupComplete || (!activeSetup && (sales || target));
-    var businessProfileComplete = !!(trimmed(profile.businessName) || trimmed(profile.companyName));
     var businessTypeComplete = ctx.businessTypeSet === true;
+    var hard = evaluateBusinessProfile({
+      businessName: profile.businessName,
+      companyName: profile.companyName,
+      businessTypeSet: businessTypeComplete,
+      openingDate: openingDate,
+      country: profile.country,
+      stateRegion: profile.stateRegion,
+      currency: profile.currency,
+    });
+    var businessProfileComplete = hard.complete;
     var annualTargetComplete = target;
     var status = 'NORMAL';
     if (!grandfathered) {
-      if (!businessProfileComplete || !businessTypeComplete || !openingOk) {
+      if (!businessProfileComplete) {
         status = 'SETUP_PROFILE_REQUIRED';
       } else if (!setupComplete) {
         status = 'SETUP_INITIAL_REQUIRED';
@@ -186,6 +249,7 @@
       grandfathered: grandfathered,
       explicitKnownSeedState: false,
       businessProfileComplete: businessProfileComplete,
+      businessProfileMissing: hard.missing,
       businessTypeComplete: businessTypeComplete,
       openingDateComplete: openingOk,
       initialDataState: initialDataState(store, oy, openingDate, openingOk),
@@ -283,9 +347,15 @@
       'background:rgba(4,14,28,.94);color:#e8fbff;box-shadow:0 0 24px rgba(0,229,255,.18);}',
       '#kpi-nr-guard .kpi-nr-headline{margin:0 0 12px;font-size:18px;letter-spacing:.08em;font-weight:700;}',
       '#kpi-nr-guard .kpi-nr-body{margin:0;font-size:14px;line-height:1.6;}',
+      '#kpi-nr-guard .kpi-nr-start{margin-top:18px;padding:9px 16px;font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;',
+      'border:1px solid rgba(0,229,255,.85);background:rgba(0,229,255,.14);color:#e8fbff;}',
+      '#kpi-nr-guard .kpi-nr-start:hover{background:rgba(0,229,255,.26);}',
+      '#kpi-nr-guard .kpi-nr-start[hidden]{display:none;}',
       'body.office-mode #kpi-nr-guard{background:rgba(20,20,20,.28);}',
       'body.office-mode #kpi-nr-guard .kpi-nr-card{border:1px solid #1c1c1c;background:#f4f1ea;color:#1a1a1c;box-shadow:none;}',
       'body.office-mode #kpi-nr-guard .kpi-nr-headline{letter-spacing:.04em;font-weight:600;}',
+      'body.office-mode #kpi-nr-guard .kpi-nr-start{border-color:#1c1c1c;background:#1c1c1c;color:#fff;}',
+      'body.office-mode #kpi-nr-guard .kpi-nr-start:hover{background:#3a3a3a;}',
     ].join('');
     (global.document.head || global.document.documentElement).appendChild(style);
   }
@@ -304,9 +374,27 @@
     guardEl.hidden = true;
     guardEl.innerHTML =
       '<div class="kpi-nr-card"><h2 class="kpi-nr-headline" id="kpi-nr-headline">KPN SETUP REQUIRED</h2>' +
-      '<p class="kpi-nr-body" id="kpi-nr-body"></p></div>';
+      '<p class="kpi-nr-body" id="kpi-nr-body"></p>' +
+      '<button type="button" class="kpi-nr-start" id="kpi-nr-start" hidden></button></div>';
     global.document.body.appendChild(guardEl);
+    var start = guardEl.querySelector('#kpi-nr-start');
+    if (start) start.addEventListener('click', openStep0);
     return guardEl;
+  }
+
+  function step0Api() {
+    var api = global.KpiSetupStep0;
+    return api && typeof api.open === 'function' ? api : null;
+  }
+
+  function openStep0() {
+    var api = step0Api();
+    if (!api) return;
+    api.open({
+      onDone: function () {
+        settle(lastPlan);
+      },
+    });
   }
 
   function applyGuard(result) {
@@ -318,6 +406,11 @@
     var lang = detectLang();
     var body = el.querySelector('#kpi-nr-body');
     if (body) body.textContent = COPY[lang] || COPY.en;
+    var start = el.querySelector('#kpi-nr-start');
+    if (start) {
+      start.textContent = START_COPY[lang] || START_COPY.en;
+      start.hidden = !step0Api();
+    }
   }
 
   function settle(plan) {
@@ -358,6 +451,10 @@
   global.KpiNavigationReadiness = {
     __ready: true,
     evaluateSnapshot: evaluateSnapshot,
+    evaluateBusinessProfile: evaluateBusinessProfile,
+    buildOpeningDate: buildOpeningDate,
+    isValidOpeningDate: isValidOpeningDate,
+    HARD_REQUIRED_FIELDS: HARD_REQUIRED_FIELDS.slice(),
     detectLang: detectLang,
     COPY: COPY,
     settle: settle,
