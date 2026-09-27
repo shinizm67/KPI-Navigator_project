@@ -39,17 +39,20 @@
 
   var COPY = {
     ja: {
-      kicker: 'KPN SETUP — STEP 0',
+      kicker: 'KPN INITIAL SETUP — STEP 01',
       title: 'Business Profile',
-      lead: 'KPN を始めるために、必須 7 項目を入力してください。任意項目は空欄のままでも保存できます。',
+      lead: 'KPNを開始するために、ビジネスの基本情報を設定してください。',
+      lead2: '必須項目をすべて入力すると保存できます。',
       required: '必須',
       optional: '任意',
       sectionRequired: '必須項目',
       sectionOptional: '任意項目',
+      sectionOptionalNote: '空欄のままでも保存できます',
+      progressLabel: 'PROFILE SETUP',
       businessName: '屋号 / サービス名 / 店名',
       companyName: '会社名',
       businessType: '業種',
-      openingDate: 'Business 開始年月',
+      openingDate: '事業開始年月',
       country: '国',
       regionJP: '都道府県',
       regionUS: '州',
@@ -73,19 +76,23 @@
       loading: '読み込み中…',
       loadFailed: 'プロフィールを読み込めませんでした。時間をおいてもう一度お試しください。',
       saveFailed: '保存できませんでした。入力内容はそのままです。もう一度お試しください。',
-      storeWarn: 'Business 開始年月・業種のサーバ同期がまだ完了していません。画面を再読み込みすると再送されます。',
-      savedTitle: 'Business Profile を保存しました',
-      savedBody: '次のステップ（過去データ・今年度・年間目標）は準備中です。このまま KPN に進めます。',
+      storeWarn: '事業開始年月・業種のサーバ同期がまだ完了していません。画面を再読み込みすると再送されます。',
+      savedTitle: 'BUSINESS PROFILE SAVED',
+      savedLead: 'ビジネス情報を保存しました。',
+      savedBody: 'このまま KPN をご利用いただけます。',
       next: 'KPN に進む',
     },
     en: {
-      kicker: 'KPN SETUP — STEP 0',
+      kicker: 'KPN INITIAL SETUP — STEP 01',
       title: 'Business Profile',
-      lead: 'To start KPN, fill in the 7 required fields. Optional fields can stay blank.',
+      lead: 'Set up your basic business information to start KPN.',
+      lead2: 'You can save once all required fields are filled in.',
       required: 'Required',
       optional: 'Optional',
       sectionRequired: 'Required',
       sectionOptional: 'Optional',
+      sectionOptionalNote: 'Can be left blank',
+      progressLabel: 'PROFILE SETUP',
       businessName: 'Business / Service / Store Name',
       companyName: 'Company Name',
       businessType: 'Business Type',
@@ -114,22 +121,26 @@
       loadFailed: 'Could not load your profile. Please try again in a moment.',
       saveFailed: 'Could not save. Your input is kept. Please try again.',
       storeWarn: 'Business Start and Business Type have not finished syncing to the server. Reloading the page will retry.',
-      savedTitle: 'Business Profile saved',
-      savedBody: 'The next steps (past data, current year, annual target) are not ready yet. You can continue to KPN.',
+      savedTitle: 'BUSINESS PROFILE SAVED',
+      savedLead: 'Your business information has been saved.',
+      savedBody: 'You can continue to KPN now.',
       next: 'Continue to KPN',
     },
     zh: {
-      kicker: 'KPN SETUP — STEP 0',
+      kicker: 'KPN INITIAL SETUP — STEP 01',
       title: 'Business Profile',
-      lead: '開始使用 KPN 前，請填寫 7 個必填項目。選填項目可以留空。',
+      lead: '開始使用 KPN 前，請設定商家的基本資訊。',
+      lead2: '填妥所有必填項目後即可儲存。',
       required: '必填',
       optional: '選填',
       sectionRequired: '必填項目',
       sectionOptional: '選填項目',
+      sectionOptionalNote: '可以留空',
+      progressLabel: 'PROFILE SETUP',
       businessName: '店名 / 服務名稱',
       companyName: '公司名稱',
       businessType: '產業',
-      openingDate: 'Business 開始年月',
+      openingDate: '事業開始年月',
       country: '國家',
       regionJP: '都道府縣',
       regionUS: '州',
@@ -153,9 +164,10 @@
       loading: '讀取中…',
       loadFailed: '無法讀取個人資料，請稍後再試。',
       saveFailed: '無法儲存。輸入內容已保留，請再試一次。',
-      storeWarn: 'Business 開始年月與產業尚未完成伺服器同步。重新整理頁面後會再次傳送。',
-      savedTitle: '已儲存 Business Profile',
-      savedBody: '下一步（過去資料、本年度、年度目標）尚在準備中。可以直接進入 KPN。',
+      storeWarn: '事業開始年月與產業尚未完成伺服器同步。重新整理頁面後會再次傳送。',
+      savedTitle: 'BUSINESS PROFILE SAVED',
+      savedLead: '已儲存商家資訊。',
+      savedBody: '現在可以直接進入 KPN。',
       next: '進入 KPN',
     },
   };
@@ -356,63 +368,78 @@
     var style = global.document.createElement('style');
     style.id = 'kpi-s0-css';
     style.textContent = [
-      '#kpi-s0{position:fixed;inset:0;z-index:100001;display:flex;align-items:flex-start;justify-content:center;',
-      'padding:32px 24px;overflow:auto;background:rgba(2,8,18,.82);}',
+      '#kpi-s0{position:fixed;inset:0;z-index:100001;display:flex;align-items:flex-start;justify-content:center;padding:32px 24px;overflow:auto;background:rgba(2,8,18,.84);}',
       '#kpi-s0[hidden]{display:none !important;}',
-      '#kpi-s0 .kpi-s0-card{width:100%;max-width:620px;margin:auto 0;padding:26px 28px 22px;border:1px solid rgba(0,229,255,.7);',
-      'background:rgba(4,14,28,.96);color:#e8fbff;box-shadow:0 0 24px rgba(0,229,255,.18);font-size:14px;}',
-      '#kpi-s0 .kpi-s0-kicker{margin:0 0 4px;font-size:11px;letter-spacing:.14em;color:rgba(0,229,255,.9);font-weight:700;}',
-      '#kpi-s0 .kpi-s0-title{margin:0 0 8px;font-size:20px;letter-spacing:.06em;font-weight:700;}',
-      '#kpi-s0 .kpi-s0-lead{margin:0 0 14px;line-height:1.6;opacity:.92;}',
-      '#kpi-s0 .kpi-s0-progress{margin:0 0 16px;padding:10px 12px;border:1px solid rgba(0,229,255,.35);background:rgba(0,229,255,.06);}',
-      '#kpi-s0 .kpi-s0-progress-count{font-weight:700;letter-spacing:.04em;}',
-      '#kpi-s0 .kpi-s0-progress-rest{margin-top:4px;font-size:12.5px;line-height:1.5;color:#ffd27a;}',
-      '#kpi-s0 .kpi-s0-progress.is-done .kpi-s0-progress-rest{color:#7dffb2;}',
-      '#kpi-s0 .kpi-s0-section{margin:0 0 14px;padding:0;border:0;}',
-      '#kpi-s0 .kpi-s0-section-title{margin:0 0 8px;font-size:12px;letter-spacing:.12em;font-weight:700;opacity:.8;}',
-      '#kpi-s0 .kpi-s0-field{display:grid;grid-template-columns:200px 1fr;gap:6px 14px;align-items:start;margin:0 0 10px;}',
-      '#kpi-s0 .kpi-s0-label{padding-top:7px;font-weight:600;line-height:1.35;}',
-      '#kpi-s0 .kpi-s0-badge{display:inline-block;margin-left:6px;padding:1px 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;vertical-align:1px;',
-      'border:1px solid rgba(0,229,255,.8);color:#9ff4ff;}',
-      '#kpi-s0 .kpi-s0-badge.is-optional{border-color:rgba(232,251,255,.35);color:rgba(232,251,255,.65);}',
-      '#kpi-s0 .kpi-s0-control input,#kpi-s0 .kpi-s0-control select{width:100%;box-sizing:border-box;padding:7px 9px;font:inherit;',
-      'background:rgba(0,0,0,.35);color:#e8fbff;border:1px solid rgba(0,229,255,.4);border-radius:0;}',
+      '#kpi-s0 .kpi-s0-card{position:relative;width:100%;max-width:640px;margin:auto 0;padding:28px 32px 24px;border:1px solid rgba(0,229,255,.5);background:rgba(3,11,22,.97);color:#e8fbff;font-size:14px;}',
+      '#kpi-s0 .kpi-s0-card::before{content:\'\';position:absolute;top:-1px;left:-1px;width:64px;height:2px;background:#00e5ff;}',
+      '#kpi-s0 .kpi-s0-head{margin:0 0 18px;padding:0 0 16px;border-bottom:1px solid rgba(0,229,255,.18);}',
+      '#kpi-s0 .kpi-s0-kicker{margin:0 0 8px;font-size:11px;letter-spacing:.16em;color:rgba(0,229,255,.9);font-weight:700;}',
+      '#kpi-s0 .kpi-s0-title{margin:0 0 10px;font-size:22px;letter-spacing:.04em;font-weight:700;}',
+      '#kpi-s0 .kpi-s0-lead{margin:0;line-height:1.65;color:rgba(232,251,255,.9);}',
+      '#kpi-s0 .kpi-s0-lead2{margin:2px 0 0;font-size:13px;line-height:1.6;color:rgba(232,251,255,.62);}',
+      '#kpi-s0 .kpi-s0-progress{margin:0 0 20px;}',
+      '#kpi-s0 .kpi-s0-progress-count{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}',
+      '#kpi-s0 .kpi-s0-progress-label{font-size:11px;letter-spacing:.16em;font-weight:700;color:rgba(0,229,255,.85);}',
+      '#kpi-s0 .kpi-s0-progress-num{font-size:15px;font-weight:700;letter-spacing:.06em;font-variant-numeric:tabular-nums;}',
+      '#kpi-s0 .kpi-s0-progress-line{position:relative;height:2px;margin:8px 0 7px;background:rgba(0,229,255,.16);}',
+      '#kpi-s0 .kpi-s0-progress-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#00e5ff;transition:width .2s ease;}',
+      '#kpi-s0 .kpi-s0-progress-rest{font-size:12.5px;line-height:1.5;color:rgba(232,251,255,.66);}',
+      '#kpi-s0 .kpi-s0-progress.is-done .kpi-s0-progress-rest{color:#7ff3ff;}',
+      '#kpi-s0 .kpi-s0-section{margin:0 0 16px;padding:0;border:0;min-width:0;}',
+      '#kpi-s0 .kpi-s0-section-title{display:block;width:100%;box-sizing:border-box;margin:0 0 12px;padding:0 0 6px;border-bottom:1px solid rgba(0,229,255,.16);font-size:12px;letter-spacing:.1em;font-weight:700;color:rgba(0,229,255,.85);}',
+      '#kpi-s0 .kpi-s0-section-note{margin-left:10px;font-size:11.5px;letter-spacing:.02em;font-weight:400;color:rgba(232,251,255,.55);}',
+      '#kpi-s0 .kpi-s0-field{display:grid;grid-template-columns:200px 1fr;gap:6px 16px;align-items:start;margin:0 0 12px;}',
+      '#kpi-s0 .kpi-s0-label{padding-top:8px;font-weight:600;line-height:1.35;}',
+      '#kpi-s0 .kpi-s0-badge{display:inline-block;margin-left:8px;padding:0 6px;font-size:10.5px;line-height:17px;font-weight:600;letter-spacing:.06em;vertical-align:1px;border:1px solid rgba(0,229,255,.7);color:#7ff3ff;background:rgba(0,229,255,.07);}',
+      '#kpi-s0 .kpi-s0-badge.is-optional{border:1px dashed rgba(232,251,255,.32);color:rgba(232,251,255,.6);background:transparent;}',
+      '#kpi-s0 .kpi-s0-control input,#kpi-s0 .kpi-s0-control select{width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;background:rgba(0,0,0,.4);color:#e8fbff;border:1px solid rgba(0,229,255,.32);border-radius:0;}',
       '#kpi-s0 .kpi-s0-control select option{color:#111;background:#fff;}',
-      '#kpi-s0 .kpi-s0-control input:focus,#kpi-s0 .kpi-s0-control select:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff;}',
+      '#kpi-s0 .kpi-s0-control input:focus,#kpi-s0 .kpi-s0-control select:focus{outline:none;border-color:#00e5ff;box-shadow:0 0 0 1px rgba(0,229,255,.55);}',
       '#kpi-s0 .kpi-s0-date{display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:8px;}',
-      '#kpi-s0 .kpi-s0-hint{margin-top:4px;font-size:12px;line-height:1.45;opacity:.72;}',
-      '#kpi-s0 .kpi-s0-error{margin-top:4px;font-size:12px;color:#ff8a8a;}',
+      '#kpi-s0 .kpi-s0-hint{margin-top:5px;font-size:12px;line-height:1.45;color:rgba(232,251,255,.58);}',
+      '#kpi-s0 .kpi-s0-error{margin-top:5px;font-size:12px;color:#ff8a8a;}',
       '#kpi-s0 .kpi-s0-error:empty{display:none;}',
       '#kpi-s0 .kpi-s0-field.is-missing input,#kpi-s0 .kpi-s0-field.is-missing select{border-color:#ffb44d;}',
       '#kpi-s0 .kpi-s0-status{min-height:18px;margin:6px 0 0;font-size:12.5px;line-height:1.5;}',
       '#kpi-s0 .kpi-s0-status.is-error{color:#ff8a8a;}',
       '#kpi-s0 .kpi-s0-status.is-warn{color:#ffd27a;}',
-      '#kpi-s0 .kpi-s0-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}',
-      '#kpi-s0 .kpi-s0-btn{padding:9px 18px;font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;',
-      'border:1px solid rgba(0,229,255,.85);background:transparent;color:#e8fbff;}',
-      '#kpi-s0 .kpi-s0-btn.is-primary{background:rgba(0,229,255,.18);}',
-      '#kpi-s0 .kpi-s0-btn:hover:not([disabled]){background:rgba(0,229,255,.3);}',
-      '#kpi-s0 .kpi-s0-btn[disabled]{opacity:.4;cursor:not-allowed;}',
-      '#kpi-s0 .kpi-s0-saved{padding:6px 0 2px;}',
-      '#kpi-s0 .kpi-s0-saved h3{margin:0 0 8px;font-size:17px;}',
-      '#kpi-s0 .kpi-s0-saved p{margin:0;line-height:1.6;}',
+      '#kpi-s0 .kpi-s0-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;padding-top:16px;border-top:1px solid rgba(0,229,255,.14);}',
+      '#kpi-s0 .kpi-s0-btn{min-width:108px;padding:9px 20px;font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;border:1px solid rgba(232,251,255,.3);background:transparent;color:rgba(232,251,255,.85);}',
+      '#kpi-s0 .kpi-s0-btn:hover:not([disabled]){border-color:rgba(0,229,255,.7);color:#e8fbff;}',
+      '#kpi-s0 .kpi-s0-btn.is-primary{border-color:#00e5ff;background:rgba(0,229,255,.2);color:#fff;}',
+      '#kpi-s0 .kpi-s0-btn.is-primary:hover:not([disabled]){background:rgba(0,229,255,.32);}',
+      '#kpi-s0 .kpi-s0-btn[disabled]{opacity:.38;cursor:not-allowed;}',
+      '#kpi-s0 .kpi-s0-saved{padding:4px 0 2px;}',
+      '#kpi-s0 .kpi-s0-saved-head{margin-bottom:0;}',
+      '#kpi-s0 .kpi-s0-saved-head ~ .kpi-s0-status:empty{display:none;}',
+      '#kpi-s0 .kpi-s0-saved-head ~ .kpi-s0-actions{border-top:0;}',
+      '#kpi-s0 .kpi-s0-saved-title{margin:0 0 12px;font-size:18px;letter-spacing:.1em;font-weight:700;}',
+      '#kpi-s0 .kpi-s0-saved-lead{margin:0;font-size:15px;line-height:1.6;}',
+      '#kpi-s0 .kpi-s0-saved-body{margin:2px 0 0;font-size:13px;line-height:1.6;color:rgba(232,251,255,.62);}',
       'body.office-mode #kpi-s0{background:rgba(20,20,20,.32);}',
-      'body.office-mode #kpi-s0 .kpi-s0-card{border:1px solid #1c1c1c;background:#f4f1ea;color:#1a1a1c;box-shadow:none;}',
-      'body.office-mode #kpi-s0 .kpi-s0-kicker{color:#555;}',
+      'body.office-mode #kpi-s0 .kpi-s0-card{border:1px solid #1c1c1c;background:#f4f1ea;color:#1a1a1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-card::before{background:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-head{border-bottom-color:#d6d0c4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-kicker,body.office-mode #kpi-s0 .kpi-s0-progress-label{color:#555;}',
       'body.office-mode #kpi-s0 .kpi-s0-title{letter-spacing:.03em;font-weight:600;}',
-      'body.office-mode #kpi-s0 .kpi-s0-progress{border-color:#c9c3b6;background:#fff;}',
-      'body.office-mode #kpi-s0 .kpi-s0-progress-rest{color:#9a5a00;}',
-      'body.office-mode #kpi-s0 .kpi-s0-progress.is-done .kpi-s0-progress-rest{color:#1f6b3a;}',
-      'body.office-mode #kpi-s0 .kpi-s0-badge{border-color:#1c1c1c;color:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-lead{color:#2a2a2c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-lead2,body.office-mode #kpi-s0 .kpi-s0-progress-rest,body.office-mode #kpi-s0 .kpi-s0-section-note,body.office-mode #kpi-s0 .kpi-s0-hint,body.office-mode #kpi-s0 .kpi-s0-saved-body{color:#66625b;}',
+      'body.office-mode #kpi-s0 .kpi-s0-progress-line{background:#ddd6c8;}',
+      'body.office-mode #kpi-s0 .kpi-s0-progress-fill{background:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-progress.is-done .kpi-s0-progress-rest{color:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-section-title{color:#3a3a3a;border-bottom-color:#d6d0c4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-badge{border-color:#1c1c1c;color:#1c1c1c;background:transparent;}',
       'body.office-mode #kpi-s0 .kpi-s0-badge.is-optional{border-color:#9a948a;color:#6b665e;}',
       'body.office-mode #kpi-s0 .kpi-s0-control input,body.office-mode #kpi-s0 .kpi-s0-control select{background:#fff;color:#1a1a1c;border-color:#a9a395;}',
       'body.office-mode #kpi-s0 .kpi-s0-control input:focus,body.office-mode #kpi-s0 .kpi-s0-control select:focus{border-color:#1c1c1c;box-shadow:0 0 0 1px #1c1c1c;}',
       'body.office-mode #kpi-s0 .kpi-s0-field.is-missing input,body.office-mode #kpi-s0 .kpi-s0-field.is-missing select{border-color:#c77700;}',
       'body.office-mode #kpi-s0 .kpi-s0-error,body.office-mode #kpi-s0 .kpi-s0-status.is-error{color:#b3261e;}',
       'body.office-mode #kpi-s0 .kpi-s0-status.is-warn{color:#9a5a00;}',
-      'body.office-mode #kpi-s0 .kpi-s0-btn{border-color:#1c1c1c;color:#1c1c1c;}',
-      'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary{background:#1c1c1c;color:#fff;}',
-      'body.office-mode #kpi-s0 .kpi-s0-btn:hover:not([disabled]){background:#3a3a3a;color:#fff;}',
+      'body.office-mode #kpi-s0 .kpi-s0-actions{border-top-color:#d6d0c4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-btn{border-color:#9a948a;color:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-btn:hover:not([disabled]){border-color:#1c1c1c;color:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary{border-color:#1c1c1c;background:#1c1c1c;color:#fff;}',
+      'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary:hover:not([disabled]){background:#3a3a3a;color:#fff;}',
     ].join('');
     (global.document.head || global.document.documentElement).appendChild(style);
   }
@@ -460,11 +487,16 @@
       '<div class="kpi-s0-hint">' + esc(c.dateHint) + '</div>' +
       '<div class="kpi-s0-error" id="kpi-s0-date-error"></div>';
     return (
+      '<div class="kpi-s0-head">' +
       '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
       '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(c.title) + '</h2>' +
       '<p class="kpi-s0-lead">' + esc(c.lead) + '</p>' +
+      '<p class="kpi-s0-lead2">' + esc(c.lead2) + '</p></div>' +
       '<div class="kpi-s0-progress" id="kpi-s0-progress" aria-live="polite">' +
-      '<div class="kpi-s0-progress-count" id="kpi-s0-progress-count"></div>' +
+      '<div class="kpi-s0-progress-count" id="kpi-s0-progress-count">' +
+      '<span class="kpi-s0-progress-label">' + esc(c.progressLabel) + '</span>' +
+      '<span class="kpi-s0-progress-num" id="kpi-s0-progress-num"></span></div>' +
+      '<div class="kpi-s0-progress-line" aria-hidden="true"><span class="kpi-s0-progress-fill" id="kpi-s0-progress-fill"></span></div>' +
       '<div class="kpi-s0-progress-rest" id="kpi-s0-progress-rest"></div></div>' +
       '<form id="kpi-s0-form" novalidate>' +
       '<fieldset class="kpi-s0-section" data-s0-section="required">' +
@@ -492,7 +524,8 @@
       ) +
       '</fieldset>' +
       '<fieldset class="kpi-s0-section" data-s0-section="optional">' +
-      '<legend class="kpi-s0-section-title">' + esc(c.sectionOptional) + '</legend>' +
+      '<legend class="kpi-s0-section-title">' + esc(c.sectionOptional) +
+      '<span class="kpi-s0-section-note">' + esc(c.sectionOptionalNote) + '</span></legend>' +
       fieldRow(c, 'city', esc(c.city), textInput('city', 'kpi-s0-city-list'), false) +
       fieldRow(c, 'genre', esc(c.genre), textInput('genre'), false) +
       '</fieldset>' +
@@ -506,9 +539,12 @@
 
   function renderSaved(c) {
     return (
+      '<div class="kpi-s0-head kpi-s0-saved-head">' +
       '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
       '<div class="kpi-s0-saved" id="kpi-s0-saved">' +
-      '<h3>' + esc(c.savedTitle) + '</h3><p>' + esc(c.savedBody) + '</p></div>' +
+      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(c.savedTitle) + '</h2>' +
+      '<p class="kpi-s0-saved-lead">' + esc(c.savedLead) + '</p>' +
+      '<p class="kpi-s0-saved-body">' + esc(c.savedBody) + '</p></div></div>' +
       '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
       '<div class="kpi-s0-actions">' +
       '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-next">' + esc(c.next) + '</button></div>'
@@ -658,9 +694,12 @@
     var total = (readiness() && readiness().HARD_REQUIRED_FIELDS || []).length || 7;
     var done = total - result.missing.length;
     var box = el('kpi-s0-progress');
-    var count = el('kpi-s0-progress-count');
+    var num = el('kpi-s0-progress-num');
+    var fill = el('kpi-s0-progress-fill');
     var rest = el('kpi-s0-progress-rest');
-    if (count) count.textContent = fmt(c.progress, { done: done, total: total });
+    if (num) num.textContent = done + ' / ' + total;
+    if (fill) fill.style.width = Math.round((done / total) * 100) + '%';
+    if (box) box.setAttribute('aria-label', fmt(c.progress, { done: done, total: total }));
     if (rest) {
       rest.textContent = result.complete
         ? c.allDone

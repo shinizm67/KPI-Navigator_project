@@ -16,14 +16,14 @@
   var LEGACY_PLACEHOLDER_SALES = 1234;
   var ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
   var COPY = {
-    ja: '業種が未設定のため、この画面はまだ通常利用できません。',
-    en: 'Business Type is not set, so this screen is not ready for normal use yet.',
-    zh: '尚未設定業種，此畫面目前還不能進入一般使用。',
+    ja: 'KPNを利用するために、最初にビジネス情報を設定してください。',
+    en: 'To use KPN, please set up your business information first.',
+    zh: '使用 KPN 前，請先設定您的商家資訊。',
   };
   var START_COPY = {
-    ja: 'Business Profile を入力する',
-    en: 'Enter Business Profile',
-    zh: '填寫 Business Profile',
+    ja: '初期設定を始める',
+    en: 'Start Initial Setup',
+    zh: '開始初始設定',
   };
   var HARD_REQUIRED_FIELDS = [
     'businessName',
