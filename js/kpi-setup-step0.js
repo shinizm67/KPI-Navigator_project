@@ -5,7 +5,11 @@
  *
  * profile.php PUT overwrites every column: always GET the current profile, merge only
  * the fields this form changed, then PUT the full payload. Never partial-PUT.
- * Never writes store.meta.setup.
+ *
+ * Phase 3 — STEP 02 Historical Data (openHistory) shares this dialog.
+ * store.meta.setup writes: Step 01 save creates an empty object when opened with
+ * startSetup (non-grandfathered only), so importing history cannot grandfather the user
+ * mid-setup; STEP 02 Skip sets historicalSkipped only. setup.complete is never written here.
  */
 (function (global) {
   'use strict';
@@ -83,7 +87,61 @@
       savedTitle: 'BUSINESS PROFILE SAVED',
       savedLead: 'ビジネス情報を保存しました。',
       savedBody: 'このまま KPN をご利用いただけます。',
+      savedBodyContinue: '次は過去データの確認です。',
       next: 'KPN に進む',
+      nextStep: '次へ',
+      history: {
+        title: 'Historical Data',
+        lead: '過去の売上データを登録すると、KPNがより正確に傾向を把握できます。',
+        start: '事業開始',
+        range: '対象期間',
+        status: '状態',
+        detected: '検出した年',
+        level: 'おすすめ度',
+        none: 'なし',
+        rangeSep: ' 〜 ',
+        state: {
+          absent: '過去データは見つかりません',
+          present: '過去データがあります',
+          skipped: 'スキップ中',
+          not_applicable: '対象外（今年開業）',
+        },
+        levelText: { not_applicable: '不要', recommended: 'おすすめ', strong: '強くおすすめ', present: '登録済み' },
+        msg: {
+          not_applicable: '今年開業のため、過去データは必要ありません。',
+          recommended: '過去データを登録すると、年間傾向や比較精度を高められます。',
+          strong: 'KPNの分析精度を高めるため、過去データの登録をおすすめします。',
+          present: '過去データが登録されています。追加の登録は後からでもできます。',
+          skipped: '過去データの登録をスキップしています。後から登録できます。',
+        },
+        register: '過去データを登録する',
+        addMore: '過去データを追加する',
+        skip: '今はスキップする',
+        close: '閉じる',
+        next: '次へ',
+        viaAnnual: '登録は年間ビューの「過去売上データ」で行います。',
+        confirmTitle: '過去データの登録をスキップしますか？',
+        confirmLines: [
+          '過去データは後から登録できます。',
+          'スキップしても KPN はそのまま使えます。',
+          '一部の比較・分析の精度が低くなる場合があります。',
+        ],
+        confirmSkip: 'スキップする',
+        confirmBack: '戻る',
+        skipFailed: 'スキップを保存できませんでした。もう一度お試しください。',
+        skipWarn: 'スキップの設定がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
+        doneTitle: {
+          present: 'HISTORICAL DATA READY',
+          skipped: 'HISTORICAL DATA SKIPPED',
+          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+        },
+        doneLead: {
+          present: '過去データを確認しました。',
+          skipped: '過去データの登録をスキップしました。',
+          not_applicable: '過去データは必要ありません。',
+        },
+        doneBody: '次のステップは「今年度」です（準備中）。このまま KPN をご利用いただけます。',
+      },
     },
     en: {
       kicker: 'KPN INITIAL SETUP',
@@ -130,7 +188,61 @@
       savedTitle: 'BUSINESS PROFILE SAVED',
       savedLead: 'Your business information has been saved.',
       savedBody: 'You can continue to KPN now.',
+      savedBodyContinue: 'Next, check your past data.',
       next: 'Continue to KPN',
+      nextStep: 'Next',
+      history: {
+        title: 'Historical Data',
+        lead: 'Adding past sales data helps KPN read your trends more accurately.',
+        start: 'Business Start',
+        range: 'Historical Range',
+        status: 'Status',
+        detected: 'Detected Years',
+        level: 'Recommendation',
+        none: 'None',
+        rangeSep: ' – ',
+        state: {
+          absent: 'No historical data detected',
+          present: 'Historical data found',
+          skipped: 'Skipped',
+          not_applicable: 'Not applicable (opened this year)',
+        },
+        levelText: { not_applicable: 'Not needed', recommended: 'Recommended', strong: 'Strongly recommended', present: 'Registered' },
+        msg: {
+          not_applicable: 'Your business started this year, so no past data is needed.',
+          recommended: 'Adding past data improves yearly trends and comparisons.',
+          strong: 'To improve KPN analysis accuracy, we recommend adding your past data.',
+          present: 'Past data is registered. You can add more at any time.',
+          skipped: 'Past data is skipped for now. You can add it later.',
+        },
+        register: 'Add Past Data',
+        addMore: 'Add More Past Data',
+        skip: 'Skip for Now',
+        close: 'Close',
+        next: 'Next',
+        viaAnnual: 'Past data is added from Past Sales Data in Annual view.',
+        confirmTitle: 'Skip adding past data?',
+        confirmLines: [
+          'You can add past data later.',
+          'You can keep using KPN.',
+          'Some comparisons and analysis may be less accurate.',
+        ],
+        confirmSkip: 'Skip',
+        confirmBack: 'Back',
+        skipFailed: 'Could not save the skip. Please try again.',
+        skipWarn: 'The skip has not reached the server yet. Reloading the page will retry.',
+        doneTitle: {
+          present: 'HISTORICAL DATA READY',
+          skipped: 'HISTORICAL DATA SKIPPED',
+          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+        },
+        doneLead: {
+          present: 'Your past data is confirmed.',
+          skipped: 'Past data is skipped for now.',
+          not_applicable: 'No past data is needed.',
+        },
+        doneBody: 'Next step: Current Year (coming soon). You can continue to KPN now.',
+      },
     },
     zh: {
       kicker: 'KPN INITIAL SETUP',
@@ -177,7 +289,61 @@
       savedTitle: 'BUSINESS PROFILE SAVED',
       savedLead: '已儲存商家資訊。',
       savedBody: '現在可以直接進入 KPN。',
+      savedBodyContinue: '接下來確認過去資料。',
       next: '進入 KPN',
+      nextStep: '下一步',
+      history: {
+        title: 'Historical Data',
+        lead: '登錄過去的營業額資料，KPN 能更準確地掌握趨勢。',
+        start: '事業開始',
+        range: '對象期間',
+        status: '狀態',
+        detected: '偵測到的年份',
+        level: '建議程度',
+        none: '無',
+        rangeSep: ' ～ ',
+        state: {
+          absent: '未偵測到過去資料',
+          present: '已有過去資料',
+          skipped: '已略過',
+          not_applicable: '不適用（本年度開業）',
+        },
+        levelText: { not_applicable: '不需要', recommended: '建議', strong: '強烈建議', present: '已登錄' },
+        msg: {
+          not_applicable: '本年度開業，不需要過去資料。',
+          recommended: '登錄過去資料可提升年度趨勢與比較的準確度。',
+          strong: '為提升 KPN 的分析準確度，建議登錄過去資料。',
+          present: '已登錄過去資料，之後也可以隨時追加。',
+          skipped: '目前已略過過去資料，之後仍可登錄。',
+        },
+        register: '登錄過去資料',
+        addMore: '追加過去資料',
+        skip: '暫時略過',
+        close: '關閉',
+        next: '下一步',
+        viaAnnual: '過去資料請在年度檢視的「過去營業額資料」登錄。',
+        confirmTitle: '要略過過去資料的登錄嗎？',
+        confirmLines: [
+          '之後仍可登錄過去資料。',
+          '略過後仍可繼續使用 KPN。',
+          '部分比較與分析的準確度可能降低。',
+        ],
+        confirmSkip: '略過',
+        confirmBack: '返回',
+        skipFailed: '無法儲存略過設定，請再試一次。',
+        skipWarn: '略過設定尚未傳送到伺服器。重新整理頁面後會再次傳送。',
+        doneTitle: {
+          present: 'HISTORICAL DATA READY',
+          skipped: 'HISTORICAL DATA SKIPPED',
+          not_applicable: 'HISTORICAL DATA NOT REQUIRED',
+        },
+        doneLead: {
+          present: '已確認過去資料。',
+          skipped: '已略過過去資料的登錄。',
+          not_applicable: '不需要過去資料。',
+        },
+        doneBody: '下一步是「本年度」（準備中）。現在可以直接進入 KPN。',
+      },
     },
   };
 
@@ -308,11 +474,38 @@
     return s && s.meta ? trimmed(s.meta.openingDate) : '';
   }
 
-  function writeOpeningDate(iso) {
+  function writeStoreJson(store) {
+    var gw = global.__KPI_DATA_GATEWAY;
+    try {
+      if (gw && typeof gw.setJson === 'function') {
+        gw.setJson(STORE_KEY, store);
+        return true;
+      }
+      localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function writeHistoricalSkipped() {
+    var store = readStore();
+    if (!store) return false;
+    if (!store.meta || typeof store.meta !== 'object') store.meta = {};
+    var bag = store.meta.setup;
+    if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
+    bag.historicalSkipped = true;
+    return writeStoreJson(store);
+  }
+
+  function writeOpeningDate(iso, startSetup) {
     var store = readStore();
     if (!store) return false;
     if (!store.meta || typeof store.meta !== 'object') store.meta = {};
     store.meta.openingDate = iso;
+    if (startSetup && (!store.meta.setup || typeof store.meta.setup !== 'object')) {
+      store.meta.setup = {};
+    }
     var gw = global.__KPI_DATA_GATEWAY;
     try {
       if (gw && typeof gw.setJson === 'function') {
@@ -443,6 +636,18 @@
       '#kpi-s0 .kpi-s0-saved-title{margin:0 0 12px;font-size:18px;letter-spacing:.1em;font-weight:700;}',
       '#kpi-s0 .kpi-s0-saved-lead{margin:0;font-size:15px;line-height:1.6;}',
       '#kpi-s0 .kpi-s0-saved-body{margin:2px 0 0;font-size:13px;line-height:1.6;color:rgba(232,251,255,.62);}',
+      '#kpi-s0 .kpi-s0-summary{display:grid;grid-template-columns:160px 1fr;gap:8px 16px;margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,229,255,.18);background:rgba(0,229,255,.04);}',
+      '#kpi-s0 .kpi-s0-summary dt{margin:0;font-size:12px;letter-spacing:.06em;font-weight:700;color:rgba(0,229,255,.85);}',
+      '#kpi-s0 .kpi-s0-summary dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}',
+      '#kpi-s0 .kpi-s0-note{margin:0 0 4px;padding:10px 14px;border-left:3px solid rgba(0,229,255,.7);background:rgba(0,229,255,.06);line-height:1.6;}',
+      '#kpi-s0 .kpi-s0-note.is-strong{border-left-color:#ffd27a;background:rgba(255,210,122,.07);}',
+      '#kpi-s0 .kpi-s0-note.is-ok{border-left-color:#0F9403;background:rgba(15,148,3,.08);}',
+      '#kpi-s0 .kpi-s0-actions .kpi-s0-btn.is-left{margin-right:auto;}',
+      '#kpi-s0 .kpi-s0-via{margin:10px 0 0;font-size:12px;line-height:1.5;color:rgba(232,251,255,.58);text-align:right;}',
+      '#kpi-s0 .kpi-s0-confirm{margin-top:12px;padding:14px 16px 4px;border:1px solid rgba(0,229,255,.32);}',
+      '#kpi-s0 .kpi-s0-confirm-title{margin:0 0 8px;font-weight:700;}',
+      '#kpi-s0 .kpi-s0-confirm ul{margin:0;padding-left:1.2em;font-size:13px;line-height:1.65;color:rgba(232,251,255,.8);}',
+      '#kpi-s0 .kpi-s0-confirm .kpi-s0-actions{border-top:0;padding-top:8px;}',
       'body.office-mode #kpi-s0{background:rgba(20,20,20,.32);}',
       'body.office-mode #kpi-s0 .kpi-s0-card{border:1px solid #1c1c1c;background:#f4f1ea;color:#1a1a1c;}',
       'body.office-mode #kpi-s0 .kpi-s0-card::before{background:#1c1c1c;}',
@@ -477,6 +682,14 @@
       'body.office-mode #kpi-s0 .kpi-s0-btn:hover:not([disabled]){border-color:#1c1c1c;color:#1c1c1c;}',
       'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary{border-color:#1c1c1c;background:#1c1c1c;color:#fff;}',
       'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary:hover:not([disabled]){background:#3a3a3a;color:#fff;}',
+      'body.office-mode #kpi-s0 .kpi-s0-summary{border-color:#d6d0c4;background:#fbf9f4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-summary dt{color:#555;}',
+      'body.office-mode #kpi-s0 .kpi-s0-note{border-left-color:#1c1c1c;background:#ece7dc;}',
+      'body.office-mode #kpi-s0 .kpi-s0-note.is-strong{border-left-color:#c77700;background:#f6ead4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-note.is-ok{border-left-color:#0F9403;background:#e6f0e2;}',
+      'body.office-mode #kpi-s0 .kpi-s0-via{color:#66625b;}',
+      'body.office-mode #kpi-s0 .kpi-s0-confirm{border-color:#a9a395;background:#fbf9f4;}',
+      'body.office-mode #kpi-s0 .kpi-s0-confirm ul{color:#2a2a2c;}',
     ].join('');
     (global.document.head || global.document.documentElement).appendChild(style);
   }
@@ -610,6 +823,7 @@
   }
 
   function renderSaved(c) {
+    var cont = !!(state && state.continueSetup);
     return (
       '<div class="kpi-s0-head kpi-s0-saved-head">' +
       '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
@@ -617,10 +831,10 @@
       '<div class="kpi-s0-saved" id="kpi-s0-saved">' +
       '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(c.savedTitle) + '</h2>' +
       '<p class="kpi-s0-saved-lead">' + esc(c.savedLead) + '</p>' +
-      '<p class="kpi-s0-saved-body">' + esc(c.savedBody) + '</p></div></div>' +
+      '<p class="kpi-s0-saved-body">' + esc(cont ? c.savedBodyContinue : c.savedBody) + '</p></div></div>' +
       '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
       '<div class="kpi-s0-actions">' +
-      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-next">' + esc(c.next) + '</button></div>'
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-next">' + esc(cont ? c.nextStep : c.next) + '</button></div>'
     );
   }
 
@@ -927,7 +1141,7 @@
       .then(function (merged) {
         var B = bt();
         if (B && typeof B.setBusinessType === 'function') B.setBusinessType(merged.businessType);
-        var storeOk = writeOpeningDate(form.openingDate);
+        var storeOk = writeOpeningDate(form.openingDate, state.startSetup);
         writeLocalProfile(merged, merged.currency);
         return pushStore().then(function (push) {
           return { storeOk: storeOk && !!(push && push.ok === true) };
@@ -950,6 +1164,7 @@
     state.view = 'saved';
     var card = el('kpi-s0-card');
     if (!card) return;
+    card.setAttribute('data-s0-view', 'profile-saved');
     card.innerHTML = renderSaved(c);
     if (!storeOk) setStatus(c.storeWarn, 'warn');
     var next = el('kpi-s0-next');
@@ -983,9 +1198,14 @@
       touched: {},
       currencyUserSet: false,
       initialRaw: null,
+      startSetup: !!(opts && opts.startSetup === true),
+      continueSetup: !!(opts && opts.continueSetup === true),
       onDone: opts && typeof opts.onDone === 'function' ? opts.onDone : null,
     };
+    hist = null;
     var card = el('kpi-s0-card');
+    card.setAttribute('data-s0-view', 'profile');
+    card.removeAttribute('data-s2-kind');
     card.innerHTML = renderForm(c);
     root.hidden = false;
     bindForm();
@@ -1010,10 +1230,255 @@
     });
   }
 
+  /* ---------- STEP 02 Historical Data ---------- */
+
+  var hist = null;
+
+  function historySummary() {
+    var r = readiness();
+    if (!r || typeof r.historicalSummary !== 'function') return null;
+    return r.historicalSummary(readStore());
+  }
+
+  function hasImporterHere() {
+    var r = readiness();
+    return !!(r && typeof r.hasHistoryImporter === 'function' && r.hasHistoryImporter());
+  }
+
+  function renderHistorySummary(h, sum) {
+    var na = sum.level === 'not_applicable';
+    var rows = [['start', h.start, sum.openingYm]];
+    if (!na) rows.push(['range', h.range, sum.rangeStart + h.rangeSep + sum.rangeEnd]);
+    rows.push(['status', h.status, h.state[sum.state] || '']);
+    if (!na) rows.push(['detected', h.detected, sum.detectedYears.length ? sum.detectedYears.join(', ') : h.none]);
+    rows.push(['level', h.level, h.levelText[sum.state === 'present' ? 'present' : sum.level] || '']);
+    return (
+      '<dl class="kpi-s0-summary" id="kpi-s0-hist-summary">' +
+      rows.map(function (r) {
+        return '<dt>' + esc(r[1]) + '</dt><dd data-s2-row="' + r[0] + '">' + esc(r[2]) + '</dd>';
+      }).join('') +
+      '</dl>'
+    );
+  }
+
+  function historyMessageKey(sum) {
+    if (sum.state === 'present' || sum.state === 'skipped') return sum.state;
+    return sum.level;
+  }
+
+  function renderHistory(c, sum) {
+    var h = c.history;
+    var msgKey = historyMessageKey(sum);
+    var noteClass = msgKey === 'strong' ? ' is-strong' : msgKey === 'present' || msgKey === 'not_applicable' ? ' is-ok' : '';
+    var btn = function (id, label, primary, left) {
+      return (
+        '<button type="button" class="kpi-s0-btn' + (primary ? ' is-primary' : '') + (left ? ' is-left' : '') +
+        '" id="' + id + '">' + esc(label) + '</button>'
+      );
+    };
+    var actions = btn('kpi-s0-hist-close', h.close, false, true);
+    var hasRegister = true;
+    if (sum.state === 'absent') {
+      actions += btn('kpi-s0-hist-skip', h.skip) + btn('kpi-s0-hist-register', h.register, true);
+    } else if (sum.state === 'present') {
+      actions += btn('kpi-s0-hist-register', h.addMore) + btn('kpi-s0-hist-next', h.next, true);
+    } else if (sum.state === 'skipped') {
+      actions += btn('kpi-s0-hist-register', h.register) + btn('kpi-s0-hist-next', h.next, true);
+    } else {
+      hasRegister = false;
+      actions += btn('kpi-s0-hist-next', h.next, true);
+    }
+    return (
+      '<div class="kpi-s0-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: 1 }) +
+      '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(h.title) + '</h2>' +
+      '<p class="kpi-s0-lead">' + esc(h.lead) + '</p></div>' +
+      renderHistorySummary(h, sum) +
+      '<p class="kpi-s0-note' + noteClass + '" id="kpi-s0-hist-note" data-s2-level="' + esc(msgKey) + '">' +
+      esc(h.msg[msgKey] || '') + '</p>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions" id="kpi-s0-hist-actions">' + actions + '</div>' +
+      (hasRegister && !hasImporterHere() ? '<p class="kpi-s0-via" id="kpi-s0-hist-via">' + esc(h.viaAnnual) + '</p>' : '') +
+      '<div id="kpi-s0-hist-confirm-host"></div>'
+    );
+  }
+
+  function renderHistoryDone(c, kind) {
+    var h = c.history;
+    return (
+      '<div class="kpi-s0-head kpi-s0-saved-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: -1, states: ['completed', kind === 'skipped' ? 'skipped' : 'completed'], position: 2 }) +
+      '<div class="kpi-s0-saved" id="kpi-s0-hist-done-body">' +
+      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(h.doneTitle[kind] || '') + '</h2>' +
+      '<p class="kpi-s0-saved-lead">' + esc(h.doneLead[kind] || '') + '</p>' +
+      '<p class="kpi-s0-saved-body">' + esc(h.doneBody) + '</p></div></div>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-hist-done">' + esc(c.next) + '</button></div>'
+    );
+  }
+
+  function closeHistory() {
+    if (rootEl) rootEl.hidden = true;
+    hist = null;
+  }
+
+  function finishHistory() {
+    var done = hist && hist.onDone;
+    closeHistory();
+    if (typeof done === 'function') done();
+  }
+
+  function focusEl(id) {
+    try {
+      var n = el(id);
+      if (n) n.focus();
+    } catch (_e) {}
+  }
+
+  function showHistoryDone(kind, warn) {
+    var c = t(hist.lang);
+    var card = el('kpi-s0-card');
+    if (!card) return;
+    hist.view = 'done';
+    card.setAttribute('data-s0-view', 'history-done');
+    card.setAttribute('data-s2-kind', kind);
+    card.innerHTML = renderHistoryDone(c, kind);
+    if (warn) setStatus(c.history.skipWarn, 'warn');
+    var btn = el('kpi-s0-hist-done');
+    if (btn) btn.addEventListener('click', finishHistory);
+    focusEl('kpi-s0-hist-done');
+  }
+
+  /** Reuses the existing Annual Past Sales dialog (CSV / Excel import included); STEP 02 returns when it closes. */
+  function openPastSalesFromSetup() {
+    var btn = global.document.getElementById('annual-past-sales-btn');
+    var modal = global.document.getElementById('past-sales-modal');
+    var opts = hist ? hist.opts : {};
+    var reopen = function () {
+      openHistory(Object.assign({}, opts, { entry: 'flow' }));
+    };
+    closeHistory();
+    btn.click();
+    if (!modal || modal.hasAttribute('hidden') || typeof global.MutationObserver !== 'function') {
+      reopen();
+      return;
+    }
+    var mo = new global.MutationObserver(function () {
+      if (!modal.hasAttribute('hidden')) return;
+      mo.disconnect();
+      reopen();
+    });
+    mo.observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+  }
+
+  function startHistoryImport() {
+    if (!hist) return;
+    if (hasImporterHere()) {
+      openPastSalesFromSetup();
+      return;
+    }
+    var r = readiness();
+    var url = r && typeof r.annualSetupUrl === 'function' ? r.annualSetupUrl() : '';
+    if (url) global.location.href = url;
+  }
+
+  function showSkipConfirm() {
+    var c = t(hist.lang);
+    var h = c.history;
+    var actions = el('kpi-s0-hist-actions');
+    var host = el('kpi-s0-hist-confirm-host');
+    if (!host) return;
+    if (actions) actions.style.display = 'none';
+    host.innerHTML =
+      '<div class="kpi-s0-confirm" id="kpi-s0-hist-confirm" role="group" aria-labelledby="kpi-s0-hist-confirm-title">' +
+      '<p class="kpi-s0-confirm-title" id="kpi-s0-hist-confirm-title">' + esc(h.confirmTitle) + '</p>' +
+      '<ul>' + h.confirmLines.map(function (line) {
+        return '<li>' + esc(line) + '</li>';
+      }).join('') + '</ul>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn" id="kpi-s0-hist-confirm-back">' + esc(h.confirmBack) + '</button>' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-hist-confirm-skip">' + esc(h.confirmSkip) + '</button>' +
+      '</div></div>';
+    el('kpi-s0-hist-confirm-back').addEventListener('click', function () {
+      host.innerHTML = '';
+      if (actions) actions.style.display = '';
+      focusEl('kpi-s0-hist-skip');
+    });
+    el('kpi-s0-hist-confirm-skip').addEventListener('click', confirmSkip);
+    focusEl('kpi-s0-hist-confirm-back');
+  }
+
+  function confirmSkip() {
+    if (!hist || hist.saving) return;
+    var session = hist;
+    var c = t(hist.lang);
+    var buttons = [el('kpi-s0-hist-confirm-back'), el('kpi-s0-hist-confirm-skip')];
+    if (!writeHistoricalSkipped()) {
+      setStatus(c.history.skipFailed, 'error');
+      return;
+    }
+    hist.saving = true;
+    buttons.forEach(function (b) {
+      if (b) b.disabled = true;
+    });
+    pushStore().then(function (push) {
+      if (hist !== session) return;
+      hist.saving = false;
+      showHistoryDone('skipped', !(push && push.ok === true));
+    });
+  }
+
+  function bindHistory() {
+    var on = function (id, fn) {
+      var n = el(id);
+      if (n) n.addEventListener('click', fn);
+    };
+    on('kpi-s0-hist-close', finishHistory);
+    on('kpi-s0-hist-register', startHistoryImport);
+    on('kpi-s0-hist-skip', showSkipConfirm);
+    on('kpi-s0-hist-next', function () {
+      if (hist && hist.sum) showHistoryDone(hist.sum.state);
+    });
+  }
+
+  /**
+   * opts.entry: 'flow' shows STEP 02 itself; 'resume' goes past it when history is not absent
+   * (the next soft step is not built yet, so that is the done card).
+   */
+  function openHistory(opts) {
+    var o = opts || {};
+    var done = typeof o.onDone === 'function' ? o.onDone : null;
+    var root = ensureRoot();
+    var sum = historySummary();
+    if (!root || !sum) {
+      if (done) done();
+      return;
+    }
+    state = null;
+    var lang = detectLang();
+    hist = { lang: lang, opts: o, onDone: done, sum: sum, view: 'history', saving: false };
+    var card = el('kpi-s0-card');
+    root.hidden = false;
+    if (o.entry === 'resume' && sum.state !== 'absent') {
+      showHistoryDone(sum.state);
+      return;
+    }
+    card.setAttribute('data-s0-view', 'history');
+    card.setAttribute('data-s2-kind', sum.state);
+    card.innerHTML = renderHistory(t(lang), sum);
+    bindHistory();
+    focusEl(el('kpi-s0-hist-register') && sum.state === 'absent' ? 'kpi-s0-hist-register' : 'kpi-s0-hist-next');
+  }
+
   global.KpiSetupStep0 = {
     __ready: true,
     open: open,
     close: close,
+    openHistory: openHistory,
+    closeHistory: closeHistory,
     mergeProfile: mergeProfile,
     SETUP_STEPS: SETUP_STEPS.slice(),
     renderStepRuler: function (opts) {

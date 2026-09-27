@@ -25,6 +25,12 @@
     en: 'Start Initial Setup',
     zh: '開始初始設定',
   };
+  var RESUME_COPY = {
+    ja: '初期設定を続ける',
+    en: 'Continue Setup',
+    zh: '繼續初始設定',
+  };
+  var SETUP_PARAM = 'kpnSetup';
   var HARD_REQUIRED_FIELDS = [
     'businessName',
     'companyName',
@@ -184,6 +190,46 @@
     return 'absent';
   }
 
+  function historicalYears(store, oy, openingDate) {
+    var map = store && store.timeline ? store.timeline.dailySales : null;
+    if (!map || typeof map !== 'object') return [];
+    var seen = {};
+    Object.keys(map).forEach(function (iso) {
+      if (!isCanonicalDailySales(iso, map[iso], oy)) return;
+      var y = Number(String(iso).slice(0, 4));
+      if (y < oy && String(iso) >= openingDate) seen[y] = true;
+    });
+    return Object.keys(seen)
+      .map(Number)
+      .sort(function (a, b) {
+        return a - b;
+      });
+  }
+
+  /**
+   * STEP 02 summary from the store alone. level follows the opening year only:
+   * same year = not_applicable, previous year = recommended, two or more years back = strong.
+   * Returns null while the opening date is not a valid YYYY-MM-DD.
+   */
+  function historicalSummary(store) {
+    var s = store && typeof store === 'object' ? store : {};
+    var oy = operatingYearOf(s);
+    var openingDate = s.meta ? trimmed(s.meta.openingDate) : '';
+    if (!isValidOpeningDate(openingDate)) return null;
+    var openYear = Number(openingDate.slice(0, 4));
+    var level = openYear >= oy ? 'not_applicable' : openYear === oy - 1 ? 'recommended' : 'strong';
+    return {
+      operatingYear: oy,
+      openingDate: openingDate,
+      openingYm: openingDate.slice(0, 7),
+      rangeStart: level === 'not_applicable' ? null : openingDate.slice(0, 7),
+      rangeEnd: level === 'not_applicable' ? null : String(oy - 1) + '-12',
+      state: initialDataState(s, oy, openingDate, true),
+      detectedYears: level === 'not_applicable' ? [] : historicalYears(s, oy, openingDate),
+      level: level,
+    };
+  }
+
   function blankFacts() {
     return {
       status: 'PENDING',
@@ -333,7 +379,10 @@
 
   var generation = 0;
   var lastPlan = null;
+  var lastResult = null;
   var guardEl = null;
+  var resumeEl = null;
+  var setupParamHandled = false;
 
   function ensureStyle() {
     if (!global.document || global.document.getElementById('kpi-nr-guard-css')) return;
@@ -356,6 +405,12 @@
       'body.office-mode #kpi-nr-guard .kpi-nr-headline{letter-spacing:.04em;font-weight:600;}',
       'body.office-mode #kpi-nr-guard .kpi-nr-start{border-color:#1c1c1c;background:#1c1c1c;color:#fff;}',
       'body.office-mode #kpi-nr-guard .kpi-nr-start:hover{background:#3a3a3a;}',
+      '#kpi-nr-resume{position:fixed;left:18px;bottom:70px;z-index:900;padding:7px 14px;font:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer;',
+      'border:1px solid rgba(0,229,255,.6);background:rgba(4,14,28,.9);color:#e8fbff;}',
+      '#kpi-nr-resume:hover{border-color:#00e5ff;background:rgba(0,229,255,.18);}',
+      '#kpi-nr-resume[hidden]{display:none !important;}',
+      'body.office-mode #kpi-nr-resume{border-color:#1c1c1c;background:#f4f1ea;color:#1c1c1c;}',
+      'body.office-mode #kpi-nr-resume:hover{background:#e8e3d8;}',
     ].join('');
     (global.document.head || global.document.documentElement).appendChild(style);
   }
@@ -387,14 +442,106 @@
     return api && typeof api.open === 'function' ? api : null;
   }
 
+  function historyApi() {
+    var api = global.KpiSetupStep0;
+    return api && typeof api.openHistory === 'function' ? api : null;
+  }
+
+  function isSetupPending(result) {
+    return !!(
+      result &&
+      !result.grandfathered &&
+      (result.status === 'SETUP_PROFILE_REQUIRED' || result.status === 'SETUP_INITIAL_REQUIRED')
+    );
+  }
+
+  /** Called from the guard: the user is not grandfathered, so Step 01 may start the setup object. */
   function openStep0() {
     var api = step0Api();
     if (!api) return;
     api.open({
+      startSetup: true,
+      continueSetup: !!historyApi(),
+      onDone: function () {
+        settle(lastPlan).then(function (result) {
+          if (result && !result.grandfathered && result.status === 'SETUP_INITIAL_REQUIRED') {
+            openHistory('flow');
+          }
+        });
+      },
+    });
+  }
+
+  function openHistory(entry) {
+    var api = historyApi();
+    if (!api) return;
+    api.openHistory({
+      entry: entry,
       onDone: function () {
         settle(lastPlan);
       },
     });
+  }
+
+  /** Resume is derived from Readiness only; no step is stored. */
+  function resumeSetup() {
+    var result = lastResult;
+    if (!isSetupPending(result) || result.phase1Block) return;
+    if (!result.businessProfileComplete) {
+      openStep0();
+      return;
+    }
+    openHistory('resume');
+  }
+
+  function setupDialogOpen() {
+    var d = global.document && global.document.getElementById('kpi-s0');
+    return !!(d && !d.hidden);
+  }
+
+  function hasHistoryImporter() {
+    return !!(global.document && global.document.getElementById('annual-past-sales-btn'));
+  }
+
+  function applyResume(result) {
+    if (!global.document || !global.document.body) return;
+    var show = isSetupPending(result) && !result.phase1Block && hasHistoryImporter() && !!historyApi();
+    if (!show && !resumeEl) return;
+    if (!resumeEl) {
+      ensureStyle();
+      resumeEl = global.document.createElement('button');
+      resumeEl.type = 'button';
+      resumeEl.id = 'kpi-nr-resume';
+      resumeEl.hidden = true;
+      resumeEl.addEventListener('click', resumeSetup);
+      global.document.body.appendChild(resumeEl);
+    }
+    var lang = detectLang();
+    resumeEl.textContent = RESUME_COPY[lang] || RESUME_COPY.en;
+    resumeEl.hidden = !show;
+  }
+
+  function takeSetupParam() {
+    if (setupParamHandled) return false;
+    setupParamHandled = true;
+    var loc = global.location;
+    if (!loc || !loc.search) return false;
+    var re = new RegExp('([?&])' + SETUP_PARAM + '=1(&|$)');
+    if (!re.test(loc.search)) return false;
+    try {
+      var search = loc.search.replace(re, function (_m, lead, tail) {
+        return tail ? lead : '';
+      }).replace(/[?&]$/, '');
+      global.history.replaceState(global.history.state, '', loc.pathname + search + (loc.hash || ''));
+    } catch (_e) {}
+    return true;
+  }
+
+  function annualSetupUrl() {
+    if (!global.document) return '';
+    var a = global.document.querySelector('.global-nav-item a.nav-frame-btn[href*="annual/index.html"]');
+    if (!a || !a.href) return '';
+    return a.href.split('#')[0] + (a.href.indexOf('?') >= 0 ? '&' : '?') + SETUP_PARAM + '=1';
   }
 
   function applyGuard(result) {
@@ -433,6 +580,10 @@
         result = blankFacts();
       }
       applyGuard(result);
+      if (result.status === 'PENDING') return result;
+      lastResult = result;
+      applyResume(result);
+      if (takeSetupParam() && !setupDialogOpen()) resumeSetup();
       return result;
     });
   }
@@ -452,6 +603,10 @@
     __ready: true,
     evaluateSnapshot: evaluateSnapshot,
     evaluateBusinessProfile: evaluateBusinessProfile,
+    historicalSummary: historicalSummary,
+    annualSetupUrl: annualSetupUrl,
+    hasHistoryImporter: hasHistoryImporter,
+    resumeSetup: resumeSetup,
     buildOpeningDate: buildOpeningDate,
     isValidOpeningDate: isValidOpeningDate,
     HARD_REQUIRED_FIELDS: HARD_REQUIRED_FIELDS.slice(),
