@@ -15,7 +15,7 @@ BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
 Phase 1 CLOSED 2026-09-27 — Navigation Readiness + Safe Guard (Human Smoke PASS)
 Phase 2 CLOSED 2026-09-27 — Business Profile / Step 01 (production verified on account 00; Launch UI approved)
-Phase 3 BLOCKED — BR-ONBOARDING-01-R2 (d6dced6 residual regressions, P0 x2, not fixed)
+Phase 3 UNBLOCKED 2026-09-27 — PHASE 3 SAFE TO PROCEED (BR-ONBOARDING-01-R2 CLOSED); not started, needs Shin GO
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -30,7 +30,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 
 ACTIVE BRANCHES:
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
-- BR-ONBOARDING-01-R2 d6dced6 Residual Regressions P0 (audit done 2026-09-27; fix needs Shin GO)
+- (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
 
 REGISTERED (under TRUNK-06; do not start):
 - (none — trunk CLOSED)
@@ -130,12 +130,14 @@ DEFERRED:
   parent: TRUNK-06. REGISTER ONLY. Not BR-LAUNCH-06. Accountant/archive workbook.
 - BR-POST-SETUP-RULER-ANIM Initial Setup Step Ruler Progress Animation P3 POST-LAUNCH / MINOR UX POLISH
   parent: BR-ONBOARDING-01. REGISTER ONLY. Not a Launch blocker; unannounced post-launch polish.
+- BR-POST-D6-MINOR d6dced6 minor leftovers outside the R2 audit P3 POST-LAUNCH / SEPARATE TASK
+  parent: BR-ONBOARDING-01-R2. REGISTER ONLY. No data loss. See R2 node `residual_notes`.
 
 RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 Phase 3 BLOCKED by `BR-ONBOARDING-01-R2` P0 (Sales Data Save always rejected; Annual Cockpit shows `—` for saved annual targets). Fix plan needs Shin GO; do not fix before cause / impact sign-off. Phase 2 CLOSED 2026-09-27 (production verified on account 00, then reset to empty via `reset-user-kpi.php`). The 7-field Hard Gate stays off in production (separate GO). Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+BR-ONBOARDING-01 `PHASE 3 SAFE TO PROCEED` — `BR-ONBOARDING-01-R2` CLOSED 2026-09-27 (`fabd406` + `335d6af`, deployed, production verified on account 00, then reset). Phase 3 Implementation is not started and needs Shin GO. Phase 2 CLOSED 2026-09-27 (production verified on account 00, then reset to empty via `reset-user-kpi.php`). The 7-field Hard Gate stays off in production (separate GO). Do not start Phase 3 Implementation without Shin GO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1519,7 +1521,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | setup_progress | Unchanged: `complete`, `currentYearAcknowledged`, `targetAcknowledged`, `historicalSkipped`. No `currentStep` / `lastCompletedStep`. Phase 2 never writes `store.meta.setup`. Resume is derived from Readiness. |
 | grandfather | Unchanged. Grandfathered users are never sent to Step 0 for missing company / country / region / currency / opening date. |
 | evidence | Phase 0 freeze 2026-09-27. Module `js/kpi-navigation-readiness.js`. Wired on Annual and Monthly, JP / EN / ZH-TW. MEP / PL and Monthly Edit direct URLs are not wired. |
-| next_action | Phase 3 (Historical / Current Year / Target / Review / setup complete) BLOCKED until `BR-ONBOARDING-01-R2` P0 items are fixed and verified. The 7-field Hard Gate stays off in production (separate GO). Do not auto-start `BR-LAUNCH-05`. |
+| blocker_r2 | `BR-ONBOARDING-01-R2` CLOSED 2026-09-27 (see node below). Phase 3 block lifted: `PHASE 3 SAFE TO PROCEED`. |
+| next_action | Phase 3 (Historical / Current Year / Target / Review / setup complete) is SAFE TO PROCEED but not started; needs Shin GO. The 7-field Hard Gate stays off in production (separate GO). Do not auto-start `BR-LAUNCH-05`. |
 | constraint | no DB migration; no Registration change; no Importer change; no Business Type contract change; no Planning Readiness reuse; no Annual / Monthly / MEP / PL math change; excel/ untouched |
 
 ### BR-ONBOARDING-01-R2
@@ -1529,13 +1532,20 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-ONBOARDING-01-R2` |
 | name | `d6dced6` Residual Regressions (non-R1) |
 | parent | `BR-ONBOARDING-01` |
-| status | ACTIVE (audit done, not fixed) |
+| status | CLOSED 2026-09-27 (ACTIVE 2026-09-27 on Shin GO; fixed, deployed, production verified) |
 | priority | P0 |
 | started_at | 2026-09-27 |
-| return_to | `BR-ONBOARDING-01` Phase 3 |
+| closed_at | 2026-09-27 |
+| return_to | `BR-ONBOARDING-01` Phase 3 (block lifted) |
 | reason | `d6dced6` replaced the inline `KpiYearStore` of Annual / Monthly / Monthly Edit (JP / EN / ZH-TW) with an older copy. R1 restored store init only. Callers still use `typeof KpiYearStore.X === 'function'` guards, so the missing APIs fail silently. Production runtime (account 00, read-only probe): `canEditSalesDataLive`, `readSavedAnnualPlanTarget`, `hasSavedAnnualPlanTarget`, `isUiBusinessDay`, `isBaselineActualDay`, `isPlanningBusinessDay` are undefined on all 9 pages. |
 | audit | Method: `d6dced6~1` vs `d6dced6` vs HEAD, production runtime probe, mocked before/HEAD render. (1) dailySalesInputPath light key: C P2. Path still persists via `store.meta` + full `persistStore()`; cross-tab storage sync and toggle-without-store-PUT are lost. (2) MEP lease steal: D. `acquireEditLease` no longer honours `meta.steal`, but no caller passes `steal: true` before or after `d6dced6`. (3) Annual target source / memory heal: C P0. `syncAnnualTargetDisplay` and `hasPlan` read the missing APIs, so Annual Cockpit shows `—` for annual target, Total Business Day, monthly business days / average target and cumulative targets for every saved target (mock: before `¥36,000,000` / `364`, HEAD `—` / `—`). Stored target is intact. `memory-reference-heal` also gone. (4) Business-day three layers: C P1. Planning layer masked by (3). Baseline layer: `computeObserved` counts no-data weekdays as business days; partial-year history skews `rec.observed` (persisted) and the operating-year H/L baseline (mock Apr-Dec data: before 266 BD / ~100 %, HEAD 330 BD / Jan-Mar 0 % / ~123 %). Full-year data identical. (5) A/B stream sync: C P1. `syncDailyIncomeStreamsFromTimelineTotals` removed from Sales Data Save; masked by (6), but restoring (6) alone would let MEP `sales_a` / `sales_b` / `store_sales` diverge from daily totals. (6) Sales Data lease check: C P0. `canEditSalesDataLiveNow()` is always false, so Sales Data Save is rejected even in Edit with the lease held (production UI on account 00: dialog `未保存の変更があります。編集モードに切り替えて保存してください。`, 0 writes). `persistSalesDataModalSave` also lost its own path / lease check. (7) Busy background rule: C P2. `runServerYearRebuild` wraps background year rebuild in `__KPI_BUSY.run('save')` again (`KPI-BUSY-NAV-OFF-CX` lost). No data loss or OCC break found: stored sales / targets / business days stay intact; Monthly PUTs carry the full store. |
-| next_action | Fix plan for (3) + (6), with (4) + (5) in the same pass. Needs Shin GO; no fix before sign-off. Phase 3 stays blocked until P0 is fixed and verified. |
+| root_cause | `d6dced6` swapped in an older `KpiYearStore` copy and HEAD kept it (R1 restored init only). The six APIs were dropped, and callers guard them with `typeof ... === 'function'`, so they failed silently: no saved target (`—`), `canEditSalesDataLiveNow()` always false, readiness / cockpit fell back to weekday or raw-target paths. |
+| fix | `fabd406` (R2-1..R2-5) + `335d6af` (R2-6), 9 pages (Annual / Monthly / Monthly Edit x JP / EN / ZH-TW). Per page, only functions that page had at `d6dced6~1` were ported (Monthly never had `canEditSalesDataLive`, A/B sync or the light key; they were not added). R2-1: `isUserSavedAnnualPlanSource` (`sales-data-save` only; `rollover-snapshot` / `memory-reference-heal` are not user targets), `hasSavedAnnualPlanTarget`, `readSavedAnnualPlanTarget`, `annualFacts.annualTarget` from the saved target, memory-only heal in `syncToAnnualDaily` (only when no plan target > 0; never persists), `writeAnnualTarget` persists on `sales-data-save` (target was memory-only after Save). R2-2: `canEditSalesDataLive` (annual path + daily-sales lease); `persistSalesDataModalSave` returns `{ok:false}` for no_daily / path_blocked / edit_lease_lost; `persistFromAnnualDaily` skips sync on failure. R2-3: `readBusinessDayFlag`, `isUiBusinessDay` (false off, true/unset open), `isBaselineActualDay` (false off, true on, unset only if sales > 0), `isPlanningBusinessDay` (saved-target year only, false off); `computeObserved` uses baseline, `snapshotIsBusinessDay` uses planning / baseline. Unresolved review days are unset flags (baseline excluded; resolve writes the flag). R2-4: `syncDailyIncomeStreamsFromTimelineTotals` in Sales Data Save (store_sales = total - A - B; A+B > total clears A/B); dailySales stays canonical, dailyMeal untouched. R2-5: per-device `kpiNavigator.dailySalesInputPath` light key (write on toggle, apply on init / `reload()` after server hydrate / storage event); Edit toggle and tier enforcement no longer full-PUT the store. R2-6: background year rebuild without Busy (`KPI-BUSY-NAV-OFF-CX`). Not restored: MEP lease steal (dead). Kept: past-business-day review, dailyMeal, R1 init, Step 0, OCC. |
+| smoke | R2 contract smoke 165/165 (JP / EN / ZH-TW; Annual / Monthly / Monthly Edit; target, Sales Data View/Edit/Save/reload/OCC 409, full-store PUT, null store + Edit, 3 business-day layers on full / partial year, zero-sales / closed / unresolved / resolved days, series daily / lunch / dinner / customers / groups / A-B / reload, tab sync). Same smoke on `31824c3` pages: 30/111. R2-6 busy 9/9 (fails before). Regression: R1 store 171/171, Step 0 329/329 (Sci-Fi / Office, grandfather). Inline script syntax check OK on all 9 pages. |
+| deploy | 2026-09-27 stage r2: 9 pages from `335d6af`, production matched `31824c3` before upload, backup taken, production SHA match + markers OK. Production-asset smoke 165/165 + busy 9/9. |
+| production | Account 00 only, real API: View Save refused (read-only, disabled, handler refuses, 0 PUT); Edit toggle 0 store PUT (empty store not pushed); Edit Save accepted, server dailySales + plan.targetSales `12345678` source `sales-data-save`, revision advanced; close without prompt; reload Annual / Monthly both use the saved target (Annual `¥12,345,678`, BD 365, MTD / YTD targets). 7/7. Reset afterwards: store null, profile empty, daily 0. No other account touched. Human Smoke not required. |
+| residual_notes | Not in the R2 audit, not fixed (registered as `BR-POST-D6-MINOR`, P3): Monthly Edit `writeDailyIncome` ignores `meta.deferPersist` (extra local persist per MEP cell; server PUT is debounced, no partial PUT); `setSelectedDate` no longer writes `operatingSelectedIso` (Annual Focus reads it as optional fallback); `setPastSalesEditEnabled` full-persists the store on toggle. |
+| next_action | none (CLOSED). Phase 3 SAFE TO PROCEED; needs Shin GO. |
 | constraint | not a revert of `d6dced6`; keep past-business-day review (`businessDayUnresolved`) and R1 init; excel/ untouched |
 
 ### BR-POST-SETUP-RULER-ANIM
@@ -1786,4 +1796,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR CLOSED** Office SVG fill `#ffffff`. Sci-Fi `#59e1f3` unchanged. Production smoke 30/30 PASS. SHA `414b164`. Human Review NO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-26 | **BR-POST-FOOTER-VERSION CLOSED** Shared footer brand: Key Performance Navigator / Version 1.0.0 / © 2025 Forge Laboratory. SHA `900bfc3`. |
 | 2026-09-26 | **BR-POST-COCKPIT-GAP CLOSED** Shared Cockpit box gap Sci-Fi 30px / Office 17px (EN reference). JP/ZH-TW match EN. Production 48/48 PASS. SHA `deabb85`. Human Review NO. Do not reopen `TRUNK-06`. |
+| 2026-09-27 | **BR-ONBOARDING-01-R2 CLOSED** d6dced6 residual store contracts ported (no revert): saved target source + memory heal, Sales Data edit right, 3 business-day layers, A/B sync, light key, background Busy off. `fabd406` / `335d6af` deployed (9 pages, SHA match). Smoke 165/165, R1 171/171, Step 0 329/329; production 00 7/7 then reset. `PHASE 3 SAFE TO PROCEED` (not started). |
 | 2026-09-27 | **Construction State baseline recorded.** Future unfinished full pages default to scramble placeholder unless a documented exception. Spec: `docs/kpn-construction-state.md`. Task Tree §3 Operating Rule. No product-code change. |
