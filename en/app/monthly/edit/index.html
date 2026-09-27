@@ -15624,6 +15624,7 @@
       }
       function clearDirty() {
         hasPendingEdits = false;
+        editTouched = false;
       }
       function sortedIsoMap(src) {
         var out = {};
@@ -15755,57 +15756,15 @@
         return JSON.stringify(o);
       }
       function hasUnsavedChanges() {
+        /* KPI-MEP-NAV-NOT-DIRTY: chooser/OCC/leave follow user edits, not year/month view-state. */
         if (
           memoFloatRoot &&
           !memoFloatRoot.hasAttribute('hidden') &&
           (!memoFloatState.sessionSaved || memoFloatState.dirty)
         ) {
-          try {
-            console.info('[KPN_DIRTY_DIFF]', { reason: 'memoFloat', paths: [{ path: 'memoFloat', confirmed: false, current: true }] });
-          } catch (_eMemo) {}
           return true;
         }
-        if (!confirmedSnapshot) return false;
-        var confS = dataDirtySnapshotString(confirmedSnapshot);
-        var curS = dataDirtySnapshotString(buildConfirmedSnapshot());
-        if (confS === curS) return false;
-        try {
-          var diffs = [];
-          function walk(a, b, prefix) {
-            if (diffs.length >= 40) return;
-            var aObj = a && typeof a === 'object';
-            var bObj = b && typeof b === 'object';
-            var aArr = Array.isArray(a);
-            var bArr = Array.isArray(b);
-            if (aArr || bArr) {
-              if (JSON.stringify(a) !== JSON.stringify(b)) {
-                diffs.push({ path: prefix || '(root)', confirmed: a, current: b });
-              }
-              return;
-            }
-            if (!aObj && !bObj) {
-              if (a !== b) diffs.push({ path: prefix || '(root)', confirmed: a, current: b });
-              return;
-            }
-            var keys = {};
-            if (aObj) Object.keys(a).forEach(function (k) { keys[k] = 1; });
-            if (bObj) Object.keys(b).forEach(function (k) { keys[k] = 1; });
-            Object.keys(keys).sort().forEach(function (k) {
-              if (diffs.length >= 40) return;
-              var p = prefix ? prefix + '.' + k : k;
-              var av = aObj ? a[k] : undefined;
-              var bv = bObj ? b[k] : undefined;
-              if (av && bv && typeof av === 'object' && typeof bv === 'object') {
-                walk(av, bv, p);
-                return;
-              }
-              if (av !== bv) diffs.push({ path: p, confirmed: av, current: bv });
-            });
-          }
-          walk(JSON.parse(confS || '{}'), JSON.parse(curS || '{}'), '');
-          console.info('[KPN_DIRTY_DIFF]', { reason: 'snapshot', count: diffs.length, paths: diffs });
-        } catch (_eDiff) {}
-        return true;
+        return typeof mepIsUserEditDirty === 'function' && mepIsUserEditDirty();
       }
 
       var closeChooser = document.getElementById('sales-data-close-chooser');
@@ -15880,7 +15839,6 @@
         });
       }
       function canLeaveWithoutChooser() {
-        if (typeof mepIsUserEditDirty === 'function' && mepIsUserEditDirty()) return false;
         return !hasUnsavedChanges();
       }
       function mepPutFailed(putResult) {

@@ -16,9 +16,20 @@ def fail(msg: str) -> None:
     raise SystemExit("FAIL " + msg)
 
 
+def slice_fn(text: str, name: str) -> str:
+    key = "function " + name + "("
+    i = text.find(key)
+    if i < 0:
+        fail("missing " + name)
+    j = text.find("\n      function ", i + len(key))
+    if j < 0:
+        j = i + 1200
+    return text[i:j]
+
+
 def main() -> int:
     for path in FILES:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         rel = str(path.relative_to(ROOT)).replace("\\", "/")
         if "KPI-MEP-NAV-NOT-DIRTY" not in text:
             fail(rel + " missing nav-not-dirty marker")
@@ -36,14 +47,23 @@ def main() -> int:
                 fail(rel + " missing " + needle)
         if "sessionStorage.getItem(MEF_STORAGE_MONTHLY_LAST)" not in text:
             fail(rel + " monthlyLast must be read as view-state")
-        if "delete o.year;" not in text or "delete o.month0;" not in text:
-            fail(rel + " snapshot compare must ignore year/month0")
-        if "mepIsUserEditDirty()) return false;\n        return !hasUnsavedChanges();" not in text.replace(
-            "\r\n", "\n"
-        ):
-            # looser
-            if "mepIsUserEditDirty" not in text.split("function canLeaveWithoutChooser()")[1][:400]:
-                fail(rel + " close chooser must use user-edit dirty, not view-state")
+        if "sessionStorage.setItem(\n            MEF_STORAGE_MONTHLY_LAST" not in text and "sessionStorage.setItem(\n          MEF_STORAGE_MONTHLY_LAST" not in text:
+            if "sessionStorage.setItem(" not in slice_fn(text, "persistMefMonth"):
+                fail(rel + " persistMefMonth must write monthlyLast view-state")
+        unsaved = slice_fn(text, "hasUnsavedChanges")
+        if "mepIsUserEditDirty" not in unsaved:
+            fail(rel + " hasUnsavedChanges must use mepIsUserEditDirty")
+        if "dataDirtySnapshotString" in unsaved or "reason: 'snapshot'" in unsaved:
+            fail(rel + " hasUnsavedChanges must not treat snapshot/view hydrate as dirty")
+        leave = slice_fn(text, "canLeaveWithoutChooser")
+        if "return !hasUnsavedChanges();" not in leave:
+            fail(rel + " close chooser must follow hasUnsavedChanges")
+        dirty = slice_fn(text, "clearDirty")
+        if "editTouched = false" not in dirty:
+            fail(rel + " save/clear must reset editTouched")
+        bu = text.find("window.addEventListener('beforeunload', function (ev)")
+        if bu < 0 or "if (!hasUnsavedChanges()) return;" not in text[bu : bu + 350]:
+            fail(rel + " beforeunload must use hasUnsavedChanges")
         idx_apply = text.index("function applyMonthSelection(month0)")
         chunk = text[idx_apply : idx_apply + 900]
         if "acceptMepViewBaselineIfClean();" not in chunk:
@@ -51,6 +71,11 @@ def main() -> int:
         idx_today = text.index("function jumpToToday()")
         if "acceptMepViewBaselineIfClean();" not in text[idx_today : idx_today + 900]:
             fail(rel + " jumpToToday must accept baseline")
+        money = text.index("action === 'money-input'")
+        if "markDirty();" not in text[money : money + 4500]:
+            fail(rel + " money cell edit must markDirty")
+        if "markDirty();" not in text[text.index("action === 'bizday-toggle'") : text.index("action === 'bizday-toggle'") + 1200]:
+            fail(rel + " bizday toggle must markDirty")
     print("PASS mep nav-not-dirty contract n=" + str(len(FILES)))
     return 0
 
