@@ -39,7 +39,7 @@
 
   var COPY = {
     ja: {
-      kicker: 'KPN INITIAL SETUP — STEP 01',
+      kicker: 'KPN INITIAL SETUP',
       title: 'Business Profile',
       lead: 'KPNを開始するために、ビジネスの基本情報を設定してください。',
       lead2: '必須項目をすべて入力すると保存できます。',
@@ -48,7 +48,10 @@
       sectionRequired: '必須項目',
       sectionOptional: '任意項目',
       sectionOptionalNote: '空欄のままでも保存できます',
-      progressLabel: 'PROFILE SETUP',
+      progressLabel: 'REQUIRED FIELDS',
+      stepsLabel: 'KPN 初期設定 {total} ステップ中 {current}',
+      steps: ['ビジネス情報', '過去データ', '今年度', '年間目標', '最終確認'],
+      stepState: { completed: '完了', active: '入力中', skipped: 'スキップ', future: '未着手' },
       businessName: '屋号 / サービス名 / 店名',
       companyName: '会社名',
       businessType: '業種',
@@ -83,7 +86,7 @@
       next: 'KPN に進む',
     },
     en: {
-      kicker: 'KPN INITIAL SETUP — STEP 01',
+      kicker: 'KPN INITIAL SETUP',
       title: 'Business Profile',
       lead: 'Set up your basic business information to start KPN.',
       lead2: 'You can save once all required fields are filled in.',
@@ -92,7 +95,10 @@
       sectionRequired: 'Required',
       sectionOptional: 'Optional',
       sectionOptionalNote: 'Can be left blank',
-      progressLabel: 'PROFILE SETUP',
+      progressLabel: 'REQUIRED FIELDS',
+      stepsLabel: 'KPN initial setup, step {current} of {total}',
+      steps: ['Business Profile', 'History', 'Current Year', 'Target', 'Review'],
+      stepState: { completed: 'Done', active: 'In progress', skipped: 'Skipped', future: 'Not started' },
       businessName: 'Business / Service / Store Name',
       companyName: 'Company Name',
       businessType: 'Business Type',
@@ -127,7 +133,7 @@
       next: 'Continue to KPN',
     },
     zh: {
-      kicker: 'KPN INITIAL SETUP — STEP 01',
+      kicker: 'KPN INITIAL SETUP',
       title: 'Business Profile',
       lead: '開始使用 KPN 前，請設定商家的基本資訊。',
       lead2: '填妥所有必填項目後即可儲存。',
@@ -136,7 +142,10 @@
       sectionRequired: '必填項目',
       sectionOptional: '選填項目',
       sectionOptionalNote: '可以留空',
-      progressLabel: 'PROFILE SETUP',
+      progressLabel: 'REQUIRED FIELDS',
+      stepsLabel: 'KPN 初始設定，共 {total} 步中的第 {current} 步',
+      steps: ['商家資訊', '過去資料', '本年度', '年度目標', '最終確認'],
+      stepState: { completed: '已完成', active: '填寫中', skipped: '已略過', future: '尚未開始' },
       businessName: '店名 / 服務名稱',
       companyName: '公司名稱',
       businessType: '產業',
@@ -373,7 +382,23 @@
       '#kpi-s0 .kpi-s0-card{position:relative;width:100%;max-width:640px;margin:auto 0;padding:28px 32px 24px;border:1px solid rgba(0,229,255,.5);background:rgba(3,11,22,.97);color:#e8fbff;font-size:14px;}',
       '#kpi-s0 .kpi-s0-card::before{content:\'\';position:absolute;top:-1px;left:-1px;width:64px;height:2px;background:#00e5ff;}',
       '#kpi-s0 .kpi-s0-head{margin:0 0 18px;padding:0 0 16px;border-bottom:1px solid rgba(0,229,255,.18);}',
-      '#kpi-s0 .kpi-s0-kicker{margin:0 0 8px;font-size:11px;letter-spacing:.16em;color:rgba(0,229,255,.9);font-weight:700;}',
+      '#kpi-s0 .kpi-s0-kicker{margin:0 0 14px;font-size:11px;letter-spacing:.16em;color:rgba(0,229,255,.9);font-weight:700;}',
+      '#kpi-s0 .kpi-s0-ruler{list-style:none;margin:0 0 20px;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}',
+      '#kpi-s0 .kpi-s0-ruler-step{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 4px;text-align:center;}',
+      '#kpi-s0 .kpi-s0-ruler-step::before{content:\'\';position:absolute;top:5px;right:50%;width:100%;height:1px;background:rgba(0,229,255,.22);}',
+      '#kpi-s0 .kpi-s0-ruler-step:first-child::before{display:none;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-completed::before,#kpi-s0 .kpi-s0-ruler-step.is-active::before{background:#00e5ff;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-skipped::before{background:repeating-linear-gradient(90deg,rgba(0,229,255,.6) 0 4px,transparent 4px 8px);}',
+      '#kpi-s0 .kpi-s0-ruler-node{position:relative;z-index:1;width:11px;height:11px;box-sizing:border-box;border:1px solid rgba(0,229,255,.45);border-radius:50%;background:#030b16;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-node{border-color:#00e5ff;background:#00e5ff;box-shadow:0 0 0 3px rgba(0,229,255,.18);}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-node{border-color:#00e5ff;background:rgba(0,229,255,.55);}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-skipped .kpi-s0-ruler-node{border-style:dashed;border-color:rgba(0,229,255,.7);}',
+      '#kpi-s0 .kpi-s0-ruler-num{margin-top:7px;font-size:10.5px;letter-spacing:.12em;font-weight:700;font-variant-numeric:tabular-nums;color:rgba(232,251,255,.42);}',
+      '#kpi-s0 .kpi-s0-ruler-label{margin-top:2px;max-width:100%;font-size:12px;line-height:1.3;color:rgba(232,251,255,.5);overflow-wrap:break-word;hyphens:auto;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-num{color:#00e5ff;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-label{color:#e8fbff;font-weight:600;}',
+      '#kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-num,#kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-label{color:rgba(232,251,255,.78);}',
+      '#kpi-s0 .kpi-s0-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}',
       '#kpi-s0 .kpi-s0-title{margin:0 0 10px;font-size:22px;letter-spacing:.04em;font-weight:700;}',
       '#kpi-s0 .kpi-s0-lead{margin:0;line-height:1.65;color:rgba(232,251,255,.9);}',
       '#kpi-s0 .kpi-s0-lead2{margin:2px 0 0;font-size:13px;line-height:1.6;color:rgba(232,251,255,.62);}',
@@ -421,6 +446,16 @@
       'body.office-mode #kpi-s0 .kpi-s0-card::before{background:#1c1c1c;}',
       'body.office-mode #kpi-s0 .kpi-s0-head{border-bottom-color:#d6d0c4;}',
       'body.office-mode #kpi-s0 .kpi-s0-kicker,body.office-mode #kpi-s0 .kpi-s0-progress-label{color:#555;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step::before{background:#cfc8ba;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-completed::before,body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-active::before{background:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-skipped::before{background:repeating-linear-gradient(90deg,#8a857c 0 4px,transparent 4px 8px);}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-node{border-color:#9a948a;background:#f4f1ea;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-node{border-color:#1c1c1c;background:#1c1c1c;box-shadow:0 0 0 3px rgba(28,28,28,.12);}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-node{border-color:#1c1c1c;background:#6b665e;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-skipped .kpi-s0-ruler-node{border-color:#6b665e;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-num,body.office-mode #kpi-s0 .kpi-s0-ruler-label{color:#8a857c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-num,body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-active .kpi-s0-ruler-label{color:#1c1c1c;}',
+      'body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-num,body.office-mode #kpi-s0 .kpi-s0-ruler-step.is-completed .kpi-s0-ruler-label{color:#4a4640;}',
       'body.office-mode #kpi-s0 .kpi-s0-title{letter-spacing:.03em;font-weight:600;}',
       'body.office-mode #kpi-s0 .kpi-s0-lead{color:#2a2a2c;}',
       'body.office-mode #kpi-s0 .kpi-s0-lead2,body.office-mode #kpi-s0 .kpi-s0-progress-rest,body.office-mode #kpi-s0 .kpi-s0-section-note,body.office-mode #kpi-s0 .kpi-s0-hint,body.office-mode #kpi-s0 .kpi-s0-saved-body{color:#66625b;}',
@@ -442,6 +477,40 @@
       'body.office-mode #kpi-s0 .kpi-s0-btn.is-primary:hover:not([disabled]){background:#3a3a3a;color:#fff;}',
     ].join('');
     (global.document.head || global.document.documentElement).appendChild(style);
+  }
+
+  /* Initial Setup steps. Code-side Step 0 is shown to users as step 01. */
+  var SETUP_STEPS = ['profile', 'history', 'current', 'target', 'review'];
+  var STEP_STATES = ['completed', 'active', 'skipped', 'future'];
+
+  /**
+   * opts.current: 0-based active step (-1 for none).
+   * opts.states: optional per-step state overriding the default
+   * (before current = completed, current = active, after = future).
+   * opts.position: 1-based step announced to screen readers (default current + 1).
+   */
+  function renderStepRuler(c, opts) {
+    var o = opts || {};
+    var current = typeof o.current === 'number' ? o.current : 0;
+    var given = o.states || [];
+    var total = SETUP_STEPS.length;
+    var items = SETUP_STEPS.map(function (key, i) {
+      var st = STEP_STATES.indexOf(given[i]) >= 0 ? given[i] : i < current ? 'completed' : i === current ? 'active' : 'future';
+      var num = (i < 9 ? '0' : '') + (i + 1);
+      return (
+        '<li class="kpi-s0-ruler-step is-' + st + '" data-step="' + key + '" data-state="' + st + '"' +
+        (st === 'active' ? ' aria-current="step"' : '') + '>' +
+        '<span class="kpi-s0-ruler-node" aria-hidden="true"></span>' +
+        '<span class="kpi-s0-ruler-num">' + num + '</span>' +
+        '<span class="kpi-s0-ruler-label">' + esc(c.steps[i]) + '</span>' +
+        '<span class="kpi-s0-sr">' + esc(c.stepState[st]) + '</span></li>'
+      );
+    }).join('');
+    var position = typeof o.position === 'number' ? o.position : current + 1;
+    return (
+      '<ol class="kpi-s0-ruler" id="kpi-s0-ruler" aria-label="' +
+      esc(fmt(c.stepsLabel, { current: position, total: total })) + '">' + items + '</ol>'
+    );
   }
 
   function badge(c, required) {
@@ -489,6 +558,7 @@
     return (
       '<div class="kpi-s0-head">' +
       '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: 0 }) +
       '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(c.title) + '</h2>' +
       '<p class="kpi-s0-lead">' + esc(c.lead) + '</p>' +
       '<p class="kpi-s0-lead2">' + esc(c.lead2) + '</p></div>' +
@@ -541,6 +611,7 @@
     return (
       '<div class="kpi-s0-head kpi-s0-saved-head">' +
       '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: -1, states: ['completed'], position: 1 }) +
       '<div class="kpi-s0-saved" id="kpi-s0-saved">' +
       '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(c.savedTitle) + '</h2>' +
       '<p class="kpi-s0-saved-lead">' + esc(c.savedLead) + '</p>' +
@@ -942,6 +1013,11 @@
     open: open,
     close: close,
     mergeProfile: mergeProfile,
+    SETUP_STEPS: SETUP_STEPS.slice(),
+    renderStepRuler: function (opts) {
+      ensureStyle();
+      return renderStepRuler(t(detectLang()), opts);
+    },
     COPY: COPY,
   };
 })(typeof window !== 'undefined' ? window : this);
