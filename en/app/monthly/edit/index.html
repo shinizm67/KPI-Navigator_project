@@ -10683,6 +10683,16 @@
         }
         return true;
       }
+      function acceptMepViewBaselineIfClean() {
+        /* KPI-MEP-NAV-NOT-DIRTY: year/month/today hydrate is view-state, not a user edit. */
+        if (typeof mepIsUserEditDirty === 'function' && mepIsUserEditDirty()) return false;
+        if (typeof buildConfirmedSnapshot === 'function') {
+          confirmedSnapshot = buildConfirmedSnapshot();
+        }
+        if (typeof clearDirty === 'function') clearDirty();
+        editTouched = false;
+        return true;
+      }
       var confirmedSnapshot = '';
       var summaryCollapsed = false;
       var MEF_STORAGE_SUMMARY_COLLAPSED = 'kpiNavigator.monthlyEdit.summaryCollapsed';
@@ -13875,6 +13885,7 @@
         syncMepDisplayedMonthFromTimelineIfClean();
         buildGrid();
         persistMefMonth();
+        acceptMepViewBaselineIfClean();
         scrollToPreferredDayLeft();
       }
       function renderMonthPicker() {
@@ -15473,6 +15484,22 @@
           }
           return;
         }
+        try {
+          var lastRaw = sessionStorage.getItem(MEF_STORAGE_MONTHLY_LAST);
+          if (lastRaw) {
+            var last = JSON.parse(lastRaw);
+            if (
+              last &&
+              Number.isFinite(Number(last.year)) &&
+              Number.isFinite(Number(last.month0)) &&
+              Number(last.month0) >= 0 &&
+              Number(last.month0) <= 11
+            ) {
+              applyMepYearMonthOpen(Number(last.year), Number(last.month0) + 1);
+              return;
+            }
+          }
+        } catch (_eLast) {}
         applyMepSelectedIso(resolveMepOpenIsoFromContext());
       }
       function persistMefMonth() {
@@ -15581,6 +15608,7 @@
         buildGrid();
         persistMefMonth();
         scrollToPreferredDayLeft();
+        acceptMepViewBaselineIfClean();
       }
       function navigateBackToMonthly() {
         if (window.__KPI_EDIT_LEASE && typeof window.__KPI_EDIT_LEASE.release === 'function') {
@@ -15852,6 +15880,7 @@
         });
       }
       function canLeaveWithoutChooser() {
+        if (typeof mepIsUserEditDirty === 'function' && mepIsUserEditDirty()) return false;
         return !hasUnsavedChanges();
       }
       function mepPutFailed(putResult) {
@@ -16786,6 +16815,7 @@
         syncMepDisplayedMonthFromTimelineIfClean();
         buildGrid();
         persistMefMonth();
+        acceptMepViewBaselineIfClean();
       });
       btnNext && btnNext.addEventListener('click', function () {
         flushStrategyNoteToCache();
@@ -16800,6 +16830,7 @@
         syncMepDisplayedMonthFromTimelineIfClean();
         buildGrid();
         persistMefMonth();
+        acceptMepViewBaselineIfClean();
       });
       btnToday && btnToday.addEventListener('click', function () {
         jumpToToday();
