@@ -7,7 +7,6 @@
   'use strict';
 
   var STORAGE_KEY_OFFICE = 'kpi-office-mode';
-  var STORAGE_KEY_PLAN = 'kpi-registration-plan';
 
   /* Public registration emergency gate: do not submit when notice is shown */
   var regDisabledNotice = document.getElementById('registration-disabled-notice');
@@ -53,23 +52,12 @@
     updateModeButton();
   }
 
-  /* プラン表示: URL の ?plan=basic / ?plan=pro。言語切替で同じプランを維持するため sessionStorage に保存 */
+  /* 公開 Registration は Billing 実装まで Basic 固定。?plan= は表示にも権限にも使わない */
   var planTitle = document.getElementById('plan-title');
   var planPrice = document.getElementById('plan-price');
   if (planTitle && planPrice) {
-    var params = new URLSearchParams(window.location.search);
-    var planFromUrl = params.get('plan');
-    var plan = (planFromUrl || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
-    if (planFromUrl) {
-      sessionStorage.setItem(STORAGE_KEY_PLAN, plan);
-    }
-    if (plan === 'pro') {
-      planTitle.textContent = 'Key Performance Navigator Pro';
-      planPrice.textContent = '$29 / 月';
-    } else {
-      planTitle.textContent = 'Key Performance Navigator Basic';
-      planPrice.textContent = '$5 / 月';
-    }
+    planTitle.textContent = 'Key Performance Navigator Basic';
+    planPrice.textContent = '$5 / 月';
   }
 
   /* Forge Lab 風カスタム言語選択（画面右下） */
@@ -103,8 +91,6 @@
         if (bodyEl && bodyEl.classList.contains('office-mode')) {
           sessionStorage.setItem(STORAGE_KEY_OFFICE, '1');
         }
-        var params = new URLSearchParams(window.location.search);
-        var plan = (params.get('plan') || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
         var lang = this.getAttribute('data-lang');
         var baseUrl =
           lang === 'ja' && urlJa
@@ -115,8 +101,7 @@
                 ? urlZhTw
                 : null;
         if (baseUrl) {
-          var sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
-          window.location.href = baseUrl + sep + 'plan=' + plan;
+          window.location.href = baseUrl;
         }
       });
     });
@@ -141,34 +126,12 @@
   };
   var msg = messages[pageLang] || messages.en;
 
-  /* Register ボタン: 全入力＋パスワード条件＋Confirm 一致＋同意チェックで有効化 */
+  /* Register ボタン: Email＋パスワード条件＋Confirm 一致＋同意チェックで有効化。Business Profile は Initial Setup STEP 01 */
   var agreeTerms = document.getElementById('agree-terms');
   var btnRegister = document.getElementById('btn-register');
-  var nameInput = document.getElementById('name');
-  var companyInput = document.getElementById('company');
-  var businessTypeInput = document.getElementById('business-type');
-  var businessTypeHint = document.getElementById('business-type-hint');
   var emailInput = document.getElementById('email');
   var passwordInput = document.getElementById('password');
   var passwordConfirmInput = document.getElementById('password-confirm');
-  var registrationConfirmed = false;
-
-  function currentRegistrationPlan() {
-    var params = new URLSearchParams(window.location.search);
-    return (params.get('plan') || sessionStorage.getItem(STORAGE_KEY_PLAN) || 'basic').toLowerCase();
-  }
-
-  function isBusinessTypeOk() {
-    if (!window.KpiBusinessType) return !!(businessTypeInput && businessTypeInput.value);
-    return !!window.KpiBusinessType.normalizeBusinessType(
-      businessTypeInput ? businessTypeInput.value : ''
-    );
-  }
-
-  if (window.KpiBusinessType) {
-    window.KpiBusinessType.populateSelect(businessTypeInput);
-    window.KpiBusinessType.applyHint(businessTypeHint, currentRegistrationPlan());
-  }
 
   function isPasswordValid(pw) {
     if (!pw || pw.length < 8) return false;
@@ -180,29 +143,19 @@
 
   function setRegisterButtonState() {
     if (!btnRegister) return;
-    var nameOk = nameInput && nameInput.value.trim().length > 0;
-    var companyOk = companyInput && companyInput.value.trim().length > 0;
     var emailOk = emailInput && emailInput.value.trim().length > 0;
     var pw = passwordInput ? passwordInput.value : '';
     var pwConfirm = passwordConfirmInput ? passwordConfirmInput.value : '';
     var passwordOk = isPasswordValid(pw);
     var confirmOk = pw.length > 0 && pwConfirm.length > 0 && pw === pwConfirm;
     var agreed = agreeTerms && agreeTerms.checked;
-    btnRegister.disabled = !(
-      nameOk &&
-      companyOk &&
-      isBusinessTypeOk() &&
-      emailOk &&
-      passwordOk &&
-      confirmOk &&
-      agreed
-    );
+    btnRegister.disabled = !(emailOk && passwordOk && confirmOk && agreed);
   }
 
   if (btnRegister) {
     setRegisterButtonState();
     if (agreeTerms) agreeTerms.addEventListener('change', setRegisterButtonState);
-    [nameInput, companyInput, businessTypeInput, emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
+    [emailInput, passwordInput, passwordConfirmInput].forEach(function (el) {
       if (el) {
         el.addEventListener('input', setRegisterButtonState);
         el.addEventListener('change', setRegisterButtonState);
@@ -258,35 +211,13 @@
         alert('Auth module failed to load.');
         return;
       }
-      if (!isBusinessTypeOk()) {
-        alert(pageLang === 'ja' ? '業種を選択してください。' : pageLang === 'zh' ? '請選擇業種。' : 'Please select a Business Type.');
-        return;
-      }
-      if (!registrationConfirmed) {
-        if (window.KpiBusinessType && typeof window.KpiBusinessType.confirmRegistration === 'function') {
-          window.KpiBusinessType.confirmRegistration(function () {
-            registrationConfirmed = true;
-            if (typeof regForm.requestSubmit === 'function') regForm.requestSubmit();
-            else regForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-          }, function () {
-            registrationConfirmed = false;
-            setRegisterButtonState();
-          });
-          return;
-        }
-      }
-      registrationConfirmed = false;
       var email = emailEl ? emailEl.value.trim() : '';
       var pw = password ? password.value : '';
-      var selectedType = businessTypeInput ? businessTypeInput.value : '';
       if (btnRegister) btnRegister.disabled = true;
       window.__KPI_AUTH
         .register(email, pw)
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
-            if (window.KpiBusinessType) {
-              window.KpiBusinessType.setBusinessType(selectedType);
-            }
             alert('Registration complete. Proceeding to login.');
             window.location.href = '../login/index.html';
             return;

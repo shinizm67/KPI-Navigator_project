@@ -223,19 +223,16 @@ def test_surfaces() -> None:
     jp_reg = (ROOT / "register" / "registration_si-fi_jp" / "registration_si-fi_jp.html").read_text(encoding="utf-8")
     en_reg = (ROOT / "en" / "register" / "registration_si-fi_en.html").read_text(encoding="utf-8")
     zh_reg = (ROOT / "zh-tw" / "register" / "registration_si-fi_zh-tw.html").read_text(encoding="utf-8")
+    # BR-LAUNCH-05 Phase 1: Business Type is owned by Initial Setup STEP 01, not Registration.
     for label, html in (("jp", jp_reg), ("en", en_reg), ("zh", zh_reg)):
-        assert_true('id="business-type"' in html, f"{label} register has business-type")
-        assert_true("kpi-business-type.js" in html, f"{label} register includes helper")
-        assert_true("required" in html.split('id="business-type"', 1)[1][:120], f"{label} BT required")
+        assert_true('id="business-type"' not in html, f"{label} register has no business-type")
+        assert_true("kpi-business-type.js" not in html, f"{label} register does not load helper")
     jp_js = (ROOT / "register" / "script.js").read_text(encoding="utf-8")
     en_js = (ROOT / "en" / "register" / "script.js").read_text(encoding="utf-8")
     zh_js = (ROOT / "zh-tw" / "register" / "script.js").read_text(encoding="utf-8")
     for label, js in (("jp", jp_js), ("en", en_js), ("zh", zh_js)):
-        assert_true("confirmRegistration" in js, f"{label} register waits for confirm dialog")
-        assert_true("registrationConfirmed" in js, f"{label} register does not save immediately")
-        assert_true("setBusinessType" in js, f"{label} register writes canonical after 201")
-        assert_true("isBusinessTypeOk" in js, f"{label} register requires BT")
-        assert_true("applyHint" in js, f"{label} register plan hint")
+        assert_true("setBusinessType" not in js, f"{label} register does not write Business Type")
+        assert_true("KpiBusinessType" not in js, f"{label} register does not use Business Type helper")
 
     jp_edit = (ROOT / "setting" / "profile_edit.html").read_text(encoding="utf-8")
     en_edit = (ROOT / "en" / "setting" / "profile_edit.html").read_text(encoding="utf-8")
