@@ -14,7 +14,8 @@ CURRENT PATH:
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
 Phase 1 CLOSED 2026-09-27 — Navigation Readiness + Safe Guard (Human Smoke PASS)
-Phase 2 ACTIVE — Business Profile / Hard Required Step 0
+Phase 2 CLOSED 2026-09-27 — Business Profile / Step 01 (production verified on account 00; Launch UI approved)
+Phase 3 BLOCKED — BR-ONBOARDING-01-R2 (d6dced6 residual regressions, P0 x2, not fixed)
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -29,6 +30,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 
 ACTIVE BRANCHES:
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
+- BR-ONBOARDING-01-R2 d6dced6 Residual Regressions P0 (audit done 2026-09-27; fix needs Shin GO)
 
 REGISTERED (under TRUNK-06; do not start):
 - (none — trunk CLOSED)
@@ -126,12 +128,14 @@ DEFERRED:
   parent: BR-LAUNCH-01-C2. REGISTER ONLY. Not an Excel clone.
 - BR-POST-XLSX-REPORT True XLSX / PL Report Export HIGH POST-LAUNCH
   parent: TRUNK-06. REGISTER ONLY. Not BR-LAUNCH-06. Accountant/archive workbook.
+- BR-POST-SETUP-RULER-ANIM Initial Setup Step Ruler Progress Animation P3 POST-LAUNCH / MINOR UX POLISH
+  parent: BR-ONBOARDING-01. REGISTER ONLY. Not a Launch blocker; unannounced post-launch polish.
 
 RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 Phase 2 only (Step 0 input + save). P0 `BR-ONBOARDING-01-R1` fixed locally (store init restored on 9 pages, smoke PASS); deploy R1 alone, verify production, then deploy Phase 2 files. Do not enable the 7-field Hard Gate in production until Step 0 save smoke passes. Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+BR-ONBOARDING-01 Phase 3 BLOCKED by `BR-ONBOARDING-01-R2` P0 (Sales Data Save always rejected; Annual Cockpit shows `—` for saved annual targets). Fix plan needs Shin GO; do not fix before cause / impact sign-off. Phase 2 CLOSED 2026-09-27 (production verified on account 00, then reset to empty via `reset-user-kpi.php`). The 7-field Hard Gate stays off in production (separate GO). Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1506,16 +1510,48 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | reason | First-run navigation readiness for existing full_authorized stores. Flow B only. Registration stays on deferred `BR-LAUNCH-05`. |
 | phase_0 | CLOSED 2026-09-27. Grandfather, Opening Date, Flow B, Importer reuse, Navigation Readiness, and Setup Completion are frozen. `explicitKnownSeedState` has no store predicate. |
 | phase_1 | CLOSED 2026-09-27. Safe guard only: `!grandfathered && !businessTypeComplete` after hydrate. A successful GET with `store:null` is an empty business state (`kpi:storeHydrateSettled`); fetch / profile / Business Type hydrate failure stays PENDING. Commits `bdbc8aa`, `a35a0c7`, `d799395` deployed. Human Smoke PASS on `kpn_full_authorized00` Annual. |
-| phase_2 | ACTIVE 2026-09-27. Business Profile / Hard Required Step 0 (input + save only). Implemented `js/kpi-setup-step0.js`, opened from the Phase 1 guard button on Annual / Monthly JP / EN / ZH-TW. Not deployed. Not closed: blocked by `BR-ONBOARDING-01-R1`. |
-| blocker_r1 | `BR-ONBOARDING-01-R1` P0 (found 2026-09-27, not fixed). `d6dced6` removed `readStorePayloadFromLocal` and the user-scope init (`startInitAfterUserScopeBound` / `__userScopeReady`) from Annual / Monthly / Monthly Edit in 3 languages. `KpiYearStore.loadStore()` now reads the in-memory store via `__KPI_DATA_GATEWAY.getJson`, so localStorage and server store never reach memory; store hydrate also waits 8 s. Production Annual HTML matches. Effects: Navigation Readiness can guard grandfathered users with Business Type unset; `store.meta.openingDate` looks empty after reload; any store PUT from these pages sends the in-memory store. FIX 2026-09-27 (Shin GO, not a revert of `d6dced6`): restored per page `readStorePayloadFromLocal`, `resetForUserScope` + init user-scope consume (Annual / Monthly), deferred init `startInitAfterUserScopeBound` / `markUserScopeReady` / `__userScopeReady` (+ `enableSessionStoreSyncIfAuthed` on Annual), MEP preserve + hollow-PUT guard (`persistStoreIfYearMepSafe`) on load / legacy merge / rollover. Kept `d6dced6` past-business-day review (`businessDayUnresolved`, review APIs). Other `d6dced6` losses (dailySalesInputPath light key, MEP lease steal, annual target source heal, business-day three-layer helpers, A/B stream sync, Sales Data lease checks, Busy background rule) are a separate finding, not fixed. Smoke: R1 store 171/171, Step 0 regression 215/215 (no neutralize). |
+| phase_2 | CLOSED 2026-09-27. Business Profile / Hard Required Step 01 (input + save only). `js/kpi-setup-step0.js`, opened from the Phase 1 guard button on Annual / Monthly JP / EN / ZH-TW. Deployed after `BR-ONBOARDING-01-R1`; UI `39ba2dc`, Step Ruler `76eae50`, ruler visual `d5d1418` (all deployed, production SHA match). Production verification on `kpn_full_authorized00` (real UI, no Human Smoke): Guard -> 初期設定を始める -> Step 01 -> 7 fields -> REQUIRED FIELDS 7 / 7 -> Save -> BUSINESS PROFILE SAVED -> KPNに進む -> Reload. Server after save: profile businessName / companyName / businessType `restaurant` / country `JP` / stateRegion `Kanagawa` / currency `JPY`; store.meta businessType `restaurant`, openingDate `2026-01-01`; dailySales / targets / setup unchanged; daily inputs / facts 0. Reload keeps values on Annual JP / EN (memory + Step 01 prefill); Monthly -> Annual -> Monthly in one browser keeps openingDate. Contract smoke on production assets 329 / 329 (JP / EN / ZH-TW, Sci-Fi / Office, grandfather). Account 00 reset afterwards (`reset-user-kpi.php`): store null, profile empty, daily 0, Guard shows again. Note (pre-existing design, not a regression): Monthly opened alone in a fresh browser does not GET the server store (no session store sync on Monthly since before `d6dced6`), so its memory lacks openingDate until Annual has run. |
+| step01_ui | Launch approved 2026-09-27. Kicker `KPN INITIAL SETUP`; 5-step ruler Business Profile / History / Current / Target / Review, Step 01 active; active / completed node + rail `#0F9403`, rail 4px, node 16px, future muted, skipped dashed; `REQUIRED FIELDS n / 7` is a separate in-step count. No further pre-launch visual refinement. |
+| blocker_r1 | `BR-ONBOARDING-01-R1` P0 (found 2026-09-27; FIXED and deployed 2026-09-27, `a3b9803`). `d6dced6` removed `readStorePayloadFromLocal` and the user-scope init (`startInitAfterUserScopeBound` / `__userScopeReady`) from Annual / Monthly / Monthly Edit in 3 languages. `KpiYearStore.loadStore()` now reads the in-memory store via `__KPI_DATA_GATEWAY.getJson`, so localStorage and server store never reach memory; store hydrate also waits 8 s. Production Annual HTML matches. Effects: Navigation Readiness can guard grandfathered users with Business Type unset; `store.meta.openingDate` looks empty after reload; any store PUT from these pages sends the in-memory store. FIX 2026-09-27 (Shin GO, not a revert of `d6dced6`): restored per page `readStorePayloadFromLocal`, `resetForUserScope` + init user-scope consume (Annual / Monthly), deferred init `startInitAfterUserScopeBound` / `markUserScopeReady` / `__userScopeReady` (+ `enableSessionStoreSyncIfAuthed` on Annual), MEP preserve + hollow-PUT guard (`persistStoreIfYearMepSafe`) on load / legacy merge / rollover. Kept `d6dced6` past-business-day review (`businessDayUnresolved`, review APIs). Other `d6dced6` losses (dailySalesInputPath light key, MEP lease steal, annual target source heal, business-day three-layer helpers, A/B stream sync, Sales Data lease checks, Busy background rule) were audited 2026-09-27 as `BR-ONBOARDING-01-R2` (see below). Smoke: R1 store 171/171, Step 0 regression 215/215 (no neutralize). DEPLOY 2026-09-27: R1 stage = 9 pages (Annual / Monthly built as `3cc23c8^` + R1, no Step 0 tags), production SHA match, production-asset smoke 171/171. Then Phase 2 stage = `js/kpi-navigation-readiness.js`, `js/kpi-setup-step0.js`, HEAD Annual / Monthly x3; production-asset smoke Step 0 215/215, R1 171/171. |
 | hard_required | Business Profile Hard Complete = all 7: businessName (屋号 / サービス名 / 店名), companyName, businessType (canonical, never the restaurant fallback), openingDate (`store.meta.openingDate`, `YYYY-MM-DD`, year+month required, missing day = `01`), country, stateRegion (non-empty text; catalog match not required), currency (country may suggest, never lock). Business Name and Company Name are both required. |
 | optional | city, genre, KPI focus, other profile helpers. Never part of Hard Complete. |
 | profile_save_p0 | `profile.php` PUT overwrites every column. Step 0 must GET the current profile, keep existing values, merge only Step 0 changes, then PUT the full payload. Never partial-PUT. |
 | setup_progress | Unchanged: `complete`, `currentYearAcknowledged`, `targetAcknowledged`, `historicalSkipped`. No `currentStep` / `lastCompletedStep`. Phase 2 never writes `store.meta.setup`. Resume is derived from Readiness. |
 | grandfather | Unchanged. Grandfathered users are never sent to Step 0 for missing company / country / region / currency / opening date. |
 | evidence | Phase 0 freeze 2026-09-27. Module `js/kpi-navigation-readiness.js`. Wired on Annual and Monthly, JP / EN / ZH-TW. MEP / PL and Monthly Edit direct URLs are not wired. |
-| next_action | Phase 2 Step 0 only. Hard Gate (7 fields) stays off in production until Step 0 save smoke passes. Do not start Phase 3 (Historical / Current Year / Target / Review / setup complete). Do not auto-start `BR-LAUNCH-05`. |
+| next_action | Phase 3 (Historical / Current Year / Target / Review / setup complete) BLOCKED until `BR-ONBOARDING-01-R2` P0 items are fixed and verified. The 7-field Hard Gate stays off in production (separate GO). Do not auto-start `BR-LAUNCH-05`. |
 | constraint | no DB migration; no Registration change; no Importer change; no Business Type contract change; no Planning Readiness reuse; no Annual / Monthly / MEP / PL math change; excel/ untouched |
+
+### BR-ONBOARDING-01-R2
+
+| Field | Value |
+|-------|-------|
+| id | `BR-ONBOARDING-01-R2` |
+| name | `d6dced6` Residual Regressions (non-R1) |
+| parent | `BR-ONBOARDING-01` |
+| status | ACTIVE (audit done, not fixed) |
+| priority | P0 |
+| started_at | 2026-09-27 |
+| return_to | `BR-ONBOARDING-01` Phase 3 |
+| reason | `d6dced6` replaced the inline `KpiYearStore` of Annual / Monthly / Monthly Edit (JP / EN / ZH-TW) with an older copy. R1 restored store init only. Callers still use `typeof KpiYearStore.X === 'function'` guards, so the missing APIs fail silently. Production runtime (account 00, read-only probe): `canEditSalesDataLive`, `readSavedAnnualPlanTarget`, `hasSavedAnnualPlanTarget`, `isUiBusinessDay`, `isBaselineActualDay`, `isPlanningBusinessDay` are undefined on all 9 pages. |
+| audit | Method: `d6dced6~1` vs `d6dced6` vs HEAD, production runtime probe, mocked before/HEAD render. (1) dailySalesInputPath light key: C P2. Path still persists via `store.meta` + full `persistStore()`; cross-tab storage sync and toggle-without-store-PUT are lost. (2) MEP lease steal: D. `acquireEditLease` no longer honours `meta.steal`, but no caller passes `steal: true` before or after `d6dced6`. (3) Annual target source / memory heal: C P0. `syncAnnualTargetDisplay` and `hasPlan` read the missing APIs, so Annual Cockpit shows `—` for annual target, Total Business Day, monthly business days / average target and cumulative targets for every saved target (mock: before `¥36,000,000` / `364`, HEAD `—` / `—`). Stored target is intact. `memory-reference-heal` also gone. (4) Business-day three layers: C P1. Planning layer masked by (3). Baseline layer: `computeObserved` counts no-data weekdays as business days; partial-year history skews `rec.observed` (persisted) and the operating-year H/L baseline (mock Apr-Dec data: before 266 BD / ~100 %, HEAD 330 BD / Jan-Mar 0 % / ~123 %). Full-year data identical. (5) A/B stream sync: C P1. `syncDailyIncomeStreamsFromTimelineTotals` removed from Sales Data Save; masked by (6), but restoring (6) alone would let MEP `sales_a` / `sales_b` / `store_sales` diverge from daily totals. (6) Sales Data lease check: C P0. `canEditSalesDataLiveNow()` is always false, so Sales Data Save is rejected even in Edit with the lease held (production UI on account 00: dialog `未保存の変更があります。編集モードに切り替えて保存してください。`, 0 writes). `persistSalesDataModalSave` also lost its own path / lease check. (7) Busy background rule: C P2. `runServerYearRebuild` wraps background year rebuild in `__KPI_BUSY.run('save')` again (`KPI-BUSY-NAV-OFF-CX` lost). No data loss or OCC break found: stored sales / targets / business days stay intact; Monthly PUTs carry the full store. |
+| next_action | Fix plan for (3) + (6), with (4) + (5) in the same pass. Needs Shin GO; no fix before sign-off. Phase 3 stays blocked until P0 is fixed and verified. |
+| constraint | not a revert of `d6dced6`; keep past-business-day review (`businessDayUnresolved`) and R1 init; excel/ untouched |
+
+### BR-POST-SETUP-RULER-ANIM
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-SETUP-RULER-ANIM` |
+| name | Initial Setup Step Ruler Progress Animation |
+| parent | `BR-ONBOARDING-01` |
+| status | DEFERRED — POST-LAUNCH / MINOR UX POLISH |
+| priority | P3 |
+| started_at | not started |
+| return_to | none |
+| reason | Users likely see Initial Setup once. Show setup progression as the start of navigation. Idea: at step start the rail stops at the active node; on Save / Step Complete the green rail extends smoothly to the next node, then that node turns into a green dot. Sci-Fi is the main effect; Office keeps the same meaning with a quieter animation. |
+| next_action | REGISTER ONLY. Not a Launch blocker; unannounced post-launch polish. Do not implement now. |
+| constraint | keep 5 steps, state logic, `#0F9403`, rail 4px, node 16px, separate REQUIRED FIELDS count |
 
 ### BR-POST-XLSX-REPORT
 
