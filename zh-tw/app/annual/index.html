@@ -25842,9 +25842,8 @@
               });
             });
           };
-          if (window.__KPI_BUSY && typeof window.__KPI_BUSY.run === 'function') {
-            return window.__KPI_BUSY.run('save', work).catch(function () {});
-          }
+          /* KPI-BUSY-NAV-OFF-CX: background year rebuild must NOT show Saving/Rebuilding.
+             Overlay stays only on explicit Save/CSV button handlers. */
           return work();
         }
 
