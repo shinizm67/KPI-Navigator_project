@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
-  <link rel="stylesheet" href="../../en/setting/style.css?v=20260927-cs1">
+  <link rel="stylesheet" href="../../en/setting/style.css?v=20260927-cs2">
   <style id="kpi-lang-switcher-locale">
     html[lang='ja'] .lang-option-zh-tw { display: none !important; }
     html[lang='zh-TW'] .lang-option-ja,
@@ -234,9 +234,10 @@
     })();
   </script>
 
-  <main class="booking-coming-soon">
-    <section class="coming-soon-panel" aria-live="polite" aria-label="予約台帳（準備中）">
-      <p class="coming-soon-text" id="coming-soon-text">Coming soon</p>
+  <main class="booking-coming-soon kpn-construction-state">
+    <section class="coming-soon-panel" data-kpn-cs aria-live="polite" aria-label="予約台帳（準備中）">
+      <p class="coming-soon-text" id="coming-soon-text">COMING SOON</p>
+      <p class="coming-soon-sub">この機能は現在準備中です。</p>
     </section>
   </main>
 
@@ -305,69 +306,7 @@
         });
       });
     })();
-    (function () {
-      var textEl = document.getElementById('coming-soon-text');
-      var bodyEl = document.getElementById('body-el');
-      if (!textEl || !bodyEl) return;
-      var idleLabel = 'Coming soon';
-      var phrases = ['Coming soon', 'Work in Progress', 'Under Construction'];
-      var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!?<>[]{}+-_=*';
-      var steps = 34;
-      var revealDelay = 35;
-      var phraseHold = 15000;
-      var cyclePause = 15000;
-      var index = 0;
-      var running = false;
-      function randomText(len) {
-        var out = '';
-        for (var i = 0; i < len; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
-        return out;
-      }
-      function animatePhrase(target, done) {
-        var pos = 0;
-        function tick() {
-          if (bodyEl.classList.contains('office-mode')) { textEl.textContent = idleLabel; running = false; return; }
-          if (pos < steps) {
-            textEl.textContent = randomText(target.length);
-            pos += 1;
-            setTimeout(tick, revealDelay);
-            return;
-          }
-          var revealed = 0;
-          function revealTick() {
-            if (bodyEl.classList.contains('office-mode')) { textEl.textContent = idleLabel; running = false; return; }
-            if (revealed <= target.length) {
-              var left = target.slice(0, revealed);
-              var right = randomText(Math.max(target.length - revealed, 0));
-              textEl.textContent = left + right;
-              revealed += 1;
-              setTimeout(revealTick, revealDelay);
-            } else {
-              textEl.textContent = target;
-              setTimeout(done, phraseHold);
-            }
-          }
-          revealTick();
-        }
-        tick();
-      }
-      function loop() {
-        if (running) return;
-        if (bodyEl.classList.contains('office-mode')) { textEl.textContent = idleLabel; return; }
-        running = true;
-        animatePhrase(phrases[index], function () {
-          index = (index + 1) % phrases.length;
-          running = false;
-          setTimeout(loop, cyclePause);
-        });
-      }
-      loop();
-      var observer = new MutationObserver(function () {
-        running = false;
-        loop();
-      });
-      observer.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
-    })();
   </script>
+  <script src="../../js/kpi-construction-state.js?v=20260927-cs2"></script>
 </body>
 </html>

@@ -1496,8 +1496,9 @@ html[lang^="zh"] .si-fi.office-mode.profile-page .global-nav-list {
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
-/* Booking Coming Soon: reuse Session Management scramble, scoped to booking-page */
-body.si-fi.booking-page .booking-coming-soon {
+/* KPN Construction State: Sci-Fi Orbitron hero + Office calm. Booking fills leftover viewport. */
+body.si-fi.booking-page .booking-coming-soon,
+body.si-fi.booking-page .kpn-construction-state {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1506,29 +1507,69 @@ body.si-fi.booking-page .booking-coming-soon {
   min-height: calc(100vh - 220px);
   box-sizing: border-box;
 }
+.kpn-construction-state .coming-soon-panel,
 body.si-fi.booking-page .coming-soon-panel {
   width: 100%;
   max-width: 760px;
   min-height: 280px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 28px;
   margin-top: 14px;
 }
+.kpn-construction-state .coming-soon-text,
 body.si-fi.booking-page .coming-soon-text {
   margin: 0;
+  font-family: 'Orbitron', sans-serif;
   font-size: 36px;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   color: var(--si-fi-cyan);
   text-align: center;
+  text-shadow: 0 0 8px rgba(88, 225, 243, 0.45);
+  min-height: 1.25em;
 }
+.kpn-construction-state .coming-soon-sub,
+body.si-fi.booking-page .coming-soon-sub {
+  margin: 18px 0 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--si-fi-cyan);
+  text-align: center;
+  opacity: 0.72;
+}
+html[lang="ja"] .kpn-construction-state .coming-soon-sub,
+html[lang="ja"] body.si-fi.booking-page .coming-soon-sub,
+html[lang="zh-TW"] .kpn-construction-state .coming-soon-sub,
+html[lang="zh-TW"] body.si-fi.booking-page .coming-soon-sub,
+html[lang^="zh"] .kpn-construction-state .coming-soon-sub,
+html[lang^="zh"] body.si-fi.booking-page .coming-soon-sub {
+  font-family: 'BIZ UDPGothic', sans-serif;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+body.si-fi.office-mode .kpn-construction-state .coming-soon-panel,
 body.si-fi.office-mode.booking-page .coming-soon-panel {
   border: none;
 }
+body.si-fi.office-mode .kpn-construction-state .coming-soon-text,
 body.si-fi.office-mode.booking-page .coming-soon-text {
   color: #000;
   font-family: 'BIZ UDPGothic', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-shadow: none;
+}
+body.si-fi.office-mode .kpn-construction-state .coming-soon-sub,
+body.si-fi.office-mode.booking-page .coming-soon-sub {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+  opacity: 0.62;
+  text-shadow: none;
 }
 
 /* ========================================
