@@ -1399,6 +1399,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 |------------|-----|
 | id | `BR-LAUNCH-05` |
 | name | Registration / Billing Readiness Assessment |
+| audit_2026-09-28 | Phase 0 Contract Audit (Registration -> Initial Setup integration; audit only, status unchanged, nothing implemented). HEAD confirms: `registrationEnabled` false (config.example / bootstrap default); `register.php` takes email + password only, 409 `email_taken`, 8-char server minimum, plan = `defaultPlan`, creates the account and a session; never writes profile / store. Registration pages JP / EN / ZH-TW (production GET): static disabled notice, form hidden, Plan pages point to Early Access mailto only (no link to Registration). Form still asks name, company, Business Type (duplicates STEP 01; name / company never sent; Business Type goes only to browser localStorage store meta after success). Plan from `?plan=` is display-only and never sent. Terms / Privacy checkbox is client-only; no consent record in API or `kpi_users`. Success -> alert -> Login -> Annual -> existing Readiness -> Step 01. Proposed: light Registration (email, password, confirm, consent), Initial Setup STEP 01 owns Business Profile, reuse Login -> Annual -> Readiness (no new setup route), consent record needs a schema decision. Waiting for Shin decision before Phase 1. |
 | parent | `TRUNK-06` |
 | status | DEFERRED |
 | priority | P1 |
