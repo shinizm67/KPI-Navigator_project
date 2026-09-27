@@ -25335,6 +25335,7 @@
         }
 
         var EDIT_LEASE_KEY = 'kpiNavigator.kpiEditLeases';
+        var DAILY_SALES_INPUT_PATH_KEY = 'kpiNavigator.dailySalesInputPath';
         var TAB_ID_SESSION_KEY = 'kpiNavigator.kpiTabId';
         var SUBSCRIPTION_TIER_KEY = 'kpiNavigator.subscriptionTier';
         var EDIT_LEASE_TTL_MS = 120000;
@@ -25359,7 +25360,6 @@
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
-            persistStore();
           }
         }
 
@@ -25367,12 +25367,80 @@
           return normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual');
         }
 
+        function parseDailySalesInputPathValue(raw) {
+          if (raw == null || raw === '') return null;
+          var v = raw;
+          if (typeof raw === 'string') {
+            try {
+              v = JSON.parse(raw);
+            } catch (_eParse) {
+              v = raw;
+            }
+          }
+          if (v === 'annual' || v === 'mep') return v;
+          if (v && typeof v === 'object' && (v.path === 'annual' || v.path === 'mep')) {
+            return v.path;
+          }
+          return null;
+        }
+
+        function readDailySalesInputPathLightKey() {
+          try {
+            var fromGw = parseDailySalesInputPathValue(gw().getJson(DAILY_SALES_INPUT_PATH_KEY));
+            if (fromGw) return fromGw;
+          } catch (_eGw) {}
+          try {
+            return parseDailySalesInputPathValue(localStorage.getItem(DAILY_SALES_INPUT_PATH_KEY));
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
+        function writeDailySalesInputPathLightKey(path) {
+          try {
+            gw().setJson(DAILY_SALES_INPUT_PATH_KEY, {
+              path: path === 'mep' ? 'mep' : 'annual',
+              updatedAt: Date.now(),
+            });
+          } catch (_eWrite) {}
+        }
+
+        function applyDailySalesInputPathFromLightKey(opts) {
+          var next = readDailySalesInputPathLightKey();
+          if (!next) return false;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return false;
+          store.meta.dailySalesInputPath = next;
+          if (opts && opts.dispatch) {
+            document.dispatchEvent(
+              new CustomEvent('kpi:dailySalesInputPathChanged', {
+                detail: { path: next, source: 'storage' },
+              })
+            );
+          }
+          return true;
+        }
+
+        function applyDailySalesInputPathFromStorageRaw(raw) {
+          var next = parseDailySalesInputPathValue(raw);
+          if (raw == null || raw === '') next = 'annual';
+          if (!next) return;
+          if (!isProSubscription()) next = 'annual';
+          if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return;
+          store.meta.dailySalesInputPath = next;
+          document.dispatchEvent(
+            new CustomEvent('kpi:dailySalesInputPathChanged', {
+              detail: { path: next, source: 'storage' },
+            })
+          );
+        }
+
         function setDailySalesInputPath(path) {
           if (!isProSubscription()) return;
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
-          persistStore();
+          writeDailySalesInputPathLightKey(next);
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -25558,6 +25626,70 @@
           return canWriteDailySalesFrom(source, iso);
         }
 
+        /** Sales Data live UI / Save: Annual path + this tab holds daily-sales lease. */
+        function canEditSalesDataLive() {
+          if (getDailySalesInputPath() !== 'annual') return false;
+          return holdsEditLease('daily-sales');
+        }
+
+        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
+        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
+        var PLAN_USER_SAVED_SOURCES = {
+          'sales-data-save': true
+        };
+
+        function isUserSavedAnnualPlanSource(source) {
+          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
+        }
+
+        function hasSavedAnnualPlanTarget(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var rec = store.years[y];
+          if (!rec || !rec.plan) return false;
+          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
+          var n = Number(rec.plan.targetSales);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        function readSavedAnnualPlanTarget(year) {
+          if (!hasSavedAnnualPlanTarget(year)) return null;
+          return Number(store.years[Number(year)].plan.targetSales);
+        }
+
+        function readBusinessDayFlag(iso) {
+          if (!validIso(iso)) return null;
+          var bmap = store.timeline.businessDays;
+          if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
+            return !!bmap[iso];
+          }
+          return null;
+        }
+
+        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
+        function isUiBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
+        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
+        function isBaselineActualDay(iso) {
+          if (!validIso(iso)) return false;
+          var flag = readBusinessDayFlag(iso);
+          if (flag === false) return false;
+          if (flag === true) return true;
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
+          var n = Number(store.timeline.dailySales[iso]);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
+        function isPlanningBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
         /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
         function isCalendarBusinessDay(y, m0, day) {
           var d = new Date(y, m0, day);
@@ -25589,8 +25721,8 @@
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -26281,13 +26413,10 @@
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
-            return !!store.timeline.businessDays[iso];
+          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
+            return isPlanningBusinessDay(iso);
           }
-          var d = new Date(iso + 'T00:00:00');
-          if (!isFinite(d.getTime())) return false;
-          var dow = d.getDay();
-          return dow !== 0 && dow !== 6;
+          return isBaselineActualDay(iso);
         }
 
         function snapshotSalesAmt(iso) {
@@ -26393,7 +26522,7 @@
             };
           }
           rec.annualFacts = {
-            annualTarget: readAnnualTarget(year),
+            annualTarget: readSavedAnnualPlanTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -26812,15 +26941,100 @@
           if (store.meta.selectedDate) daily.selectedDate = store.meta.selectedDate;
           var oy = getOperatingYear();
           var yr = store.years[oy];
-          if (yr && yr.plan && yr.plan.targetSales != null && Number.isFinite(Number(yr.plan.targetSales))) {
-            window.__ANNUAL_DATA.targetSales = Number(yr.plan.targetSales);
+          var planN =
+            yr && yr.plan && yr.plan.targetSales != null
+              ? Number(yr.plan.targetSales)
+              : NaN;
+          if (Number.isFinite(planN) && planN > 0) {
+            window.__ANNUAL_DATA.targetSales = planN;
+          } else {
+            /* KPI-SALES-DATA-TARGET-PERSIST-CT: memory-only heal — never persistStore here
+               (CS wrote on every nav → Saving/Rebuilding noise). */
+            try {
+              var refN = NaN;
+              if (daily.referenceAnnualSales != null) {
+                refN = Number(daily.referenceAnnualSales);
+              }
+              if (!(Number.isFinite(refN) && refN > 0)) {
+                var gwR = window.__KPI_DATA_GATEWAY;
+                var shared =
+                  gwR && typeof gwR.getJson === 'function'
+                    ? gwR.getJson('kpiNavigator.annualDailyShared')
+                    : null;
+                if (shared && shared.referenceAnnualSales != null) {
+                  refN = Number(shared.referenceAnnualSales);
+                }
+              }
+              if (Number.isFinite(refN) && refN > 0) {
+                daily.referenceAnnualSales = Math.round(refN);
+                window.__ANNUAL_DATA.targetSales = Math.round(refN);
+                var recHeal = ensureYearRecord(oy);
+                if (!recHeal.plan) recHeal.plan = {};
+                if (!(Number(recHeal.plan.targetSales) > 0)) {
+                  recHeal.plan.targetSales = Math.round(refN);
+                  recHeal.plan.source = 'memory-reference-heal';
+                }
+              }
+            } catch (_eSyncRef) {}
           }
           syncToPastSalesMemory();
         }
 
+        /** Sales Data / CSV Save: timeline総売上に合わせて dailyIncome の Store/A/B を同期 */
+        function syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix) {
+          if (!salesMap || typeof salesMap !== 'object') return;
+          Object.keys(salesMap).forEach(function (iso) {
+            if (!validIso(iso) || iso.indexOf(prefix) !== 0) return;
+            if (!canEditIso(iso)) return;
+            var newTotal = Number(salesMap[iso]);
+            if (isLegacyPlaceholderSales(newTotal)) return;
+            if (!Number.isFinite(newTotal)) newTotal = 0;
+            newTotal = Math.round(newTotal);
+            var y = isoYear(iso);
+            var rec = ensureYearMepData(y);
+            var di = rec.dailyIncome;
+            function readStream(id) {
+              if (!di[id] || !Object.prototype.hasOwnProperty.call(di[id], iso)) return 0;
+              var v = Number(di[id][iso]);
+              return Number.isFinite(v) ? Math.round(v) : 0;
+            }
+            function writeStream(id, val) {
+              if (!di[id] || typeof di[id] !== 'object') di[id] = {};
+              var n = Math.round(Number(val) || 0);
+              if (!n) delete di[id][iso];
+              else di[id][iso] = n;
+            }
+            var a = readStream('sales_a');
+            var b = readStream('sales_b');
+            var streams = a + b;
+            if (streams > newTotal) {
+              try {
+                console.warn(
+                  '[kpi] annual total < A+B; clearing A/B',
+                  iso,
+                  newTotal,
+                  a,
+                  b
+                );
+              } catch (_eWarn) {}
+              writeStream('sales_a', 0);
+              writeStream('sales_b', 0);
+              writeStream('store_sales', newTotal);
+            } else {
+              writeStream('store_sales', newTotal - streams);
+            }
+            rec.mepUpdatedAt = Date.now();
+          });
+        }
+
         function persistSalesDataModalSave(daily, meta) {
-          if (!daily) return;
-          if (getDailySalesInputPath() !== 'annual') return;
+          if (!daily) return Promise.resolve({ ok: false, error: 'no_daily' });
+          if (getDailySalesInputPath() !== 'annual') {
+            return Promise.resolve({ ok: false, error: 'path_blocked' });
+          }
+          if (!holdsEditLease('daily-sales')) {
+            return Promise.resolve({ ok: false, error: 'edit_lease_lost' });
+          }
           var oy = getOperatingYear();
           var prefix = oy + '-';
           var salesMap = daily.targetSalesByDate || {};
@@ -26844,6 +27058,7 @@
             yearTouched = true;
           });
           if (!yearTouched) return Promise.resolve();
+          syncDailyIncomeStreamsFromTimelineTotals(salesMap, prefix);
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           persistStore();
           syncLegacyKeys();
@@ -26866,8 +27081,11 @@
           var m = Object.assign({ source: 'annual-daily-compat' }, meta || {});
           if (m.source === 'sales-data-save') {
             var saved = persistSalesDataModalSave(daily, m);
-            syncToAnnualDaily();
-            return saved;
+            return Promise.resolve(saved).then(function (result) {
+              if (result && result.ok === false) return result;
+              syncToAnnualDaily();
+              return result;
+            });
           }
           var merged = mergeDailyMaps(daily.targetSalesByDate, daily.businessDayByDate, m);
           syncToAnnualDaily();
@@ -27044,8 +27262,15 @@
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
           }
-          if (meta && (meta.skipRebuild || meta.source === 'sales-data-save')) {
-            if (meta.skipRebuild) persistStore();
+          /* KPI-SALES-DATA-TARGET-PERSIST-CT:
+             Persist plan on Sales Data Save. Do not emit/rebuild here —
+             that caused nav Saving/Rebuilding (CS regression). */
+          if (meta && meta.source === 'sales-data-save') {
+            persistStore();
+            return;
+          }
+          if (meta && meta.skipRebuild) {
+            persistStore();
             return;
           }
           scheduleServerYearRebuild(y, 'annual-target', {
@@ -27270,6 +27495,7 @@
             migrateLegacy();
           }
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey();
           maybeRolloverYear();
           (function syncObservedFromTimelineOnLoad() {
             var yearsAll = {};
@@ -28243,6 +28469,7 @@
             loadStore();
             hydrateNavFromStorage();
             enforceSubscriptionTierDefaults();
+            applyDailySalesInputPathFromLightKey();
             maybeRolloverYear();
             syncToAnnualDaily();
           },
@@ -28298,7 +28525,13 @@
           setPastSalesEditEnabled: setPastSalesEditEnabled,
           canWriteDailySalesFrom: canWriteDailySalesFrom,
           canWriteBusinessDayFrom: canWriteBusinessDayFrom,
+          canEditSalesDataLive: canEditSalesDataLive,
           salesSourceToPath: salesSourceToPath,
+          hasSavedAnnualPlanTarget: hasSavedAnnualPlanTarget,
+          readSavedAnnualPlanTarget: readSavedAnnualPlanTarget,
+          isUiBusinessDay: isUiBusinessDay,
+          isBaselineActualDay: isBaselineActualDay,
+          isPlanningBusinessDay: isPlanningBusinessDay,
           computeObserved: computeObserved,
           refreshObservedForYear: refreshObservedForYear,
           observedForPastYear: observedForPastYear,
@@ -28430,9 +28663,14 @@
             document.dispatchEvent(new CustomEvent('kpi:editGuardsRefresh'));
             return;
           }
+          if (ev.key === DAILY_SALES_INPUT_PATH_KEY) {
+            applyDailySalesInputPathFromStorageRaw(ev.newValue);
+            return;
+          }
           if (ev.key !== STORE_KEY && ev.key !== LEGACY_DAILY_KEY && ev.key !== LEGACY_PAST_KEY) return;
           loadStore();
           enforceSubscriptionTierDefaults();
+          applyDailySalesInputPathFromLightKey({ dispatch: true });
           maybeRolloverYear();
           syncToAnnualDaily();
           dispatchChange('dailySalesChanged', { source: 'storage' });

@@ -20487,7 +20487,6 @@ Cumulative Target Annual Sales</p>
           if (isProSubscription()) return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
-            persistStore();
           }
         }
 
@@ -20500,7 +20499,6 @@ Cumulative Target Annual Sales</p>
           var next = normalizeSalesInputPath(path);
           if (store.meta.dailySalesInputPath === next) return;
           store.meta.dailySalesInputPath = next;
-          persistStore();
           document.dispatchEvent(
             new CustomEvent('kpi:dailySalesInputPathChanged', {
               detail: { path: next },
@@ -20686,6 +20684,64 @@ Cumulative Target Annual Sales</p>
           return canWriteDailySalesFrom(source, iso);
         }
 
+        var PLAN_SOURCE_MEMORY_HEAL = 'memory-reference-heal';
+        var PLAN_SOURCE_ROLLOVER_SNAPSHOT = 'rollover-snapshot';
+        var PLAN_USER_SAVED_SOURCES = {
+          'sales-data-save': true
+        };
+
+        function isUserSavedAnnualPlanSource(source) {
+          return !!PLAN_USER_SAVED_SOURCES[String(source || '')];
+        }
+
+        function hasSavedAnnualPlanTarget(year) {
+          var y = Number(year);
+          if (!Number.isFinite(y)) return false;
+          var rec = store.years[y];
+          if (!rec || !rec.plan) return false;
+          if (!isUserSavedAnnualPlanSource(rec.plan.source)) return false;
+          var n = Number(rec.plan.targetSales);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        function readSavedAnnualPlanTarget(year) {
+          if (!hasSavedAnnualPlanTarget(year)) return null;
+          return Number(store.years[Number(year)].plan.targetSales);
+        }
+
+        function readBusinessDayFlag(iso) {
+          if (!validIso(iso)) return null;
+          var bmap = store.timeline.businessDays;
+          if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
+            return !!bmap[iso];
+          }
+          return null;
+        }
+
+        /** A. UI: false = OFF, true/unset = 営業日表示. 土日・売上0から推測しない */
+        function isUiBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
+        /** B. 過去実績 weekday baseline: false除外, true対象, unsetは sales>0 のみ */
+        function isBaselineActualDay(iso) {
+          if (!validIso(iso)) return false;
+          var flag = readBusinessDayFlag(iso);
+          if (flag === false) return false;
+          if (flag === true) return true;
+          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return false;
+          var n = Number(store.timeline.dailySales[iso]);
+          return Number.isFinite(n) && n > 0;
+        }
+
+        /** C. planning: false除外, true/unset=営業. 明示Saveの plan.targetSales>0 の年のみ */
+        function isPlanningBusinessDay(iso) {
+          if (!validIso(iso)) return false;
+          if (!hasSavedAnnualPlanTarget(isoYear(iso))) return false;
+          return readBusinessDayFlag(iso) !== false;
+        }
+
         /** Annual UI と同一: businessDayByDate 最優先 → sales 0=休 → 土日既定 */
         function isCalendarBusinessDay(y, m0, day) {
           var d = new Date(y, m0, day);
@@ -20717,8 +20773,8 @@ Cumulative Target Annual Sales</p>
           for (var m0 = 0; m0 < 12; m0++) {
             var dc = new Date(y, m0 + 1, 0).getDate();
             for (var day = 1; day <= dc; day++) {
-              if (!isCalendarBusinessDay(y, m0, day)) continue;
               var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+              if (!isBaselineActualDay(iso)) continue;
               totalBizDays++;
               monthlyBizDays[m0]++;
               if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
@@ -21409,13 +21465,10 @@ Cumulative Target Annual Sales</p>
 
         function snapshotIsBusinessDay(iso) {
           if (!validIso(iso)) return false;
-          if (Object.prototype.hasOwnProperty.call(store.timeline.businessDays, iso)) {
-            return !!store.timeline.businessDays[iso];
+          if (hasSavedAnnualPlanTarget(isoYear(iso))) {
+            return isPlanningBusinessDay(iso);
           }
-          var d = new Date(iso + 'T00:00:00');
-          if (!isFinite(d.getTime())) return false;
-          var dow = d.getDay();
-          return dow !== 0 && dow !== 6;
+          return isBaselineActualDay(iso);
         }
 
         function snapshotSalesAmt(iso) {
@@ -21521,7 +21574,7 @@ Cumulative Target Annual Sales</p>
             };
           }
           rec.annualFacts = {
-            annualTarget: readAnnualTarget(year),
+            annualTarget: readSavedAnnualPlanTarget(year),
             yearActual: ytdA,
             yearTarget: ytdT,
           };
@@ -21940,8 +21993,41 @@ Cumulative Target Annual Sales</p>
           if (store.meta.selectedDate) daily.selectedDate = store.meta.selectedDate;
           var oy = getOperatingYear();
           var yr = store.years[oy];
-          if (yr && yr.plan && yr.plan.targetSales != null && Number.isFinite(Number(yr.plan.targetSales))) {
-            window.__ANNUAL_DATA.targetSales = Number(yr.plan.targetSales);
+          var planN =
+            yr && yr.plan && yr.plan.targetSales != null
+              ? Number(yr.plan.targetSales)
+              : NaN;
+          if (Number.isFinite(planN) && planN > 0) {
+            window.__ANNUAL_DATA.targetSales = planN;
+          } else {
+            /* KPI-SALES-DATA-TARGET-PERSIST-CT: memory-only heal — never persistStore here
+               (CS wrote on every nav → Saving/Rebuilding noise). */
+            try {
+              var refN = NaN;
+              if (daily.referenceAnnualSales != null) {
+                refN = Number(daily.referenceAnnualSales);
+              }
+              if (!(Number.isFinite(refN) && refN > 0)) {
+                var gwR = window.__KPI_DATA_GATEWAY;
+                var shared =
+                  gwR && typeof gwR.getJson === 'function'
+                    ? gwR.getJson('kpiNavigator.annualDailyShared')
+                    : null;
+                if (shared && shared.referenceAnnualSales != null) {
+                  refN = Number(shared.referenceAnnualSales);
+                }
+              }
+              if (Number.isFinite(refN) && refN > 0) {
+                daily.referenceAnnualSales = Math.round(refN);
+                window.__ANNUAL_DATA.targetSales = Math.round(refN);
+                var recHeal = ensureYearRecord(oy);
+                if (!recHeal.plan) recHeal.plan = {};
+                if (!(Number(recHeal.plan.targetSales) > 0)) {
+                  recHeal.plan.targetSales = Math.round(refN);
+                  recHeal.plan.source = 'memory-reference-heal';
+                }
+              }
+            } catch (_eSyncRef) {}
           }
           syncToPastSalesMemory();
         }
@@ -22169,8 +22255,15 @@ Cumulative Target Annual Sales</p>
           if (y === getOperatingYear() && window.__ANNUAL_DATA) {
             window.__ANNUAL_DATA.targetSales = rec.plan.targetSales;
           }
-          if (meta && (meta.skipRebuild || meta.source === 'sales-data-save')) {
-            if (meta.skipRebuild) persistStore();
+          /* KPI-SALES-DATA-TARGET-PERSIST-CT:
+             Persist plan on Sales Data Save. Do not emit/rebuild here —
+             that caused nav Saving/Rebuilding (CS regression). */
+          if (meta && meta.source === 'sales-data-save') {
+            persistStore();
+            return;
+          }
+          if (meta && meta.skipRebuild) {
+            persistStore();
             return;
           }
           scheduleServerYearRebuild(y, 'annual-target', {
@@ -23424,6 +23517,11 @@ Cumulative Target Annual Sales</p>
           canWriteDailySalesFrom: canWriteDailySalesFrom,
           canWriteBusinessDayFrom: canWriteBusinessDayFrom,
           salesSourceToPath: salesSourceToPath,
+          hasSavedAnnualPlanTarget: hasSavedAnnualPlanTarget,
+          readSavedAnnualPlanTarget: readSavedAnnualPlanTarget,
+          isUiBusinessDay: isUiBusinessDay,
+          isBaselineActualDay: isBaselineActualDay,
+          isPlanningBusinessDay: isPlanningBusinessDay,
           computeObserved: computeObserved,
           refreshObservedForYear: refreshObservedForYear,
           observedForPastYear: observedForPastYear,
