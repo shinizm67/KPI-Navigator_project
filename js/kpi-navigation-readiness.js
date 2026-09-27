@@ -142,6 +142,7 @@
       initialDataState: null,
       annualTargetComplete: false,
       setupComplete: false,
+      activeSetup: false,
       currentYearAcknowledged: false,
       targetAcknowledged: false,
       historicalSkipped: false,
@@ -163,9 +164,10 @@
     var openingDate = store.meta ? trimmed(store.meta.openingDate) : '';
     var openingOk = isValidOpeningDate(openingDate);
     var setupComplete = !!(bag && bag.complete === true);
+    var activeSetup = !!(bag && bag.complete !== true);
     var sales = hasCanonicalDailySales(store, oy);
     var target = hasUserAnnualTarget(store, oy);
-    var grandfathered = setupComplete || sales || target;
+    var grandfathered = setupComplete || (!activeSetup && (sales || target));
     var businessProfileComplete = !!(trimmed(profile.businessName) || trimmed(profile.companyName));
     var businessTypeComplete = ctx.businessTypeSet === true;
     var annualTargetComplete = target;
@@ -188,6 +190,7 @@
       initialDataState: initialDataState(store, oy, openingDate, openingOk),
       annualTargetComplete: annualTargetComplete,
       setupComplete: setupComplete,
+      activeSetup: activeSetup,
       currentYearAcknowledged: !!(bag && bag.currentYearAcknowledged === true),
       targetAcknowledged: !!(bag && bag.targetAcknowledged === true),
       historicalSkipped: !!(bag && bag.historicalSkipped === true),
