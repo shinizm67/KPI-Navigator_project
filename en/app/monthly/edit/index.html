@@ -3293,6 +3293,16 @@
 
         var store = emptyStore();
 
+        function readStorePayloadFromLocal() {
+          try {
+            var raw = localStorage.getItem(STORE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+          } catch (_eRaw) {
+            return null;
+          }
+        }
+
         function isoYear(iso) {
           if (!iso || iso.length < 4) return NaN;
           var y = Number(iso.slice(0, 4));
@@ -3323,9 +3333,11 @@
         }
 
         function loadStore() {
-          var parsed = gw().getJson(STORE_KEY);
+          var preservedMepYears = snapshotMepYearRecords(store && store.years);
+          var parsed = readStorePayloadFromLocal();
           if (!parsed || typeof parsed !== 'object') {
             store = emptyStore();
+            restoreMepYearRecords(preservedMepYears);
             return;
           }
           store = emptyStore();
@@ -3346,23 +3358,21 @@
               parsed.timeline.businessDayUnresolved || {}
             );
           }
-          if (sanitizePlaceholderSalesMap(store.timeline.dailySales)) {
-            persistStore();
-          }
+          var needPersist = sanitizePlaceholderSalesMap(store.timeline.dailySales);
           if (parsed.years && typeof parsed.years === 'object') {
             store.years = JSON.parse(JSON.stringify(parsed.years));
           }
           normalizeMepYearRecords();
+          restoreMepYearRecords(preservedMepYears);
           if (!store.meta.schemaVersion || store.meta.schemaVersion < SCHEMA_VERSION) {
             store.meta.schemaVersion = SCHEMA_VERSION;
-            persistStore();
+            needPersist = true;
           } else {
-            var hadFacts = false;
             Object.keys(store.years || {}).forEach(function (yk) {
-              if (store.years[yk] && store.years[yk].dailyFacts) hadFacts = true;
+              if (store.years[yk] && store.years[yk].dailyFacts) needPersist = true;
             });
-            if (hadFacts) persistStore();
           }
+          if (needPersist) persistStoreIfYearMepSafe();
         }
 
         function persistableStore() {
@@ -3435,7 +3445,7 @@
           if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
-          persistStore();
+          persistStoreIfYearMepSafe();
         }
 
         /** timeline に無い ISO のみ legacy キーから補完（リセット後の CSV 再取込前の復旧用） */
@@ -3565,6 +3575,131 @@
             rec.monthlyStrategyUserNotes = {};
           }
           return rec;
+        }
+
+        function cloneMepJson(value) {
+          try {
+            return JSON.parse(JSON.stringify(value));
+          } catch (_eClone) {
+            return null;
+          }
+        }
+
+        function mepStreamMapHasData(map) {
+          if (!map || typeof map !== 'object') return false;
+          var keys = Object.keys(map);
+          for (var i = 0; i < keys.length; i++) {
+            var byIso = map[keys[i]];
+            if (byIso && typeof byIso === 'object' && Object.keys(byIso).length) return true;
+          }
+          return false;
+        }
+
+        function mepDailyMetaHasData(meta) {
+          if (!meta || typeof meta !== 'object') return false;
+          if (mepStreamMapHasData(meta.memos)) return true;
+          if (meta.weather && typeof meta.weather === 'object' && Object.keys(meta.weather).length) {
+            return true;
+          }
+          if (meta.flags && typeof meta.flags === 'object' && Object.keys(meta.flags).length) {
+            return true;
+          }
+          return false;
+        }
+
+        function mepNotesHasData(notes) {
+          if (!notes || typeof notes !== 'object') return false;
+          var keys = Object.keys(notes);
+          for (var i = 0; i < keys.length; i++) {
+            if (String(notes[keys[i]] == null ? '' : notes[keys[i]]).trim()) return true;
+          }
+          return false;
+        }
+
+        var MEP_YEAR_PRESERVE_KEYS = [
+          'dailyIncome',
+          'dailyExpenses',
+          'dailyMeta',
+          'mepMemoRows',
+          'monthlyStrategyUserNotes',
+          'mepUpdatedAt',
+        ];
+
+        function yearMepFieldHasData(rec, key) {
+          if (!rec || typeof rec !== 'object') return false;
+          if (key === 'dailyIncome' || key === 'dailyExpenses') return mepStreamMapHasData(rec[key]);
+          if (key === 'dailyMeta') return mepDailyMetaHasData(rec[key]);
+          if (key === 'monthlyStrategyUserNotes') return mepNotesHasData(rec[key]);
+          if (key === 'mepMemoRows') return Array.isArray(rec[key]) && rec[key].length > 0;
+          if (key === 'mepUpdatedAt') return rec.mepUpdatedAt != null && rec.mepUpdatedAt !== '';
+          return rec[key] != null;
+        }
+
+        function yearRecordHasMepData(rec) {
+          if (!rec || typeof rec !== 'object') return false;
+          return (
+            mepStreamMapHasData(rec.dailyIncome) ||
+            mepStreamMapHasData(rec.dailyExpenses) ||
+            mepDailyMetaHasData(rec.dailyMeta) ||
+            mepNotesHasData(rec.monthlyStrategyUserNotes) ||
+            (Array.isArray(rec.mepMemoRows) && rec.mepMemoRows.length > 0)
+          );
+        }
+
+        function snapshotMepYearRecords(years) {
+          var out = {};
+          if (!years || typeof years !== 'object') return out;
+          Object.keys(years).forEach(function (yk) {
+            var rec = years[yk];
+            if (!rec || typeof rec !== 'object') return;
+            var snap = {};
+            var has = false;
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(rec[key]);
+              if (cloned == null) return;
+              snap[key] = cloned;
+              has = true;
+            });
+            if (has) out[String(yk)] = snap;
+          });
+          return out;
+        }
+
+        function restoreMepYearRecords(preserved) {
+          if (!preserved || typeof preserved !== 'object') return;
+          if (!store.years || typeof store.years !== 'object') store.years = {};
+          Object.keys(preserved).forEach(function (yk) {
+            var src = preserved[yk];
+            if (!src || typeof src !== 'object') return;
+            var yn = Number(yk);
+            if (!Number.isFinite(yn)) return;
+            var rec = ensureYearMepData(yn);
+            MEP_YEAR_PRESERVE_KEYS.forEach(function (key) {
+              if (!yearMepFieldHasData(src, key)) return;
+              if (yearMepFieldHasData(rec, key)) return;
+              var cloned = cloneMepJson(src[key]);
+              if (cloned == null) return;
+              rec[key] = cloned;
+            });
+          });
+        }
+
+        function storeWouldPutHollowYearMep() {
+          var years = store.years || {};
+          var yks = Object.keys(years);
+          if (!yks.length) return true;
+          for (var i = 0; i < yks.length; i++) {
+            if (!yearRecordHasMepData(years[yks[i]])) return true;
+          }
+          return false;
+        }
+
+        /** Timeline/schema persist: keep year MEP maps; never PUT empty shells. */
+        function persistStoreIfYearMepSafe() {
+          if (storeWouldPutHollowYearMep()) return false;
+          persistStore();
+          return true;
         }
 
         function normalizeMepYearRecords() {
@@ -4428,7 +4563,7 @@
           }
           if (changed) {
             store.meta.lastRolloverAt = new Date().toISOString();
-            persistStore();
+            persistStoreIfYearMepSafe();
             try {
               document.dispatchEvent(
                 new CustomEvent('kpi:yearRolloverCompleted', {
