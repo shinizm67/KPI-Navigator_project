@@ -887,19 +887,25 @@ def daily_sales_import_js() -> str:
         function applyToRowState(rowStateByIso, maps, yearFilter) {{
           if (!rowStateByIso || !maps) return;
           var yf = yearFilter != null ? Number(yearFilter) : NaN;
-          Object.keys(maps.salesByDate).forEach(function (iso) {{
+          var bizMap0 = maps.businessDayByDate || {{}};
+          var salesMap = maps.salesByDate || {{}};
+          var seen = {{}};
+          function applyIso(iso) {{
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
-            /* KPI-BIZDAY-IMPORT-DD: never treat missing/0 as open via !== false */
-            var bizMap0 = maps.businessDayByDate || {{}};
+            if (seen[iso]) return;
+            seen[iso] = true;
+            /* KPI-BIZDAY-IMPORT-DD + KPI-BD-FALSE-PROPAGATE: hasOwn false is closed, not missing */
             var hasBiz = Object.prototype.hasOwnProperty.call(bizMap0, iso);
-            var sales = Number(maps.salesByDate[iso]);
+            var sales = Object.prototype.hasOwnProperty.call(salesMap, iso)
+              ? Number(salesMap[iso])
+              : NaN;
             var last = String(Number.isFinite(sales) ? Math.round(sales) : 0);
             if (hasBiz && bizMap0[iso]) {{
-              rowStateByIso[iso] = {{ off: false, last: last }};
+              rowStateByIso[iso] = {{ off: false, last: last, bizTouched: true }};
               return;
             }}
             if (hasBiz) {{
-              rowStateByIso[iso] = {{ off: true, last: '0' }};
+              rowStateByIso[iso] = {{ off: true, last: '0', bizTouched: true }};
               return;
             }}
             if (Object.prototype.hasOwnProperty.call(rowStateByIso, iso) && rowStateByIso[iso]) {{
@@ -907,7 +913,9 @@ def daily_sales_import_js() -> str:
             }} else {{
               rowStateByIso[iso] = {{ off: false, last: last }};
             }}
-          }});
+          }}
+          Object.keys(salesMap).forEach(applyIso);
+          Object.keys(bizMap0).forEach(applyIso);
         }}
 
         function countForYear(maps, year) {{

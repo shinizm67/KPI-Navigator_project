@@ -873,6 +873,27 @@
     return diffs;
   }
 
+  /**
+   * KPI-BD-FALSE-PROPAGATE: copy BD maps with hasOwn so explicit false survives.
+   * Do not skip falsy values; absent keys stay absent.
+   */
+  function assignExplicitBusinessDays(dest, src) {
+    if (!dest || typeof dest !== 'object') dest = {};
+    if (!src || typeof src !== 'object') return dest;
+    Object.keys(src).forEach(function (iso) {
+      if (!Object.prototype.hasOwnProperty.call(src, iso)) return;
+      dest[iso] = !!src[iso];
+    });
+    return dest;
+  }
+
+  function overlayBusinessDaysPreserveExplicit(fallback, explicit) {
+    var out = {};
+    assignExplicitBusinessDays(out, fallback);
+    assignExplicitBusinessDays(out, explicit);
+    return out;
+  }
+
   global.KpiWorkbookLayout = {
     __ready: true,
     detectLayout: detectLayout,
@@ -886,5 +907,7 @@
     completeHistoricalImport: completeHistoricalImport,
     diffHistoricalImport: diffHistoricalImport,
     importedClassification: importedClassification,
+    assignExplicitBusinessDays: assignExplicitBusinessDays,
+    overlayBusinessDaysPreserveExplicit: overlayBusinessDaysPreserveExplicit,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);

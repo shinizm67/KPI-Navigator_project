@@ -15014,7 +15014,7 @@
     <script src="../../../js/kpi-csv-templates.js"></script>
     <script src="../../../js/kpi-excel-templates.js"></script>
     <script src="../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
-    <script src="../../../js/kpi-workbook-layout.js?v=20260926-bdr2"></script>
+    <script src="../../../js/kpi-workbook-layout.js?v=20260927-bdfalse"></script>
     <script>
     (function () {
       if (window.__headerDlBound) return;
@@ -26702,6 +26702,9 @@
           });
           persistStore();
           try {
+            if (typeof syncToAnnualDaily === 'function') syncToAnnualDaily();
+          } catch (_eSyncBd) {}
+          try {
             document.dispatchEvent(new CustomEvent('kpi:businessDayChanged', {
               detail: { source: 'historical-bd-review', action: 'ingest-hist-bd', bulk: true },
             }));
@@ -30785,19 +30788,25 @@
         function applyToRowState(rowStateByIso, maps, yearFilter) {
           if (!rowStateByIso || !maps) return;
           var yf = yearFilter != null ? Number(yearFilter) : NaN;
-          Object.keys(maps.salesByDate).forEach(function (iso) {
+          var bizMap0 = maps.businessDayByDate || {};
+          var salesMap = maps.salesByDate || {};
+          var seen = {};
+          function applyIso(iso) {
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
-            /* KPI-BIZDAY-IMPORT-DD: never treat missing/0 as open via !== false */
-            var bizMap0 = maps.businessDayByDate || {};
+            if (seen[iso]) return;
+            seen[iso] = true;
+            /* KPI-BIZDAY-IMPORT-DD + KPI-BD-FALSE-PROPAGATE: hasOwn false is closed, not missing */
             var hasBiz = Object.prototype.hasOwnProperty.call(bizMap0, iso);
-            var sales = Number(maps.salesByDate[iso]);
+            var sales = Object.prototype.hasOwnProperty.call(salesMap, iso)
+              ? Number(salesMap[iso])
+              : NaN;
             var last = String(Number.isFinite(sales) ? Math.round(sales) : 0);
             if (hasBiz && bizMap0[iso]) {
-              rowStateByIso[iso] = { off: false, last: last };
+              rowStateByIso[iso] = { off: false, last: last, bizTouched: true };
               return;
             }
             if (hasBiz) {
-              rowStateByIso[iso] = { off: true, last: '0' };
+              rowStateByIso[iso] = { off: true, last: '0', bizTouched: true };
               return;
             }
             if (Object.prototype.hasOwnProperty.call(rowStateByIso, iso) && rowStateByIso[iso]) {
@@ -30805,7 +30814,9 @@
             } else {
               rowStateByIso[iso] = { off: false, last: last };
             }
-          });
+          }
+          Object.keys(salesMap).forEach(applyIso);
+          Object.keys(bizMap0).forEach(applyIso);
         }
 
         function countForYear(maps, year) {
@@ -31259,7 +31270,7 @@
             ps.salesByDate = Object.assign({}, ps.salesByDate || {}, parsed.salesByDate);
           }
           if (parsed && parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
-            ps.businessDayByDate = Object.assign({}, ps.businessDayByDate || {}, parsed.businessDayByDate);
+            ps.businessDayByDate = Object.assign({}, parsed.businessDayByDate, ps.businessDayByDate || {});
           }
           if (parsed && parsed.referenceAnnualSalesByYear) {
             ps.referenceAnnualSalesByYear = Object.assign(
@@ -31282,7 +31293,7 @@
           ps.salesByDate = Object.assign({}, ps.salesByDate || {}, parsed.salesByDate);
         }
         if (parsed.businessDayByDate && typeof parsed.businessDayByDate === 'object') {
-          ps.businessDayByDate = Object.assign({}, ps.businessDayByDate || {}, parsed.businessDayByDate);
+          ps.businessDayByDate = Object.assign({}, parsed.businessDayByDate, ps.businessDayByDate || {});
         }
         if (parsed.referenceAnnualSalesByYear && typeof parsed.referenceAnnualSalesByYear === 'object') {
           ps.referenceAnnualSalesByYear = Object.assign(
@@ -36754,18 +36765,25 @@
             : NaN;
         var sales = {};
         var biz = {};
+        function pastSalesCsvIsoYear(iso) {
+          return typeof isoYearFromIso === 'function' ? isoYearFromIso(iso) : Number(String(iso).slice(0, 4));
+        }
+        function pastSalesCsvYearOk(iso) {
+          var y = pastSalesCsvIsoYear(iso);
+          if (!Number.isFinite(y)) return false;
+          if (Number.isFinite(oy) && y >= oy) return false;
+          return true;
+        }
         Object.keys(maps.salesByDate || {}).forEach(function (iso) {
-          var y = typeof isoYearFromIso === 'function' ? isoYearFromIso(iso) : Number(String(iso).slice(0, 4));
-          if (!Number.isFinite(y)) return;
-          if (Number.isFinite(oy) && y >= oy) return;
+          if (!pastSalesCsvYearOk(iso)) return;
           var n = Number(maps.salesByDate[iso]);
           sales[iso] = Number.isFinite(n) ? n : 0;
-          if (
-            maps.businessDayByDate &&
-            Object.prototype.hasOwnProperty.call(maps.businessDayByDate, iso)
-          ) {
-            biz[iso] = !!maps.businessDayByDate[iso];
-          }
+        });
+        /* KPI-BD-FALSE-PROPAGATE: classified closed days must copy even when sales key is separate */
+        Object.keys(maps.businessDayByDate || {}).forEach(function (iso) {
+          if (!pastSalesCsvYearOk(iso)) return;
+          if (!Object.prototype.hasOwnProperty.call(maps.businessDayByDate, iso)) return;
+          biz[iso] = !!maps.businessDayByDate[iso];
         });
         var ps = ensurePastSalesDaily();
         Object.keys(sales).forEach(function (iso) {
@@ -36796,6 +36814,13 @@
             { salesByDate: sales, businessDayByDate: biz },
             { source: 'past-sales-csv-import' }
           );
+          /* Re-apply after persistFromPastSales → syncToAnnualDaily so explicit false is not wiped */
+          Object.keys(sales).forEach(function (iso) {
+            ps.salesByDate[iso] = sales[iso];
+          });
+          Object.keys(biz).forEach(function (iso) {
+            ps.businessDayByDate[iso] = biz[iso];
+          });
           var payload = {
             salesByDate: ps.salesByDate || {},
             businessDayByDate: ps.businessDayByDate || {},
@@ -38333,8 +38358,20 @@
             pushUndoSnapshot();
             var persistP = persistPastSalesCsvByYear(maps);
             var yShow = Number(year);
-            var csvYears = maps.years || [];
-            if (csvYears.indexOf(yShow) < 0) return persistP;
+            var prefix = Number.isFinite(yShow) ? String(yShow) + '-' : '';
+            var hasShowYear = false;
+            if (prefix) {
+              function pastSalesImportHasYear(map) {
+                if (!map || typeof map !== 'object') return false;
+                return Object.keys(map).some(function (iso) {
+                  return iso.indexOf(prefix) === 0;
+                });
+              }
+              hasShowYear =
+                pastSalesImportHasYear(maps.salesByDate) ||
+                pastSalesImportHasYear(maps.businessDayByDate);
+            }
+            if (!hasShowYear) return persistP;
             window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, yShow);
             recomputeModalDirty();
             syncUndoButton();
