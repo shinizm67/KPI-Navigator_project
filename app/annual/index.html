@@ -10877,6 +10877,14 @@
     .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__input-only {
       display: none !important;
     }
+    /* OSB wraps panes in .kpn-osb-host; tab CSS only hid the inner pane, leaving
+       inactive hosts as flex:1 gaps. Hide the inactive host with the pane. */
+    .past-sales-modal__panel[data-psm-tab='analyze'] .kpn-osb-host:has(#past-sales-pane-input) {
+      display: none !important;
+    }
+    .past-sales-modal__panel[data-psm-tab='input'] .kpn-osb-host:has(#past-sales-pane-analyze) {
+      display: none !important;
+    }
     .past-sales-modal__panel[data-psm-tab='input'] #past-sales-pane-analyze {
       display: none !important;
     }
@@ -15704,7 +15712,7 @@
             aria-selected="true"
             data-psm-tab="input"
           >
-            Input
+            入力
           </button>
           <button
             type="button"
@@ -15714,7 +15722,7 @@
             aria-selected="false"
             data-psm-tab="analyze"
           >
-            Analyze
+            分析
           </button>
         </div>
       </div>

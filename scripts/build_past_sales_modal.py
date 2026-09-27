@@ -34,8 +34,8 @@ TEXT = {
         "undo": "UNDO",
         "save": "保存",
         "tablist": "過去売上ビュー",
-        "tab_input": "Input",
-        "tab_analyze": "Analyze",
+        "tab_input": "入力",
+        "tab_analyze": "分析",
         "summary_aria": "過去売上サマリー",
         "sum1_label": "累計入力売上",
         "sum2_label": "年間目標売上",
@@ -673,6 +673,12 @@ PS_LAYOUT_CSS = """
       color: var(--psm-cyan);
     }
     .past-sales-modal__panel[data-psm-tab='analyze'] .past-sales-modal__input-only {
+      display: none !important;
+    }
+    .past-sales-modal__panel[data-psm-tab='analyze'] .kpn-osb-host:has(#past-sales-pane-input) {
+      display: none !important;
+    }
+    .past-sales-modal__panel[data-psm-tab='input'] .kpn-osb-host:has(#past-sales-pane-analyze) {
       display: none !important;
     }
     .past-sales-modal__panel[data-psm-tab='input'] #past-sales-pane-analyze {
