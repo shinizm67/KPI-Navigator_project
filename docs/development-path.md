@@ -13,7 +13,8 @@
 CURRENT PATH:
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
-Phase 1 ACTIVE — Navigation Readiness + Safe Guard
+Phase 1 CLOSED 2026-09-27 — Navigation Readiness + Safe Guard (Human Smoke PASS)
+Phase 2 ACTIVE — Business Profile / Hard Required Step 0
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -130,7 +131,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 Phase 1 only. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start Phase 2 until Phase 1 is accepted.
+BR-ONBOARDING-01 Phase 2 only (Step 0 input + save). Do not enable the 7-field Hard Gate in production until Step 0 save smoke passes. Do not start Phase 3. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -142,7 +143,7 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | Phase 0 baseline `0a25d22`. This change is BR-ONBOARDING-01 Phase 1. |
+| HEAD | Phase 1 closed at `d799395` (deployed). Phase 2 commits follow. |
 | origin sync | Push this commit. Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1504,9 +1505,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | NONE |
 | reason | First-run navigation readiness for existing full_authorized stores. Flow B only. Registration stays on deferred `BR-LAUNCH-05`. |
 | phase_0 | CLOSED 2026-09-27. Grandfather, Opening Date, Flow B, Importer reuse, Navigation Readiness, and Setup Completion are frozen. `explicitKnownSeedState` has no store predicate. |
-| phase_1 | IMPLEMENTED 2026-09-27, not closed. Safe guard only: `!grandfathered && !businessTypeComplete` after hydrate. No setup URL. Does not write `store.meta.setup.complete`. |
+| phase_1 | CLOSED 2026-09-27. Safe guard only: `!grandfathered && !businessTypeComplete` after hydrate. A successful GET with `store:null` is an empty business state (`kpi:storeHydrateSettled`); fetch / profile / Business Type hydrate failure stays PENDING. Commits `bdbc8aa`, `a35a0c7`, `d799395` deployed. Human Smoke PASS on `kpn_full_authorized00` Annual. |
+| phase_2 | ACTIVE 2026-09-27. Business Profile / Hard Required Step 0 (input + save only). |
+| hard_required | Business Profile Hard Complete = all 7: businessName (屋号 / サービス名 / 店名), companyName, businessType (canonical, never the restaurant fallback), openingDate (`store.meta.openingDate`, `YYYY-MM-DD`, year+month required, missing day = `01`), country, stateRegion (non-empty text; catalog match not required), currency (country may suggest, never lock). Business Name and Company Name are both required. |
+| optional | city, genre, KPI focus, other profile helpers. Never part of Hard Complete. |
+| profile_save_p0 | `profile.php` PUT overwrites every column. Step 0 must GET the current profile, keep existing values, merge only Step 0 changes, then PUT the full payload. Never partial-PUT. |
+| setup_progress | Unchanged: `complete`, `currentYearAcknowledged`, `targetAcknowledged`, `historicalSkipped`. No `currentStep` / `lastCompletedStep`. Phase 2 never writes `store.meta.setup`. Resume is derived from Readiness. |
+| grandfather | Unchanged. Grandfathered users are never sent to Step 0 for missing company / country / region / currency / opening date. |
 | evidence | Phase 0 freeze 2026-09-27. Module `js/kpi-navigation-readiness.js`. Wired on Annual and Monthly, JP / EN / ZH-TW. MEP / PL and Monthly Edit direct URLs are not wired. |
-| next_action | Await Shin acceptance of Phase 1. Do not start Phase 2, Opening Date UI, or the setup shell. Do not auto-start `BR-LAUNCH-05`. |
+| next_action | Phase 2 Step 0 only. Hard Gate (7 fields) stays off in production until Step 0 save smoke passes. Do not start Phase 3 (Historical / Current Year / Target / Review / setup complete). Do not auto-start `BR-LAUNCH-05`. |
 | constraint | no DB migration; no Registration change; no Importer change; no Business Type contract change; no Planning Readiness reuse; no Annual / Monthly / MEP / PL math change; excel/ untouched |
 
 ### BR-POST-XLSX-REPORT
