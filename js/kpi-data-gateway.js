@@ -1180,6 +1180,18 @@
           } catch (_eLog) {}
         }
         hydrateComplete = true;
+        /* Fires on every successful GET, including store:null (no row yet).
+           kpi:storeHydratedFromServer stays gated on changed for its existing listeners. */
+        try {
+          document.dispatchEvent(
+            new CustomEvent('kpi:storeHydrateSettled', {
+              detail: {
+                plan: data.plan || null,
+                storePresent: !!(data.store && typeof data.store === 'object'),
+              },
+            })
+          );
+        } catch (_eSettled) {}
       })
       .catch(function () {
         resetHydrateForRetry();

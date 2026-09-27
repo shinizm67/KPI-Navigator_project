@@ -2,6 +2,7 @@
  * BR-ONBOARDING-01 Phase 1 — Navigation Readiness.
  * Separate from KpiPlanningReadiness. Does not write store.meta.setup.
  * Phase 1 cockpit block: !grandfathered && !businessTypeComplete, after hydrate only.
+ * A successful GET with store:null is an empty business state, not PENDING.
  */
 (function (global) {
   'use strict';
@@ -351,7 +352,7 @@
 
   function install() {
     if (!global.document || !global.document.addEventListener) return;
-    global.document.addEventListener('kpi:storeHydratedFromServer', onStoreHydrated);
+    global.document.addEventListener('kpi:storeHydrateSettled', onStoreHydrated);
   }
 
   global.KpiNavigationReadiness = {
