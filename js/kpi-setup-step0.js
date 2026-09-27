@@ -17,6 +17,10 @@
  * Phase 5 — STEP 04 Annual Target (openAnnualTarget) follows STEP 03. The target itself is
  * saved only by the existing Sales Data dialog; this step writes targetAcknowledged = true,
  * on an explicit click, whether or not a target exists.
+ *
+ * Phase 6 — STEP 05 Review (openReview) follows STEP 04. It re-checks the completion contract
+ * (Readiness.loadCompletion) before showing and again on Complete; setup.complete = true is
+ * written only by the Complete button, keeping every other setup field.
  */
 (function (global) {
   'use strict';
@@ -208,9 +212,39 @@
         confirmBack: '戻る',
         ackFailed: '確認を保存できませんでした。もう一度お試しください。',
         ackWarn: '確認の記録がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
-        doneTitle: 'ANNUAL TARGET CONFIRMED',
-        doneLead: '年間目標の確認が完了しました。',
-        doneBody: '次は最終確認です（準備中）。このまま KPN をご利用いただけます。',
+      },
+      review: {
+        title: 'Review',
+        lead: 'これまでの設定内容を確認してください。問題がなければ初期設定を完了します。',
+        section: { profile: 'ビジネス情報', history: '過去データ', current: '今年度', target: '年間目標' },
+        region: '地域',
+        historyState: { present: '登録済み', skipped: 'スキップ', not_applicable: '対象外' },
+        state: '状態',
+        years: '検出年',
+        confirmed: '確認済み',
+        detected: '記録日数',
+        positive: '売上のある日',
+        days: '{n} 日',
+        amount: '金額',
+        notSet: '未設定のまま続行',
+        warnTitle: '確認事項',
+        warn: {
+          history_skipped: '過去データはスキップされています。後から登録すると比較や計画の精度が上がります。',
+          target_not_set: '年間目標は未設定です。年間ビューのリマインダーから後で設定できます。',
+          no_positive_days: '今年度の売上のある日がまだありません。',
+          no_expense: '支出データがまだありません（Pro）。後から取り込めます。',
+        },
+        warnNote: '確認事項があっても初期設定は完了できます。',
+        complete: '初期設定を完了する',
+        completing: '保存中…',
+        close: '閉じる',
+        checking: '最新の状態を確認しています…',
+        loadFailed: '最新の状態を確認できませんでした。時間をおいてもう一度お試しください。',
+        saveFailed: '保存できませんでした。もう一度お試しください。',
+        conflict: '別の画面で新しい内容が保存されていました。最新の内容で確認し直してください。',
+        doneTitle: 'KPN INITIAL SETUP COMPLETE',
+        doneLead: '初期設定が完了しました。',
+        doneBody: 'このまま KPN をご利用いただけます。',
       },
     },
     en: {
@@ -372,9 +406,39 @@
         confirmBack: 'Back',
         ackFailed: 'Could not save the confirmation. Please try again.',
         ackWarn: 'The confirmation has not reached the server yet. Reloading the page will retry.',
-        doneTitle: 'ANNUAL TARGET CONFIRMED',
-        doneLead: 'Your annual target step is complete.',
-        doneBody: 'Next step: Review (coming soon). You can continue to KPN now.',
+      },
+      review: {
+        title: 'Review',
+        lead: 'Review your setup. If everything looks right, complete the initial setup.',
+        section: { profile: 'Business Profile', history: 'Historical Data', current: 'Current Year', target: 'Annual Target' },
+        region: 'Region',
+        historyState: { present: 'Present', skipped: 'Skipped', not_applicable: 'Not applicable' },
+        state: 'Status',
+        years: 'Years found',
+        confirmed: 'Confirmed',
+        detected: 'Days recorded',
+        positive: 'Days with sales',
+        days: '{n} days',
+        amount: 'Amount',
+        notSet: 'Not set (continuing without one)',
+        warnTitle: 'Notes',
+        warn: {
+          history_skipped: 'Historical data was skipped. Adding it later improves comparisons and planning.',
+          target_not_set: 'No annual target is set. You can set it later from the reminder in Annual view.',
+          no_positive_days: 'No days with sales have been recorded this year yet.',
+          no_expense: 'No expense data yet (Pro). You can import it later.',
+        },
+        warnNote: 'You can complete the setup with these notes.',
+        complete: 'Complete Initial Setup',
+        completing: 'Saving…',
+        close: 'Close',
+        checking: 'Checking the latest status…',
+        loadFailed: 'Could not check the latest status. Please try again later.',
+        saveFailed: 'Could not save. Please try again.',
+        conflict: 'Newer changes were saved on another screen. Please review the latest content again.',
+        doneTitle: 'KPN INITIAL SETUP COMPLETE',
+        doneLead: 'Initial setup is complete.',
+        doneBody: 'You can start using KPN now.',
       },
     },
     zh: {
@@ -536,9 +600,39 @@
         confirmBack: '返回',
         ackFailed: '無法儲存確認，請再試一次。',
         ackWarn: '確認紀錄尚未傳送到伺服器。重新整理頁面後會再次傳送。',
-        doneTitle: 'ANNUAL TARGET CONFIRMED',
-        doneLead: '已完成年度目標的確認。',
-        doneBody: '下一步是「最終確認」（準備中）。現在可以直接進入 KPN。',
+      },
+      review: {
+        title: 'Review',
+        lead: '請確認目前的設定內容。確認無誤後即可完成初始設定。',
+        section: { profile: '商家資訊', history: '過去資料', current: '本年度', target: '年度目標' },
+        region: '地區',
+        historyState: { present: '已登錄', skipped: '已略過', not_applicable: '不適用' },
+        state: '狀態',
+        years: '偵測到的年份',
+        confirmed: '已確認',
+        detected: '記錄天數',
+        positive: '有營業額的天數',
+        days: '{n} 天',
+        amount: '金額',
+        notSet: '未設定（直接繼續）',
+        warnTitle: '確認事項',
+        warn: {
+          history_skipped: '已略過過去資料。之後登錄可提高比較與計畫的準確度。',
+          target_not_set: '尚未設定年度目標。之後可從年度檢視的提醒設定。',
+          no_positive_days: '本年度尚無有營業額的日子。',
+          no_expense: '尚無支出資料（Pro）。之後可以匯入。',
+        },
+        warnNote: '即使有確認事項，也可以完成初始設定。',
+        complete: '完成初始設定',
+        completing: '儲存中…',
+        close: '關閉',
+        checking: '正在確認最新狀態…',
+        loadFailed: '無法確認最新狀態，請稍後再試。',
+        saveFailed: '無法儲存，請再試一次。',
+        conflict: '其他畫面已儲存較新的內容。請以最新內容重新確認。',
+        doneTitle: 'KPN INITIAL SETUP COMPLETE',
+        doneLead: '初始設定已完成。',
+        doneBody: '現在可以開始使用 KPN。',
       },
     },
   };
@@ -861,6 +955,10 @@
       '#kpi-s0 .kpi-s0-summary dt{margin:0;font-size:12px;letter-spacing:.06em;font-weight:700;color:rgba(0,229,255,.85);}',
       '#kpi-s0 .kpi-s0-summary dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}',
       '#kpi-s0 .kpi-s0-note{margin:0 0 4px;padding:10px 14px;border-left:3px solid rgba(0,229,255,.7);background:rgba(0,229,255,.06);line-height:1.6;}',
+      '#kpi-s0 .kpi-s0-rev-h{margin:0 0 6px;font-size:12px;letter-spacing:.08em;font-weight:700;}',
+      '#kpi-s0 .kpi-s0-rev-dl{margin:0 0 12px;padding:10px 16px;gap:4px 16px;}',
+      '#kpi-s0 .kpi-s0-rev-warn ul{margin:4px 0;padding-left:1.2em;font-size:13px;}',
+      '#kpi-s0 .kpi-s0-rev-warn p{margin:0;font-size:13px;}',
       '#kpi-s0 .kpi-s0-note.is-strong{border-left-color:#ffd27a;background:rgba(255,210,122,.07);}',
       '#kpi-s0 .kpi-s0-note.is-ok{border-left-color:#0F9403;background:rgba(15,148,3,.08);}',
       '#kpi-s0 .kpi-s0-actions .kpi-s0-btn.is-left{margin-right:auto;}',
@@ -1426,11 +1524,13 @@
     hist = null;
     curYear = null;
     annualTgt = null;
+    review = null;
     var card = el('kpi-s0-card');
     card.setAttribute('data-s0-view', 'profile');
     card.removeAttribute('data-s2-kind');
     card.removeAttribute('data-s3-status');
     card.removeAttribute('data-s4-status');
+    card.removeAttribute('data-s5-status');
     card.innerHTML = renderForm(c);
     root.hidden = false;
     bindForm();
@@ -1661,6 +1761,7 @@
     state = null;
     curYear = null;
     annualTgt = null;
+    review = null;
     if (o.entry === 'resume' && sum.state !== 'absent') {
       hist = null;
       openCurrentYear({ entry: 'resume', onDone: done });
@@ -1674,6 +1775,7 @@
     card.setAttribute('data-s2-kind', sum.state);
     card.removeAttribute('data-s3-status');
     card.removeAttribute('data-s4-status');
+    card.removeAttribute('data-s5-status');
     card.innerHTML = renderHistory(t(lang), sum);
     bindHistory();
     focusEl(el('kpi-s0-hist-register') && sum.state === 'absent' ? 'kpi-s0-hist-register' : 'kpi-s0-hist-next');
@@ -1890,6 +1992,7 @@
     state = null;
     hist = null;
     annualTgt = null;
+    review = null;
     if (o.entry === 'resume' && sum.acknowledged) {
       curYear = null;
       openAnnualTarget({ entry: 'resume', onDone: done });
@@ -1900,6 +2003,7 @@
     var card = el('kpi-s0-card');
     card.removeAttribute('data-s2-kind');
     card.removeAttribute('data-s4-status');
+    card.removeAttribute('data-s5-status');
     card.setAttribute('data-s3-status', sum.status);
     root.hidden = false;
     card.setAttribute('data-s0-view', 'current');
@@ -1977,26 +2081,6 @@
     );
   }
 
-  function renderTargetDone(c) {
-    var k = c.target;
-    return (
-      '<div class="kpi-s0-head kpi-s0-saved-head">' +
-      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
-      renderStepRuler(c, {
-        current: -1,
-        states: ['completed', historyRulerState(), currentRulerState(), 'completed'],
-        position: 4,
-      }) +
-      '<div class="kpi-s0-saved" id="kpi-s0-tgt-done-body">' +
-      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(k.doneTitle) + '</h2>' +
-      '<p class="kpi-s0-saved-lead">' + esc(k.doneLead) + '</p>' +
-      '<p class="kpi-s0-saved-body">' + esc(k.doneBody) + '</p></div></div>' +
-      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
-      '<div class="kpi-s0-actions">' +
-      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-tgt-done">' + esc(c.next) + '</button></div>'
-    );
-  }
-
   function closeAnnualTarget() {
     if (rootEl) rootEl.hidden = true;
     annualTgt = null;
@@ -2008,22 +2092,17 @@
     if (typeof done === 'function') done();
   }
 
-  function showTargetDone(warn) {
-    var c = t(annualTgt.lang);
-    var card = el('kpi-s0-card');
-    if (!card) return;
-    card.setAttribute('data-s0-view', 'target-done');
-    card.innerHTML = renderTargetDone(c);
-    if (warn) setStatus(c.target.ackWarn, 'warn');
-    var btn = el('kpi-s0-tgt-done');
-    if (btn) btn.addEventListener('click', finishAnnualTarget);
-    focusEl('kpi-s0-tgt-done');
+  /** STEP 04 passes (acknowledged); STEP 05 opens in the same dialog. */
+  function goToReview(ackWarn) {
+    var done = annualTgt && annualTgt.onDone;
+    annualTgt = null;
+    openReview({ entry: 'flow', onDone: done, ackWarn: !!ackWarn });
   }
 
   function acknowledgeTarget() {
     if (!annualTgt || annualTgt.saving) return;
     if (annualTgt.sum.acknowledged) {
-      showTargetDone(false);
+      goToReview(false);
       return;
     }
     var session = annualTgt;
@@ -2042,7 +2121,7 @@
     pushStore().then(function (push) {
       if (annualTgt !== session) return;
       annualTgt.saving = false;
-      showTargetDone(!(push && push.ok === true));
+      goToReview(!(push && push.ok === true));
     });
   }
 
@@ -2101,8 +2180,8 @@
   }
 
   /**
-   * opts.entry: 'flow' shows STEP 04 itself; 'resume' shows the done card once acknowledged
-   * (STEP 05 is not built yet). opts.ackWarn: the STEP 03 acknowledge push did not reach the server.
+   * opts.entry: 'flow' shows STEP 04 itself; 'resume' goes on to STEP 05 once acknowledged.
+   * opts.ackWarn: the STEP 03 acknowledge push did not reach the server.
    */
   function openAnnualTarget(opts) {
     var o = opts || {};
@@ -2117,22 +2196,361 @@
     state = null;
     hist = null;
     curYear = null;
+    review = null;
+    if (o.entry === 'resume' && sum.acknowledged) {
+      annualTgt = null;
+      openReview({ entry: 'resume', onDone: done });
+      return;
+    }
     var lang = detectLang();
     annualTgt = { lang: lang, opts: o, onDone: done, sum: sum, saving: false };
     var card = el('kpi-s0-card');
     card.removeAttribute('data-s2-kind');
     card.removeAttribute('data-s3-status');
+    card.removeAttribute('data-s5-status');
     card.setAttribute('data-s4-status', sum.status);
     root.hidden = false;
-    if (o.entry === 'resume' && sum.acknowledged) {
-      showTargetDone(false);
-      return;
-    }
     card.setAttribute('data-s0-view', 'target');
     card.innerHTML = renderTarget(t(lang), sum);
     bindTarget();
     if (o.ackWarn) setStatus(t(lang).current.ackWarn, 'warn');
     focusEl(el('kpi-s0-tgt-ack') ? 'kpi-s0-tgt-ack' : el('kpi-s0-tgt-next') ? 'kpi-s0-tgt-next' : 'kpi-s0-tgt-set');
+  }
+
+  /* ---------- STEP 05 Review / Setup Complete ---------- */
+
+  var review = null;
+
+  function targetRulerState() {
+    var sum = targetSummary();
+    return sum && sum.acknowledged ? 'completed' : 'future';
+  }
+
+  function reviewRuler(c, done) {
+    var states = ['completed', historyRulerState(), currentRulerState(), targetRulerState(), done ? 'completed' : 'active'];
+    return renderStepRuler(c, done ? { current: -1, states: states, position: 5 } : { current: 4, states: states });
+  }
+
+  /** Sends the user to the first unresolved step; STEP 05 comes back through the normal flow. */
+  function routeToStep(step, done) {
+    if (step === 'profile') {
+      open({
+        startSetup: true,
+        continueSetup: true,
+        onDone: function () {
+          openHistory({ entry: 'flow', onDone: done });
+        },
+      });
+    } else if (step === 'history') {
+      openHistory({ entry: 'flow', onDone: done });
+    } else if (step === 'current') {
+      openCurrentYear({ entry: 'flow', onDone: done });
+    } else {
+      openAnnualTarget({ entry: 'flow', onDone: done });
+    }
+  }
+
+  function profileDisplay(p, lang) {
+    var L = loc();
+    var B = bt();
+    var C = cur();
+    var locale = locationLocale(lang);
+    var code = '';
+    if (B) {
+      code = (typeof B.readMetaBusinessType === 'function' && B.readMetaBusinessType()) ||
+        (typeof B.normalizeBusinessType === 'function' && B.normalizeBusinessType(p.businessType)) || '';
+    }
+    return {
+      businessName: trimmed(p.businessName),
+      companyName: trimmed(p.companyName || p.company),
+      businessType: code && B && typeof B.label === 'function' ? B.label(code) : code,
+      country: L ? L.displayCountry(p.country, locale) : trimmed(p.country),
+      stateRegion: L ? L.displayState(p.stateRegion || p.state, locale) : trimmed(p.stateRegion || p.state),
+      currency: C && typeof C.displayLabel === 'function' ? C.displayLabel(p.currency) : trimmed(p.currency),
+    };
+  }
+
+  function reviewSection(key, title, rows) {
+    return (
+      '<h3 class="kpi-s0-rev-h">' + esc(title) + '</h3>' +
+      '<dl class="kpi-s0-summary kpi-s0-rev-dl" data-s5-section="' + key + '">' +
+      rows.map(function (r) {
+        return '<dt>' + esc(r[1]) + '</dt><dd data-s5-row="' + key + '.' + r[0] + '">' + esc(r[2]) + '</dd>';
+      }).join('') +
+      '</dl>'
+    );
+  }
+
+  function reviewWarnings(chk) {
+    var r = readiness();
+    var out = [];
+    if (chk.history && chk.history.state === 'skipped') out.push('history_skipped');
+    if (chk.target.status !== 'set') out.push('target_not_set');
+    if (chk.current && chk.current.positiveDays === 0) out.push('no_positive_days');
+    var plan = r && typeof r.currentPlan === 'function' ? r.currentPlan() : null;
+    if (plan !== 'basic' && r && typeof r.hasExpenseData === 'function' && !r.hasExpenseData()) out.push('no_expense');
+    return out;
+  }
+
+  function renderReview(c, data) {
+    var k = c.review;
+    var chk = data.check;
+    var p = profileDisplay(data.profile, review.lang);
+    var h = chk.history;
+    var historyRows = [['state', k.state, k.historyState[h.state] || '']];
+    if (h.state !== 'not_applicable') {
+      historyRows.push(['years', k.years, h.detectedYears.length ? h.detectedYears.join(', ') : '—']);
+    }
+    var warns = reviewWarnings(chk);
+    return (
+      '<div class="kpi-s0-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      reviewRuler(c, false) +
+      '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(k.title) + '</h2>' +
+      '<p class="kpi-s0-lead">' + esc(k.lead) + '</p></div>' +
+      reviewSection('profile', k.section.profile, [
+        ['businessName', c.businessName, p.businessName],
+        ['companyName', c.companyName, p.companyName],
+        ['businessType', c.businessType, p.businessType],
+        ['openingDate', c.openingDate, h.openingYm],
+        ['country', c.country, p.country],
+        ['stateRegion', k.region, p.stateRegion],
+        ['currency', c.currency, p.currency],
+      ]) +
+      reviewSection('history', k.section.history, historyRows) +
+      reviewSection('current', k.section.current, [
+        ['state', k.state, k.confirmed],
+        ['detected', k.detected, fmt(k.days, { n: chk.current.detectedDays })],
+        ['positive', k.positive, fmt(k.days, { n: chk.current.positiveDays })],
+      ]) +
+      reviewSection('target', k.section.target, [
+        ['amount', k.amount, chk.target.status === 'set' ? formatTarget(chk.target.targetSales) : k.notSet],
+        ['state', k.state, k.confirmed],
+      ]) +
+      (warns.length
+        ? '<div class="kpi-s0-note kpi-s0-rev-warn" id="kpi-s0-rev-warn" data-s5-warn="' + warns.join(' ') + '">' +
+          '<p><strong>' + esc(k.warnTitle) + '</strong></p><ul>' +
+          warns.map(function (w) {
+            return '<li>' + esc(k.warn[w]) + '</li>';
+          }).join('') + '</ul><p>' + esc(k.warnNote) + '</p></div>'
+        : '') +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions" id="kpi-s0-rev-actions">' +
+      actionBtn('kpi-s0-rev-close', k.close, false, true) +
+      actionBtn('kpi-s0-rev-complete', k.complete, true) + '</div>'
+    );
+  }
+
+  function renderReviewLoading(c) {
+    var k = c.review;
+    return (
+      '<div class="kpi-s0-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      reviewRuler(c, false) +
+      '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(k.title) + '</h2>' +
+      '<p class="kpi-s0-lead">' + esc(k.lead) + '</p></div>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions" id="kpi-s0-rev-actions">' + actionBtn('kpi-s0-rev-close', k.close, false, true) + '</div>'
+    );
+  }
+
+  function renderReviewDone(c) {
+    var k = c.review;
+    return (
+      '<div class="kpi-s0-head kpi-s0-saved-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      reviewRuler(c, true) +
+      '<div class="kpi-s0-saved" id="kpi-s0-rev-done-body">' +
+      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(k.doneTitle) + '</h2>' +
+      '<p class="kpi-s0-saved-lead">' + esc(k.doneLead) + '</p>' +
+      '<p class="kpi-s0-saved-body">' + esc(k.doneBody) + '</p></div></div>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-rev-done">' + esc(c.next) + '</button></div>'
+    );
+  }
+
+  function closeReview() {
+    if (rootEl) rootEl.hidden = true;
+    review = null;
+  }
+
+  function finishReview() {
+    var done = review && review.onDone;
+    closeReview();
+    if (typeof done === 'function') done();
+  }
+
+  function setReviewBusy(busy) {
+    var box = el('kpi-s0-rev-actions');
+    if (!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function (b) {
+      b.disabled = !!busy;
+    });
+  }
+
+  function showReviewDone() {
+    var c = t(review.lang);
+    var card = el('kpi-s0-card');
+    if (!card) return;
+    card.setAttribute('data-s0-view', 'review-done');
+    card.setAttribute('data-s5-status', 'complete');
+    card.innerHTML = renderReviewDone(c);
+    var btn = el('kpi-s0-rev-done');
+    if (btn) btn.addEventListener('click', finishReview);
+    focusEl('kpi-s0-rev-done');
+    var r = readiness();
+    if (r && typeof r.settle === 'function') r.settle(typeof r.currentPlan === 'function' ? r.currentPlan() : null);
+  }
+
+  function waitForHydrate(ms) {
+    return new Promise(function (resolve) {
+      var finished = false;
+      var finish = function () {
+        if (finished) return;
+        finished = true;
+        global.document.removeEventListener('kpi:storeHydrateSettled', finish);
+        resolve();
+      };
+      global.document.addEventListener('kpi:storeHydrateSettled', finish);
+      global.setTimeout(finish, ms);
+    });
+  }
+
+  /**
+   * The only writer of setup.complete. Re-reads profile / business type / server store,
+   * re-checks the contract on the store that will be sent, keeps every existing setup field,
+   * and saves through the gateway (expectedRevision / 409 handling unchanged).
+   */
+  function completeSetup() {
+    if (!review || review.saving || !review.data) return;
+    var session = review;
+    var k = t(session.lang).review;
+    session.saving = true;
+    setReviewBusy(true);
+    setStatus(k.completing, '');
+    readiness().loadCompletion().then(function (data) {
+      if (review !== session) return;
+      if (!data.ok) {
+        session.saving = false;
+        setReviewBusy(false);
+        setStatus(k.loadFailed, 'error');
+        return;
+      }
+      if (data.check.complete) {
+        session.saving = false;
+        showReviewDone();
+        return;
+      }
+      if (!data.check.ready) {
+        review = null;
+        routeToStep(data.check.step, session.onDone);
+        return;
+      }
+      var store = readStore();
+      if (!store) {
+        session.saving = false;
+        setReviewBusy(false);
+        setStatus(k.saveFailed, 'error');
+        return;
+      }
+      if (!store.meta || typeof store.meta !== 'object') store.meta = {};
+      var bag = store.meta.setup;
+      if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
+      bag.complete = true;
+      if (!writeStoreJson(store)) {
+        delete bag.complete;
+        session.saving = false;
+        setReviewBusy(false);
+        setStatus(k.saveFailed, 'error');
+        return;
+      }
+      pushStore().then(function (push) {
+        if (review !== session) return;
+        if (push && push.ok === true) {
+          session.saving = false;
+          showReviewDone();
+          return;
+        }
+        if (push && push.conflict) {
+          setStatus(k.conflict, 'error');
+          waitForHydrate(10000).then(function () {
+            if (review !== session) return;
+            review = null;
+            openReview({ entry: 'flow', onDone: session.onDone, conflict: true });
+          });
+          return;
+        }
+        var s2 = readStore();
+        if (s2 && s2.meta && s2.meta.setup && s2.meta.setup.complete === true) {
+          delete s2.meta.setup.complete;
+          writeStoreJson(s2);
+        }
+        session.saving = false;
+        setReviewBusy(false);
+        setStatus(k.saveFailed, 'error');
+      });
+    });
+  }
+
+  /**
+   * STEP 05. Re-evaluates the contract before showing anything; an unresolved step opens
+   * instead. opts.ackWarn: the STEP 04 push did not reach the server. opts.conflict: reopened
+   * after a 409 on Complete.
+   */
+  function openReview(opts) {
+    var o = opts || {};
+    var done = typeof o.onDone === 'function' ? o.onDone : null;
+    var root = ensureRoot();
+    var r = readiness();
+    if (!root || !r || typeof r.loadCompletion !== 'function') {
+      if (root) root.hidden = true;
+      if (done) done();
+      return;
+    }
+    state = null;
+    hist = null;
+    curYear = null;
+    annualTgt = null;
+    var lang = detectLang();
+    var c = t(lang);
+    var session = { lang: lang, opts: o, onDone: done, saving: false, data: null };
+    review = session;
+    var card = el('kpi-s0-card');
+    card.removeAttribute('data-s2-kind');
+    card.removeAttribute('data-s3-status');
+    card.removeAttribute('data-s4-status');
+    card.setAttribute('data-s5-status', 'loading');
+    card.setAttribute('data-s0-view', 'review-loading');
+    card.innerHTML = renderReviewLoading(c);
+    root.hidden = false;
+    el('kpi-s0-rev-close').addEventListener('click', finishReview);
+    setStatus(c.review.checking, '');
+    r.loadCompletion().then(function (data) {
+      if (review !== session) return;
+      if (!data.ok) {
+        setStatus(c.review.loadFailed, 'error');
+        return;
+      }
+      if (data.check.complete) {
+        showReviewDone();
+        return;
+      }
+      if (!data.check.ready) {
+        review = null;
+        routeToStep(data.check.step, done);
+        return;
+      }
+      session.data = data;
+      card.setAttribute('data-s0-view', 'review');
+      card.setAttribute('data-s5-status', 'ready');
+      card.innerHTML = renderReview(c, data);
+      el('kpi-s0-rev-close').addEventListener('click', finishReview);
+      el('kpi-s0-rev-complete').addEventListener('click', completeSetup);
+      if (o.conflict) setStatus(c.review.conflict, 'error');
+      else if (o.ackWarn) setStatus(c.target.ackWarn, 'warn');
+      focusEl('kpi-s0-rev-complete');
+    });
   }
 
   global.KpiSetupStep0 = {
@@ -2145,6 +2563,8 @@
     closeCurrentYear: closeCurrentYear,
     openAnnualTarget: openAnnualTarget,
     closeAnnualTarget: closeAnnualTarget,
+    openReview: openReview,
+    closeReview: closeReview,
     mergeProfile: mergeProfile,
     SETUP_STEPS: SETUP_STEPS.slice(),
     renderStepRuler: function (opts) {

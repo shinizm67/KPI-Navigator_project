@@ -7,6 +7,7 @@
  * It does not widen phase1Block.
  * Phase 4: currentYearSummary feeds STEP 03; completion is currentYearAcknowledged only.
  * Phase 5: annualTargetSummary feeds STEP 04; completion is targetAcknowledged only.
+ * Phase 6: completionCheck / loadCompletion gate STEP 05; setup.complete is written only there.
  */
 (function (global) {
   'use strict';
@@ -256,6 +257,44 @@
     };
   }
 
+  /**
+   * STEP 05 completion contract. step = first unresolved step (profile | history | current | target)
+   * or null when setup.complete may be written. Hard 7 fields, historical present / skipped /
+   * not_applicable, currentYearAcknowledged, targetAcknowledged. No stored step is read.
+   */
+  function completionCheck(ctx) {
+    var c = ctx || {};
+    var s = c.store && typeof c.store === 'object' ? c.store : {};
+    var p = c.profile && typeof c.profile === 'object' ? c.profile : {};
+    var hard = evaluateBusinessProfile({
+      businessName: p.businessName,
+      companyName: p.companyName,
+      businessTypeSet: c.businessTypeSet === true,
+      openingDate: s.meta ? s.meta.openingDate : '',
+      country: p.country,
+      stateRegion: p.stateRegion,
+      currency: p.currency,
+    });
+    var history = historicalSummary(s);
+    var current = currentYearSummary(s, c.today);
+    var target = annualTargetSummary(s);
+    var step = null;
+    if (!hard.complete) step = 'profile';
+    else if (!history || history.state === 'absent' || !history.state) step = 'history';
+    else if (!current || current.status === 'invalid' || !current.acknowledged) step = 'current';
+    else if (!target.acknowledged) step = 'target';
+    var bag = setupBag(s);
+    return {
+      ready: step === null,
+      step: step,
+      missing: hard.missing,
+      history: history,
+      current: current,
+      target: target,
+      complete: !!(bag && bag.complete === true),
+    };
+  }
+
   function localTodayIso() {
     var d = new Date();
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
@@ -447,6 +486,81 @@
       .catch(function () {
         return { ok: false, profile: null };
       });
+  }
+
+  function storeApiUrl() {
+    try {
+      var gw = global.__KPI_DATA_GATEWAY;
+      var cfg = gw && typeof gw.syncConfig === 'function' ? gw.syncConfig() : null;
+      if (cfg && cfg.baseUrl) return cfg.baseUrl;
+    } catch (_e) {}
+    return resolveProfileApi().replace(/profile\.php$/, 'store.php');
+  }
+
+  /** Read-only GET of the server store (no memory merge). */
+  function fetchServerStore() {
+    if (typeof global.fetch !== 'function') return Promise.resolve({ ok: false, store: null, revision: null });
+    return global
+      .fetch(storeApiUrl(), {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+      .then(function (res) {
+        return res.json().catch(function () {
+          return null;
+        }).then(function (data) {
+          if (!res.ok || !data || data.ok !== true) return { ok: false, store: null, revision: null };
+          return { ok: true, store: data.store || null, revision: data.revision == null ? null : data.revision };
+        });
+      })
+      .catch(function () {
+        return { ok: false, store: null, revision: null };
+      });
+  }
+
+  /**
+   * Latest server profile + business type, server store (read-only) and the in-memory store
+   * that a save would send, evaluated with completionCheck. check uses the memory store;
+   * server is returned for comparison.
+   */
+  function loadCompletion() {
+    return Promise.all([hydrateBusinessTypeProfile(), fetchProfile(), fetchServerStore()]).then(function (all) {
+      var prof = all[1] || { ok: false, profile: null };
+      var srv = all[2] || { ok: false, store: null, revision: null };
+      var mem = readStore();
+      var ok = all[0] === true && prof.ok === true && srv.ok === true && !!mem;
+      var profileCtx = prof.profile || {};
+      var btSet = businessTypeIsSet();
+      return {
+        ok: ok,
+        profile: profileCtx,
+        check: completionCheck({ store: mem, profile: profileCtx, businessTypeSet: btSet }),
+        server: {
+          revision: srv.revision,
+          check: srv.store ? completionCheck({ store: srv.store, profile: profileCtx, businessTypeSet: btSet }) : null,
+        },
+      };
+    });
+  }
+
+  function currentPlan() {
+    return lastPlan;
+  }
+
+  /** Any saved PL expense year in this browser's synced PL keys (Pro expense import / entry). */
+  function hasExpenseData() {
+    try {
+      var gw = global.__KPI_DATA_GATEWAY;
+      var pl = gw && typeof gw.collectPlFromLocal === 'function' ? gw.collectPlFromLocal() : null;
+      var ey = (pl && pl.expensesByYear) || {};
+      return Object.keys(ey).some(function (y) {
+        return ey[y] && typeof ey[y] === 'object' && Object.keys(ey[y]).length > 0;
+      });
+    } catch (_e) {
+      return false;
+    }
   }
 
   function hydrateBusinessTypeProfile() {
@@ -700,6 +814,10 @@
     historicalSummary: historicalSummary,
     currentYearSummary: currentYearSummary,
     annualTargetSummary: annualTargetSummary,
+    completionCheck: completionCheck,
+    loadCompletion: loadCompletion,
+    currentPlan: currentPlan,
+    hasExpenseData: hasExpenseData,
     annualSetupUrl: annualSetupUrl,
     hasHistoryImporter: hasHistoryImporter,
     hasCurrentYearImporter: hasCurrentYearImporter,
