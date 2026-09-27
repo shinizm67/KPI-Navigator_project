@@ -11,7 +11,9 @@
 
 ```
 CURRENT PATH:
-(none)
+BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
+Phase 0 CLOSED 2026-09-27
+Phase 1 ACTIVE — Navigation Readiness + Safe Guard
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -25,7 +27,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
-- (none)
+- BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 
 REGISTERED (under TRUNK-06; do not start):
 - (none — trunk CLOSED)
@@ -128,7 +130,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-NONE. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start unrelated post-launch work.
+BR-ONBOARDING-01 Phase 1 only. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. Do not start Phase 2 until Phase 1 is accepted.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -140,8 +142,8 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `deabb85` (BR-POST-COCKPIT-GAP; footer `900bfc3`) |
-| origin sync | in sync |
+| HEAD | Phase 0 baseline `0a25d22`. This change is BR-ONBOARDING-01 Phase 1. |
+| origin sync | Push this commit. Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
 ---
@@ -1488,6 +1490,24 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | evidence | Shared CSS tokens: BD box `left: calc(100% - 228px)`, gap Sci-Fi 30px / Office 17px (EN reference). JS no longer sets inline left. Production 24/24 cockpit PASS. SHA `deabb85`. |
 | next_action | N/A CLOSED. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | constraint | visual/layout only; no KPI math / Today / History behavior |
+
+### BR-ONBOARDING-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-ONBOARDING-01` |
+| name | KPN Initial Setup & Readiness |
+| parent | none (new parent; do not reopen `TRUNK-06`) |
+| status | ACTIVE |
+| priority | P0 |
+| started_at | 2026-09-27 |
+| return_to | NONE |
+| reason | First-run navigation readiness for existing full_authorized stores. Flow B only. Registration stays on deferred `BR-LAUNCH-05`. |
+| phase_0 | CLOSED 2026-09-27. Grandfather, Opening Date, Flow B, Importer reuse, Navigation Readiness, and Setup Completion are frozen. `explicitKnownSeedState` has no store predicate. |
+| phase_1 | IMPLEMENTED 2026-09-27, not closed. Safe guard only: `!grandfathered && !businessTypeComplete` after hydrate. No setup URL. Does not write `store.meta.setup.complete`. |
+| evidence | Phase 0 freeze 2026-09-27. Module `js/kpi-navigation-readiness.js`. Wired on Annual and Monthly, JP / EN / ZH-TW. MEP / PL and Monthly Edit direct URLs are not wired. |
+| next_action | Await Shin acceptance of Phase 1. Do not start Phase 2, Opening Date UI, or the setup shell. Do not auto-start `BR-LAUNCH-05`. |
+| constraint | no DB migration; no Registration change; no Importer change; no Business Type contract change; no Planning Readiness reuse; no Annual / Monthly / MEP / PL math change; excel/ untouched |
 
 ### BR-POST-XLSX-REPORT
 
