@@ -6,6 +6,7 @@
  * Phase 2: businessProfileComplete is the 7-field Hard Required AND.
  * It does not widen phase1Block.
  * Phase 4: currentYearSummary feeds STEP 03; completion is currentYearAcknowledged only.
+ * Phase 5: annualTargetSummary feeds STEP 04; completion is targetAcknowledged only.
  */
 (function (global) {
   'use strict';
@@ -228,6 +229,30 @@
       state: initialDataState(s, oy, openingDate, true),
       detectedYears: level === 'not_applicable' ? [] : historicalYears(s, oy, openingDate),
       level: level,
+    };
+  }
+
+  /* Same rule as KpiYearStore.isUserSavedAnnualPlanSource (R2). The grandfather predicate keeps hasUserAnnualTarget. */
+  var USER_TARGET_SOURCES = { 'sales-data-save': true };
+
+  /**
+   * STEP 04 summary. status: set (user-saved target > 0 for operatingYear) | not_set.
+   * rollover-snapshot and memory-only heal values are not_set. Never decides completion;
+   * only store.meta.setup.targetAcknowledged does.
+   */
+  function annualTargetSummary(store) {
+    var s = store && typeof store === 'object' ? store : {};
+    var oy = operatingYearOf(s);
+    var rec = yearRecord(s, oy);
+    var plan = rec && rec.plan;
+    var n = plan ? Number(plan.targetSales) : NaN;
+    var set = !!(plan && USER_TARGET_SOURCES[String(plan.source || '')] && Number.isFinite(n) && n > 0);
+    var bag = setupBag(s);
+    return {
+      operatingYear: oy,
+      targetSales: set ? n : null,
+      status: set ? 'set' : 'not_set',
+      acknowledged: !!(bag && bag.targetAcknowledged === true),
     };
   }
 
@@ -674,6 +699,7 @@
     evaluateBusinessProfile: evaluateBusinessProfile,
     historicalSummary: historicalSummary,
     currentYearSummary: currentYearSummary,
+    annualTargetSummary: annualTargetSummary,
     annualSetupUrl: annualSetupUrl,
     hasHistoryImporter: hasHistoryImporter,
     hasCurrentYearImporter: hasCurrentYearImporter,

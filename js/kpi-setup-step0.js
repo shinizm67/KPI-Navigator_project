@@ -13,6 +13,10 @@
  *
  * Phase 4 — STEP 03 Current Year (openCurrentYear) follows STEP 02 in the same dialog.
  * Its only write is currentYearAcknowledged = true, on an explicit click.
+ *
+ * Phase 5 — STEP 04 Annual Target (openAnnualTarget) follows STEP 03. The target itself is
+ * saved only by the existing Sales Data dialog; this step writes targetAcknowledged = true,
+ * on an explicit click, whether or not a target exists.
  */
 (function (global) {
   'use strict';
@@ -169,9 +173,44 @@
         viaAnnual: '登録は年間ビューの「売上」で行います。',
         ackFailed: '確認を保存できませんでした。もう一度お試しください。',
         ackWarn: '確認の記録がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
-        doneTitle: 'CURRENT YEAR CONFIRMED',
-        doneLead: '今年度データの状態を確認しました。',
-        doneBody: '次のステップは「年間目標」です（準備中）。このまま KPN をご利用いただけます。',
+      },
+      target: {
+        title: 'Annual Target',
+        lead: '年間目標の状態を確認してください。設定しなくても先へ進めます。',
+        operatingYear: '運用年度',
+        amount: '年間目標',
+        status: '状態',
+        notSet: '未設定',
+        state: {
+          set: '年間目標は設定済みです',
+          not_set: '今すぐ設定するか、設定せずに続けられます',
+        },
+        msg: {
+          set: '設定済みの年間目標を確認してから次へ進んでください。変更は後からでもできます。',
+          not_set: '年間目標は後から設定することもできます。',
+          acknowledged: '年間目標の確認は済んでいます。',
+        },
+        ackSet: '年間目標を確認しました',
+        set: '年間目標を設定する',
+        change: '年間目標を変更する',
+        skip: '今は設定せず続ける',
+        close: '閉じる',
+        next: '次へ',
+        howTo: '「売上」を開き、「売上データ編集」を編集に切り替えて「年間目標売上」に入力し、保存します。',
+        viaAnnual: '年間目標は年間ビューの「売上」で設定します。',
+        confirmTitle: '年間目標を設定せずに続けますか？',
+        confirmLines: [
+          '年間目標は後から設定できます。',
+          '設定しなくても KPN はそのまま使えます。',
+          '未設定のあいだは、年間ビューに年間目標のリマインダーが表示されます。',
+        ],
+        confirmSkip: '設定せずに続ける',
+        confirmBack: '戻る',
+        ackFailed: '確認を保存できませんでした。もう一度お試しください。',
+        ackWarn: '確認の記録がサーバーにまだ届いていません。画面を再読み込みすると再送されます。',
+        doneTitle: 'ANNUAL TARGET CONFIRMED',
+        doneLead: '年間目標の確認が完了しました。',
+        doneBody: '次は最終確認です（準備中）。このまま KPN をご利用いただけます。',
       },
     },
     en: {
@@ -298,9 +337,44 @@
         viaAnnual: "This year's data is added from Sales in Annual view.",
         ackFailed: 'Could not save the confirmation. Please try again.',
         ackWarn: 'The confirmation has not reached the server yet. Reloading the page will retry.',
-        doneTitle: 'CURRENT YEAR CONFIRMED',
-        doneLead: "This year's data status is confirmed.",
-        doneBody: 'Next step: Annual Target (coming soon). You can continue to KPN now.',
+      },
+      target: {
+        title: 'Annual Target',
+        lead: 'Check your annual target. You can continue without setting one.',
+        operatingYear: 'Operating Year',
+        amount: 'Annual Target',
+        status: 'Status',
+        notSet: 'Not set',
+        state: {
+          set: 'Annual target is set',
+          not_set: 'You can set it now or continue without one',
+        },
+        msg: {
+          set: 'Review your annual target, then continue. You can change it later.',
+          not_set: 'You can also set your annual target later.',
+          acknowledged: 'Your annual target step is already confirmed.',
+        },
+        ackSet: "I've Reviewed the Annual Target",
+        set: 'Set Annual Target',
+        change: 'Change Annual Target',
+        skip: 'Continue Without a Target',
+        close: 'Close',
+        next: 'Next',
+        howTo: 'Open Sales, switch Sales Data Edit to Edit, enter Annual Target Sales, then Save.',
+        viaAnnual: 'The annual target is set from Sales in Annual view.',
+        confirmTitle: 'Continue without an annual target?',
+        confirmLines: [
+          'You can set it later.',
+          'You can keep using KPN without it.',
+          'Until it is set, the existing annual target reminder appears in Annual view.',
+        ],
+        confirmSkip: 'Continue Without a Target',
+        confirmBack: 'Back',
+        ackFailed: 'Could not save the confirmation. Please try again.',
+        ackWarn: 'The confirmation has not reached the server yet. Reloading the page will retry.',
+        doneTitle: 'ANNUAL TARGET CONFIRMED',
+        doneLead: 'Your annual target step is complete.',
+        doneBody: 'Next step: Review (coming soon). You can continue to KPN now.',
       },
     },
     zh: {
@@ -427,9 +501,44 @@
         viaAnnual: '本年度資料請在年度檢視的「營業額」登錄。',
         ackFailed: '無法儲存確認，請再試一次。',
         ackWarn: '確認紀錄尚未傳送到伺服器。重新整理頁面後會再次傳送。',
-        doneTitle: 'CURRENT YEAR CONFIRMED',
-        doneLead: '已確認本年度資料的狀態。',
-        doneBody: '下一步是「年度目標」（準備中）。現在可以直接進入 KPN。',
+      },
+      target: {
+        title: 'Annual Target',
+        lead: '請確認年度目標的狀態。未設定也可以繼續。',
+        operatingYear: '營運年度',
+        amount: '年度目標',
+        status: '狀態',
+        notSet: '未設定',
+        state: {
+          set: '已設定年度目標',
+          not_set: '可以現在設定，也可以不設定直接繼續',
+        },
+        msg: {
+          set: '請確認已設定的年度目標後再進入下一步。之後也可以變更。',
+          not_set: '年度目標之後也可以再設定。',
+          acknowledged: '年度目標已確認。',
+        },
+        ackSet: '已確認年度目標',
+        set: '設定年度目標',
+        change: '變更年度目標',
+        skip: '暫不設定並繼續',
+        close: '關閉',
+        next: '下一步',
+        howTo: '請開啟「營業額」，將「營業額資料編輯」切換為編輯，輸入「年度目標營業額」後儲存。',
+        viaAnnual: '年度目標請在年度檢視的「營業額」設定。',
+        confirmTitle: '要在未設定年度目標的情況下繼續嗎？',
+        confirmLines: [
+          '之後仍可設定年度目標。',
+          '未設定也可以繼續使用 KPN。',
+          '未設定期間，年度檢視會顯示現有的年度目標提醒。',
+        ],
+        confirmSkip: '不設定並繼續',
+        confirmBack: '返回',
+        ackFailed: '無法儲存確認，請再試一次。',
+        ackWarn: '確認紀錄尚未傳送到伺服器。重新整理頁面後會再次傳送。',
+        doneTitle: 'ANNUAL TARGET CONFIRMED',
+        doneLead: '已完成年度目標的確認。',
+        doneBody: '下一步是「最終確認」（準備中）。現在可以直接進入 KPN。',
       },
     },
   };
@@ -596,6 +705,17 @@
     var bag = store.meta.setup;
     if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
     bag.currentYearAcknowledged = true;
+    return writeStoreJson(store);
+  }
+
+  /** Records that the user confirmed STEP 04, with or without a saved target. Touches nothing else. */
+  function writeTargetAcknowledged() {
+    var store = readStore();
+    if (!store) return false;
+    if (!store.meta || typeof store.meta !== 'object') store.meta = {};
+    var bag = store.meta.setup;
+    if (!bag || typeof bag !== 'object') bag = store.meta.setup = {};
+    bag.targetAcknowledged = true;
     return writeStoreJson(store);
   }
 
@@ -1305,10 +1425,12 @@
     };
     hist = null;
     curYear = null;
+    annualTgt = null;
     var card = el('kpi-s0-card');
     card.setAttribute('data-s0-view', 'profile');
     card.removeAttribute('data-s2-kind');
     card.removeAttribute('data-s3-status');
+    card.removeAttribute('data-s4-status');
     card.innerHTML = renderForm(c);
     root.hidden = false;
     bindForm();
@@ -1538,6 +1660,7 @@
     }
     state = null;
     curYear = null;
+    annualTgt = null;
     if (o.entry === 'resume' && sum.state !== 'absent') {
       hist = null;
       openCurrentYear({ entry: 'resume', onDone: done });
@@ -1550,6 +1673,7 @@
     card.setAttribute('data-s0-view', 'history');
     card.setAttribute('data-s2-kind', sum.state);
     card.removeAttribute('data-s3-status');
+    card.removeAttribute('data-s4-status');
     card.innerHTML = renderHistory(t(lang), sum);
     bindHistory();
     focusEl(el('kpi-s0-hist-register') && sum.state === 'absent' ? 'kpi-s0-hist-register' : 'kpi-s0-hist-next');
@@ -1644,22 +1768,6 @@
     );
   }
 
-  function renderCurrentDone(c) {
-    var k = c.current;
-    return (
-      '<div class="kpi-s0-head kpi-s0-saved-head">' +
-      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
-      renderStepRuler(c, { current: -1, states: ['completed', historyRulerState(), 'completed'], position: 3 }) +
-      '<div class="kpi-s0-saved" id="kpi-s0-cur-done-body">' +
-      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(k.doneTitle) + '</h2>' +
-      '<p class="kpi-s0-saved-lead">' + esc(k.doneLead) + '</p>' +
-      '<p class="kpi-s0-saved-body">' + esc(k.doneBody) + '</p></div></div>' +
-      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
-      '<div class="kpi-s0-actions">' +
-      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-cur-done">' + esc(c.next) + '</button></div>'
-    );
-  }
-
   function closeCurrentYear() {
     if (rootEl) rootEl.hidden = true;
     curYear = null;
@@ -1671,22 +1779,17 @@
     if (typeof done === 'function') done();
   }
 
-  function showCurrentDone(warn) {
-    var c = t(curYear.lang);
-    var card = el('kpi-s0-card');
-    if (!card) return;
-    card.setAttribute('data-s0-view', 'current-done');
-    card.innerHTML = renderCurrentDone(c);
-    if (warn) setStatus(c.current.ackWarn, 'warn');
-    var btn = el('kpi-s0-cur-done');
-    if (btn) btn.addEventListener('click', finishCurrentYear);
-    focusEl('kpi-s0-cur-done');
+  /** STEP 03 passes (acknowledged); STEP 04 opens in the same dialog. */
+  function goToAnnualTarget(ackWarn) {
+    var done = curYear && curYear.onDone;
+    curYear = null;
+    openAnnualTarget({ entry: 'flow', onDone: done, ackWarn: !!ackWarn });
   }
 
   function acknowledgeCurrentYear() {
     if (!curYear || curYear.saving) return;
     if (curYear.sum.acknowledged) {
-      showCurrentDone(false);
+      goToAnnualTarget(false);
       return;
     }
     var session = curYear;
@@ -1705,20 +1808,18 @@
     pushStore().then(function (push) {
       if (curYear !== session) return;
       curYear.saving = false;
-      showCurrentDone(!(push && push.ok === true));
+      goToAnnualTarget(!(push && push.ok === true));
     });
   }
 
-  /** Reuses the existing Annual Sales Data dialog (operatingYear, CSV / Excel import included); STEP 03 returns when it closes. */
-  function openSalesDataFromSetup() {
+  /**
+   * Reuses the existing Annual Sales Data dialog (operatingYear, CSV / Excel import and the
+   * annual target field included). The calling step reopens when it closes.
+   */
+  function openSalesDataFromSetup(reopen) {
     var btn = global.document.getElementById('annual-current-sales-btn');
     var modal = global.document.getElementById('sales-data-modal');
-    var opts = curYear ? curYear.opts : {};
-    var done = curYear ? curYear.onDone : null;
-    var reopen = function () {
-      openCurrentYear(Object.assign({}, opts, { entry: 'flow', onDone: done, skipWarn: false }));
-    };
-    closeCurrentYear();
+    if (rootEl) rootEl.hidden = true;
     btn.click();
     if (!modal || modal.hasAttribute('hidden') || typeof global.MutationObserver !== 'function') {
       reopen();
@@ -1735,7 +1836,12 @@
   function startCurrentImport() {
     if (!curYear || curYear.saving) return;
     if (hasCurrentImporterHere()) {
-      openSalesDataFromSetup();
+      var opts = curYear.opts;
+      var done = curYear.onDone;
+      curYear = null;
+      openSalesDataFromSetup(function () {
+        openCurrentYear(Object.assign({}, opts, { entry: 'flow', onDone: done, skipWarn: false }));
+      });
       return;
     }
     var r = readiness();
@@ -1768,8 +1874,8 @@
   }
 
   /**
-   * opts.entry: 'flow' shows STEP 03 itself; 'resume' shows the done card once acknowledged
-   * (STEP 04 is not built yet). opts.skipWarn: the STEP 02 skip push did not reach the server.
+   * opts.entry: 'flow' shows STEP 03 itself; 'resume' goes on to STEP 04 once acknowledged.
+   * opts.skipWarn: the STEP 02 skip push did not reach the server.
    */
   function openCurrentYear(opts) {
     var o = opts || {};
@@ -1783,21 +1889,250 @@
     }
     state = null;
     hist = null;
+    annualTgt = null;
+    if (o.entry === 'resume' && sum.acknowledged) {
+      curYear = null;
+      openAnnualTarget({ entry: 'resume', onDone: done });
+      return;
+    }
     var lang = detectLang();
     curYear = { lang: lang, opts: o, onDone: done, sum: sum, saving: false };
     var card = el('kpi-s0-card');
     card.removeAttribute('data-s2-kind');
+    card.removeAttribute('data-s4-status');
     card.setAttribute('data-s3-status', sum.status);
     root.hidden = false;
-    if (o.entry === 'resume' && sum.acknowledged) {
-      showCurrentDone(false);
-      return;
-    }
     card.setAttribute('data-s0-view', 'current');
     card.innerHTML = renderCurrent(t(lang), sum);
     bindCurrent();
     if (o.skipWarn) setStatus(t(lang).history.skipWarn, 'warn');
     focusEl(el('kpi-s0-cur-ack') ? 'kpi-s0-cur-ack' : el('kpi-s0-cur-fix') ? 'kpi-s0-cur-fix' : 'kpi-s0-cur-close');
+  }
+
+  /* ---------- STEP 04 Annual Target ---------- */
+
+  var annualTgt = null;
+
+  function targetSummary() {
+    var r = readiness();
+    if (!r || typeof r.annualTargetSummary !== 'function') return null;
+    return r.annualTargetSummary(readStore());
+  }
+
+  function currentRulerState() {
+    var sum = currentSummary();
+    return sum && sum.acknowledged ? 'completed' : 'future';
+  }
+
+  function formatTarget(n) {
+    var kc = cur();
+    try {
+      if (kc && typeof kc.formatMoney === 'function') return kc.formatMoney(n);
+    } catch (_e) {}
+    return Number(n).toLocaleString();
+  }
+
+  function renderTargetSummary(k, sum) {
+    var rows = [
+      ['operatingYear', k.operatingYear, String(sum.operatingYear)],
+      ['amount', k.amount, sum.status === 'set' ? formatTarget(sum.targetSales) : k.notSet],
+      ['status', k.status, k.state[sum.status] || ''],
+    ];
+    return (
+      '<dl class="kpi-s0-summary" id="kpi-s0-tgt-summary">' +
+      rows.map(function (r) {
+        return '<dt>' + esc(r[1]) + '</dt><dd data-s4-row="' + r[0] + '">' + esc(r[2]) + '</dd>';
+      }).join('') +
+      '</dl>'
+    );
+  }
+
+  function renderTarget(c, sum) {
+    var k = c.target;
+    var msgKey = sum.acknowledged ? 'acknowledged' : sum.status;
+    var noteClass = msgKey === 'not_set' ? '' : ' is-ok';
+    var actions = actionBtn('kpi-s0-tgt-close', k.close, false, true);
+    if (!sum.acknowledged && sum.status === 'not_set') {
+      actions += actionBtn('kpi-s0-tgt-skip', k.skip);
+      actions += actionBtn('kpi-s0-tgt-set', k.set, true);
+    } else {
+      actions += actionBtn('kpi-s0-tgt-set', sum.status === 'set' ? k.change : k.set);
+      actions += sum.acknowledged
+        ? actionBtn('kpi-s0-tgt-next', k.next, true)
+        : actionBtn('kpi-s0-tgt-ack', k.ackSet, true);
+    }
+    return (
+      '<div class="kpi-s0-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, { current: 3, states: ['completed', historyRulerState(), currentRulerState(), 'active'] }) +
+      '<h2 class="kpi-s0-title" id="kpi-s0-title">' + esc(k.title) + '</h2>' +
+      '<p class="kpi-s0-lead">' + esc(k.lead) + '</p></div>' +
+      renderTargetSummary(k, sum) +
+      '<p class="kpi-s0-note' + noteClass + '" id="kpi-s0-tgt-note" data-s4-msg="' + esc(msgKey) + '">' +
+      esc(k.msg[msgKey] || '') + '</p>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions" id="kpi-s0-tgt-actions">' + actions + '</div>' +
+      '<p class="kpi-s0-via" id="kpi-s0-tgt-via">' + esc(hasCurrentImporterHere() ? k.howTo : k.viaAnnual) + '</p>' +
+      '<div id="kpi-s0-tgt-confirm-host"></div>'
+    );
+  }
+
+  function renderTargetDone(c) {
+    var k = c.target;
+    return (
+      '<div class="kpi-s0-head kpi-s0-saved-head">' +
+      '<p class="kpi-s0-kicker">' + esc(c.kicker) + '</p>' +
+      renderStepRuler(c, {
+        current: -1,
+        states: ['completed', historyRulerState(), currentRulerState(), 'completed'],
+        position: 4,
+      }) +
+      '<div class="kpi-s0-saved" id="kpi-s0-tgt-done-body">' +
+      '<h2 class="kpi-s0-saved-title" id="kpi-s0-title">' + esc(k.doneTitle) + '</h2>' +
+      '<p class="kpi-s0-saved-lead">' + esc(k.doneLead) + '</p>' +
+      '<p class="kpi-s0-saved-body">' + esc(k.doneBody) + '</p></div></div>' +
+      '<div class="kpi-s0-status" id="kpi-s0-status" role="status"></div>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-tgt-done">' + esc(c.next) + '</button></div>'
+    );
+  }
+
+  function closeAnnualTarget() {
+    if (rootEl) rootEl.hidden = true;
+    annualTgt = null;
+  }
+
+  function finishAnnualTarget() {
+    var done = annualTgt && annualTgt.onDone;
+    closeAnnualTarget();
+    if (typeof done === 'function') done();
+  }
+
+  function showTargetDone(warn) {
+    var c = t(annualTgt.lang);
+    var card = el('kpi-s0-card');
+    if (!card) return;
+    card.setAttribute('data-s0-view', 'target-done');
+    card.innerHTML = renderTargetDone(c);
+    if (warn) setStatus(c.target.ackWarn, 'warn');
+    var btn = el('kpi-s0-tgt-done');
+    if (btn) btn.addEventListener('click', finishAnnualTarget);
+    focusEl('kpi-s0-tgt-done');
+  }
+
+  function acknowledgeTarget() {
+    if (!annualTgt || annualTgt.saving) return;
+    if (annualTgt.sum.acknowledged) {
+      showTargetDone(false);
+      return;
+    }
+    var session = annualTgt;
+    var c = t(annualTgt.lang);
+    if (!writeTargetAcknowledged()) {
+      setStatus(c.target.ackFailed, 'error');
+      return;
+    }
+    annualTgt.saving = true;
+    var card = el('kpi-s0-card');
+    if (card) {
+      Array.prototype.forEach.call(card.querySelectorAll('.kpi-s0-actions button'), function (b) {
+        b.disabled = true;
+      });
+    }
+    pushStore().then(function (push) {
+      if (annualTgt !== session) return;
+      annualTgt.saving = false;
+      showTargetDone(!(push && push.ok === true));
+    });
+  }
+
+  function showTargetSkipConfirm() {
+    if (!annualTgt || annualTgt.saving) return;
+    var k = t(annualTgt.lang).target;
+    var actions = el('kpi-s0-tgt-actions');
+    var host = el('kpi-s0-tgt-confirm-host');
+    if (!host) return;
+    if (actions) actions.style.display = 'none';
+    host.innerHTML =
+      '<div class="kpi-s0-confirm" id="kpi-s0-tgt-confirm" role="group" aria-labelledby="kpi-s0-tgt-confirm-title">' +
+      '<p class="kpi-s0-confirm-title" id="kpi-s0-tgt-confirm-title">' + esc(k.confirmTitle) + '</p>' +
+      '<ul>' + k.confirmLines.map(function (line) {
+        return '<li>' + esc(line) + '</li>';
+      }).join('') + '</ul>' +
+      '<div class="kpi-s0-actions">' +
+      '<button type="button" class="kpi-s0-btn" id="kpi-s0-tgt-confirm-back">' + esc(k.confirmBack) + '</button>' +
+      '<button type="button" class="kpi-s0-btn is-primary" id="kpi-s0-tgt-confirm-skip">' + esc(k.confirmSkip) + '</button>' +
+      '</div></div>';
+    el('kpi-s0-tgt-confirm-back').addEventListener('click', function () {
+      host.innerHTML = '';
+      if (actions) actions.style.display = '';
+      focusEl('kpi-s0-tgt-skip');
+    });
+    el('kpi-s0-tgt-confirm-skip').addEventListener('click', acknowledgeTarget);
+    focusEl('kpi-s0-tgt-confirm-back');
+  }
+
+  /** The target is entered in the existing Sales Data dialog; STEP 04 re-reads the store when it closes. */
+  function startTargetInput() {
+    if (!annualTgt || annualTgt.saving) return;
+    if (hasCurrentImporterHere()) {
+      var done = annualTgt.onDone;
+      annualTgt = null;
+      openSalesDataFromSetup(function () {
+        openAnnualTarget({ entry: 'flow', onDone: done });
+      });
+      return;
+    }
+    var r = readiness();
+    var url = r && typeof r.annualSetupUrl === 'function' ? r.annualSetupUrl() : '';
+    if (url) global.location.href = url;
+  }
+
+  function bindTarget() {
+    var on = function (id, fn) {
+      var n = el(id);
+      if (n) n.addEventListener('click', fn);
+    };
+    on('kpi-s0-tgt-close', finishAnnualTarget);
+    on('kpi-s0-tgt-set', startTargetInput);
+    on('kpi-s0-tgt-ack', acknowledgeTarget);
+    on('kpi-s0-tgt-next', acknowledgeTarget);
+    on('kpi-s0-tgt-skip', showTargetSkipConfirm);
+  }
+
+  /**
+   * opts.entry: 'flow' shows STEP 04 itself; 'resume' shows the done card once acknowledged
+   * (STEP 05 is not built yet). opts.ackWarn: the STEP 03 acknowledge push did not reach the server.
+   */
+  function openAnnualTarget(opts) {
+    var o = opts || {};
+    var done = typeof o.onDone === 'function' ? o.onDone : null;
+    var root = ensureRoot();
+    var sum = targetSummary();
+    if (!root || !sum) {
+      if (root) root.hidden = true;
+      if (done) done();
+      return;
+    }
+    state = null;
+    hist = null;
+    curYear = null;
+    var lang = detectLang();
+    annualTgt = { lang: lang, opts: o, onDone: done, sum: sum, saving: false };
+    var card = el('kpi-s0-card');
+    card.removeAttribute('data-s2-kind');
+    card.removeAttribute('data-s3-status');
+    card.setAttribute('data-s4-status', sum.status);
+    root.hidden = false;
+    if (o.entry === 'resume' && sum.acknowledged) {
+      showTargetDone(false);
+      return;
+    }
+    card.setAttribute('data-s0-view', 'target');
+    card.innerHTML = renderTarget(t(lang), sum);
+    bindTarget();
+    if (o.ackWarn) setStatus(t(lang).current.ackWarn, 'warn');
+    focusEl(el('kpi-s0-tgt-ack') ? 'kpi-s0-tgt-ack' : el('kpi-s0-tgt-next') ? 'kpi-s0-tgt-next' : 'kpi-s0-tgt-set');
   }
 
   global.KpiSetupStep0 = {
@@ -1808,6 +2143,8 @@
     closeHistory: closeHistory,
     openCurrentYear: openCurrentYear,
     closeCurrentYear: closeCurrentYear,
+    openAnnualTarget: openAnnualTarget,
+    closeAnnualTarget: closeAnnualTarget,
     mergeProfile: mergeProfile,
     SETUP_STEPS: SETUP_STEPS.slice(),
     renderStepRuler: function (opts) {
