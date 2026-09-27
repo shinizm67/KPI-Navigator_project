@@ -15,7 +15,8 @@ BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
 Phase 1 CLOSED 2026-09-27 — Navigation Readiness + Safe Guard (Human Smoke PASS)
 Phase 2 CLOSED 2026-09-27 — Business Profile / Step 01 (production verified on account 00; Launch UI approved)
-Phase 3 UNBLOCKED 2026-09-27 — PHASE 3 SAFE TO PROCEED (BR-ONBOARDING-01-R2 CLOSED); not started, needs Shin GO
+Phase 3 ACTIVE 2026-09-27 — STEP 02 Historical Data (implemented, deployed, production verified on account 00; close pending Shin approval)
+Phase 4 (STEP 03 Current Year) NOT STARTED — needs Shin GO
 
 PRIOR TRUNK (CLOSED):
 Unit 5B -> Unit 5C -> Floating Window Functional Audit
@@ -137,7 +138,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 `PHASE 3 SAFE TO PROCEED` — `BR-ONBOARDING-01-R2` CLOSED 2026-09-27 (`fabd406` + `335d6af`, deployed, production verified on account 00, then reset). Phase 3 Implementation is not started and needs Shin GO. Phase 2 CLOSED 2026-09-27 (production verified on account 00, then reset to empty via `reset-user-kpi.php`). The 7-field Hard Gate stays off in production (separate GO). Do not start Phase 3 Implementation without Shin GO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+BR-ONBOARDING-01 Phase 3 (STEP 02 Historical Data) ACTIVE — `7937a9e` deployed, production verified on account 00, then reset. Verdict `PHASE 3 READY TO CLOSE`; close needs Shin approval. Do not start Phase 4 / STEP 03 without Shin GO. The 7-field Hard Gate stays off in production (separate GO). Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1518,11 +1519,12 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | hard_required | Business Profile Hard Complete = all 7: businessName (屋号 / サービス名 / 店名), companyName, businessType (canonical, never the restaurant fallback), openingDate (`store.meta.openingDate`, `YYYY-MM-DD`, year+month required, missing day = `01`), country, stateRegion (non-empty text; catalog match not required), currency (country may suggest, never lock). Business Name and Company Name are both required. |
 | optional | city, genre, KPI focus, other profile helpers. Never part of Hard Complete. |
 | profile_save_p0 | `profile.php` PUT overwrites every column. Step 0 must GET the current profile, keep existing values, merge only Step 0 changes, then PUT the full payload. Never partial-PUT. |
-| setup_progress | Unchanged: `complete`, `currentYearAcknowledged`, `targetAcknowledged`, `historicalSkipped`. No `currentStep` / `lastCompletedStep`. Phase 2 never writes `store.meta.setup`. Resume is derived from Readiness. |
+| setup_progress | Unchanged: `complete`, `currentYearAcknowledged`, `targetAcknowledged`, `historicalSkipped`. No `currentStep` / `lastCompletedStep`. Phase 2 never writes `store.meta.setup`. Phase 3: guard-entry Step 01 save creates an empty `store.meta.setup` (activeSetup marker, no flags); STEP 02 Skip sets `historicalSkipped` only. Resume is derived from Readiness. |
 | grandfather | Unchanged. Grandfathered users are never sent to Step 0 for missing company / country / region / currency / opening date. |
 | evidence | Phase 0 freeze 2026-09-27. Module `js/kpi-navigation-readiness.js`. Wired on Annual and Monthly, JP / EN / ZH-TW. MEP / PL and Monthly Edit direct URLs are not wired. |
 | blocker_r2 | `BR-ONBOARDING-01-R2` CLOSED 2026-09-27 (see node below). Phase 3 block lifted: `PHASE 3 SAFE TO PROCEED`. |
-| next_action | Phase 3 (Historical / Current Year / Target / Review / setup complete) is SAFE TO PROCEED but not started; needs Shin GO. The 7-field Hard Gate stays off in production (separate GO). Do not auto-start `BR-LAUNCH-05`. |
+| phase_3 | ACTIVE 2026-09-27 (Shin GO). STEP 02 Historical Data, `7937a9e`. Pure `KpiNavigationReadiness.historicalSummary(store)`: opening month, range opening..(operatingYear-1)-12, state from frozen `initialDataState`, detected years, level (same year `not_applicable`, previous year `recommended`, 2+ years back `strong`). Detection = canonical `timeline.dailySales` (0 counts, key without finite value does not, before opening date / operatingYear+ ignored, 1234 sentinel only on operatingYear+ per Phase 0 freeze). UI in the Step 01 dialog (`KpiSetupStep0.openHistory`): 5-step ruler 01 completed / 02 active, summary, recommendation note, CTAs Close / Skip / Add Past Data (present: Add More / Next; not_applicable: Next only). Import = existing Annual Past Sales dialog (`#annual-past-sales-btn`, CSV / Excel importer unchanged); STEP 02 returns when it closes. Monthly: Add Past Data opens Annual `?kpnSetup=1`. Skip: light inline confirm, writes `store.meta.setup.historicalSkipped = true` only. Done card after STEP 02 (02 completed / skipped, "next: Current Year (coming soon)", Continue to KPN); no STEP 03 screen. Resume derived from Readiness (no stored step): Annual `初期設定を続ける` button (non-grandfathered, setup pending) and `?kpnSetup=1`; absent -> STEP 02, otherwise the done card. activeSetup: guard-entry Step 01 save creates `store.meta.setup = {}` in the same store push (existing object kept), so imported history does not grandfather mid-setup. `setup.complete` never written. Smoke local 235/235, production assets 235/235; Step 0 regression 329/329 (3 checks re-pointed to the new contract), R2 165/165 + busy 9/9, R1 171/171, importer tests 73/73 + 97/97, planning readiness 148/148. Production real API on 00: 15/15, then reset (store null, profile empty, daily 0). Human Smoke not required. Note: `_test_business_day_review.py` 3 FAIL are pre-existing (expects old `kpi-workbook-layout.js?v=20260926-bdr2`; pages carry `20260927-bdfalse` since before Phase 3). |
+| next_action | Phase 3 close needs Shin approval. Phase 4 (STEP 03 Current Year) not started; needs Shin GO. The 7-field Hard Gate stays off in production (separate GO). Do not auto-start `BR-LAUNCH-05`. |
 | constraint | no DB migration; no Registration change; no Importer change; no Business Type contract change; no Planning Readiness reuse; no Annual / Monthly / MEP / PL math change; excel/ untouched |
 
 ### BR-ONBOARDING-01-R2
@@ -1796,5 +1798,6 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-25 | **BR-POST-BOOKING-ICON-COLOR CLOSED** Office SVG fill `#ffffff`. Sci-Fi `#59e1f3` unchanged. Production smoke 30/30 PASS. SHA `414b164`. Human Review NO. Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`. |
 | 2026-09-26 | **BR-POST-FOOTER-VERSION CLOSED** Shared footer brand: Key Performance Navigator / Version 1.0.0 / © 2025 Forge Laboratory. SHA `900bfc3`. |
 | 2026-09-26 | **BR-POST-COCKPIT-GAP CLOSED** Shared Cockpit box gap Sci-Fi 30px / Office 17px (EN reference). JP/ZH-TW match EN. Production 48/48 PASS. SHA `deabb85`. Human Review NO. Do not reopen `TRUNK-06`. |
+| 2026-09-27 | **BR-ONBOARDING-01 Phase 3 ACTIVE** STEP 02 Historical Data: summary + recommendation from canonical dailySales, existing Past Sales importer bridge, light skip (historicalSkipped only), done card before unbuilt STEP 03, Annual resume button / `?kpnSetup=1`, Step 01 starts `store.meta.setup`. `7937a9e` deployed (8 files, SHA match). Smoke 235/235 local + prod assets; regressions green; production 00 15/15 then reset. Verdict `PHASE 3 READY TO CLOSE`. Phase 4 not started. |
 | 2026-09-27 | **BR-ONBOARDING-01-R2 CLOSED** d6dced6 residual store contracts ported (no revert): saved target source + memory heal, Sales Data edit right, 3 business-day layers, A/B sync, light key, background Busy off. `fabd406` / `335d6af` deployed (9 pages, SHA match). Smoke 165/165, R1 171/171, Step 0 329/329; production 00 7/7 then reset. `PHASE 3 SAFE TO PROCEED` (not started). |
 | 2026-09-27 | **Construction State baseline recorded.** Future unfinished full pages default to scramble placeholder unless a documented exception. Spec: `docs/kpn-construction-state.md`. Task Tree §3 Operating Rule. No product-code change. |
