@@ -11,6 +11,12 @@
 
 ```
 CURRENT PATH:
+BR-LAUNCH-05 (Registration -> Initial Setup Integration) P1
+Phase 0 audit + Freeze 2026-09-28
+Phase 1 DONE 2026-09-28 — Registration UI simplification (`6994e30` deployed; production asset smoke 83/83; waiting for Shin review)
+Phase 2 NOT STARTED — server consent record / UI reads registrationEnabled / abuse protection (needs Shin GO)
+
+PREVIOUS PATH (IMPLEMENTED / PRODUCTION VERIFIED):
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
 Phase 1 CLOSED 2026-09-27 — Navigation Readiness + Safe Guard (Human Smoke PASS)
@@ -33,6 +39,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
+- BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 done 2026-09-28; Phase 2 not started, waits for Shin GO)
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 - (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
 
@@ -111,8 +118,6 @@ PAUSED / REGISTER ONLY (under TRUNK-06):
 - (none)
 
 DEFERRED:
-- BR-LAUNCH-05 Registration / Billing Readiness Assessment P1
-  note: Stripe / billing ????????????????? assessment ????
 - BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS P2
   parent: BR-LAUNCH-01-C2
   reason: Feature works; discoverability is weak. Do not block CSV/Excel launch path.
@@ -138,12 +143,16 @@ DEFERRED:
   parent: BR-ONBOARDING-01-R2. REGISTER ONLY. No data loss. See R2 node `residual_notes`.
 - BR-POST-SETUP-EXTRA-PUT One extra store PUT during Initial Setup P2 INVESTIGATE / NOT A LAUNCH BLOCKER
   parent: BR-ONBOARDING-01. REGISTER ONLY. Do not fix inside onboarding phases.
+- BR-LAUNCH-05-EMAIL-VERIFY Registration email verification SEPARATE TASK / REGISTER ONLY
+  parent: BR-LAUNCH-05. Not in Launch-required scope. Re-evaluate before paid Pro / billing.
+- BR-LAUNCH-05-REG-SESSION register.php sets a session but the UI sends the user to Login P2 REGISTER ONLY
+  parent: BR-LAUNCH-05. Behavior unchanged. Cleanup options (stop session on register, or go straight in) decided later.
 
 RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-ONBOARDING-01 Phase 6 (STEP 05 Review / Setup Complete) CLOSED — `e11a327` deployed, production verified on account 00, then reset. Initial Setup is IMPLEMENTED / PRODUCTION VERIFIED. Nothing new starts without Shin GO. Separate tasks (not started): post-launch ruler animation, `BR-POST-SETUP-EXTRA-PUT` investigation (P2 register-only), reminder polish, Registration integration (`BR-LAUNCH-05`), launch-wide destructive action smoke. The 7-field Hard Gate stays off in production (separate GO). Do not reopen `TRUNK-06`. Do not auto-start `BR-LAUNCH-05`.
+BR-LAUNCH-05 Phase 1 (Registration UI simplification) done — `6994e30` deployed (6 files), production asset smoke 83/83. Registration asks only Email / Password / Confirmation / Terms + Privacy consent; Basic fixed; public registration stays disabled. Waiting for Shin review. Do not start Phase 2 (server consent record, `registrationEnabled` read by the UI, abuse protection) without Shin GO. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1400,15 +1409,17 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LAUNCH-05` |
 | name | Registration / Billing Readiness Assessment |
 | audit_2026-09-28 | Phase 0 Contract Audit (Registration -> Initial Setup integration; audit only, status unchanged, nothing implemented). HEAD confirms: `registrationEnabled` false (config.example / bootstrap default); `register.php` takes email + password only, 409 `email_taken`, 8-char server minimum, plan = `defaultPlan`, creates the account and a session; never writes profile / store. Registration pages JP / EN / ZH-TW (production GET): static disabled notice, form hidden, Plan pages point to Early Access mailto only (no link to Registration). Form still asks name, company, Business Type (duplicates STEP 01; name / company never sent; Business Type goes only to browser localStorage store meta after success). Plan from `?plan=` is display-only and never sent. Terms / Privacy checkbox is client-only; no consent record in API or `kpi_users`. Success -> alert -> Login -> Annual -> existing Readiness -> Step 01. Proposed: light Registration (email, password, confirm, consent), Initial Setup STEP 01 owns Business Profile, reuse Login -> Annual -> Readiness (no new setup route), consent record needs a schema decision. Waiting for Shin decision before Phase 1. |
+| phase0_freeze_2026-09-28 | Shin froze: (1) legal consent is Launch-required; the server must record Terms version, Privacy version, accepted_at (storage option A columns on `kpi_users` / B dedicated table decided in Phase 2; no schema change in Phase 1). (2) Public registration is `basic` fixed until Billing; no plan is sent from Registration; `?plan=pro` never grants anything; Pro stays Coming Soon; admin-create plan contract unchanged. (3) Abuse protection is Launch-required: server rate limit, keep duplicate-email 409, basic bot mitigation, generic safe errors; no CAPTCHA / heavy UX; email verification is a separate task (re-evaluate before paid Pro / billing). (4) Server `registrationEnabled` is the single source; the UI must read it (false: notice + hidden form, true: form) so reopening needs no HTML redeploy. (5) Registration = Email / Password / Confirmation / Terms + Privacy consent; STEP 01 = the 7 fields (City, Genre optional); Name, Company, Business Type and the local Business Type write are removed from Registration. |
+| phase1_2026-09-28 | Registration UI simplification, JP / EN / ZH-TW, Sci-Fi / Office. Removed Name, Company / Business Name, Business Type (and `kpi-business-type.js`) from the 3 pages; removed the `setBusinessType` localStorage write after success; plan block fixed to Basic (`?plan=` ignored, not stored, not sent); button needs email + password rule + match + consent; payload stays `{email, password}`. Success -> alert -> same-language Login -> Annual -> existing Readiness -> STEP 01 (no auto-login). Static disabled notice / hidden form / emergency gate unchanged. Not touched: `register.php`, DB, Login, Readiness, Initial Setup, profile / store APIs, admin-create, Billing. Commit `6994e30` pushed; deployed 6 files (production matched base `5072b38` before upload; HTTP SHA match after). Smoke 83/83 local and 83/83 on production assets; emergency gate 40/40; business type foundation 140/140; Step 0 329/329; Phase 6 225/225. P0 = 0, P1 = 0. Note: register `script.js` is served with `max-age=604800` and no version query; reopening registration (Phase 2) must make sure browsers get the new script. |
 | parent | `TRUNK-06` |
-| status | DEFERRED |
+| status | ACTIVE (Phase 1 done; Phase 2 not started) |
 | priority | P1 |
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | ?????????? readiness ???Stripe / billing ??????????????????????? assessment ????? |
 | evidence | commit `af07bf7` Disable public registration until billing is ready; `free-trial-account-ops.md`?billingType ???? |
-| next_action | ?????Stripe / ???????????? assessment ? ???????? |
-| note | **????????**?readiness assessment only?? |
+| next_action | Shin review of Phase 1. Phase 2 (server consent record, UI reads `registrationEnabled`, abuse protection) only after Shin GO. Public registration stays disabled until then. |
+| note | Separate tasks: `BR-LAUNCH-05-EMAIL-VERIFY`, `BR-LAUNCH-05-REG-SESSION` (P2). Billing / Stripe stay out of scope. |
 
 ### BR-LAUNCH-06
 
@@ -1701,7 +1712,8 @@ CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C
 PAUSED under `TRUNK-06` (legacy): none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-DEFERRED under `TRUNK-06`: `BR-LAUNCH-05`, `BR-POST-XLSX-REPORT`  
+ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 1 done)  
+DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
@@ -1833,3 +1845,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-27 | **BR-ONBOARDING-01 Phase 6 CLOSED** STEP 05 Review / Setup Complete: completion contract (Hard 7 + historical resolved + current year / target acknowledged) re-checked before Review and on Complete, routing to the first unresolved step; Review summary + non-blocking warnings; explicit-only `setup.complete = true` keeping other setup fields, OCC-safe (409 re-check, failure revert, double-click safe); completion card; NORMAL by setupComplete after reload; Planning Readiness coexists. `e11a327` deployed (8 files, SHA match). Smoke 225/225 local + prod assets; regressions green; production 00 16/16 then reset. Human Smoke NOT REQUIRED. **Initial Setup IMPLEMENTED / PRODUCTION VERIFIED.** |
 | 2026-09-27 | **BR-ONBOARDING-01-R2 CLOSED** d6dced6 residual store contracts ported (no revert): saved target source + memory heal, Sales Data edit right, 3 business-day layers, A/B sync, light key, background Busy off. `fabd406` / `335d6af` deployed (9 pages, SHA match). Smoke 165/165, R1 171/171, Step 0 329/329; production 00 7/7 then reset. `PHASE 3 SAFE TO PROCEED` (not started). |
 | 2026-09-27 | **Construction State baseline recorded.** Future unfinished full pages default to scramble placeholder unless a documented exception. Spec: `docs/kpn-construction-state.md`. Task Tree §3 Operating Rule. No product-code change. |
+| 2026-09-28 | **BR-LAUNCH-05 Phase 0 audit** Registration -> Initial Setup contract audit (audit only). Commit `5072b38`. |
+| 2026-09-28 | **BR-LAUNCH-05 Phase 0 Freeze / Phase 1 done** Freeze: consent server record required, Basic fixed, abuse protection required, server `registrationEnabled` single source, Registration vs STEP 01 split. Phase 1 Registration UI simplification JP / EN / ZH-TW x Sci-Fi / Office. `6994e30` deployed (6 files, SHA match). Smoke 83/83 local + production assets; regressions green. P0 = 0, P1 = 0. Registered `BR-LAUNCH-05-EMAIL-VERIFY` (separate) and `BR-LAUNCH-05-REG-SESSION` (P2). Phase 2 not started. |
