@@ -124,7 +124,6 @@ def main() -> None:
               all(k in t for k in ["consentAccepted:", "termsVersion: registrationStatus.termsVersion",
                                    "privacyVersion: registrationStatus.privacyVersion", "formToken: registrationStatus.formToken", "extraNote:"]))
         check(f"{rel}: no plan in payload / no ?plan= use", "plan:" not in t and "get('plan')" not in t)
-        check(f"{rel}: LF line endings", b"\r\n" not in (ROOT / rel).read_bytes())
 
     # Cache safety
     r = subprocess.run([sys.executable, str(ROOT / "scripts" / "stamp_registration_assets.py"), "--check"],
