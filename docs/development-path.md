@@ -13,8 +13,9 @@
 CURRENT PATH:
 BR-LAUNCH-05 (Registration -> Initial Setup Integration) P1
 Phase 0 audit + Freeze 2026-09-28
-Phase 1 DONE 2026-09-28 — Registration UI simplification (`6994e30` deployed; production asset smoke 83/83; waiting for Shin review)
-Phase 2 NOT STARTED — server consent record / UI reads registrationEnabled / abuse protection (needs Shin GO)
+Phase 1 CLOSED 2026-09-28 — Registration UI simplification (`6994e30` deployed; Shin approved)
+Phase 2 ACTIVE 2026-09-28 — consent record / registration-status GET / abuse protection / cache-bust (`5a3267e` + `e9e8cc2` deployed; registrationEnabled stays false; waiting for Shin close)
+Phase 3+ NOT STARTED — reopen prerequisites (consent table in production DB, REMOTE_ADDR check, flip registrationEnabled) need Shin GO
 
 PREVIOUS PATH (IMPLEMENTED / PRODUCTION VERIFIED):
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
@@ -39,7 +40,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
-- BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 done 2026-09-28; Phase 2 not started, waits for Shin GO)
+- BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 CLOSED 2026-09-28; Phase 2 ACTIVE — deployed, registration still off; Phase 3+ NOT STARTED)
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 - (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
 
@@ -152,7 +153,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-LAUNCH-05 Phase 1 (Registration UI simplification) done — `6994e30` deployed (6 files), production asset smoke 83/83. Registration asks only Email / Password / Confirmation / Terms + Privacy consent; Basic fixed; public registration stays disabled. Waiting for Shin review. Do not start Phase 2 (server consent record, `registrationEnabled` read by the UI, abuse protection) without Shin GO. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
+BR-LAUNCH-05 Phase 1 CLOSED (Shin approved). Phase 2 ACTIVE — consent record, `registration-status.php` (fail closed UI), rate limit / honeypot / minimum submit time, `?v=` cache-bust; `5a3267e` + `e9e8cc2` deployed (10 files), production GET probe 30/30, UI smoke on production status 128/128. Public registration stays disabled (`registrationEnabled` false). Waiting for Shin Phase 2 close. Do not start Phase 3 (apply `api/v1/schema_kpi_user_consents.add.sql` in phpMyAdmin, verify REMOTE_ADDR behind the host proxy, flip `registrationEnabled`) without Shin GO. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1412,13 +1413,14 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | phase0_freeze_2026-09-28 | Shin froze: (1) legal consent is Launch-required; the server must record Terms version, Privacy version, accepted_at (storage option A columns on `kpi_users` / B dedicated table decided in Phase 2; no schema change in Phase 1). (2) Public registration is `basic` fixed until Billing; no plan is sent from Registration; `?plan=pro` never grants anything; Pro stays Coming Soon; admin-create plan contract unchanged. (3) Abuse protection is Launch-required: server rate limit, keep duplicate-email 409, basic bot mitigation, generic safe errors; no CAPTCHA / heavy UX; email verification is a separate task (re-evaluate before paid Pro / billing). (4) Server `registrationEnabled` is the single source; the UI must read it (false: notice + hidden form, true: form) so reopening needs no HTML redeploy. (5) Registration = Email / Password / Confirmation / Terms + Privacy consent; STEP 01 = the 7 fields (City, Genre optional); Name, Company, Business Type and the local Business Type write are removed from Registration. |
 | phase1_2026-09-28 | Registration UI simplification, JP / EN / ZH-TW, Sci-Fi / Office. Removed Name, Company / Business Name, Business Type (and `kpi-business-type.js`) from the 3 pages; removed the `setBusinessType` localStorage write after success; plan block fixed to Basic (`?plan=` ignored, not stored, not sent); button needs email + password rule + match + consent; payload stays `{email, password}`. Success -> alert -> same-language Login -> Annual -> existing Readiness -> STEP 01 (no auto-login). Static disabled notice / hidden form / emergency gate unchanged. Not touched: `register.php`, DB, Login, Readiness, Initial Setup, profile / store APIs, admin-create, Billing. Commit `6994e30` pushed; deployed 6 files (production matched base `5072b38` before upload; HTTP SHA match after). Smoke 83/83 local and 83/83 on production assets; emergency gate 40/40; business type foundation 140/140; Step 0 329/329; Phase 6 225/225. P0 = 0, P1 = 0. Note: register `script.js` is served with `max-age=604800` and no version query; reopening registration (Phase 2) must make sure browsers get the new script. |
 | parent | `TRUNK-06` |
-| status | ACTIVE (Phase 1 done; Phase 2 not started) |
+| phase2_2026-09-28 | Server launch requirements. (A) Consent: dedicated append-only table `kpi_user_consents` (id, user_id, terms_version, privacy_version, accepted_at, source; no IP / UA) in `schema.sql` + `schema_kpi_user_consents.add.sql`; canonical `KPI_TERMS_VERSION` / `KPI_PRIVACY_VERSION` = `2026-02-16` in `api/v1/_registration.php` (all 6 legal pages dated 2026-02-16; test enforces equality); MySQL: user INSERT + consent INSERT in one transaction, rollback on failure; file mode: `register.lock` + compensating unlink; payload `{email, password, consentAccepted, termsVersion, privacyVersion, formToken, extraNote}`, server validates all (`consent_required` / `consent_outdated`). (B) `api/v1/auth/registration-status.php` public GET, no session, `no-store`, `{registrationEnabled, termsVersion, privacyVersion}` + `formToken` only when enabled; UI hidden by default, form shown only on 200 + `registrationEnabled === true` + token; any failure stays closed; `register.php` 403 kept. (C) Rate limit IP 10 / 10 min, email 5 / h (file sliding window, no new infra; storage unavailable -> 503), honeypot `extra_note` (off-screen, `aria-hidden`, `tabindex=-1`, `autocomplete=off`), signed form token with min 2 s / max 24 h, generic `registration_rejected`, 409 `email_taken` kept, no CAPTCHA. Password rule (8+, letter, digit, symbol) applied on public registration only; Login / admin unchanged. Plan hard-coded `basic` (`defaultPlan` no longer used by register). (D) `?v=<sha256[:12]>` on `kpi-auth-client.js` and register `script.js` for JP / EN / ZH-TW via `scripts/stamp_registration_assets.py` (`--check`). ZH-TW register is generated by `build_zh_tw_public_pages.py` `build_register` (now strict, zh strings for notice, `errorMessage('zh')`, site chrome + stamp); full regeneration leaves register pages unchanged. Tests: launch contract 60/60, emergency gate 40/40, server smoke (PHP + MariaDB) 73/73, UI smoke 128/128; regressions Step 0 329/329, Phase 6 225/225, business type 140/140, password reset 106/106. Deployed 10 files (production matched `5a3267e~1` before upload; FTP + HTTP SHA match after); production GET probe 30/30 (status false, no token, no-store, fresh `?v=` assets, legal pages match repo, Login 200). No production DB change; `kpi_user_consents` not yet applied (registration fails closed with rollback if missing). |
+| status | ACTIVE (Phase 1 CLOSED; Phase 2 ACTIVE — deployed, waiting for Shin close; Phase 3+ NOT STARTED) |
 | priority | P1 |
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | ?????????? readiness ???Stripe / billing ??????????????????????? assessment ????? |
 | evidence | commit `af07bf7` Disable public registration until billing is ready; `free-trial-account-ops.md`?billingType ???? |
-| next_action | Shin review of Phase 1. Phase 2 (server consent record, UI reads `registrationEnabled`, abuse protection) only after Shin GO. Public registration stays disabled until then. |
+| next_action | Shin close of Phase 2. Phase 3 (reopen: apply `schema_kpi_user_consents.add.sql` in phpMyAdmin, verify REMOTE_ADDR, flip `registrationEnabled`) only after Shin GO. Public registration stays disabled until then. |
 | note | Separate tasks: `BR-LAUNCH-05-EMAIL-VERIFY`, `BR-LAUNCH-05-REG-SESSION` (P2). Billing / Stripe stay out of scope. |
 
 ### BR-LAUNCH-06
@@ -1712,7 +1714,7 @@ CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C
 PAUSED under `TRUNK-06` (legacy): none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 1 done)  
+ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 1 CLOSED; Phase 2 ACTIVE)  
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -1847,3 +1849,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-27 | **Construction State baseline recorded.** Future unfinished full pages default to scramble placeholder unless a documented exception. Spec: `docs/kpn-construction-state.md`. Task Tree §3 Operating Rule. No product-code change. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 0 audit** Registration -> Initial Setup contract audit (audit only). Commit `5072b38`. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 0 Freeze / Phase 1 done** Freeze: consent server record required, Basic fixed, abuse protection required, server `registrationEnabled` single source, Registration vs STEP 01 split. Phase 1 Registration UI simplification JP / EN / ZH-TW x Sci-Fi / Office. `6994e30` deployed (6 files, SHA match). Smoke 83/83 local + production assets; regressions green. P0 = 0, P1 = 0. Registered `BR-LAUNCH-05-EMAIL-VERIFY` (separate) and `BR-LAUNCH-05-REG-SESSION` (P2). Phase 2 not started. |
+| 2026-09-28 | **BR-LAUNCH-05 Phase 1 CLOSED / Phase 2 deployed** Consent table `kpi_user_consents` (append-only, transaction with user), `registration-status.php` + fail-closed UI, IP / email rate limit, honeypot, min submit time, `?v=` cache-bust JP / EN / ZH-TW, ZH generator strict. `5a3267e` + `e9e8cc2` deployed (10 files, SHA match). Production GET 30/30; smokes green. `registrationEnabled` stays false. Consent table not applied to production DB (Phase 3 prerequisite). P0 = 0, P1 = 0. Phase 3 not started. |
