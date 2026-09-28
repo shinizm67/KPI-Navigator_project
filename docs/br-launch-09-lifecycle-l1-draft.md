@@ -1,24 +1,32 @@
 # BR-LAUNCH-09 Phase 3A Extension — Account Lifecycle L1 Draft
 
-**Status: DRAFT (L1) — not live.** Created 2026-09-29.
+**Status: FINAL DRAFT (L1) — waiting for Shin final approval. Not live.** Created 2026-09-29; retention decided 2026-09-29.
 
 - Production Privacy Policy (`legal/privacy/`, `en/legal/privacy/`, `zh-tw/legal/privacy/`) is **unchanged**.
 - `KPI_PRIVACY_VERSION` stays `2026-02-16` (no production update).
 - Delete Account STEP 2 (`delete_account3.html` × 3 languages) is **unchanged** in production.
-- No Lifecycle server implementation. **HOLD until the retention period is decided (legal review).**
-- Retention period in every draft below: `TBD — legal review pending`.
+- No Lifecycle server implementation until Shin's final approval.
 
-Order after this draft: retention period decided → Shin approval → final Privacy version / date → L2 implementation.
+Order: Shin final approval → final Privacy version / date → L2 implementation.
 
-Contract background: `docs/development-path.md` rows `phase3a_lifecycle_2026-09-29`, `phase3a_lifecycle_decisions_2026-09-29`, `phase3a_churn_freeze_2026-09-29`.
+Contract background: `docs/development-path.md` rows `phase3a_lifecycle_2026-09-29`, `phase3a_lifecycle_decisions_2026-09-29`, `phase3a_churn_freeze_2026-09-29`, `phase3a_retention_2026-09-29`.
 
 ---
 
-## 1. Privacy Policy draft (changes only)
+## 0. Retention contract (decided by Shin, 2026-09-29)
+
+- **Retention period: 3 years after account deletion.** Same contract in JP / EN / ZH-TW.
+- This is **not** a statutory retention period. It is the period KPN needs for: churn analysis, account lifetime analysis, return / re-registration analysis, cohort analysis.
+- A lifecycle history row is **deleted automatically** once 3 years have passed since its deletion date (`deleted_at + 3 years`).
+- Kept as before: no raw email (HMAC matching value only); no business data; no consent history; no IP / UA; the Founder side provides a procedure to erase a history row on the person's request.
+
+---
+
+## 1. Privacy Policy final draft (changes only)
 
 Unchanged sections are not repeated. "Add" = new text; existing text stays unless marked "Replace".
 
-Header: Last updated = `TBD (set when the final version is approved)`; `KPI_PRIVACY_VERSION` = `TBD`.
+Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `TBD (set at final approval)`.
 
 ### 1-1. 日本語（`legal/privacy/index.html`）
 
@@ -37,7 +45,7 @@ Header: Last updated = `TBD (set when the final version is approved)`; `KPI_PRIV
 
 **§6 保存期間 — Add (paragraph, after the existing list):**
 
-> アカウントが削除された場合、アカウント情報、事業入力データ、プロフィール、同意記録などは削除します。ただし、1.に記載した退会履歴に限り、統計分析および再登録の判別のため、削除日から **TBD — legal review pending** 保持し、その後消去します。退会履歴には、メールアドレス、パスワード、事業入力データ、IPアドレス、ブラウザ情報は含まれません。
+> アカウントが削除された場合、アカウント情報、事業入力データ、プロフィール、同意記録などは削除します。ただし、1.に記載した退会履歴に限り、統計分析および再登録の判別のため、**削除日から3年間**保持し、3年を経過した記録は自動的に消去します。この期間は法令上の保存期間ではなく、上記の目的に必要な期間として当方が定めたものです。退会履歴には、メールアドレス、パスワード、事業入力データ、同意記録、IPアドレス、ブラウザ情報は含まれません。
 
 **§7 ユーザーの権利 — Add (paragraph, after the existing list):**
 
@@ -60,7 +68,7 @@ Header: Last updated = `TBD (set when the final version is approved)`; `KPI_PRIV
 
 **§6 Retention — Add (paragraph):**
 
-> When an account is deleted, we delete the account data, business input data, profile, consent records and related data. Only the account deletion record described in section 1 is kept, for statistical analysis and recognizing re-registrations, for **TBD — legal review pending** from the deletion date, and is then erased. The account deletion record does not include the email address, password, business input data, IP address or browser information.
+> When an account is deleted, we delete the account data, business input data, profile, consent records and related data. Only the account deletion record described in section 1 is kept, for statistical analysis and recognizing re-registrations, **for 3 years from the deletion date**; records older than 3 years are erased automatically. This is not a statutory retention period; it is the period we set as necessary for these purposes. The account deletion record does not include the email address, password, business input data, consent records, IP address or browser information.
 
 **§7 Your rights — Add (paragraph):**
 
@@ -83,7 +91,7 @@ Header: Last updated = `TBD (set when the final version is approved)`; `KPI_PRIV
 
 **§6 保存期間 — Add (paragraph):**
 
-> 帳戶刪除時，我們會刪除帳戶資料、業務輸入資料、個人資料設定、同意紀錄等。僅第 1 節所述之帳戶刪除紀錄，為統計分析及判別重新註冊之目的，自刪除日起保存 **TBD — legal review pending**，其後清除。帳戶刪除紀錄不包含電子信箱、密碼、業務輸入資料、IP 位址或瀏覽器資訊。
+> 帳戶刪除時，我們會刪除帳戶資料、業務輸入資料、個人資料設定、同意紀錄等。僅第 1 節所述之帳戶刪除紀錄，為統計分析及判別重新註冊之目的，**自刪除日起保存 3 年**，超過 3 年之紀錄將自動清除。此期間並非法定保存期間，而是我們依上述目的所訂定之必要期間。帳戶刪除紀錄不包含電子信箱、密碼、業務輸入資料、同意紀錄、IP 位址或瀏覽器資訊。
 
 **§7 您的權利 — Add (paragraph):**
 
@@ -91,33 +99,38 @@ Header: Last updated = `TBD (set when the final version is approved)`; `KPI_PRIV
 
 ---
 
-## 2. Delete Account STEP 2 draft copy (`delete_account3.html`)
+## 2. Delete Account STEP 2 final draft copy (`delete_account3.html`)
 
 Only the 「削除後も残るもの」 column changes: **one item is added at the top.** The 「削除されるデータ」 column is unchanged (the plan setting itself is deleted; only the plan at deletion stays in the minimal record).
 
 | Language | Added item (first line of the "remains" column) |
 |---|---|
-| JP | 退会履歴（メールアドレスを含まない最小限の記録：作成日・削除日・削除時のプランなど。保持期間：TBD — legal review pending） |
-| EN | Account deletion record (a minimal record without your email address: creation date, deletion date, plan at deletion, etc. Kept for: TBD — legal review pending) |
-| ZH-TW | 帳戶刪除紀錄（不含電子信箱的最小紀錄：建立日、刪除日、刪除時的方案等。保存期間：TBD — legal review pending） |
-
-At L2 the placeholder is replaced by the approved period (e.g. 「削除日から○年」 / "for N years from the deletion date" / 「自刪除日起 N 年」).
+| JP | 退会履歴（メールアドレスを含まない最小限の記録：作成日・削除日・削除時のプランなど。削除日から3年後に自動で消去されます） |
+| EN | Account deletion record (a minimal record without your email address: creation date, deletion date, plan at deletion, etc. Erased automatically 3 years after the deletion date) |
+| ZH-TW | 帳戶刪除紀錄（不含電子信箱的最小紀錄：建立日、刪除日、刪除時的方案等。自刪除日起 3 年後自動清除） |
 
 ---
 
-## 3. Points for legal review
+## 3. L2 requirements added by the retention contract
 
-1. **Retention period** for the account deletion record (blocks L2).
-2. **Classification:** a keyed HMAC of the email can be re-matched by us (with the key and a candidate email), so the record is treated here as pseudonymized personal data (GDPR) / personal information (APPI), not anonymous data. Confirm.
-3. **Legal basis:** legitimate interests for EEA / UK (balancing: minimal fields, no email, fixed period, erasure on request). Confirm that consent is not required.
-4. **Erasure requests for the record itself** (§7 draft): confirm this commitment. It requires the Founder email lookup + delete action in L3.
-5. **Notice to existing users:** whether updating "Last updated" is enough or existing users must be notified. Registration is still closed; current production users were admin-created and have no consent rows.
-6. **Existing gap (not changed by this draft):** after deletion the Policy does not mention that anonymized feedback text, emails already sent to support, and server logs / backups for a limited period remain (STEP 2 already says so). Decide whether §6 should state this too.
+1. **Automatic purge:** rows with `deleted_at` older than 3 years are deleted. A 3-year window is only reached in 2029, so no row can be affected before then; the purge still ships in L2 and is covered by tests (time-shifted rows). Trigger: to be fixed at L2 (candidate: run the purge opportunistically inside Founder lifecycle / dashboard requests and inside each account deletion — no cron dependency on ConoHa WING).
+2. **Churn over the window:** metrics can only look back up to 3 years; cohorts older than that lose their deleted members. Founder UI states the window.
+3. **Erasure on request:** Founder email lookup (server-side HMAC, input not stored or logged) + "erase this history row" action, Founder only.
+4. **Fail closed** (decided): missing HMAC key or history table → the account deletion does not run (500, retry allowed).
 
 ---
 
-## 4. Not in this draft
+## 4. Remaining review notes (not blocking the approval of this draft)
 
-- Lifecycle schema, HMAC key provisioning, delete / registration integration, Founder UI (L2 / L3, on HOLD).
+1. **Classification:** a keyed HMAC of the email can be re-matched by us, so the record is treated as pseudonymized personal data (GDPR) / personal information (APPI), not anonymous data — the draft is written on that basis.
+2. **Legal basis:** legitimate interests for EEA / UK (minimal fields, no email, 3-year limit, erasure on request).
+3. **Notice to existing users:** registration is still closed; current production users were admin-created and have no consent rows. Updating "Last updated" + version is the planned notice.
+4. **Existing gap (not changed by this draft):** the Policy does not mention that anonymized feedback text, emails already sent to support, and server logs / backups for a limited period remain after deletion (STEP 2 already says so). Separate decision.
+
+---
+
+## 5. Not in this draft
+
+- Lifecycle schema, HMAC key provisioning, delete / registration integration, Founder UI (L2 / L3).
 - Stripe / paid deletion wording (Phase 3B BLOCKED).
 - Exact plan timeline (separate task).
