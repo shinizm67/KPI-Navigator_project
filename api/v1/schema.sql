@@ -120,3 +120,18 @@ CREATE TABLE IF NOT EXISTS kpi_password_reset_tokens (
     FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Legal consent (append-only): existing DBs use schema_kpi_user_consents.add.sql once.
+CREATE TABLE IF NOT EXISTS kpi_user_consents (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(64) NOT NULL,
+  terms_version VARCHAR(32) NOT NULL,
+  privacy_version VARCHAR(32) NOT NULL,
+  accepted_at DATETIME NOT NULL,
+  source VARCHAR(32) NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_kpi_user_consents_user_accepted (user_id, accepted_at),
+  CONSTRAINT fk_kpi_user_consents_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

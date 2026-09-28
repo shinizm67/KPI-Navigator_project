@@ -45,15 +45,17 @@ def main() -> None:
 
     # 2) Server gate before create/session
     gate_pos = reg.find("registration_disabled")
-    write_pos = reg.find("kpi_v1_auth_write_user")
+    write_pos = reg.find("kpi_v1_registration_create_user_with_consent")
     session_pos = reg.find("kpi_v1_auth_set_session_user")
     check("register.php emits registration_disabled", "registration_disabled" in reg)
     check("register.php returns 403 on gate", "kpi_v1_json_out(403" in reg and "registration_disabled" in reg)
     check("gate before user write", gate_pos >= 0 and write_pos > gate_pos)
     check("gate before session", gate_pos >= 0 and session_pos > gate_pos)
+    reg_helper = read("api/v1/_registration.php")
     check(
         "gate uses empty(registrationEnabled)",
-        "empty($cfg['registrationEnabled'])" in reg or 'empty($cfg["registrationEnabled"])' in reg,
+        "if (!kpi_v1_registration_enabled($cfg))" in reg
+        and "return !empty($cfg['registrationEnabled']);" in reg_helper,
     )
 
     # 3) admin-create-user isolated

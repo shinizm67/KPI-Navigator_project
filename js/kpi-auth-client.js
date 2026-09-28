@@ -383,11 +383,19 @@
     });
   }
 
-  function register(email, password) {
-    return request('POST', '/auth/register.php', {
-      email: email,
-      password: password,
-    }).then(function (r) {
+  /** Public read-only registration status (server registrationEnabled is the single source). */
+  function registrationStatus() {
+    return request('GET', '/auth/registration-status.php', null);
+  }
+
+  function register(email, password, extra) {
+    var body = { email: email, password: password };
+    if (extra && typeof extra === 'object') {
+      Object.keys(extra).forEach(function (k) {
+        if (k !== 'email' && k !== 'password') body[k] = extra[k];
+      });
+    }
+    return request('POST', '/auth/register.php', body).then(function (r) {
       if (r.status === 201 && r.data && r.data.ok) {
         if (r.data.userId) bindLocalUserId(r.data.userId);
         setRegistrationComplete();
@@ -939,6 +947,36 @@
       if (isZh) return '目前暫停接受新註冊。';
       return 'New registrations are temporarily unavailable.';
     }
+    if (code === 'password_weak') {
+      if (isJa) return 'パスワードは8文字以上で、英字・数字・記号を含めてください。';
+      if (isZh) return '密碼至少需 8 個字元，並包含字母、數字與符號。';
+      return 'Password must be at least 8 characters, including letters, numbers, and symbols.';
+    }
+    if (code === 'consent_required') {
+      if (isJa) return '利用規約とプライバシーポリシーへの同意が必要です。';
+      if (isZh) return '必須同意服務條款與隱私權政策。';
+      return 'You must agree to the Terms of Service and Privacy Policy.';
+    }
+    if (code === 'consent_outdated') {
+      if (isJa) return '利用規約またはプライバシーポリシーが更新されました。ページを再読み込みし、内容を確認のうえ、もう一度同意してください。';
+      if (isZh) return '服務條款或隱私權政策已更新。請重新載入頁面，確認內容後再次同意。';
+      return 'The Terms of Service or Privacy Policy has been updated. Please reload the page, review it, and agree again.';
+    }
+    if (code === 'rate_limited') {
+      if (isJa) return '短時間に登録の試行が続いたため、一時的に受け付けを制限しています。しばらく時間をおいてから、もう一度お試しください。';
+      if (isZh) return '註冊嘗試次數過多，暫時無法受理。請稍候再試。';
+      return 'Too many registration attempts. Please wait a while and try again.';
+    }
+    if (code === 'registration_rejected') {
+      if (isJa) return '登録を完了できませんでした。ページを再読み込みし、少し時間をおいてから、もう一度お試しください。';
+      if (isZh) return '無法完成註冊。請重新載入頁面，稍候再試。';
+      return 'Registration could not be completed. Please reload the page and try again in a moment.';
+    }
+    if (code === 'registration_unavailable') {
+      if (isJa) return '現在、登録を処理できません。しばらくしてから、もう一度お試しください。';
+      if (isZh) return '目前無法處理註冊，請稍後再試。';
+      return 'Registration cannot be processed right now. Please try again later.';
+    }
     if (code === 'stale_account') {
       return staleAccountMessage();
     }
@@ -957,6 +995,7 @@
     resolveAuthBase: resolveAuthBase,
     resolveAppRoot: resolveAppRoot,
     register: register,
+    registrationStatus: registrationStatus,
     login: login,
     forgotPassword: forgotPassword,
     resetPassword: resetPassword,

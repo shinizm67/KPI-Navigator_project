@@ -621,16 +621,6 @@ def build_register() -> None:
         (">Cancel anytime</p>", ">可隨時取消</p>"),
         ('id="plan-price">$5 / Month</p>', 'id="plan-price">$5 / 月</p>'),
         (">Registration</span>", ">註冊</span>"),
-        ("<label for=\"name\">Name :</label>", "<label for=\"name\">姓名 :</label>"),
-        (
-            "<label for=\"company\">Company Name / Store Name :</label>",
-            "<label for=\"company\">公司名稱 / 店名 :</label>",
-        ),
-        (
-            "<label for=\"business-type\">Business Type :</label>",
-            "<label for=\"business-type\">產業 :</label>",
-        ),
-        ('aria-label="Select business type"', 'aria-label="選擇產業"'),
         (
             "<label for=\"email\">Email Address :</label>",
             "<label for=\"email\">電子郵件地址 :</label>",
@@ -655,8 +645,21 @@ def build_register() -> None:
         (">View Terms</a>", ">查看服務條款</a>"),
         (">View Privacy</a>", ">查看隱私權政策</a>"),
         (">Register</button>", ">註冊</button>"),
+        (
+            '<p class="registration-disabled-title">Registration temporarily unavailable</p>',
+            '<p class="registration-disabled-title">目前暫停接受新註冊</p>',
+        ),
+        (
+            '<p class="registration-disabled-body">New registrations are temporarily unavailable. Existing accounts can still sign in.</p>',
+            '<p class="registration-disabled-body">目前暫停接受新註冊。既有帳號仍可登入使用。</p>',
+        ),
+        ('<a href="../login/">Go to Login</a>', '<a href="../login/">前往登入</a>'),
+        (">Early Access / Contact</a>", ">搶先體驗／聯絡我們</a>"),
+        ('<label for="reg-extra-note">Leave this field empty</label>', '<label for="reg-extra-note">請勿填寫此欄位</label>'),
     ]
     for a, b in reps:
+        if a not in text:
+            raise SystemExit(f"build_register: EN source changed, missing: {a[:80]}")
         text = text.replace(a, b)
     text = _patch_lang_switcher(
         text,
@@ -666,7 +669,7 @@ def build_register() -> None:
         url_zh_tw="registration_si-fi_zh-tw.html",
     )
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.write_text(text, encoding="utf-8")
+    dst.write_text(text, encoding="utf-8", newline="\r\n")
     print(f"wrote {dst.relative_to(ROOT)}")
 
     # script.js for zh-tw register
@@ -737,8 +740,17 @@ def build_register() -> None:
     # Also keep $ prices (same as EN / zh-tw setting); localize / Month → / 月
     js = js.replace("planPrice.textContent = '$29 / Month';", "planPrice.textContent = '$29 / 月';")
     js = js.replace("planPrice.textContent = '$5 / Month';", "planPrice.textContent = '$5 / 月';")
-    (ROOT / "zh-tw" / "register" / "script.js").write_text(js, encoding="utf-8")
+    js = js.replace("window.__KPI_AUTH.errorMessage('en',", "window.__KPI_AUTH.errorMessage('zh',")
+    (ROOT / "zh-tw" / "register" / "script.js").write_text(js, encoding="utf-8", newline="\n")
     print("wrote zh-tw/register/script.js")
+
+    # Shared public chrome, then ?v= (zh-tw script content differs from EN, so it is re-stamped here).
+    import build_site_chrome
+    import stamp_registration_assets
+
+    zh_page = "zh-tw/register/registration_si-fi_zh-tw.html"
+    build_site_chrome.patch_page(next(c for c in build_site_chrome.PAGES_PUBLIC if c["path"] == zh_page))
+    stamp_registration_assets.stamp_page(zh_page)
 
 
 def wire_ja_en_switchers() -> None:

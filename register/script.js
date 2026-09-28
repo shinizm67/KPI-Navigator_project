@@ -11,20 +11,52 @@
   var pageLangRaw = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
   var authLang = pageLangRaw.indexOf('zh') === 0 ? 'zh' : (pageLangRaw.indexOf('ja') === 0 ? 'ja' : 'en');
 
-  /* Public registration emergency gate: do not submit when notice is shown */
+  /* 受付可否は server の registrationEnabled が正本。status GET が true を返すまで停止表示のまま（fail closed） */
   var regDisabledNotice = document.getElementById('registration-disabled-notice');
-  if (regDisabledNotice) {
-    var regFormGate = document.getElementById('registration-form');
+  var regFormGate = document.getElementById('registration-form');
+  var registrationOpen = false;
+  var registrationStatus = null;
+  if (regFormGate) {
+    regFormGate.setAttribute('hidden', 'hidden');
+    regFormGate.setAttribute('aria-hidden', 'true');
+    regFormGate.addEventListener('submit', function (e) {
+      if (registrationOpen) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
+  }
+  var btnGate = document.getElementById('btn-register');
+  if (btnGate) btnGate.disabled = true;
+
+  function isOpenStatus(r) {
+    var d = r && r.status === 200 ? r.data : null;
+    return !!(
+      d &&
+      d.registrationEnabled === true &&
+      typeof d.termsVersion === 'string' && d.termsVersion &&
+      typeof d.privacyVersion === 'string' && d.privacyVersion &&
+      typeof d.formToken === 'string' && d.formToken
+    );
+  }
+
+  function openRegistrationForm(d) {
+    registrationStatus = d;
+    registrationOpen = true;
+    if (regDisabledNotice) regDisabledNotice.hidden = true;
     if (regFormGate) {
-      regFormGate.setAttribute('hidden', 'hidden');
-      regFormGate.setAttribute('aria-hidden', 'true');
-      regFormGate.addEventListener('submit', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }, true);
+      regFormGate.removeAttribute('hidden');
+      regFormGate.removeAttribute('aria-hidden');
     }
-    var btnGate = document.getElementById('btn-register');
-    if (btnGate) btnGate.disabled = true;
+    setRegisterButtonState();
+  }
+
+  if (regFormGate && window.__KPI_AUTH && typeof window.__KPI_AUTH.registrationStatus === 'function') {
+    window.__KPI_AUTH
+      .registrationStatus()
+      .then(function (r) {
+        if (isOpenStatus(r)) openRegistrationForm(r.data);
+      })
+      .catch(function () {});
   }
 
 
@@ -160,7 +192,7 @@
     var passwordOk = isPasswordValid(pw);
     var confirmOk = pw.length > 0 && pwConfirm.length > 0 && pw === pwConfirm;
     var agreed = agreeTerms && agreeTerms.checked;
-    btnRegister.disabled = !(emailOk && passwordOk && confirmOk && agreed);
+    btnRegister.disabled = !(registrationOpen && emailOk && passwordOk && confirmOk && agreed);
   }
 
   if (btnRegister) {
@@ -212,6 +244,7 @@
 
     regForm.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (!registrationOpen || !registrationStatus) return;
       var password = document.getElementById('password');
       var passwordConfirm = document.getElementById('password-confirm');
       var emailEl = document.getElementById('email');
@@ -229,9 +262,16 @@
       }
       var email = emailEl ? emailEl.value.trim() : '';
       var pw = password ? password.value : '';
+      var extraNote = document.getElementById('reg-extra-note');
       if (btnRegister) btnRegister.disabled = true;
       window.__KPI_AUTH
-        .register(email, pw)
+        .register(email, pw, {
+          consentAccepted: !!(agreeTerms && agreeTerms.checked),
+          termsVersion: registrationStatus.termsVersion,
+          privacyVersion: registrationStatus.privacyVersion,
+          formToken: registrationStatus.formToken,
+          extraNote: extraNote ? extraNote.value : ''
+        })
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
             alert(isJa ? '登録が完了しました。ログイン画面へ進みます。' : 'Registration complete. Proceeding to login.');
