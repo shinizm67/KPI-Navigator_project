@@ -70,6 +70,15 @@ def main() -> None:
     for col in ["id BIGINT", "user_id", "terms_version", "privacy_version", "accepted_at", "source"]:
         check(f"consent migration has {col}", col in mig)
     check("schema.sql includes kpi_user_consents", "CREATE TABLE IF NOT EXISTS kpi_user_consents" in schema)
+    mig_sql = "\n".join(l for l in mig.splitlines() if not l.strip().startswith("--"))
+    stmts = [s.strip() for s in mig_sql.split(";") if s.strip()]
+    check("consent migration: exactly one statement, CREATE TABLE IF NOT EXISTS kpi_user_consents",
+          len(stmts) == 1 and stmts[0].startswith("CREATE TABLE IF NOT EXISTS kpi_user_consents ("), stmts[:2])
+    check("consent migration: no DROP / ALTER / DELETE / UPDATE / TRUNCATE / INSERT / RENAME / GRANT outside comments",
+          re.search(r"\b(DROP|ALTER|DELETE|UPDATE|TRUNCATE|INSERT|RENAME|GRANT|REPLACE)\b",
+                    re.sub(r"ON\s+DELETE\s+CASCADE", "", mig_sql, flags=re.I), re.I) is None)
+    check("consent migration: only references kpi_users (FK), never modifies it",
+          re.findall(r"\bkpi_\w+", mig_sql) == ["kpi_user_consents", "kpi_users"])
     api_php = "\n".join(p.read_text(encoding="utf-8") for p in (ROOT / "api").rglob("*.php"))
     check("no UPDATE / DELETE on kpi_user_consents anywhere in api/",
           re.search(r"(UPDATE|DELETE\s+FROM)\s+kpi_user_consents", api_php, re.I) is None)
@@ -136,6 +145,10 @@ def main() -> None:
               "errorMessage('zh',", 'newline="\\n"', "stamp_registration_assets.stamp_page(zh_page)"]:
         check(f"zh-tw generator keeps: {s}", s in gen)
     check("zh-tw generator fails loudly when EN source drifts", "EN source changed, missing" in gen)
+    zh_js = read("zh-tw/register/script.js")
+    check("zh-tw register: success message in Traditional Chinese", "alert('註冊完成，將前往登入頁面。');" in zh_js
+          and "Registration complete. Proceeding to login." not in zh_js)
+    check("zh-tw register: urlZhTw declared once", zh_js.count("var urlZhTw =") == 1)
 
     print(f"\n{PASSED} passed, {FAILED} failed")
     raise SystemExit(1 if FAILED else 0)

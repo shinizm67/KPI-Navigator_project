@@ -115,7 +115,6 @@
     var urlEn = wrap && wrap.getAttribute('data-url-en');
     var urlJa = wrap && wrap.getAttribute('data-url-ja');
     var urlZhTw = wrap && wrap.getAttribute('data-url-zh-tw');
-    var urlZhTw = wrap && wrap.getAttribute('data-url-zh-tw');
 
     langOptions.forEach(function (opt) {
       opt.addEventListener('click', function (e) {
@@ -258,7 +257,7 @@
         })
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
-            alert('Registration complete. Proceeding to login.');
+            alert('註冊完成，將前往登入頁面。');
             window.location.href = '../login/index.html';
             return;
           }

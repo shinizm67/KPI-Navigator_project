@@ -679,13 +679,8 @@ def build_register() -> None:
         "btnModeToggle.setAttribute('aria-label', isOffice ? 'Switch to Sci-Fi Mode' : 'Switch to Office Mode');",
         "btnModeToggle.setAttribute('aria-label', isOffice ? '切換至 Sci-Fi Mode' : '切換至 Office Mode');",
     )
-    js = js.replace(
-        "var urlEn = wrap && wrap.getAttribute('data-url-en');\n"
-        "    var urlJa = wrap && wrap.getAttribute('data-url-ja');",
-        "var urlEn = wrap && wrap.getAttribute('data-url-en');\n"
-        "    var urlJa = wrap && wrap.getAttribute('data-url-ja');\n"
-        "    var urlZhTw = wrap && wrap.getAttribute('data-url-zh-tw');",
-    )
+    if "var urlZhTw = wrap && wrap.getAttribute('data-url-zh-tw');" not in js:
+        raise SystemExit("build_register: EN script.js no longer declares urlZhTw")
     js = js.replace(
         "var baseUrl = (lang === 'ja' && urlJa) ? urlJa : (lang === 'en' && urlEn) ? urlEn : null;",
         "var baseUrl =\n"
@@ -741,6 +736,10 @@ def build_register() -> None:
     js = js.replace("planPrice.textContent = '$29 / Month';", "planPrice.textContent = '$29 / 月';")
     js = js.replace("planPrice.textContent = '$5 / Month';", "planPrice.textContent = '$5 / 月';")
     js = js.replace("window.__KPI_AUTH.errorMessage('en',", "window.__KPI_AUTH.errorMessage('zh',")
+    success_en = "alert('Registration complete. Proceeding to login.');"
+    if js.count(success_en) != 1:
+        raise SystemExit("build_register: EN success alert changed")
+    js = js.replace(success_en, "alert('註冊完成，將前往登入頁面。');")
     (ROOT / "zh-tw" / "register" / "script.js").write_text(js, encoding="utf-8", newline="\n")
     print("wrote zh-tw/register/script.js")
 
