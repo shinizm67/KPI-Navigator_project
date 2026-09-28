@@ -3097,6 +3097,25 @@ egister/ login/ plan/ legal/ setting/ 等を日→英→台湾。
 
 ---
 
+## BR-LAUNCH-09 Phase 2 Email Change（2026-09-28）
+
+`js/` → `api/` → `setting/` 日 → `en/setting/`（画面 + style.css）→ `zh-tw/setting/`。`config.local.php` / DB / `api/v1/data/` は上げない。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C202 | `C:\Users\funki\kpi-navigator\js\kpi-change-email-page.js` | `public_html/kpi-navigator/js/kpi-change-email-page.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-change-email-page.js |
+| C203 | `C:\Users\funki\kpi-navigator\api\v1\_email_change.php` | `public_html/kpi-navigator/api/v1/_email_change.php` | （URL 確認なし・PHP） |
+| C204 | `C:\Users\funki\kpi-navigator\api\v1\auth\request-email-change.php` | `public_html/kpi-navigator/api/v1/auth/request-email-change.php` | （GET で 405 になれば OK） |
+| C205 | `C:\Users\funki\kpi-navigator\api\v1\auth\confirm-email-change.php` | `public_html/kpi-navigator/api/v1/auth/confirm-email-change.php` | （GET で 405 になれば OK） |
+| C206 | `C:\Users\funki\kpi-navigator\setting\change_email_edit.html` | `public_html/kpi-navigator/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/setting/change_email_edit.html |
+| C207 | `C:\Users\funki\kpi-navigator\en\setting\change_email_edit.html` | `public_html/kpi-navigator/en/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_email_edit.html |
+| C208 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+| C209 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_email_edit.html` | `public_html/kpi-navigator/zh-tw/setting/change_email_edit.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_email_edit.html |
+
+確認: メールアドレス変更の編集画面で「現在のパスワード」が空欄。「確認コードを送信」→ 新しいアドレスに届いた6桁コードを入力して初めて変更される。登録は閉じたまま（registrationEnabled false）。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
