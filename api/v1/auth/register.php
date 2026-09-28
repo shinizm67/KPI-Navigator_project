@@ -11,6 +11,7 @@
 
 require __DIR__ . '/../_entitlement.php';
 require_once __DIR__ . '/../_registration.php';
+require_once __DIR__ . '/../_lifecycle.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
@@ -84,6 +85,7 @@ if ($created === 'email_taken') {
 if ($created !== 'ok') {
     kpi_v1_json_out(503, ['ok' => false, 'error' => 'registration_unavailable']);
 }
+kpi_v1_lifecycle_on_account_created($cfg, $user['userId'], $user['email']);
 
 kpi_v1_auth_set_session_user($user['userId']);
 kpi_v1_json_out(201, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

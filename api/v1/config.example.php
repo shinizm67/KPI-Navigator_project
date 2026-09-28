@@ -42,4 +42,10 @@ return [
     'passwordResetTtlMinutes' => 30,
     'passwordResetCooldownSeconds' => 120,
     'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
+    // Account Lifecycle History: HMAC key for the email matching value (random, >= 32 chars; never commit it; keep a
+    // copy outside the server — losing it only breaks return detection). Empty = account deletion refuses to run.
+    // Rotation: move the old key to lifecycleHmacPreviousKeys [id => key] so earlier rows still match.
+    'lifecycleHmacKeyId' => 'k1',
+    'lifecycleHmacKey' => '',
+    'lifecycleHmacPreviousKeys' => [],
 ];

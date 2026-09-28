@@ -9,13 +9,17 @@
  *   profile / reset tokens / consents through the existing ON DELETE CASCADE foreign keys.
  * - The session revoke file is bumped and kept: removing it would reset the epoch to 0 and
  *   let stale sessions of the (random, never reused) userId pass the epoch check again.
- * - Feedback left by the user is anonymized (message kept, identifiers stripped).
+ * - Feedback left by the user is anonymized (message, sent time and category kept; identifiers, plan and page stripped).
+ * - A minimal lifecycle history row (_lifecycle.php) is written together with the account delete: in MySQL inside the
+ *   same transaction, so a history row exists exactly when the account row was deleted. No HMAC key / history
+ *   tables = nothing is deleted (fail closed).
  */
 
 require_once __DIR__ . '/_registration.php';
 require_once __DIR__ . '/_session_revoke.php';
 require_once __DIR__ . '/_email_change.php';
 require_once __DIR__ . '/_admin_store.php';
+require_once __DIR__ . '/_lifecycle.php';
 
 const KPI_ACCOUNT_DELETE_INTENT_TTL = 600;
 const KPI_ACCOUNT_DELETE_MAX_PASSWORD_FAILURES = 5;
@@ -112,9 +116,13 @@ function kpi_v1_account_delete_intent_valid($user)
         && (int) ($intent['revokeEpoch'] ?? -1) === kpi_v1_session_revoke_get_epoch($user['userId']);
 }
 
-/** Every directory the post-delete cleanup writes to must be writable before anything is deleted. */
-function kpi_v1_account_delete_preflight()
+/** Lifecycle history must be recordable and every directory the post-delete cleanup writes to must be writable. */
+function kpi_v1_account_delete_preflight($cfg)
 {
+    if (!kpi_v1_lifecycle_ready($cfg)) {
+        error_log('kpn account delete: lifecycle history not ready (HMAC key or history storage missing)');
+        return false;
+    }
     $dirs = [
         kpi_v1_session_revoke_dir(),
         kpi_v1_email_change_dir(),
@@ -135,19 +143,22 @@ function kpi_v1_account_delete_preflight()
 }
 
 /**
- * Remove the canonical user record. Nothing is deleted when this returns anything but 'ok'.
+ * Remove the canonical user record and write its lifecycle history row.
+ * Nothing is deleted (and no history row remains) when this returns anything but 'ok'.
+ * @param string|null $lifecycleId set to the history row id on 'ok'
  * @return string ok | gone | stale | has_child_accounts | failed
  */
-function kpi_v1_account_delete_user_record($cfg, $user)
+function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
 {
     $userId = (string) $user['userId'];
+    $lifecycleId = null;
     if (kpi_v1_storage_is_mysql($cfg)) {
         require_once __DIR__ . '/_db.php';
         try {
             $pdo = kpi_v1_db($cfg);
             $pdo->beginTransaction();
             $st = $pdo->prepare(
-                'SELECT email, password_hash, role FROM kpi_users WHERE user_id = ? LIMIT 1 FOR UPDATE'
+                'SELECT email, password_hash, role, plan, created_at, parent_user_id FROM kpi_users WHERE user_id = ? LIMIT 1 FOR UPDATE'
             );
             $st->execute([$userId]);
             $row = $st->fetch(PDO::FETCH_ASSOC);
@@ -165,6 +176,19 @@ function kpi_v1_account_delete_user_record($cfg, $user)
                 $pdo->rollBack();
                 return 'has_child_accounts';
             }
+            $record = kpi_v1_lifecycle_build_record($cfg, [
+                'userId' => $userId,
+                'email' => (string) $row['email'],
+                'plan' => (string) $row['plan'],
+                'role' => (string) $row['role'],
+                'createdAt' => (string) $row['created_at'],
+                'parentUserId' => $row['parent_user_id'],
+            ], kpi_v1_lifecycle_db_origin($pdo, $userId));
+            if ($record === null) {
+                $pdo->rollBack();
+                return 'failed';
+            }
+            kpi_v1_lifecycle_db_insert($pdo, $record);
             $del = $pdo->prepare('DELETE FROM kpi_users WHERE user_id = ? LIMIT 1');
             $del->execute([$userId]);
             if ($del->rowCount() !== 1) {
@@ -172,6 +196,7 @@ function kpi_v1_account_delete_user_record($cfg, $user)
                 return 'failed';
             }
             $pdo->commit();
+            $lifecycleId = $record['lifecycleId'];
             return 'ok';
         } catch (Throwable $e) {
             if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
@@ -193,6 +218,10 @@ function kpi_v1_account_delete_user_record($cfg, $user)
     if (kpi_v1_account_delete_has_children($cfg, $userId)) {
         return 'has_child_accounts';
     }
+    $record = kpi_v1_lifecycle_build_record($cfg, $fresh, kpi_v1_lifecycle_file_origin($userId));
+    if ($record === null || !kpi_v1_lifecycle_file_insert($record)) {
+        return 'failed';
+    }
     $index = kpi_v1_auth_read_email_index();
     $nextIndex = $index;
     foreach ($nextIndex as $email => $uid) {
@@ -201,12 +230,15 @@ function kpi_v1_account_delete_user_record($cfg, $user)
         }
     }
     if (!kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $nextIndex)) {
+        kpi_v1_lifecycle_file_remove($record['lifecycleId']);
         return 'failed';
     }
     if (!@unlink($userPath)) {
         kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $index);
+        kpi_v1_lifecycle_file_remove($record['lifecycleId']);
         return 'failed';
     }
+    $lifecycleId = $record['lifecycleId'];
     return 'ok';
 }
 
@@ -301,6 +333,8 @@ function kpi_v1_account_delete_cleanup_files($cfg, $user)
         $row['sessionEmail'] = '';
         $row['contactEmail'] = '';
         $row['userAgent'] = '';
+        $row['plan'] = '';
+        $row['pageUrl'] = '';
         $row['anonymizedAt'] = gmdate('Y-m-d\TH:i:s\Z');
         if (!kpi_v1_registration_write_json_atomic($path, $row)) {
             $failed[] = 'feedback';
@@ -331,11 +365,12 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId)
         unset($_SESSION['kpi_delete_intent']);
         return [403, ['ok' => false, 'error' => 'delete_intent_required']];
     }
-    if (!kpi_v1_account_delete_preflight()) {
+    if (!kpi_v1_account_delete_preflight($cfg)) {
         return [500, ['ok' => false, 'error' => 'delete_failed']];
     }
 
-    $result = kpi_v1_account_delete_user_record($cfg, $user);
+    $lifecycleId = null;
+    $result = kpi_v1_account_delete_user_record($cfg, $user, $lifecycleId);
     if ($result === 'gone') {
         return [401, ['ok' => false, 'error' => 'unauthorized']];
     }
@@ -356,6 +391,12 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId)
     $residual = kpi_v1_account_delete_cleanup_files($cfg, $user);
     if ($residual !== []) {
         error_log('kpn account delete: residual files for ' . $userId . ': ' . implode(',', $residual));
+    }
+    if (!kpi_v1_lifecycle_set_cleanup($cfg, $lifecycleId, $residual)) {
+        error_log('kpn account delete: lifecycle cleanup status not recorded for ' . $lifecycleId);
+    }
+    if (kpi_v1_lifecycle_purge($cfg) === null) {
+        error_log('kpn lifecycle: retention purge failed');
     }
     return [200, ['ok' => true, 'deleted' => true]];
 }

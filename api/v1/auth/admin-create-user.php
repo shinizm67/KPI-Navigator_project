@@ -8,6 +8,7 @@
  */
 
 require __DIR__ . '/../_entitlement.php';
+require_once __DIR__ . '/../_lifecycle.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
@@ -54,5 +55,6 @@ $user = [
 kpi_v1_auth_write_user($user);
 $index[$email] = $userId;
 kpi_v1_auth_write_email_index($index);
+kpi_v1_lifecycle_on_account_created($cfg, $userId, $email);
 
 kpi_v1_json_out(201, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

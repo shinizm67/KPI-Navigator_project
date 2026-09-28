@@ -121,6 +121,46 @@ CREATE TABLE IF NOT EXISTS kpi_password_reset_tokens (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Account Lifecycle History: existing DBs use schema_kpi_account_lifecycle.add.sql once.
+CREATE TABLE IF NOT EXISTS kpi_account_deletions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  lifecycle_id VARCHAR(40) NOT NULL,
+  previous_user_id VARCHAR(64) NOT NULL,
+  email_hmac CHAR(64) NOT NULL,
+  hmac_key_id VARCHAR(16) NOT NULL,
+  account_created_at DATETIME NOT NULL,
+  deleted_at DATETIME NOT NULL,
+  lifetime_days INT UNSIGNED NOT NULL,
+  plan_at_deletion VARCHAR(16) NOT NULL,
+  role_at_deletion VARCHAR(32) NOT NULL,
+  account_kind VARCHAR(16) NOT NULL,
+  signup_origin VARCHAR(16) NOT NULL,
+  deletion_source VARCHAR(32) NOT NULL DEFAULT 'self_service',
+  cleanup_status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  cleanup_detail VARCHAR(255) NULL DEFAULT NULL,
+  exclude_from_metrics TINYINT(1) NOT NULL DEFAULT 0,
+  returned_at DATETIME NULL DEFAULT NULL,
+  return_count INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_kpi_account_deletions_lifecycle (lifecycle_id),
+  UNIQUE KEY uq_kpi_account_deletions_prev_user (previous_user_id),
+  KEY idx_kpi_account_deletions_hmac (email_hmac),
+  KEY idx_kpi_account_deletions_deleted (deleted_at),
+  KEY idx_kpi_account_deletions_created (account_created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kpi_account_origins (
+  user_id VARCHAR(64) NOT NULL,
+  origin VARCHAR(16) NOT NULL,
+  matched_deletion_id BIGINT UNSIGNED NULL DEFAULT NULL,
+  exclude_from_metrics TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_kpi_account_origins_user
+    FOREIGN KEY (user_id) REFERENCES kpi_users (user_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Legal consent (append-only): existing DBs use schema_kpi_user_consents.add.sql once.
 CREATE TABLE IF NOT EXISTS kpi_user_consents (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

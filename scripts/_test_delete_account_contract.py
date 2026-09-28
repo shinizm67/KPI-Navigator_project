@@ -67,7 +67,7 @@ def main() -> int:
           in_order(lib[lib.find("function kpi_v1_account_delete_execute_locked"):],
                    ["function kpi_v1_account_delete_execute_locked", "kpi_v1_auth_read_user($userId)",
                          "kpi_v1_auth_user_is_disabled(", "kpi_v1_account_delete_reject_reason(", "kpi_v1_account_delete_intent_valid(",
-                         "kpi_v1_account_delete_preflight()", "kpi_v1_account_delete_user_record(", "kpi_v1_session_revoke_bump(",
+                         "kpi_v1_account_delete_preflight($cfg)", "kpi_v1_account_delete_user_record(", "kpi_v1_session_revoke_bump(",
                          "kpi_v1_account_delete_cleanup_files("]))
     check("intent bound to user / email / password / revoke epoch / expiry",
           all(k in lib for k in ["'passwordFingerprint'", "'revokeEpoch'", "'expiresAt'", "KPI_ACCOUNT_DELETE_INTENT_TTL"]))
