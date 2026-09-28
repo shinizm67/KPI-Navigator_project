@@ -17,6 +17,10 @@ Phase 1 CLOSED 2026-09-28 — Registration UI simplification (`6994e30` deployed
 Phase 2 CLOSED 2026-09-28 — consent record / registration-status GET / abuse protection / cache-bust (`5a3267e` + `e9e8cc2` deployed; Shin approved)
 Phase 3 ACTIVE 2026-09-28 — production readiness; BLOCKED on client IP (REMOTE_ADDR spoofable via CF-Connecting-IP / X-Real-IP; waiting for ConoHa answer); consent table applied + verified; registrationEnabled stays false
 
+BR-LAUNCH-09 (Account Security & Destructive Actions) P0
+Phase 0 CLOSED 2026-09-28 — audit (fake Delete / Password / Email flows; allowSelfPlanChange false in production)
+Phase 1 ACTIVE 2026-09-28 — Password Change server-side (`067c51e` deployed + verified; waiting for Shin review)
+
 PREVIOUS PATH (IMPLEMENTED / PRODUCTION VERIFIED):
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
 Phase 0 CLOSED 2026-09-27
@@ -40,6 +44,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
+- BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 CLOSED; Phase 1 Password Change deployed, waiting for Shin review; Phase 2 not started)
 - BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; Phase 3 ACTIVE — BLOCKED on client IP; registration still off)
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 - (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
@@ -153,6 +158,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
+BR-LAUNCH-09: Shin reviews Phase 1 (Password Change). Phase 2 (Email Change) only after Shin GO.
 BR-LAUNCH-05 Phase 1 / Phase 2 CLOSED. Phase 3 ACTIVE (production readiness) — BLOCKED: production LiteSpeed sets REMOTE_ADDR from client-sent `CF-Connecting-IP` / `X-Real-IP`, so the IP rate limit can be bypassed; hosting publishes no trusted-header contract. Shin decided: no code change; Shin asks ConoHa support for the trusted client-IP header contract (stays BLOCKED until answered). `kpi_user_consents` applied by Shin in phpMyAdmin and verified read-only (InnoDB utf8mb4_unicode_ci, 6 columns, PK + (user_id, accepted_at) index, FK to `kpi_users` ON DELETE CASCADE, 0 rows; `kpi_users` unchanged). Also pending: controlled smoke GO. Plan Basic CTA follows registration-status (`0e6ee18` deployed; Early Access while off). `registrationEnabled` stays false; Cursor never flips it. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 
 BASELINE UX CONVENTION (not a work branch):
@@ -1424,6 +1430,23 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | ConoHa support answer on client IP (then Shin decides the fix). Consent table done. Then controlled smoke (after Shin GO), then `READY TO ENABLE PUBLIC REGISTRATION`. `registrationEnabled` is flipped only by Shin with explicit GO. |
 | note | Separate tasks: `BR-LAUNCH-05-EMAIL-VERIFY`, `BR-LAUNCH-05-REG-SESSION` (P2). Billing / Stripe stay out of scope. |
 
+### BR-LAUNCH-09
+
+| Field | Value |
+|-------|-------|
+| id | `BR-LAUNCH-09` |
+| name | Account Security & Destructive Actions |
+| parent | Launch readiness (outside `TRUNK-06`; do not reopen `TRUNK-06`) |
+| audit_2026-09-28 | Phase 0 audit (audit only). Delete Account 5 steps are UI only (no API; password / OTP not checked; shows deleted but deletes nothing). Change Password stored the new password in plaintext `localStorage['kpi-auth-password']` and faked success (no current password, no API). Change Email only rewrote local profile cache (login ID unchanged). Session Management = Coming soon; no Basic 1 / Pro 3 limit. Change Plan buttons `href="#"`. All mock pages confirmed live in production (GET). Numbered 09 because `BR-LAUNCH-06` is the CLOSED PL Excel task. |
+| gate0_2026-09-28 | Production `allowSelfPlanChange` = false (read-only probe: no-session POST to `set-plan.php` -> 403 `forbidden`, exits before any write). Not a Launch blocker; no config change. |
+| phase1_2026-09-28 | Real server-side Password Change. New `api/v1/auth/change-password.php` (POST, session user only, `X-KPI-Expected-User` guard, disabled -> 403, rule = public registration `kpi_v1_registration_password_ok` (8+, letter, digit, symbol), current password `password_verify`, same password -> `password_unchanged`, `PASSWORD_DEFAULT` hash; MySQL transaction `UPDATE ... WHERE user_id = ? AND password_hash = ?` (409 `password_conflict` if it changed meanwhile), revoke epoch bump inside the transaction (failure -> rollback, 500 `change_failed`); then `session_regenerate_id(true)` + epoch re-stamp). Shin decisions: other sessions revoked (same epoch as password reset), this session stays signed in on a new session ID (A); same password rejected; legacy `kpi-auth-password` removed on every page load (`kpi-auth-client.js`) and on the Change Password page. UI JP / EN / ZH-TW x Sci-Fi / Office: current password field, inline errors, `js/kpi-change-password-page.js` (only pre-existing `__KPI_AUTH` members, so a cached client still works), success screen only after server 200 (flag read once; direct open shows nothing), password values never stored. `stamp_registration_assets.py` now also covers the 6 Change Password pages; registration pages got only a new `?v=` for `kpi-auth-client.js` (Shin approved; registration unchanged, still off). Not changed: Login, Logout, Password Reset (8-char rule, clears current session), Admin Set Password (8-char rule), Registration, Initial Setup, Profile, force logout, DB schema. Commit `067c51e` pushed; deployed 13 files (production matched `067c51e~1` before upload; FTP + HTTP SHA match). Tests: contract 50/50; local server + UI smoke (PHP 8.3 + MariaDB + Chrome) 161/161; registration server smoke 86/86; password reset 106/106; admin actions 54/54; admin console 43/43; planning readiness 148/148; registration contract 69/69; production verify 36/36 (GET + no-session POST 401; no production password changed) + registration probe 33/33. Pre-existing failures unchanged at HEAD (stale-account annual cache-bust 1, emergency gate Plan CTA 3, profile_edit 3). |
+| status | ACTIVE (Phase 0 CLOSED; Phase 1 deployed + verified, waiting for Shin review) |
+| priority | P0 |
+| started_at | 2026-09-28 |
+| phases | 1 Password Change / 2 Email Change / 3 Delete Account / 4 Plan / Subscription placeholder cleanup / 5 Account launch-wide smoke. One phase at a time. |
+| next_action | Shin reviews Phase 1 (optional Human Smoke on a test account). Phase 2 (Email Change) only after Shin GO. |
+| note | Registered follow-ups (not in Phase 1): no attempt limit on wrong current password (same as login; P1); password rule differs between registration / self change (8+ letter digit symbol) and reset / admin set (8+ only), not unified (P2); no `session_regenerate_id` on login (P2, unchanged). |
+
 ### BR-LAUNCH-06
 
 | Field | Value |
@@ -1694,6 +1717,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LAUNCH-06` | PL Excel Download Repair | CLOSED | P1 | `TRUNK-06` |
 | `BR-LAUNCH-07` | Global Menu Spacing / Reservation Button Collision | CLOSED | P1 | `TRUNK-06` |
 | `BR-LAUNCH-08` | ZH-TW PL Global Menu Parity Repair | CLOSED | P1 | `TRUNK-06` |
+| `BR-LAUNCH-09` | Account Security & Destructive Actions | ACTIVE | P0 | Launch readiness |
 | `BR-POST-XLSX-REPORT` | True XLSX / PL Report Export | POST-LAUNCH / DEFERRED | HIGH | `TRUNK-06` |
 | `BR-POST-BOOKING-ICON-COLOR` | Booking Icon Office Mode Color | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
@@ -1715,7 +1739,7 @@ CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C
 PAUSED under `TRUNK-06` (legacy): none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP)  
+ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP), `BR-LAUNCH-09` (Phase 0 CLOSED; Phase 1 deployed)  
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -1854,3 +1878,5 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-28 | **BR-LAUNCH-05 Phase 2 CLOSED / Phase 3 ACTIVE (BLOCKED)** Consent SQL safe (CREATE TABLE only); production MySQL 8.4.8 FK-compatible; table not applied yet. Client IP audit: REMOTE_ADDR spoofable via client `CF-Connecting-IP` / `X-Real-IP` (P1, IP rate limit bypass); no hosting contract. zh-tw register success message + duplicate var fixed via generator (`4bca49d`, 2 files deployed). `registrationEnabled` stays false. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 3 Plan CTA** Basic CTA follows registration-status (Early Access by default / on failure; Pro unchanged). `0e6ee18` deployed (4 files). Client IP: Shin asks ConoHa support; no code change; still BLOCKED. `registrationEnabled` stays false. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 3 Gate A done** Shin applied `schema_kpi_user_consents.add.sql`. Read-only verification: table InnoDB utf8mb4_unicode_ci; id BIGINT UNSIGNED AI, user_id VARCHAR(64), terms_version / privacy_version / source VARCHAR(32), accepted_at DATETIME, all NOT NULL; PRIMARY + `idx_kpi_user_consents_user_accepted`; `fk_kpi_user_consents_user` -> `kpi_users.user_id` CASCADE; 0 rows; `kpi_users` columns / row count unchanged. Still BLOCKED on client IP. `registrationEnabled` false. |
+| 2026-09-28 | **BR-LAUNCH-09 REGISTER / Phase 0 CLOSED** Account Security & Destructive Actions (09 because 06 is the CLOSED PL Excel task). Audit: Delete / Password / Email flows are UI mocks live in production. Gate 0: production `allowSelfPlanChange` false (no-session POST `set-plan.php` 403). Shin: real server-side processing, one phase at a time. |
+| 2026-09-28 | **BR-LAUNCH-09 Phase 1 deployed** Password Change: `change-password.php` (current password, registration rule, same password rejected, transaction + revoke epoch, new session ID), UI JP / EN / ZH-TW x Sci-Fi / Office, plaintext `kpi-auth-password` removed. `067c51e` deployed (13 files, SHA match). Smokes: contract 50/50, local 161/161, registration 86/86, production 36/36 + 33/33. No production password changed. `registrationEnabled` false. Phase 2 not started. |

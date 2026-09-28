@@ -3073,6 +3073,30 @@ egister/ login/ plan/ legal/ setting/ 等を日→英→台湾。
 
 ---
 
+## BR-LAUNCH-09 Phase 1 Password Change（2026-09-28）
+
+`js/` → `api/` → `setting/` 日→英→台湾 → `register/` 日→英→台湾。登録ページは `?v=` の値だけ。`config.local.php` / DB は上げない。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C189 | `C:\Users\funki\kpi-navigator\js\kpi-auth-client.js` | `public_html/kpi-navigator/js/kpi-auth-client.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-auth-client.js |
+| C190 | `C:\Users\funki\kpi-navigator\js\kpi-change-password-page.js` | `public_html/kpi-navigator/js/kpi-change-password-page.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-change-password-page.js |
+| C191 | `C:\Users\funki\kpi-navigator\api\v1\_registration.php` | `public_html/kpi-navigator/api/v1/_registration.php` | （URL 確認なし・PHP） |
+| C192 | `C:\Users\funki\kpi-navigator\api\v1\auth\change-password.php` | `public_html/kpi-navigator/api/v1/auth/change-password.php` | （GET で 405 になれば OK） |
+| C193 | `C:\Users\funki\kpi-navigator\setting\change_password.html` | `public_html/kpi-navigator/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password.html |
+| C194 | `C:\Users\funki\kpi-navigator\setting\change_password_success.html` | `public_html/kpi-navigator/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/setting/change_password_success.html |
+| C195 | `C:\Users\funki\kpi-navigator\en\setting\change_password.html` | `public_html/kpi-navigator/en/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_password.html |
+| C196 | `C:\Users\funki\kpi-navigator\en\setting\change_password_success.html` | `public_html/kpi-navigator/en/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/en/setting/change_password_success.html |
+| C197 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_password.html` | `public_html/kpi-navigator/zh-tw/setting/change_password.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_password.html |
+| C198 | `C:\Users\funki\kpi-navigator\zh-tw\setting\change_password_success.html` | `public_html/kpi-navigator/zh-tw/setting/change_password_success.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/change_password_success.html |
+| C199 | `C:\Users\funki\kpi-navigator\register\registration_si-fi_jp\registration_si-fi_jp.html` | `public_html/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html` | https://forge-laboratory.com/kpi-navigator/register/registration_si-fi_jp/registration_si-fi_jp.html |
+| C200 | `C:\Users\funki\kpi-navigator\en\register\registration_si-fi_en.html` | `public_html/kpi-navigator/en/register/registration_si-fi_en.html` | https://forge-laboratory.com/kpi-navigator/en/register/registration_si-fi_en.html |
+| C201 | `C:\Users\funki\kpi-navigator\zh-tw\register\registration_si-fi_zh-tw.html` | `public_html/kpi-navigator/zh-tw/register/registration_si-fi_zh-tw.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/register/registration_si-fi_zh-tw.html |
+
+確認: パスワード変更画面に「現在のパスワード」欄。成功画面は直接開くとメッセージが出ない。`kpi-auth-password` を保存しない。登録は閉じたまま（registrationEnabled false）。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  
