@@ -1036,6 +1036,11 @@
     errorMessage: errorMessage,
   };
 
+  /* Passwords must never live in browser storage; drop the legacy plaintext copy on every page. */
+  try {
+    localStorage.removeItem('kpi-auth-password');
+  } catch (_ePw) {}
+
   // App / settings pages: enforce server session; public auth pages skip redirect.
   try {
     enforceSession().catch(function () {});

@@ -1,7 +1,7 @@
 <?php
 /**
  * Public registration helpers: legal consent record, status, abuse protection.
- * Used by auth/register.php and auth/registration-status.php only.
+ * Used by auth/register.php and auth/registration-status.php; auth/change-password.php reuses the password rule.
  * admin-create-user.php / login.php / reset-password.php keep their own contracts.
  */
 
@@ -40,7 +40,7 @@ function kpi_v1_registration_dir()
     return $dir;
 }
 
-/* ---------- Password (public registration only; matches the Registration page rule) ---------- */
+/* ---------- Password (public registration + self password change; matches the Registration page rule) ---------- */
 
 function kpi_v1_registration_password_ok($password)
 {

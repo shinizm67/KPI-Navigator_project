@@ -31,6 +31,7 @@ PW_REPLACEMENTS = [
     # Longer phrase first so "New Password" does not leave "Confirm 新密碼"
     ("Confirm New Password :", "確認新密碼 :"),
     ("New Password :", "新密碼 :"),
+    ("Current Password :", "目前密碼 :"),
     (">Update Password</button>", ">更新密碼</button>"),
     ("Password successfully changed.", "密碼已成功變更。"),
     (">Back to Profile</a>", ">返回個人資料</a>"),
