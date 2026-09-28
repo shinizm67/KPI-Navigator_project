@@ -275,6 +275,11 @@ def build_plan() -> None:
         ),
         (">Register Basic</a>", ">註冊基本方案</a>"),
         (">Register Pro</a>", ">註冊專業方案</a>"),
+        (
+            'data-register-href="../register/registration_si-fi_en.html"',
+            'data-register-href="../register/registration_si-fi_zh-tw.html"',
+        ),
+        ('data-register-label="Sign up for Basic"', 'data-register-label="註冊基本方案"'),
     ]
     for a, b in reps:
         text = text.replace(a, b)
@@ -288,6 +293,9 @@ def build_plan() -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_text(text, encoding="utf-8")
     print(f"wrote {dst.relative_to(ROOT)}")
+    import stamp_registration_assets
+
+    stamp_registration_assets.stamp_page("zh-tw/plan/index.html")
 
 
 def build_account_protection() -> None:

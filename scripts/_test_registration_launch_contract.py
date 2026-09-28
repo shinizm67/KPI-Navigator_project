@@ -145,6 +145,16 @@ def main() -> None:
               "errorMessage('zh',", 'newline="\\n"', "stamp_registration_assets.stamp_page(zh_page)"]:
         check(f"zh-tw generator keeps: {s}", s in gen)
     check("zh-tw generator fails loudly when EN source drifts", "EN source changed, missing" in gen)
+    for rel, reg in [("plan/index.html", "../register/registration_si-fi_jp/registration_si-fi_jp.html"),
+                     ("en/plan/index.html", "../register/registration_si-fi_en.html"),
+                     ("zh-tw/plan/index.html", "../register/registration_si-fi_zh-tw.html")]:
+        t = read(rel)
+        m = re.search(r'<a href="([^"]+)" class="btn-register" id="plan-basic-cta" data-register-href="([^"]+)"', t)
+        check(f"{rel}: Basic CTA defaults to Early Access mailto, switches only to same-language Registration",
+              m is not None and m.group(1).startswith("mailto:") and m.group(2) == reg and "kpi-plan-cta.js?v=" in t)
+    cta = read("js/kpi-plan-cta.js")
+    check("kpi-plan-cta.js opens only on registrationEnabled === true + versions + formToken (same as Registration)",
+          "d.registrationEnabled !== true" in cta and "typeof d.formToken !== 'string'" in cta and ".catch(function () {})" in cta)
     zh_js = read("zh-tw/register/script.js")
     check("zh-tw register: success message in Traditional Chinese", "alert('註冊完成，將前往登入頁面。');" in zh_js
           and "Registration complete. Proceeding to login." not in zh_js)
