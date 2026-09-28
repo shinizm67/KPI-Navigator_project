@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Stamp Registration / Plan / Change Password page script URLs with a content hash (?v=<sha256[:12]>).
+"""Stamp Registration / Plan / Change Password / Change Email page script URLs with a content hash (?v=<sha256[:12]>).
 
 JS is served with a 7-day cache, so every page listed here must request a URL that
 changes whenever the script content changes. Run after editing any Registration script,
-js/kpi-auth-client.js, js/kpi-plan-cta.js or js/kpi-change-password-page.js
+js/kpi-auth-client.js, js/kpi-plan-cta.js, js/kpi-change-password-page.js or js/kpi-change-email-page.js
 (build_zh_tw_public_pages.py runs it for zh-tw register).
 
   python scripts/stamp_registration_assets.py          # rewrite
@@ -41,6 +41,9 @@ PAGES = {
     "en/setting/change_password_success.html": {"../../js/kpi-change-password-page.js": "js/kpi-change-password-page.js"},
     "zh-tw/setting/change_password.html": {"../../js/kpi-change-password-page.js": "js/kpi-change-password-page.js"},
     "zh-tw/setting/change_password_success.html": {"../../js/kpi-change-password-page.js": "js/kpi-change-password-page.js"},
+    "setting/change_email_edit.html": {"../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
+    "en/setting/change_email_edit.html": {"../../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
+    "zh-tw/setting/change_email_edit.html": {"../../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
 }
 
 

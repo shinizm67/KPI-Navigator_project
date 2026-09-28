@@ -882,6 +882,15 @@ body.office-mode .si-fi.profile-page .profile-form .profile-location-option.is-a
   font-family: 'BIZ UDPGothic', sans-serif;
 }
 
+.si-fi.profile-page #email-change-back {
+  color: var(--si-fi-cyan);
+  font-size: 13px;
+}
+
+.si-fi.office-mode.profile-page #email-change-back {
+  color: #000;
+}
+
 /* Save Profile ボタン: カーソルオーバー時に背景緑・文字白 */
 .si-fi.profile-page .profile-save-button:hover {
   background: var(--si-fi-green);

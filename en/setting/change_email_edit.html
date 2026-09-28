@@ -259,10 +259,10 @@
           </div>
 
           <div class="form-group">
-            <label for="password">Password :</label>
+            <label for="current-password">Current Password :</label>
             <div class="input-password-wrap">
-              <input type="password" id="password" name="password" autocomplete="current-password" value="$Forgelab1234567" required>
-              <button type="button" class="btn-password-toggle" aria-label="Show password" title="Show password" data-target="password">
+              <input type="password" id="current-password" name="current_password" autocomplete="current-password" required>
+              <button type="button" class="btn-password-toggle" aria-label="Show password" title="Show password" data-target="current-password">
                 <span class="icon-eye-open" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </span>
@@ -271,12 +271,33 @@
                 </span>
               </button>
             </div>
-            <p class="form-error" id="err-password" role="alert" aria-live="polite" hidden></p>
+            <p class="form-error" id="err-current-password" role="alert" aria-live="polite" hidden></p>
           </div>
         </div>
 
+        <p class="form-error" id="err-change-email" role="alert" aria-live="polite" hidden></p>
         <div class="form-actions profile-actions">
-          <button type="submit" class="btn-submit btn-register profile-save-button">Update Email Address</button>
+          <button type="submit" class="btn-submit btn-register profile-save-button">Send Confirmation Code</button>
+        </div>
+      </form>
+
+      <form class="registration-form profile-form" action="#" method="post" id="confirm-email-form" novalidate hidden>
+        <div class="profile-alert" id="email-code-sent" role="status" aria-live="polite"></div>
+
+        <div class="profile-editable-group">
+          <div class="form-group">
+            <label for="email-code">Confirmation Code :</label>
+            <input type="text" id="email-code" name="email_code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" required>
+            <p class="form-error" id="err-email-code" role="alert" aria-live="polite" hidden></p>
+          </div>
+        </div>
+
+        <p class="form-error" id="err-confirm-email-form" role="alert" aria-live="polite" hidden></p>
+        <div class="form-actions profile-actions">
+          <button type="submit" class="btn-submit btn-register profile-save-button">Change Email Address</button>
+        </div>
+        <div class="form-actions profile-actions">
+          <a href="#" id="email-change-back">Back to the previous step</a>
         </div>
       </form>
     </main>
@@ -475,85 +496,8 @@
     })();
   </script>
   <script src="../../js/kpi-profile-session-account.js?v=20260919-1" data-kpi-profile-account-mode="change-email"></script>
+  <script src="../../js/kpi-change-email-page.js?v=9bb9c0f7f91a"></script>
   <script>
-    (function () {
-      var form = document.getElementById('change-email-form');
-      if (!form) return;
-
-      var newEmailEl = document.getElementById('new-email');
-      var confirmEl = document.getElementById('confirm-email');
-      var passwordEl = document.getElementById('password');
-
-      var errNew = document.getElementById('err-new-email');
-      var errConfirm = document.getElementById('err-confirm-email');
-      var errPw = document.getElementById('err-password');
-
-      function setErr(el, msg) {
-        if (!el) return;
-        el.textContent = msg || '';
-        el.hidden = !msg;
-      }
-
-      function norm(v) {
-        return String(v || '').trim();
-      }
-
-      function isEmailLike(v) {
-        // simple, practical check for UI validation
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      }
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        setErr(errNew, '');
-        setErr(errConfirm, '');
-        setErr(errPw, '');
-
-        var newEmail = norm(newEmailEl && newEmailEl.value);
-        var confirmEmail = norm(confirmEl && confirmEl.value);
-        var pw = norm(passwordEl && passwordEl.value);
-
-        var hasError = false;
-
-        if (!newEmail) {
-          setErr(errNew, 'Please enter a new email address.');
-          hasError = true;
-        } else if (!isEmailLike(newEmail)) {
-          setErr(errNew, 'Please enter a valid email address.');
-          hasError = true;
-        }
-
-        if (!confirmEmail) {
-          setErr(errConfirm, 'Please confirm your new email address.');
-          hasError = true;
-        } else if (newEmail && confirmEmail && newEmail !== confirmEmail) {
-          setErr(errConfirm, 'Email addresses do not match.');
-          hasError = true;
-        }
-
-        if (!pw) {
-          setErr(errPw, 'Please enter your password.');
-          hasError = true;
-        }
-
-        if (hasError) return;
-
-        // mock update: persist to localStorage (profile + email pages read from it)
-        try {
-          var raw = localStorage.getItem('kpi-profile-last');
-          var data = raw ? JSON.parse(raw) : {};
-          if (!data || typeof data !== 'object') data = {};
-          data.email = newEmail;
-          localStorage.setItem('kpi-profile-last', JSON.stringify(data));
-          sessionStorage.setItem('kpi-email-change-success', '1');
-        } catch (err) {
-          // If persistence fails, stay on page (could show error in future)
-          return;
-        }
-
-        window.location.href = 'change_email.html';
-      });
-    })();
     (function () {
       /* Password visibility toggle (eye icon) */
       document.querySelectorAll('.btn-password-toggle').forEach(function (btn) {

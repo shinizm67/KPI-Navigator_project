@@ -240,29 +240,29 @@
       <form class="registration-form profile-form" action="#" method="post" id="change-email-form" novalidate>
         <div class="profile-readonly-group email-change-current-wrap">
           <div class="form-group form-group-email-display email-change-current-row">
-            <label>Current Email Address :</label>
+            <label>現在のメールアドレス :</label>
             <p class="profile-email-value" id="current-email" aria-live="polite">—</p>
           </div>
         </div>
 
         <div class="profile-editable-group">
           <div class="form-group">
-            <label for="new-email">New Email Address :</label>
+            <label for="new-email">新しいメールアドレス :</label>
             <input type="email" id="new-email" name="new_email" autocomplete="email" inputmode="email" placeholder="name@example.com" required>
             <p class="form-error" id="err-new-email" role="alert" aria-live="polite" hidden></p>
           </div>
 
           <div class="form-group">
-            <label for="confirm-email">Confirm New Email Address :</label>
+            <label for="confirm-email">新しいメールアドレス（確認） :</label>
             <input type="email" id="confirm-email" name="confirm_email" autocomplete="email" inputmode="email" placeholder="name@example.com" required>
             <p class="form-error" id="err-confirm-email" role="alert" aria-live="polite" hidden></p>
           </div>
 
           <div class="form-group">
-            <label for="password">Password :</label>
+            <label for="current-password">現在のパスワード :</label>
             <div class="input-password-wrap">
-              <input type="password" id="password" name="password" autocomplete="current-password" value="$Forgelab1234567" required>
-              <button type="button" class="btn-password-toggle" aria-label="パスワードを表示" title="パスワードを表示" data-target="password">
+              <input type="password" id="current-password" name="current_password" autocomplete="current-password" required>
+              <button type="button" class="btn-password-toggle" aria-label="パスワードを表示" title="パスワードを表示" data-target="current-password">
                 <span class="icon-eye-open" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </span>
@@ -271,12 +271,33 @@
                 </span>
               </button>
             </div>
-            <p class="form-error" id="err-password" role="alert" aria-live="polite" hidden></p>
+            <p class="form-error" id="err-current-password" role="alert" aria-live="polite" hidden></p>
           </div>
         </div>
 
+        <p class="form-error" id="err-change-email" role="alert" aria-live="polite" hidden></p>
         <div class="form-actions profile-actions">
-          <button type="submit" class="btn-submit btn-register profile-save-button">メールアドレスを更新</button>
+          <button type="submit" class="btn-submit btn-register profile-save-button">確認コードを送信</button>
+        </div>
+      </form>
+
+      <form class="registration-form profile-form" action="#" method="post" id="confirm-email-form" novalidate hidden>
+        <div class="profile-alert" id="email-code-sent" role="status" aria-live="polite"></div>
+
+        <div class="profile-editable-group">
+          <div class="form-group">
+            <label for="email-code">確認コード :</label>
+            <input type="text" id="email-code" name="email_code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" required>
+            <p class="form-error" id="err-email-code" role="alert" aria-live="polite" hidden></p>
+          </div>
+        </div>
+
+        <p class="form-error" id="err-confirm-email-form" role="alert" aria-live="polite" hidden></p>
+        <div class="form-actions profile-actions">
+          <button type="submit" class="btn-submit btn-register profile-save-button">メールアドレスを変更</button>
+        </div>
+        <div class="form-actions profile-actions">
+          <a href="#" id="email-change-back">入力画面に戻る</a>
         </div>
       </form>
     </main>
@@ -475,82 +496,8 @@
     })();
   </script>
   <script src="../js/kpi-profile-session-account.js?v=20260919-1" data-kpi-profile-account-mode="change-email"></script>
+  <script src="../js/kpi-change-email-page.js?v=9bb9c0f7f91a"></script>
   <script>
-    (function () {
-      var form = document.getElementById('change-email-form');
-      if (!form) return;
-
-      var newEmailEl = document.getElementById('new-email');
-      var confirmEl = document.getElementById('confirm-email');
-      var passwordEl = document.getElementById('password');
-
-      var errNew = document.getElementById('err-new-email');
-      var errConfirm = document.getElementById('err-confirm-email');
-      var errPw = document.getElementById('err-password');
-
-      function setErr(el, msg) {
-        if (!el) return;
-        el.textContent = msg || '';
-        el.hidden = !msg;
-      }
-
-      function norm(v) {
-        return String(v || '').trim();
-      }
-
-      function isEmailLike(v) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      }
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        setErr(errNew, '');
-        setErr(errConfirm, '');
-        setErr(errPw, '');
-
-        var newEmail = norm(newEmailEl && newEmailEl.value);
-        var confirmEmail = norm(confirmEl && confirmEl.value);
-        var pw = norm(passwordEl && passwordEl.value);
-
-        var hasError = false;
-
-        if (!newEmail) {
-          setErr(errNew, '新しいメールアドレスを入力してください。');
-          hasError = true;
-        } else if (!isEmailLike(newEmail)) {
-          setErr(errNew, 'メールアドレスの形式が正しくありません。');
-          hasError = true;
-        }
-
-        if (!confirmEmail) {
-          setErr(errConfirm, '確認用メールアドレスを入力してください。');
-          hasError = true;
-        } else if (newEmail && confirmEmail && newEmail !== confirmEmail) {
-          setErr(errConfirm, 'メールアドレスが一致しません。');
-          hasError = true;
-        }
-
-        if (!pw) {
-          setErr(errPw, 'パスワードを入力してください。');
-          hasError = true;
-        }
-
-        if (hasError) return;
-
-        try {
-          var raw = localStorage.getItem('kpi-profile-last');
-          var data = raw ? JSON.parse(raw) : {};
-          if (!data || typeof data !== 'object') data = {};
-          data.email = newEmail;
-          localStorage.setItem('kpi-profile-last', JSON.stringify(data));
-          sessionStorage.setItem('kpi-email-change-success', '1');
-        } catch (err) {
-          return;
-        }
-
-        window.location.href = 'change_email.html';
-      });
-    })();
     (function () {
       /* Password visibility toggle (eye icon) */
       document.querySelectorAll('.btn-password-toggle').forEach(function (btn) {

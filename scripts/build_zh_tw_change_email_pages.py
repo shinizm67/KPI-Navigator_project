@@ -33,7 +33,12 @@ EMAIL_REPLACEMENTS = [
     # Longer phrase first so "New Email Address" does not leave "Confirm 新的…"
     ("Confirm New Email Address :", "確認新的電子郵件地址 :"),
     ("New Email Address :", "新的電子郵件地址 :"),
+    ("Current Password :", "目前密碼 :"),
     ("Password :", "密碼 :"),
+    (">Send Confirmation Code</button>", ">傳送確認碼</button>"),
+    ("Confirmation Code :", "確認碼 :"),
+    (">Change Email Address</button>", ">變更電子信箱</button>"),
+    (">Back to the previous step</a>", ">返回輸入頁面</a>"),
     (">Edit</a>", ">編輯</a>"),
     (">Update Email Address</button>", ">更新電子郵件地址</button>"),
     ('aria-label="Show password"', 'aria-label="顯示密碼"'),
