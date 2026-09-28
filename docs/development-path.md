@@ -15,7 +15,7 @@ BR-LAUNCH-05 (Registration -> Initial Setup Integration) P1
 Phase 0 audit + Freeze 2026-09-28
 Phase 1 CLOSED 2026-09-28 — Registration UI simplification (`6994e30` deployed; Shin approved)
 Phase 2 CLOSED 2026-09-28 — consent record / registration-status GET / abuse protection / cache-bust (`5a3267e` + `e9e8cc2` deployed; Shin approved)
-Phase 3 ACTIVE 2026-09-28 — production readiness; BLOCKED on client IP (REMOTE_ADDR spoofable via CF-Connecting-IP / X-Real-IP); consent table not yet applied; registrationEnabled stays false
+Phase 3 ACTIVE 2026-09-28 — production readiness; BLOCKED on client IP (REMOTE_ADDR spoofable via CF-Connecting-IP / X-Real-IP; waiting for ConoHa answer); consent table applied + verified; registrationEnabled stays false
 
 PREVIOUS PATH (IMPLEMENTED / PRODUCTION VERIFIED):
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
@@ -153,7 +153,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-LAUNCH-05 Phase 1 / Phase 2 CLOSED. Phase 3 ACTIVE (production readiness) — BLOCKED: production LiteSpeed sets REMOTE_ADDR from client-sent `CF-Connecting-IP` / `X-Real-IP`, so the IP rate limit can be bypassed; hosting publishes no trusted-header contract. Shin decided: no code change; Shin asks ConoHa support for the trusted client-IP header contract (stays BLOCKED until answered). Also pending: Shin applies `api/v1/schema_kpi_user_consents.add.sql` in phpMyAdmin (then read-only verification), controlled smoke GO. Plan Basic CTA follows registration-status (`0e6ee18` deployed; Early Access while off). `registrationEnabled` stays false; Cursor never flips it. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
+BR-LAUNCH-05 Phase 1 / Phase 2 CLOSED. Phase 3 ACTIVE (production readiness) — BLOCKED: production LiteSpeed sets REMOTE_ADDR from client-sent `CF-Connecting-IP` / `X-Real-IP`, so the IP rate limit can be bypassed; hosting publishes no trusted-header contract. Shin decided: no code change; Shin asks ConoHa support for the trusted client-IP header contract (stays BLOCKED until answered). `kpi_user_consents` applied by Shin in phpMyAdmin and verified read-only (InnoDB utf8mb4_unicode_ci, 6 columns, PK + (user_id, accepted_at) index, FK to `kpi_users` ON DELETE CASCADE, 0 rows; `kpi_users` unchanged). Also pending: controlled smoke GO. Plan Basic CTA follows registration-status (`0e6ee18` deployed; Early Access while off). `registrationEnabled` stays false; Cursor never flips it. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1421,7 +1421,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `TRUNK-06` |
 | reason | ?????????? readiness ???Stripe / billing ??????????????????????? assessment ????? |
 | evidence | commit `af07bf7` Disable public registration until billing is ready; `free-trial-account-ops.md`?billingType ???? |
-| next_action | ConoHa support answer on client IP (then Shin decides the fix), phpMyAdmin apply of `schema_kpi_user_consents.add.sql`. Then controlled smoke (after Shin GO), then `READY TO ENABLE PUBLIC REGISTRATION`. `registrationEnabled` is flipped only by Shin with explicit GO. |
+| next_action | ConoHa support answer on client IP (then Shin decides the fix). Consent table done. Then controlled smoke (after Shin GO), then `READY TO ENABLE PUBLIC REGISTRATION`. `registrationEnabled` is flipped only by Shin with explicit GO. |
 | note | Separate tasks: `BR-LAUNCH-05-EMAIL-VERIFY`, `BR-LAUNCH-05-REG-SESSION` (P2). Billing / Stripe stay out of scope. |
 
 ### BR-LAUNCH-06
@@ -1853,3 +1853,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-28 | **BR-LAUNCH-05 Phase 1 CLOSED / Phase 2 deployed** Consent table `kpi_user_consents` (append-only, transaction with user), `registration-status.php` + fail-closed UI, IP / email rate limit, honeypot, min submit time, `?v=` cache-bust JP / EN / ZH-TW, ZH generator strict. `5a3267e` + `e9e8cc2` deployed (10 files, SHA match). Production GET 30/30; smokes green. `registrationEnabled` stays false. Consent table not applied to production DB (Phase 3 prerequisite). P0 = 0, P1 = 0. Phase 3 not started. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 2 CLOSED / Phase 3 ACTIVE (BLOCKED)** Consent SQL safe (CREATE TABLE only); production MySQL 8.4.8 FK-compatible; table not applied yet. Client IP audit: REMOTE_ADDR spoofable via client `CF-Connecting-IP` / `X-Real-IP` (P1, IP rate limit bypass); no hosting contract. zh-tw register success message + duplicate var fixed via generator (`4bca49d`, 2 files deployed). `registrationEnabled` stays false. |
 | 2026-09-28 | **BR-LAUNCH-05 Phase 3 Plan CTA** Basic CTA follows registration-status (Early Access by default / on failure; Pro unchanged). `0e6ee18` deployed (4 files). Client IP: Shin asks ConoHa support; no code change; still BLOCKED. `registrationEnabled` stays false. |
+| 2026-09-28 | **BR-LAUNCH-05 Phase 3 Gate A done** Shin applied `schema_kpi_user_consents.add.sql`. Read-only verification: table InnoDB utf8mb4_unicode_ci; id BIGINT UNSIGNED AI, user_id VARCHAR(64), terms_version / privacy_version / source VARCHAR(32), accepted_at DATETIME, all NOT NULL; PRIMARY + `idx_kpi_user_consents_user_accepted`; `fk_kpi_user_consents_user` -> `kpi_users.user_id` CASCADE; 0 rows; `kpi_users` columns / row count unchanged. Still BLOCKED on client IP. `registrationEnabled` false. |
