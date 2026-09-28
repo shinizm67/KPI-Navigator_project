@@ -181,7 +181,6 @@
         </div>
       </div>
     </div>
-    <script src="../../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../../js/kpi-business-type.js"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
@@ -229,29 +228,14 @@
       </div>
 
       <h1 class="profile-title-main">Key Performance Navigator</h1>
-      <h2 class="profile-title-sub delete-account-page-title">帳戶已刪除</h2>
+      <h2 class="profile-title-sub delete-account-page-title">ACCOUNT DELETED</h2>
 
-      <section class="delete-accomplished-panel">
+      <section class="delete-accomplished-panel" id="delete-accomplished-panel" data-kpi-home="../login/index.html" hidden>
         <h3 class="delete-account-step-heading">您的帳戶已刪除。</h3>
         <p class="delete-retention-text">感謝您使用 Key Performance Navigator。</p>
-        <p class="delete-retention-text">若方便，請留下您的意見回饋。</p>
-
-        <form id="delete-accomplished-form" class="delete-accomplished-form" novalidate>
-          <fieldset class="delete-accomplished-fieldset">
-            <legend>您為什麼要離開？（選填）</legend>
-            <label><input type="radio" name="delete-reason" value="price"> 費用太高</label>
-            <label><input type="radio" name="delete-reason" value="features"> 缺少需要的功能</label>
-            <label><input type="radio" name="delete-reason" value="ux"> 不好用</label>
-            <label><input type="radio" name="delete-reason" value="switching"> 改用其他工具</label>
-            <label><input type="radio" name="delete-reason" value="other"> 其他</label>
-          </fieldset>
-          <label for="delete-feedback" class="delete-accomplished-label">其他意見（選填）</label>
-          <textarea id="delete-feedback" rows="4" maxlength="400" placeholder="請告訴我們可以如何改進。"></textarea>
-          <div class="delete-accomplished-actions">
-            <button type="submit" class="btn-delete-stripe">送出回饋</button>
-            <a href="../../index.html" class="btn-delete-stripe">關閉</a>
-          </div>
-        </form>
+        <div class="delete-accomplished-actions">
+          <a href="../login/index.html" class="btn-delete-stripe">前往登入頁面</a>
+        </div>
       </section>
     </main>
   </div>
@@ -295,7 +279,6 @@
     (function(){var trigger=document.getElementById('workspace-trigger'),popup=document.getElementById('workspace-popup');if(!trigger||!popup)return;trigger.addEventListener('click',function(e){e.stopPropagation();var isOpen=!popup.hidden;popup.hidden=isOpen;trigger.setAttribute('aria-expanded',!isOpen);});popup.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',function(){popup.hidden=true;trigger.setAttribute('aria-expanded','false');});})();
     (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap');if(!langBtn||!langDropdown||!langWrap)return;langBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!langDropdown.hidden;langDropdown.hidden=isOpen;langBtn.setAttribute('aria-expanded',!isOpen);});document.addEventListener('click',function(){langDropdown.hidden=true;langBtn.setAttribute('aria-expanded','false');});var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el');langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();if(bodyElForLang&&bodyElForLang.classList.contains('office-mode'))sessionStorage.setItem('kpi-office-mode','1');var lang=this.getAttribute('data-lang');var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null;if(href)window.location.href=href;});});})();
     (function(){var backTop=document.getElementById('footerBackToTop');if(!backTop)return;backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
-    (function(){var form=document.getElementById('delete-accomplished-form');if(!form)return;form.addEventListener('submit',function(e){e.preventDefault();window.location.href='../../index.html';});})();
   </script>
   <script>
 /* KPI-PL-MEP-EXPORT */
@@ -1352,5 +1335,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+<script src="../../js/kpi-delete-account-page.js?v=1dd7e29172ca"></script>
 </body>
 </html>

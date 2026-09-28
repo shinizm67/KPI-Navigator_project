@@ -3116,6 +3116,42 @@ egister/ login/ plan/ legal/ setting/ 等を日→英→台湾。
 
 ---
 
+## BR-LAUNCH-09 Phase 3 Delete Account（2026-09-28）
+
+`js/` → `api/` → `setting/` 日 → `en/setting/`（画面 + style.css）→ `zh-tw/setting/`。`config.local.php` / DB / `api/v1/data/` は上げない。schema 変更なし。
+
+| # | ローカル | サーバ | 確認 URL |
+|---|---------|--------|----------|
+| C210 | `C:\Users\funki\kpi-navigator\js\kpi-delete-account-page.js` | `public_html/kpi-navigator/js/kpi-delete-account-page.js` | https://forge-laboratory.com/kpi-navigator/js/kpi-delete-account-page.js |
+| C211 | `C:\Users\funki\kpi-navigator\api\v1\_account_delete.php` | `public_html/kpi-navigator/api/v1/_account_delete.php` | （URL 確認なし・PHP） |
+| C212 | `C:\Users\funki\kpi-navigator\api\v1\auth\delete-account.php` | `public_html/kpi-navigator/api/v1/auth/delete-account.php` | （GET で 405 になれば OK） |
+| C213 | `C:\Users\funki\kpi-navigator\setting\delete_account1.html` | `public_html/kpi-navigator/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account1.html |
+| C214 | `C:\Users\funki\kpi-navigator\setting\delete_account2.html` | `public_html/kpi-navigator/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account2.html |
+| C215 | `C:\Users\funki\kpi-navigator\setting\delete_account3.html` | `public_html/kpi-navigator/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account3.html |
+| C216 | `C:\Users\funki\kpi-navigator\setting\delete_account4-1.html` | `public_html/kpi-navigator/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-1.html |
+| C217 | `C:\Users\funki\kpi-navigator\setting\delete_account4-2.html` | `public_html/kpi-navigator/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account4-2.html |
+| C218 | `C:\Users\funki\kpi-navigator\setting\delete_account5.html` | `public_html/kpi-navigator/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account5.html |
+| C219 | `C:\Users\funki\kpi-navigator\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/setting/delete_account_accomplished.html |
+| C220 | `C:\Users\funki\kpi-navigator\en\setting\delete_account1.html` | `public_html/kpi-navigator/en/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account1.html |
+| C221 | `C:\Users\funki\kpi-navigator\en\setting\delete_account2.html` | `public_html/kpi-navigator/en/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account2.html |
+| C222 | `C:\Users\funki\kpi-navigator\en\setting\delete_account3.html` | `public_html/kpi-navigator/en/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account3.html |
+| C223 | `C:\Users\funki\kpi-navigator\en\setting\delete_account4-1.html` | `public_html/kpi-navigator/en/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account4-1.html |
+| C224 | `C:\Users\funki\kpi-navigator\en\setting\delete_account4-2.html` | `public_html/kpi-navigator/en/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account4-2.html |
+| C225 | `C:\Users\funki\kpi-navigator\en\setting\delete_account5.html` | `public_html/kpi-navigator/en/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account5.html |
+| C226 | `C:\Users\funki\kpi-navigator\en\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/en/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/en/setting/delete_account_accomplished.html |
+| C227 | `C:\Users\funki\kpi-navigator\en\setting\style.css` | `public_html/kpi-navigator/en/setting/style.css` | https://forge-laboratory.com/kpi-navigator/en/setting/style.css |
+| C228 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account1.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account1.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account1.html |
+| C229 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account2.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account2.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account2.html |
+| C230 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account3.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account3.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account3.html |
+| C231 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account4-1.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account4-1.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account4-1.html |
+| C232 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account4-2.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account4-2.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account4-2.html |
+| C233 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account5.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account5.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account5.html |
+| C234 | `C:\Users\funki\kpi-navigator\zh-tw\setting\delete_account_accomplished.html` | `public_html/kpi-navigator/zh-tw/setting/delete_account_accomplished.html` | https://forge-laboratory.com/kpi-navigator/zh-tw/setting/delete_account_accomplished.html |
+
+確認: アカウント削除は STEP 1 削除される内容 → STEP 2 データの扱い → STEP 3 現在のパスワード（サーバー確認）→ STEP 4 最終確認（チェック必須）→ 削除完了画面。Stripe / 6桁コードの画面は無し（旧 URL は STEP 1 へ転送）。登録は閉じたまま（registrationEnabled false）。本番アカウントの削除は Shin の GO 後のみ。excel/ 未使用。
+
+---
+
 ## チャットでの言い方
 
 ユーザーが「上げて」と言ったら、エージェントはコード変更のあとに **必ずこの表**を出す。  

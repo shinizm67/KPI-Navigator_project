@@ -21,7 +21,7 @@ BR-LAUNCH-09 (Account Security & Destructive Actions) P0
 Phase 0 CLOSED 2026-09-28 — audit (fake Delete / Password / Email flows; allowSelfPlanChange false in production)
 Phase 1 CLOSED 2026-09-28 — Password Change server-side (`067c51e` deployed + verified; Shin approved; Launch blocker resolved)
 Phase 2 CLOSED 2026-09-28 — Email Change server-side (`54c37d5` deployed; production Human Smoke PASS)
-Phase 3 ACTIVE 2026-09-28 — Delete Account; BLOCKED — consent retention policy decision required (contract audit done; other items frozen; no implementation yet)
+Phase 3 ACTIVE 2026-09-28 — Delete Account; consent retention decided (delete with account, existing CASCADE); implemented, waiting for Delete Account Human Smoke
 
 PREVIOUS PATH (IMPLEMENTED / PRODUCTION VERIFIED):
 BR-ONBOARDING-01 (KPN Initial Setup & Readiness) P0
@@ -46,7 +46,7 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
 ACTIVE BRANCHES:
-- BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3 Delete Account ACTIVE — BLOCKED on consent retention policy)
+- BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3 Delete Account ACTIVE — implemented, waiting for Human Smoke)
 - BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; Phase 3 ACTIVE — BLOCKED on client IP; registration still off)
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 - (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
@@ -160,7 +160,7 @@ RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
-BR-LAUNCH-09: Phase 3 (Delete Account) BLOCKED — consent retention policy decision required (Shin / legal). Implement only after that decision. Phase 4 only after Shin GO.
+BR-LAUNCH-09: Phase 3 (Delete Account) READY FOR DELETE ACCOUNT HUMAN SMOKE (`funkizm@mac.com` only, Shin GO required before any production deletion). Phase 4 only after Shin GO.
 BR-LAUNCH-05 Phase 1 / Phase 2 CLOSED. Phase 3 ACTIVE (production readiness) — BLOCKED: production LiteSpeed sets REMOTE_ADDR from client-sent `CF-Connecting-IP` / `X-Real-IP`, so the IP rate limit can be bypassed; hosting publishes no trusted-header contract. Shin decided: no code change; Shin asks ConoHa support for the trusted client-IP header contract (stays BLOCKED until answered). `kpi_user_consents` applied by Shin in phpMyAdmin and verified read-only (InnoDB utf8mb4_unicode_ci, 6 columns, PK + (user_id, accepted_at) index, FK to `kpi_users` ON DELETE CASCADE, 0 rows; `kpi_users` unchanged). Also pending: controlled smoke GO. Plan Basic CTA follows registration-status (`0e6ee18` deployed; Early Access while off). `registrationEnabled` stays false; Cursor never flips it. Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 
 BASELINE UX CONVENTION (not a work branch):
@@ -1448,11 +1448,13 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | phase3_audit_2026-09-28 | Current delete flow (7 pages × JA/EN/ZH-TW) is fake end-to-end: no API call; hardcoded Pro / next billing / Stripe buttons; fictional retention claims; password not verified; OTP never sent and any 6 digits pass; `confirm()` then "削除完了"; reason form sends nothing. All `kpi_users` FKs are ON DELETE CASCADE (store, daily facts / inputs, plan history, profiles, reset tokens, consents); `parent_user_id` has no FK. File data under `api/v1/data/`: users + email index, store blobs + backups, profiles, plan_history, email_change, password_reset, session_revoke, consents, feedback (userId / session email / contact email / UA / message; also mailed to support), registration rate-limit. No audit log exists. Store / profile / daily endpoints re-read the user (401 once deleted); MySQL FK blocks orphan inserts. |
 | phase3_freeze_2026-09-28 | Shin frozen: (1) only role `user` may self-delete; `founder_superadmin` / `admin_staff` / `support_readonly` rejected server-side; (2) user with child accounts rejected (「関連アカウントを先に整理してください」), no cascade / no parent_user_id rewrite; a child (leaf) account may delete itself; (3) feedback of the deleted user anonymized (keep message + time, strip userId / emails / UA; mailbox copies out of system scope); (4) 5 real steps: what is deleted → kept / deleted data → current password (server-verified, 10-min delete intent in server session) → 「この操作は取り消せません」 final confirm → server delete → completion; OTP page and Stripe steps removed (old URLs redirect to step 1); (5) completion page: ACCOUNT DELETED / 「アカウントを削除しました。」 + KPN top CTA, reason form removed; (6) session_revoke file bumped and kept as tombstone (deleting it would reset epoch to 0 and revive stale sessions); theme / language keys kept, user-scoped client keys cleared; Stripe wording removed. |
 | phase3_blocked_2026-09-28 | **BLOCKED — consent retention policy decision required.** Privacy §6 (「必要な期間…法的義務の履行・紛争解決」) and Terms do not state whether consent evidence survives deletion; Shin chose not to decide yet. Options on the table: cascade delete (as-is) / minimized file record (userId hash + terms / privacy versions + accepted / deleted time, no email; no schema change) / keep DB rows (FK schema change). Production likely has 0 consent rows (registration never opened; admin-created users write none) — not verified. No implementation until decided. |
-| status | ACTIVE (Phase 0 / 1 / 2 CLOSED; Phase 3 Delete Account BLOCKED — consent retention policy decision required) |
+| phase3_consent_2026-09-28 | Shin decided **Delete everything**: `kpi_user_consents` rows are deleted with the account through the existing `kpi_users -> kpi_user_consents ON DELETE CASCADE` (no schema change, no separate retention file). Reasons: current Terms / Privacy define no post-deletion consent retention; no concrete legal requirement identified; no unnecessary personal data kept. A future retention requirement (legal review) is a separate task that must first define Privacy Policy wording, purpose and period. BLOCK lifted. |
+| phase3_impl_2026-09-28 | `api/v1/auth/delete-account.php` (POST; `verify` = current password → 10-min delete intent in server session, 5 failures → 15-min lock; `delete` = `acknowledge: true` + valid intent) and `api/v1/_account_delete.php` (role `user` only; children reject, fail closed; register.lock; preflight writable dirs; MySQL `SELECT … FOR UPDATE` + child re-check + `DELETE FROM kpi_users` in one transaction, dependents via existing CASCADE; file mode removes user + index; then revoke bump (tombstone kept) and best-effort cleanup of email change / reset tokens / store blob / backups / profile / consent / plan history, feedback anonymized; residual logged). `js/kpi-delete-account-page.js`; 7 pages × JA / EN / ZH-TW rewritten (steps 1 / 2 / 3 / 4 + completion; `delete_account2` / `4-2` redirect to step 1; completion page drops the session guard and shows only after a 200 in this tab); client account keys cleared, theme / UI prefs kept. Local smoke 254/254 (file + MySQL + Chrome, 3 languages × Sci-Fi / Office), contract test `scripts/_test_delete_account_contract.py` 49/49; regressions: Phase 2 238/238, Phase 1 161/161, registration 86/86, contract suites green. |
+| status | ACTIVE (Phase 0 / 1 / 2 CLOSED; Phase 3 Delete Account implemented — READY FOR DELETE ACCOUNT HUMAN SMOKE) |
 | priority | P0 |
 | started_at | 2026-09-28 |
 | phases | 1 Password Change / 2 Email Change / 3 Delete Account / 4 Plan / Subscription placeholder cleanup / 5 Account launch-wide smoke. One phase at a time. |
-| next_action | Shin (with legal review if needed) decides consent retention on account deletion. Then implement Phase 3 per `phase3_freeze_2026-09-28`, stop at READY FOR DELETE ACCOUNT HUMAN SMOKE (`funkizm@mac.com` only). Phase 4 only after Shin GO. |
+| next_action | Shin runs the Delete Account Human Smoke with `funkizm@mac.com` only (Cursor never deletes a production account on its own). Phase 4 only after Shin GO. |
 | note | Registered follow-ups (not in Phase 1): no attempt limit on wrong current password (same as login; P1); password rule differs between registration / self change (8+ letter digit symbol) and reset / admin set (8+ only), not unified (P2); no `session_regenerate_id` on login (P2, unchanged). |
 
 ### BR-LAUNCH-06
@@ -1747,7 +1749,7 @@ CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C
 PAUSED under `TRUNK-06` (legacy): none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP), `BR-LAUNCH-09` (Phase 0 / 1 / 2 CLOSED; Phase 3 ACTIVE — BLOCKED on consent retention policy)  
+ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP), `BR-LAUNCH-09` (Phase 0 / 1 / 2 CLOSED; Phase 3 ACTIVE — waiting for Delete Account Human Smoke)  
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -1892,3 +1894,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-28 | **BR-LAUNCH-09 Phase 2 deployed** Email Change: `request-email-change.php` + `confirm-email-change.php` (current password, normalize, duplicate, 6-digit code to the new address, 30 min, 5 attempts, cooldown + hourly cap, re-check at confirm, other sessions revoked, new session ID, old-address notice), file-backed pending (no schema), UI JP / EN / ZH-TW x Sci-Fi / Office, hardcoded password value removed. `54c37d5` deployed (8 files, SHA match). Smokes: contract 59/59, local 238/238, Phase 1 161/161, registration 86/86, production 35/35. No production email changed. Phase 3 not started. |
 | 2026-09-28 | **BR-LAUNCH-09 Phase 2 CLOSED / Phase 3 GO** Email Change production Human Smoke PASS (code to new address, old email login fails, new email login OK, Annual OK). P1 observation: old-address notice not confirmed. Phase 3 Delete Account started (contract audit first). |
 | 2026-09-28 | **BR-LAUNCH-09 Phase 3 BLOCKED** Delete Account contract audit done (existing flow fake end-to-end). Frozen: user-role only, reject if children, feedback anonymized, 5 real steps with server-verified password + delete intent, completion page without reason form, revoke tombstone kept. BLOCKED — consent retention policy decision required. No code changes. |
+| 2026-09-28 | **BR-LAUNCH-09 Phase 3 consent decided / implemented** Shin: Delete everything (consents cascade with the account; no schema change). Delete Account implemented per freeze; local smoke 254/254 + regressions green. Waiting for Delete Account Human Smoke (`funkizm@mac.com` only). |

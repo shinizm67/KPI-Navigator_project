@@ -181,7 +181,6 @@
         </div>
       </div>
     </div>
-    <script src="../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../js/kpi-business-type.js"></script>
     <script src="../js/kpi-pl-expense-presets.js"></script>
     <script src="../js/kpi-csv-templates.js"></script>
@@ -229,29 +228,14 @@
       </div>
 
       <h1 class="profile-title-main">Key Performance Navigator</h1>
-      <h2 class="profile-title-sub delete-account-page-title">アカウント削除完了</h2>
+      <h2 class="profile-title-sub delete-account-page-title">ACCOUNT DELETED</h2>
 
-      <section class="delete-accomplished-panel">
-        <h3 class="delete-account-step-heading">アカウントの削除が完了しました。</h3>
-        <p class="delete-retention-text">Key Performance Navigatorをご利用いただき、ありがとうございました。</p>
-        <p class="delete-retention-text">今後の改善のため、よろしければご意見をお聞かせください。</p>
-
-        <form id="delete-accomplished-form" class="delete-accomplished-form" novalidate>
-          <fieldset class="delete-accomplished-fieldset">
-            <legend>退会理由（任意）</legend>
-            <label><input type="radio" name="delete-reason" value="price"> 料金が高い</label>
-            <label><input type="radio" name="delete-reason" value="features"> 必要な機能が不足している</label>
-            <label><input type="radio" name="delete-reason" value="ux"> 使いづらい</label>
-            <label><input type="radio" name="delete-reason" value="switching"> 他のツールへ移行する</label>
-            <label><input type="radio" name="delete-reason" value="other"> その他</label>
-          </fieldset>
-          <label for="delete-feedback" class="delete-accomplished-label">ご意見・ご要望（任意）</label>
-          <textarea id="delete-feedback" rows="4" maxlength="400" placeholder="改善のためのご意見をお聞かせください。"></textarea>
-          <div class="delete-accomplished-actions">
-            <button type="submit" class="btn-delete-stripe">フィードバックを送信</button>
-            <a href="../index.html" class="btn-delete-stripe">閉じる</a>
-          </div>
-        </form>
+      <section class="delete-accomplished-panel" id="delete-accomplished-panel" data-kpi-home="../index.html" hidden>
+        <h3 class="delete-account-step-heading">アカウントを削除しました。</h3>
+        <p class="delete-retention-text">Key Performance Navigator をご利用いただき、ありがとうございました。</p>
+        <div class="delete-accomplished-actions">
+          <a href="../index.html" class="btn-delete-stripe">Key Performance Navigator トップへ</a>
+        </div>
       </section>
     </main>
   </div>
@@ -295,7 +279,6 @@
     (function(){var trigger=document.getElementById('workspace-trigger'),popup=document.getElementById('workspace-popup');if(!trigger||!popup)return;trigger.addEventListener('click',function(e){e.stopPropagation();var isOpen=!popup.hidden;popup.hidden=isOpen;trigger.setAttribute('aria-expanded',!isOpen);});popup.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',function(){popup.hidden=true;trigger.setAttribute('aria-expanded','false');});})();
     (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap');if(!langBtn||!langDropdown||!langWrap)return;langBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!langDropdown.hidden;langDropdown.hidden=isOpen;langBtn.setAttribute('aria-expanded',!isOpen);});document.addEventListener('click',function(){langDropdown.hidden=true;langBtn.setAttribute('aria-expanded','false');});var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el');langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();if(bodyElForLang&&bodyElForLang.classList.contains('office-mode'))sessionStorage.setItem('kpi-office-mode','1');var lang=this.getAttribute('data-lang');var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null;if(href)window.location.href=href;});});})();
     (function(){var backTop=document.getElementById('footerBackToTop');if(!backTop)return;backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
-    (function(){var form=document.getElementById('delete-accomplished-form');if(!form)return;form.addEventListener('submit',function(e){e.preventDefault();window.location.href='../index.html';});})();
   </script>
   <script>
 /* KPI-PL-MEP-EXPORT */
@@ -1352,5 +1335,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+<script src="../js/kpi-delete-account-page.js?v=1dd7e29172ca"></script>
 </body>
 </html>

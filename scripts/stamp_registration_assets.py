@@ -44,6 +44,11 @@ PAGES = {
     "setting/change_email_edit.html": {"../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
     "en/setting/change_email_edit.html": {"../../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
     "zh-tw/setting/change_email_edit.html": {"../../js/kpi-change-email-page.js": "js/kpi-change-email-page.js"},
+    **{
+        f"{prefix}setting/{page}": {f"{up}js/kpi-delete-account-page.js": "js/kpi-delete-account-page.js"}
+        for prefix, up in (("", "../"), ("en/", "../../"), ("zh-tw/", "../../"))
+        for page in ("delete_account4-1.html", "delete_account5.html", "delete_account_accomplished.html")
+    },
 }
 
 

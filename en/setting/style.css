@@ -2755,6 +2755,57 @@ body.si-fi.office-mode.booking-page .coming-soon-sub {
   min-width: 170px;
 }
 
+.delete-final-form {
+  margin-top: 44px;
+}
+
+.delete-final-ack {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--si-fi-cyan);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.delete-final-ack input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--si-fi-green);
+}
+
+.delete-final-error {
+  margin: 14px 0 0;
+}
+
+.delete-final-reverify {
+  margin: 10px 0 0;
+}
+
+.delete-final-reverify a {
+  color: var(--si-fi-cyan);
+}
+
+.btn-delete-stripe:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.delete-accomplished-panel[hidden] {
+  display: none;
+}
+
+.si-fi.office-mode.delete-account-page .delete-final-ack,
+.si-fi.office-mode.delete-account-page .delete-final-reverify a {
+  color: #000;
+  font-family: 'BIZ UDPGothic', sans-serif;
+}
+
+.si-fi.office-mode.delete-account-page .delete-final-ack input[type="checkbox"] {
+  accent-color: #000;
+}
+
 /* Delete Account accomplished */
 .delete-accomplished-panel {
   width: 100%;

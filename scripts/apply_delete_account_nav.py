@@ -96,6 +96,10 @@ def patch_step5(text: str, *, back: str) -> str:
 
 
 def main() -> None:
+    raise SystemExit(
+        "Superseded by BR-LAUNCH-09 Phase 3 (real Delete Account flow): step navigation now lives in the pages. "
+        "Re-running this would restore the removed mock steps."
+    )
     for lang, folder in TARGETS.items():
         L = LABELS[lang]
         patches = {

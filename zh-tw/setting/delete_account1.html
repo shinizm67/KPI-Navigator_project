@@ -237,44 +237,35 @@
       <h2 class="profile-title-sub delete-account-page-title">刪除帳戶</h2>
 
       <p class="delete-account-warning" role="alert">
-        此操作將停用您的帳戶。個人資料將被移除，匿名化資料可能會被保留。
+        刪除帳戶後將無法復原。
       </p>
 
       <nav class="delete-account-stepper" aria-label="刪除帳戶步驟">
         <div class="delete-account-stepper-track">
-          <img
-            src="../../images/stepper_1.svg"
-            data-src-sci-fi="../../images/stepper_1.svg"
-            data-src-office="../../images/stepper_1_office.svg"
-            alt="第 1 / 5 步：帳戶狀態、管理訂閱、資料保留、安全驗證、最終確認"
-            class="delete-account-stepper-image"
-            id="delete-account-stepper-image"
-          >
+          <img src="../../images/stepper_1.svg" data-src-sci-fi="../../images/stepper_1.svg" data-src-office="../../images/stepper_1_office.svg" alt="第 1 / 5 步：刪除內容" class="delete-account-stepper-image" id="delete-account-stepper-image">
           <ol class="delete-account-stepper-labels" aria-hidden="true">
-            <li>1. 帳戶狀態</li>
-            <li>2. 管理訂閱</li>
-            <li>3. 資料保留</li>
-            <li>4. 安全驗證</li>
-            <li>5. 最終確認</li>
+            <li>1. 刪除內容</li>
+            <li>2. 資料處理</li>
+            <li>3. 身分驗證</li>
+            <li>4. 最終確認</li>
+            <li>5. 執行刪除</li>
           </ol>
         </div>
       </nav>
 
       <section class="plan-details-section delete-account-step-panel" aria-labelledby="delete-step1-heading">
-        <h3 class="delete-account-step-heading" id="delete-step1-heading">1. 帳戶狀態</h3>
-        <dl class="delete-account-status-dl">
-          <div class="delete-account-status-row"><dt>訂閱</dt><dd>使用中</dd></div>
-          <div class="delete-account-status-row"><dt>方案</dt><dd>專業</dd></div>
-          <div class="delete-account-status-row"><dt>下次帳單日</dt><dd>2025年3月28日</dd></div>
-        </dl>
-        <p class="delete-account-stripe-actions">
-          <a href="#" class="btn-delete-stripe" id="btn-manage-stripe">管理訂閱（Stripe）→</a>
-        </p>
-        <p class="delete-account-step-note">完成刪除帳戶前，請先在 Stripe 取消或變更帳單。</p>
+        <h3 class="delete-account-step-heading" id="delete-step1-heading">1. 刪除內容</h3>
+        <p class="delete-retention-text">刪除帳戶後，以下內容將全部刪除。</p>
+        <ul class="delete-retention-list">
+            <li>登入用的電子信箱與密碼（將無法再以此帳戶登入）</li>
+            <li>您輸入的所有 KPI 資料，包括營業額、支出、目標與預約</li>
+            <li>個人資料與店舖設定</li>
+            <li>方案變更紀錄，以及服務條款／隱私權政策的同意紀錄</li>
+          </ul>
       </section>
       <div class="delete-retention-nav">
         <span></span>
-        <a href="delete_account2.html">繼續 →</a>
+        <a href="delete_account3.html">繼續 →</a>
       </div>
 </main>
   </div>

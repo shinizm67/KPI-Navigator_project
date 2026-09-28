@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>刪除帳戶（步驟 4-1） | Key Performance Navigator | FORGE LABORATORY</title>
+  <title>刪除帳戶（步驟 3） | Key Performance Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -233,24 +233,24 @@
 
       <nav class="delete-account-stepper" aria-label="刪除帳戶步驟">
         <div class="delete-account-stepper-track">
-          <img src="../../images/stepper_4.svg" data-src-sci-fi="../../images/stepper_4.svg" data-src-office="../../images/stepper_4_office.svg" alt="第 4 / 5 步：安全驗證" class="delete-account-stepper-image" id="delete-account-stepper-image">
+          <img src="../../images/stepper_3.svg" data-src-sci-fi="../../images/stepper_3.svg" data-src-office="../../images/stepper_3_office.svg" alt="第 3 / 5 步：身分驗證" class="delete-account-stepper-image" id="delete-account-stepper-image">
           <ol class="delete-account-stepper-labels" aria-hidden="true">
-            <li>1. 帳戶狀態</li>
-            <li>2. 管理訂閱</li>
-            <li>3. 資料保留</li>
-            <li>4. 安全驗證</li>
-            <li>5. 最終確認</li>
+            <li>1. 刪除內容</li>
+            <li>2. 資料處理</li>
+            <li>3. 身分驗證</li>
+            <li>4. 最終確認</li>
+            <li>5. 執行刪除</li>
           </ol>
         </div>
       </nav>
 
       <section class="delete-security-panel">
-        <h3 class="delete-account-step-heading">4. 安全驗證</h3>
+        <h3 class="delete-account-step-heading">3. 身分驗證</h3>
         <p class="delete-retention-text">為保護您的帳戶，請先完成身分驗證再繼續。</p>
         <p class="delete-retention-text">此刻尚未完成帳戶刪除。</p>
 
         <form id="delete-security-form" class="delete-security-form" novalidate>
-          <label for="verify-password">輸入密碼</label>
+          <label for="verify-password">目前的密碼</label>
           <div class="input-password-wrap delete-security-input-wrap">
             <input type="password" id="verify-password" autocomplete="current-password" required>
             <button type="button" class="btn-password-toggle" id="verify-password-toggle" aria-label="顯示密碼" title="顯示密碼">
@@ -315,7 +315,7 @@
     (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap');if(!langBtn||!langDropdown||!langWrap)return;langBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!langDropdown.hidden;langDropdown.hidden=isOpen;langBtn.setAttribute('aria-expanded',!isOpen);});document.addEventListener('click',function(){langDropdown.hidden=true;langBtn.setAttribute('aria-expanded','false');});var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el');langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();if(bodyElForLang&&bodyElForLang.classList.contains('office-mode'))sessionStorage.setItem('kpi-office-mode','1');var lang=this.getAttribute('data-lang');var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null;if(href)window.location.href=href;});});})();
     (function(){var backTop=document.getElementById('footerBackToTop');if(!backTop)return;backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
     (function(){var bodyEl=document.getElementById('body-el'),imgEl=document.getElementById('delete-account-stepper-image');if(!bodyEl||!imgEl)return;var sciFiSrc=imgEl.getAttribute('data-src-sci-fi'),officeSrc=imgEl.getAttribute('data-src-office');function applyStepperByMode(){if(bodyEl.classList.contains('office-mode')){if(officeSrc)imgEl.src=officeSrc;}else{if(sciFiSrc)imgEl.src=sciFiSrc;}}applyStepperByMode();var observer=new MutationObserver(applyStepperByMode);observer.observe(bodyEl,{attributes:true,attributeFilter:['class']});})();
-    (function(){var form=document.getElementById('delete-security-form'),input=document.getElementById('verify-password'),error=document.getElementById('delete-security-error'),btn=document.getElementById('verify-password-toggle');if(form&&input&&error){form.addEventListener('submit',function(e){e.preventDefault();if(!String(input.value||'').trim()){error.hidden=false;return;}error.hidden=true;window.location.href='delete_account4-2.html';});}if(btn&&input){var openEl=btn.querySelector('.icon-eye-open'),closedEl=btn.querySelector('.icon-eye-closed');btn.addEventListener('click',function(){var isPassword=input.type==='password';input.type=isPassword?'text':'password';if(openEl)openEl.hidden=isPassword;if(closedEl)closedEl.hidden=!isPassword;btn.setAttribute('aria-label',isPassword?'隱藏密碼':'顯示密碼');btn.setAttribute('title',isPassword?'隱藏密碼':'顯示密碼');});}})();
+    (function(){var form=document.getElementById('delete-security-form'),input=document.getElementById('verify-password'),error=document.getElementById('delete-security-error'),btn=document.getElementById('verify-password-toggle');if(btn&&input){var openEl=btn.querySelector('.icon-eye-open'),closedEl=btn.querySelector('.icon-eye-closed');btn.addEventListener('click',function(){var isPassword=input.type==='password';input.type=isPassword?'text':'password';if(openEl)openEl.hidden=isPassword;if(closedEl)closedEl.hidden=!isPassword;btn.setAttribute('aria-label',isPassword?'隱藏密碼':'顯示密碼');btn.setAttribute('title',isPassword?'隱藏密碼':'顯示密碼');});}})();
   </script>
   <script>
 /* KPI-PL-MEP-EXPORT */
@@ -1372,6 +1372,7 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+<script src="../../js/kpi-delete-account-page.js?v=1dd7e29172ca"></script>
 </body>
 </html>
 

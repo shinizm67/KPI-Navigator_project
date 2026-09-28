@@ -346,6 +346,10 @@ def refresh_chrome_and_export() -> None:
 
 
 def main() -> None:
+    raise SystemExit(
+        "Superseded by BR-LAUNCH-09 Phase 3 (real Delete Account flow): JA / EN / zh-tw pages are edited "
+        "directly. Re-running this would restore the removed mock steps."
+    )
     for name in PAGES:
         build_zh_tw_from_en(name)
     wire_ja_en_lang_switchers()

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delete Account (Step 5) | Key Performance Navigator | FORGE LABORATORY</title>
+  <title>Delete Account (Step 4) | Key Performance Navigator | FORGE LABORATORY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -233,38 +233,42 @@
 
       <nav class="delete-account-stepper" aria-label="Account deletion steps">
         <div class="delete-account-stepper-track">
-          <img src="../../images/stepper_5.svg" data-src-sci-fi="../../images/stepper_5.svg" data-src-office="../../images/stepper_5_office.svg" alt="Step 5 of 5: Final Confirmation" class="delete-account-stepper-image" id="delete-account-stepper-image">
+          <img src="../../images/stepper_4.svg" data-src-sci-fi="../../images/stepper_4.svg" data-src-office="../../images/stepper_4_office.svg" alt="Step 4 of 5: Final Confirmation" class="delete-account-stepper-image" id="delete-account-stepper-image">
           <ol class="delete-account-stepper-labels" aria-hidden="true">
-            <li>1. Account Status</li>
-            <li>2. Manage Subscription</li>
-            <li>3. Data Retention</li>
-            <li>4. Security Verification</li>
-            <li>5. Final Confirmation</li>
+            <li>1. What Is Deleted</li>
+            <li>2. Your Data</li>
+            <li>3. Verify Identity</li>
+            <li>4. Final Confirmation</li>
+            <li>5. Delete</li>
           </ol>
         </div>
       </nav>
 
       <section class="delete-final-panel">
-        <h3 class="delete-account-step-heading">5. Final Confirmation</h3>
-        <p class="delete-retention-text">This action is permanent and cannot be undone.</p>
+        <h3 class="delete-account-step-heading">4. Final Confirmation</h3>
+        <p class="delete-retention-text">This action cannot be undone.</p>
 
         <div class="delete-final-list-wrap">
-          <p class="delete-retention-text delete-final-list-title">The following data will be permanently deleted:</p>
+          <p class="delete-retention-text delete-final-list-title">When you press "Delete Account", the following data is deleted immediately.</p>
           <ul class="delete-retention-list delete-final-list">
-            <li>All KPI records</li>
-            <li>All financial data</li>
-            <li>Workspace settings</li>
-            <li>Subscription history</li>
+            <li>Account information (sign-in email address and password)</li>
+            <li>All KPI data</li>
+            <li>Profile and store settings</li>
           </ul>
         </div>
 
-        <div class="delete-final-actions">
-          <a href="profile.html" class="btn-delete-stripe">Cancel</a>
-          <button type="button" class="btn-delete-stripe" id="btn-final-delete">Delete Account</button>
-        </div>
+        <form id="delete-final-form" class="delete-final-form" novalidate>
+          <label class="delete-final-ack"><input type="checkbox" id="delete-final-ack"> I understand that this action cannot be undone</label>
+          <p class="form-error delete-final-error" id="delete-final-error" role="alert" hidden></p>
+          <p class="delete-final-reverify" id="delete-final-reverify" hidden><a href="delete_account4-1.html">Back to Step 3</a></p>
+          <div class="delete-final-actions">
+            <a href="profile.html" class="btn-delete-stripe">Cancel</a>
+            <button type="submit" class="btn-delete-stripe" id="btn-final-delete">Delete Account</button>
+          </div>
+        </form>
       </section>
       <div class="delete-retention-nav">
-        <a href="delete_account4-2.html">← Back</a>
+        <a href="delete_account4-1.html">← Back</a>
         <span></span>
       </div>
 </main>
@@ -310,7 +314,6 @@
     (function(){var langBtn=document.getElementById('lang-select-btn'),langDropdown=document.getElementById('lang-select-dropdown'),langOptions=document.querySelectorAll('.lang-option'),langWrap=document.getElementById('lang-select-wrap');if(!langBtn||!langDropdown||!langWrap)return;langBtn.addEventListener('click',function(e){e.stopPropagation();var isOpen=!langDropdown.hidden;langDropdown.hidden=isOpen;langBtn.setAttribute('aria-expanded',!isOpen);});document.addEventListener('click',function(){langDropdown.hidden=true;langBtn.setAttribute('aria-expanded','false');});var urlEn=langWrap.getAttribute('data-url-en'),urlJa=langWrap.getAttribute('data-url-ja'),bodyElForLang=document.getElementById('body-el');langOptions.forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();if(bodyElForLang&&bodyElForLang.classList.contains('office-mode'))sessionStorage.setItem('kpi-office-mode','1');var lang=this.getAttribute('data-lang');var href=(lang==='ja'&&urlJa)?urlJa:(lang==='en'&&urlEn)?urlEn:null;if(href)window.location.href=href;});});})();
     (function(){var backTop=document.getElementById('footerBackToTop');if(!backTop)return;backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
     (function(){var bodyEl=document.getElementById('body-el'),imgEl=document.getElementById('delete-account-stepper-image');if(!bodyEl||!imgEl)return;var sciFiSrc=imgEl.getAttribute('data-src-sci-fi'),officeSrc=imgEl.getAttribute('data-src-office');function applyStepperByMode(){if(bodyEl.classList.contains('office-mode')){if(officeSrc)imgEl.src=officeSrc;}else{if(sciFiSrc)imgEl.src=sciFiSrc;}}applyStepperByMode();var observer=new MutationObserver(applyStepperByMode);observer.observe(bodyEl,{attributes:true,attributeFilter:['class']});})();
-    (function(){var btn=document.getElementById('btn-final-delete');if(!btn)return;btn.addEventListener('click',function(){var ok=window.confirm('Delete this account permanently?');if(!ok)return;window.location.href='delete_account_accomplished.html';});})();
   </script>
   <script>
 /* KPI-PL-MEP-EXPORT */
@@ -1367,5 +1370,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+<script src="../../js/kpi-delete-account-page.js?v=1dd7e29172ca"></script>
 </body>
 </html>
