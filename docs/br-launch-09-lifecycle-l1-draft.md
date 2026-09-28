@@ -1,6 +1,8 @@
 # BR-LAUNCH-09 Phase 3A Extension — Account Lifecycle L1 Draft
 
-**Status: FINAL DRAFT (L1) — waiting for Shin final approval. Not live.** Created 2026-09-29; retention decided 2026-09-29.
+**Status: L1 CLOSED — final draft approved by Shin 2026-09-29 (with the feedback / support mailbox addition in §6). Not live until L4.** Created 2026-09-29; retention decided 2026-09-29.
+
+**Final Privacy version / Last updated (fixed rule):** the **JST date on which the Privacy Policy change is actually deployed to production at L4** (not the approval date). At that deploy: `KPI_PRIVACY_VERSION = 'YYYY-MM-DD'`; JP 「最終更新日：YYYY年M月D日」; EN "Last updated: D Mon YYYY"; ZH-TW 「最後更新：YYYY年M月D日」. The Privacy Policy pages, STEP 2 copy and Lifecycle recording go live in the same L4 deploy.
 
 - Production Privacy Policy (`legal/privacy/`, `en/legal/privacy/`, `zh-tw/legal/privacy/`) is **unchanged**.
 - `KPI_PRIVACY_VERSION` stays `2026-02-16` (no production update).
@@ -26,7 +28,7 @@ Contract background: `docs/development-path.md` rows `phase3a_lifecycle_2026-09-
 
 Unchanged sections are not repeated. "Add" = new text; existing text stays unless marked "Replace".
 
-Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `TBD (set at final approval)`.
+Header: Last updated and `KPI_PRIVACY_VERSION` = the L4 production deploy date (JST), see the rule at the top.
 
 ### 1-1. 日本語（`legal/privacy/index.html`）
 
@@ -46,6 +48,12 @@ Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `T
 **§6 保存期間 — Add (paragraph, after the existing list):**
 
 > アカウントが削除された場合、アカウント情報、事業入力データ、プロフィール、同意記録などは削除します。ただし、1.に記載した退会履歴に限り、統計分析および再登録の判別のため、**削除日から3年間**保持し、3年を経過した記録は自動的に消去します。この期間は法令上の保存期間ではなく、上記の目的に必要な期間として当方が定めたものです。退会履歴には、メールアドレス、パスワード、事業入力データ、同意記録、IPアドレス、ブラウザ情報は含まれません。
+
+**§6 保存期間 — Add (paragraphs, after the paragraph above):**
+
+> アカウントに関連付けられたご意見・リクエスト（フィードバック）は、アカウント削除時にユーザーID、ログイン用メールアドレス、連絡先メールアドレス、ブラウザ情報、プラン、送信元ページを削除し、本文・送信日時・種別（不具合・機能要望など）のみを匿名化した状態で保持する場合があります。これらは本サービスの改善および品質分析のために利用し、個人を特定する目的には利用しません。
+>
+> アカウント削除より前にサポート宛てに送信されたメール（フィードバック送信時にサポート宛てに届く通知メールを含みます）は、本サービスのアカウント削除処理では自動的に削除されません。これらの保持および削除は、当方のサポート記録の管理方針に従います。
 
 **§7 ユーザーの権利 — Add (paragraph, after the existing list):**
 
@@ -70,6 +78,12 @@ Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `T
 
 > When an account is deleted, we delete the account data, business input data, profile, consent records and related data. Only the account deletion record described in section 1 is kept, for statistical analysis and recognizing re-registrations, **for 3 years from the deletion date**; records older than 3 years are erased automatically. This is not a statutory retention period; it is the period we set as necessary for these purposes. The account deletion record does not include the email address, password, business input data, consent records, IP address or browser information.
 
+**§6 Retention — Add (paragraphs, after the paragraph above):**
+
+> For feedback and requests linked to an account, when the account is deleted we remove the user ID, login email address, contact email address, browser information, plan and the page it was sent from, and may keep only the message text, the date and time it was sent, and its category (such as bug report or feature request) in anonymized form. We use this only to improve the Service and analyze its quality, and not to identify individuals.
+>
+> Emails sent to our support address before the account was deleted (including the notification emails our support address receives when feedback is sent) are not deleted automatically by the Service's account deletion process. Their retention and deletion follow our policy for managing support records.
+
 **§7 Your rights — Add (paragraph):**
 
 > If you would like your account deletion record erased after your account has been deleted, contact us at the address in section 12. We will identify the matching record from the email address you provide and erase it.
@@ -93,6 +107,12 @@ Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `T
 
 > 帳戶刪除時，我們會刪除帳戶資料、業務輸入資料、個人資料設定、同意紀錄等。僅第 1 節所述之帳戶刪除紀錄，為統計分析及判別重新註冊之目的，**自刪除日起保存 3 年**，超過 3 年之紀錄將自動清除。此期間並非法定保存期間，而是我們依上述目的所訂定之必要期間。帳戶刪除紀錄不包含電子信箱、密碼、業務輸入資料、同意紀錄、IP 位址或瀏覽器資訊。
 
+**§6 保存期間 — Add (paragraphs, after the paragraph above):**
+
+> 與帳戶關聯之意見與需求（意見回饋），於帳戶刪除時，我們會刪除使用者 ID、登入用電子信箱、聯絡用電子信箱、瀏覽器資訊、方案及送出頁面，僅可能以匿名化狀態保留內文、送出日期時間及類別（例如錯誤回報、功能需求）。這些資料僅用於改善本服務及品質分析，不會用於識別個人。
+>
+> 帳戶刪除前寄送至客服信箱之電子郵件（包含送出意見回饋時寄送至客服信箱之通知郵件），不會因本服務之帳戶刪除處理而自動刪除。其保存與刪除依我們的客服紀錄管理方針辦理。
+
 **§7 您的權利 — Add (paragraph):**
 
 > 帳戶刪除後，如希望清除帳戶刪除紀錄，請透過第 12 節之聯絡方式與我們聯繫。我們將依您提供的電子信箱找出對應紀錄並予以清除。
@@ -101,13 +121,32 @@ Header: Last updated = `TBD (set at final approval)`; `KPI_PRIVACY_VERSION` = `T
 
 ## 2. Delete Account STEP 2 final draft copy (`delete_account3.html`)
 
-Only the 「削除後も残るもの」 column changes: **one item is added at the top.** The 「削除されるデータ」 column is unchanged (the plan setting itself is deleted; only the plan at deletion stays in the minimal record).
+Only the 「削除後も残るもの」 column changes. The 「削除されるデータ」 column is unchanged (the plan setting itself is deleted; only the plan at deletion stays in the minimal record).
 
-| Language | Added item (first line of the "remains" column) |
-|---|---|
-| JP | 退会履歴（メールアドレスを含まない最小限の記録：作成日・削除日・削除時のプランなど。削除日から3年後に自動で消去されます） |
-| EN | Account deletion record (a minimal record without your email address: creation date, deletion date, plan at deletion, etc. Erased automatically 3 years after the deletion date) |
-| ZH-TW | 帳戶刪除紀錄（不含電子信箱的最小紀錄：建立日、刪除日、刪除時的方案等。自刪除日起 3 年後自動清除） |
+Final 「削除後も残るもの」 column (new item 1; items 2 and 3 reworded to match Privacy §6; items 4 and 5 unchanged):
+
+**JP**
+1. 退会履歴（メールアドレスを含まない最小限の記録：作成日・削除日・削除時のプランなど。削除日から3年後に自動で消去されます）
+2. フィードバックの本文・送信日時・種別（送信者を特定できる情報は取り除きます）
+3. サポート宛てに送信済みのメール（アカウント削除では自動削除されません）
+4. サーバーのログ・バックアップ（一定期間ののち消去されます）
+5. この端末の表示設定（Sci-Fi / Office モード）
+
+**EN**
+1. Account deletion record (a minimal record without your email address: creation date, deletion date, plan at deletion, etc. Erased automatically 3 years after the deletion date)
+2. The text, date and category of feedback you sent (information that identifies you is removed)
+3. Emails already sent to support (not deleted automatically by account deletion)
+4. Server logs and backups (erased after a limited period)
+5. Display settings on this device (Sci-Fi / Office mode)
+
+**ZH-TW**
+1. 帳戶刪除紀錄（不含電子信箱的最小紀錄：建立日、刪除日、刪除時的方案等。自刪除日起 3 年後自動清除）
+2. 您送出的意見回饋內文、送出日期時間與類別（可識別您身分的資訊將被移除）
+3. 已寄送給客服的電子郵件（不會因帳戶刪除而自動刪除）
+4. 伺服器日誌與備份（經過一定期間後清除）
+5. 此裝置的顯示設定（Sci-Fi／Office 模式）
+
+**Feedback anonymization change required in L2 (Shin 2026-09-29):** on account deletion, also blank `plan` and `pageUrl` in linked feedback records (today only `userId` / `sessionEmail` / `contactEmail` / `userAgent` are blanked). Kept: `message`, `at`, `category`.
 
 ---
 
@@ -125,7 +164,7 @@ Only the 「削除後も残るもの」 column changes: **one item is added at t
 1. **Classification:** a keyed HMAC of the email can be re-matched by us, so the record is treated as pseudonymized personal data (GDPR) / personal information (APPI), not anonymous data — the draft is written on that basis.
 2. **Legal basis:** legitimate interests for EEA / UK (minimal fields, no email, 3-year limit, erasure on request).
 3. **Notice to existing users:** registration is still closed; current production users were admin-created and have no consent rows. Updating "Last updated" + version is the planned notice.
-4. **Existing gap (not changed by this draft):** the Policy does not mention that anonymized feedback text, emails already sent to support, and server logs / backups for a limited period remain after deletion (STEP 2 already says so). Separate decision.
+4. **Feedback / support mailbox:** closed — added to §6 (JP / EN / ZH-TW) and aligned with STEP 2 (Shin 2026-09-29).
 
 ---
 
