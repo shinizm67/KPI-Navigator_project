@@ -92,11 +92,28 @@ def main() -> None:
 
     # Server-side checks and order
     order = [reg.find(s) for s in [
-        "kpi_v1_registration_enabled($cfg)", "kpi_v1_registration_rate_allow($cfg, 'ip'", "kpi_v1_registration_bot_reason(",
-        "kpi_v1_registration_rate_allow($cfg, 'email'", "kpi_v1_registration_password_ok(", "kpi_v1_registration_consent_from_body(",
-        "kpi_v1_registration_create_user_with_consent(", "kpi_v1_auth_set_session_user("]]
-    check("register order: gate -> IP limit -> bot -> email limit -> password -> consent -> create -> session",
+        "kpi_v1_registration_enabled($cfg)", "kpi_v1_registration_has_forwarded_ip_header()",
+        "kpi_v1_registration_rate_gate($cfg, 'global_attempt'", "kpi_v1_registration_rate_gate($cfg, 'ip'",
+        "kpi_v1_registration_bot_reason(", "kpi_v1_registration_rate_gate($cfg, 'email'", "kpi_v1_registration_password_ok(",
+        "kpi_v1_registration_consent_from_body(", "isset($index[$email])", "kpi_v1_registration_rate_gate($cfg, 'global_create_day'",
+        "kpi_v1_registration_rate_gate($cfg, 'global_create_hour'", "kpi_v1_registration_create_user_with_consent(",
+        "kpi_v1_auth_set_session_user("]]
+    check("register order: gate -> forwarded header reject -> global attempt -> IP (auxiliary) -> bot -> email limit -> "
+          "password -> consent -> duplicate -> global create day / hour -> create -> session",
           all(x >= 0 for x in order) and order == sorted(order), str(order))
+    check("forwarded header reject = CF-Connecting-IP / X-Real-IP only, answered as generic registration_rejected",
+          "isset($_SERVER['HTTP_CF_CONNECTING_IP']) || isset($_SERVER['HTTP_X_REAL_IP'])" in helper
+          and re.search(r"has_forwarded_ip_header\(\)\) \{\s*kpi_v1_json_out\(400, \['ok' => false, 'error' => 'registration_rejected'\]\);", reg)
+          is not None)
+    check("global limiter defaults: attempts 30 / 10 min, creations 10 / h and 40 / 24 h",
+          "'registrationGlobalAttemptMax', 30," in helper and "'registrationGlobalAttemptWindowSeconds', 600," in helper
+          and re.search(r"'registrationGlobalCreateHourMax', 10, 1, 10000\),\s*3600,", helper) is not None
+          and re.search(r"'registrationGlobalCreateDayMax', 40, 1, 10000\),\s*86400,", helper) is not None)
+    check("rate gate fails closed: storage unavailable -> 503, full -> 429 rate_limited",
+          re.search(r"if \(\$allowed === null\) \{\s*kpi_v1_json_out\(503, \['ok' => false, 'error' => 'registration_unavailable'\]\);",
+                    helper) is not None and "kpi_v1_json_out(429, ['ok' => false, 'error' => 'rate_limited']);" in helper)
+    check("no forwarded header is trusted as the client IP",
+          not re.search(r"HTTP_(X_FORWARDED_FOR|CF_CONNECTING_IP|X_REAL_IP|TRUE_CLIENT_IP|CLIENT_IP|FORWARDED)'\]\)\s*\?", helper))
     check("consentAccepted must be boolean true", "$body['consentAccepted'] !== true" in helper)
     check("stale version -> consent_outdated", "'consent_outdated'" in helper)
     check("public registration plan fixed to basic", "'plan' => 'basic'," in reg and "default_plan" not in reg)

@@ -21,13 +21,13 @@ if (!kpi_v1_registration_enabled($cfg)) {
     kpi_v1_json_out(403, ['ok' => false, 'error' => 'registration_disabled']);
 }
 
-$ipAllowed = kpi_v1_registration_rate_allow($cfg, 'ip', kpi_v1_registration_client_ip());
-if ($ipAllowed === null) {
-    kpi_v1_json_out(503, ['ok' => false, 'error' => 'registration_unavailable']);
+/* Rejected before any counter so a spoofed header cannot consume or pick an IP bucket. */
+if (kpi_v1_registration_has_forwarded_ip_header()) {
+    kpi_v1_json_out(400, ['ok' => false, 'error' => 'registration_rejected']);
 }
-if ($ipAllowed === false) {
-    kpi_v1_json_out(429, ['ok' => false, 'error' => 'rate_limited']);
-}
+
+kpi_v1_registration_rate_gate($cfg, 'global_attempt', 'all');
+kpi_v1_registration_rate_gate($cfg, 'ip', kpi_v1_registration_client_ip());
 
 $body = kpi_v1_auth_read_json_body();
 
@@ -40,13 +40,7 @@ if ($email === null) {
     kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_email']);
 }
 
-$emailAllowed = kpi_v1_registration_rate_allow($cfg, 'email', $email);
-if ($emailAllowed === null) {
-    kpi_v1_json_out(503, ['ok' => false, 'error' => 'registration_unavailable']);
-}
-if ($emailAllowed === false) {
-    kpi_v1_json_out(429, ['ok' => false, 'error' => 'rate_limited']);
-}
+kpi_v1_registration_rate_gate($cfg, 'email', $email);
 
 $password = isset($body['password']) && is_string($body['password']) ? $body['password'] : '';
 if (!kpi_v1_registration_password_ok($password)) {
@@ -62,6 +56,10 @@ $index = kpi_v1_auth_read_email_index();
 if (isset($index[$email])) {
     kpi_v1_json_out(409, ['ok' => false, 'error' => 'email_taken']);
 }
+
+/* Counts every request that reaches account creation (a later create failure still uses the slot). */
+kpi_v1_registration_rate_gate($cfg, 'global_create_day', 'all');
+kpi_v1_registration_rate_gate($cfg, 'global_create_hour', 'all');
 
 $hash = password_hash($password, PASSWORD_DEFAULT);
 if ($hash === false) {

@@ -134,8 +134,18 @@ function kpi_v1_registration_bot_reason($cfg, $body)
     return kpi_v1_registration_check_form_token($cfg, isset($body['formToken']) ? $body['formToken'] : '');
 }
 
+/**
+ * ConoHa WING gives no trusted client-IP contract, and its LiteSpeed rewrites REMOTE_ADDR from these
+ * client-sent headers. The hosting front never sends them on normal requests, so their presence = spoofing attempt.
+ */
+function kpi_v1_registration_has_forwarded_ip_header()
+{
+    return isset($_SERVER['HTTP_CF_CONNECTING_IP']) || isset($_SERVER['HTTP_X_REAL_IP']);
+}
+
 /* ---------- Rate limit (file counters under data/registration; no new infra) ---------- */
 
+/* REMOTE_ADDR is not trustworthy on this hosting: the 'ip' bucket is an auxiliary signal, the 'global_*' buckets are the volume bound. */
 function kpi_v1_registration_client_ip()
 {
     return isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : 'unknown';
@@ -144,6 +154,18 @@ function kpi_v1_registration_client_ip()
 function kpi_v1_registration_rate_limits($cfg)
 {
     return [
+        'global_attempt' => [
+            kpi_v1_registration_int_cfg($cfg, 'registrationGlobalAttemptMax', 30, 1, 10000),
+            kpi_v1_registration_int_cfg($cfg, 'registrationGlobalAttemptWindowSeconds', 600, 60, 86400),
+        ],
+        'global_create_hour' => [
+            kpi_v1_registration_int_cfg($cfg, 'registrationGlobalCreateHourMax', 10, 1, 10000),
+            3600,
+        ],
+        'global_create_day' => [
+            kpi_v1_registration_int_cfg($cfg, 'registrationGlobalCreateDayMax', 40, 1, 10000),
+            86400,
+        ],
         'ip' => [
             kpi_v1_registration_int_cfg($cfg, 'registrationRateLimitIpMax', 10, 1, 1000),
             kpi_v1_registration_int_cfg($cfg, 'registrationRateLimitIpWindowSeconds', 600, 60, 86400),
@@ -201,6 +223,18 @@ function kpi_v1_registration_rate_allow($cfg, $bucket, $key, $now = null)
     } finally {
         flock($fh, LOCK_UN);
         fclose($fh);
+    }
+}
+
+/** Exits with 503 when the counter storage is unavailable (fail closed) and 429 when the bucket is full. */
+function kpi_v1_registration_rate_gate($cfg, $bucket, $key)
+{
+    $allowed = kpi_v1_registration_rate_allow($cfg, $bucket, $key);
+    if ($allowed === null) {
+        kpi_v1_json_out(503, ['ok' => false, 'error' => 'registration_unavailable']);
+    }
+    if ($allowed === false) {
+        kpi_v1_json_out(429, ['ok' => false, 'error' => 'rate_limited']);
     }
 }
 
