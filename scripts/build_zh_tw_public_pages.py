@@ -664,6 +664,16 @@ def build_register() -> None:
         ('<a href="../login/">Go to Login</a>', '<a href="../login/">前往登入</a>'),
         (">Early Access / Contact</a>", ">搶先體驗／聯絡我們</a>"),
         ('<label for="reg-extra-note">Leave this field empty</label>', '<label for="reg-extra-note">請勿填寫此欄位</label>'),
+        (
+            '>Receive emails from Forge Laboratory about new KPN features, new services and campaigns'
+            '<span class="form-marketing-optional"> (optional)</span></span>',
+            '>接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知'
+            '<span class="form-marketing-optional">（選填）</span></span>',
+        ),
+        (
+            '>You can unsubscribe at any time. When you delete your account, you can choose whether to keep receiving them.</p>',
+            '>您可隨時取消訂閱。刪除帳戶時，可選擇是否繼續接收。</p>',
+        ),
     ]
     for a, b in reps:
         if a not in text:
@@ -748,6 +758,16 @@ def build_register() -> None:
     if js.count(success_en) != 1:
         raise SystemExit("build_register: EN success alert changed")
     js = js.replace(success_en, "alert('註冊完成，將前往登入頁面。');")
+    for a, b in (
+        ("extra.marketingLocale = 'en';", "extra.marketingLocale = 'zh-TW';"),
+        (
+            "alert('The newsletter wording has been updated. Please reload the page, review it, and try again.');",
+            "alert('通知郵件的文字已更新。請重新載入頁面，確認內容後再試一次。');",
+        ),
+    ):
+        if js.count(a) != 1:
+            raise SystemExit(f"build_register: EN script.js changed, missing: {a[:80]}")
+        js = js.replace(a, b)
     (ROOT / "zh-tw" / "register" / "script.js").write_text(js, encoding="utf-8", newline="\n")
     print("wrote zh-tw/register/script.js")
 

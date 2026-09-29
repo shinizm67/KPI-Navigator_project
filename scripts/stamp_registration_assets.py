@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Stamp Registration / Plan / Change Password / Change Email page script URLs with a content hash (?v=<sha256[:12]>).
+"""Stamp Registration / Plan / Change Password / Change Email / Preferences / Unsubscribe page script URLs with a content hash (?v=<sha256[:12]>).
 
 JS is served with a 7-day cache, so every page listed here must request a URL that
 changes whenever the script content changes. Run after editing any Registration script,
-js/kpi-auth-client.js, js/kpi-plan-cta.js, js/kpi-change-password-page.js or js/kpi-change-email-page.js
+js/kpi-auth-client.js, js/kpi-plan-cta.js, js/kpi-change-password-page.js, js/kpi-change-email-page.js,
+js/kpi-marketing-preference.js or js/kpi-unsubscribe-page.js
 (build_zh_tw_public_pages.py runs it for zh-tw register).
 
   python scripts/stamp_registration_assets.py          # rewrite
@@ -48,6 +49,14 @@ PAGES = {
         f"{prefix}setting/{page}": {f"{up}js/kpi-delete-account-page.js": "js/kpi-delete-account-page.js"}
         for prefix, up in (("", "../"), ("en/", "../../"), ("zh-tw/", "../../"))
         for page in ("delete_account4-1.html", "delete_account5.html", "delete_account_accomplished.html")
+    },
+    **{
+        f"{prefix}setting/preferences.html": {f"{up}js/kpi-marketing-preference.js": "js/kpi-marketing-preference.js"}
+        for prefix, up in (("", "../"), ("en/", "../../"), ("zh-tw/", "../../"))
+    },
+    **{
+        f"{prefix}unsubscribe/index.html": {f"{up}js/kpi-unsubscribe-page.js": "js/kpi-unsubscribe-page.js"}
+        for prefix, up in (("", "../"), ("en/", "../../"), ("zh-tw/", "../../"))
     },
 }
 

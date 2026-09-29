@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>お知らせメールの配信停止 | Key Performance Navigator | FORGE LABORATORY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../register/style.css">
+  <link rel="stylesheet" href="../en/login/style.css">
+  <style>
+    .unsubscribe-intro {
+      margin: 0 0 28px;
+      color: #58e1f3;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .si-fi.login-page .login-form .form-group select,
+    .si-fi.login-page .login-form .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--si-fi-input-bg);
+      border: 1px solid var(--si-fi-green);
+      border-radius: 3px;
+      color: var(--si-fi-cyan);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .si-fi.login-page .login-form .form-group select {
+      appearance: none;
+      padding-right: 36px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%2358E1F3'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .si-fi.login-page .login-form .form-group textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+    .si-fi.office-mode .unsubscribe-intro {
+      color: #000;
+    }
+    .si-fi.office-mode .login-form .form-group select,
+    .si-fi.office-mode .login-form .form-group textarea {
+      border: 1px solid #000;
+      background-color: #e8e8e8;
+      color: #000;
+    }
+    .si-fi.office-mode .login-form .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23000'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    }
+  </style>
+  <style id="kpi-lang-switcher-locale">
+    html[lang='ja'] .lang-option-zh-tw { display: none !important; }
+    html[lang='zh-TW'] .lang-option-ja,
+    html[lang^='zh'] .lang-option-ja { display: none !important; }
+  </style>
+</head>
+<body class="si-fi login-page" id="body-el">
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <a href="https://forge-laboratory.com/" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <div class="header-actions">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="オフィスモードに切り替え">
+          <span class="btn-mode-frame">
+            <img src="../images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
+            <span class="btn-mode-text" id="btn-mode-text">オフィスモード</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap login-wrap">
+    <main class="login-content">
+      <h1 class="login-title-main">Key Performance Navigator</h1>
+      <h2 class="login-title-sub">お知らせメールの配信停止</h2>
+      <form class="login-form" action="#" method="post" id="unsubscribe-form">
+        <p class="unsubscribe-intro">Forge Laboratoryからのお知らせメール（KPNの新機能・新サービス・キャンペーン等）の配信を停止します。アカウントやKPNのデータには影響しません。</p>
+        <div class="form-group">
+          <label for="unsubscribe-reason">停止の理由（任意） :</label>
+          <select id="unsubscribe-reason" name="reason">
+              <option value="">選択しない</option>
+              <option value="too_many">配信が多すぎる</option>
+              <option value="not_relevant">内容が関係ない</option>
+              <option value="not_requested">受け取りを申し込んだ覚えがない</option>
+              <option value="other">その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="unsubscribe-note">ご意見（任意・200文字まで） :</label>
+          <textarea id="unsubscribe-note" name="note" maxlength="200" rows="3"></textarea>
+        </div>
+        <p class="auth-error" id="unsubscribe-error" role="alert" hidden></p>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit btn-login" id="btn-unsubscribe" disabled>配信を停止する</button>
+        </div>
+      </form>
+      <div id="unsubscribe-done" hidden>
+        <p class="auth-message" role="status" aria-live="polite">配信停止を受け付けました。今後、このメールアドレスにお知らせメールをお送りすることはありません。再び受け取りたい場合は、ログイン後の「設定」画面から変更できます。</p>
+        <p class="auth-secondary-link"><a href="../login/index.html">ログインへ</a></p>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-separator"></div>
+      <div class="footer-logo">
+        <a href="https://forge-laboratory.com/" class="logo-link" aria-label="FORGE LABORATORY - トップページ" target="_blank" rel="noopener noreferrer">
+          <img src="../images/forge_lab_logo.png" alt="FORGE LABORATORY" class="logo-img">
+        </a>
+      </div>
+      <div class="footer-brand">
+      <p class="footer-product">Key Performance Navigator</p>
+      <p class="footer-version">Version 1.0.0</p>
+      <p class="footer-copy">© 2025 Forge Laboratory</p>
+    </div>
+    </footer>
+  </div>
+
+  <div class="lang-select-wrap" id="lang-select-wrap" data-url-en="../en/unsubscribe/index.html" data-url-ja="../unsubscribe/index.html" data-url-zh-tw="../zh-tw/unsubscribe/index.html">
+    <button type="button" class="lang-select-btn" id="lang-select-btn" aria-expanded="false" aria-haspopup="listbox" aria-label="言語を選択">
+      <span class="lang-code" aria-hidden="true">JP</span>
+      <span class="lang-name">Japanese</span>
+      <span class="lang-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="lang-select-dropdown" id="lang-select-dropdown" role="listbox" hidden>
+      <button type="button" class="lang-option lang-option-ja lang-option-active" role="option" data-lang="ja">JP - Japanese</button>
+      <button type="button" class="lang-option lang-option-en" role="option" data-lang="en">EN - English</button>
+      <button type="button" class="lang-option lang-option-zh-tw" role="option" data-lang="zh-tw">TW - Traditional Chinese</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'kpi-office-mode';
+      var bodyEl = document.getElementById('body-el');
+      var btnModeToggle = document.getElementById('btn-mode-toggle');
+      var btnModeText = document.getElementById('btn-mode-text');
+      function updateModeButton() {
+        if (!btnModeText || !btnModeToggle) return;
+        var isOffice = bodyEl && bodyEl.classList.contains('office-mode');
+        btnModeText.textContent = isOffice ? 'SCI-FI MODE' : 'オフィスモード';
+        btnModeToggle.setAttribute('aria-label', isOffice ? 'Sci-Fi' : 'オフィスモードに切り替え');
+      }
+      if (bodyEl && btnModeToggle) {
+        try {
+          if (sessionStorage.getItem(STORAGE_KEY) === '1') bodyEl.classList.add('office-mode');
+        } catch (_e) {}
+        btnModeToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          bodyEl.classList.toggle('office-mode');
+          try {
+            if (bodyEl.classList.contains('office-mode')) sessionStorage.setItem(STORAGE_KEY, '1');
+            else sessionStorage.removeItem(STORAGE_KEY);
+          } catch (_e) {}
+          updateModeButton();
+        });
+        updateModeButton();
+      }
+    })();
+    (function () {
+      var langBtn = document.getElementById('lang-select-btn');
+      var langDropdown = document.getElementById('lang-select-dropdown');
+      var langOptions = document.querySelectorAll('.lang-option');
+      var langWrap = document.getElementById('lang-select-wrap');
+      if (!langBtn || !langDropdown) return;
+      langBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !langDropdown.hidden;
+        langDropdown.hidden = isOpen;
+        langBtn.setAttribute('aria-expanded', !isOpen);
+      });
+      document.addEventListener('click', function () {
+        langDropdown.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      });
+      var urlEn = langWrap && langWrap.getAttribute('data-url-en');
+      var urlJa = langWrap && langWrap.getAttribute('data-url-ja');
+      var urlZhTw = langWrap && langWrap.getAttribute('data-url-zh-tw');
+      langOptions.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var lang = this.getAttribute('data-lang');
+          var href = lang === 'ja' && urlJa ? urlJa : lang === 'en' && urlEn ? urlEn : lang === 'zh-tw' && urlZhTw ? urlZhTw : null;
+          if (!href) return;
+          try {
+            var tok = new URLSearchParams(window.location.search).get('t');
+            if (tok) href += '?t=' + encodeURIComponent(tok);
+          } catch (_e) {}
+          window.location.href = href;
+        });
+      });
+    })();
+  </script>
+  <script src="../js/kpi-unsubscribe-page.js?v=1c638fa5efc3"></script>
+</body>
+</html>

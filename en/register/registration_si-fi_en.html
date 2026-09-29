@@ -8,6 +8,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style id="kpi-marketing-optin">
+    .si-fi .form-marketing {
+      margin: 0 0 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(88, 225, 243, 0.28);
+    }
+    .si-fi .form-marketing .form-agreement-label {
+      align-items: flex-start;
+      margin-bottom: 0;
+    }
+    .si-fi .form-marketing .form-agreement-checkbox {
+      margin-top: 1px;
+    }
+    .si-fi .form-marketing-hint {
+      margin: 6px 0 0 28px;
+    }
+    .si-fi.office-mode .form-marketing {
+      border-top-color: rgba(0, 0, 0, 0.2);
+    }
+  </style>
   <style id="kpi-lang-switcher-locale">
     /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
     html[lang='ja'] .lang-option-zh-tw {
@@ -108,6 +128,13 @@
             <a href="../legal/terms/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">View Terms</a>
             <a href="../legal/privacy/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">View Privacy</a>
           </p>
+          <div class="form-marketing" id="marketing-optin-wrap" data-marketing-version="mkt-2026-09-29" hidden>
+            <label class="form-agreement-label" for="marketing-optin">
+              <input type="checkbox" id="marketing-optin" name="marketing_opt_in" class="form-agreement-checkbox">
+              <span class="form-agreement-text">Receive emails from Forge Laboratory about new KPN features, new services and campaigns<span class="form-marketing-optional"> (optional)</span></span>
+            </label>
+            <p class="form-hint form-marketing-hint">You can unsubscribe at any time. When you delete your account, you can choose whether to keep receiving them.</p>
+          </div>
           <div class="form-actions">
             <button type="submit" class="btn-submit btn-register" id="btn-register" disabled>Register</button>
           </div>
@@ -146,6 +173,6 @@
   </div>
 
   <script src="../../js/kpi-auth-client.js?v=a3bd7260925e"></script>
-  <script src="script.js?v=cc425fb75d9c"></script>
+  <script src="script.js?v=021c30093263"></script>
 </body>
 </html>

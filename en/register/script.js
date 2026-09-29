@@ -36,9 +36,22 @@
     );
   }
 
+  /* Newsletter (optional, default OFF): shown only when the server wording version equals this page's; otherwise nothing is sent */
+  var marketingWrap = document.getElementById('marketing-optin-wrap');
+  var marketingBox = document.getElementById('marketing-optin');
+
+  function marketingOffered() {
+    return !!(marketingWrap && marketingBox && !marketingWrap.hidden);
+  }
+
   function openRegistrationForm(d) {
     registrationStatus = d;
     registrationOpen = true;
+    if (marketingWrap && marketingBox) {
+      var pageVersion = marketingWrap.getAttribute('data-marketing-version') || '';
+      marketingBox.checked = false;
+      marketingWrap.hidden = !(pageVersion && d.marketingConsentVersion === pageVersion);
+    }
     if (regDisabledNotice) regDisabledNotice.hidden = true;
     if (regFormGate) {
       regFormGate.removeAttribute('hidden');
@@ -242,19 +255,31 @@
       var email = emailEl ? emailEl.value.trim() : '';
       var pw = password ? password.value : '';
       var extraNote = document.getElementById('reg-extra-note');
+      var marketingOptIn = marketingOffered() && marketingBox.checked;
+      var extra = {
+        consentAccepted: !!(agreeTerms && agreeTerms.checked),
+        termsVersion: registrationStatus.termsVersion,
+        privacyVersion: registrationStatus.privacyVersion,
+        formToken: registrationStatus.formToken,
+        extraNote: extraNote ? extraNote.value : ''
+      };
+      if (marketingOptIn) {
+        extra.marketingOptIn = true;
+        extra.marketingConsentVersion = marketingWrap.getAttribute('data-marketing-version');
+        extra.marketingLocale = 'en';
+      }
       if (btnRegister) btnRegister.disabled = true;
       window.__KPI_AUTH
-        .register(email, pw, {
-          consentAccepted: !!(agreeTerms && agreeTerms.checked),
-          termsVersion: registrationStatus.termsVersion,
-          privacyVersion: registrationStatus.privacyVersion,
-          formToken: registrationStatus.formToken,
-          extraNote: extraNote ? extraNote.value : ''
-        })
+        .register(email, pw, extra)
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
             alert('Registration complete. Proceeding to login.');
             window.location.href = '../login/index.html';
+            return;
+          }
+          if (r.data && r.data.error === 'marketing_consent_outdated') {
+            alert('The newsletter wording has been updated. Please reload the page, review it, and try again.');
+            setRegisterButtonState();
             return;
           }
           alert(window.__KPI_AUTH.errorMessage('en', r.status, r.data));

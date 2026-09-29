@@ -22,6 +22,28 @@
       color: #333;
       opacity: 1;
     }
+    .si-fi.profile-page .profile-form .form-group.pref-marketing-row .form-agreement-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .si-fi.profile-page .profile-form .form-group.pref-marketing-row input.form-agreement-checkbox {
+      width: 18px;
+      height: 18px;
+      min-height: 0;
+      margin: 1px 0 0;
+      padding: 0;
+      border: 0;
+      background: none;
+    }
+    .si-fi.profile-page .profile-form .form-group.pref-marketing-row input.form-agreement-checkbox:disabled + .form-agreement-text {
+      opacity: 0.6;
+    }
+    .pref-marketing-row .profile-preferences-hint {
+      margin: 0 0 4px 28px;
+    }
   </style>
   <style id="kpi-lang-switcher-locale">
     /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
@@ -291,6 +313,16 @@
               <option value="1">ON</option>
               <option value="0">OFF</option>
             </select>
+          </div>
+
+          <div class="form-group pref-marketing-row" id="pref-marketing-row" data-marketing-version="mkt-2026-09-29" hidden>
+            <label for="pref-marketing">通知郵件 :</label>
+            <label class="form-agreement-label" for="pref-marketing">
+              <input type="checkbox" id="pref-marketing" name="marketing" class="form-agreement-checkbox">
+              <span class="form-agreement-text">接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知</span>
+            </label>
+            <p class="profile-preferences-hint" id="pref-marketing-state" role="status" aria-live="polite"></p>
+            <p class="profile-preferences-hint">勾選變更後會立即生效（不需按「儲存偏好設定」）。您可隨時取消訂閱。</p>
           </div>
         </div>
 
@@ -1654,5 +1686,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
+  <script src="../../js/kpi-marketing-preference.js?v=bb9c8b08b16c"></script>
 </body>
 </html>

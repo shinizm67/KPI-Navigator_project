@@ -19,7 +19,10 @@ require_once __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/_auth.php';
 require_once __DIR__ . '/_registration.php';
 
-/* Version of the fixed opt-in wording (Registration / Settings). A new wording = a new version + text below. */
+/*
+ * Version of the fixed opt-in wording (Registration / Settings). A new wording = a new version + text below.
+ * The pages show exactly this sentence (Registration appends an "optional" marker) and send their version.
+ */
 const KPI_MARKETING_CONSENT_VERSION = 'mkt-2026-09-29';
 const KPI_MARKETING_EVIDENCE_RETENTION = '+3 years';
 const KPI_MARKETING_MIN_SECRET_LENGTH = 32;
@@ -28,9 +31,9 @@ function kpi_v1_marketing_consent_texts()
 {
     return [
         'mkt-2026-09-29' => [
-            'ja' => 'Forge Laboratoryから、KPNの新機能・新サービス・キャンペーン等のお知らせをメールで受け取る（任意）',
-            'en' => 'Receive emails from Forge Laboratory about new KPN features, new services and campaigns (optional)',
-            'zh-TW' => '接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知（選填）',
+            'ja' => 'Forge Laboratoryから、KPNの新機能・新サービス・キャンペーン等のお知らせをメールで受け取る',
+            'en' => 'Receive emails from Forge Laboratory about new KPN features, new services and campaigns',
+            'zh-TW' => '接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知',
         ],
     ];
 }
@@ -686,7 +689,7 @@ function kpi_v1_marketing_rate_gate($cfg, $bucket, $key)
 function kpi_v1_marketing_record_reason($reason, $note)
 {
     $reason = is_string($reason) && in_array($reason, KPI_MARKETING_UNSUB_REASONS, true) ? $reason : null;
-    $note = is_string($note) ? trim(mb_substr($note, 0, 500)) : '';
+    $note = is_string($note) ? trim(mb_substr($note, 0, 200)) : '';
     if ($reason === null && $note === '') {
         return true;
     }

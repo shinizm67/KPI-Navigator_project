@@ -9,6 +9,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
+  <style id="kpi-marketing-optin">
+    .si-fi .form-marketing {
+      margin: 0 0 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(88, 225, 243, 0.28);
+    }
+    .si-fi .form-marketing .form-agreement-label {
+      align-items: flex-start;
+      margin-bottom: 0;
+    }
+    .si-fi .form-marketing .form-agreement-checkbox {
+      margin-top: 1px;
+    }
+    .si-fi .form-marketing-hint {
+      margin: 6px 0 0 28px;
+    }
+    .si-fi.office-mode .form-marketing {
+      border-top-color: rgba(0, 0, 0, 0.2);
+    }
+  </style>
   <style id="kpi-lang-switcher-locale">
     /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
     html[lang='ja'] .lang-option-zh-tw {
@@ -111,6 +131,13 @@
             <span class="form-agreement-sep"> / </span>
             <a href="../../legal/privacy/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">プライバシーポリシーを表示</a>
           </p>
+          <div class="form-marketing" id="marketing-optin-wrap" data-marketing-version="mkt-2026-09-29" hidden>
+            <label class="form-agreement-label" for="marketing-optin">
+              <input type="checkbox" id="marketing-optin" name="marketing_opt_in" class="form-agreement-checkbox">
+              <span class="form-agreement-text">Forge Laboratoryから、KPNの新機能・新サービス・キャンペーン等のお知らせをメールで受け取る<span class="form-marketing-optional">（任意）</span></span>
+            </label>
+            <p class="form-hint form-marketing-hint">配信はいつでも停止できます。退会後も受け取るかは、退会時に選べます。</p>
+          </div>
           <div class="form-actions">
             <button type="submit" class="btn-submit btn-register" id="btn-register" disabled>登録する</button>
           </div>
@@ -151,6 +178,6 @@
   </div>
 
   <script src="../../js/kpi-auth-client.js?v=a3bd7260925e"></script>
-  <script src="../script.js?v=e686f1339ef1"></script>
+  <script src="../script.js?v=bebf7335e9f4"></script>
 </body>
 </html>

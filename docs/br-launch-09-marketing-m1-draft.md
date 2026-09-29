@@ -128,7 +128,9 @@ Below the Terms / Privacy checkbox, a separate unchecked checkbox + helper text 
 - ZH-TW: 「接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知（選填）」
   helper: 「您可隨時取消訂閱。刪除帳戶時，可選擇是否繼續接收。」
 
-Register button condition unchanged (Terms / Privacy only). Payload gains `marketingOptIn: true|false` (+ the consent text version the page showed); server validates the version. `registration-status` also returns `marketingConsentVersion`.
+The consent sentence is the text without the （任意）/ (optional) /（選填） marker; the marker is a Registration display label only (the server's `mkt-2026-09-29` text = the sentence). Final copy is reviewed by Shin before production deploy.
+
+Register button condition unchanged (Terms / Privacy only). Payload gains `marketingOptIn: true` (+ the consent text version the page showed) only when checked; unchecked payloads are unchanged. The server validates the version (mismatch → fail closed). `registration-status` also returns `marketingConsentVersion`.
 
 Settings (M3): a "お知らせメール" row on the existing Preferences page: current status + subscribe / unsubscribe (session user only, current email).
 
@@ -284,3 +286,20 @@ Contract as implemented (differences from sections 2–8 are refinements, not ne
 - Lifecycle segments (history rows only, at delete time): country = listed ISO 3166-1 code of the app catalog (`UK` → `GB`), business type = fixed code (legacy labels mapped), currency = listed ISO 4217 code; other values → `other`, empty → NULL. From the profile, business type falls back to `store.meta.businessType`. Old rows stay NULL. Founder Deleted Accounts API returns `country` / `businessType` / `currency`. The lifecycle readiness check now requires these columns → **the migration must be applied before the M2 server is deployed** (else Delete fails closed as designed).
 
 Local verification (PHP 8.2 + MariaDB 10.11, file + MySQL): M2 smoke 124/124, Delete + Lifecycle regression 341/341, Lifecycle phase-2 regression 236/238 and Registration regression 94/98 (remaining FAILs are pre-existing harness expectations: old privacy version and "no HMAC key" log lines), static contract tests incl. `scripts/_test_marketing_m2_contract.py` all PASS.
+
+## 17. M3 implementation (local, 2026-09-29)
+
+UI only on top of M2. No production migration / deploy, no marketing send, no Delete UI (M4), no Founder UI (M6).
+
+- Registration (JP / EN / ZH-TW, Sci-Fi / Office): a separate unchecked checkbox + helper below the Terms / Privacy links (section 5 copy). It is shown only when `registration-status.marketingConsentVersion` equals the page's `data-marketing-version`; otherwise it stays hidden (no stale wording). Reset to unchecked every time the form opens. `marketing_consent_outdated` → reload message, nothing registered.
+- Preferences (`setting/preferences.html` × 3): one "お知らせメール / Newsletter emails / 通知郵件" row in the existing editable group. Hidden until `GET marketing/preference.php` answers a boolean state (state unknown → row hidden, never a pre-checked box). The checkbox applies immediately (not via Save Preferences): ON → `subscribe` with the page's wording version (new explicit consent event, also after OFF), OFF → `unsubscribe`. Current status line + result message; failure → checkbox reverts. A page whose wording version differs from the server cannot subscribe (unsubscribe still works).
+- Unsubscribe confirm page (`unsubscribe/`, `en/unsubscribe/`, `zh-tw/unsubscribe/`): public, no auth script, `noindex` + `no-referrer`. Opening it changes nothing; only the button POSTs `{token, reason?, note?}` (no cookies). Malformed / missing token → error, button disabled. Same done message for every 200 (no enumeration); 429 → "try later". Optional reason (4 fixed codes) + note (max 200 chars, server truncates to 200). Language switch keeps `?t=`.
+- Cache-bust: `scripts/stamp_registration_assets.py` now also stamps the Preferences and Unsubscribe pages.
+- zh-tw Registration copy is kept in `scripts/build_zh_tw_public_pages.py` (`build_register`).
+
+Production Gate (before M7):
+
+- Unsubscribe secret: place it outside the web document root or in the existing production secret / config area where possible (config `marketingTokenSecret`). `.htaccess` must not be the primary protection of the key; audit and report the placement before M7.
+- The server never trusts a client `marketingConsentVersion`: Registration and Settings subscribe compare it with the server's current version and fail closed (400 `marketing_consent_outdated`) on mismatch.
+
+Local verification: M3 UI smoke 226/226 (file + MySQL, JP / EN / ZH-TW, Sci-Fi / Office), `scripts/_test_marketing_m3_ui_contract.py` 43/43, M2 smoke 124/124, Registration e2e 94/98 (same pre-existing FAILs as M2). Other static FAILs are identical on `f2fa402` (pre-existing).

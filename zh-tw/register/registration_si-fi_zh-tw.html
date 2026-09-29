@@ -8,6 +8,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=BIZ+UDP+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../register/style.css">
+  <style id="kpi-marketing-optin">
+    .si-fi .form-marketing {
+      margin: 0 0 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(88, 225, 243, 0.28);
+    }
+    .si-fi .form-marketing .form-agreement-label {
+      align-items: flex-start;
+      margin-bottom: 0;
+    }
+    .si-fi .form-marketing .form-agreement-checkbox {
+      margin-top: 1px;
+    }
+    .si-fi .form-marketing-hint {
+      margin: 6px 0 0 28px;
+    }
+    .si-fi.office-mode .form-marketing {
+      border-top-color: rgba(0, 0, 0, 0.2);
+    }
+  </style>
   <style id="kpi-lang-switcher-locale">
     /* KPI-LANG-SWITCHER-LOCALE: footer shortcut = native + EN only (see docs/lang-switcher-locale-policy.md) */
     html[lang='ja'] .lang-option-zh-tw {
@@ -108,6 +128,13 @@
             <a href="../legal/terms/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">查看服務條款</a>
             <a href="../legal/privacy/" class="form-agreement-link" target="_blank" rel="noopener noreferrer">查看隱私權政策</a>
           </p>
+          <div class="form-marketing" id="marketing-optin-wrap" data-marketing-version="mkt-2026-09-29" hidden>
+            <label class="form-agreement-label" for="marketing-optin">
+              <input type="checkbox" id="marketing-optin" name="marketing_opt_in" class="form-agreement-checkbox">
+              <span class="form-agreement-text">接收 Forge Laboratory 以電子郵件寄送的 KPN 新功能、新服務及活動等通知<span class="form-marketing-optional">（選填）</span></span>
+            </label>
+            <p class="form-hint form-marketing-hint">您可隨時取消訂閱。刪除帳戶時，可選擇是否繼續接收。</p>
+          </div>
           <div class="form-actions">
             <button type="submit" class="btn-submit btn-register" id="btn-register" disabled>註冊</button>
           </div>
@@ -146,6 +173,6 @@
   </div>
 
   <script src="../../js/kpi-auth-client.js?v=a3bd7260925e"></script>
-  <script src="script.js?v=8e8babf8bf0e"></script>
+  <script src="script.js?v=00d1f272c9ae"></script>
 </body>
 </html>

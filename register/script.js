@@ -39,9 +39,22 @@
     );
   }
 
+  /* お知らせメール（任意・既定 OFF）: server の文言版とページの文言版が一致したときだけ表示。不一致なら送らない */
+  var marketingWrap = document.getElementById('marketing-optin-wrap');
+  var marketingBox = document.getElementById('marketing-optin');
+
+  function marketingOffered() {
+    return !!(marketingWrap && marketingBox && !marketingWrap.hidden);
+  }
+
   function openRegistrationForm(d) {
     registrationStatus = d;
     registrationOpen = true;
+    if (marketingWrap && marketingBox) {
+      var pageVersion = marketingWrap.getAttribute('data-marketing-version') || '';
+      marketingBox.checked = false;
+      marketingWrap.hidden = !(pageVersion && d.marketingConsentVersion === pageVersion);
+    }
     if (regDisabledNotice) regDisabledNotice.hidden = true;
     if (regFormGate) {
       regFormGate.removeAttribute('hidden');
@@ -263,19 +276,31 @@
       var email = emailEl ? emailEl.value.trim() : '';
       var pw = password ? password.value : '';
       var extraNote = document.getElementById('reg-extra-note');
+      var marketingOptIn = marketingOffered() && marketingBox.checked;
+      var extra = {
+        consentAccepted: !!(agreeTerms && agreeTerms.checked),
+        termsVersion: registrationStatus.termsVersion,
+        privacyVersion: registrationStatus.privacyVersion,
+        formToken: registrationStatus.formToken,
+        extraNote: extraNote ? extraNote.value : ''
+      };
+      if (marketingOptIn) {
+        extra.marketingOptIn = true;
+        extra.marketingConsentVersion = marketingWrap.getAttribute('data-marketing-version');
+        extra.marketingLocale = 'ja';
+      }
       if (btnRegister) btnRegister.disabled = true;
       window.__KPI_AUTH
-        .register(email, pw, {
-          consentAccepted: !!(agreeTerms && agreeTerms.checked),
-          termsVersion: registrationStatus.termsVersion,
-          privacyVersion: registrationStatus.privacyVersion,
-          formToken: registrationStatus.formToken,
-          extraNote: extraNote ? extraNote.value : ''
-        })
+        .register(email, pw, extra)
         .then(function (r) {
           if (r.status === 201 && r.data && r.data.ok) {
             alert(isJa ? '登録が完了しました。ログイン画面へ進みます。' : 'Registration complete. Proceeding to login.');
             window.location.href = '../../login/index.html';
+            return;
+          }
+          if (r.data && r.data.error === 'marketing_consent_outdated') {
+            alert('お知らせメールの文言が更新されました。ページを再読み込みし、内容を確認してから、もう一度お試しください。');
+            setRegisterButtonState();
             return;
           }
           alert(window.__KPI_AUTH.errorMessage(authLang, r.status, r.data));
