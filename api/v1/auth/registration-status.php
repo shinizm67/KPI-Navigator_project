@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/../_registration.php';
+require_once __DIR__ . '/../_marketing.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_cors($cfg);
@@ -20,4 +21,4 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     kpi_v1_json_out(405, ['ok' => false, 'error' => 'method_not_allowed']);
 }
 
-kpi_v1_json_out(200, kpi_v1_registration_public_status($cfg));
+kpi_v1_json_out(200, array_merge(kpi_v1_registration_public_status($cfg), ['marketingConsentVersion' => KPI_MARKETING_CONSENT_VERSION]));

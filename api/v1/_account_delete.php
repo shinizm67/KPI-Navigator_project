@@ -13,6 +13,8 @@
  * - A minimal lifecycle history row (_lifecycle.php) is written together with the account delete: in MySQL inside the
  *   same transaction, so a history row exists exactly when the account row was deleted. No HMAC key / history
  *   tables = nothing is deleted (fail closed).
+ * - A marketing subscription (_marketing.php) is settled in the same unit: subscribed = the user must choose
+ *   keep (email kept for news only, account link removed) or stop; otherwise nothing is deleted. Never turned on here.
  */
 
 require_once __DIR__ . '/_registration.php';
@@ -143,12 +145,13 @@ function kpi_v1_account_delete_preflight($cfg)
 }
 
 /**
- * Remove the canonical user record and write its lifecycle history row.
+ * Remove the canonical user record and write its lifecycle history row; settle a marketing subscription
+ * ($marketingChoice keep | stop, required only while subscribed) in the same unit.
  * Nothing is deleted (and no history row remains) when this returns anything but 'ok'.
  * @param string|null $lifecycleId set to the history row id on 'ok'
- * @return string ok | gone | stale | has_child_accounts | failed
+ * @return string ok | gone | stale | has_child_accounts | marketing_choice_required | failed
  */
-function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
+function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null, $marketingChoice = null)
 {
     $userId = (string) $user['userId'];
     $lifecycleId = null;
@@ -176,6 +179,13 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
                 $pdo->rollBack();
                 return 'has_child_accounts';
             }
+            $mkt = kpi_v1_marketing_run($cfg, function ($ctx) use ($row, $marketingChoice) {
+                return kpi_v1_marketing_op_account_deleted($ctx, (string) $row['email'], $marketingChoice);
+            }, $pdo);
+            if ($mkt[0] === 'ok' && $mkt[1] === 'choice_required') {
+                $pdo->rollBack();
+                return 'marketing_choice_required';
+            }
             $record = kpi_v1_lifecycle_build_record($cfg, [
                 'userId' => $userId,
                 'email' => (string) $row['email'],
@@ -183,7 +193,7 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
                 'role' => (string) $row['role'],
                 'createdAt' => (string) $row['created_at'],
                 'parentUserId' => $row['parent_user_id'],
-            ], kpi_v1_lifecycle_db_origin($pdo, $userId));
+            ], kpi_v1_lifecycle_db_origin($pdo, $userId), kpi_v1_lifecycle_segment($cfg, $userId));
             if ($record === null) {
                 $pdo->rollBack();
                 return 'failed';
@@ -218,8 +228,22 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
     if (kpi_v1_account_delete_has_children($cfg, $userId)) {
         return 'has_child_accounts';
     }
-    $record = kpi_v1_lifecycle_build_record($cfg, $fresh, kpi_v1_lifecycle_file_origin($userId));
-    if ($record === null || !kpi_v1_lifecycle_file_insert($record)) {
+    $record = kpi_v1_lifecycle_build_record($cfg, $fresh, kpi_v1_lifecycle_file_origin($userId), kpi_v1_lifecycle_segment($cfg, $userId));
+    if ($record === null) {
+        return 'failed';
+    }
+    $marketingSnap = kpi_v1_marketing_file_snapshot();
+    $mkt = kpi_v1_marketing_run($cfg, function ($ctx) use ($fresh, $marketingChoice) {
+        return kpi_v1_marketing_op_account_deleted($ctx, (string) $fresh['email'], $marketingChoice);
+    });
+    if ($mkt[0] !== 'ok') {
+        return 'failed';
+    }
+    if ($mkt[1] === 'choice_required') {
+        return 'marketing_choice_required';
+    }
+    if (!kpi_v1_lifecycle_file_insert($record)) {
+        kpi_v1_marketing_file_restore($marketingSnap);
         return 'failed';
     }
     $index = kpi_v1_auth_read_email_index();
@@ -231,11 +255,13 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null)
     }
     if (!kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $nextIndex)) {
         kpi_v1_lifecycle_file_remove($record['lifecycleId']);
+        kpi_v1_marketing_file_restore($marketingSnap);
         return 'failed';
     }
     if (!@unlink($userPath)) {
         kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $index);
         kpi_v1_lifecycle_file_remove($record['lifecycleId']);
+        kpi_v1_marketing_file_restore($marketingSnap);
         return 'failed';
     }
     $lifecycleId = $record['lifecycleId'];
@@ -348,7 +374,7 @@ function kpi_v1_account_delete_cleanup_files($cfg, $user)
  * Runs under the registration lock. Returns [status, payload]; never exits.
  * @return array{0:int,1:array}
  */
-function kpi_v1_account_delete_execute_locked($cfg, $userId)
+function kpi_v1_account_delete_execute_locked($cfg, $userId, $marketingChoice = null)
 {
     $user = kpi_v1_auth_read_user($userId);
     if ($user === null || empty($user['passwordHash'])) {
@@ -370,7 +396,10 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId)
     }
 
     $lifecycleId = null;
-    $result = kpi_v1_account_delete_user_record($cfg, $user, $lifecycleId);
+    $result = kpi_v1_account_delete_user_record($cfg, $user, $lifecycleId, $marketingChoice);
+    if ($result === 'marketing_choice_required') {
+        return [400, ['ok' => false, 'error' => 'marketing_choice_required']];
+    }
     if ($result === 'gone') {
         return [401, ['ok' => false, 'error' => 'unauthorized']];
     }
@@ -397,6 +426,9 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId)
     }
     if (kpi_v1_lifecycle_purge($cfg) === null) {
         error_log('kpn lifecycle: retention purge failed');
+    }
+    if (kpi_v1_marketing_purge($cfg) === null) {
+        error_log('kpn marketing: evidence purge failed');
     }
     return [200, ['ok' => true, 'deleted' => true]];
 }

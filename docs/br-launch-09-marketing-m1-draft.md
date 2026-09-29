@@ -1,6 +1,6 @@
 # BR-LAUNCH-09 Extension — Lifecycle Segmentation + Marketing Opt-in (M1 draft)
 
-Status: **M1 CONTRACT FROZEN 2026-09-29 — Shin decided D1–D6 (all recommended options, section 15).** Nothing implemented, nothing deployed. Privacy wording (section 9) still needs Shin's text approval before M7.
+Status: **M1 CONTRACT FROZEN 2026-09-29 — Shin decided D1–D6 (all recommended options, section 15). Lookup contract corrected by Shin (section 10). M2 server infrastructure implemented locally (section 16); no production migration / deploy.** Privacy wording (section 9) still needs Shin's text approval before M7.
 Public Registration is live (`registrationEnabled` true); this work must not break it.
 
 Two separate data areas, never joined:
@@ -193,7 +193,14 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 
 - New page `admin/marketing/` (Founder Super Admin only, English like the rest): counts (subscribed / unsubscribed / evidence-only / total), table email (Founder only) / status / locale / consent date / source / consent text version / last sent / unsubscribed at / has account (yes / no), actions: manual unsubscribe, erase (blocked while under legal hold). No send button.
 - Deleted Accounts: **no email / marketing column.** Segment columns Country / Business Type / Currency added (compact; "Unknown" for NULL).
-- Email Lookup Option B: the email stays only in the POST body and page memory; after a lookup the page shows `Matched lookup: <entered email>` above the result, the input is cleared; the text lives in a JS variable only (no URL, no storage), so reload / navigation removes it. API responses keep no raw email; the server does not log it (unchanged).
+- Email Lookup Option B (corrected by Shin 2026-09-29 — the lookup is a server-side HMAC match, so the email **is** sent to the server):
+  - the Founder's entered email is sent to the server **in the POST body**; never in the URL / query string;
+  - the server normalizes it and computes the HMAC in memory only;
+  - the raw email is not saved to the DB, files or application logs;
+  - API responses never return the raw email;
+  - after the lookup the browser clears the input;
+  - only a temporary `Matched lookup: <entered email>` line is allowed on the Founder UI, held in browser memory (JS variable; no URL, no localStorage / sessionStorage / cookie);
+  - reload / navigation removes it.
 
 ## 11. DB / schema impact
 
@@ -213,10 +220,10 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 ## 13. Implementation phases
 
 - M1 Audit / contract / Privacy final draft (this document) → Shin decisions
-- M2 DB + server marketing infrastructure (schema, helpers, file mode, unsubscribe endpoint + page, purge)
-- M3 Registration checkbox + Settings preference
-- M4 Delete Account integration (STEP 4 choice, STEP 2 copy, server)
-- M5 Lifecycle segment snapshot + segment metrics
+- M2 DB + server marketing infrastructure (schema, helpers, file mode, unsubscribe endpoint, purge, registration / delete / email-change server contracts, lifecycle segment columns + snapshot) — **done locally 2026-09-29 (section 16)**
+- M3 Registration checkbox + Settings preference + unsubscribe page (UI only; server ready)
+- M4 Delete Account integration (STEP 4 choice, STEP 2 copy; server ready)
+- M5 Segment metrics (the snapshot itself moved into M2)
 - M6 Founder UI (Marketing page, Deleted Accounts segment columns, Lookup Option B)
 - M7 Production migration / deploy / smoke (Privacy date = deploy day)
 - Later, separate Phase: marketing sender (provider, sender block with address / contact, List-Unsubscribe headers, send log → `last_marketing_sent_at`)
@@ -250,3 +257,30 @@ Production (after deploy, Shin GO): read-only + the kept test account only; no n
 - D4 Email change: the subscription follows the account (email updated + event) — recommended.
 - D5 Segment storage: nullable columns on `kpi_account_deletions` (ALTER ADD COLUMN) — recommended; alternative: a separate segment table (CREATE only).
 - D6 Sender postal address / phone for marketing mails: decide in the sender Phase (not needed to collect consent) — recommended.
+
+## 16. M2 implementation (local, 2026-09-29)
+
+Server only. No UI change, no production migration / deploy, no marketing send. Public Registration payloads without `marketingOptIn` behave exactly as before.
+
+Files:
+
+- `api/v1/schema_kpi_marketing.add.sql` (migration: 2 CREATE TABLE IF NOT EXISTS + 3 ADD COLUMN on `kpi_account_deletions`; rollback in comments) and the same in `api/v1/schema.sql`.
+- `api/v1/_marketing.php`: consent wording versions (`mkt-2026-09-29`, ja / en / zh-TW text kept in code), state planning, MySQL + file storage, registration / delete / email-change hooks, unsubscribe, reasons, purge, Founder list / action, unsubscribe rate limits.
+- `api/v1/marketing/unsubscribe.php` (POST, no login), `api/v1/marketing/preference.php` (session user GET / POST), `api/v1/admin/marketing-subscribers.php`, `api/v1/admin/marketing-action.php` (Founder Super Admin).
+- Hooks: `auth/register.php` + `_registration.php`, `_account_delete.php` + `auth/delete-account.php`, `_email_change.php`, `_lifecycle.php` / `_lifecycle_admin.php` (segments), `auth/registration-status.php` (`marketingConsentVersion`).
+
+Contract as implemented (differences from sections 2–8 are refinements, not new behavior):
+
+- Token: `base64url(HMAC-SHA256(secret, 'kpn-marketing-unsub|' + nonce))`; the DB keeps only the 16-byte random nonce (`unsub_token_nonce`) and `sha256` of the token (`unsub_token_hash`). The sender Phase derives the link from nonce + secret, so no plain token is ever stored. Secret: config `marketingTokenSecret` (≥ 32 chars) or a generated `data/marketing/unsub_secret.key` (0600, outside the repo). Rotated on every (re)subscribe and on email change; revoked (NULL) on stop.
+- Link format for the sender Phase: `…/kpi-navigator/unsubscribe/?t=<token>` (no subscriber id in the URL). The endpoint accepts the token in the JSON body or `t`, is POST only (GET 405: the confirm page is M3), answers `200 {"ok":true}` for valid / unknown / already-unsubscribed tokens alike, and supports the RFC 8058 One-Click form. Rate limits: global 300 / 10 min, per token 20 / 10 min (config `marketingUnsubscribeGlobalMax` / `marketingUnsubscribeTokenMax`), separate from the registration buckets.
+- Registration: `marketingOptIn: true` + `marketingConsentVersion` equal to the current version (else 400 `marketing_consent_outdated`, checked before anything is written). The subscriber row + event is written inside the account + consent transaction (MySQL) / undone with the account files (file mode); a missing or failing marketing store fails the registration closed (503). Without opt-in the marketing store is never touched, so Registration keeps working before the migration.
+- Missing marketing tables = "nothing subscribed": delete and email change continue unchanged; the delete verify step answers `marketing.subscribed: false` (`null` only when the store exists but fails).
+- Stop (link / settings / delete_stop / founder): never mailed → row + events deleted; mailed → evidence-only (status unsubscribed, token NULL, `retain_until = last_marketing_sent_at + 3 years`). Purge runs after each account delete and before the Founder list.
+- Delete: subscribed → `marketingAfterDelete` `keep` | `stop` required (else 400 `marketing_choice_required`, nothing deleted); keep → only `account_user_id` NULL + `keep_after_delete` event; not subscribed → nothing created. Inside the delete transaction (MySQL) / compensated (file).
+- Email change (D4): never-mailed subscriber and no row for the new address → the row moves to the new address (token rotated, `email_changed` event). Otherwise the old address is stopped per the rule above and the new address is subscribed with the carried consent (same consent date / wording version / locale, source `email_change`). Same transaction as the email update.
+- Settings API: subscribe needs the current wording version; unsubscribe keeps the account link.
+- Founder: list returns email / status / locale / consent / last sent / unsubscribed / retain / has account, never token data. Erase of mailed evidence before `retain_until` → 409 `legal_hold`.
+- Unsubscribe reasons: fixed codes + max 200 chars note, `data/marketing/unsubscribe_reasons.jsonl`, no email / token / IP.
+- Lifecycle segments (history rows only, at delete time): country = listed ISO 3166-1 code of the app catalog (`UK` → `GB`), business type = fixed code (legacy labels mapped), currency = listed ISO 4217 code; other values → `other`, empty → NULL. From the profile, business type falls back to `store.meta.businessType`. Old rows stay NULL. Founder Deleted Accounts API returns `country` / `businessType` / `currency`. The lifecycle readiness check now requires these columns → **the migration must be applied before the M2 server is deployed** (else Delete fails closed as designed).
+
+Local verification (PHP 8.2 + MariaDB 10.11, file + MySQL): M2 smoke 124/124, Delete + Lifecycle regression 341/341, Lifecycle phase-2 regression 236/238 and Registration regression 94/98 (remaining FAILs are pre-existing harness expectations: old privacy version and "no HMAC key" log lines), static contract tests incl. `scripts/_test_marketing_m2_contract.py` all PASS.

@@ -9,6 +9,7 @@
 require_once __DIR__ . '/_registration.php';
 require_once __DIR__ . '/_session_revoke.php';
 require_once __DIR__ . '/_password_reset.php';
+require_once __DIR__ . '/_marketing.php';
 
 const KPI_EMAIL_CHANGE_MAX_ATTEMPTS = 5;
 const KPI_EMAIL_CHANGE_MAX_SENDS_PER_HOUR = 5;
@@ -220,6 +221,7 @@ function kpi_v1_email_change_notice_mail($cfg, $locale, $maskedNewEmail)
 
 /**
  * Swap the canonical email. Only succeeds when email + password hash still match what the request saw.
+ * A marketing subscription moves with it in the same unit (D4); a marketing storage failure fails the change.
  * @return string ok | stale | email_unavailable | failed
  */
 function kpi_v1_email_change_apply($cfg, $userId, $oldEmail, $newEmail, $passwordHash)
@@ -243,6 +245,9 @@ function kpi_v1_email_change_apply($cfg, $userId, $oldEmail, $newEmail, $passwor
                 $pdo->rollBack();
                 return 'stale';
             }
+            kpi_v1_marketing_run($cfg, function ($ctx) use ($cfg, $userId, $oldEmail, $newEmail) {
+                kpi_v1_marketing_op_email_changed($cfg, $ctx, $userId, $oldEmail, $newEmail);
+            }, $pdo);
             if (kpi_v1_session_revoke_bump($userId) === null) {
                 $pdo->rollBack();
                 return 'failed';
@@ -286,7 +291,12 @@ function kpi_v1_email_change_apply($cfg, $userId, $oldEmail, $newEmail, $passwor
         kpi_v1_registration_write_json_atomic($userPath, $fresh);
         return 'failed';
     }
-    if (kpi_v1_session_revoke_bump($userId) === null) {
+    $marketingSnap = kpi_v1_marketing_file_snapshot();
+    $moved = kpi_v1_marketing_run($cfg, function ($ctx) use ($cfg, $userId, $oldEmail, $newEmail) {
+        kpi_v1_marketing_op_email_changed($cfg, $ctx, $userId, $oldEmail, $newEmail);
+    });
+    if ($moved[0] !== 'ok' || kpi_v1_session_revoke_bump($userId) === null) {
+        kpi_v1_marketing_file_restore($marketingSnap);
         kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $index);
         kpi_v1_registration_write_json_atomic($userPath, $fresh);
         return 'failed';

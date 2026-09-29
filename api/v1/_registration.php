@@ -179,11 +179,12 @@ function kpi_v1_registration_rate_limits($cfg)
 
 /**
  * Sliding window. Every attempt counts (success or failure).
+ * $limits: other callers' buckets (same counter files); default = the registration buckets.
  * @return bool|null true = allowed, false = limited, null = counter storage unavailable
  */
-function kpi_v1_registration_rate_allow($cfg, $bucket, $key, $now = null)
+function kpi_v1_registration_rate_allow($cfg, $bucket, $key, $now = null, $limits = null)
 {
-    $limits = kpi_v1_registration_rate_limits($cfg);
+    $limits = is_array($limits) ? $limits : kpi_v1_registration_rate_limits($cfg);
     if (!isset($limits[$bucket])) {
         return null;
     }
@@ -363,10 +364,11 @@ function kpi_v1_registration_pdo_is_duplicate(PDOException $e)
 /**
  * Creates the user and its first consent row together. Never leaves a user without consent.
  * MySQL: one transaction. File: registration lock + compensating deletes.
+ * $alsoWrite(PDO|null): optional extra write (marketing opt-in) inside the same unit; false = nothing is created.
  *
  * @return string 'ok' | 'email_taken' | 'failed'
  */
-function kpi_v1_registration_create_user_with_consent($cfg, $user, $consent)
+function kpi_v1_registration_create_user_with_consent($cfg, $user, $consent, $alsoWrite = null)
 {
     if (kpi_v1_storage_is_mysql($cfg)) {
         require_once __DIR__ . '/_db.php';
@@ -375,6 +377,10 @@ function kpi_v1_registration_create_user_with_consent($cfg, $user, $consent)
             $pdo->beginTransaction();
             kpi_v1_registration_db_insert_user($pdo, $user);
             kpi_v1_consent_db_insert($pdo, $user['userId'], $consent);
+            if ($alsoWrite !== null && $alsoWrite($pdo) !== true) {
+                $pdo->rollBack();
+                return 'failed';
+            }
             $pdo->commit();
             return 'ok';
         } catch (PDOException $e) {
@@ -389,7 +395,7 @@ function kpi_v1_registration_create_user_with_consent($cfg, $user, $consent)
             return 'failed';
         }
     }
-    return kpi_v1_registration_file_create($user, $consent);
+    return kpi_v1_registration_file_create($user, $consent, $alsoWrite);
 }
 
 function kpi_v1_registration_write_json_atomic($path, $data)
@@ -407,7 +413,7 @@ function kpi_v1_registration_write_json_atomic($path, $data)
     return true;
 }
 
-function kpi_v1_registration_file_create($user, $consent)
+function kpi_v1_registration_file_create($user, $consent, $alsoWrite = null)
 {
     $lock = @fopen(kpi_v1_registration_dir() . '/register.lock', 'c+');
     if ($lock === false || !flock($lock, LOCK_EX)) {
@@ -434,8 +440,15 @@ function kpi_v1_registration_file_create($user, $consent)
             @unlink($consentPath);
             return 'failed';
         }
+        $prevIndex = $index;
         $index[$user['email']] = $user['userId'];
         if (!kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $index)) {
+            @unlink($consentPath);
+            @unlink($userPath);
+            return 'failed';
+        }
+        if ($alsoWrite !== null && $alsoWrite(null) !== true) {
+            kpi_v1_registration_write_json_atomic(kpi_v1_auth_email_index_path(), $prevIndex);
             @unlink($consentPath);
             @unlink($userPath);
             return 'failed';

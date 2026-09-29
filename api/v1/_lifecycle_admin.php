@@ -33,6 +33,9 @@ function kpi_v1_lifecycle_row_from_db($r)
         'excludeFromMetrics' => (int) $r['exclude_from_metrics'] === 1,
         'returnedAt' => $r['returned_at'] !== null ? (string) $r['returned_at'] : null,
         'returnCount' => (int) $r['return_count'],
+        'segCountry' => isset($r['seg_country']) ? (string) $r['seg_country'] : null,
+        'segBusinessType' => isset($r['seg_business_type']) ? (string) $r['seg_business_type'] : null,
+        'segCurrency' => isset($r['seg_currency']) ? (string) $r['seg_currency'] : null,
     ];
 }
 
@@ -75,6 +78,9 @@ function kpi_v1_lifecycle_public_row($r)
         'returned' => (int) ($r['returnCount'] ?? 0) > 0,
         'returnedAt' => kpi_v1_admin_dt_to_iso($r['returnedAt'] ?? null),
         'returnCount' => (int) ($r['returnCount'] ?? 0),
+        'country' => isset($r['segCountry']) ? (string) $r['segCountry'] : null,
+        'businessType' => isset($r['segBusinessType']) ? (string) $r['segBusinessType'] : null,
+        'currency' => isset($r['segCurrency']) ? (string) $r['segCurrency'] : null,
     ];
 }
 

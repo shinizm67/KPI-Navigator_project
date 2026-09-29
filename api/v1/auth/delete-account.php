@@ -5,9 +5,10 @@
  * { "action": "verify", "currentPassword": "...", "expectedUserId": "..." }
  *   Checks the current password, role and child accounts; stores a short-lived delete intent
  *   in this server session. Deletes nothing.
- * { "action": "delete", "acknowledge": true, "expectedUserId": "..." }
+ * { "action": "delete", "acknowledge": true, "expectedUserId": "...", "marketingAfterDelete": "keep" | "stop" }
  *   Requires a valid intent from this session, then deletes the account (BR-LAUNCH-09 Phase 3),
- *   revokes every session and destroys this one.
+ *   revokes every session and destroys this one. marketingAfterDelete is required only while subscribed
+ *   (400 marketing_choice_required, nothing deleted); verify answers marketing.subscribed.
  *
  * Never echoes passwords or hashes.
  */
@@ -51,7 +52,12 @@ if ($action === 'verify') {
         kpi_v1_json_out($reject === 'protected_account' ? 403 : 409, ['ok' => false, 'error' => $reject]);
     }
     kpi_v1_account_delete_issue_intent($user);
-    kpi_v1_json_out(200, ['ok' => true, 'expiresInSeconds' => KPI_ACCOUNT_DELETE_INTENT_TTL]);
+    kpi_v1_json_out(200, [
+        'ok' => true,
+        'expiresInSeconds' => KPI_ACCOUNT_DELETE_INTENT_TTL,
+        /* STEP 4 asks keep / stop only when true; null = could not be read (delete still enforces the choice). */
+        'marketing' => ['subscribed' => kpi_v1_marketing_is_subscribed($cfg, (string) $user['email'])],
+    ]);
 }
 
 if ($action !== 'delete') {
@@ -65,7 +71,9 @@ $lock = kpi_v1_email_change_lock();
 if ($lock === null) {
     kpi_v1_json_out(500, ['ok' => false, 'error' => 'delete_failed']);
 }
-list($status, $payload) = kpi_v1_account_delete_execute_locked($cfg, $uid);
+$marketingChoice = isset($body['marketingAfterDelete']) && in_array($body['marketingAfterDelete'], ['keep', 'stop'], true)
+    ? $body['marketingAfterDelete'] : null;
+list($status, $payload) = kpi_v1_account_delete_execute_locked($cfg, $uid, $marketingChoice);
 kpi_v1_email_change_unlock($lock);
 
 if ($status === 200 || $status === 401) {

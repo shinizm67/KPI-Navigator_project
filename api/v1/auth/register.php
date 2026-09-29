@@ -1,7 +1,8 @@
 <?php
 /**
  * POST /api/v1/auth/register.php
- * Body: { "email", "password", "consentAccepted": true, "termsVersion", "privacyVersion", "formToken", "extraNote": "" }
+ * Body: { "email", "password", "consentAccepted": true, "termsVersion", "privacyVersion", "formToken", "extraNote": "",
+ *         optional "marketingOptIn": true, "marketingConsentVersion", "marketingLocale" }
  *
  * Public self-serve signup. Gated by config registrationEnabled (default false).
  * Admin account creation uses admin-create-user.php and is not affected by this gate.
@@ -12,6 +13,7 @@
 require __DIR__ . '/../_entitlement.php';
 require_once __DIR__ . '/../_registration.php';
 require_once __DIR__ . '/../_lifecycle.php';
+require_once __DIR__ . '/../_marketing.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
@@ -52,6 +54,12 @@ if (isset($consent['error'])) {
     kpi_v1_json_out(400, ['ok' => false, 'error' => $consent['error']]);
 }
 
+/* Optional and separate from the Terms consent; absent / false = no marketing row at all. */
+$marketing = kpi_v1_marketing_consent_from_registration($body);
+if (isset($marketing['error'])) {
+    kpi_v1_json_out(400, ['ok' => false, 'error' => $marketing['error']]);
+}
+
 $index = kpi_v1_auth_read_email_index();
 if (isset($index[$email])) {
     kpi_v1_json_out(409, ['ok' => false, 'error' => 'email_taken']);
@@ -76,7 +84,10 @@ $user = [
     'createdAt' => gmdate('c'),
 ];
 
-$created = kpi_v1_registration_create_user_with_consent($cfg, $user, $consent['record']);
+$alsoWrite = $marketing === null ? null : function ($pdo) use ($cfg, $user, $marketing) {
+    return kpi_v1_marketing_on_registration($cfg, $user, $marketing, $pdo);
+};
+$created = kpi_v1_registration_create_user_with_consent($cfg, $user, $consent['record'], $alsoWrite);
 if ($created === 'email_taken') {
     kpi_v1_json_out(409, ['ok' => false, 'error' => 'email_taken']);
 }

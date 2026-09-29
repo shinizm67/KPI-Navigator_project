@@ -4,8 +4,10 @@
  *
  * Contract (L1 closed 2026-09-29, docs/br-launch-09-lifecycle-l1-draft.md):
  * - One minimal row per self-service deletion: previous userId, HMAC(normalized email, server key), created / deleted
- *   dates, lifetime, plan / role at deletion, account kind, signup origin, cleanup status, return counters.
- *   Never: raw email, password hash, profile, business data, consent contents, IP, UA, Stripe IDs.
+ *   dates, lifetime, plan / role at deletion, account kind, signup origin, cleanup status, return counters, and the
+ *   segment snapshot country / business type / currency as codes (M2, 2026-09-29; older rows NULL = Unknown).
+ *   Never: raw email, password hash, business / company name, city, region, genre, free text, business data,
+ *   consent contents, IP, UA, Stripe IDs.
  * - The HMAC key lives only in config.local.php (`lifecycleHmacKey` + `lifecycleHmacKeyId`; retired keys in
  *   `lifecycleHmacPreviousKeys` [id => key] stay usable for matching). Missing key / tables = not ready, and the
  *   account deletion refuses to run (fail closed).
@@ -153,7 +155,7 @@ function kpi_v1_lifecycle_ready($cfg)
         require_once __DIR__ . '/_db.php';
         try {
             $pdo = kpi_v1_db($cfg);
-            $pdo->query('SELECT id FROM kpi_account_deletions LIMIT 0');
+            $pdo->query('SELECT id, seg_country, seg_business_type, seg_currency FROM kpi_account_deletions LIMIT 0');
             $pdo->query('SELECT user_id FROM kpi_account_origins LIMIT 0');
             return true;
         } catch (Throwable $e) {
@@ -168,14 +170,94 @@ function kpi_v1_lifecycle_ready($cfg)
         && kpi_v1_lifecycle_file_read('deletions') !== null && kpi_v1_lifecycle_file_read('origins') !== null;
 }
 
+/* ---------- Segment snapshot (coded values only; never names, city, region, genre or free text) ---------- */
+
+const KPI_LIFECYCLE_BUSINESS_TYPES = ['restaurant', 'retail', 'hair_salon', 'fitness', 'hotel', 'other'];
+const KPI_LIFECYCLE_BUSINESS_TYPE_LEGACY = ['cafe' => 'restaurant', 'wear_shop' => 'retail', 'personal_trainer' => 'fitness'];
+/* Same catalogs as the Profile form (js/kpi-profile-location.js COUNTRY_CODES, js/kpi-currency.js CURRENCY_CODES). */
+const KPI_LIFECYCLE_COUNTRIES = ['JP', 'US', 'GB', 'CA', 'AU', 'NZ', 'IE', 'SG', 'TW', 'HK', 'KR', 'CN', 'DE', 'FR', 'IT', 'ES',
+                                 'NL', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PT', 'AE', 'IN', 'ZA'];
+const KPI_LIFECYCLE_CURRENCIES = ['JPY', 'USD', 'GBP', 'CAD', 'AUD', 'NZD', 'EUR', 'SGD', 'TWD', 'HKD', 'KRW', 'CNY', 'CHF', 'SEK',
+                                  'NOK', 'DKK', 'AED', 'INR', 'ZAR'];
+
+/** Listed ISO 3166-1 alpha-2 code (the profile stores the code for listed countries); other text → other; empty → null */
+function kpi_v1_lifecycle_seg_country($raw)
+{
+    $s = strtoupper(trim((string) $raw));
+    if ($s === '') {
+        return null;
+    }
+    if ($s === 'UK') {
+        $s = 'GB';
+    }
+    return in_array($s, KPI_LIFECYCLE_COUNTRIES, true) ? $s : 'other';
+}
+
+function kpi_v1_lifecycle_seg_business_type($raw)
+{
+    $s = strtolower(trim((string) $raw));
+    if ($s === '') {
+        return null;
+    }
+    if (in_array($s, KPI_LIFECYCLE_BUSINESS_TYPES, true)) {
+        return $s;
+    }
+    return KPI_LIFECYCLE_BUSINESS_TYPE_LEGACY[$s] ?? 'other';
+}
+
+/** Listed ISO 4217 code; other text → other; empty → null */
+function kpi_v1_lifecycle_seg_currency($raw)
+{
+    $s = strtoupper(trim((string) $raw));
+    if ($s === '') {
+        return null;
+    }
+    return in_array($s, KPI_LIFECYCLE_CURRENCIES, true) ? $s : 'other';
+}
+
+/**
+ * Country / business type / currency of the account at deletion. Business type falls back to store.meta.businessType.
+ * Read failures give null segments (Unknown); they never block the deletion.
+ * @return array{segCountry:?string,segBusinessType:?string,segCurrency:?string}
+ */
+function kpi_v1_lifecycle_segment($cfg, $userId)
+{
+    require_once __DIR__ . '/_admin_store.php';
+    $userId = (string) $userId;
+    $profile = kpi_v1_profile_read($cfg, $userId);
+    $type = $profile['businessType'] ?? null;
+    if ($type === null || trim((string) $type) === '') {
+        try {
+            if (kpi_v1_storage_is_mysql($cfg)) {
+                $st = kpi_v1_db($cfg)->prepare('SELECT store_json FROM kpi_store WHERE user_id = ? LIMIT 1');
+                $st->execute([$userId]);
+                $store = json_decode((string) $st->fetchColumn(), true);
+            } else {
+                $blob = json_decode((string) @file_get_contents(kpi_v1_data_path($userId)), true);
+                $store = is_array($blob) ? ($blob['store'] ?? null) : null;
+            }
+            $type = is_array($store) && isset($store['meta']['businessType']) && is_string($store['meta']['businessType'])
+                ? $store['meta']['businessType'] : null;
+        } catch (Throwable $e) {
+            $type = null;
+        }
+    }
+    return [
+        'segCountry' => kpi_v1_lifecycle_seg_country($profile['country'] ?? null),
+        'segBusinessType' => kpi_v1_lifecycle_seg_business_type($type),
+        'segCurrency' => kpi_v1_lifecycle_seg_currency($profile['currency'] ?? null),
+    ];
+}
+
 /* ---------- Deletion record ---------- */
 
 /**
  * @param array $account userId, email, plan, role, createdAt, parentUserId
  * @param array|null $origin origin row of the account (origin, excludeFromMetrics) or null
+ * @param array|null $segment kpi_v1_lifecycle_segment() or null (= Unknown)
  * @return array|null record, or null when no key is configured
  */
-function kpi_v1_lifecycle_build_record($cfg, $account, $origin)
+function kpi_v1_lifecycle_build_record($cfg, $account, $origin, $segment = null)
 {
     $key = kpi_v1_lifecycle_active_key($cfg);
     if ($key === null) {
@@ -205,6 +287,9 @@ function kpi_v1_lifecycle_build_record($cfg, $account, $origin)
         'excludeFromMetrics' => is_array($origin) && !empty($origin['excludeFromMetrics']),
         'returnedAt' => null,
         'returnCount' => 0,
+        'segCountry' => is_array($segment) ? $segment['segCountry'] : null,
+        'segBusinessType' => is_array($segment) ? $segment['segBusinessType'] : null,
+        'segCurrency' => is_array($segment) ? $segment['segCurrency'] : null,
     ];
 }
 
@@ -214,13 +299,14 @@ function kpi_v1_lifecycle_db_insert(PDO $pdo, $r)
     $st = $pdo->prepare(
         'INSERT INTO kpi_account_deletions (lifecycle_id, previous_user_id, email_hmac, hmac_key_id, account_created_at,
            deleted_at, lifetime_days, plan_at_deletion, role_at_deletion, account_kind, signup_origin, deletion_source,
-           cleanup_status, exclude_from_metrics, return_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
+           cleanup_status, exclude_from_metrics, return_count, seg_country, seg_business_type, seg_currency)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)'
     );
     $st->execute([
         $r['lifecycleId'], $r['previousUserId'], $r['emailHmac'], $r['hmacKeyId'], $r['accountCreatedAt'],
         $r['deletedAt'], $r['lifetimeDays'], $r['planAtDeletion'], $r['roleAtDeletion'], $r['accountKind'],
         $r['signupOrigin'], $r['deletionSource'], $r['cleanupStatus'], $r['excludeFromMetrics'] ? 1 : 0,
+        $r['segCountry'], $r['segBusinessType'], $r['segCurrency'],
     ]);
 }
 

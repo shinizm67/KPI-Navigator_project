@@ -82,9 +82,11 @@ def main() -> None:
     api_php = "\n".join(p.read_text(encoding="utf-8") for p in (ROOT / "api").rglob("*.php"))
     check("no UPDATE / DELETE on kpi_user_consents anywhere in api/",
           re.search(r"(UPDATE|DELETE\s+FROM)\s+kpi_user_consents", api_php, re.I) is None)
-    check("MySQL: user + consent in one transaction",
+    check("MySQL: user + consent (+ optional marketing opt-in) in one transaction",
           re.search(r"beginTransaction\(\);\s*kpi_v1_registration_db_insert_user\(\$pdo, \$user\);\s*"
-                    r"kpi_v1_consent_db_insert\(\$pdo, \$user\['userId'\], \$consent\);\s*\$pdo->commit\(\);", helper) is not None)
+                    r"kpi_v1_consent_db_insert\(\$pdo, \$user\['userId'\], \$consent\);\s*"
+                    r"if \(\$alsoWrite !== null && \$alsoWrite\(\$pdo\) !== true\) \{\s*\$pdo->rollBack\(\);\s*return 'failed';\s*\}\s*"
+                    r"\$pdo->commit\(\);", helper) is not None)
     check("MySQL: rollBack on failure", helper.count("$pdo->rollBack();") >= 2)
     check("file: compensating delete when consent / index write fails", helper.count("@unlink($userPath);") >= 2)
     check("register creates via create_user_with_consent (not a bare write_user)",
