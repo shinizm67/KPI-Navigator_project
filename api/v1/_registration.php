@@ -10,7 +10,7 @@ require_once __DIR__ . '/_auth.php';
 
 /* Canonical legal versions = "Last updated" date on legal/terms and legal/privacy (JP / EN / ZH-TW share one version). */
 const KPI_TERMS_VERSION = '2026-02-16';
-const KPI_PRIVACY_VERSION = '2026-02-16';
+const KPI_PRIVACY_VERSION = '2026-09-29';
 
 const KPI_CONSENT_SOURCE_PUBLIC_REGISTRATION = 'public_registration';
 
