@@ -305,6 +305,83 @@ table.admin-table {
   color: var(--admin-muted);
 }
 
+.dash-section { margin-bottom: 8px; }
+
+.dash-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dash-section-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  font-weight: 500;
+}
+
+.dash-month {
+  color: var(--admin-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-select-inline {
+  width: auto;
+  margin-left: 8px;
+}
+
+.cards-aux .card .value { font-size: 18px; }
+
+.card-sub {
+  margin-top: 6px;
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+
+.dash-note {
+  margin: -12px 0 24px;
+  font-size: 12px;
+}
+
+.lookup-box {
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.lookup-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.admin-input {
+  width: 100%;
+  max-width: 360px;
+  background: #000;
+  color: var(--admin-cyan);
+  border: 1px solid var(--admin-border);
+  padding: 6px 10px;
+  font-family: var(--admin-mono);
+  font-size: 12px;
+}
+
+table.admin-table-static { min-width: 0; }
+.admin-table-static th { white-space: normal; vertical-align: bottom; }
+.admin-table-static tbody tr { cursor: default; }
+
+.toggle-label { cursor: pointer; }
+
+.tag-returned { color: #ffd166; }
+
 .rel-child-row {
   display: flex;
   flex-wrap: wrap;

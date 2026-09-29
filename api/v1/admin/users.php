@@ -4,7 +4,7 @@
  * Founder Super Admin only. Never returns password_hash / tokens.
  */
 
-require __DIR__ . '/../_admin_store.php';
+require __DIR__ . '/../_lifecycle_admin.php';
 
 $cfg = kpi_v1_load_config();
 kpi_v1_auth_boot($cfg);
@@ -14,11 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 kpi_v1_auth_require_founder_superadmin($cfg);
 
 $users = kpi_v1_admin_list_users($cfg);
+$origins = kpi_v1_lifecycle_origins_map($cfg);
 $rows = [];
 foreach ($users as $u) {
     $uid = (string) $u['userId'];
     $profile = kpi_v1_profile_read($cfg, $uid);
     $children = kpi_v1_admin_list_child_ids($cfg, $uid);
+    $origin = $origins[$uid] ?? ['origin' => 'legacy', 'excludeFromMetrics' => false];
     $rows[] = [
         'userId' => $uid,
         'email' => (string) ($u['email'] ?? ''),
@@ -41,6 +43,8 @@ foreach ($users as $u) {
         'currency' => $profile['synced'] ? ($profile['currency'] ?? null) : null,
         'profileSynced' => !empty($profile['synced']),
         'accountStatus' => !empty($u['disabled']) ? 'disabled' : 'active',
+        'signupOrigin' => $origin['origin'],
+        'excludeFromMetrics' => $origin['excludeFromMetrics'],
     ];
 }
 

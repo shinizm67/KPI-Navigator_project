@@ -71,11 +71,101 @@
     el.textContent = '';
   }
 
-  function renderDashboard() {
+  function authFailMsg(res) {
+    if (res.status === 401) return '401 unauthorized — sign in as Founder Super Admin.';
+    if (res.status === 403) return '403 forbidden — Founder Super Admin required.';
+    if (res.data && res.data.error) return 'Failed: ' + res.data.error;
+    return '';
+  }
+
+  function jstDateTime(iso) {
+    if (!iso) return 'N/A';
+    var t = Date.parse(iso);
+    if (isNaN(t)) return 'N/A';
+    var d = new Date(t + 9 * 3600 * 1000);
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) + ' ' +
+      p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' JST';
+  }
+
+  function originHtml(origin) {
+    if (origin === 'new') return 'NEW';
+    if (origin === 'returned') return '<span class="tag-returned">RETURNED</span>';
+    if (origin === 'legacy') return 'NEW <span class="muted" title="Created before lifecycle tracking">(pre-tracking)</span>';
+    return '<span class="muted">UNKNOWN</span>';
+  }
+
+  function postExclusion(body) {
+    return fetchJson(apiBase() + '/admin/set-metrics-exclusion.php', { method: 'POST', body: body });
+  }
+
+  function card(label, value, sub) {
+    return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div>' +
+      (sub ? '<div class="card-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function paintLifecycle(lc, months) {
+    var section = document.getElementById('lifecycle-section');
+    var cards = document.getElementById('lifecycle-cards');
+    var aux = document.getElementById('lifecycle-aux');
+    var note = document.getElementById('lifecycle-note');
+    var sel = document.getElementById('lifecycle-month');
+    if (!section || !cards) return;
+    section.hidden = false;
+    if (sel && months && sel.options.length !== months.length) {
+      sel.innerHTML = months.map(function (m) {
+        return '<option value="' + esc(m) + '">' + esc(m) + '</option>';
+      }).join('');
+    }
+    if (!lc) {
+      cards.innerHTML = '<div class="card"><div class="label">Lifecycle</div><div class="value">N/A</div>' +
+        '<div class="card-sub">History storage unavailable.</div></div>';
+      if (aux) aux.innerHTML = '';
+      if (note) note.textContent = '';
+      return;
+    }
+    if (sel) sel.value = lc.month;
+    var c = lc.churn || {};
+    var rate = c.ratePercent === null || c.ratePercent === undefined ? 'N/A' : (Number(c.ratePercent).toFixed(2) + '%');
+    var nb = lc.newBreakdown || {};
+    cards.innerHTML = [
+      card('Active', dash(lc.active), 'Now · incl. disabled'),
+      card('New', dash(lc.newAccounts), 'NEW ' + dash(nb['new']) + ' · RETURNED ' + dash(nb.returned) + ' · UNKNOWN ' + dash(nb.other)),
+      card('Deleted', dash(lc.deleted), 'incl. Early Churn'),
+      card('Monthly Churn', rate, dash(c.numerator) + ' / ' + dash(c.denominator) + ' at month start'),
+      card('Returned', dash(lc.returned), 'Created this month as RETURNED')
+    ].join('');
+    if (aux) {
+      aux.innerHTML = [
+        card('Early Churn', dash(lc.earlyChurn), 'Created & deleted this month'),
+        card('Child Deletions', dash(lc.childDeletions), 'Not in churn'),
+        card('Disabled', dash(lc.disabled), 'Now · in denominator')
+      ].join('');
+    }
+    if (note) {
+      var ex = lc.excluded || {};
+      note.textContent =
+        'Standalone customer accounts only (role user, no parent). JST month ' + lc.month +
+        (lc.monthToDate ? ' (month to date)' : '') + '. ' +
+        'Monthly Churn = accounts deleted this month that existed at month start ÷ accounts at month start. ' +
+        'Excluded from metrics: ' + dash(ex.accounts) + ' account(s), ' + dash(ex.historyRows) + ' history row(s).' +
+        (lc.beforeRetentionWindow ? ' This month starts before the 3-year history window; deletions may be undercounted.' : '');
+    }
+  }
+
+  function renderDashboard(month) {
     var err = document.getElementById('admin-error');
     var grid = document.getElementById('dash-cards');
     if (!grid) return;
-    fetchJson(apiBase() + '/admin/dashboard.php').then(function (res) {
+    var sel = document.getElementById('lifecycle-month');
+    if (sel && !sel.getAttribute('data-bound')) {
+      sel.setAttribute('data-bound', '1');
+      sel.addEventListener('change', function () {
+        renderDashboard(sel.value);
+      });
+    }
+    var url = apiBase() + '/admin/dashboard.php' + (month ? '?month=' + encodeURIComponent(month) : '');
+    fetchJson(url).then(function (res) {
       if (res.status === 401) {
         showError(err, '401 unauthorized — sign in as Founder Super Admin.');
         return;
@@ -89,6 +179,7 @@
         return;
       }
       var d = res.data;
+      paintLifecycle(d.lifecycle, d.lifecycleMonths);
       var cards = [
         ['Total Users', d.totalUsers],
         ['Basic', d.basic],
@@ -147,12 +238,35 @@
           '<td>' + (u.profileSynced ? dash(u.city) : 'N/A') + '</td>' +
           '<td>' + (u.profileSynced ? dash(u.currency) : 'N/A') + '</td>' +
           '<td>' + dash(u.accountStatus) + '</td>' +
+          '<td>' + originHtml(u.signupOrigin) + '</td>' +
+          '<td class="cell-toggle"><label class="toggle-label"><input type="checkbox" data-exclude-user="' + esc(u.userId) + '"' +
+            (u.excludeFromMetrics ? ' checked' : '') + '> Exclude</label></td>' +
           '</tr>'
         );
       }).join('');
       Array.prototype.forEach.call(tbody.querySelectorAll('tr[data-href]'), function (tr) {
-        tr.addEventListener('click', function () {
+        tr.addEventListener('click', function (ev) {
+          if (ev.target && ev.target.closest && ev.target.closest('.cell-toggle')) return;
           window.location.href = tr.getAttribute('data-href');
+        });
+      });
+      Array.prototype.forEach.call(tbody.querySelectorAll('input[data-exclude-user]'), function (box) {
+        box.addEventListener('change', function () {
+          var next = box.checked;
+          box.disabled = true;
+          postExclusion({ userId: box.getAttribute('data-exclude-user'), exclude: next }).then(function (r) {
+            box.disabled = false;
+            if (!r.data || !r.data.ok) {
+              box.checked = !next;
+              showError(err, authFailMsg(r) || 'Exclude from metrics update failed.');
+              return;
+            }
+            clearError(err);
+          }).catch(function () {
+            box.disabled = false;
+            box.checked = !next;
+            showError(err, 'Network error updating Exclude from metrics.');
+          });
         });
       });
     }).catch(function () {
@@ -554,10 +668,159 @@
     });
   }
 
+  function renderDeletedAccounts() {
+    var err = document.getElementById('admin-error');
+    var tbody = document.getElementById('lc-tbody');
+    var status = document.getElementById('lc-status');
+    var form = document.getElementById('lc-lookup-form');
+    var input = document.getElementById('lc-lookup-email');
+    var clearBtn = document.getElementById('lc-lookup-clear');
+    var msg = document.getElementById('lc-lookup-msg');
+    if (!tbody) return;
+    var lookupRows = null;
+
+    function setMsg(text, isError) {
+      if (!msg) return;
+      msg.hidden = !text;
+      msg.textContent = text || '';
+      msg.className = 'actions-msg' + (isError ? ' actions-msg-error' : ' actions-msg-ok');
+    }
+
+    function paint(rows, label) {
+      if (status) status.textContent = label;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="12" class="muted">No history rows.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function (r) {
+        var cleanup = r.cleanupStatus === 'complete' ? 'complete'
+          : '<span class="danger">' + esc(dash(r.cleanupStatus)) + '</span>' +
+            (r.cleanupDetail ? ' <span class="muted">' + esc(r.cleanupDetail) + '</span>' : '');
+        return (
+          '<tr>' +
+          '<td>' + esc(dash(r.previousUserId)) + '</td>' +
+          '<td>' + jstDateTime(r.accountCreatedAt) + '</td>' +
+          '<td>' + jstDateTime(r.deletedAt) + '</td>' +
+          '<td>' + esc(dash(r.lifetimeDays)) + ' d</td>' +
+          '<td>' + esc(dash(r.planAtDeletion)) + '</td>' +
+          '<td>' + esc(dash(r.accountKind)) + '</td>' +
+          '<td>' + originHtml(r.signupOrigin) + '</td>' +
+          '<td>' + cleanup + '</td>' +
+          '<td>' + (r.returned ? '<span class="tag-returned">Returned</span> <span class="muted">' + jstDateTime(r.returnedAt) + '</span>' : 'Not Returned') + '</td>' +
+          '<td>' + esc(dash(r.returnCount)) + '</td>' +
+          '<td><label class="toggle-label"><input type="checkbox" data-exclude-lc="' + esc(r.lifecycleId) + '"' +
+            (r.excludeFromMetrics ? ' checked' : '') + '> Exclude</label></td>' +
+          '<td><button type="button" class="btn-admin btn-danger" data-erase-lc="' + esc(r.lifecycleId) + '" data-prev-id="' +
+            esc(r.previousUserId) + '">Delete Row</button></td>' +
+          '</tr>'
+        );
+      }).join('');
+      Array.prototype.forEach.call(tbody.querySelectorAll('input[data-exclude-lc]'), function (box) {
+        box.addEventListener('change', function () {
+          var next = box.checked;
+          box.disabled = true;
+          postExclusion({ lifecycleId: box.getAttribute('data-exclude-lc'), exclude: next }).then(function (res) {
+            box.disabled = false;
+            if (!res.data || !res.data.ok) {
+              box.checked = !next;
+              showError(err, authFailMsg(res) || 'Exclude from metrics update failed.');
+              return;
+            }
+            clearError(err);
+          }).catch(function () {
+            box.disabled = false;
+            box.checked = !next;
+            showError(err, 'Network error updating Exclude from metrics.');
+          });
+        });
+      });
+      Array.prototype.forEach.call(tbody.querySelectorAll('button[data-erase-lc]'), function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-erase-lc');
+          if (!window.confirm('Permanently delete the history row for ' + btn.getAttribute('data-prev-id') +
+            '? Use this for erasure requests. This cannot be undone.')) return;
+          btn.disabled = true;
+          fetchJson(apiBase() + '/admin/lifecycle-erase.php', { method: 'POST', body: { lifecycleId: id } }).then(function (res) {
+            if (!res.data || !res.data.ok) {
+              btn.disabled = false;
+              showError(err, authFailMsg(res) || 'History row delete failed.');
+              return;
+            }
+            clearError(err);
+            if (lookupRows) {
+              lookupRows = lookupRows.filter(function (r) { return r.lifecycleId !== id; });
+            }
+            setMsg('History row deleted.', false);
+            load();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error deleting history row.');
+          });
+        });
+      });
+    }
+
+    function load() {
+      fetchJson(apiBase() + '/admin/deleted-accounts.php').then(function (res) {
+        if (!res.data || !res.data.ok) {
+          showError(err, authFailMsg(res) || 'Failed to load deleted accounts.');
+          return;
+        }
+        var all = res.data.rows || [];
+        var readyNote = res.data.ready ? '' : ' · WARNING: lifecycle not ready (HMAC key or storage missing) — account deletion is blocked';
+        if (lookupRows) {
+          var ids = {};
+          lookupRows.forEach(function (r) { ids[r.lifecycleId] = true; });
+          lookupRows = all.filter(function (r) { return ids[r.lifecycleId]; });
+          paint(lookupRows, lookupRows.length + ' matching row(s) for the looked-up email · ' + all.length + ' total' + readyNote);
+        } else {
+          paint(all, all.length + ' history row(s)' + readyNote);
+        }
+      }).catch(function () {
+        showError(err, 'Network error loading deleted accounts.');
+      });
+    }
+
+    if (form && input) {
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var email = input.value;
+        if (!email || email.indexOf('@') < 0) {
+          setMsg('Enter an email address.', true);
+          return;
+        }
+        fetchJson(apiBase() + '/admin/lifecycle-lookup.php', { method: 'POST', body: { email: email } }).then(function (res) {
+          input.value = '';
+          if (!res.data || !res.data.ok) {
+            setMsg(authFailMsg(res) || 'Lookup failed.', true);
+            return;
+          }
+          lookupRows = res.data.rows || [];
+          setMsg(lookupRows.length ? lookupRows.length + ' matching history row(s).' : 'No history rows match this email.', false);
+          if (clearBtn) clearBtn.hidden = false;
+          load();
+        }).catch(function () {
+          setMsg('Network error during lookup.', true);
+        });
+        email = '';
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        lookupRows = null;
+        clearBtn.hidden = true;
+        setMsg('', false);
+        load();
+      });
+    }
+    load();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var page = document.body.getAttribute('data-admin-page');
     if (page === 'dashboard') renderDashboard();
     if (page === 'users') renderUsers();
     if (page === 'detail') renderDetail();
+    if (page === 'deleted') renderDeletedAccounts();
   });
 })();

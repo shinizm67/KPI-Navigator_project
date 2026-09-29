@@ -16,7 +16,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Users | KPN Founder Console</title>
-  <link rel="stylesheet" href="../admin.css">
+  <link rel="stylesheet" href="../admin.css?v=20260929-l3">
 </head>
 <body class="admin-page" data-admin-page="users">
   <div class="admin-shell">
@@ -25,6 +25,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
       <nav class="admin-nav">
         <a href="../">Dashboard</a>
         <a class="active" href="./">Users</a>
+        <a href="../deleted-accounts/">Deleted Accounts</a>
       </nav>
     </header>
     <p class="admin-meta">Signed in as <?php echo $email; ?> · row click opens detail</p>
@@ -50,6 +51,8 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
             <th>City</th>
             <th>Currency</th>
             <th>Status</th>
+            <th>Origin</th>
+            <th>Exclude from Metrics</th>
           </tr>
         </thead>
         <tbody id="users-tbody"></tbody>
@@ -57,6 +60,6 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
     </div>
   </div>
   <script src="../../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="../admin.js"></script>
+  <script src="../admin.js?v=20260929-l3"></script>
 </body>
 </html>
