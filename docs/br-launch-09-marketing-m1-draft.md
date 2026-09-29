@@ -1,6 +1,6 @@
 # BR-LAUNCH-09 Extension — Lifecycle Segmentation + Marketing Opt-in (M1 draft)
 
-Status: **M1 DRAFT — waiting for Shin decisions (section 15).** Nothing implemented, nothing deployed.
+Status: **M1 CONTRACT FROZEN 2026-09-29 — Shin decided D1–D6 (all recommended options, section 15).** Nothing implemented, nothing deployed. Privacy wording (section 9) still needs Shin's text approval before M7.
 Public Registration is live (`registrationEnabled` true); this work must not break it.
 
 Two separate data areas, never joined:
@@ -242,7 +242,7 @@ Local (PHP + MariaDB + Chrome, file + MySQL):
 
 Production (after deploy, Shin GO): read-only + the kept test account only; no new accounts.
 
-## 15. Decisions needed
+## 15. Decisions (Shin, 2026-09-29: D1–D6 all = recommended option)
 
 - D1 Evidence after opt-out when mails were sent: evidence-only row for 3 years after the last send (legal) — recommended.
 - D2 Delete STEP 4 for subscribed users: required choice with no preselection — recommended.
