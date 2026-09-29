@@ -4,6 +4,8 @@
  *   (server keeps a short-lived delete intent in the session; nothing is deleted).
  * Step 4 (#delete-final-form): acknowledgement -> action=delete. Only a 200 { ok, deleted } response
  *   clears this browser's account data and opens the completion page.
+ *   Newsletter (#delete-marketing): subscribed -> keep / stop with no preselection, sent as marketingAfterDelete;
+ *   not subscribed -> notice only; state unknown -> Delete stays disabled. The server enforces the choice again.
  * Completion page (#delete-accomplished-panel): shown only when this tab saw the server success.
  * Uses only __KPI_AUTH members that predate this page, so a cached kpi-auth-client.js still works.
  */
@@ -94,6 +96,13 @@
         '本人確認を完了できませんでした。しばらくしてから、もう一度お試しください。',
         'Verification could not be completed. Please try again later.',
         '無法完成身分驗證，請稍後再試。'
+      );
+    },
+    marketingChanged: function () {
+      return t(
+        'お知らせメールの配信状態が変わりました。退会後の扱いを選んでから、もう一度「アカウントを削除」を押してください。データは削除されていません。',
+        'Your newsletter email status has changed. Choose what happens after deletion, then press "Delete Account" again. No data was deleted.',
+        '通知郵件的寄送狀態已變更。請選擇刪除帳戶後的處理方式，再按一次「刪除帳戶」。資料未被刪除。'
       );
     },
   };
@@ -241,20 +250,108 @@
     var finalErr = document.getElementById('delete-final-error');
     var finalBtn = document.getElementById('btn-final-delete');
     var backToVerify = document.getElementById('delete-final-reverify');
+    var mktWrap = document.getElementById('delete-marketing');
+    var mktChoice = document.getElementById('delete-marketing-choice');
+    var mktNone = document.getElementById('delete-marketing-none');
+    var mktLoading = document.getElementById('delete-marketing-loading');
+    var mktUnknown = document.getElementById('delete-marketing-unknown');
+    var mktRadios = finalForm.querySelectorAll('input[name="marketing_after_delete"]');
     var deleting = false;
+    /* 'loading' | 'subscribed' | 'none' | 'unknown'. Only a server answer unlocks the Delete button. */
+    var mktState = mktWrap ? 'loading' : 'none';
+
+    function mktSelected() {
+      for (var i = 0; i < mktRadios.length; i++) {
+        if (mktRadios[i].checked) return mktRadios[i].value;
+      }
+      return '';
+    }
+
+    function syncFinalButton() {
+      if (!finalBtn) return;
+      var blocked =
+        mktState === 'loading' || mktState === 'unknown' || (mktState === 'subscribed' && !mktSelected());
+      finalBtn.disabled = deleting || blocked;
+    }
+
+    function showMarketing(state) {
+      mktState = state;
+      if (mktLoading) mktLoading.hidden = state !== 'loading';
+      if (mktChoice) mktChoice.hidden = state !== 'subscribed';
+      if (mktNone) mktNone.hidden = state !== 'none';
+      if (mktUnknown) mktUnknown.hidden = state !== 'unknown';
+      if (state !== 'subscribed') {
+        for (var i = 0; i < mktRadios.length; i++) mktRadios[i].checked = false;
+      }
+      syncFinalButton();
+    }
+
+    function loadMarketingState() {
+      var auth = window.__KPI_AUTH;
+      if (!auth || typeof auth.resolveAuthBase !== 'function' || typeof window.fetch !== 'function') {
+        showMarketing('unknown');
+        return Promise.resolve();
+      }
+      showMarketing('loading');
+      return fetch(auth.resolveAuthBase() + '/marketing/preference.php', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      })
+        .then(function (res) {
+          return res
+            .json()
+            .catch(function () {
+              return null;
+            })
+            .then(function (data) {
+              return { status: res.status, data: data || { ok: false } };
+            });
+        })
+        .then(function (r) {
+          if (handleSessionLoss(r)) return;
+          if (r.status === 200 && r.data.ok === true && typeof r.data.subscribed === 'boolean') {
+            showMarketing(r.data.subscribed ? 'subscribed' : 'none');
+            return;
+          }
+          showMarketing('unknown');
+        })
+        .catch(function () {
+          showMarketing('unknown');
+        });
+    }
+
+    for (var ri = 0; ri < mktRadios.length; ri++) {
+      mktRadios[ri].checked = false;
+      mktRadios[ri].addEventListener('change', syncFinalButton);
+    }
+    if (mktWrap) {
+      loadMarketingState();
+      /* Back / forward cache may restore a radio choice; the choice must always be made on this visit. */
+      window.addEventListener('pageshow', function (ev) {
+        if (ev.persisted && !deleting) loadMarketingState();
+      });
+    } else {
+      syncFinalButton();
+    }
 
     finalForm.addEventListener('submit', function (e) {
       e.preventDefault();
       if (deleting) return;
       setErr(finalErr, '');
       if (backToVerify) backToVerify.hidden = true;
+      if (mktState === 'loading' || mktState === 'unknown') return;
+      var mktChoiceValue = mktState === 'subscribed' ? mktSelected() : '';
+      if (mktState === 'subscribed' && !mktChoiceValue) return;
       if (!ackEl || !ackEl.checked) {
         setErr(finalErr, MSG.ackRequired());
         return;
       }
       deleting = true;
-      if (finalBtn) finalBtn.disabled = true;
-      send({ action: 'delete', acknowledge: true })
+      syncFinalButton();
+      var body = { action: 'delete', acknowledge: true };
+      if (mktChoiceValue) body.marketingAfterDelete = mktChoiceValue;
+      send(body)
         .then(function (r) {
           if (r && r.status === 200 && r.data && r.data.ok === true && r.data.deleted === true) {
             clearAccountClientData();
@@ -265,7 +362,7 @@
             return;
           }
           deleting = false;
-          if (finalBtn) finalBtn.disabled = false;
+          syncFinalButton();
           if (!r) return setErr(finalErr, MSG.failed());
           /* A retry after a lost response lands here once the account is gone. */
           if (r.status === 401) clearAccountClientData();
@@ -276,11 +373,16 @@
             if (backToVerify) backToVerify.hidden = false;
             return;
           }
+          if (code === 'marketing_choice_required') {
+            setErr(finalErr, MSG.marketingChanged());
+            loadMarketingState();
+            return;
+          }
           setErr(finalErr, commonError(code) || MSG.failed());
         })
         .catch(function () {
           deleting = false;
-          if (finalBtn) finalBtn.disabled = false;
+          syncFinalButton();
           setErr(finalErr, MSG.unknown());
         });
     });

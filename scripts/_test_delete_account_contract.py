@@ -87,7 +87,8 @@ def main() -> int:
           "r.status === 200 && r.data && r.data.ok === true && r.data.deleted === true" in js
           and js.find("sessionStorage.setItem(DONE_FLAG") > js.find("r.data.deleted === true"))
     check("js: completion page requires the success flag", "sessionStorage.getItem(DONE_FLAG) === '1'" in js)
-    check("js: double submit guarded", "if (deleting) return;" in js and "finalBtn.disabled = true" in js)
+    check("js: double submit guarded", "if (deleting) return;" in js
+          and ("finalBtn.disabled = true" in js or "finalBtn.disabled = deleting ||" in js))
     check("js: theme kept, account keys cleared",
           "'kpi-office-mode': true" in js and "'kpiNavigator.lastKpiUserId'" in js and "clearUserScopedLocalData" in js)
     check("js: no password written to storage", not re.search(r"setItem\([^)]*pw", js))

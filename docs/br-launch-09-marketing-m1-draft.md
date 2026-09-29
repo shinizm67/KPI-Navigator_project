@@ -144,7 +144,7 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
   - keep → subscriber row stays subscribed, `account_user_id` NULL, event `keep_after_delete`.
   - stop / not subscribed → status unsubscribed (+ event) and the raw email is removed per section 8.
   - Done inside the delete transaction; failure → rollback (fail closed, same as lifecycle).
-- STEP 2 copy (`delete_account3`) gains one line: 「お知らせメールを退会後も受け取ることを選んだ場合に限り、メールアドレスを配信用に保持します（事業データとは別に管理し、KPNのデータは復元されません）。」
+- STEP 2 copy (`delete_account3`) gains one line (as implemented in M4: two lines, see section 18): 「お知らせメールを退会後も受け取ることを選んだ場合に限り、メールアドレスを配信用に保持します（事業データとは別に管理し、KPNのデータは復元されません）。」
 - KPN business data is deleted in both cases; lifecycle keeps HMAC only.
 
 ## 7. Unsubscribe contract
@@ -303,3 +303,20 @@ Production Gate (before M7):
 - The server never trusts a client `marketingConsentVersion`: Registration and Settings subscribe compare it with the server's current version and fail closed (400 `marketing_consent_outdated`) on mismatch.
 
 Local verification: M3 UI smoke 226/226 (file + MySQL, JP / EN / ZH-TW, Sci-Fi / Office), `scripts/_test_marketing_m3_ui_contract.py` 43/43, M2 smoke 124/124, Registration e2e 94/98 (same pre-existing FAILs as M2). Other static FAILs are identical on `f2fa402` (pre-existing).
+
+M7 copy review candidates (Shin, not M4 blockers): EN Settings heading "Newsletter emails" → "Email updates"; "You will now receive our newsletter emails." → "You will now receive email updates from Forge Laboratory." (EN wording elsewhere, e.g. Delete STEP 2 / 4, should follow the same decision.)
+
+## 18. M4 implementation (local, 2026-09-29)
+
+Delete UI only, on the M2 server contract (D1 / D2 / D3 unchanged). No production deploy / migration, no marketing send, no Founder UI (M6).
+
+- STEP 4 (`delete_account5.html` × 3): a newsletter block inside the final form, driven by `GET marketing/preference.php` (session user).
+  - Subscribed → 「退会後もお知らせメールを受け取る」 / 「お知らせメールの配信を停止する」, no preselection (reset on load and on back / forward cache). The Delete button stays disabled until one is chosen; the choice is sent as `marketingAfterDelete`.
+  - Not subscribed → notice only (no choice, no new opt-in, nothing sent).
+  - Loading / unknown (non-200, network error, non-boolean answer) → Delete disabled + message; the submit handler also refuses.
+  - Server `400 marketing_choice_required` (state changed after the page loaded) → message, state reloaded, choice shown; nothing deleted.
+  - Existing acknowledgement checkbox, Cancel, completion / failure / network-loss handling unchanged.
+- STEP 2 (`delete_account3.html` × 3): two lines under "remains after deletion", after the account deletion record: the newsletter recipient (keep only; email only for sending, separate from the deletion record, no KPN data) and the consent record (only if already mailed; 3 years from the last email by law; no mail meanwhile). This replaces the single draft line of section 6 so the D1 evidence case is not hidden.
+- Server unchanged (M2): only `keep` / `stop` accepted, required while subscribed, settled inside the delete transaction (MySQL) / compensated (file); not subscribed + `keep` never creates a subscriber.
+
+Local verification: M4 UI smoke 140/140 (file + MySQL; JP / EN / ZH-TW × Sci-Fi / Office keep / stop / not subscribed, unknown state ×3, stale state → 400, server validation bypass, marketing store failure inside delete → nothing deleted, retry), `scripts/_test_marketing_m4_delete_ui_contract.py` 35/35, Delete + Lifecycle regression 341/341 (incl. the 5-step browser flow), M2 smoke 124/124, M3 UI smoke 226/226; other static FAILs identical to `f2fa402`.
