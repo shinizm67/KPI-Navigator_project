@@ -374,6 +374,115 @@ function kpi_v1_lifecycle_metrics($cfg, $month)
     return kpi_v1_lifecycle_metrics_compute($users, kpi_v1_lifecycle_origins_map($cfg), $rows, $month);
 }
 
+/* ---------- Segment breakdown (BR-LAUNCH-09 Extension M5; separate from the metrics above) ---------- */
+
+/** Stored segment code → bucket: null / empty = unknown (never inferred); unlisted = other. */
+function kpi_v1_lifecycle_segment_bucket($value, $catalog)
+{
+    if ($value === null) {
+        return 'unknown';
+    }
+    $s = trim((string) $value);
+    if ($s === '') {
+        return 'unknown';
+    }
+    return in_array($s, $catalog, true) ? $s : 'other';
+}
+
+/**
+ * Deletions by country / business type / currency, from history rows only (no live account, no email).
+ * Population = the rows behind `deleted` of the metrics: standalone, not excluded, valid dates.
+ * Scopes: `month` = deleted in the JST month; `retained` = every row deleted within the 3-year retention window.
+ * Each bucket: deleted = churned (existed at month start; for `retained` not split) + earlyChurn.
+ * @param array[] $rows kpi_v1_lifecycle_all_rows
+ */
+function kpi_v1_lifecycle_segments_compute($rows, $month, $now = null)
+{
+    $now = $now === null ? time() : (int) $now;
+    $start = new DateTimeImmutable($month . '-01 00:00:00', kpi_v1_lifecycle_jst());
+    $s = $start->getTimestamp();
+    $e = $start->modify('+1 month')->getTimestamp();
+    $windowStart = strtotime(KPI_LIFECYCLE_RETENTION, $now);
+    $dims = [
+        'country' => ['segCountry', KPI_LIFECYCLE_COUNTRIES],
+        'businessType' => ['segBusinessType', KPI_LIFECYCLE_BUSINESS_TYPES],
+        'currency' => ['segCurrency', KPI_LIFECYCLE_CURRENCIES],
+    ];
+    $acc = ['month' => [], 'retained' => []];
+    $totals = ['month' => ['deleted' => 0, 'churned' => 0, 'earlyChurn' => 0], 'retained' => ['deleted' => 0]];
+    $skipped = ['excluded' => 0, 'child' => 0, 'invalidDates' => 0];
+    foreach ($rows as $r) {
+        if (!empty($r['excludeFromMetrics'])) {
+            $skipped['excluded']++;
+            continue;
+        }
+        if (($r['accountKind'] ?? 'standalone') === 'child') {
+            $skipped['child']++;
+            continue;
+        }
+        $c = kpi_v1_lifecycle_ts($r['accountCreatedAt'] ?? null);
+        $d = kpi_v1_lifecycle_ts($r['deletedAt'] ?? null);
+        if ($c === null || $d === null) {
+            $skipped['invalidDates']++;
+            continue;
+        }
+        $keys = [];
+        foreach ($dims as $dim => $def) {
+            $keys[$dim] = kpi_v1_lifecycle_segment_bucket($r[$def[0]] ?? null, $def[1]);
+        }
+        if ($d >= $windowStart && $d <= $now) {
+            $totals['retained']['deleted']++;
+            foreach ($keys as $dim => $k) {
+                $acc['retained'][$dim][$k]['deleted'] = ($acc['retained'][$dim][$k]['deleted'] ?? 0) + 1;
+            }
+        }
+        if ($d >= $s && $d < $e) {
+            $kind = $c < $s ? 'churned' : 'earlyChurn';
+            $totals['month']['deleted']++;
+            $totals['month'][$kind]++;
+            foreach ($keys as $dim => $k) {
+                $b = $acc['month'][$dim][$k] ?? ['deleted' => 0, 'churned' => 0, 'earlyChurn' => 0];
+                $b['deleted']++;
+                $b[$kind]++;
+                $acc['month'][$dim][$k] = $b;
+            }
+        }
+    }
+    $out = [];
+    foreach (['month', 'retained'] as $scope) {
+        $out[$scope] = ['total' => $totals[$scope]];
+        foreach (array_keys($dims) as $dim) {
+            $list = [];
+            foreach ($acc[$scope][$dim] ?? [] as $code => $b) {
+                $list[] = array_merge(['code' => (string) $code], $b);
+            }
+            usort($list, function ($a, $b) {
+                if ($a['deleted'] !== $b['deleted']) {
+                    return $b['deleted'] - $a['deleted'];
+                }
+                $ra = $a['code'] === 'unknown' ? 2 : ($a['code'] === 'other' ? 1 : 0);
+                $rb = $b['code'] === 'unknown' ? 2 : ($b['code'] === 'other' ? 1 : 0);
+                return $ra !== $rb ? $ra - $rb : strcmp($a['code'], $b['code']);
+            });
+            $out[$scope][$dim] = $list;
+        }
+    }
+    return [
+        'month' => $month,
+        'timezone' => 'Asia/Tokyo',
+        'retentionWindowStart' => gmdate('c', $windowStart),
+        'scopes' => $out,
+        'skipped' => $skipped,
+    ];
+}
+
+/** @return array|null segment breakdown, null when history storage is unavailable */
+function kpi_v1_lifecycle_segments($cfg, $month)
+{
+    $rows = kpi_v1_lifecycle_all_rows($cfg);
+    return $rows === null ? null : kpi_v1_lifecycle_segments_compute($rows, $month);
+}
+
 /** @return string[] selectable months (JST), newest first, within the 3-year retention window */
 function kpi_v1_lifecycle_month_options()
 {

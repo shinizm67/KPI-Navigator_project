@@ -3,6 +3,8 @@
  * GET /api/v1/admin/dashboard.php[?month=YYYY-MM]
  * Founder Super Admin only.
  * `lifecycle` = account lifecycle metrics for the JST month (default: current month, month-to-date); null if history storage is unavailable.
+ * `lifecycleSegments` = deletions by country / business type / currency (same month + the 3-year retention window);
+ *   null if history storage is unavailable. Separate from `lifecycle`; NULL segments = unknown.
  */
 
 require __DIR__ . '/../_lifecycle_admin.php';
@@ -24,5 +26,6 @@ if (kpi_v1_lifecycle_purge($cfg) === null) {
     error_log('kpn lifecycle: retention purge failed');
 }
 $stats['lifecycle'] = kpi_v1_lifecycle_metrics($cfg, $month);
+$stats['lifecycleSegments'] = kpi_v1_lifecycle_segments($cfg, $month);
 $stats['lifecycleMonths'] = $options;
 kpi_v1_json_out(200, array_merge(['ok' => true], $stats));
