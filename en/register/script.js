@@ -278,7 +278,7 @@
             return;
           }
           if (r.data && r.data.error === 'marketing_consent_outdated') {
-            alert('The newsletter wording has been updated. Please reload the page, review it, and try again.');
+            alert('The email updates wording has been updated. Please reload the page, review it, and try again.');
             setRegisterButtonState();
             return;
           }

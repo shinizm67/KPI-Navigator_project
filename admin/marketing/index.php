@@ -1,6 +1,7 @@
 <?php
 /**
- * Founder Admin — Users Table
+ * Founder Admin — Email Updates (marketing subscribers)
+ * Raw email is shown on this page only. Token / hash / secret never.
  */
 require __DIR__ . '/../../api/v1/_admin.php';
 require_once __DIR__ . '/../../api/v1/_admin_store.php';
@@ -15,48 +16,42 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Users | KPN Founder Console</title>
+  <title>Email Updates | KPN Founder Console</title>
   <link rel="stylesheet" href="../admin.css?v=20260930-m6">
 </head>
-<body class="admin-page" data-admin-page="users">
+<body class="admin-page" data-admin-page="marketing">
   <div class="admin-shell">
     <header class="admin-header">
-      <h1 class="admin-title">Users</h1>
+      <h1 class="admin-title">Email Updates</h1>
       <nav class="admin-nav">
         <a href="../">Dashboard</a>
-        <a class="active" href="./">Users</a>
+        <a href="../users/">Users</a>
         <a href="../deleted-accounts/">Deleted Accounts</a>
-        <a href="../marketing/">Email Updates</a>
+        <a class="active" href="./">Email Updates</a>
       </nav>
     </header>
-    <p class="admin-meta">Signed in as <?php echo $email; ?> · row click opens detail</p>
+    <p class="admin-meta">Signed in as <?php echo $email; ?> · raw email is shown here only · no send function · evidence kept 3 years after the last email</p>
     <div id="admin-error" class="err" hidden></div>
+    <div id="mkt-cards" class="cards"></div>
+    <p id="mkt-status" class="admin-meta"></p>
+    <div id="mkt-msg" class="actions-msg" hidden></div>
     <div class="table-wrap">
-      <table class="admin-table">
+      <table class="admin-table admin-table-static">
         <thead>
           <tr>
-            <th>User ID</th>
             <th>Email</th>
-            <th>Plan</th>
-            <th>Plan Changed At</th>
-            <th>Created At</th>
-            <th>Last Login</th>
-            <th>Related</th>
-            <th>Business Name</th>
-            <th>Company Name</th>
-            <th>Business Type</th>
-            <th>Genre</th>
-            <th>Language</th>
-            <th>Country</th>
-            <th>State / Region</th>
-            <th>City</th>
-            <th>Currency</th>
             <th>Status</th>
-            <th>Origin</th>
-            <th>Exclude from Metrics</th>
+            <th>Locale</th>
+            <th>Consent Source</th>
+            <th>Consent Time</th>
+            <th>Last Email Sent</th>
+            <th>Has Account</th>
+            <th>Unsubscribed</th>
+            <th>Retain Until</th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="users-tbody"></tbody>
+        <tbody id="mkt-tbody"></tbody>
       </table>
     </div>
   </div>

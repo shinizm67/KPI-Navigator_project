@@ -761,7 +761,7 @@ def build_register() -> None:
     for a, b in (
         ("extra.marketingLocale = 'en';", "extra.marketingLocale = 'zh-TW';"),
         (
-            "alert('The newsletter wording has been updated. Please reload the page, review it, and try again.');",
+            "alert('The email updates wording has been updated. Please reload the page, review it, and try again.');",
             "alert('通知郵件的文字已更新。請重新載入頁面，確認內容後再試一次。');",
         ),
     ):

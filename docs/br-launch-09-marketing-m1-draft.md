@@ -226,7 +226,7 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 - M3 Registration checkbox + Settings preference + unsubscribe page (UI only; server ready)
 - M4 Delete Account integration (STEP 4 choice, STEP 2 copy; server ready)
 - M5 Segment metrics (the snapshot itself moved into M2)
-- M6 Founder UI (Marketing page, Deleted Accounts segment columns, Lookup Option B)
+- M6 Founder UI (Marketing page, Deleted Accounts segment columns, Lookup Option B) — **done locally 2026-09-30 (section 20)**
 - M7 Production migration / deploy / smoke (Privacy date = deploy day)
 - Later, separate Phase: marketing sender (provider, sender block with address / contact, List-Unsubscribe headers, send log → `last_marketing_sent_at`)
 
@@ -304,7 +304,7 @@ Production Gate (before M7):
 
 Local verification: M3 UI smoke 226/226 (file + MySQL, JP / EN / ZH-TW, Sci-Fi / Office), `scripts/_test_marketing_m3_ui_contract.py` 43/43, M2 smoke 124/124, Registration e2e 94/98 (same pre-existing FAILs as M2). Other static FAILs are identical on `f2fa402` (pre-existing).
 
-M7 copy review candidates (Shin, not M4 blockers): EN Settings heading "Newsletter emails" → "Email updates"; "You will now receive our newsletter emails." → "You will now receive email updates from Forge Laboratory." (EN wording elsewhere, e.g. Delete STEP 2 / 4, should follow the same decision.)
+M6 applied the EN copy candidates: Settings heading "Email updates"; subscribed message "You will now receive email updates from Forge Laboratory." JP 「お知らせメール」 / ZH-TW 「通知郵件」 headings unchanged.
 
 ## 18. M4 implementation (local, 2026-09-29)
 
@@ -331,3 +331,15 @@ Server only. The existing lifecycle metrics (`lifecycle`) are unchanged; the bre
 - Buckets: stored listed code kept (`KPI_LIFECYCLE_COUNTRIES` / `BUSINESS_TYPES` / `CURRENCIES`); NULL / empty (history from before M2, empty profile) → `unknown`, never inferred; any unlisted stored value → `other` (business type `other` is the same bucket). Sorted by count, ties: listed codes, then `other`, then `unknown`.
 
 Local verification: M5 smoke 30/30 (file + MySQL: real deletions with coded / free-text / empty profiles, injected legacy NULL / missing-key / excluded / child / previous-month / beyond-retention / tampered rows, reconciliation with `lifecycle`, previous month, invalid month, non-Founder 403, storage unavailable → null), `scripts/_test_lifecycle_segments_m5_contract.py` 11/11, L3 dashboard smoke 105/105, Lifecycle server regression 201/201, M2 smoke 124/124, Founder lifecycle UI / admin console / lifecycle / M2 contracts PASS; other static FAILs identical to `f2fa402`.
+
+## 20. M6 implementation (local, 2026-09-30) — Founder UI
+
+UI only on top of M2–M5. No production migration / deploy, no bulk marketing send.
+
+- Email Updates page (`admin/marketing/`): Founder Super Admin only. Table = email / status / locale / consent source / consent time / last sent / has account / unsubscribed / retain until / actions. Raw email here only. Token / hash / secret / nonce never shown. Manual unsubscribe (confirm; never-mailed → row gone, mailed → evidence-only; already-unsubscribed → `already`) and erase (confirm; mailed evidence before `retain_until` → 409 `legal_hold`).
+- Deleted Accounts: display-only labels for stored `seg_country` / `seg_business_type` / `seg_currency` (API codes unchanged). Unknown = NULL / empty / pre-M2 / unavailable. Other = canonical `other` or a value outside the current catalog. No history backfill.
+- Dashboard: separate "Deletions by Segment" section (`lifecycleSegments`, not mixed with Monthly Churn). "This month" (JST) vs "Retained history" (last 3 years); Country / Business Type / Currency counts only.
+- Email lookup Option B: POST `{email}` (never URL); input cleared; temporary `Matched lookup: <entered>` in page memory only (no localStorage / sessionStorage).
+- EN copy: Preferences heading "Email updates"; subscribed "You will now receive email updates from Forge Laboratory."; Delete STEP 2 / 4 and Unsubscribe follow the same name. JP / ZH-TW headings stay 「お知らせメール」 / 「通知郵件」.
+
+Local verification: M6 founder smoke 44/44 (file + MySQL: list / unsubscribe / erase / legal hold / 403 / no email leak; dashboard scopes; marketing page; Deleted Accounts labels; lookup Option B), `_test_marketing_m6_founder_ui_contract.py` 18/18, Founder lifecycle UI contract 83/83, M5 30/30, M2 124/124, M3 226/226, M4 140/140, L3 121/121, Delete + Lifecycle 341/341.

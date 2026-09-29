@@ -389,3 +389,49 @@ table.admin-table-static { min-width: 0; }
   gap: 8px;
   margin-bottom: 6px;
 }
+
+.seg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.seg-block h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.seg-scope-title {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.seg-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel);
+}
+
+.seg-table th,
+.seg-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(88, 225, 243, 0.15);
+}
+
+.seg-table th {
+  color: var(--admin-muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.seg-unknown { color: var(--admin-muted); }
+.seg-other { color: #ffd166; }

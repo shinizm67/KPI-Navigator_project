@@ -334,16 +334,16 @@
 
         <form id="delete-final-form" class="delete-final-form" novalidate>
           <div class="delete-marketing" id="delete-marketing">
-            <p class="delete-marketing-status" id="delete-marketing-loading" role="status">Checking your newsletter email status…</p>
+            <p class="delete-marketing-status" id="delete-marketing-loading" role="status">Checking your email updates status…</p>
             <fieldset class="delete-marketing-fieldset" id="delete-marketing-choice" hidden>
-              <legend>Newsletter emails</legend>
-              <p class="delete-marketing-lead">You currently receive newsletter emails. Choose what happens after deletion.</p>
-              <label class="delete-marketing-option"><input type="radio" name="marketing_after_delete" value="keep" autocomplete="off"> <span>Keep receiving newsletter emails after deletion</span></label>
-              <label class="delete-marketing-option"><input type="radio" name="marketing_after_delete" value="stop" autocomplete="off"> <span>Stop newsletter emails</span></label>
+              <legend>Email updates</legend>
+              <p class="delete-marketing-lead">You currently receive email updates. Choose what happens after deletion.</p>
+              <label class="delete-marketing-option"><input type="radio" name="marketing_after_delete" value="keep" autocomplete="off"> <span>Keep receiving email updates after deletion</span></label>
+              <label class="delete-marketing-option"><input type="radio" name="marketing_after_delete" value="stop" autocomplete="off"> <span>Stop email updates</span></label>
               <p class="delete-marketing-note">Even if you keep receiving them, your KPN data is deleted and cannot be restored. You can unsubscribe at any time from the link in each email.</p>
             </fieldset>
-            <p class="delete-marketing-status" id="delete-marketing-none" hidden>You are not currently receiving newsletter emails. We will not keep your email address for sending them after deletion.</p>
-            <p class="delete-marketing-status delete-marketing-unknown" id="delete-marketing-unknown" role="alert" hidden>We could not check your newsletter email status, so your account cannot be deleted right now. Please reload the page later.</p>
+            <p class="delete-marketing-status" id="delete-marketing-none" hidden>You are not currently receiving email updates. We will not keep your email address for sending them after deletion.</p>
+            <p class="delete-marketing-status delete-marketing-unknown" id="delete-marketing-unknown" role="alert" hidden>We could not check your email updates status, so your account cannot be deleted right now. Please reload the page later.</p>
           </div>
           <label class="delete-final-ack"><input type="checkbox" id="delete-final-ack"> I understand that this action cannot be undone</label>
           <p class="form-error delete-final-error" id="delete-final-error" role="alert" hidden></p>
@@ -1457,6 +1457,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
-<script src="../../js/kpi-delete-account-page.js?v=5a2419f7b8c3"></script>
+<script src="../../js/kpi-delete-account-page.js?v=fa1faf103cf2"></script>
 </body>
 </html>

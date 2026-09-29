@@ -23,13 +23,13 @@ def read(rel):
 
 STEP4 = {"ja": "setting/delete_account5.html", "en": "en/setting/delete_account5.html", "zh": "zh-tw/setting/delete_account5.html"}
 STEP2 = {"ja": "setting/delete_account3.html", "en": "en/setting/delete_account3.html", "zh": "zh-tw/setting/delete_account3.html"}
-KEEP = {"ja": "退会後もお知らせメールを受け取る", "en": "Keep receiving newsletter emails after deletion", "zh": "刪除帳戶後仍接收通知郵件"}
-STOP = {"ja": "お知らせメールの配信を停止する", "en": "Stop newsletter emails", "zh": "停止寄送通知郵件"}
+KEEP = {"ja": "退会後もお知らせメールを受け取る", "en": "Keep receiving email updates after deletion", "zh": "刪除帳戶後仍接收通知郵件"}
+STOP = {"ja": "お知らせメールの配信を停止する", "en": "Stop email updates", "zh": "停止寄送通知郵件"}
 NONE = {"ja": "現在、お知らせメールは配信されていません。退会後にメールアドレスを配信用として保持することはありません。",
-        "en": "You are not currently receiving newsletter emails. We will not keep your email address for sending them after deletion.",
+        "en": "You are not currently receiving email updates. We will not keep your email address for sending them after deletion.",
         "zh": "目前未寄送通知郵件給您。刪除帳戶後，不會保留您的電子郵件地址用於寄送。"}
 S2 = {"ja": ("<li>お知らせメールの配信先（STEP 4 で「退会後もお知らせメールを受け取る」を選んだ場合のみ。", "<li>お知らせメールの同意記録（"),
-      "en": ("<li>Newsletter recipient (only if you choose \"Keep receiving newsletter emails after deletion\" in Step 4", "<li>Newsletter consent record ("),
+      "en": ("<li>Email updates recipient (only if you choose \"Keep receiving email updates after deletion\" in Step 4", "<li>Email updates consent record ("),
       "zh": ("<li>通知郵件收件地址（僅限您於步驟 4 選擇「刪除帳戶後仍接收通知郵件」時", "<li>通知郵件同意紀錄（")}
 
 

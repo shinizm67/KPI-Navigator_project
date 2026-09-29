@@ -17,7 +17,7 @@ $id = isset($_GET['id']) ? htmlspecialchars((string) $_GET['id'], ENT_QUOTES, 'U
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Detail | KPN Founder Console</title>
-  <link rel="stylesheet" href="../../admin.css?v=20260929-l3">
+  <link rel="stylesheet" href="../../admin.css?v=20260930-m6">
 </head>
 <body class="admin-page" data-admin-page="detail">
   <div class="admin-shell">
@@ -27,6 +27,7 @@ $id = isset($_GET['id']) ? htmlspecialchars((string) $_GET['id'], ENT_QUOTES, 'U
         <a href="../../">Dashboard</a>
         <a href="../">Users</a>
         <a href="../../deleted-accounts/">Deleted Accounts</a>
+        <a href="../../marketing/">Email Updates</a>
         <a class="active" href="./?id=<?php echo rawurlencode($id); ?>">Detail</a>
       </nav>
     </header>
@@ -35,6 +36,6 @@ $id = isset($_GET['id']) ? htmlspecialchars((string) $_GET['id'], ENT_QUOTES, 'U
     <div id="detail-root"></div>
   </div>
   <script src="../../../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="../../admin.js?v=20260929-l3"></script>
+  <script src="../../admin.js?v=20260930-m6"></script>
 </body>
 </html>

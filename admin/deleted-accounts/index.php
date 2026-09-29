@@ -17,7 +17,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deleted Accounts | KPN Founder Console</title>
-  <link rel="stylesheet" href="../admin.css?v=20260929-l3">
+  <link rel="stylesheet" href="../admin.css?v=20260930-m6">
 </head>
 <body class="admin-page" data-admin-page="deleted">
   <div class="admin-shell">
@@ -27,6 +27,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
         <a href="../">Dashboard</a>
         <a href="../users/">Users</a>
         <a class="active" href="./">Deleted Accounts</a>
+        <a href="../marketing/">Email Updates</a>
       </nav>
     </header>
     <p class="admin-meta">Signed in as <?php echo $email; ?> · raw email is never stored · rows are purged automatically 3 years after deletion</p>
@@ -52,6 +53,9 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
             <th>Lifetime</th>
             <th>Plan at Deletion</th>
             <th>Kind</th>
+            <th>Country</th>
+            <th>Business Type</th>
+            <th>Currency</th>
             <th>Origin</th>
             <th>Cleanup Status</th>
             <th>Returned</th>
@@ -65,6 +69,6 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
     </div>
   </div>
   <script src="../../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="../admin.js?v=20260929-l3"></script>
+  <script src="../admin.js?v=20260930-m6"></script>
 </body>
 </html>

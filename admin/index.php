@@ -17,7 +17,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | KPN Founder Console</title>
-  <link rel="stylesheet" href="admin.css?v=20260929-l3">
+  <link rel="stylesheet" href="admin.css?v=20260930-m6">
 </head>
 <body class="admin-page" data-admin-page="dashboard">
   <div class="admin-shell">
@@ -27,6 +27,7 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
         <a class="active" href="./">Dashboard</a>
         <a href="users/">Users</a>
         <a href="deleted-accounts/">Deleted Accounts</a>
+        <a href="marketing/">Email Updates</a>
       </nav>
     </header>
     <p class="admin-meta">Signed in as <?php echo $email; ?> · Sci-Fi Mode</p>
@@ -42,12 +43,17 @@ $email = htmlspecialchars((string) ($adminUser['email'] ?? ''), ENT_QUOTES, 'UTF
       <div id="lifecycle-aux" class="cards cards-aux"></div>
       <p id="lifecycle-note" class="dash-note muted"></p>
     </section>
+    <section class="dash-section" id="lifecycle-segments-section" hidden>
+      <h2 class="dash-section-title">Deletions by Segment</h2>
+      <p id="lifecycle-segments-note" class="dash-note muted"></p>
+      <div id="lifecycle-segments-root"></div>
+    </section>
     <section class="dash-section">
       <h2 class="dash-section-title">Accounts (all roles)</h2>
       <div id="dash-cards" class="cards"></div>
     </section>
   </div>
   <script src="../js/kpi-auth-client.js?v=20260919-2"></script>
-  <script src="admin.js?v=20260929-l3"></script>
+  <script src="admin.js?v=20260930-m6"></script>
 </body>
 </html>

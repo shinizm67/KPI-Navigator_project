@@ -101,7 +101,7 @@
     marketingChanged: function () {
       return t(
         'お知らせメールの配信状態が変わりました。退会後の扱いを選んでから、もう一度「アカウントを削除」を押してください。データは削除されていません。',
-        'Your newsletter email status has changed. Choose what happens after deletion, then press "Delete Account" again. No data was deleted.',
+        'Your email updates status has changed. Choose what happens after deletion, then press "Delete Account" again. No data was deleted.',
         '通知郵件的寄送狀態已變更。請選擇刪除帳戶後的處理方式，再按一次「刪除帳戶」。資料未被刪除。'
       );
     },

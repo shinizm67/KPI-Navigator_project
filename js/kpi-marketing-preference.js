@@ -29,9 +29,9 @@
     en: {
       on: 'Current status: receiving',
       off: 'Current status: not receiving',
-      subscribed: 'You will now receive our newsletter emails.',
-      unsubscribed: 'You have unsubscribed from our newsletter emails.',
-      outdated: 'The newsletter wording has been updated. Please reload the page and review it.',
+      subscribed: 'You will now receive email updates from Forge Laboratory.',
+      unsubscribed: 'You have unsubscribed from email updates.',
+      outdated: 'The email updates wording has been updated. Please reload the page and review it.',
       failed: 'This change cannot be processed right now. Please try again later.'
     },
     zh: {

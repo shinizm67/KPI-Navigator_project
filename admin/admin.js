@@ -104,6 +104,115 @@
       (sub ? '<div class="card-sub">' + sub + '</div>' : '') + '</div>';
   }
 
+  /* Catalog labels for Founder display only. Stored codes / API values are never rewritten. */
+  var COUNTRY_EN = {
+    JP: 'Japan', US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+    NZ: 'New Zealand', IE: 'Ireland', SG: 'Singapore', TW: 'Taiwan', HK: 'Hong Kong',
+    KR: 'South Korea', CN: 'China', DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain',
+    NL: 'Netherlands', BE: 'Belgium', CH: 'Switzerland', AT: 'Austria', SE: 'Sweden',
+    NO: 'Norway', DK: 'Denmark', FI: 'Finland', PT: 'Portugal',
+    AE: 'United Arab Emirates', IN: 'India', ZA: 'South Africa'
+  };
+  var BTYPE_EN = {
+    restaurant: 'Restaurant', retail: 'Retail', hair_salon: 'Hair salon',
+    fitness: 'Fitness', hotel: 'Hotel', other: 'Other'
+  };
+  var CURRENCY_EN = {
+    JPY: 'Japanese Yen', USD: 'US Dollar', GBP: 'British Pound', CAD: 'Canadian Dollar',
+    AUD: 'Australian Dollar', NZD: 'New Zealand Dollar', EUR: 'Euro', SGD: 'Singapore Dollar',
+    TWD: 'New Taiwan Dollar', HKD: 'Hong Kong Dollar', KRW: 'South Korean Won', CNY: 'Chinese Yuan',
+    CHF: 'Swiss Franc', SEK: 'Swedish Krona', NOK: 'Norwegian Krone', DKK: 'Danish Krone',
+    AED: 'UAE Dirham', INR: 'Indian Rupee', ZAR: 'South African Rand'
+  };
+
+  function catalogMap(dim) {
+    if (dim === 'country') return COUNTRY_EN;
+    if (dim === 'currency') return CURRENCY_EN;
+    return BTYPE_EN;
+  }
+
+  function segmentBucketLabel(code) {
+    if (code == null || String(code).trim() === '' || code === 'unknown') {
+      return '<span class="seg-unknown">Unknown</span>';
+    }
+    if (code === 'other') {
+      return '<span class="seg-other">Other</span>';
+    }
+    return null;
+  }
+
+  function segmentLabelHtml(dim, code) {
+    var special = segmentBucketLabel(code);
+    if (special) return special;
+    var map = catalogMap(dim);
+    if (map[code]) return esc(map[code]);
+    return '<span class="seg-other">Other</span> <span class="muted">(' + esc(code) + ')</span>';
+  }
+
+  function historySegmentHtml(dim, raw) {
+    if (raw == null || String(raw).trim() === '') {
+      return '<span class="seg-unknown" title="No value stored (pre-M2 history or unavailable)">Unknown</span>';
+    }
+    var code = String(raw).trim();
+    var special = segmentBucketLabel(code);
+    if (special && code === 'unknown') return special;
+    var map = catalogMap(dim);
+    if (map[code] && code !== 'other') return esc(map[code]);
+    if (code === 'other') return '<span class="seg-other" title="Canonical other">Other</span>';
+    return '<span class="seg-other" title="Value outside the current catalog">Other</span> <span class="muted">(' + esc(code) + ')</span>';
+  }
+
+  function segmentTable(dim, title, rows, split) {
+    var head = split
+      ? '<th>Segment</th><th>Deleted</th><th>Churned</th><th>Early Churn</th>'
+      : '<th>Segment</th><th>Deleted</th>';
+    var body = (rows && rows.length)
+      ? rows.map(function (b) {
+          return '<tr><td>' + segmentLabelHtml(dim, b.code) + '</td><td>' + esc(dash(b.deleted)) + '</td>' +
+            (split ? '<td>' + esc(dash(b.churned)) + '</td><td>' + esc(dash(b.earlyChurn)) + '</td>' : '') + '</tr>';
+        }).join('')
+      : '<tr><td colspan="' + (split ? 4 : 2) + '" class="muted">None</td></tr>';
+    return '<div class="seg-block"><h3>' + title + '</h3><table class="seg-table"><thead><tr>' + head +
+      '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  function paintSegments(seg) {
+    var section = document.getElementById('lifecycle-segments-section');
+    var root = document.getElementById('lifecycle-segments-root');
+    var note = document.getElementById('lifecycle-segments-note');
+    if (!section || !root) return;
+    section.hidden = false;
+    if (!seg) {
+      root.innerHTML = '<p class="muted">Segment history unavailable.</p>';
+      if (note) note.textContent = '';
+      return;
+    }
+    var mo = (seg.scopes && seg.scopes.month) || {};
+    var rt = (seg.scopes && seg.scopes.retained) || {};
+    var mt = mo.total || {};
+    var rtTotal = (rt.total && rt.total.deleted) || 0;
+    if (note) {
+      var sk = seg.skipped || {};
+      note.textContent =
+        'Counts of deleted standalone accounts, separate from Monthly Churn above. This month is JST ' +
+        dash(seg.month) + ' (' + dash(mt.deleted) + ' deleted). Retained history is the last 3 years (' +
+        dash(rtTotal) + ' deleted). Skipped: ' + dash(sk.excluded) + ' excluded, ' + dash(sk.child) + ' child.';
+    }
+    root.innerHTML =
+      '<h3 class="seg-scope-title">This month (JST ' + esc(dash(seg.month)) + ')</h3>' +
+      '<div class="seg-grid">' +
+        segmentTable('country', 'Country', mo.country, true) +
+        segmentTable('businessType', 'Business Type', mo.businessType, true) +
+        segmentTable('currency', 'Currency', mo.currency, true) +
+      '</div>' +
+      '<h3 class="seg-scope-title">Retained history (last 3 years)</h3>' +
+      '<div class="seg-grid">' +
+        segmentTable('country', 'Country', rt.country, false) +
+        segmentTable('businessType', 'Business Type', rt.businessType, false) +
+        segmentTable('currency', 'Currency', rt.currency, false) +
+      '</div>';
+  }
+
   function paintLifecycle(lc, months) {
     var section = document.getElementById('lifecycle-section');
     var cards = document.getElementById('lifecycle-cards');
@@ -122,6 +231,7 @@
         '<div class="card-sub">History storage unavailable.</div></div>';
       if (aux) aux.innerHTML = '';
       if (note) note.textContent = '';
+      paintSegments(null);
       return;
     }
     if (sel) sel.value = lc.month;
@@ -180,6 +290,7 @@
       }
       var d = res.data;
       paintLifecycle(d.lifecycle, d.lifecycleMonths);
+      paintSegments(d.lifecycleSegments);
       var cards = [
         ['Total Users', d.totalUsers],
         ['Basic', d.basic],
@@ -689,7 +800,7 @@
     function paint(rows, label) {
       if (status) status.textContent = label;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="12" class="muted">No history rows.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" class="muted">No history rows.</td></tr>';
         return;
       }
       tbody.innerHTML = rows.map(function (r) {
@@ -704,6 +815,9 @@
           '<td>' + esc(dash(r.lifetimeDays)) + ' d</td>' +
           '<td>' + esc(dash(r.planAtDeletion)) + '</td>' +
           '<td>' + esc(dash(r.accountKind)) + '</td>' +
+          '<td>' + historySegmentHtml('country', r.country) + '</td>' +
+          '<td>' + historySegmentHtml('businessType', r.businessType) + '</td>' +
+          '<td>' + historySegmentHtml('currency', r.currency) + '</td>' +
           '<td>' + originHtml(r.signupOrigin) + '</td>' +
           '<td>' + cleanup + '</td>' +
           '<td>' + (r.returned ? '<span class="tag-returned">Returned</span> <span class="muted">' + jstDateTime(r.returnedAt) + '</span>' : 'Not Returned') + '</td>' +
@@ -784,25 +898,24 @@
     if (form && input) {
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
-        var email = input.value;
-        if (!email || email.indexOf('@') < 0) {
+        var entered = input.value;
+        if (!entered || entered.indexOf('@') < 0) {
           setMsg('Enter an email address.', true);
           return;
         }
-        fetchJson(apiBase() + '/admin/lifecycle-lookup.php', { method: 'POST', body: { email: email } }).then(function (res) {
+        fetchJson(apiBase() + '/admin/lifecycle-lookup.php', { method: 'POST', body: { email: entered } }).then(function (res) {
           input.value = '';
           if (!res.data || !res.data.ok) {
             setMsg(authFailMsg(res) || 'Lookup failed.', true);
             return;
           }
           lookupRows = res.data.rows || [];
-          setMsg(lookupRows.length ? lookupRows.length + ' matching history row(s).' : 'No history rows match this email.', false);
+          setMsg('Matched lookup: ' + entered, false);
           if (clearBtn) clearBtn.hidden = false;
           load();
         }).catch(function () {
           setMsg('Network error during lookup.', true);
         });
-        email = '';
       });
     }
     if (clearBtn) {
@@ -816,11 +929,131 @@
     load();
   }
 
+  function mktStatusHtml(r) {
+    if (r.status === 'subscribed') return 'Subscribed';
+    if (r.evidenceOnly) return 'Unsubscribed · evidence-only';
+    return 'Unsubscribed';
+  }
+
+  function renderMarketing() {
+    var err = document.getElementById('admin-error');
+    var tbody = document.getElementById('mkt-tbody');
+    var cards = document.getElementById('mkt-cards');
+    var status = document.getElementById('mkt-status');
+    var msg = document.getElementById('mkt-msg');
+    if (!tbody) return;
+
+    function setMsg(text, isError) {
+      if (!msg) return;
+      msg.hidden = !text;
+      msg.textContent = text || '';
+      msg.className = 'actions-msg' + (isError ? ' actions-msg-error' : ' actions-msg-ok');
+    }
+
+    function postAction(id, action) {
+      return fetchJson(apiBase() + '/admin/marketing-action.php', { method: 'POST', body: { id: id, action: action } });
+    }
+
+    function paint(data) {
+      var counts = data.counts || {};
+      if (cards) {
+        cards.innerHTML = [
+          card('Subscribed', dash(counts.subscribed), 'Active recipients'),
+          card('Evidence-only', dash(counts.evidenceOnly), 'Unsubscribed, retained after a send'),
+          card('Total', dash(counts.total), 'Rows now')
+        ].join('');
+      }
+      if (status) {
+        status.textContent = (data.ready ? '' : 'WARNING: marketing store not ready · ') +
+          dash(counts.total) + ' row(s). Token / hash / secret are never shown.';
+      }
+      var rows = data.rows || [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="muted">No email-update subscribers.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(function (r) {
+        var unsubBtn = r.status === 'subscribed'
+          ? '<button type="button" class="btn-admin" data-mkt-action="unsubscribe" data-mkt-id="' + esc(String(r.id)) +
+            '" data-mkt-email="' + esc(r.email) + '">Unsubscribe</button> '
+          : '';
+        var eraseBtn = '<button type="button" class="btn-admin btn-danger" data-mkt-action="erase" data-mkt-id="' +
+          esc(String(r.id)) + '" data-mkt-email="' + esc(r.email) + '" data-mkt-sent="' +
+          (r.lastMarketingSentAt ? '1' : '0') + '">Erase</button>';
+        return (
+          '<tr>' +
+          '<td>' + esc(dash(r.email)) + '</td>' +
+          '<td>' + mktStatusHtml(r) + '</td>' +
+          '<td>' + esc(dash(r.locale)) + '</td>' +
+          '<td>' + esc(dash(r.consentSource)) + '</td>' +
+          '<td>' + jstDateTime(r.consentAt) + '</td>' +
+          '<td>' + (r.lastMarketingSentAt ? jstDateTime(r.lastMarketingSentAt) : 'Never') + '</td>' +
+          '<td>' + (r.hasAccount ? 'Yes' : 'No') + '</td>' +
+          '<td>' + (r.unsubscribedAt ? jstDateTime(r.unsubscribedAt) + (r.unsubscribeSource ? ' · ' + esc(r.unsubscribeSource) : '') : '—') + '</td>' +
+          '<td>' + (r.retainUntil ? jstDateTime(r.retainUntil) : '—') + '</td>' +
+          '<td>' + unsubBtn + eraseBtn + '</td>' +
+          '</tr>'
+        );
+      }).join('');
+      Array.prototype.forEach.call(tbody.querySelectorAll('[data-mkt-action]'), function (btn) {
+        btn.addEventListener('click', function () {
+          var action = btn.getAttribute('data-mkt-action');
+          var id = Number(btn.getAttribute('data-mkt-id'));
+          var em = btn.getAttribute('data-mkt-email') || '';
+          if (action === 'unsubscribe') {
+            if (!window.confirm('Unsubscribe ' + em + ' from email updates? This cannot send mail.')) return;
+          } else {
+            var sent = btn.getAttribute('data-mkt-sent') === '1';
+            var confirmText = sent
+              ? 'Erase is blocked while this address is under legal hold (already mailed). Continue to check the hold?'
+              : 'Permanently erase ' + em + '? Never mailed — the row and events will be deleted.';
+            if (!window.confirm(confirmText)) return;
+          }
+          btn.disabled = true;
+          postAction(id, action).then(function (res) {
+            btn.disabled = false;
+            if (res.status === 409) {
+              setMsg('Legal hold: evidence must be kept until ' + dash(res.data && res.data.retainUntil) + '.', true);
+              return;
+            }
+            if (!res.data || !res.data.ok) {
+              showError(err, authFailMsg(res) || 'Email updates action failed.');
+              return;
+            }
+            clearError(err);
+            setMsg(action === 'unsubscribe'
+              ? (res.data.result === 'already' ? 'Already unsubscribed.' : 'Unsubscribed.')
+              : (res.data.result === 'erased' ? 'Row erased.' : 'Moved to evidence-only.'), false);
+            load();
+          }).catch(function () {
+            btn.disabled = false;
+            showError(err, 'Network error updating email updates.');
+          });
+        });
+      });
+    }
+
+    function load() {
+      fetchJson(apiBase() + '/admin/marketing-subscribers.php').then(function (res) {
+        if (!res.data || !res.data.ok) {
+          showError(err, authFailMsg(res) || 'Failed to load email updates.');
+          return;
+        }
+        paint(res.data);
+      }).catch(function () {
+        showError(err, 'Network error loading email updates.');
+      });
+    }
+
+    load();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var page = document.body.getAttribute('data-admin-page');
     if (page === 'dashboard') renderDashboard();
     if (page === 'users') renderUsers();
     if (page === 'detail') renderDetail();
     if (page === 'deleted') renderDeletedAccounts();
+    if (page === 'marketing') renderMarketing();
   });
 })();

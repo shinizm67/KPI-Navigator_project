@@ -42,7 +42,8 @@ ENDPOINTS = {
     "api/v1/admin/dashboard.php": "GET",
     "api/v1/admin/users.php": "GET",
 }
-PAGES = ["admin/index.php", "admin/users/index.php", "admin/users/detail/index.php", "admin/deleted-accounts/index.php"]
+PAGES = ["admin/index.php", "admin/users/index.php", "admin/users/detail/index.php", "admin/deleted-accounts/index.php",
+         "admin/marketing/index.php"]
 
 
 def main() -> int:
@@ -100,10 +101,11 @@ def main() -> int:
         src = read(rel)
         check(f"{rel}: founder page gate", "kpi_v1_admin_require_founder_page($cfg)" in src)
         check(f"{rel}: nav has Deleted Accounts", "Deleted Accounts</a>" in src)
+        check(f"{rel}: nav has Email Updates", "Email Updates</a>" in src)
         check(f"{rel}: admin.js / admin.css versioned", "admin.js?v=" in src and "admin.css?v=" in src)
     dp = read("admin/deleted-accounts/index.php")
-    for col in ("Previous User ID", "Created", "Deleted", "Lifetime", "Plan at Deletion", "Origin", "Cleanup Status", "Returned",
-                "Return Count", "Exclude from Metrics", "Actions"):
+    for col in ("Previous User ID", "Created", "Deleted", "Lifetime", "Plan at Deletion", "Country", "Business Type",
+                "Currency", "Origin", "Cleanup Status", "Returned", "Return Count", "Exclude from Metrics", "Actions"):
         check(f"deleted page column {col}", f"<th>{col}</th>" in dp)
     check("deleted page: lookup input not autocompleted", 'autocomplete="off"' in dp)
     check("deleted page: data-admin-page=deleted", 'data-admin-page="deleted"' in dp)
@@ -113,6 +115,7 @@ def main() -> int:
         check(f"dashboard card {label}", "card(" + label in js)
     check("admin.js: history delete confirms", "window.confirm('Permanently delete the history row" in js)
     check("admin.js: lookup clears the input", "input.value = '';" in js)
+    check("admin.js: lookup shows Matched lookup in memory only", "Matched lookup: " in js)
     check("admin.js: no email written to storage", "localStorage" not in js and "sessionStorage" not in js)
     check("admin.js: origin labels NEW / RETURNED / UNKNOWN", all(x in js for x in ("'NEW'", "RETURNED</span>", "UNKNOWN</span>")))
 
