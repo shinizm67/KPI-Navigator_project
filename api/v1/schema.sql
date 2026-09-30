@@ -167,7 +167,9 @@ CREATE TABLE IF NOT EXISTS kpi_account_origins (
 -- Marketing opt-in (no FK; rows can outlive the account): existing DBs use schema_kpi_marketing.add.sql once.
 CREATE TABLE IF NOT EXISTS kpi_marketing_subscribers (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  normalized_email VARCHAR(255) NOT NULL,
+  normalized_email VARCHAR(255) NULL DEFAULT NULL,
+  match_key CHAR(64) NOT NULL,
+  match_key_id VARCHAR(16) NOT NULL,
   status VARCHAR(16) NOT NULL,
   locale VARCHAR(8) NOT NULL,
   account_user_id VARCHAR(64) NULL DEFAULT NULL,
@@ -185,6 +187,7 @@ CREATE TABLE IF NOT EXISTS kpi_marketing_subscribers (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_kpi_marketing_email (normalized_email),
+  UNIQUE KEY uq_kpi_marketing_match (match_key),
   UNIQUE KEY uq_kpi_marketing_token (unsub_token_hash),
   KEY idx_kpi_marketing_status (status),
   KEY idx_kpi_marketing_account (account_user_id),

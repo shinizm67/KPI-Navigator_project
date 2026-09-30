@@ -8,7 +8,7 @@ Two separate data areas, never joined:
 | | Lifecycle History (`kpi_account_deletions`) | Marketing Subscribers (`kpi_marketing_subscribers`) |
 |---|---|---|
 | Purpose | churn / retention / return / segment analysis | news about KPN / Forge Laboratory services, only with opt-in |
-| Email | HMAC only (never raw) | raw normalized email (needed to send) |
+| Email | HMAC only (never raw) | raw email only while subscribed or keep-after-delete; evidence-only = marketing match key + match_key_id (marketingEvidenceSecret, not token secret, not lifecycle HMAC) |
 | Created | on account delete | only on explicit opt-in |
 | Retention | 3 years after deletion (unchanged contract) | while subscribed; evidence 3 years after the last marketing mail (section 8) |
 | Link between them | none (no lifecycle id / HMAC in subscribers; no subscriber id in history) | |
@@ -158,10 +158,10 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 
 ## 8. Consent evidence retention (separate from Lifecycle's 3 years)
 
-- Subscribed: kept while subscribed.
+- Subscribed / keep-after-delete: raw email kept (needed to send).
 - Unsubscribed / delete-stop / Founder erase:
-  - no marketing mail ever sent → email + events deleted immediately (nothing to prove);
-  - at least one mail sent → **evidence-only** row (status unsubscribed, never mailed) until `last_marketing_sent_at + 3 years`, then purged automatically (特商法; covers 特電法 1 month). Recommended, D1.
+  - no marketing mail ever sent → row + events deleted immediately (nothing to prove);
+  - at least one mail sent → **evidence-only** row until `last_marketing_sent_at + 3 years`, then purged (特商法; covers 特電法 1 month). Raw email is cleared. Kept: wording version, source, consent / unsubscribe timestamps and method, last send, retain_until, `match_key`, and `match_key_id` (first id `k1`). `match_key` uses `marketingEvidenceSecret` only — never `marketingTokenSecret`, never the lifecycle HMAC. Recommended, D1; raw-email minimization M7-A.1; secret split M7-A.2.
 - `retain_until` computed on each state change; purge runs with the existing lifecycle purge hook.
 - Founder "erase" of an evidence-only row before its date is blocked with a notice (legal hold); a full erase is possible when nothing was sent.
 
@@ -173,21 +173,21 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 - ZH-TW: 「帳戶刪除紀錄：刪除帳戶時建立的最低限度紀錄（刪除前的內部使用者 ID、由電子郵件地址產生的比對用值、帳戶建立日、刪除日及使用期間、刪除時的方案、權限及帳戶類型，以及國家、業種及幣別）。不包含電子郵件地址、商號／公司名稱、市區町村、州／都道府縣，以及營業額等事業輸入資料。比對用值係以本方管理之秘密金鑰產生，僅憑該值無法還原電子郵件地址。」
 
 §1 new item:
-- JP: 「お知らせメールの配信情報　お知らせメールの受信を希望された場合に限り、メールアドレス、表示言語、同意日時・同意した画面と文言の版、配信停止日時、最終配信日時」
-- EN: "Newsletter information: only if you choose to receive our emails — email address, display language, date and time of consent, the screen and wording version you agreed to, unsubscribe date and time, and the date of the last email sent"
-- ZH-TW: 「通知郵件寄送資訊：僅限您選擇接收通知郵件時——電子郵件地址、顯示語言、同意日期時間、同意時之畫面及文字版本、取消訂閱日期時間，以及最後寄送日期時間」
+- JP: 「お知らせメールの配信情報　お知らせメールの受信を希望されている間（アカウント削除後も継続を選んだ場合を含む）、メールアドレス、表示言語、同意日時・同意した画面と文言の版。配信を停止した場合はメールアドレスを削除し、同意の版・日時・方法、配信停止の日時および方法、最終配信日時、ならびに照合用の値のみを保持します」
+- EN: "Email updates information: while you choose to receive email updates (including if you keep receiving them after deleting your account) — email address, display language, date and time of consent, the screen and wording version you agreed to. After you unsubscribe we delete the email address and keep only the wording version, dates and method of consent and unsubscription, the date of the last email sent, and a matching value"
+- ZH-TW: 「通知郵件寄送資訊：於您希望接收期間（含刪除帳戶後仍選擇繼續接收時）——電子郵件地址、顯示語言、同意日期時間、同意時之畫面及文字版本。取消訂閱後我們刪除電子郵件地址，僅保存文字版本、同意及取消之日期時間與方式、最後寄送日期時間，以及比對用值」
 
 §2 purposes (replace the statistics line + add one):
 - JP: 「退会数・利用継続期間・再登録の状況、ならびに国・業種・通貨・プラン別の傾向など、事業運営のための統計分析（退会履歴を利用します）」／「ご本人が受信を希望された場合に限り、KPNの新機能、Forge Laboratoryの新サービス、キャンペーン等のお知らせをメールで送ること」
 - EN: "Statistical analysis for running our business, such as the number of deletions, period of use, re-registration, and trends by country, business type, currency and plan (using account deletion records)" / "Only if you have asked to receive them, sending emails about new KPN features, new Forge Laboratory services, campaigns and similar news"
 - ZH-TW: 「為事業經營所需之統計分析，例如刪除數量、使用期間、重新註冊狀況，以及依國家、業種、幣別及方案之趨勢（使用帳戶刪除紀錄）」／「僅限您希望接收時，以電子郵件寄送 KPN 新功能、Forge Laboratory 新服務及活動等通知」
 
-§3 consent line (replace): JP 「同意（任意の分析Cookie、およびお知らせメールの配信）」 / EN "Consent (optional analytics cookies and our newsletter emails)" / ZH-TW 「同意（選用之分析 Cookie 及通知郵件之寄送）」
+§3 consent line (replace): JP 「同意（任意の分析Cookie、およびお知らせメールの配信）」 / EN "Consent (optional analytics cookies and email updates)" / ZH-TW 「同意（選用之分析 Cookie 及通知郵件之寄送）」
 
 §6 new paragraph after the 退会履歴 paragraph:
-- JP: 「お知らせメールの配信情報は、事業入力データとは別に管理し、受信を希望されている間保持します。配信はメール内のリンクまたは設定画面からいつでも停止できます。アカウント削除時に受信の継続を選んだ場合に限り、アカウント削除後もメールアドレスを配信用に保持します（KPNのデータは保持・復元しません）。継続を選ばなかった場合や配信を停止した場合は、配信用のメールアドレスを削除します。ただし、すでにお知らせメールを送信していた場合は、法令に基づき、同意の記録（メールアドレス、同意・停止の日時および方法）を最後の送信日から3年間保持し、その間メールを送ることはありません。」
-- EN: "Newsletter information is kept separately from business data for as long as you want to receive our emails. You can unsubscribe at any time from the link in each email or in Settings. Only if you choose to keep receiving them when deleting your account do we keep your email address for this purpose after deletion (KPN data is neither kept nor restored). If you do not choose this, or you unsubscribe, we delete the email address used for sending. However, if we have already sent you such emails, we keep the record of your consent (email address, date, time and method of consent and unsubscription) for 3 years from the last email as required by law, and we do not email you during that time."
-- ZH-TW: 「通知郵件寄送資訊與事業輸入資料分開管理，於您希望接收期間保存。您可隨時透過郵件中的連結或設定畫面取消訂閱。僅限您於刪除帳戶時選擇繼續接收，我們才會於帳戶刪除後保留您的電子郵件地址以供寄送（不保存亦不還原 KPN 資料）。未選擇繼續或取消訂閱時，我們將刪除寄送用之電子郵件地址。惟若我們已寄送過通知郵件，將依法令自最後寄送日起保存同意紀錄（電子郵件地址、同意及取消之日期時間與方式）3 年，期間內不會再寄送郵件。」
+- JP: 「お知らせメールの配信情報は、事業入力データおよび退会履歴とは別に管理します。受信を希望されている間はメールアドレスを配信用に保持します。配信はメール内のリンクまたは設定画面からいつでも停止できます。アカウント削除時に受信の継続を選んだ場合に限り、アカウント削除後もメールアドレスを配信用に保持します（KPNのデータは保持・復元しません）。配信を停止した場合、またはアカウント削除時に継続を選ばなかった場合は、配信用のメールアドレスを削除します。ただし、すでにお知らせメールを送信していた場合は、法令に基づき、同意の記録（同意した文言の版、同意・停止の日時および方法、最終配信日時、ならびにメールアドレスから生成した照合用の値）を最後の送信日から3年間保持し、その間メールを送ることはありません。照合用の値だけからメールアドレスを復元することはできません。」
+- EN: "Email updates information is kept separately from business data and from the account deletion record. While you want to receive email updates we keep your email address for sending them. You can unsubscribe at any time from the link in each email or in Preferences. Only if you choose to keep receiving them when deleting your account do we keep your email address for this purpose after deletion (KPN data is neither kept nor restored). If you unsubscribe, or you do not choose to keep receiving them when deleting your account, we delete the email address used for sending. However, if we have already sent you such emails, we keep the record of your consent (wording version, date, time and method of consent and unsubscription, the date of the last email, and a matching value derived from the email address) for 3 years from the last email as required by law, and we do not email you during that time. The email address cannot be recovered from the matching value alone."
+- ZH-TW: 「通知郵件寄送資訊與事業輸入資料及帳戶刪除紀錄分開管理。於您希望接收期間，我們保留電子郵件地址以供寄送。您可隨時透過郵件中的連結或設定畫面取消訂閱。僅限您於刪除帳戶時選擇繼續接收，我們才會於帳戶刪除後保留您的電子郵件地址以供寄送（不保存亦不還原 KPN 資料）。取消訂閱或刪除帳戶時未選擇繼續時，我們將刪除寄送用之電子郵件地址。惟若我們已寄送過通知郵件，將依法令自最後寄送日起保存同意紀錄（文字版本、同意及取消之日期時間與方式、最後寄送日期，以及由電子郵件地址產生的比對用值）3 年，期間內不會再寄送郵件。僅憑比對用值無法還原電子郵件地址。」
 
 §7 add: JP 「お知らせメールは、各メールのリンク、設定画面、または12.のお問い合わせ先への連絡により、いつでも配信を停止できます。」 (EN / ZH-TW same meaning).
 
@@ -217,7 +217,7 @@ STEP 4 (final confirm, `delete_account5`) gets a Marketing block driven by the s
 - No secret in repo / logs; token only inside the mail.
 - Marketing APIs: Settings = session + expected-user guard; Founder = Founder Super Admin; unsubscribe = token + rate limit. Registration marketing flag passes the existing layers first (header reject, global / IP / email limiters).
 - Enumeration: registration keeps the existing 409 behavior (frozen); marketing endpoints never reveal whether an email is subscribed.
-- Raw email only in the marketing table and the Founder marketing page; never in lifecycle rows / responses.
+- Raw email only for subscribed / keep-after-delete rows and on the Founder Email Updates page for those rows; never in evidence-only rows, never in lifecycle rows / responses. Marketing match_key is never shown and is not the account-deletion matching value.
 
 ## 13. Implementation phases
 
@@ -273,7 +273,8 @@ Files:
 
 Contract as implemented (differences from sections 2–8 are refinements, not new behavior):
 
-- Token: `base64url(HMAC-SHA256(secret, 'kpn-marketing-unsub|' + nonce))`; the DB keeps only the 16-byte random nonce (`unsub_token_nonce`) and `sha256` of the token (`unsub_token_hash`). The sender Phase derives the link from nonce + secret, so no plain token is ever stored. Secret: config `marketingTokenSecret` (≥ 32 chars) or a generated `data/marketing/unsub_secret.key` (0600, outside the repo). Rotated on every (re)subscribe and on email change; revoked (NULL) on stop.
+- Token: `base64url(HMAC-SHA256(marketingTokenSecret, 'kpn-marketing-unsub|' + nonce))`; the DB keeps only the 16-byte random nonce (`unsub_token_nonce`) and `sha256` of the token (`unsub_token_hash`). The sender Phase derives the link from nonce + secret, so no plain token is ever stored. Secret: config `marketingTokenSecret` (≥ 32 chars) or a generated `data/marketing/unsub_secret.key` (0600, outside the repo; local only). Production: set in `config.local.php`, no auto-generation. Rotated on every (re)subscribe and on email change; revoked (NULL) on stop. Rotating this secret must not affect evidence matching.
+- Evidence match_key: `HMAC-SHA256(marketingEvidenceSecret, 'kpn-marketing-evidence|' + email)`. Stored with `match_key_id` (first `k1`). Config `marketingEvidenceSecret` only — no file, no auto-generation, no token/lifecycle fallback. Rotation: new id + secret; keep the old secret in `marketingEvidencePreviousSecrets` so existing 3-year rows still match.
 - Link format for the sender Phase: `…/kpi-navigator/unsubscribe/?t=<token>` (no subscriber id in the URL). The endpoint accepts the token in the JSON body or `t`, is POST only (GET 405: the confirm page is M3), answers `200 {"ok":true}` for valid / unknown / already-unsubscribed tokens alike, and supports the RFC 8058 One-Click form. Rate limits: global 300 / 10 min, per token 20 / 10 min (config `marketingUnsubscribeGlobalMax` / `marketingUnsubscribeTokenMax`), separate from the registration buckets.
 - Registration: `marketingOptIn: true` + `marketingConsentVersion` equal to the current version (else 400 `marketing_consent_outdated`, checked before anything is written). The subscriber row + event is written inside the account + consent transaction (MySQL) / undone with the account files (file mode); a missing or failing marketing store fails the registration closed (503). Without opt-in the marketing store is never touched, so Registration keeps working before the migration.
 - Missing marketing tables = "nothing subscribed": delete and email change continue unchanged; the delete verify step answers `marketing.subscribed: false` (`null` only when the store exists but fails).
@@ -299,7 +300,7 @@ UI only on top of M2. No production migration / deploy, no marketing send, no De
 
 Production Gate (before M7):
 
-- Unsubscribe secret: place it outside the web document root or in the existing production secret / config area where possible (config `marketingTokenSecret`). `.htaccess` must not be the primary protection of the key; audit and report the placement before M7.
+- Unsubscribe secret: place it outside the web document root or in the existing production secret / config area where possible (config `marketingTokenSecret`). Evidence secret is a separate key (`marketingEvidenceSecret`). `.htaccess` must not be the primary protection of either key; audit and report the placement before M7.
 - The server never trusts a client `marketingConsentVersion`: Registration and Settings subscribe compare it with the server's current version and fail closed (400 `marketing_consent_outdated`) on mismatch.
 
 Local verification: M3 UI smoke 226/226 (file + MySQL, JP / EN / ZH-TW, Sci-Fi / Office), `scripts/_test_marketing_m3_ui_contract.py` 43/43, M2 smoke 124/124, Registration e2e 94/98 (same pre-existing FAILs as M2). Other static FAILs are identical on `f2fa402` (pre-existing).
@@ -343,3 +344,18 @@ UI only on top of M2–M5. No production migration / deploy, no bulk marketing s
 - EN copy: Preferences heading "Email updates"; subscribed "You will now receive email updates from Forge Laboratory."; Delete STEP 2 / 4 and Unsubscribe follow the same name. JP / ZH-TW headings stay 「お知らせメール」 / 「通知郵件」.
 
 Local verification: M6 founder smoke 44/44 (file + MySQL: list / unsubscribe / erase / legal hold / 403 / no email leak; dashboard scopes; marketing page; Deleted Accounts labels; lookup Option B), `_test_marketing_m6_founder_ui_contract.py` 18/18, Founder lifecycle UI contract 83/83, M5 30/30, M2 124/124, M3 226/226, M4 140/140, L3 121/121, Delete + Lifecycle 341/341.
+
+## 21. M7-A.1 Consent evidence minimization (local, 2026-09-30)
+
+特商法の記録は「定型文 + 表示時点 + アドレスごとの記録」。停止後も平文メールを3年置くことは条文上必須ではない。特電法はより短い。監督・再購読・消去請求に答えるため、Marketing 専用の照合値だけ残す（lifecycle HMAC は使わない）。
+
+- `normalized_email` nullable. Subscribed / keep-after-delete: raw email. STOP / unsubscribe after a send: email NULL.
+- `match_key` CHAR(64) NOT NULL + `match_key_id` VARCHAR(16) NOT NULL (first `k1`) = HMAC-SHA256(`kpn-marketing-evidence|` + normalized email, `marketingEvidenceSecret`). Founder API never returns either. `marketingTokenSecret` is unsubscribe-only.
+- Re-subscribe / Settings ON / email-change lookup finds the evidence row by `match_key` (current + previous evidence secrets).
+- Privacy §1 / §6 and Delete STEP 2 JP / EN / ZH-TW: user-facing text stays “復元できない照合用の値” — no secret names or key ids. Terms still no change.
+
+## 22. M7-A.2 Marketing evidence secret separation (local, 2026-09-30)
+
+`marketingTokenSecret` and `marketingEvidenceSecret` are separate production secrets in `config.local.php` (empty placeholders in `config.example.php`). Neither value is committed, logged, or printed. Production: place both before deploy; sufficient random length; no auto-generation. Lifecycle HMAC remains a third, independent key.
+
+Local verification: M2 contract 50/50, M2 131/131 (23b token-secret change / 23c–d evidence rotation), M3 226/226, M4 140/140, M5 30/30, M6 44/44. No production change.

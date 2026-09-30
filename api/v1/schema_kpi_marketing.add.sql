@@ -2,7 +2,9 @@
 -- Contract: docs/br-launch-09-marketing-m1-draft.md (D1–D6 frozen 2026-09-29).
 -- Apply once on MySQL / MariaDB BEFORE deploying the code that uses it. Existing rows are not changed; no backfill.
 --
--- kpi_marketing_subscribers: one row per normalized email, created only on explicit opt-in.
+-- kpi_marketing_subscribers: one row per address (match_key + match_key_id). Raw email only while subscribed / keep-after-delete.
+--   Evidence-only (mailed then stopped): normalized_email NULL; match_key + match_key_id remain
+--   (marketingEvidenceSecret + prefix kpn-marketing-evidence|, first id k1; not marketingTokenSecret; not lifecycle HMAC).
 --   No FK (a "keep after delete" row outlives the account). Never stores password / business data / IP / UA /
 --   lifecycle id / HMAC. The unsubscribe token itself is never stored: nonce + sha256(token) only
 --   (token = HMAC(server secret, nonce)).
@@ -13,7 +15,9 @@
 
 CREATE TABLE IF NOT EXISTS kpi_marketing_subscribers (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  normalized_email VARCHAR(255) NOT NULL,
+  normalized_email VARCHAR(255) NULL DEFAULT NULL,
+  match_key CHAR(64) NOT NULL,
+  match_key_id VARCHAR(16) NOT NULL,
   status VARCHAR(16) NOT NULL,
   locale VARCHAR(8) NOT NULL,
   account_user_id VARCHAR(64) NULL DEFAULT NULL,
@@ -31,6 +35,7 @@ CREATE TABLE IF NOT EXISTS kpi_marketing_subscribers (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_kpi_marketing_email (normalized_email),
+  UNIQUE KEY uq_kpi_marketing_match (match_key),
   UNIQUE KEY uq_kpi_marketing_token (unsub_token_hash),
   KEY idx_kpi_marketing_status (status),
   KEY idx_kpi_marketing_account (account_user_id),

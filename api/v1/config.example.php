@@ -48,4 +48,12 @@ return [
     'lifecycleHmacKeyId' => 'k1',
     'lifecycleHmacKey' => '',
     'lifecycleHmacPreviousKeys' => [],
+    // Marketing unsubscribe token only (link HMAC). Random, >= 32 chars. Never commit the value.
+    // Production: set in config.local.php before deploy. Empty here. Do not auto-generate on production.
+    'marketingTokenSecret' => '',
+    // Marketing evidence match_key only. Separate from marketingTokenSecret and from lifecycleHmacKey.
+    // First key id is k1. Rotation: keep the old secret in marketingEvidencePreviousSecrets [id => secret].
+    'marketingEvidenceKeyId' => 'k1',
+    'marketingEvidenceSecret' => '',
+    'marketingEvidencePreviousSecrets' => [],
 ];

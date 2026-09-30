@@ -38,8 +38,10 @@ def main():
     check("action API: founder + POST; unsubscribe | erase only",
           "kpi_v1_auth_require_founder_superadmin($cfg)" in act_api and "kpi_v1_auth_require_post()" in act_api
           and "['unsubscribe', 'erase']" in act_api)
-    check("public row: email yes, token material no",
-          "'email' => (string) $r['email']" in pub and "token" not in pub[pub.find("function kpi_v1_marketing_public_row"):pub.find("function kpi_v1_marketing_founder_list")])
+    check("public row: raw email only while subscribed; token / match key no",
+          "== 'subscribed') ? (string) $r['email']" in pub
+          and "token" not in pub[pub.find("function kpi_v1_marketing_public_row"):pub.find("function kpi_v1_marketing_founder_list")]
+          and "matchKey" not in pub[pub.find("function kpi_v1_marketing_public_row"):pub.find("function kpi_v1_marketing_founder_list")])
     check("admin.js: marketing confirms unsubscribe + erase",
           "Unsubscribe " in js and "from email updates" in js and "Permanently erase " in js and "legal hold" in js)
     check("admin.js: marketing actions POST id + action (no token)",

@@ -60,6 +60,7 @@ def main() -> int:
     lookup = read("api/v1/admin/lifecycle-lookup.php")
     schema = read("api/v1/schema.sql")
     mig = read("api/v1/schema_kpi_marketing.add.sql")
+    example = read("api/v1/config.example.php")
 
     # Consent
     c = fn(mk, "kpi_v1_marketing_consent_from_registration")
@@ -88,9 +89,20 @@ def main() -> int:
     # Retention
     stop = fn(mk, "kpi_v1_marketing_plan_stop")
     check("stop: never mailed → row deleted (null)", "if (empty($old['lastMarketingSentAt'])) {\n        return [null, []];" in stop)
-    check("stop: mailed → evidence-only, token revoked, retain = last send + 3 years",
-          all(k in stop for k in ["'unsubscribed'", "$row['tokenNonce'] = null;", "$row['tokenHash'] = null;",
+    check("stop: mailed → evidence-only, token revoked, raw email cleared, retain = last send + 3 years",
+          all(k in stop for k in ["'unsubscribed'", "$row['email'] = null;", "$row['tokenNonce'] = null;", "$row['tokenHash'] = null;",
                                   "KPI_MARKETING_EVIDENCE_RETENTION"]) and "const KPI_MARKETING_EVIDENCE_RETENTION = '+3 years';" in mk)
+    check("evidence match key: marketingEvidenceSecret + kpn-marketing-evidence prefix, not lifecycle HMAC, not token secret",
+          "kpn-marketing-evidence|" in mk and "lifecycleHmac" not in mk and "kpn-lifecycle-email" not in mk
+          and "function kpi_v1_marketing_match_key(" in mk
+          and "kpi_v1_marketing_evidence_secret" in fn(mk, "kpi_v1_marketing_match_key")
+          and "kpi_v1_marketing_token_secret" not in fn(mk, "kpi_v1_marketing_match_key")
+          and "kpi_v1_marketing_token_secret" not in fn(mk, "kpi_v1_marketing_match_key_with_secret"))
+    check("evidence key id: first id k1 stored on the row; previous secrets kept for lookup",
+          "const KPI_MARKETING_EVIDENCE_KEY_ID = 'k1';" in mk
+          and "function kpi_v1_marketing_evidence_secrets(" in mk
+          and "marketingEvidencePreviousSecrets" in mk
+          and "function kpi_v1_marketing_match_keys_for_lookup(" in mk)
     check("purge: unsubscribed rows past retain_until deleted with their evidence",
           "(string) $r['retainUntil'] < $now" in fn(mk, "kpi_v1_marketing_purge_in")
           and "DELETE FROM kpi_marketing_consent_events WHERE subscriber_id = ?" in mk)
@@ -135,8 +147,15 @@ def main() -> int:
     check("token = HMAC(secret, nonce); only nonce + sha256(token) stored",
           "hash_hmac('sha256', 'kpn-marketing-unsub|' . $nonce" in mk and "hash('sha256', 'kpn-marketing-unsub-token|'" in mk
           and "random_bytes(16)" in mk and "unsub_token_nonce CHAR(32)" in mig and "unsub_token_hash CHAR(64)" in mig)
-    check("secret: config marketingTokenSecret (>= 32) or generated 0600 file under data/marketing",
-          "marketingTokenSecret" in mk and "KPI_MARKETING_MIN_SECRET_LENGTH = 32" in mk and "@chmod($tmp, 0600);" in mk)
+    check("token secret: config marketingTokenSecret (>= 32) or generated 0600 file under data/marketing",
+          "marketingTokenSecret" in mk and "KPI_MARKETING_MIN_SECRET_LENGTH = 32" in mk and "@chmod($tmp, 0600);" in mk
+          and "unsub_secret.key" in fn(mk, "kpi_v1_marketing_token_secret"))
+    check("evidence secret: config marketingEvidenceSecret only; no file auto-gen; no token/lifecycle fallback",
+          "marketingEvidenceSecret" in fn(mk, "kpi_v1_marketing_evidence_secret")
+          and "unsub_secret.key" not in fn(mk, "kpi_v1_marketing_evidence_secret")
+          and "bin2hex(random_bytes" not in fn(mk, "kpi_v1_marketing_evidence_secret")
+          and "marketingTokenSecret" not in fn(mk, "kpi_v1_marketing_evidence_secret")
+          and "lifecycleHmacKey" not in mk)
     check("no error_log with an email / token in marketing code",
           not re.search(r"error_log\([^;]*(\$email|\$token|\$row)", mk + unsub + pref))
 
@@ -158,7 +177,8 @@ def main() -> int:
           and "!== KPI_MARKETING_CONSENT_VERSION" in pref)
     check("Founder APIs gated", "kpi_v1_auth_require_founder_superadmin($cfg);" in fl and "kpi_v1_auth_require_founder_superadmin($cfg);" in fa)
     pub = fn(mk, "kpi_v1_marketing_public_row")
-    check("Founder rows never carry token material", "token" not in pub.lower())
+    check("Founder rows never carry token / match-key material", "token" not in pub.lower() and "matchKey" not in pub and "match_key" not in pub)
+    check("Founder email only while subscribed", "== 'subscribed') ? (string) $r['email']" in pub)
     check("no send function / mail() in marketing code",
           not re.search(r"(?<![\w])mail\(", mk + unsub + pref + fl + fa) and "kpi_v1_mail_send" not in mk + unsub + pref + fl + fa)
 
@@ -181,9 +201,12 @@ def main() -> int:
     for label, sql in (("schema.sql", schema), ("migration", mig)):
         s = table(sql, "kpi_marketing_subscribers")
         e = table(sql, "kpi_marketing_consent_events")
-        check(f"{label}: subscribers table unique email + token hash, no FK, no password / ip / ua / hmac / business columns",
-              "UNIQUE KEY uq_kpi_marketing_email (normalized_email)" in s and "UNIQUE KEY uq_kpi_marketing_token (unsub_token_hash)" in s
-              and "FOREIGN KEY" not in s and not re.search(r"^\s*(password\w*|ip\w*|user_agent|email_hmac|business\w*)\s", s, re.M))
+        check(f"{label}: subscribers unique nullable email + match_key + match_key_id + token hash; no FK / password / ip / lifecycle email_hmac",
+              "normalized_email VARCHAR(255) NULL" in s and "UNIQUE KEY uq_kpi_marketing_email (normalized_email)" in s
+              and "match_key CHAR(64) NOT NULL" in s and "match_key_id VARCHAR(16) NOT NULL" in s
+              and "UNIQUE KEY uq_kpi_marketing_match (match_key)" in s and "UNIQUE KEY uq_kpi_marketing_token (unsub_token_hash)" in s
+              and "FOREIGN KEY" not in s and "email_hmac" not in s
+              and not re.search(r"^\s*(password\w*|ip\w*|user_agent|business\w*)\s", s, re.M))
         check(f"{label}: events table append-only shape, no email column, no FK",
               "subscriber_id BIGINT UNSIGNED NOT NULL" in e and "email" not in e and "FOREIGN KEY" not in e)
     check("migration: additive only (CREATE IF NOT EXISTS + ADD COLUMN), no UPDATE / DELETE / DROP outside comments",
@@ -192,6 +215,11 @@ def main() -> int:
     check("schema.sql: segment columns on kpi_account_deletions",
           all(k in table(schema, "kpi_account_deletions") for k in ["seg_country VARCHAR(8) NULL", "seg_business_type VARCHAR(32) NULL",
                                                                     "seg_currency VARCHAR(8) NULL"]))
+    check("config.example: marketing secrets empty and separate from lifecycle",
+          "'marketingTokenSecret' => ''," in example and "'marketingEvidenceSecret' => ''," in example
+          and "'marketingEvidenceKeyId' => 'k1'," in example
+          and "'lifecycleHmacKey' => ''," in example
+          and not re.search(r"['\"]marketing(Token|Evidence)Secret['\"]\s*=>\s*['\"][^'\"]+['\"]", example))
 
     print(f"\n{PASSED} passed, {FAILED} failed")
     return 0 if FAILED == 0 else 1

@@ -8,9 +8,13 @@
  * - Stop (unsubscribe link / Settings / Delete "stop" / Founder / email change of the old address):
  *   never mailed → row + evidence deleted at once; mailed → evidence-only row (unsubscribed, never mailed again)
  *   until last_marketing_sent_at + 3 years, then purged (特定商取引法 / 特定電子メール法).
+ *   Evidence-only keeps wording / source / timestamps / method / last send / retain_until and a marketing-only
+ *   irreversible match key + match_key_id. Raw email is cleared. Not the lifecycle HMAC.
  * - Delete Account: a subscribed row needs "keep" or "stop"; "keep" only unlinks the account. Never turned on at delete.
  * - Email change: the subscription follows the account (D4).
- * - Unsubscribe token = HMAC(server secret, per-row nonce); only the nonce and sha256(token) are stored.
+ * - Unsubscribe token = HMAC(marketingTokenSecret, per-row nonce); only the nonce and sha256(token) are stored.
+ * - Evidence match_key = HMAC(marketingEvidenceSecret, prefix + email). First key id is k1. Token secret is never
+ *   used for matching. Lifecycle HMAC key is never used here.
  * - Missing tables (migration not applied) = no subscriber exists; only an opt-in needs the storage.
  * - Nothing here sends mail.
  */
@@ -26,6 +30,7 @@ require_once __DIR__ . '/_registration.php';
 const KPI_MARKETING_CONSENT_VERSION = 'mkt-2026-09-29';
 const KPI_MARKETING_EVIDENCE_RETENTION = '+3 years';
 const KPI_MARKETING_MIN_SECRET_LENGTH = 32;
+const KPI_MARKETING_EVIDENCE_KEY_ID = 'k1';
 
 function kpi_v1_marketing_consent_texts()
 {
@@ -67,7 +72,7 @@ function kpi_v1_marketing_dir()
     return __DIR__ . '/data/marketing';
 }
 
-/** Config `marketingTokenSecret` (>= 32 chars) or a generated file secret under data/marketing. */
+/** Unsubscribe-token secret only. Config `marketingTokenSecret` (>= 32 chars) or a generated file under data/marketing. Never used for evidence match_key. */
 function kpi_v1_marketing_token_secret($cfg)
 {
     if (isset($cfg['marketingTokenSecret']) && is_string($cfg['marketingTokenSecret'])
@@ -105,6 +110,89 @@ function kpi_v1_marketing_b64url($bin)
 function kpi_v1_marketing_token_for_nonce($secret, $nonce)
 {
     return kpi_v1_marketing_b64url(hash_hmac('sha256', 'kpn-marketing-unsub|' . $nonce, (string) $secret, true));
+}
+
+/**
+ * Evidence secret only (config `marketingEvidenceSecret`, >= 32 chars).
+ * No file, no auto-generation, no fallback to the unsubscribe-token secret or the account-deletion matching key.
+ */
+function kpi_v1_marketing_evidence_secret($cfg)
+{
+    if (isset($cfg['marketingEvidenceSecret']) && is_string($cfg['marketingEvidenceSecret'])
+        && strlen($cfg['marketingEvidenceSecret']) >= KPI_MARKETING_MIN_SECRET_LENGTH) {
+        return $cfg['marketingEvidenceSecret'];
+    }
+    return null;
+}
+
+/** Active evidence key id (default k1). Invalid id → null (fail closed). */
+function kpi_v1_marketing_evidence_key_id($cfg)
+{
+    $id = isset($cfg['marketingEvidenceKeyId']) && is_string($cfg['marketingEvidenceKeyId'])
+        ? trim($cfg['marketingEvidenceKeyId']) : KPI_MARKETING_EVIDENCE_KEY_ID;
+    if (!preg_match('/^[A-Za-z0-9_-]{1,16}$/', $id)) {
+        return null;
+    }
+    return $id;
+}
+
+/** @return array<string,string> keyId => secret, active first; previous ids kept for the 3-year evidence window */
+function kpi_v1_marketing_evidence_secrets($cfg)
+{
+    $out = [];
+    $id = kpi_v1_marketing_evidence_key_id($cfg);
+    $secret = kpi_v1_marketing_evidence_secret($cfg);
+    if ($id !== null && $secret !== null) {
+        $out[$id] = $secret;
+    }
+    if (isset($cfg['marketingEvidencePreviousSecrets']) && is_array($cfg['marketingEvidencePreviousSecrets'])) {
+        foreach ($cfg['marketingEvidencePreviousSecrets'] as $kid => $key) {
+            if (is_string($key) && strlen($key) >= KPI_MARKETING_MIN_SECRET_LENGTH
+                && preg_match('/^[A-Za-z0-9_-]{1,16}$/', (string) $kid) && !isset($out[(string) $kid])) {
+                $out[(string) $kid] = $key;
+            }
+        }
+    }
+    return $out;
+}
+
+function kpi_v1_marketing_match_key_with_secret($secret, $email)
+{
+    $norm = kpi_v1_marketing_normalize_email($email);
+    if ($secret === null || $secret === '' || $norm === '' || strpos($norm, '@') === false) {
+        return null;
+    }
+    return hash_hmac('sha256', 'kpn-marketing-evidence|' . $norm, (string) $secret);
+}
+
+/** Current-secret match_key (new writes). Token / lifecycle secrets are never used. */
+function kpi_v1_marketing_match_key($cfg, $email)
+{
+    return kpi_v1_marketing_match_key_with_secret(kpi_v1_marketing_evidence_secret($cfg), $email);
+}
+
+/** @return array{0:string,1:string}|null [matchKey, matchKeyId] */
+function kpi_v1_marketing_match_key_current($cfg, $email)
+{
+    $id = kpi_v1_marketing_evidence_key_id($cfg);
+    $key = kpi_v1_marketing_match_key($cfg, $email);
+    if ($id === null || $key === null) {
+        return null;
+    }
+    return [$key, $id];
+}
+
+/** All match_key candidates for lookup after rotation (current + previous evidence secrets). */
+function kpi_v1_marketing_match_keys_for_lookup($cfg, $email)
+{
+    $out = [];
+    foreach (kpi_v1_marketing_evidence_secrets($cfg) as $secret) {
+        $k = kpi_v1_marketing_match_key_with_secret($secret, $email);
+        if ($k !== null) {
+            $out[] = $k;
+        }
+    }
+    return array_values(array_unique($out));
 }
 
 function kpi_v1_marketing_token_hash($token)
@@ -155,16 +243,18 @@ function kpi_v1_marketing_event($event, $source, $meta = [])
  * Opt-in (new row or re-subscribe). $consent: source, consentTextVersion, privacyVersion, locale, consentAt?, accountUserId?
  * @return array{0:array,1:array[]} [row, events]
  */
-function kpi_v1_marketing_plan_subscribe($old, $email, $consent, $token)
+function kpi_v1_marketing_plan_subscribe($old, $email, $consent, $token, $matchKey, $matchKeyId)
 {
     $now = kpi_v1_marketing_now();
     $row = is_array($old) ? $old : [
         'id' => null,
-        'email' => (string) $email,
         'lastMarketingSentAt' => null,
         'createdAt' => $now,
         'accountUserId' => null,
     ];
+    $row['email'] = (string) $email;
+    $row['matchKey'] = $matchKey;
+    $row['matchKeyId'] = $matchKeyId;
     $row['status'] = 'subscribed';
     $row['locale'] = kpi_v1_marketing_locale($consent['locale'] ?? 'en');
     $row['consentAt'] = isset($consent['consentAt']) && $consent['consentAt'] ? (string) $consent['consentAt'] : $now;
@@ -206,6 +296,7 @@ function kpi_v1_marketing_plan_stop($old, $source, $keepAccountLink)
         $row['unsubscribeSource'] = (string) $source;
     }
     $row['status'] = 'unsubscribed';
+    $row['email'] = null;
     $row['tokenNonce'] = null;
     $row['tokenHash'] = null;
     $row['retainUntil'] = gmdate('Y-m-d H:i:s', strtotime((string) $old['lastMarketingSentAt'] . ' UTC ' . KPI_MARKETING_EVIDENCE_RETENTION));
@@ -227,7 +318,9 @@ function kpi_v1_marketing_row_from_db($r)
 {
     return [
         'id' => (int) $r['id'],
-        'email' => (string) $r['normalized_email'],
+        'email' => ($r['normalized_email'] !== null && $r['normalized_email'] !== '') ? (string) $r['normalized_email'] : null,
+        'matchKey' => (!empty($r['match_key'])) ? (string) $r['match_key'] : null,
+        'matchKeyId' => (!empty($r['match_key_id'])) ? (string) $r['match_key_id'] : null,
         'status' => (string) $r['status'],
         'locale' => (string) $r['locale'],
         'accountUserId' => $r['account_user_id'] !== null ? (string) $r['account_user_id'] : null,
@@ -266,7 +359,7 @@ function kpi_v1_marketing_db_present(PDO $pdo)
     }
 }
 
-function kpi_v1_marketing_db_ctx(PDO $pdo)
+function kpi_v1_marketing_db_ctx($cfg, PDO $pdo)
 {
     $one = function ($where, $arg) use ($pdo) {
         $st = $pdo->prepare('SELECT * FROM kpi_marketing_subscribers WHERE ' . $where . ' LIMIT 1 FOR UPDATE');
@@ -275,8 +368,19 @@ function kpi_v1_marketing_db_ctx(PDO $pdo)
         return $r ? kpi_v1_marketing_row_from_db($r) : null;
     };
     return [
-        'find' => function ($email) use ($one) {
-            return $one('normalized_email = ?', (string) $email);
+        'find' => function ($email) use ($one, $cfg) {
+            $norm = kpi_v1_marketing_normalize_email($email);
+            $hit = $one('normalized_email = ?', $norm);
+            if ($hit) {
+                return $hit;
+            }
+            foreach (kpi_v1_marketing_match_keys_for_lookup($cfg, $norm) as $key) {
+                $hit = $one('match_key = ?', $key);
+                if ($hit) {
+                    return $hit;
+                }
+            }
+            return null;
         },
         'findByToken' => function ($hash) use ($one) {
             return $one('unsub_token_hash = ?', (string) $hash);
@@ -297,21 +401,23 @@ function kpi_v1_marketing_db_ctx(PDO $pdo)
                 return null;
             }
             $vals = [
-                $new['email'], $new['status'], $new['locale'], $new['accountUserId'], $new['consentAt'], $new['consentSource'],
-                $new['consentTextVersion'], $new['privacyVersionAtConsent'], $new['unsubscribedAt'], $new['unsubscribeSource'],
-                $new['lastMarketingSentAt'], $new['tokenNonce'], $new['tokenHash'], $new['retainUntil'], $new['updatedAt'],
+                $new['email'], $new['matchKey'] ?? null, $new['matchKeyId'] ?? KPI_MARKETING_EVIDENCE_KEY_ID,
+                $new['status'], $new['locale'], $new['accountUserId'], $new['consentAt'],
+                $new['consentSource'], $new['consentTextVersion'], $new['privacyVersionAtConsent'], $new['unsubscribedAt'],
+                $new['unsubscribeSource'], $new['lastMarketingSentAt'], $new['tokenNonce'], $new['tokenHash'], $new['retainUntil'],
+                $new['updatedAt'],
             ];
             if ($new['id'] === null) {
                 $pdo->prepare(
-                    'INSERT INTO kpi_marketing_subscribers (normalized_email, status, locale, account_user_id, consent_at, consent_source,
+                    'INSERT INTO kpi_marketing_subscribers (normalized_email, match_key, match_key_id, status, locale, account_user_id, consent_at, consent_source,
                        consent_text_version, privacy_version_at_consent, unsubscribed_at, unsubscribe_source, last_marketing_sent_at,
                        unsub_token_nonce, unsub_token_hash, retain_until, updated_at, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 )->execute(array_merge($vals, [$new['createdAt']]));
                 $new['id'] = (int) $pdo->lastInsertId();
             } else {
                 $pdo->prepare(
-                    'UPDATE kpi_marketing_subscribers SET normalized_email = ?, status = ?, locale = ?, account_user_id = ?, consent_at = ?,
+                    'UPDATE kpi_marketing_subscribers SET normalized_email = ?, match_key = ?, match_key_id = ?, status = ?, locale = ?, account_user_id = ?, consent_at = ?,
                        consent_source = ?, consent_text_version = ?, privacy_version_at_consent = ?, unsubscribed_at = ?,
                        unsubscribe_source = ?, last_marketing_sent_at = ?, unsub_token_nonce = ?, unsub_token_hash = ?,
                        retain_until = ?, updated_at = ? WHERE id = ?'
@@ -346,7 +452,7 @@ function kpi_v1_marketing_file_read($name)
 }
 
 /** File-mode context over in-memory arrays (the caller persists them). */
-function kpi_v1_marketing_file_ctx(&$subs, &$events)
+function kpi_v1_marketing_file_ctx($cfg, &$subs, &$events)
 {
     $find = function ($key, $val) use (&$subs) {
         foreach ($subs as $r) {
@@ -357,8 +463,19 @@ function kpi_v1_marketing_file_ctx(&$subs, &$events)
         return null;
     };
     return [
-        'find' => function ($email) use ($find) {
-            return $find('email', $email);
+        'find' => function ($email) use ($find, $cfg) {
+            $norm = kpi_v1_marketing_normalize_email($email);
+            $hit = $find('email', $norm);
+            if ($hit) {
+                return $hit;
+            }
+            foreach (kpi_v1_marketing_match_keys_for_lookup($cfg, $norm) as $key) {
+                $hit = $find('matchKey', $key);
+                if ($hit) {
+                    return $hit;
+                }
+            }
+            return null;
         },
         'findByToken' => function ($hash) use ($find) {
             return $find('tokenHash', $hash);
@@ -417,7 +534,7 @@ function kpi_v1_marketing_run($cfg, callable $fn, $pdo = null)
             if (!kpi_v1_marketing_db_present($pdo)) {
                 return ['absent'];
             }
-            return ['ok', $fn(kpi_v1_marketing_db_ctx($pdo))];
+            return ['ok', $fn(kpi_v1_marketing_db_ctx($cfg, $pdo))];
         }
         try {
             $pdo = kpi_v1_db($cfg);
@@ -425,7 +542,7 @@ function kpi_v1_marketing_run($cfg, callable $fn, $pdo = null)
                 return ['absent'];
             }
             $pdo->beginTransaction();
-            $out = $fn(kpi_v1_marketing_db_ctx($pdo));
+            $out = $fn(kpi_v1_marketing_db_ctx($cfg, $pdo));
             $pdo->commit();
             return ['ok', $out];
         } catch (Throwable $e) {
@@ -455,7 +572,7 @@ function kpi_v1_marketing_run($cfg, callable $fn, $pdo = null)
         }
         $subs0 = $subs;
         $events0 = $events;
-        $out = $fn(kpi_v1_marketing_file_ctx($subs, $events));
+        $out = $fn(kpi_v1_marketing_file_ctx($cfg, $subs, $events));
         if ($subs !== $subs0 && !kpi_v1_registration_write_json_atomic(kpi_v1_marketing_file_path('subscribers'), array_values($subs))) {
             return ['failed'];
         }
@@ -502,11 +619,15 @@ function kpi_v1_marketing_file_restore($snap)
 function kpi_v1_marketing_op_subscribe($cfg, $ctx, $email, $consent)
 {
     $token = kpi_v1_marketing_new_token(kpi_v1_marketing_token_secret($cfg));
+    $mk = kpi_v1_marketing_match_key_current($cfg, $email);
     if ($token === null) {
         throw new RuntimeException('marketing token secret unavailable');
     }
+    if ($mk === null) {
+        throw new RuntimeException('marketing evidence secret unavailable');
+    }
     $old = $ctx['find']($email);
-    list($new, $events) = kpi_v1_marketing_plan_subscribe($old, $email, $consent, $token);
+    list($new, $events) = kpi_v1_marketing_plan_subscribe($old, $email, $consent, $token, $mk[0], $mk[1]);
     return $ctx['apply']($old, $new, $events);
 }
 
@@ -571,6 +692,12 @@ function kpi_v1_marketing_op_email_changed($cfg, $ctx, $userId, $oldEmail, $newE
         }
         $new = $a;
         $new['email'] = (string) $newEmail;
+        $mk = kpi_v1_marketing_match_key_current($cfg, $newEmail);
+        if ($mk === null) {
+            throw new RuntimeException('marketing evidence secret unavailable');
+        }
+        $new['matchKey'] = $mk[0];
+        $new['matchKeyId'] = $mk[1];
         $new['accountUserId'] = (string) $userId;
         $new['tokenNonce'] = $token[0];
         $new['tokenHash'] = $token[1];
@@ -730,15 +857,16 @@ function kpi_v1_marketing_purge_in($cfg, $ctx, $now)
 
 /* ---------- Founder ---------- */
 
-/** Founder view of a row: email yes (Founder only), token material never. */
+/** Founder view of a row: raw email only while subscribed (incl. keep-after-delete). Token / match key never. */
 function kpi_v1_marketing_public_row($r)
 {
     $iso = function ($v) {
         return $v ? gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $v . ' UTC')) : null;
     };
+    $raw = (!empty($r['email']) && ($r['status'] ?? '') === 'subscribed') ? (string) $r['email'] : null;
     return [
         'id' => (int) $r['id'],
-        'email' => (string) $r['email'],
+        'email' => $raw,
         'status' => (string) $r['status'],
         'evidenceOnly' => $r['status'] === 'unsubscribed',
         'locale' => (string) $r['locale'],
