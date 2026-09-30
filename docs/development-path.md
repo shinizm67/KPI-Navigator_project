@@ -1676,6 +1676,24 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | REGISTER ONLY. Do not implement in Launch. Do not expand `BR-LAUNCH-06`. |
 | constraint | excel/ untouched; not CSV download repair |
 
+### BR-POST-HOME-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-HOME-01` |
+| name | KPN Home / Simple Mode |
+| parent | post-launch (do not reopen `TRUNK-06`) |
+| status | DEFERRED / POST-LAUNCH |
+| priority | P1 |
+| started_at | not started (registered 2026-09-30, Shin) |
+| return_to | none |
+| purpose | Daily-use entry page so Daily / Monthly / Annual current state can be read on one screen. Initial Setup = do not get lost the first time; Home = do not get lost in daily operation; Full KPN = detail analysis. |
+| concept | Three windows (Daily / Monthly / Annual) on the same reference date. Collapsed = main KPIs only. Expanded = supporting figures. Home is not an editor or analysis page; detail goes to existing Annual / Monthly. Global Menu: add Home to the left of Annual. Before any implementation: menu / chrome audit. Prefer shifting the Forge Laboratory logo left by tightening left margin over shrinking the logo. |
+| collapsed_kpi_candidates | Actual; Cumulative Target / Target; Difference; Achievement % |
+| expanded_candidates | Final Target; Remaining Amount; Business Days Left; Required Sales / Remaining Business Day; Business-day progress; Sales progress; horizontal progress bar; warning / tooltip |
+| next_action | **H1 — Global Menu / Home Entry Pre-Implementation Audit.** Required before implementation: 1200px viewport; Forge Laboratory logo position; left padding / margin; menu gap; JP / EN / ZH-TW; Sci-Fi / Office; right-side controls; overflow / overlap after adding Home. **Do not implement now.** |
+| constraint | REGISTER ONLY. No Home page, no menu item, no KPI window, no chrome change until H1 + Shin GO. |
+
 ---
 
 ## 8. DEFERRED BRANCHES????
@@ -1756,6 +1774,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-BOOKING-ICON-COLOR` | Booking Icon Office Mode Color | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-COCKPIT-GAP` | Cockpit Annual Target / Business Day gap | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-HOME-01` | KPN Home / Simple Mode | DEFERRED / POST-LAUNCH | P1 | post-launch (do not reopen `TRUNK-06`) |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1777,6 +1796,7 @@ ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 AC
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
+DEFERRED post-launch (do not start): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1; first action H1 menu/chrome audit)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
 ---
@@ -1933,3 +1953,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-29 | **BR-LAUNCH-05 redesign deployed** `09f4711` (2 api files). Production verify 16/16; emergency gate 403 kept; `registrationEnabled` false. |
 | 2026-09-29 | **BR-LAUNCH-05 Controlled Registration Smoke PASS** Registration open ~18 s, one test account (basic / user, 1 consent), header rejects + duplicate 409 on production, Login → Annual → Setup STEP 01. Back to false. READY TO ENABLE PUBLIC REGISTRATION (permanent enable waits for Shin GO). |
 | 2026-09-29 | **BR-LAUNCH-05 PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED** Test account excluded from metrics; `registrationEnabled` true (status true after 3 s); verify 19/19, no account created. `BR-LAUNCH-05-EMAIL-VERIFY` stays post-launch. |
+| 2026-09-30 | **BR-POST-HOME-01 registered** KPN Home / Simple Mode. DEFERRED / POST-LAUNCH P1. First Action H1 Global Menu / Home Entry Pre-Implementation Audit. No implementation. |
