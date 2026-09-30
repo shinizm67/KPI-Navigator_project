@@ -1688,11 +1688,14 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | started_at | not started (registered 2026-09-30, Shin) |
 | return_to | none |
 | purpose | Daily-use entry page so Daily / Monthly / Annual current state can be read on one screen. Initial Setup = do not get lost the first time; Home = do not get lost in daily operation; Full KPN = detail analysis. |
-| concept | Three windows (Daily / Monthly / Annual) on the same reference date. Collapsed = main KPIs only. Expanded = supporting figures. Home is not an editor or analysis page; detail goes to existing Annual / Monthly. Global Menu: add Home to the left of Annual. Before any implementation: menu / chrome audit. Prefer shifting the Forge Laboratory logo left by tightening left margin over shrinking the logo. |
-| collapsed_kpi_candidates | Actual; Cumulative Target / Target; Difference; Achievement % |
-| expanded_candidates | Final Target; Remaining Amount; Business Days Left; Required Sales / Remaining Business Day; Business-day progress; Sales progress; horizontal progress bar; warning / tooltip |
-| next_action | **H1 — Global Menu / Home Entry Pre-Implementation Audit.** Required before implementation: 1200px viewport; Forge Laboratory logo position; left padding / margin; menu gap; JP / EN / ZH-TW; Sci-Fi / Office; right-side controls; overflow / overlap after adding Home. **Do not implement now.** |
-| constraint | REGISTER ONLY. No Home page, no menu item, no KPI window, no chrome change until H1 + Shin GO. |
+| concept | Do not redesign. Recompose. Three independent Window Boxes (Daily, Monthly, Annual), one Shared Reference Date. Upper half = Current Position. Lower half = what is required to reach the goal. Detail goes to existing Annual / Monthly / Daily. Global Menu: Home to the left of Annual (H1 candidate; not applied). |
+| design_note | [`docs/br-post-home-01.md`](./br-post-home-01.md) |
+| h1 | **DONE / REVIEWED** (2026-09-30). Global Menu / Home Entry audit at 1200px, JP / EN / ZH-TW, Sci-Fi / Office. A fifth 120px slot overlaps in Office (logo 24.5px, booking 57.5px). Reviewed candidate, not applied: left padding 24→12, header gap 40→24, menu gap 12, slot 104; logo stays 217×32; Office booking gap stays 12.1–12.5px. |
+| h2 | **DESIGN APPROVED / NOT IMPLEMENTED** (2026-09-30). Home Information Architecture / Window Contract. See design note. Window gap final value (start ~32px; compare 24 / 32 / 40) waits for a later 1200px visual smoke. Opening-date default Today / Yesterday is not finalized. Recent / Pinned / Planning Bookmark stay out of v1. |
+| h3 | **NEXT / NOT STARTED.** Shared Reference Date Architecture Audit. Audit only when started. Do not implement. |
+| h4 | **NOT STARTED.** Home Implementation. Blocked on H3 and Shin GO. |
+| next_action | **H3 — Shared Reference Date Architecture Audit.** Do not implement Home, the Global Menu item, or Shared Reference Date. |
+| constraint | REGISTER ONLY. No Home page, no menu item, no Shared Reference Date implementation, no CSS / HTML / JS / PHP until H4 + Shin GO. CURRENT PATH unchanged. |
 
 ---
 
@@ -1796,7 +1799,7 @@ ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 AC
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
-DEFERRED post-launch (do not start): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1; first action H1 menu/chrome audit)  
+DEFERRED post-launch (do not start implementation): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1; REGISTER ONLY. H1 DONE / REVIEWED. H2 DESIGN APPROVED / NOT IMPLEMENTED. Next: H3 Shared Reference Date Architecture Audit, NOT STARTED. H4 NOT STARTED.)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
 ---
@@ -1954,3 +1957,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-29 | **BR-LAUNCH-05 Controlled Registration Smoke PASS** Registration open ~18 s, one test account (basic / user, 1 consent), header rejects + duplicate 409 on production, Login → Annual → Setup STEP 01. Back to false. READY TO ENABLE PUBLIC REGISTRATION (permanent enable waits for Shin GO). |
 | 2026-09-29 | **BR-LAUNCH-05 PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED** Test account excluded from metrics; `registrationEnabled` true (status true after 3 s); verify 19/19, no account created. `BR-LAUNCH-05-EMAIL-VERIFY` stays post-launch. |
 | 2026-09-30 | **BR-POST-HOME-01 registered** KPN Home / Simple Mode. DEFERRED / POST-LAUNCH P1. First Action H1 Global Menu / Home Entry Pre-Implementation Audit. No implementation. |
+| 2026-09-30 | **BR-POST-HOME-01 H1 DONE / REVIEWED; H2 DESIGN APPROVED / NOT IMPLEMENTED.** Design note [`docs/br-post-home-01.md`](./br-post-home-01.md). Next: H3 Shared Reference Date Architecture Audit (NOT STARTED). H4 NOT STARTED. REGISTER ONLY. CURRENT PATH unchanged. No implementation. |
