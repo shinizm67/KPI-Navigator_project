@@ -21,10 +21,10 @@ Progress comparison = Is sales keeping pace with operating time?
 |----|------|--------|
 | H1 | Global Menu / Home Entry Pre-Implementation Audit | **DONE / REVIEWED** |
 | H2 | Home Information Architecture / Window Contract | **DESIGN APPROVED / NOT IMPLEMENTED** |
-| H3 | Shared Reference Date Architecture Audit | **NEXT / NOT STARTED** |
-| H4 | Home Implementation | **NOT STARTED** |
+| H3 | Shared Reference Date Architecture Audit | **DONE / REVIEWED** |
+| H4 | Home Implementation | **NEXT / NOT STARTED** |
 
-Next action is H3 only. Do not start H4 until H3 is done and Shin gives GO.
+Next action is H4 only, and only after Shin GO. Do not start Home or Shared Reference Date implementation in this docs update.
 
 ---
 
@@ -124,13 +124,13 @@ Home does not introduce a new visual language. Reuse existing KPN / Daily FW typ
 - Daily / Monthly / Annual visually have their own date controls, but they operate on one KPN Shared Reference Date.
 - Existing previous / next controls and long-press continuous navigation are reused.
 - A reference-date change updates KPI values, progress bars, warnings and graphs together.
-- The same reference date must ultimately synchronize with date-aware KPN areas including Annual / Monthly / Daily / MEP / Insight and related views.
+- The same reference date must ultimately synchronize with Home v1 date-aware areas: Home, Annual, Monthly, Daily / Daily FW, MEP, and Insight.
 - During an active session, the selected reference date remains shared across KPN.
-- New-session opening date preference: Today / Yesterday.
-- Default option is not yet finalized.
-- Do not automatically restore a distant previously viewed planning date on new login.
+- New-session opening date preference: Today / Yesterday. v1 default is **Yesterday**. The user can switch to Today. Decided in H3.
+- Explicit URL `?iso=` is an intentional cross-screen handoff and wins over the opening preference.
+- Do not automatically restore a distant previously viewed `annualNav.selectedIso` as the initial date of a new login.
 
-Architecture of that shared date is **H3**. Do not implement it in H2.
+Architecture of that shared date is recorded in **H3**. Do not implement it until H4 + Shin GO.
 
 ### Collapsed contract — common
 
@@ -239,23 +239,63 @@ Global Menu geometry (Home to the left of Annual) stays the H1 candidate. Do not
 
 ## H3 — Shared Reference Date Architecture Audit
 
-Status: **NEXT / NOT STARTED**.
+Status: **DONE / REVIEWED** (2026-09-30). Audit only. No implementation.
 
-Audit only when started. Do not implement the shared date, session opening preference, or cross-page sync in this step.
+Screens are not fully independent. A shared cursor already exists. Daily FW, Insight, and PL comparison keep a local date that does not write that cursor back.
 
-Scope when started:
+### Canonical date
 
-- Where Annual / Monthly / Daily / MEP / Insight and related views read and write the current date today.
-- How previous / next and long-press continuous navigation work, and what can be reused.
-- What “one Shared Reference Date” must update together (KPI values, progress bars, warnings, graphs).
-- New-session opening preference Today / Yesterday. Default is not finalized. Do not pick it during the audit unless Shin decides.
-- Do not restore a distant previously viewed planning date on a new login.
-- displayYear vs operatingYear stay separate (`docs/display-vs-operating-year.md`). The audit must not collapse them.
+- Keep `kpiNavigator.annualNav.selectedIso` as the Shared Reference Date.
+- Do not create a new date store.
+- `operatingYear` stays a separate concept. Do not change it. displayYear / `calendarYear` stay separate from operatingYear (`docs/display-vs-operating-year.md`).
+- In-session writers that already use this cursor: Annual cockpit, Monthly cockpit, MEP open/push, graph date step, and Monthly vertical focus, via `KpiYearStore.setSelectedDate` / `window.__ANNUAL_UI.setDailyDateByISO`.
+- `KpiYearStore` is copied inside Annual, Monthly, and MEP HTML (JA / EN / ZH-TW). The shared axis is the storage key and the server `annualNav` field, not one JS module.
+- The server stores client `annualNav` JSON on the user blob (`api/v1/store.php`). A date move uses a nav-only PUT. PHP does not compute the reference date.
+
+### Opening Date Preference
+
+- Two choices: Today / Yesterday.
+- v1 default is **Yesterday**.
+- The user can change it to Today.
+
+### Date precedence
+
+1. Explicit URL `?iso=` is an intentional cross-screen date handoff and has highest priority.
+2. During the same session, keep the Shared Reference Date.
+3. On a new session with no explicit `iso`, apply the Opening Date Preference.
+4. Do not automatically restore a distant `annualNav.selectedIso` from the previous session as the initial date of a new login.
+
+### Home v1 integration targets
+
+- Home
+- Annual
+- Monthly
+- Daily / Daily FW
+- MEP
+- Insight
+
+### Daily FW / Insight
+
+Today they read the shared date only as the opening value. Previous / next, Today, the date picker, and long-press update a local `selectedIso` and do not write the canonical date. Closing the overlay drops that local date.
+
+At implementation time, wire previous / next, Today, picker, and long-press onto the Shared Reference Date write path (`setDailyDateByISO` / `setSelectedDate`).
+
+### PL comparison
+
+PL comparison keeps its own date context (`selectedIso`, hash `#insight=areaN&date=`, `localStorage` `kpiNavigator.plInsightLast`). It does not read `annualNav`.
+
+Out of Home v1 Shared Reference Date integration. **Deferred.**
+
+### Long-press timing
+
+Graph long-press starts at 350ms. Cockpit long-press starts at 400ms, then repeats every 75ms. Do not fix that difference in this task.
+
+Home v1 reuses the existing Cockpit date controls. Do not add a new date engine.
 
 ---
 
 ## H4 — Home Implementation
 
-Status: **NOT STARTED**.
+Status: **NEXT / NOT STARTED**.
 
-Blocked on H3 and Shin GO. Includes the Home page, Global Menu item, window UI, and Shared Reference Date wiring. None of that is in progress.
+Blocked on Shin GO. H3 is done. Includes the Home page, Global Menu item, window UI, and Shared Reference Date wiring. None of that is in progress. Do not start it from this docs update.
