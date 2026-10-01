@@ -264,6 +264,200 @@
     return [money(actual), money(target), diff(actual, target), ach(actual, target)];
   }
 
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  /* Same rule as KpiYearStore.isPlanningBusinessDay: saved plan, and explicit false is closed. */
+  function planningDay(store, iso) {
+    return hasSavedPlan(store, yearOf(iso)) && isUiBusinessDay(store, iso);
+  }
+
+  function storedFact(store, iso) {
+    return remoteFacts[iso] || factsFor(store, iso);
+  }
+
+  function yearHasFacts(store, year) {
+    if (yearHasRemote(year)) return true;
+    var rec = yearRec(store, year);
+    return !!(rec && rec.dailyFacts && Object.keys(rec.dailyFacts).length);
+  }
+
+  /* Home remaining days start the day after the reference date (dayIso > iso).
+     Elapsed business days include the reference date when it is open (dayIso <= iso).
+     monthlyFullTarget is the sum of stored dailyTarget. This does not allocate HL / seasonality. */
+  function goalFor(iso) {
+    var store = readStore();
+    var base = metricsFor(iso);
+    var out = {
+      hasPlan: false,
+      facts: false,
+      isBusinessToday: false,
+      dailySales: null,
+      dailyTarget: null,
+      finalMonthly: null,
+      remainingMonthly: null,
+      monthDays: null,
+      monthPerDay: null,
+      monthElapsed: null,
+      monthTotal: null,
+      finalAnnual: null,
+      remainingAnnual: null,
+      yearDays: null,
+      yearPerDay: null,
+      yearElapsed: null,
+      yearTotal: null,
+      mtdA: null,
+      ytdA: null
+    };
+    if (!store || !base || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return out;
+    out.isBusinessToday = !!base.isBusinessToday;
+    out.dailySales = base.isBusinessToday ? base.dailySales : null;
+    out.dailyTarget = base.isBusinessToday ? base.dailyTarget : null;
+    out.mtdA = base.mtdA;
+    out.ytdA = base.ytdA;
+    if (!base.hasPlan) return out;
+    out.hasPlan = true;
+    var y = yearOf(iso);
+    var annualTarget = Number(yearRec(store, y).plan.targetSales);
+    out.finalAnnual = Number.isFinite(annualTarget) ? annualTarget : null;
+    out.remainingAnnual =
+      out.finalAnnual != null && Number.isFinite(base.ytdA) ? out.finalAnnual - base.ytdA : null;
+    if (!yearHasFacts(store, y)) return out;
+    out.facts = true;
+    var m0 = Number(String(iso).slice(5, 7)) - 1;
+    var monthFull = 0;
+    var monthRem = 0;
+    var yearRem = 0;
+    var monthElapsed = 0;
+    var yearElapsed = 0;
+    for (var m = 0; m < 12; m++) {
+      var dc = new Date(y, m + 1, 0).getDate();
+      for (var day = 1; day <= dc; day++) {
+        var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
+        if (!planningDay(store, dayIso)) continue;
+        var fact = storedFact(store, dayIso);
+        var tgt = fact ? numOrNull(fact.dailyTarget) : null;
+        if (m === m0 && tgt != null) monthFull += tgt;
+        if (dayIso > iso) {
+          yearRem += 1;
+          if (m === m0) monthRem += 1;
+        } else {
+          yearElapsed += 1;
+          if (m === m0) monthElapsed += 1;
+        }
+      }
+    }
+    var monthNeed = Number.isFinite(monthFull) && Number.isFinite(base.mtdA) ? monthFull - base.mtdA : null;
+    out.finalMonthly = monthFull;
+    out.remainingMonthly = monthNeed;
+    out.monthDays = monthRem;
+    out.monthPerDay =
+      monthRem > 0 && monthNeed != null && Number.isFinite(monthNeed) ? monthNeed / monthRem : null;
+    out.monthElapsed = monthElapsed;
+    out.monthTotal = monthElapsed + monthRem;
+    out.yearDays = yearRem;
+    out.yearPerDay =
+      yearRem > 0 && out.remainingAnnual != null && Number.isFinite(out.remainingAnnual)
+        ? out.remainingAnnual / yearRem
+        : null;
+    out.yearElapsed = yearElapsed;
+    out.yearTotal = yearElapsed + yearRem;
+    return out;
+  }
+
+  function countText(n) {
+    if (!Number.isFinite(n)) return DASH;
+    return String(Math.round(n));
+  }
+
+  function ratioPct(part, whole) {
+    if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return null;
+    var pct = (part / whole) * 100;
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  function pctText(pct) {
+    if (pct == null || !Number.isFinite(pct)) return DASH;
+    return Math.round(pct) + '%';
+  }
+
+  /* Daily FW graph marker. Not a Home warning threshold. */
+  function markerColor(percent) {
+    var p = Number(percent);
+    if (!Number.isFinite(p)) return '#E6FF00';
+    if (p >= 100) return '#E6FF00';
+    if (p >= 90) return '#F9A825';
+    if (p >= 80) return '#EF6C00';
+    if (p >= 70) return '#E65100';
+    if (p >= 60) return '#E53935';
+    if (p >= 50) return '#C62828';
+    return '#B71C1C';
+  }
+
+  function paintBar(track, rateEl, pct) {
+    if (!track || !rateEl) return;
+    if (pct == null || !Number.isFinite(pct)) {
+      rateEl.textContent = DASH;
+      track.style.setProperty('--kpi-x', '66.666%');
+      track.style.setProperty('--kgi-x', '0%');
+      track.style.setProperty('--fill-w', '0%');
+      track.style.setProperty('--marker-color', '#E6FF00');
+      return;
+    }
+    var kpi = 66.666;
+    var maxKgi = 90;
+    var kgi = Math.max(0, Math.min(maxKgi, kpi * (Math.max(0, pct) / 100)));
+    rateEl.textContent = pctText(pct);
+    track.style.setProperty('--kpi-x', kpi + '%');
+    track.style.setProperty('--kgi-x', kgi + '%');
+    track.style.setProperty('--fill-w', kgi + '%');
+    track.style.setProperty('--marker-color', markerColor(pct));
+  }
+
+  function paintExpanded(win, kind, goal) {
+    var expanded = win.querySelector('[data-home-expanded]');
+    if (!expanded) return;
+    if (kind === 'monthly' || kind === 'annual') {
+      var finalN = kind === 'monthly' ? goal.finalMonthly : goal.finalAnnual;
+      var remainN = kind === 'monthly' ? goal.remainingMonthly : goal.remainingAnnual;
+      var daysN = kind === 'monthly' ? goal.monthDays : goal.yearDays;
+      var perN = kind === 'monthly' ? goal.monthPerDay : goal.yearPerDay;
+      var elapsed = kind === 'monthly' ? goal.monthElapsed : goal.yearElapsed;
+      var total = kind === 'monthly' ? goal.monthTotal : goal.yearTotal;
+      var actual = kind === 'monthly' ? goal.mtdA : goal.ytdA;
+      var setGoal = function (key, text) {
+        var el = expanded.querySelector('[data-home-goal="' + key + '"]');
+        if (el) el.textContent = text;
+      };
+      var showMoney = goal.hasPlan && (kind === 'annual' || goal.facts);
+      setGoal('final', showMoney && finalN != null ? money(finalN) : DASH);
+      setGoal('remaining', showMoney && remainN != null ? money(remainN) : DASH);
+      setGoal('days', goal.facts && daysN != null ? countText(daysN) : DASH);
+      setGoal('perDay', goal.facts && perN != null ? money(perN) : DASH);
+      var biz = expanded.querySelector('[data-home-progress="business"]');
+      var sales = expanded.querySelector('[data-home-progress="sales"]');
+      paintBar(
+        biz && biz.querySelector('[data-home-track]'),
+        biz && biz.querySelector('[data-home-rate]'),
+        goal.facts ? ratioPct(elapsed, total) : null
+      );
+      paintBar(
+        sales && sales.querySelector('[data-home-track]'),
+        sales && sales.querySelector('[data-home-rate]'),
+        showMoney ? ratioPct(actual, finalN) : null
+      );
+    }
+    if (kind === 'daily') {
+      var daily = expanded.querySelector('[data-home-progress="daily"]');
+      paintBar(
+        daily && daily.querySelector('[data-home-track]'),
+        daily && daily.querySelector('[data-home-rate]'),
+        goal.isBusinessToday ? ratioPct(goal.dailySales, goal.dailyTarget) : null
+      );
+    }
+  }
+
   function paint(iso) {
     lastIso = iso;
     var localFact = factsFor(readStore(), iso);
@@ -279,18 +473,21 @@
       });
     }
     var m = metricsFor(iso);
+    var goal = goalFor(iso);
     document.querySelectorAll('[data-home-window]').forEach(function (win) {
       var kind = win.getAttribute('data-home-window');
       var texts = cellsFor(kind, m);
-      var nodes = win.querySelectorAll('.home-window__kpi-value');
+      var nodes = win.querySelectorAll('.home-window__kpi:not(.home-window__goal) .home-window__kpi-value');
       for (var i = 0; i < nodes.length; i++) {
         nodes[i].textContent = texts[i] != null ? texts[i] : DASH;
       }
+      paintExpanded(win, kind, goal);
     });
   }
 
   window.__KPI_HOME_KPI = {
     paint: paint,
-    metrics: metricsFor
+    metrics: metricsFor,
+    goal: goalFor
   };
 })();

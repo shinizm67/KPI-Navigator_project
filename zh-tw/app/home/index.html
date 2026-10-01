@@ -266,7 +266,18 @@
             <p class="home-window__kpi-value">—</p>
           </div>
         </div>
-        <div class="home-window__expanded" data-home-expanded hidden>這是展開後的下段。指標與警示將於下一階段連接。</div>
+        <div class="home-window__expanded" data-home-expanded hidden>
+          <div class="home-progress" data-home-progress="daily">
+            <p class="home-progress__label">每日營業額 / 每日目標</p>
+            <div class="home-progress__track" data-home-track>
+              <span class="home-progress__tri" aria-hidden="true"></span>
+              <span class="home-progress__fill" aria-hidden="true"></span>
+              <span class="home-progress__line" aria-hidden="true"></span>
+            </div>
+            <p class="home-progress__rate" data-home-rate>—</p>
+          </div>
+          <div class="home-warning" data-home-warning data-home-warning-state="unset"></div>
+        </div>
         <div class="home-window__controls">
           <button type="button" class="home-window__expand" data-home-expand data-label-expand="展開" data-label-collapse="收合" aria-expanded="false">展開</button>
           <a class="home-window__detail" data-home-detail data-home-detail-status="provisional" href="#">查看每日詳情</a>
@@ -301,7 +312,45 @@
             <p class="home-window__kpi-value">—</p>
           </div>
         </div>
-        <div class="home-window__expanded" data-home-expanded hidden>這是展開後的下段。指標與警示將於下一階段連接。</div>
+        <div class="home-window__expanded" data-home-expanded hidden>
+          <div class="home-window__kpi home-window__goal">
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">每月最終目標</p>
+              <p class="home-window__kpi-value" data-home-goal="final">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">所需營收</p>
+              <p class="home-window__kpi-value" data-home-goal="remaining">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">剩餘營業日</p>
+              <p class="home-window__kpi-value" data-home-goal="days">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">每日所需營業額</p>
+              <p class="home-window__kpi-value" data-home-goal="perDay">—</p>
+            </div>
+          </div>
+          <div class="home-progress" data-home-progress="business">
+            <p class="home-progress__label">營業日進度</p>
+            <div class="home-progress__track" data-home-track>
+              <span class="home-progress__tri" aria-hidden="true"></span>
+              <span class="home-progress__fill" aria-hidden="true"></span>
+              <span class="home-progress__line" aria-hidden="true"></span>
+            </div>
+            <p class="home-progress__rate" data-home-rate>—</p>
+          </div>
+          <div class="home-progress" data-home-progress="sales">
+            <p class="home-progress__label">營業額進度</p>
+            <div class="home-progress__track" data-home-track>
+              <span class="home-progress__tri" aria-hidden="true"></span>
+              <span class="home-progress__fill" aria-hidden="true"></span>
+              <span class="home-progress__line" aria-hidden="true"></span>
+            </div>
+            <p class="home-progress__rate" data-home-rate>—</p>
+          </div>
+          <div class="home-warning" data-home-warning data-home-warning-state="unset"></div>
+        </div>
         <div class="home-window__controls">
           <button type="button" class="home-window__expand" data-home-expand data-label-expand="展開" data-label-collapse="收合" aria-expanded="false">展開</button>
           <a class="home-window__detail" data-home-detail data-home-href="../monthly/index.html" href="../monthly/index.html">查看每月詳情</a>
@@ -336,7 +385,45 @@
             <p class="home-window__kpi-value">—</p>
           </div>
         </div>
-        <div class="home-window__expanded" data-home-expanded hidden>這是展開後的下段。指標與警示將於下一階段連接。</div>
+        <div class="home-window__expanded" data-home-expanded hidden>
+          <div class="home-window__kpi home-window__goal">
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">年度最終目標</p>
+              <p class="home-window__kpi-value" data-home-goal="final">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">所需營收</p>
+              <p class="home-window__kpi-value" data-home-goal="remaining">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">剩餘營業日</p>
+              <p class="home-window__kpi-value" data-home-goal="days">—</p>
+            </div>
+            <div class="home-window__kpi-cell">
+              <p class="home-window__kpi-label">每日所需營業額</p>
+              <p class="home-window__kpi-value" data-home-goal="perDay">—</p>
+            </div>
+          </div>
+          <div class="home-progress" data-home-progress="business">
+            <p class="home-progress__label">營業日進度</p>
+            <div class="home-progress__track" data-home-track>
+              <span class="home-progress__tri" aria-hidden="true"></span>
+              <span class="home-progress__fill" aria-hidden="true"></span>
+              <span class="home-progress__line" aria-hidden="true"></span>
+            </div>
+            <p class="home-progress__rate" data-home-rate>—</p>
+          </div>
+          <div class="home-progress" data-home-progress="sales">
+            <p class="home-progress__label">營業額進度</p>
+            <div class="home-progress__track" data-home-track>
+              <span class="home-progress__tri" aria-hidden="true"></span>
+              <span class="home-progress__fill" aria-hidden="true"></span>
+              <span class="home-progress__line" aria-hidden="true"></span>
+            </div>
+            <p class="home-progress__rate" data-home-rate>—</p>
+          </div>
+          <div class="home-warning" data-home-warning data-home-warning-state="unset"></div>
+        </div>
         <div class="home-window__controls">
           <button type="button" class="home-window__expand" data-home-expand data-label-expand="展開" data-label-collapse="收合" aria-expanded="false">展開</button>
           <a class="home-window__detail" data-home-detail data-home-href="../annual/index.html" href="../annual/index.html">查看年度詳情</a>

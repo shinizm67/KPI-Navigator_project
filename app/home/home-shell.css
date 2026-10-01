@@ -215,3 +215,113 @@ body.office-mode .home-window__kpi-cell {
 body.office-mode .home-window__detail {
   border-bottom-color: #111111;
 }
+
+.home-window__expanded .home-window__kpi {
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.home-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  min-height: 28px;
+}
+
+.home-progress__label {
+  flex: 0 0 148px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+}
+
+.home-progress__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 14px;
+  border: 1px solid rgba(88, 225, 243, 0.26);
+  background: rgba(15, 148, 3, 0.33);
+  box-sizing: border-box;
+  overflow: visible;
+  --kpi-x: 66.666%;
+  --kgi-x: 0%;
+  --fill-w: 0%;
+  --marker-color: #e6ff00;
+}
+
+.home-progress__fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--fill-w);
+  background: #0f9403;
+  z-index: 1;
+}
+
+.home-progress__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--kpi-x);
+  width: 4px;
+  transform: translateX(-50%);
+  background: #e6ff00;
+  box-shadow: 0 0 4px color-mix(in srgb, #e6ff00 55%, transparent);
+  z-index: 2;
+}
+
+.home-progress__tri {
+  position: absolute;
+  left: var(--kgi-x);
+  top: -12px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 12px solid var(--marker-color);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+  z-index: 3;
+}
+
+.home-progress__rate {
+  flex: 0 0 64px;
+  margin: 0;
+  color: #58e1f3;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  text-align: right;
+}
+
+.home-warning[data-home-warning-state='unset'] {
+  display: block;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
+
+body.office-mode .home-progress__track {
+  border-color: rgba(102, 102, 102, 0.55);
+  background: #6e6e6e;
+}
+
+body.office-mode .home-progress__fill {
+  background: #d2d2d2;
+}
+
+body.office-mode .home-progress__line {
+  background: #e6ff00;
+  box-shadow: 0 0 2px color-mix(in srgb, #e6ff00 45%, transparent);
+}
+
+body.office-mode .home-progress__rate,
+body.office-mode .home-progress__label {
+  color: #111111;
+  font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;
+}
