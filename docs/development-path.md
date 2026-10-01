@@ -45,6 +45,12 @@ CLOSED (post-launch polish; do not reopen TRUNK-06):
 - BR-POST-FOOTER-VERSION (footer Version 1.0.0 / © 2025) P2 closed 2026-09-26
 - BR-POST-COCKPIT-GAP (Annual Target / Business Day gap parity) P2 closed 2026-09-26
 
+POST-LAUNCH (not the active path; do not mark DEPLOYED):
+- BR-POST-HOME-01 (KPN Home / Simple Mode) P1
+  IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING
+  HEAD 37702722b1b88bbd4b51d5e85cb44ff3ec739e82 (2026-10-01)
+  Not deployed. Not PRODUCTION VERIFIED. CURRENT PATH above is unchanged.
+
 ACTIVE BRANCHES:
 - BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3A Basic Account Delete IMPLEMENTED — READY FOR HUMAN SMOKE; Phase 3B Paid / Stripe Account Delete BLOCKED — Stripe / Billing contract required)
 - BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29)
@@ -1683,19 +1689,28 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-POST-HOME-01` |
 | name | KPN Home / Simple Mode |
 | parent | post-launch (do not reopen `TRUNK-06`) |
-| status | DEFERRED / POST-LAUNCH |
+| status | IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING |
 | priority | P1 |
-| started_at | not started (registered 2026-09-30, Shin) |
+| started_at | registered 2026-09-30 (Shin); validation close 2026-10-01 |
 | return_to | none |
 | purpose | Daily-use entry page so Daily / Monthly / Annual current state can be read on one screen. Initial Setup = do not get lost the first time; Home = do not get lost in daily operation; Full KPN = detail analysis. |
-| concept | Do not redesign. Recompose. Three independent Window Boxes (Daily, Monthly, Annual), one Shared Reference Date. Upper half = Current Position. Lower half = what is required to reach the goal. Detail goes to existing Annual / Monthly / Daily. Global Menu: Home to the left of Annual (H1 candidate; not applied). |
+| concept | Do not redesign. Recompose. Three independent windows (Daily, Monthly, Annual), 32px gap, default collapsed, multiple expansion allowed. One Shared Reference Date. Home is in the Global Menu before Annual. Logo stays 217×32. |
 | design_note | [`docs/br-post-home-01.md`](./br-post-home-01.md) |
-| h1 | **DONE / REVIEWED** (2026-09-30). Global Menu / Home Entry audit at 1200px, JP / EN / ZH-TW, Sci-Fi / Office. A fifth 120px slot overlaps in Office (logo 24.5px, booking 57.5px). Reviewed candidate, not applied: left padding 24→12, header gap 40→24, menu gap 12, slot 104; logo stays 217×32; Office booking gap stays 12.1–12.5px. |
-| h2 | **DESIGN APPROVED / NOT IMPLEMENTED** (2026-09-30). Home Information Architecture / Window Contract. See design note. Window gap final value (start ~32px; compare 24 / 32 / 40) waits for a later 1200px visual smoke. Opening-date default was set in H3 (Yesterday). Recent / Pinned / Planning Bookmark stay out of v1. |
-| h3 | **DONE / REVIEWED** (2026-09-30). Shared Reference Date stays `kpiNavigator.annualNav.selectedIso`. No new date store. `operatingYear` unchanged. Opening preference Today / Yesterday; v1 default Yesterday, user may switch to Today. Explicit `?iso=` wins. New login without `iso` applies the preference and does not restore a distant previous `selectedIso`. Home v1 sync targets: Home, Annual, Monthly, Daily / Daily FW, MEP, Insight. Daily FW / Insight must write the canonical date at implementation time. PL comparison stays a separate date context (Deferred). Long-press 350ms / 400ms not fixed; Home v1 reuses Cockpit date controls. |
-| h4 | **NEXT / NOT STARTED.** Home Implementation. Blocked on Shin GO. |
-| next_action | **H4 — Home Implementation.** Do not start until Shin GO. Do not implement Home, the Global Menu item, or Shared Reference Date in the meantime. |
-| constraint | REGISTER ONLY. No Home page, no menu item, no Shared Reference Date implementation, no CSS / HTML / JS / PHP until H4 + Shin GO. CURRENT PATH unchanged. |
+| head | `37702722b1b88bbd4b51d5e85cb44ff3ec739e82` |
+| h1 | **DONE** |
+| h2 | **DONE** |
+| h3 | **DONE** |
+| h4a | **DONE / VERIFIED** — Shared Reference Date Foundation |
+| h4b | **DONE / VERIFIED** — Home Shell / 3 Window Layout |
+| h4c | **DONE / VERIFIED** — Primary KPI / Data Binding |
+| h4d | **DONE / VERIFIED** — Expanded KPI / Progress |
+| h4e | **DONE / VERIFIED** — Global Menu / Site Chrome Integration |
+| h4f1 | **DONE / VERIFIED** — Daily CTA |
+| h4f2 | **DONE / VERIFIED** — Sales Progress Warning |
+| h4g | **DONE / VERIFIED** — Opening Date Preference UI |
+| h4h | **DONE / VERIFIED** — Pre-Deploy Validation. Technical blockers = 0. |
+| next_action | Production deploy pending. Do not mark DEPLOYED or PRODUCTION VERIFIED. CURRENT PATH unchanged. |
+| constraint | Implementation and validation are closed. Production deploy has not been performed. Annual's existing rebuild stays outside the Home `businessDays` guard. Opening Date Preference server sync is deferred. |
 
 ---
 
@@ -1777,7 +1792,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-BOOKING-ICON-COLOR` | Booking Icon Office Mode Color | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-COCKPIT-GAP` | Cockpit Annual Target / Business Day gap | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
-| `BR-POST-HOME-01` | KPN Home / Simple Mode | DEFERRED / POST-LAUNCH | P1 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-HOME-01` | KPN Home / Simple Mode | IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING | P1 | post-launch (do not reopen `TRUNK-06`) |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1799,7 +1814,7 @@ ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 AC
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
-DEFERRED post-launch (do not start implementation): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1; REGISTER ONLY. H1 DONE / REVIEWED. H2 DESIGN APPROVED / NOT IMPLEMENTED. H3 DONE / REVIEWED. Next: H4 Home Implementation, NOT STARTED, blocked on Shin GO.)  
+POST-LAUNCH implementation complete / production deploy pending: `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING. HEAD `3770272`. Not deployed. Not PRODUCTION VERIFIED. H4-H technical blockers = 0.)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
 
 ---
@@ -1959,3 +1974,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-30 | **BR-POST-HOME-01 registered** KPN Home / Simple Mode. DEFERRED / POST-LAUNCH P1. First Action H1 Global Menu / Home Entry Pre-Implementation Audit. No implementation. |
 | 2026-09-30 | **BR-POST-HOME-01 H1 DONE / REVIEWED; H2 DESIGN APPROVED / NOT IMPLEMENTED.** Design note [`docs/br-post-home-01.md`](./br-post-home-01.md). Next: H3 Shared Reference Date Architecture Audit (NOT STARTED). H4 NOT STARTED. REGISTER ONLY. CURRENT PATH unchanged. No implementation. |
 | 2026-09-30 | **BR-POST-HOME-01 H3 DONE / REVIEWED.** Canonical date stays `kpiNavigator.annualNav.selectedIso`. Opening preference v1 default Yesterday (user may choose Today). Explicit `?iso=` wins. New login does not restore a distant previous `selectedIso`. PL comparison Deferred. Next: H4 NOT STARTED, blocked on Shin GO. REGISTER ONLY. CURRENT PATH unchanged. No implementation. |
+| 2026-10-01 | **BR-POST-HOME-01 IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING.** H1–H3 DONE. H4-A through H4-H DONE / VERIFIED. H4-H technical blockers = 0. HEAD `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`. Not deployed. Not PRODUCTION VERIFIED. CURRENT PATH unchanged. |

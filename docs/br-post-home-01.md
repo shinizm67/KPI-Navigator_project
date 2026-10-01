@@ -1,11 +1,12 @@
 # BR-POST-HOME-01 — KPN Home / Simple Mode
 
-Status: **DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY**  
+Status: **IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING**  
 Parent: post-launch (do not reopen `TRUNK-06`)  
 Registered: 2026-09-30 (Shin)  
-Design note updated: 2026-09-30
+Validation close: 2026-10-01  
+HEAD: `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`
 
-No Home page, Global Menu change, Shared Reference Date implementation, or CSS / HTML / JS / PHP change has been made. CURRENT PATH is unchanged.
+Home v1 is implemented and validated. It is not deployed, and it is not PRODUCTION VERIFIED. CURRENT PATH is unchanged.
 
 Home v1 principle: **Do not redesign. Recompose.**
 
@@ -19,12 +20,110 @@ Progress comparison = Is sales keeping pace with operating time?
 
 | id | name | status |
 |----|------|--------|
-| H1 | Global Menu / Home Entry Pre-Implementation Audit | **DONE / REVIEWED** |
-| H2 | Home Information Architecture / Window Contract | **DESIGN APPROVED / NOT IMPLEMENTED** |
-| H3 | Shared Reference Date Architecture Audit | **DONE / REVIEWED** |
-| H4 | Home Implementation | **NEXT / NOT STARTED** |
+| H1 | Global Menu / Home Entry Audit | **DONE** |
+| H2 | Home Information Architecture / Window Contract | **DONE** |
+| H3 | Shared Reference Date Architecture Audit | **DONE** |
+| H4-A | Shared Reference Date Foundation | **DONE / VERIFIED** |
+| H4-B | Home Shell / 3 Window Layout | **DONE / VERIFIED** |
+| H4-C | Primary KPI / Data Binding | **DONE / VERIFIED** |
+| H4-D | Expanded KPI / Progress | **DONE / VERIFIED** |
+| H4-E | Global Menu / Site Chrome Integration | **DONE / VERIFIED** |
+| H4-F1 | Daily CTA | **DONE / VERIFIED** |
+| H4-F2 | Sales Progress Warning | **DONE / VERIFIED** |
+| H4-G | Opening Date Preference UI | **DONE / VERIFIED** |
+| H4-H | Pre-Deploy Validation | **DONE / VERIFIED** |
 
-Next action is H4 only, and only after Shin GO. Do not start Home or Shared Reference Date implementation in this docs update.
+Technical blockers at close: 0. Production deploy is still pending.
+
+---
+
+## Close record (2026-10-01)
+
+### Home structure
+
+- Daily / Monthly / Annual.
+- Three independent windows.
+- 32px gap.
+- Default collapsed.
+- Multiple windows may stay expanded at the same time.
+
+### Shared Reference Date
+
+- Reuses `annualNav.selectedIso`.
+- New login default is Yesterday.
+- User preference is Today or Yesterday.
+- The same authenticated login keeps the current reference date.
+- Explicit `iso` or year-month takes precedence.
+
+### Daily CTA
+
+Home Daily CTA → locale-preserving Monthly → Daily FW → `?open=daily&iso=`.
+
+### Warning
+
+- gap = raw Business-day Progress − raw Sales Progress.
+- Normal: gap < 10pt.
+- Orange: gap >= 10pt and < 20pt.
+- Red: gap >= 20pt.
+- Sales Progress >= Business-day Progress is Normal.
+- A negative Sales Progress is clamped to 0 for the warning calculation only.
+
+### Rebuild safety
+
+- Home automatic rebuild requires a complete boolean `businessDays` map for every day of the target year.
+- Incomplete map → no POST.
+- Existing facts → no POST.
+- Leap years use 366 days.
+
+### Opening Date Preference
+
+- Key: `kpiNavigator.openingDatePreference`.
+- Default: `yesterday`.
+- v1 is localStorage.
+- Server sync is deferred.
+
+### Site chrome
+
+- Home is formally integrated, before Annual.
+- Logo stays 217×32.
+- 1200px is supported.
+- The site chrome generator preserves page-specific header scripts.
+- Regeneration idempotence was verified.
+
+### Validation evidence
+
+PHP:
+
+- Production PHP is 8.2.34.
+- Portable PHP 8.2.34 was used for lint.
+- `api/v1/_auth.php` PASS.
+- `api/v1/auth/login.php` PASS.
+- `api/v1/auth/register.php` PASS.
+
+Real rebuild smoke, dedicated test account only:
+
+- Baseline facts = 0.
+- Rebuild POST once.
+- Written = 365.
+- Re-GET = 365.
+- Home displayed those facts.
+- A second rebuild POST did not happen.
+- Cleanup / reset completed.
+
+Integration:
+
+- JP / EN / ZH-TW.
+- Sci-Fi / Office.
+- 1200px PASS.
+- Home full integration smoke PASS.
+
+### Remaining non-blockers / deferred
+
+- Annual's existing rebuild logic is outside this Home guard.
+- Opening Date Preference server sync is deferred.
+- Settings pages without a CSS cache query remain non-blocking.
+- Disabled smoke users remain, with KPI data reset.
+- Future reconsideration: Home may eventually replace some Daily-page usage. That is not part of v1.
 
 ---
 
@@ -89,8 +188,8 @@ Candidate files when implementation is allowed later (not edited in H1):
 
 ## H2 — Home Information Architecture / Window Contract
 
-Status: **DESIGN APPROVED / NOT IMPLEMENTED** (2026-09-30, Shin).  
-Purpose: define the Home v1 information architecture and interaction contract before implementation.
+Status: **DONE** (design approved 2026-09-30, Shin; implemented and verified in H4).  
+Purpose: Home v1 information architecture and interaction contract. The selected gap is 32px.
 
 ### Core principle
 
@@ -130,7 +229,7 @@ Home does not introduce a new visual language. Reuse existing KPN / Daily FW typ
 - Explicit URL `?iso=` is an intentional cross-screen handoff and wins over the opening preference.
 - Do not automatically restore a distant previously viewed `annualNav.selectedIso` as the initial date of a new login.
 
-Architecture of that shared date is recorded in **H3**. Do not implement it until H4 + Shin GO.
+Architecture of that shared date is recorded in **H3**. It was implemented in H4-A and H4-G.
 
 ### Collapsed contract — common
 
@@ -233,13 +332,13 @@ Recent Date / Pinned Date / Planning Bookmark stay deferred. Do not add them to 
 
 Existing Global Menu and Footer remain normal page chrome. Do not add a Home-specific Back-to-Top control. Use the existing Footer top-return control.
 
-Global Menu geometry (Home to the left of Annual) stays the H1 candidate. Do not change the menu until H4 + Shin GO.
+Global Menu geometry (Home to the left of Annual) was applied in H4-E. Logo stays 217×32.
 
 ---
 
 ## H3 — Shared Reference Date Architecture Audit
 
-Status: **DONE / REVIEWED** (2026-09-30). Audit only. No implementation.
+Status: **DONE** (audit reviewed 2026-09-30; foundation implemented in H4-A). The notes below are the audit record.
 
 Screens are not fully independent. A shared cursor already exists. Daily FW, Insight, and PL comparison keep a local date that does not write that cursor back.
 
@@ -296,6 +395,18 @@ Home v1 reuses the existing Cockpit date controls. Do not add a new date engine.
 
 ## H4 — Home Implementation
 
-Status: **NEXT / NOT STARTED**.
+Status: **DONE / VERIFIED** (2026-10-01). Production deploy is pending.
 
-Blocked on Shin GO. H3 is done. Includes the Home page, Global Menu item, window UI, and Shared Reference Date wiring. None of that is in progress. Do not start it from this docs update.
+| id | name | status |
+|----|------|--------|
+| H4-A | Shared Reference Date Foundation | **DONE / VERIFIED** |
+| H4-B | Home Shell / 3 Window Layout | **DONE / VERIFIED** |
+| H4-C | Primary KPI / Data Binding | **DONE / VERIFIED** |
+| H4-D | Expanded KPI / Progress | **DONE / VERIFIED** |
+| H4-E | Global Menu / Site Chrome Integration | **DONE / VERIFIED** |
+| H4-F1 | Daily CTA | **DONE / VERIFIED** |
+| H4-F2 | Sales Progress Warning | **DONE / VERIFIED** |
+| H4-G | Opening Date Preference UI | **DONE / VERIFIED** |
+| H4-H | Pre-Deploy Validation | **DONE / VERIFIED** |
+
+H4-H technical blockers = 0. HEAD `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`. Not deployed. Not PRODUCTION VERIFIED.
