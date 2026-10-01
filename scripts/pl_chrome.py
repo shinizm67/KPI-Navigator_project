@@ -16,6 +16,7 @@ _SCRIPTS = Path(__file__).resolve().parent
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 from site_chrome import build_header  # noqa: E402
+from build_site_chrome import merge_preserved_header_scripts  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -96,14 +97,22 @@ def pl_header(lang: str) -> str:
 
 def apply_pl_header(path: Path, lang: str) -> None:
     """Replace the existing PL `<header>` with `pl_header(lang)`. Body unchanged."""
-    text = path.read_text(encoding="utf-8")
+    original = path.read_bytes()
+    text = original.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
     header = pl_header(lang)
     if 'id="header-booking-btn"' not in header:
         raise SystemExit(f"{path}: generated header missing #header-booking-btn")
-    new, n = _PL_HEADER_RE.subn(header, text, count=1)
-    if n != 1:
-        raise SystemExit(f"{path}: expected 1 PL header, found {n}")
-    path.write_text(new, encoding="utf-8")
+    match = _PL_HEADER_RE.search(text)
+    if not match:
+        raise SystemExit(f"{path}: expected 1 PL header, found 0")
+    header = merge_preserved_header_scripts(match.group(0), header)
+    updated = text[:match.start()] + header + text[match.end():]
+    if _PL_HEADER_RE.search(updated) is None:
+        raise SystemExit(f"{path}: PL header missing after merge")
+    newline = b"\r\n" if b"\r\n" in original else b"\n"
+    payload = updated.replace("\n", newline.decode("ascii")).encode("utf-8")
+    if payload != original:
+        path.write_bytes(payload)
     print("synced PL header", lang, "->", path)
 
 

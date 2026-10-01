@@ -3,8 +3,12 @@
 
 First run replaces the existing `<header class="site-header">…</header>` and
 `<footer class="site-footer">…</footer>` blocks with marker-wrapped generated
-markup. Subsequent runs replace only the content between markers, so this is
-idempotent and safe to re-run.
+markup. Subsequent runs replace only the content between markers.
+
+Page-specific `<script src>` tags that live inside the header marker are kept.
+A shared chrome script is replaced only when the page tag matches the generated
+file and query. A different query, or a script the template does not emit, stays
+on the page. The header download/auth inline script is always the generated one.
 
 Rollout is staged via PAGES groups: app (annual/monthly/profit), settings, and
 public (login/register/plan/legal). Generated pages (monthly/edit, PL) are still
@@ -36,15 +40,15 @@ ROOT = Path(__file__).resolve().parents[1]
 #        "link"    = page navigates to Annual for Daily (profit).
 # Profit-nav label is canonical (考察 / Insight) for every page — no per-page
 # override (the old en/profit "Profit" drift was retired 2026-07-17).
-# DEFERRED (H4-B): app/home, en/app/home, zh-tw/app/home are not generation
-# targets. Their header/footer is a snapshot. Add them in the same change as
-# the Global Menu Home entry so Home chrome cannot drift from this list.
 PAGES_APP = [
+    {"path": "app/home/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "home", "daily": "link"},
     {"path": "app/annual/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "annual", "daily": "overlay"},
     {"path": "app/monthly/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "monthly", "daily": "overlay"},
     {"path": "app/profit/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": None, "daily": "link"},
     {"path": "app/booking/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": None, "daily": "link"},
+    {"path": "en/app/home/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "home", "daily": "link"},
     {"path": "en/app/annual/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
+    {"path": "zh-tw/app/home/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "home", "daily": "link"},
     {"path": "zh-tw/app/annual/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "annual", "daily": "overlay"},
     {"path": "en/app/monthly/index.html", "lang": "en", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
     {"path": "zh-tw/app/monthly/index.html", "lang": "zh-tw", "base": "../../", "img": "../../../", "active": "monthly", "daily": "overlay"},
@@ -159,6 +163,104 @@ GROUPS = {
 }
 
 
+_SCRIPT_RE = re.compile(r"[ \t]*<script\b[^>]*>[\s\S]*?</script>", re.IGNORECASE)
+_SRC_RE = re.compile(r"""\bsrc\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
+
+
+def _script_src(tag: str) -> str | None:
+    match = _SRC_RE.search(tag)
+    return match.group(1) if match else None
+
+
+def _script_name_query(src: str) -> tuple[str, str]:
+    path, _, query = src.partition("?")
+    return path.rsplit("/", 1)[-1], query
+
+
+def _indent_script(tag: str) -> str:
+    lines = tag.strip().split("\n")
+    return "\n".join(("    " + line) if line else line for line in lines)
+
+
+def merge_preserved_header_scripts(old_block: str, new_header: str) -> str:
+    """Keep page script tags when replacing a generated header.
+
+    Chrome-owned external scripts (same filename and query as `new_header`)
+    follow the template. Anything else already in `old_block` is copied back
+    in its previous order: extra files, and shared files pinned to another query.
+    """
+    old_matches = list(_SCRIPT_RE.finditer(old_block))
+    if not old_matches:
+        return new_header
+    new_matches = list(_SCRIPT_RE.finditer(new_header))
+    if not new_matches:
+        return new_header
+
+    generated_src = []
+    generated_inline = []
+    for match in new_matches:
+        tag = match.group(0).strip()
+        if _script_src(tag):
+            generated_src.append(tag)
+        else:
+            generated_inline.append(match.group(0).strip("\n"))
+    generated_by_name = {}
+    for tag in generated_src:
+        name, _query = _script_name_query(_script_src(tag) or "")
+        generated_by_name[name] = tag
+
+    merged = []
+    seen = set()
+    page_inline = []
+    for index, match in enumerate(old_matches):
+        raw = match.group(0).strip()
+        gap = "" if index == 0 else old_block[old_matches[index - 1].end():match.start()]
+        blank = "\n\n" in gap
+        src = _script_src(raw)
+        if not src:
+            if "__headerDlBound" not in raw:
+                page_inline.append(raw)
+            continue
+        name, query = _script_name_query(src)
+        seen.add(name)
+        generated = generated_by_name.get(name)
+        if generated is None:
+            chosen = raw
+        else:
+            _gname, generated_query = _script_name_query(_script_src(generated) or "")
+            chosen = generated if query == generated_query else raw
+        merged.append({"tag": chosen, "blank": blank, "name": name})
+
+    for index, tag in enumerate(generated_src):
+        name, _query = _script_name_query(_script_src(tag) or "")
+        if name in seen:
+            continue
+        item = {"tag": tag, "blank": False, "name": name}
+        later_name = None
+        for later in generated_src[index + 1:]:
+            candidate, _query = _script_name_query(_script_src(later) or "")
+            if candidate in seen:
+                later_name = candidate
+                break
+        if later_name is None:
+            merged.append(item)
+        else:
+            insert_at = next(i for i, entry in enumerate(merged) if entry["name"] == later_name)
+            merged.insert(insert_at, item)
+        seen.add(name)
+
+    parts = []
+    for entry in merged:
+        if entry["blank"] and parts:
+            parts.append("")
+        parts.append(_indent_script(entry["tag"]))
+    parts.extend(generated_inline)
+    parts.extend(_indent_script(tag) for tag in page_inline)
+    start = new_matches[0].start()
+    end = new_matches[-1].end()
+    return new_header[:start] + "\n".join(parts) + new_header[end:]
+
+
 def _replace_block(text: str, start: str, end: str, raw_re: str, replacement: str, label: str, path: Path) -> str:
     marked = re.compile(r"[ \t]*" + re.escape(start) + r"[\s\S]*?" + re.escape(end))
     if marked.search(text):
@@ -169,12 +271,13 @@ def _replace_block(text: str, start: str, end: str, raw_re: str, replacement: st
     return raw.sub(lambda _m: replacement, text, count=1)
 
 
-def patch_page(cfg: dict) -> None:
-    path = ROOT / cfg["path"]
-    if not path.is_file():
-        raise SystemExit(f"missing page: {path}")
-    text = path.read_text(encoding="utf-8")
+def _marked_span(text: str, start: str, end: str) -> str | None:
+    marked = re.compile(r"[ \t]*" + re.escape(start) + r"[\s\S]*?" + re.escape(end))
+    match = marked.search(text)
+    return match.group(0) if match else None
 
+
+def render_page(cfg: dict, text: str, path: Path) -> str:
     if cfg.get("variant") == "public":
         header = build_public_header(cfg["lang"], cfg["img"])
     else:
@@ -189,6 +292,9 @@ def patch_page(cfg: dict) -> None:
             daily_href=cfg.get("daily_href"),
             profit_href=cfg.get("profit_href"),
         )
+    old_header = _marked_span(text, HEADER_MARK_START, HEADER_MARK_END)
+    if old_header:
+        header = merge_preserved_header_scripts(old_header, header)
     header_repl = f"  {HEADER_MARK_START}\n{header}\n  {HEADER_MARK_END}"
 
     text = _replace_block(
@@ -209,8 +315,27 @@ def patch_page(cfg: dict) -> None:
             r'[ \t]*<footer class="site-footer">[\s\S]*?</footer>',
             footer_repl, "footer", path,
         )
-    path.write_text(text, encoding="utf-8")
-    print(f"patched {cfg['path']}")
+    return text
+
+
+def _write_if_changed(path: Path, original: bytes, text: str) -> bool:
+    newline = b"\r\n" if b"\r\n" in original else b"\n"
+    payload = text.replace("\r\n", "\n").replace("\n", newline.decode("ascii")).encode("utf-8")
+    if payload == original:
+        return False
+    path.write_bytes(payload)
+    return True
+
+
+def patch_page(cfg: dict) -> None:
+    path = ROOT / cfg["path"]
+    if not path.is_file():
+        raise SystemExit(f"missing page: {path}")
+    original = path.read_bytes()
+    text = original.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    updated = render_page(cfg, text, path)
+    changed = _write_if_changed(path, original, updated)
+    print(f"{'patched' if changed else 'unchanged'} {cfg['path']}")
 
 
 def main(argv: list[str]) -> int:

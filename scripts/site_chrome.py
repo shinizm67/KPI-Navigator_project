@@ -17,9 +17,7 @@ Design notes:
     - `img`  = relative path to the *repo-root* `images/` dir (images are
       shared by both languages). For JA `img == base`; for EN `img` has one
       extra `../`.
-- `active` marks the current nav item (`annual` | `monthly` | `profit` | None).
-- DEFERRED (H4-B): Home is not a generation target yet. Add it together with
-  the Global Menu Home entry. Do not leave a Home-only chrome snapshot.
+- `active` marks the current nav item (`home` | `annual` | `monthly` | `profit` | None).
 """
 
 from __future__ import annotations
@@ -34,6 +32,8 @@ LABELS = {
         "logo_href": "https://forge-laboratory.com",
         "logo_aria": "FORGE LABORATORY - トップページ",
         "nav_aria": "メインナビゲーション",
+        "home_label": "Home",
+        "home_aria": "Home",
         "annual_label": "年次",
         "monthly_label": "月次",
         "daily_label": "日次",
@@ -45,6 +45,7 @@ LABELS = {
         "profit_aria_inactive": "利益サマリー（プロプラン）。ベーシックの場合はプラン変更へ",
         "profit_aria_active": "利益サマリー（現在のページ）",
         "office_toggle_aria": "Office Mode に切り替え",
+        "office_scifi_aria": "Sci-Fi Mode に切り替え",
         "office_text": "OFFICE MODE",
         "menu_aria": "ナビゲーションメニューを開く",
         "gear_aria": "アカウント設定",
@@ -87,6 +88,8 @@ LABELS = {
         "logo_href": "https://forge-laboratory.com/en",
         "logo_aria": "FORGE LABORATORY - Top page",
         "nav_aria": "Main navigation",
+        "home_label": "Home",
+        "home_aria": "Home",
         "annual_label": "Annual",
         "monthly_label": "Monthly",
         "daily_label": "Daily",
@@ -98,6 +101,7 @@ LABELS = {
         "profit_aria_inactive": "Profit summary (Pro). Basic plan goes to Change Plan",
         "profit_aria_active": "Profit summary (current page)",
         "office_toggle_aria": "Switch to Office Mode",
+        "office_scifi_aria": "Switch to Sci-Fi Mode",
         "office_text": "OFFICE MODE",
         "menu_aria": "Open navigation menu",
         "gear_aria": "Account settings",
@@ -140,6 +144,8 @@ LABELS = {
         "logo_href": "https://forge-laboratory.com",
         "logo_aria": "FORGE LABORATORY - 首頁",
         "nav_aria": "主要導覽",
+        "home_label": "Home",
+        "home_aria": "Home",
         "annual_label": "年度",
         "monthly_label": "月度",
         "daily_label": "每日",
@@ -151,6 +157,7 @@ LABELS = {
         "profit_aria_inactive": "利潤摘要（專業方案）。基本方案請前往變更方案",
         "profit_aria_active": "利潤摘要（目前頁面）",
         "office_toggle_aria": "切換至 Office Mode",
+        "office_scifi_aria": "切換至 Sci-Fi Mode",
         "office_text": "OFFICE MODE",
         "menu_aria": "開啟導覽選單",
         "gear_aria": "帳戶設定",
@@ -346,6 +353,10 @@ def build_header(
     items = "\n".join(
         [
             _nav_simple(
+                "home", f"{base}app/home/index.html", img,
+                L["home_label"], L["home_aria"], active == "home", nav_attr,
+            ),
+            _nav_simple(
                 "annual", f"{base}app/annual/index.html", img,
                 L["annual_label"], L["annual_aria"], active == "annual", nav_attr,
             ),
@@ -370,7 +381,7 @@ def build_header(
         </ul>
       </nav>
       <div class="header-actions">
-        <a href="#" class="btn-mode" id="btn-mode-toggle" role="button" aria-label="{L['office_toggle_aria']}">
+        <a href="#" class="btn-mode" id="btn-mode-toggle" data-aria-office="{L['office_toggle_aria']}" data-aria-scifi="{L['office_scifi_aria']}" role="button" aria-label="{L['office_toggle_aria']}">
           <span class="btn-mode-frame">
             <img src="{img}images/button_frame.svg" alt="" class="btn-mode-frame-img" aria-hidden="true">
             <span class="btn-mode-text" id="btn-mode-text">{L['office_text']}</span>

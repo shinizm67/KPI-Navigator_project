@@ -9,7 +9,7 @@
   /* BR-LAUNCH-07: one shared reserve for absolute .header-actions.
      Office actions ~337px + right:24px inset + 8px nav clearance. */
   --kpi-header-actions-reserve: 368px;
-  --kpi-header-nav-gap: 20px;
+  --kpi-header-nav-gap: 12px;
 }
 
 html[lang="ja"] .si-fi.profile-page {
@@ -21,8 +21,9 @@ html[lang="ja"] .si-fi.profile-page {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 40px;
+  gap: 24px;
   box-sizing: border-box;
+  padding-left: 12px;
   /* Reserve room for absolute-positioned right actions (Mode / booking / DL / gear). */
   padding-right: var(--kpi-header-actions-reserve);
 }
@@ -1088,8 +1089,8 @@ html[lang^="zh"] .si-fi.office-mode.profile-page .global-nav-list {
 /* Global Menu tabs (Office): keep the same slot geometry as Sci-Fi */
 .si-fi.office-mode.profile-page .global-nav .nav-frame-btn .btn-mode-frame {
   position: relative !important;
-  width: 120px !important;
-  max-width: 120px !important;
+  width: 104px !important;
+  max-width: 104px !important;
   display: inline-flex !important;
   justify-content: center;
   align-items: center;
@@ -1108,7 +1109,7 @@ html[lang^="zh"] .si-fi.office-mode.profile-page .global-nav-list {
 }
 .si-fi.office-mode.profile-page .global-nav .nav-frame-btn {
   display: inline-block;
-  width: 120px !important;
+  width: 104px !important;
 }
 
 .nav-frame-btn {
