@@ -12746,7 +12746,7 @@
 </head>
 <body class="si-fi profile-page monthly-page" id="body-el">
   <!-- KPI-CURRENCY-JS:START -->
-  <script src="../../js/kpi-data-gateway.js?v=20260927-nr2"></script>
+  <script src="../../js/kpi-data-gateway.js?v=20261001-srd1"></script>
   <script src="../../js/kpi-daily-facts-sync.js?v=20260923-c2c"></script>
   <script src="../../js/kpi-daily-inputs-sync.js?v=20260923-c2c"></script>
 
@@ -18664,10 +18664,10 @@
         var root = document.getElementById('insight-overlay');
         if (!root || root.hidden) return;
         var iso =
-          window.__INSIGHT_SELECTED_ISO ||
           (window.__ANNUAL_DATA &&
             window.__ANNUAL_DATA.daily &&
-            window.__ANNUAL_DATA.daily.selectedDate);
+            window.__ANNUAL_DATA.daily.selectedDate) ||
+          window.__INSIGHT_SELECTED_ISO;
         if (iso && typeof window.renderInsightTwDiffs === 'function') {
           window.renderInsightTwDiffs(iso);
         }
@@ -19004,6 +19004,23 @@
         if (!el || !root.contains(el)) return;
         if (insightScroll) insightScroll.scrollTo({ top: 0, behavior: 'smooth' });
       });
+      function commitSharedIso(iso) {
+        if (!iso) return;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          if (window.__ANNUAL_UI.setDailyDateByISO(iso, 'shared-overlay') === false) {
+            fill(selectedIso || resolveIso());
+            return;
+          }
+          selectedIso =
+            (window.__ANNUAL_DATA &&
+              window.__ANNUAL_DATA.daily &&
+              window.__ANNUAL_DATA.daily.selectedDate) ||
+            iso;
+          return;
+        }
+        selectedIso = iso;
+        fill(iso);
+      }
       function bindInsightDateHoldRepeat(btn, delta) {
         if (!btn) return;
         var delayId = null;
@@ -19013,8 +19030,7 @@
           if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
         }
         function stepOnce() {
-          selectedIso = shiftIso(selectedIso || resolveIso(), delta);
-          fill(selectedIso);
+          commitSharedIso(shiftIso(selectedIso || resolveIso(), delta));
         }
         function onPointerDown(ev) {
           if (ev.pointerType === 'mouse' && ev.button !== 0) return;
@@ -19058,12 +19074,19 @@
         });
         dateInputEl.addEventListener('change', function () {
           if (!dateInputEl.value) return;
-          selectedIso = dateInputEl.value;
-          fill(selectedIso);
+          commitSharedIso(dateInputEl.value);
         });
       }
       if (todayBtnEl) todayBtnEl.addEventListener('click', function () {
-        selectedIso = getTodayIso();
+        commitSharedIso(getTodayIso());
+      });
+      document.addEventListener('annual:dailyDateChanged', function () {
+        selectedIso = resolveIso();
+        if (root.hidden) {
+          window.__INSIGHT_SELECTED_ISO = selectedIso;
+          window.__INSIGHT_PENDING_ISO = selectedIso;
+          return;
+        }
         fill(selectedIso);
       });
       document.addEventListener('keydown', function (ev) {
@@ -19407,6 +19430,23 @@
           requestAnimationFrame(open);
         });
       };
+      function commitSharedIso(iso) {
+        if (!iso) return;
+        if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
+          if (window.__ANNUAL_UI.setDailyDateByISO(iso, 'shared-overlay') === false) {
+            fill(selectedIso || resolveIso());
+            return;
+          }
+          selectedIso =
+            (window.__ANNUAL_DATA &&
+              window.__ANNUAL_DATA.daily &&
+              window.__ANNUAL_DATA.daily.selectedDate) ||
+            iso;
+          return;
+        }
+        selectedIso = iso;
+        fill(iso);
+      }
       function bindDailyOverlayDateHoldRepeat(btn, delta) {
         if (!btn) return;
         var delayId = null;
@@ -19416,8 +19456,7 @@
           if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
         }
         function stepOnce() {
-          selectedIso = shiftIso(selectedIso || resolveIso(), delta);
-          fill(selectedIso);
+          commitSharedIso(shiftIso(selectedIso || resolveIso(), delta));
         }
         function onPointerDown(ev) {
           if (ev.pointerType === 'mouse' && ev.button !== 0) return;
@@ -19444,8 +19483,7 @@
       bindDailyOverlayDateHoldRepeat(nextDayBtn, 1);
       if (todayBtnEl) {
         todayBtnEl.addEventListener('click', function () {
-          selectedIso = getTodayIso();
-          fill(selectedIso);
+          commitSharedIso(getTodayIso());
         });
       }
       if (dateBtnEl && dateInputEl) {
@@ -19454,8 +19492,7 @@
         });
         dateInputEl.addEventListener('change', function () {
           if (!dateInputEl.value) return;
-          selectedIso = dateInputEl.value;
-          fill(selectedIso);
+          commitSharedIso(dateInputEl.value);
         });
       }
       btnClose.addEventListener('click', close);
@@ -26950,7 +26987,13 @@
         return null;
       }
       var urlIso = readDisplayIsoFromUrl();
-      if (urlIso) {
+      var boot = window.__KPI_SHARED_DATE && typeof window.__KPI_SHARED_DATE.bootCockpitIso === 'function'
+        ? window.__KPI_SHARED_DATE.bootCockpitIso()
+        : null;
+      if (boot && boot.iso) {
+        var bootDate = parseISODateLocal(boot.iso);
+        if (bootDate) initialDate = bootDate;
+      } else if (urlIso) {
         var urlDate = parseISODateLocal(urlIso);
         if (urlDate) initialDate = urlDate;
       } else if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
@@ -26958,7 +27001,7 @@
         var storeDate = storeIso ? parseISODateLocal(storeIso) : null;
         if (storeDate) initialDate = storeDate;
       }
-      applyDailySelection(initialDate, 'initial', { skipJumpGuard: true });
+      applyDailySelection(initialDate, (boot && boot.source) || 'initial', { skipJumpGuard: true });
 
       dateBtn.addEventListener('click', function () {
         dateBtn.setAttribute('aria-expanded', 'true');

@@ -282,6 +282,37 @@ function kpi_v1_auth_reject_if_disabled($user)
     }
 }
 
+function kpi_v1_auth_request_is_secure()
+{
+    return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+}
+
+/**
+ * JS-readable login generation. Not the session id.
+ * Same value for every tab of this PHP session. A new login gets a new value.
+ * Cleared with the session so old cached logout JS still ends the generation.
+ */
+function kpi_v1_auth_set_login_gen_cookie($value, $expires)
+{
+    setcookie('kpi_auth_gen', (string) $value, [
+        'expires' => $expires,
+        'path' => '/',
+        'secure' => kpi_v1_auth_request_is_secure(),
+        'httponly' => false,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function kpi_v1_auth_stamp_login_gen()
+{
+    $existing = isset($_SESSION['kpi_auth_gen']) ? (string) $_SESSION['kpi_auth_gen'] : '';
+    if (!preg_match('/^[a-f0-9]{32}$/', $existing)) {
+        $existing = bin2hex(random_bytes(16));
+        $_SESSION['kpi_auth_gen'] = $existing;
+    }
+    kpi_v1_auth_set_login_gen_cookie($existing, 0);
+}
+
 function kpi_v1_auth_set_session_user($userId)
 {
     require_once __DIR__ . '/_session_revoke.php';
@@ -298,6 +329,7 @@ function kpi_v1_auth_clear_session()
         $p = session_get_cookie_params();
         setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'] ?? '', !empty($p['secure']), !empty($p['httponly']));
     }
+    kpi_v1_auth_set_login_gen_cookie('', time() - 42000);
     session_destroy();
 }
 

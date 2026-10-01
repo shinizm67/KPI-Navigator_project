@@ -24,6 +24,9 @@
 
   var STORE_KEY = 'kpiNavigator.kpiYearStore';
   var NAV_KEY = 'kpiNavigator.annualNav';
+  var SHARED_DATE_BOUND_KEY = 'kpiNavigator.sharedDateAuthGen';
+  var OPENING_DATE_PREF_KEY = 'kpiNavigator.openingDatePreference';
+  var AUTH_GEN_COOKIE = 'kpi_auth_gen';
   var SYNC_KEY = 'kpiNavigator.storeSync';
   var TIER_KEY = 'kpiNavigator.subscriptionTier';
   var PL_CATALOG_KEY = 'kpiNavigator.plLineCatalog';
@@ -1140,7 +1143,7 @@
             }
           } catch (_eBtHyd) {}
         }
-        if (data.annualNav && typeof data.annualNav === 'object') {
+        if (data.annualNav && typeof data.annualNav === 'object' && !sharedDateSessionActive()) {
           localSet(NAV_KEY, data.annualNav);
           changed = true;
         }
@@ -1438,6 +1441,141 @@
     flushPut: flushPut,
     collectPlFromLocal: collectPlFromLocal,
     storeConflictMessage: storeConflictMessage,
+  };
+
+  /* KPI-SHARED-DATE-START
+     Opening preference is not a date store. The cursor stays annualNav.selectedIso.
+     A new browser tab is the same login. Opening date runs only when the
+     login generation cookie (kpi_auth_gen) changes, and only with no explicit date URL.
+     v1 preference stays in localStorage. A later profile/server preference is not built here.
+     operatingYear is not read here. */
+  function sharedDatePad2(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+  function sharedDateIsoFromDate(d) {
+    return d.getFullYear() + '-' + sharedDatePad2(d.getMonth() + 1) + '-' + sharedDatePad2(d.getDate());
+  }
+  function sharedDateIsoOk(s) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return false;
+    var p = String(s).split('-');
+    var y = Number(p[0]);
+    var m = Number(p[1]);
+    var day = Number(p[2]);
+    var dt = new Date(y, m - 1, day);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === day;
+  }
+  function readAuthGenCookie() {
+    try {
+      var parts = String(document.cookie || '').split(';');
+      var i;
+      for (i = 0; i < parts.length; i++) {
+        var part = parts[i].replace(/^\s+/, '');
+        var eq = part.indexOf('=');
+        if (eq < 0) continue;
+        var name = decodeURIComponent(part.slice(0, eq));
+        if (name !== AUTH_GEN_COOKIE) continue;
+        var value = decodeURIComponent(part.slice(eq + 1) || '');
+        if (/^[a-f0-9]{32}$/i.test(value)) return value.toLowerCase();
+      }
+    } catch (_e) {}
+    return '';
+  }
+  function readBoundAuthGen() {
+    try {
+      var v = String(localStorage.getItem(SHARED_DATE_BOUND_KEY) || '');
+      if (/^[a-f0-9]{32}$/i.test(v)) return v.toLowerCase();
+    } catch (_e) {}
+    return '';
+  }
+  /* True once this login generation is already bound. Missing cookie is not a new login. */
+  function sharedDateSessionActive() {
+    var gen = readAuthGenCookie();
+    return !!gen && gen === readBoundAuthGen();
+  }
+  function markSharedDateSession() {
+    var gen = readAuthGenCookie();
+    if (!gen) return;
+    try {
+      localStorage.setItem(SHARED_DATE_BOUND_KEY, gen);
+    } catch (_e) {}
+  }
+  function clearSharedDateSession() {
+    try {
+      localStorage.removeItem(SHARED_DATE_BOUND_KEY);
+    } catch (_e) {}
+  }
+  function explicitYearMonthContext() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var yRaw = params.get('year');
+      var mRaw = params.get('month');
+      if (yRaw == null || String(yRaw).trim() === '' || mRaw == null || String(mRaw).trim() === '') return false;
+      var y = Number(yRaw);
+      var m = Number(mRaw);
+      return Number.isFinite(y) && y >= 2000 && y <= 2100 && m >= 1 && m <= 12;
+    } catch (_e) {
+      return false;
+    }
+  }
+  function getOpeningDatePreference() {
+    try {
+      var v = localStorage.getItem(OPENING_DATE_PREF_KEY);
+      if (v === 'today' || v === 'yesterday') return v;
+    } catch (_e) {}
+    return 'yesterday';
+  }
+  function setOpeningDatePreference(v) {
+    if (v !== 'today' && v !== 'yesterday') return false;
+    try {
+      localStorage.setItem(OPENING_DATE_PREF_KEY, v);
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+  function openingDateIso(now) {
+    var base = now && typeof now.getFullYear === 'function' ? now : new Date();
+    var d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    if (getOpeningDatePreference() !== 'today') d.setDate(d.getDate() - 1);
+    return sharedDateIsoFromDate(d);
+  }
+  function explicitSharedDateIso() {
+    try {
+      var raw = String(new URLSearchParams(window.location.search).get('iso') || '').trim();
+      return sharedDateIsoOk(raw) ? raw : '';
+    } catch (_e) {
+      return '';
+    }
+  }
+  function bootCockpitIso() {
+    var explicit = explicitSharedDateIso();
+    if (explicit) {
+      markSharedDateSession();
+      return { iso: explicit, source: 'initial', mode: 'explicit' };
+    }
+    if (explicitYearMonthContext()) {
+      markSharedDateSession();
+      return null;
+    }
+    /* Same login, including a new tab: keep annualNav. No cookie yet also keeps it. */
+    if (sharedDateSessionActive() || !readAuthGenCookie()) return null;
+    markSharedDateSession();
+    return { iso: openingDateIso(new Date()), source: 'opening-preference', mode: 'opening' };
+  }
+  /* KPI-SHARED-DATE-END */
+
+  window.__KPI_SHARED_DATE = {
+    sessionKey: SHARED_DATE_BOUND_KEY,
+    authGenCookie: AUTH_GEN_COOKIE,
+    preferenceKey: OPENING_DATE_PREF_KEY,
+    sessionActive: sharedDateSessionActive,
+    markSession: markSharedDateSession,
+    clearSession: clearSharedDateSession,
+    getOpeningPreference: getOpeningDatePreference,
+    setOpeningPreference: setOpeningDatePreference,
+    openingIso: openingDateIso,
+    explicitIso: explicitSharedDateIso,
+    bootCockpitIso: bootCockpitIso,
   };
 
       if (canSync(cfg)) {

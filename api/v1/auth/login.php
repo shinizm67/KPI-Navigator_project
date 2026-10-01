@@ -39,4 +39,5 @@ kpi_v1_admin_touch_last_login($cfg, $user['userId']);
 $user = kpi_v1_auth_read_user($user['userId']) ?: $user;
 
 kpi_v1_auth_set_session_user($user['userId']);
+kpi_v1_auth_stamp_login_gen();
 kpi_v1_json_out(200, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

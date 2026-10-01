@@ -97,4 +97,5 @@ if ($created !== 'ok') {
 kpi_v1_lifecycle_on_account_created($cfg, $user['userId'], $user['email']);
 
 kpi_v1_auth_set_session_user($user['userId']);
+kpi_v1_auth_stamp_login_gen();
 kpi_v1_json_out(201, array_merge(['ok' => true], kpi_v1_auth_public_user($user, $cfg)));

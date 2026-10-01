@@ -2515,7 +2515,7 @@
   <script src="../../../js/kpi-editable-grid-keys.js?v=20260921-2"></script>
   <script src="../../../js/kpi-daily-facts-sync.js?v=20260923-c2c"></script>
   <script src="../../../js/kpi-daily-inputs-sync.js?v=20260923-c2c"></script>
-  <script src="../../../js/kpi-data-gateway.js?v=20260927-bt1"></script>
+  <script src="../../../js/kpi-data-gateway.js?v=20261001-srd1"></script>
   <script src="../../../js/kpi-pl-monthly-allocate.js"></script>
   <script src="../../../js/kpi-business-type.js?v=20260927-bt1"></script>
   <script src="../../../js/kpi-pl-expense-presets.js"></script>
@@ -15794,6 +15794,17 @@
         /* D: valid ?iso= wins even if year/month also present. */
         if (isValidMepCalendarIso(iso)) {
           applyMepSelectedIso(iso);
+          if (window.__KPI_SHARED_DATE && typeof window.__KPI_SHARED_DATE.markSession === 'function') {
+            window.__KPI_SHARED_DATE.markSession();
+          }
+          return;
+        }
+        var mepBoot = window.__KPI_SHARED_DATE && typeof window.__KPI_SHARED_DATE.bootCockpitIso === 'function'
+          ? window.__KPI_SHARED_DATE.bootCockpitIso()
+          : null;
+        if (mepBoot && mepBoot.mode === 'opening' && isValidMepCalendarIso(mepBoot.iso)) {
+          applyMepSelectedIso(mepBoot.iso);
+          pushMepSelectedDateToStore(mepBoot.iso);
           return;
         }
         if (Number.isFinite(y) && m >= 1 && m <= 12) {
