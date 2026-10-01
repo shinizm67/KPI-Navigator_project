@@ -323,6 +323,15 @@
             </select>
           </div>
 
+          <div class="form-group">
+            <label for="pref-opening-date">Opening Date :</label>
+            <select id="pref-opening-date" name="openingDate" class="profile-select" aria-label="Opening Date">
+              <option value="yesterday" selected>Yesterday</option>
+              <option value="today">Today</option>
+            </select>
+            <p class="profile-preferences-hint">Choose the reference date shown on a new sign-in.</p>
+          </div>
+
           <div class="form-group pref-marketing-row" id="pref-marketing-row" data-marketing-version="mkt-2026-09-29" hidden>
             <label for="pref-marketing">Email updates :</label>
             <label class="form-agreement-label" for="pref-marketing">
@@ -483,8 +492,10 @@
     (function () {
       var CURRENCY_KEY = 'kpi-currency';
       var TUTORIAL_KEY = 'kpi-tutorial-advanced';
+      var OPENING_KEY = 'kpiNavigator.openingDatePreference';
       var currencyEl = document.getElementById('pref-currency');
       var tutorialEl = document.getElementById('pref-tutorial');
+      var openingEl = document.getElementById('pref-opening-date');
       var langEl = document.getElementById('pref-lang');
       var form = document.getElementById('preferences-form');
       var bodyEl = document.getElementById('body-el');
@@ -539,6 +550,28 @@
         document.body.classList.toggle('tutorial-advanced-off', !on);
       }
 
+      function readOpening() {
+        try {
+          var api = window.__KPI_SHARED_DATE;
+          if (api && typeof api.getOpeningPreference === 'function') return api.getOpeningPreference();
+          var v = localStorage.getItem(OPENING_KEY);
+          if (v === 'today' || v === 'yesterday') return v;
+        } catch (_e) {}
+        return 'yesterday';
+      }
+
+      function saveOpening(v) {
+        if (v !== 'today' && v !== 'yesterday') return;
+        try {
+          var api = window.__KPI_SHARED_DATE;
+          if (api && typeof api.setOpeningPreference === 'function') {
+            api.setOpeningPreference(v);
+            return;
+          }
+          localStorage.setItem(OPENING_KEY, v);
+        } catch (_e) {}
+      }
+
       try {
         if (currencyEl && window.KpiCurrency && typeof KpiCurrency.arrangeSelect === 'function') {
           KpiCurrency.arrangeSelect(currencyEl);
@@ -547,6 +580,7 @@
         if (currencyEl && cur) currencyEl.value = cur;
         var tut = sessionStorage.getItem(TUTORIAL_KEY);
         if (tutorialEl) tutorialEl.value = tut === '0' ? '0' : '1';
+        if (openingEl) openingEl.value = readOpening();
       } catch (_e) {}
 
       if (langEl) {
@@ -565,12 +599,18 @@
           saveTutorial(tutorialEl.value !== '0');
         });
       }
+      if (openingEl) {
+        openingEl.addEventListener('change', function () {
+          saveOpening(openingEl.value);
+        });
+      }
 
       if (form) {
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           if (currencyEl) saveCurrency(currencyEl.value);
           if (tutorialEl) saveTutorial(tutorialEl.value !== '0');
+          if (openingEl) saveOpening(openingEl.value);
           var modeEl = document.getElementById('pref-mode');
           if (modeEl && bodyEl) {
             var on = modeEl.value === 'office';
