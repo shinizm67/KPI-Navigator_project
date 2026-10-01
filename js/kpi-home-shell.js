@@ -110,14 +110,17 @@
       var detail = win.querySelector('[data-home-detail]');
       if (!detail) return;
       var kind = win.getAttribute('data-home-window');
-      var q = 'year=' + encodeURIComponent(year) + '&month=' + encodeURIComponent(month) + '&iso=' + encodeURIComponent(currentIso);
-      detail.setAttribute('data-home-handoff', q);
-      /* Daily destination is not chosen. H4-C picks the page. Keep the iso handoff only. */
       if (kind === 'daily') {
-        detail.setAttribute('data-home-detail-status', 'provisional');
-        detail.setAttribute('href', '#');
+        detail.removeAttribute('data-home-detail-status');
+        var dailyBase = detail.getAttribute('data-home-href') || '../monthly/index.html';
+        var dailyPath = dailyBase.split('?')[0];
+        var dailyQ = 'open=daily&iso=' + encodeURIComponent(currentIso);
+        detail.setAttribute('data-home-handoff', dailyQ);
+        detail.setAttribute('href', dailyPath + '?' + dailyQ);
         return;
       }
+      var q = 'year=' + encodeURIComponent(year) + '&month=' + encodeURIComponent(month) + '&iso=' + encodeURIComponent(currentIso);
+      detail.setAttribute('data-home-handoff', q);
       var base = detail.getAttribute('data-home-href') || '';
       var path = base.split('?')[0];
       detail.setAttribute('href', path + '?' + q);
