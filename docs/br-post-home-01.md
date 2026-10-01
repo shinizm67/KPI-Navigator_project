@@ -1,12 +1,12 @@
 # BR-POST-HOME-01 — KPN Home / Simple Mode
 
-Status: **IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING**  
+Status: **IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / DEPLOYED / PRODUCTION VERIFIED**  
 Parent: post-launch (do not reopen `TRUNK-06`)  
 Registered: 2026-09-30 (Shin)  
-Validation close: 2026-10-01  
-HEAD: `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`
+Production close: 2026-10-01  
+Production revision: `3c8ec2598843bd07d524ac1642094007893ba2a3`
 
-Home v1 is implemented and validated. It is not deployed, and it is not PRODUCTION VERIFIED. CURRENT PATH is unchanged.
+Home v1 is deployed and production verified. CURRENT PATH is unchanged. Home is not the active path.
 
 Home v1 principle: **Do not redesign. Recompose.**
 
@@ -33,7 +33,7 @@ Progress comparison = Is sales keeping pace with operating time?
 | H4-G | Opening Date Preference UI | **DONE / VERIFIED** |
 | H4-H | Pre-Deploy Validation | **DONE / VERIFIED** |
 
-Technical blockers at close: 0. Production deploy is still pending.
+Technical blockers: 0. Production status: **PRODUCTION VERIFIED / CLOSED**.
 
 ---
 
@@ -124,6 +124,25 @@ Integration:
 - Settings pages without a CSS cache query remain non-blocking.
 - Disabled smoke users remain, with KPI data reset.
 - Future reconsideration: Home may eventually replace some Daily-page usage. That is not part of v1.
+
+These notes do not block this close.
+
+### Production verification (2026-10-01)
+
+- Deployed revision: `3c8ec2598843bd07d524ac1642094007893ba2a3`.
+- Production deploy: 78 runtime files.
+- The 2 docs files and 3 generator scripts were not part of the runtime deploy.
+- JP / EN / ZH-TW Home PASS.
+- Sci-Fi / Office PASS.
+- Global Menu Home PASS.
+- Shared Reference Date PASS.
+- Daily CTA → Monthly Daily FW PASS.
+- Opening Date Preference PASS.
+- Auth login / logout / re-login PASS.
+- Unexpected rebuild POST = 0.
+- 1200px PASS.
+- No Infinity / NaN.
+- Production errors = none.
 
 ---
 
@@ -395,7 +414,7 @@ Home v1 reuses the existing Cockpit date controls. Do not add a new date engine.
 
 ## H4 — Home Implementation
 
-Status: **DONE / VERIFIED** (2026-10-01). Production deploy is pending.
+Status: **DONE / VERIFIED** (2026-10-01). Deployed and production verified.
 
 | id | name | status |
 |----|------|--------|
@@ -409,4 +428,4 @@ Status: **DONE / VERIFIED** (2026-10-01). Production deploy is pending.
 | H4-G | Opening Date Preference UI | **DONE / VERIFIED** |
 | H4-H | Pre-Deploy Validation | **DONE / VERIFIED** |
 
-H4-H technical blockers = 0. HEAD `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`. Not deployed. Not PRODUCTION VERIFIED.
+H4-H technical blockers = 0. Production revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. DEPLOYED / PRODUCTION VERIFIED.
