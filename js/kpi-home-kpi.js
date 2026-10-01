@@ -162,8 +162,28 @@
     return false;
   }
 
+  /* POST only when every calendar day is an explicit boolean on timeline.businessDays.
+     A missing key is not treated as open or closed, and this does not fill the map.
+     Separate from the read-time fallback in isUiBusinessDay. */
+  function businessDaysExplicitForYear(store, year) {
+    var y = Number(year);
+    if (!Number.isFinite(y)) return false;
+    var bmap = store && store.timeline ? store.timeline.businessDays : null;
+    if (!bmap || typeof bmap !== 'object') return false;
+    for (var m = 0; m < 12; m++) {
+      var dc = new Date(y, m + 1, 0).getDate();
+      var mm = m + 1 < 10 ? '0' + (m + 1) : String(m + 1);
+      for (var day = 1; day <= dc; day++) {
+        var iso = y + '-' + mm + '-' + (day < 10 ? '0' : '') + day;
+        if (typeof bmap[iso] !== 'boolean') return false;
+      }
+    }
+    return true;
+  }
+
   /* Blob persist strips dailyFacts. Read the server snapshot, then the existing
-     rebuild endpoint once if that year has a saved plan and no rows yet. */
+     rebuild endpoint once if that year has a saved plan, a complete explicit
+     businessDays map, and no rows yet. */
   function loadRemoteYear(year) {
     if (remoteLoaded[year]) return Promise.resolve();
     if (remotePending[year]) return remotePending[year];
@@ -178,7 +198,13 @@
       })
       .then(function (data) {
         adoptRows(data && data.rows);
-        if (yearHasRemote(year) || !hasSavedPlan(readStore(), year) || typeof sync.rebuildYear !== 'function') {
+        var storeNow = readStore();
+        if (
+          yearHasRemote(year) ||
+          !hasSavedPlan(storeNow, year) ||
+          !businessDaysExplicitForYear(storeNow, year) ||
+          typeof sync.rebuildYear !== 'function'
+        ) {
           return null;
         }
         return sync.rebuildYear(year).then(function (res) {
