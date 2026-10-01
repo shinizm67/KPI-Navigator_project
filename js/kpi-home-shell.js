@@ -122,6 +122,9 @@
       var path = base.split('?')[0];
       detail.setAttribute('href', path + '?' + q);
     });
+    if (window.__KPI_HOME_KPI && typeof window.__KPI_HOME_KPI.paint === 'function') {
+      window.__KPI_HOME_KPI.paint(currentIso);
+    }
   }
   function commit(iso) {
     if (!parseIso(iso) || iso === currentIso) {

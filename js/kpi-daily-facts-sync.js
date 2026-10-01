@@ -228,7 +228,7 @@
         return res.json();
       })
       .then(function (data) {
-        if (!data || !data.ok) return;
+        if (!data || !data.ok) return data || null;
         applyRows(data.rows || []);
         var serverHasYear = (data.rows || []).some(function (row) {
           return row && String(row.iso).indexOf(String(year) + '-') === 0;
@@ -236,6 +236,7 @@
         if (!serverHasYear && opts.backfill) {
           putYear(year);
         }
+        return data;
       })
       .catch(function () {});
   }
