@@ -36,6 +36,9 @@ ROOT = Path(__file__).resolve().parents[1]
 #        "link"    = page navigates to Annual for Daily (profit).
 # Profit-nav label is canonical (考察 / Insight) for every page — no per-page
 # override (the old en/profit "Profit" drift was retired 2026-07-17).
+# DEFERRED (H4-B): app/home, en/app/home, zh-tw/app/home are not generation
+# targets. Their header/footer is a snapshot. Add them in the same change as
+# the Global Menu Home entry so Home chrome cannot drift from this list.
 PAGES_APP = [
     {"path": "app/annual/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "annual", "daily": "overlay"},
     {"path": "app/monthly/index.html", "lang": "ja", "base": "../../", "img": "../../", "active": "monthly", "daily": "overlay"},

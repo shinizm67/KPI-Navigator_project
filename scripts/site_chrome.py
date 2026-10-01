@@ -18,6 +18,8 @@ Design notes:
       shared by both languages). For JA `img == base`; for EN `img` has one
       extra `../`.
 - `active` marks the current nav item (`annual` | `monthly` | `profit` | None).
+- DEFERRED (H4-B): Home is not a generation target yet. Add it together with
+  the Global Menu Home entry. Do not leave a Home-only chrome snapshot.
 """
 
 from __future__ import annotations

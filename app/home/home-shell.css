@@ -1,0 +1,217 @@
+/* Home shell only. Recompose Daily FW colors. Do not invent a theme.
+   Window gap is the black band between independent boxes.
+   Default 32px. Visual smoke may set 24 or 40 on .home-windows. */
+.home-page .home-windows {
+  --home-window-gap: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-window-gap);
+  width: min(1100px, calc(100% - 48px));
+  margin: 28px auto 56px;
+  background: #000000;
+  box-sizing: border-box;
+}
+
+.home-window {
+  display: flex;
+  flex-direction: column;
+  border: 3px solid rgba(13, 177, 58, 0.85);
+  border-radius: 12px;
+  background: rgba(9, 12, 17, 0.95);
+  box-shadow: 0 0 20px rgba(13, 177, 58, 0.22);
+  color: #58e1f3;
+  font-family: 'Orbitron', sans-serif;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.home-window__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 74px;
+  padding: 12px 18px 10px;
+  border-bottom: 0.5px solid rgba(88, 225, 243, 0.72);
+  box-sizing: border-box;
+}
+
+.home-window__identity {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.home-window__date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-window__nav,
+.home-window__date-btn,
+.home-window__today {
+  border: 0;
+  margin: 0;
+  background: transparent;
+  color: #58e1f3;
+  font-family: 'Orbitron', sans-serif;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.home-window__nav {
+  width: 20px;
+  min-width: 20px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.home-window__date-btn {
+  width: 196px;
+  min-width: 196px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+}
+
+.home-window__today {
+  border: 1px solid rgba(88, 225, 243, 0.72);
+  border-radius: 4px;
+  background: rgba(88, 225, 243, 0.12);
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.home-window__today[hidden] {
+  display: none;
+}
+
+.home-window__date-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-window__kpi {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+}
+
+.home-window__kpi-cell {
+  min-height: 72px;
+  border: 1px solid rgba(88, 225, 243, 0.35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+.home-window__kpi-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.home-window__kpi-value {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.home-window__expanded[hidden] {
+  display: none;
+}
+
+.home-window__expanded {
+  margin: 0 18px 8px;
+  padding: 16px;
+  border-top: 0.5px solid rgba(88, 225, 243, 0.45);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.home-window__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 18px 16px;
+}
+
+.home-window__expand,
+.home-window__detail {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  color: #58e1f3;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.home-window__expand {
+  border: 1px solid rgba(88, 225, 243, 0.72);
+  border-radius: 4px;
+  background: rgba(88, 225, 243, 0.12);
+  padding: 8px 12px;
+}
+
+.home-window__detail {
+  margin-left: auto;
+  border-bottom: 1px solid rgba(88, 225, 243, 0.72);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+body.office-mode .home-window {
+  border: 1px solid #111111;
+  border-radius: 0;
+  background: #f0f0f0;
+  box-shadow: none;
+  color: #111111;
+  font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;
+}
+
+body.office-mode .home-window__head,
+body.office-mode .home-window__expanded {
+  border-color: #111111;
+}
+
+body.office-mode .home-window__nav,
+body.office-mode .home-window__date-btn,
+body.office-mode .home-window__identity,
+body.office-mode .home-window__kpi-label,
+body.office-mode .home-window__kpi-value,
+body.office-mode .home-window__expanded,
+body.office-mode .home-window__detail {
+  color: #111111;
+  font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;
+}
+
+body.office-mode .home-window__today,
+body.office-mode .home-window__expand {
+  border: 1px solid #111111;
+  background: #d0d0d0;
+  color: #111111;
+  box-shadow: none;
+  font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;
+}
+
+body.office-mode .home-window__kpi-cell {
+  border-color: #111111;
+  background: #ffffff;
+}
+
+body.office-mode .home-window__detail {
+  border-bottom-color: #111111;
+}
