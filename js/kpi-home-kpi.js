@@ -395,7 +395,26 @@
     return '#B71C1C';
   }
 
-  function paintBar(track, rateEl, pct) {
+  /* Candidate B. Raw percentage points, not the rounded label. */
+  function paceWarning(bizPct, salesPct) {
+    if (bizPct == null || salesPct == null) return 'normal';
+    if (!Number.isFinite(bizPct) || !Number.isFinite(salesPct)) return 'normal';
+    var sales = salesPct < 0 ? 0 : salesPct;
+    if (sales >= bizPct) return 'normal';
+    var gap = bizPct - sales;
+    if (gap >= 20) return 'red';
+    if (gap >= 10) return 'orange';
+    return 'normal';
+  }
+
+  function setPace(rateEl, pace) {
+    var progress = rateEl && rateEl.closest ? rateEl.closest('[data-home-progress]') : null;
+    if (!progress) return;
+    if (pace === 'orange' || pace === 'red') progress.setAttribute('data-home-pace', pace);
+    else progress.removeAttribute('data-home-pace');
+  }
+
+  function paintBar(track, rateEl, pct, pace) {
     if (!track || !rateEl) return;
     if (pct == null || !Number.isFinite(pct)) {
       rateEl.textContent = DASH;
@@ -403,16 +422,22 @@
       track.style.setProperty('--kgi-x', '0%');
       track.style.setProperty('--fill-w', '0%');
       track.style.setProperty('--marker-color', '#E6FF00');
+      setPace(rateEl, 'normal');
       return;
     }
     var kpi = 66.666;
     var maxKgi = 90;
     var kgi = Math.max(0, Math.min(maxKgi, kpi * (Math.max(0, pct) / 100)));
+    var marker = markerColor(pct);
+    if (pace === 'normal') marker = '#E6FF00';
+    else if (pace === 'orange') marker = '#F9A825';
+    else if (pace === 'red') marker = '#E53935';
     rateEl.textContent = pctText(pct);
     track.style.setProperty('--kpi-x', kpi + '%');
     track.style.setProperty('--kgi-x', kgi + '%');
     track.style.setProperty('--fill-w', kgi + '%');
-    track.style.setProperty('--marker-color', markerColor(pct));
+    track.style.setProperty('--marker-color', marker);
+    setPace(rateEl, pace);
   }
 
   function paintExpanded(win, kind, goal) {
@@ -437,15 +462,18 @@
       setGoal('perDay', goal.facts && perN != null ? money(perN) : DASH);
       var biz = expanded.querySelector('[data-home-progress="business"]');
       var sales = expanded.querySelector('[data-home-progress="sales"]');
+      var bizPct = goal.facts ? ratioPct(elapsed, total) : null;
+      var salesPct = showMoney ? ratioPct(actual, finalN) : null;
       paintBar(
         biz && biz.querySelector('[data-home-track]'),
         biz && biz.querySelector('[data-home-rate]'),
-        goal.facts ? ratioPct(elapsed, total) : null
+        bizPct
       );
       paintBar(
         sales && sales.querySelector('[data-home-track]'),
         sales && sales.querySelector('[data-home-rate]'),
-        showMoney ? ratioPct(actual, finalN) : null
+        salesPct,
+        paceWarning(bizPct, salesPct)
       );
     }
     if (kind === 'daily') {
@@ -485,9 +513,31 @@
     });
   }
 
+  function paintProgress(kind, bizPct, salesPct) {
+    var win = document.querySelector('[data-home-window="' + kind + '"]');
+    if (!win || (kind !== 'monthly' && kind !== 'annual')) return 'normal';
+    var biz = win.querySelector('[data-home-progress="business"]');
+    var sales = win.querySelector('[data-home-progress="sales"]');
+    paintBar(
+      biz && biz.querySelector('[data-home-track]'),
+      biz && biz.querySelector('[data-home-rate]'),
+      bizPct
+    );
+    var level = paceWarning(bizPct, salesPct);
+    paintBar(
+      sales && sales.querySelector('[data-home-track]'),
+      sales && sales.querySelector('[data-home-rate]'),
+      salesPct,
+      level
+    );
+    return level;
+  }
+
   window.__KPI_HOME_KPI = {
     paint: paint,
     metrics: metricsFor,
-    goal: goalFor
+    goal: goalFor,
+    pace: paceWarning,
+    paintProgress: paintProgress
   };
 })();

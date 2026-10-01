@@ -325,3 +325,11 @@ body.office-mode .home-progress__label {
   color: #111111;
   font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;
 }
+
+.home-progress[data-home-pace='orange'] .home-progress__rate {
+  color: #F9A825;
+}
+
+.home-progress[data-home-pace='red'] .home-progress__rate {
+  color: #E53935;
+}
