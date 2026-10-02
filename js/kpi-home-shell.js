@@ -195,16 +195,21 @@
     }
     var expandBtn = win.querySelector('[data-home-expand]');
     var expanded = win.querySelector('[data-home-expanded]');
+    function paintChevron(btn, open) {
+      btn.textContent = open ? '▼' : '▶';
+      var label = open ? btn.getAttribute('data-label-collapse') : btn.getAttribute('data-label-expand');
+      if (label) btn.setAttribute('aria-label', label);
+    }
     if (expandBtn && expanded) {
       expandBtn.setAttribute('aria-expanded', 'false');
+      paintChevron(expandBtn, false);
       expandBtn.addEventListener('click', function () {
         var open = expandBtn.getAttribute('aria-expanded') === 'true';
         var next = !open;
         expandBtn.setAttribute('aria-expanded', next ? 'true' : 'false');
         expanded.hidden = !next;
         win.classList.toggle('is-expanded', next);
-        var label = next ? expandBtn.getAttribute('data-label-collapse') : expandBtn.getAttribute('data-label-expand');
-        if (label) expandBtn.textContent = label;
+        paintChevron(expandBtn, next);
       });
     }
   });
