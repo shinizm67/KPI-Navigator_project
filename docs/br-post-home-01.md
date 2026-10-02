@@ -127,6 +127,19 @@ Integration:
 
 These notes do not block this close.
 
+### Business-day Progress bar (audit 2026-10-02)
+
+Home’s Business-day Progress reuses the Sales Progress `paintBar`. That is why a yellow 100% marker sits at 66.67% of the track. Daily Floating Window and Insight have no canonical Business-day Progress bar.
+
+Recorded Home design reading, not a code change:
+
+- bright green = elapsed business-day ratio
+- dark track = remaining portion
+- triangle = current / selected business-day position
+- yellow target marker on this bar = remove candidate
+
+The Sales Progress yellow marker stays. It is the Target Sales 100% line.
+
 ### Production verification (2026-10-01)
 
 - Deployed revision: `3c8ec2598843bd07d524ac1642094007893ba2a3`.

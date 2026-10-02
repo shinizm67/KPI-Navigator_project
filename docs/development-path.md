@@ -161,6 +161,10 @@ DEFERRED:
   parent: BR-LAUNCH-05. Not in Launch-required scope (public registration went live 2026-09-29 without it). Reconsider before paid Pro / billing.
 - BR-LAUNCH-05-REG-SESSION register.php sets a session but the UI sends the user to Login P2 REGISTER ONLY
   parent: BR-LAUNCH-05. Behavior unchanged. Cleanup options (stop session on register, or go straight in) decided later.
+- BR-POST-PROGRESS-SCALE-01 Dynamic Progress Bar Scale POST-LAUNCH / REDESIGN
+  parent: post-launch. REGISTER ONLY. Do not change the current Sales Progress contract. See [`docs/br-post-progress-scale-01.md`](./br-post-progress-scale-01.md).
+- BR-POST-PACE-ALERT-01 Business-day vs Sales Pace Alert Visual Contract POST-LAUNCH / REDESIGN
+  parent: post-launch. REGISTER ONLY. Do not change the current Home pace warning. See [`docs/br-post-pace-alert-01.md`](./br-post-pace-alert-01.md).
 
 RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
@@ -1712,6 +1716,41 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | None. PRODUCTION VERIFIED / CLOSED. CURRENT PATH unchanged. Home is not the active path. |
 | constraint | 78 runtime files deployed. Docs and generator scripts were not in the runtime deploy. Deferred, not blocking this close: Annual rebuild stays outside the Home `businessDays` guard; Opening Date Preference server sync; Settings pages without a CSS cache query; disabled smoke users with KPI data reset; Home replacing some Daily-page usage is not v1. |
 
+### BR-POST-PROGRESS-SCALE-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-PROGRESS-SCALE-01` |
+| name | Dynamic Progress Bar Scale |
+| parent | post-launch (do not reopen `TRUNK-06`) |
+| status | DEFERRED / POST-LAUNCH / REDESIGN |
+| priority | not raised |
+| started_at | registered 2026-10-02 |
+| return_to | none |
+| purpose | Later redesign so an achievement above the current visual ceiling can still move the target marker left and keep 150 / 200 / 300% visually distinct, on one contract for Daily, Monthly, Annual, Insight, and Home. |
+| current_contract | Target 100% = 66.67% of the track. Actual = that position times the achievement ratio. Visual max = 90% of the track. 135% and above share one visual position. The printed percent is not clamped. |
+| historical_audit | Sales Progress dynamic scale: evidence not found. First shipped formula is `e69ada5` (2026-03-27). `docs/annual-kpi-strip-memo.md` records the fixed 2/3 line. |
+| reference | Past Sales seasonality only: `getSeasonalityChartScale`, `scaleMax = max(peak, 100)`, 100% marker = `(100 / scaleMax) × 100%`. `9ef8dba` (2026-07-02). `docs/past-sales-floating-window-memo.md` §12.5. Not the Sales Progress bar. |
+| design_note | [`docs/br-post-progress-scale-01.md`](./br-post-progress-scale-01.md) |
+| next_action | REGISTER ONLY. Do not implement. Do not change the current Sales Progress contract. |
+
+### BR-POST-PACE-ALERT-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-POST-PACE-ALERT-01` |
+| name | Business-day vs Sales Pace Alert Visual Contract |
+| parent | post-launch (do not reopen `TRUNK-06`) |
+| status | DEFERRED / POST-LAUNCH / REDESIGN |
+| priority | not raised |
+| started_at | registered 2026-10-02 |
+| return_to | none |
+| purpose | Later redesign of the Home pace warning visual contract. |
+| current_contract | gap = raw Business-day Progress − raw Sales Progress. gap < 10 normal; 10 <= gap < 20 orange; gap >= 20 red. Home overwrites the Sales Progress triangle and percentage color. Introduced `5e7dd63` (2026-10-01). Bar paint `a6503ed` (2026-10-01). |
+| historical_audit | Pre-Home Business-day vs Sales pace warning: evidence not found. Not a restore. Achievement-severity triangle color since `e69ada5` (2026-03-27) is a different rule and remains on Daily FW / Insight. |
+| design_note | [`docs/br-post-pace-alert-01.md`](./br-post-pace-alert-01.md) |
+| next_action | REGISTER ONLY. Do not change the current Home pace warning. |
+
 ---
 
 ## 8. DEFERRED BRANCHES????
@@ -1793,6 +1832,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-COCKPIT-GAP` | Cockpit Annual Target / Business Day gap | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-HOME-01` | KPN Home / Simple Mode | PRODUCTION VERIFIED / CLOSED | P1 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-PROGRESS-SCALE-01` | Dynamic Progress Bar Scale | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-PACE-ALERT-01` | Business-day vs Sales Pace Alert Visual Contract | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1815,7 +1856,8 @@ DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`, `BR-POST-HOME-01`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 PRODUCTION VERIFIED / CLOSED (not the active path): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. Revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. CURRENT PATH unchanged.)  
-DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`
+DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`  
+DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-POST-PACE-ALERT-01`
 
 ---
 
@@ -1976,3 +2018,4 @@ DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal pars
 | 2026-09-30 | **BR-POST-HOME-01 H3 DONE / REVIEWED.** Canonical date stays `kpiNavigator.annualNav.selectedIso`. Opening preference v1 default Yesterday (user may choose Today). Explicit `?iso=` wins. New login does not restore a distant previous `selectedIso`. PL comparison Deferred. Next: H4 NOT STARTED, blocked on Shin GO. REGISTER ONLY. CURRENT PATH unchanged. No implementation. |
 | 2026-10-01 | **BR-POST-HOME-01 IMPLEMENTATION COMPLETE / VALIDATION COMPLETE / PRODUCTION DEPLOY PENDING.** H1–H3 DONE. H4-A through H4-H DONE / VERIFIED. H4-H technical blockers = 0. HEAD `37702722b1b88bbd4b51d5e85cb44ff3ec739e82`. Not deployed. Not PRODUCTION VERIFIED. CURRENT PATH unchanged. |
 | 2026-10-01 | **BR-POST-HOME-01 PRODUCTION VERIFIED / CLOSED.** Deployed revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. JP / EN / ZH-TW, Sci-Fi / Office, Global Menu, Shared Reference Date, Daily CTA, Opening Date Preference, auth login / logout / re-login, rebuild POST = 0, 1200px. No Infinity / NaN. Production errors none. CURRENT PATH unchanged. Home is not the active path. |
+| 2026-10-02 | **BR-POST-PROGRESS-SCALE-01** and **BR-POST-PACE-ALERT-01** registered. Both DEFERRED / POST-LAUNCH / REDESIGN. Priority not raised. CURRENT PATH unchanged. Home status not changed. Sales Progress dynamic scale: evidence not found (`e69ada5`). Seasonality dynamic scale remains `getSeasonalityChartScale` (`9ef8dba`). Home pace warning remains `5e7dd63`. No implementation. |
