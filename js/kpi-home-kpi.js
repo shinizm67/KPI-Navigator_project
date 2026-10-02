@@ -334,7 +334,9 @@
       yearElapsed: null,
       yearTotal: null,
       mtdA: null,
-      ytdA: null
+      ytdA: null,
+      mtdT: null,
+      ytdT: null
     };
     if (!store || !base || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return out;
     out.isBusinessToday = !!base.isBusinessToday;
@@ -342,6 +344,8 @@
     out.dailyTarget = base.isBusinessToday ? base.dailyTarget : null;
     out.mtdA = base.mtdA;
     out.ytdA = base.ytdA;
+    out.mtdT = base.mtdT;
+    out.ytdT = base.ytdT;
     if (!base.hasPlan) return out;
     out.hasPlan = true;
     var y = yearOf(iso);
@@ -489,7 +493,8 @@
       var biz = expanded.querySelector('[data-home-progress="business"]');
       var sales = expanded.querySelector('[data-home-progress="sales"]');
       var bizPct = goal.facts ? ratioPct(elapsed, total) : null;
-      var salesPct = showMoney ? ratioPct(actual, finalN) : null;
+      var salesTarget = kind === 'monthly' ? goal.mtdT : goal.ytdT;
+      var salesPct = ratioPct(actual, salesTarget);
       paintBar(
         biz && biz.querySelector('[data-home-track]'),
         biz && biz.querySelector('[data-home-rate]'),
