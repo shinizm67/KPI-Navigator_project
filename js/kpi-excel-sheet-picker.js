@@ -241,7 +241,7 @@
       expenseReason: 'この表は支出データとして判定できませんでした',
       main: 'このファイルは安全に読み取れませんでした。\nKPNの売上雛形へ、日付と売上を貼り付けて、\nもう一度アップロードしてください。',
       steps: [
-        '雛形をダウンロード',
+        'Excel雛形をダウンロード',
         '元のファイルから「日付」と「売上」をコピー',
         '雛形の3行目から貼り付け',
         'もう一度アップロード',
@@ -259,7 +259,8 @@
       toSales: '日次売上',
       expenseDaily: '日次：日付 / 費目 / 金額',
       expenseMonthly: '月次：年月 / 費目 / 金額',
-      download: '雛形をダウンロード',
+      download: 'Excel雛形をダウンロード',
+      downloadCsv: 'CSV雛形',
       daily: '日次の雛形',
       monthly: '月次の雛形',
       retry: 'もう一度アップロード',
@@ -277,7 +278,7 @@
       expenseReason: 'This table could not be recognized as expenses',
       main: 'This file could not be read safely. Copy the date and sales into the KPN sales template, then upload it again.',
       steps: [
-        'Download the template',
+        'Download the Excel template',
         'Copy the date and sales from your file',
         'Paste from row 3 of the template',
         'Upload again',
@@ -295,7 +296,8 @@
       toSales: 'Daily sales',
       expenseDaily: 'Daily: date / item / amount',
       expenseMonthly: 'Monthly: month / item / amount',
-      download: 'Download template',
+      download: 'Download Excel template',
+      downloadCsv: 'CSV template',
       daily: 'Daily template',
       monthly: 'Monthly template',
       retry: 'Upload again',
@@ -312,7 +314,7 @@
       },
       expenseReason: '這張表無法判定為支出資料',
       main: '這個檔案無法安全讀取。請把日期和銷售金額貼到 KPN 銷售範本，再上傳一次。',
-      steps: ['下載範本', '從原本的檔案複製「日期」和「銷售」', '從範本第3列貼上', '再上傳一次'],
+      steps: ['下載 Excel 範本', '從原本的檔案複製「日期」和「銷售」', '從範本第3列貼上', '再上傳一次'],
       protect: '範本的第1列和第2列請保持原樣。',
       date: '日期請含年份，例如 2026-04-01。',
       note: '請不要貼上合計或小計列。',
@@ -326,7 +328,8 @@
       toSales: '日次銷售',
       expenseDaily: '每日：日期 / 項目 / 金額',
       expenseMonthly: '月度：年月 / 項目 / 金額',
-      download: '下載範本',
+      download: '下載 Excel 範本',
+      downloadCsv: 'CSV 範本',
       daily: '每日範本',
       monthly: '月度範本',
       retry: '再上傳一次',
@@ -385,6 +388,14 @@
       ' .kpi-import-recovery__btn:hover,#' +
       RECOVERY_ID +
       ' .kpi-import-recovery__btn:focus{background:rgba(88,225,243,.12);}' +
+      '#' +
+      RECOVERY_ID +
+      ' .kpi-import-recovery__btn--quiet{width:auto;align-self:center;padding:2px 4px 6px;border:0;background:transparent;font-size:12px;line-height:1.4;text-decoration:underline;opacity:.8;}' +
+      '#' +
+      RECOVERY_ID +
+      ' .kpi-import-recovery__btn--quiet:hover,#' +
+      RECOVERY_ID +
+      ' .kpi-import-recovery__btn--quiet:focus{background:transparent;opacity:1;}' +
       'body.office-mode #' +
       RECOVERY_ID +
       ' .kpi-import-recovery__panel{background:#fff;color:#111;border-color:#ccc;}' +
@@ -412,11 +423,11 @@
     }
   }
 
-  function recoveryButton(id, label, onClick) {
+  function recoveryButton(id, label, onClick, extraClass) {
     var btn = global.document.createElement('button');
     btn.type = 'button';
     btn.id = id;
-    btn.className = 'kpi-import-recovery__btn';
+    btn.className = 'kpi-import-recovery__btn' + (extraClass ? ' ' + extraClass : '');
     btn.textContent = label;
     btn.addEventListener('click', onClick);
     return btn;
@@ -425,6 +436,28 @@
   function downloadTemplate(kind) {
     var api = global.KpiCsvTemplates;
     if (api && typeof api.downloadKind === 'function') api.downloadKind(kind);
+  }
+
+  function xlsxUnavailableGuidance() {
+    /* Same wording as the importer's existing xlsx-library alert. That alert is JA/EN only. */
+    var msg =
+      locale() === 'ja'
+        ? 'Excel ライブラリを読み込めませんでした。CSVで保存してから再度お試しください。'
+        : 'Could not load the Excel library. Save as CSV and try again.';
+    try {
+      global.window.alert(msg);
+    } catch (_eAlert) {}
+  }
+
+  function downloadRecoveryExcel() {
+    var api = global.KpiExcelTemplates;
+    if (!api || typeof api.downloadRecoverySalesTemplate !== 'function') {
+      xlsxUnavailableGuidance();
+      return;
+    }
+    api.downloadRecoverySalesTemplate().catch(function () {
+      xlsxUnavailableGuidance();
+    });
   }
 
   function showImportRecovery(opts) {
@@ -538,8 +571,18 @@
     if (kind === 'sales') {
       actions.appendChild(
         recoveryButton('kpi-import-recovery-download-sales', pack.download, function () {
-          downloadTemplate('sales');
+          downloadRecoveryExcel();
         })
+      );
+      actions.appendChild(
+        recoveryButton(
+          'kpi-import-recovery-download-csv',
+          pack.downloadCsv,
+          function () {
+            downloadTemplate('sales');
+          },
+          'kpi-import-recovery__btn--quiet'
+        )
       );
     } else {
       actions.appendChild(

@@ -11,6 +11,14 @@
 
   var XLSX_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
   var SALES_BLANK_ROWS = 8;
+  var RECOVERY_BLANK_ROWS = 31;
+  var RECOVERY_DATE_SAMPLE = '2026-04-01';
+  var RECOVERY_SALES_FILENAME = {
+    ja: 'KPN_売上入力雛形.xlsx',
+    en: 'KPN_Sales_Template.xlsx',
+    'zh-tw': 'KPN_銷售範本.xlsx',
+  };
+  var RECOVERY_REQUIRED_KEYS = { date: true, business_day: true, daily_sales: true };
   var SHEET_NAMES = {
     ja: { sales: '売上', 'expense-daily': '支出_日次', 'expense-monthly': '支出_月次' },
     en: { sales: 'Sales', 'expense-daily': 'Daily Expenses', 'expense-monthly': 'Monthly Expenses' },
@@ -94,6 +102,37 @@
     return out;
   }
 
+  function visualWidth(text) {
+    var n = 0;
+    var s = String(text || '');
+    for (var i = 0; i < s.length; i++) n += s.charCodeAt(i) > 255 ? 2 : 1;
+    return n;
+  }
+
+  function recoveryColumnWidths(keys, labels) {
+    var cols = [];
+    for (var i = 0; i < keys.length; i++) {
+      var key = String(keys[i] || '');
+      var label = labels && labels[i] != null ? String(labels[i]) : '';
+      var need = Math.max(visualWidth(key), visualWidth(label), visualWidth(RECOVERY_DATE_SAMPLE));
+      var width = need + 1;
+      if (RECOVERY_REQUIRED_KEYS[key]) width = Math.max(16, width);
+      else width = Math.max(12, width);
+      cols.push({ wch: Math.min(22, width) });
+    }
+    return cols;
+  }
+
+  function blankRows(width, count) {
+    var rows = [];
+    for (var i = 0; i < count; i++) {
+      var blank = [];
+      for (var c = 0; c < width; c++) blank.push('');
+      rows.push(blank);
+    }
+    return rows;
+  }
+
   function salesRows(businessType, lang) {
     var rec = csvApi().buildSalesTemplate(businessType, lang);
     var rows = parseCsvText(rec.text);
@@ -111,6 +150,35 @@
     return {
       rows: parseCsvText(rec.text),
       lineIds: rec.lineIds || [],
+    };
+  }
+
+  function buildRecoverySalesSpec(businessType, lang) {
+    var api = csvApi();
+    if (!api || typeof api.buildSalesTemplate !== 'function') return null;
+    var loc = lang || detectLang();
+    var bt = businessType == null ? currentBusinessType() : businessType;
+    var rec = api.buildSalesTemplate(bt, loc);
+    var rows = parseCsvText(rec.text);
+    var keys = rec.keys || (rows[0] || []);
+    var labels = rec.labels || (rows[1] || []);
+    var width = keys.length || (rows[0] && rows[0].length) || 0;
+    rows = rows.concat(blankRows(width, RECOVERY_BLANK_ROWS));
+    return {
+      businessType: bt,
+      lang: loc,
+      filename: RECOVERY_SALES_FILENAME[loc] || RECOVERY_SALES_FILENAME.en,
+      sheets: [
+        {
+          kind: 'sales',
+          name: sheetName('sales', loc),
+          rows: rows,
+          keys: keys,
+          labels: labels,
+          cols: recoveryColumnWidths(keys, labels),
+          lineIds: [],
+        },
+      ],
     };
   }
 
@@ -169,10 +237,32 @@
   function workbookFromSpec(XLSX, spec) {
     var wb = XLSX.utils.book_new();
     (spec.sheets || []).forEach(function (sheet) {
-      var ws = XLSX.utils.aoa_to_sheet(sheet.rows || []);
+      var rows = sheet.rows || [];
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      if (sheet.cols && sheet.cols.length) {
+        ws['!cols'] = sheet.cols;
+        var colCount = (sheet.keys && sheet.keys.length) || (rows[0] && rows[0].length) || sheet.cols.length;
+        if (rows.length && colCount && XLSX.utils.encode_range) {
+          ws['!ref'] = XLSX.utils.encode_range({
+            s: { r: 0, c: 0 },
+            e: { r: rows.length - 1, c: colCount - 1 },
+          });
+        }
+      }
       XLSX.utils.book_append_sheet(wb, ws, sheet.name);
     });
     return wb;
+  }
+
+  function downloadRecoverySalesTemplate(opts) {
+    opts = opts || {};
+    var spec = buildRecoverySalesSpec(opts.businessType, opts.lang);
+    if (!spec) return Promise.reject(new Error('csv-templates'));
+    return ensureXlsx().then(function (XLSX) {
+      var wb = workbookFromSpec(XLSX, spec);
+      XLSX.writeFile(wb, spec.filename);
+      return spec;
+    });
   }
 
   function downloadExcelTemplate(opts) {
@@ -222,9 +312,13 @@
   global.KpiExcelTemplates = {
     __ready: true,
     SHEET_NAMES: SHEET_NAMES,
+    RECOVERY_BLANK_ROWS: RECOVERY_BLANK_ROWS,
+    RECOVERY_SALES_FILENAME: RECOVERY_SALES_FILENAME,
     buildExcelSpec: buildExcelSpec,
+    buildRecoverySalesSpec: buildRecoverySalesSpec,
     workbookFromSpec: workbookFromSpec,
     downloadExcelTemplate: downloadExcelTemplate,
+    downloadRecoverySalesTemplate: downloadRecoverySalesTemplate,
     ensureXlsx: ensureXlsx,
     bindDownloadMenu: bindDownloadMenu,
   };
