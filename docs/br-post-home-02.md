@@ -1,11 +1,13 @@
 # BR-POST-HOME-02 — Home / Simple Mode Redesign
 
-Status: **LOCAL HUMAN VISUAL REVIEW COMPLETE / NOT DEPLOYED / P1**  
+Status: **PRODUCTION VERIFIED / CLOSED**  
 Parent: post-launch (do not reopen `TRUNK-06`)  
 Registered: 2026-10-02  
-Local visual review: 2026-10-03
+Local visual review: 2026-10-03  
+Production verified: 2026-10-03  
+Production commit: `305924ee4afdcf6f62d52669a654f86bdd567ad3`
 
-`BR-POST-HOME-01` stays **PRODUCTION VERIFIED / CLOSED**. This task does not reopen it. CURRENT PATH is unchanged. Home v2 is implemented locally and the human visual review is complete. Production deploy has not been done. This status is not PRODUCTION VERIFIED.
+`BR-POST-HOME-01` stays **PRODUCTION VERIFIED / CLOSED**. This task does not reopen it. CURRENT PATH is unchanged. Production smoke passed for JP / EN / ZH-TW × Sci-Fi / Office at 1200px. Runtime deploy was `app/home/home-shell.css`, `app/home/index.html`, `en/app/home/index.html`, and `zh-tw/app/home/index.html`. `https://forge-laboratory.com/kpi-navigator/favicon.ico` returns 404. That request did not appear as a pageerror in the production smoke. Home is not the active path.
 
 ## Product role
 
@@ -45,7 +47,7 @@ Width: 900px.
 
 ## Local visual contract
 
-Recorded from the local implementation after the 2026-10-03 human visual review. Production has not been checked.
+Recorded from the production implementation verified on 2026-10-03.
 
 - Top control zone: the existing Global Menu, then the existing Workspace selector, then Daily / Monthly / Annual.
 - Workspace bottom to Daily top is about 60px. Daily to Monthly, and Monthly to Annual, are 50px between the card borders.
@@ -183,4 +185,4 @@ The lower-right of each window links to that window’s detail page. Home v2 kee
 
 Status: **SUPERSEDED**.
 
-The separate pre-implementation audit was not recorded. Home v2 was implemented locally and closed by human visual review on 2026-10-03. Production deploy is still outstanding.
+The separate pre-implementation audit was not recorded. Home v2 was production verified on 2026-10-03 at `305924ee4afdcf6f62d52669a654f86bdd567ad3`.

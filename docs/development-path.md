@@ -50,6 +50,10 @@ POST-LAUNCH (not the active path):
   PRODUCTION VERIFIED / CLOSED (2026-10-01)
   revision 3c8ec2598843bd07d524ac1642094007893ba2a3
   CURRENT PATH above is unchanged. Home is not the active path.
+- BR-POST-HOME-02 (Home / Simple Mode Redesign) P1
+  PRODUCTION VERIFIED / CLOSED (2026-10-03)
+  revision 305924ee4afdcf6f62d52669a654f86bdd567ad3
+  CURRENT PATH above is unchanged. Home is not the active path.
 
 ACTIVE BRANCHES:
 - BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3A Basic Account Delete IMPLEMENTED — READY FOR HUMAN SMOKE; Phase 3B Paid / Stripe Account Delete BLOCKED — Stripe / Billing contract required)
@@ -165,8 +169,8 @@ DEFERRED:
   parent: post-launch. REGISTER ONLY. Do not change the current Sales Progress contract. See [`docs/br-post-progress-scale-01.md`](./br-post-progress-scale-01.md).
 - BR-POST-PACE-ALERT-01 Business-day vs Sales Pace Alert Visual Contract POST-LAUNCH / REDESIGN
   parent: post-launch. REGISTER ONLY. Do not change the current Home pace warning. See [`docs/br-post-pace-alert-01.md`](./br-post-pace-alert-01.md).
-- BR-POST-HOME-02 Home / Simple Mode Redesign P1 POST-LAUNCH / REGISTER ONLY
-  parent: post-launch. Do not reopen `BR-POST-HOME-01`. H2-1 not started. See [`docs/br-post-home-02.md`](./br-post-home-02.md).
+- BR-POST-HOME-02 Home / Simple Mode Redesign P1 PRODUCTION VERIFIED / CLOSED
+  parent: post-launch. Do not reopen `BR-POST-HOME-01`. Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. See [`docs/br-post-home-02.md`](./br-post-home-02.md).
 
 RETURN TARGET:
 N/A (TRUNK-06 CLOSED)
@@ -1725,23 +1729,23 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-POST-HOME-02` |
 | name | Home / Simple Mode Redesign |
 | parent | post-launch (do not reopen `TRUNK-06`) |
-| status | DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY |
+| status | PRODUCTION VERIFIED / CLOSED |
 | priority | P1 |
 | started_at | registered 2026-10-02 |
 | return_to | none |
 | purpose | Daily-use entry so Daily / Monthly / Annual current state can be read on one screen. Home v2 is not an edit screen. Initial Setup = do not get lost the first time; Home = do not get lost in daily operation; Full KPN = detail analysis. |
 | design_source | Shin’s latest PNG. Red dimension lines, red px numbers, and red guides are annotation, not UI. |
-| dimensions | Width 1000px. Daily Close 360px / Open 650px. Monthly Close 360px / Open 985px. Annual uses the Monthly structure. |
+| dimensions | Width 900px. Daily Close 360px / Open 650px. Monthly Close 360px / Open 985px. Annual uses the Monthly structure. |
 | sales_progress | Existing KPN contract. Values only: Daily Actual/Target, Monthly cumulative, Annual cumulative. No dynamic scale. That stays `BR-POST-PROGRESS-SCALE-01`. |
 | business_day_progress | Working proposal: bright green = elapsed, dark track = remaining, triangle = current/selected business day, yellow marker on this bar = remove candidate. Sales yellow marker stays. |
 | pace_alert | No large visual redesign here. That stays `BR-POST-PACE-ALERT-01`. |
 | color | Sci-Fi primary: Cyan `#58E1F3`, Green `#0F9403`. Yellow target marker remains the existing Progress contract. Office keeps the existing Office contract. |
 | menu | JP ホーム / EN Home / ZH-TW 首頁. JP does not use "Home". 1200px must not overflow or overlap. Adjust left padding, margin, and logo-menu gap before shrinking the logo. |
-| detail_nav | Lower-right link to that window’s detail page. Label and destination are not decided. |
+| detail_nav | Lower-right link to that window’s detail page. Home v2 keeps the existing v1 label and destination. |
 | design_note | [`docs/br-post-home-02.md`](./br-post-home-02.md) |
-| h2_1 | **NOT STARTED** — Home v2 Pre-Implementation Audit |
-| next_action | REGISTER ONLY. Do not start H2-1. Do not implement. Do not change `BR-POST-HOME-01`. |
-| constraint | Do not build a Home-only KPI engine. Reuse existing Daily / Monthly / Annual calculations. Home is presentation only. Annual Target Revision / Reforecast is a separate task. |
+| h2_1 | **SUPERSEDED** — separate pre-implementation audit was not recorded |
+| next_action | None. PRODUCTION VERIFIED / CLOSED. CURRENT PATH unchanged. Home is not the active path. |
+| constraint | Do not build a Home-only KPI engine. Reuse existing Daily / Monthly / Annual calculations. Home is presentation only. Annual Target Revision / Reforecast is a separate task. Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3` (2026-10-03). JP / EN / ZH-TW × Sci-Fi / Office smoke PASS. `kpi-navigator/favicon.ico` 404 did not surface as a pageerror. |
 
 ### BR-POST-PROGRESS-SCALE-01
 
@@ -1859,7 +1863,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-FOOTER-VERSION` | Footer Version Display | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-COCKPIT-GAP` | Cockpit Annual Target / Business Day gap | CLOSED | P2 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-HOME-01` | KPN Home / Simple Mode | PRODUCTION VERIFIED / CLOSED | P1 | post-launch (do not reopen `TRUNK-06`) |
-| `BR-POST-HOME-02` | Home / Simple Mode Redesign | DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY | P1 | post-launch (do not reopen `TRUNK-06`) |
+| `BR-POST-HOME-02` | Home / Simple Mode Redesign | PRODUCTION VERIFIED / CLOSED | P1 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PROGRESS-SCALE-01` | Dynamic Progress Bar Scale | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PACE-ALERT-01` | Business-day vs Sales Pace Alert Visual Contract | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
 
@@ -1881,12 +1885,11 @@ ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
 ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP), `BR-LAUNCH-09` (Phase 0 / 1 / 2 CLOSED; Phase 3A READY FOR HUMAN SMOKE; Phase 3B BLOCKED — Stripe / Billing contract required)  
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
-CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`, `BR-POST-HOME-01`  
+CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`, `BR-POST-HOME-01`, `BR-POST-HOME-02`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
-PRODUCTION VERIFIED / CLOSED (not the active path): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. Revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. CURRENT PATH unchanged.)  
+PRODUCTION VERIFIED / CLOSED (not the active path): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. Revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. CURRENT PATH unchanged.) `BR-POST-HOME-02` (Home / Simple Mode Redesign, P1. Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. 2026-10-03. CURRENT PATH unchanged.)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`  
 DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-POST-PACE-ALERT-01`
-DEFERRED post-launch REGISTER ONLY (do not start): `BR-POST-HOME-02` (Home / Simple Mode Redesign, P1. H2-1 not started. `BR-POST-HOME-01` stays PRODUCTION VERIFIED / CLOSED.)
 
 ---
 
@@ -2049,3 +2052,4 @@ DEFERRED post-launch REGISTER ONLY (do not start): `BR-POST-HOME-02` (Home / Sim
 | 2026-10-01 | **BR-POST-HOME-01 PRODUCTION VERIFIED / CLOSED.** Deployed revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. JP / EN / ZH-TW, Sci-Fi / Office, Global Menu, Shared Reference Date, Daily CTA, Opening Date Preference, auth login / logout / re-login, rebuild POST = 0, 1200px. No Infinity / NaN. Production errors none. CURRENT PATH unchanged. Home is not the active path. |
 | 2026-10-02 | **BR-POST-PROGRESS-SCALE-01** and **BR-POST-PACE-ALERT-01** registered. Both DEFERRED / POST-LAUNCH / REDESIGN. Priority not raised. CURRENT PATH unchanged. Home status not changed. Sales Progress dynamic scale: evidence not found (`e69ada5`). Seasonality dynamic scale remains `getSeasonalityChartScale` (`9ef8dba`). Home pace warning remains `5e7dd63`. No implementation. |
 | 2026-10-02 | **BR-POST-HOME-02 registered** Home / Simple Mode Redesign. DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY. Design note [`docs/br-post-home-02.md`](./br-post-home-02.md). H2-1 not started. `BR-POST-HOME-01` stays PRODUCTION VERIFIED / CLOSED. CURRENT PATH unchanged. No implementation. |
+| 2026-10-03 | **BR-POST-HOME-02 PRODUCTION VERIFIED / CLOSED.** Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. Runtime files: `app/home/home-shell.css`, `app/home/index.html`, `en/app/home/index.html`, `zh-tw/app/home/index.html`. JP / EN / ZH-TW × Sci-Fi / Office at 1200px PASS. `kpi-navigator/favicon.ico` 404 was not a pageerror. CURRENT PATH unchanged. Home is not the active path. |
