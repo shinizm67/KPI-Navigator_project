@@ -2702,7 +2702,7 @@
     <script src="../../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
-    <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
+    <script src="../../../../js/kpi-excel-sheet-picker.js?v=20261003-recovery"></script>
     <script src="../../../../js/kpi-workbook-layout.js?v=20260926-bdr2"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
     <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"></script>
@@ -6641,6 +6641,8 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        /* Default is partial update. Full-month replace stays opt-in because the
+           upload UI never asks the user to declare the file a whole-month source. */
         if (!opts.fullMonthReplace && !hasOwn(maps.salesByDate, iso)) continue;
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
@@ -6728,6 +6730,27 @@
     return diffs;
   }
 
+  /**
+   * KPI-BD-FALSE-PROPAGATE: copy BD maps with hasOwn so explicit false survives.
+   * Do not skip falsy values; absent keys stay absent.
+   */
+  function assignExplicitBusinessDays(dest, src) {
+    if (!dest || typeof dest !== 'object') dest = {};
+    if (!src || typeof src !== 'object') return dest;
+    Object.keys(src).forEach(function (iso) {
+      if (!Object.prototype.hasOwnProperty.call(src, iso)) return;
+      dest[iso] = !!src[iso];
+    });
+    return dest;
+  }
+
+  function overlayBusinessDaysPreserveExplicit(fallback, explicit) {
+    var out = {};
+    assignExplicitBusinessDays(out, fallback);
+    assignExplicitBusinessDays(out, explicit);
+    return out;
+  }
+
   global.KpiWorkbookLayout = {
     __ready: true,
     detectLayout: detectLayout,
@@ -6741,6 +6764,8 @@
     completeHistoricalImport: completeHistoricalImport,
     diffHistoricalImport: diffHistoricalImport,
     importedClassification: importedClassification,
+    assignExplicitBusinessDays: assignExplicitBusinessDays,
+    overlayBusinessDaysPreserveExplicit: overlayBusinessDaysPreserveExplicit,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);
 
@@ -6844,6 +6869,7 @@
           'storesales',
           'dailysales',
         ];
+        /* Exact aliases only. Substring 売上 / sales / amount is not a sales column. */
         var SAFE_SALES_EXACT_KEYS = [
           '日次売上',
           '店舗売上',
@@ -7205,7 +7231,6 @@
           return true;
         }
 
-
         function headerIsExpenseTable(headerRow) {
           var hasItem = false;
           var hasAmt = false;
@@ -7248,6 +7273,12 @@
           return { kind: 'value', value: n };
         }
 
+        function columnsReason(reason) {
+          var err = new Error('columns');
+          err.reason = reason;
+          return err;
+        }
+
         function rowsToMaps(rows) {
           if (!rows || !rows.length) throw new Error('empty');
           var unmatchedMetrics = [];
@@ -7259,9 +7290,14 @@
             if (prepared && prepared.rows && prepared.rows.length) rows = prepared.rows;
           }
           var header = rows[0].map(function (c) { return String(c == null ? '' : c); });
-          if (headerIsExpenseTable(header)) throw new Error('columns');
+          if (headerIsExpenseTable(header)) throw columnsReason('expense-shaped');
           var cols = detectColumns(header);
-          if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          if (cols.dateIdx < 0 || cols.salesIdx < 0) {
+            var columnReason = 'both-missing';
+            if (cols.dateIdx >= 0 && cols.salesIdx < 0) columnReason = 'sales-missing';
+            else if (cols.dateIdx < 0 && cols.salesIdx >= 0) columnReason = 'date-missing';
+            throw columnsReason(columnReason);
+          }
           var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
@@ -7669,19 +7705,25 @@
         function applyToRowState(rowStateByIso, maps, yearFilter) {
           if (!rowStateByIso || !maps) return;
           var yf = yearFilter != null ? Number(yearFilter) : NaN;
-          Object.keys(maps.salesByDate).forEach(function (iso) {
+          var bizMap0 = maps.businessDayByDate || {};
+          var salesMap = maps.salesByDate || {};
+          var seen = {};
+          function applyIso(iso) {
             if (Number.isFinite(yf) && isoYear(iso) !== yf) return;
-            /* KPI-BIZDAY-IMPORT-DD: never treat missing/0 as open via !== false */
-            var bizMap0 = maps.businessDayByDate || {};
+            if (seen[iso]) return;
+            seen[iso] = true;
+            /* KPI-BIZDAY-IMPORT-DD + KPI-BD-FALSE-PROPAGATE: hasOwn false is closed, not missing */
             var hasBiz = Object.prototype.hasOwnProperty.call(bizMap0, iso);
-            var sales = Number(maps.salesByDate[iso]);
+            var sales = Object.prototype.hasOwnProperty.call(salesMap, iso)
+              ? Number(salesMap[iso])
+              : NaN;
             var last = String(Number.isFinite(sales) ? Math.round(sales) : 0);
             if (hasBiz && bizMap0[iso]) {
-              rowStateByIso[iso] = { off: false, last: last };
+              rowStateByIso[iso] = { off: false, last: last, bizTouched: true };
               return;
             }
             if (hasBiz) {
-              rowStateByIso[iso] = { off: true, last: '0' };
+              rowStateByIso[iso] = { off: true, last: '0', bizTouched: true };
               return;
             }
             if (Object.prototype.hasOwnProperty.call(rowStateByIso, iso) && rowStateByIso[iso]) {
@@ -7689,7 +7731,9 @@
             } else {
               rowStateByIso[iso] = { off: false, last: last };
             }
-          });
+          }
+          Object.keys(salesMap).forEach(applyIso);
+          Object.keys(bizMap0).forEach(applyIso);
         }
 
         function countForYear(maps, year) {
@@ -7914,6 +7958,37 @@
             return;
           }
           if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
+          function openSalesRecovery(err) {
+            var code = err && err.message;
+            var reason = err && err.reason;
+            var category = 'D';
+            if (code === 'invalid-sales') category = 'C';
+            else if (code === 'meal-invalid') category = 'F';
+            else if (code === 'rows' || code === 'empty') category = 'E';
+            else if (code === 'columns') {
+              if (reason === 'sales-missing') category = 'A';
+              else if (reason === 'date-missing') category = 'B';
+            }
+            var picker = window.KpiExcelSheetPicker;
+            if (picker && typeof picker.showImportRecovery === 'function') {
+              picker.showImportRecovery({
+                kind: 'sales',
+                category: category,
+                entry: (options && options.recoveryEntry) || '',
+                restaurant: salesCsvAllowsRestaurantFields(),
+                pastSales: !!(options && options.recoveryEntry === 'past-sales'),
+                onRetry: function () { beginImport(options); },
+              });
+              return;
+            }
+            window.alert(
+              t(
+                'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
+              )
+            );
+          }
           var input = ensureFileInput();
           input.value = '';
           input.onchange = function () {
@@ -8009,41 +8084,14 @@
                     );
                     return;
                   }
-                  if (
-                    code === 'empty' ||
-                    code === 'columns' ||
-                    code === 'rows' ||
-                    code === 'unreadable' ||
-                    code === 'picker-required'
-                  ) {
-                    if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
-                      window.KpiExcelSheetPicker.showTemplateFallback('sales');
-                      return;
-                    }
-                    window.alert(
-                      t(
-                        'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                        'This sheet layout could not be recognized automatically. You can import using a KPN template.',
-                        '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
-                      )
-                    );
-                    return;
-                  }
-                  if (code === 'meal-invalid' || code === 'meal-persist' || code === 'persist-unavailable' || code === 'invalid-sales') {
+                  if (code === 'meal-persist' || code === 'persist-unavailable') {
                     window.alert(
                       (err && err.userMessage) ||
                         t('取り込みを中止しました。', 'Import stopped.', '已停止匯入。')
                     );
                     return;
                   }
-                  window.alert(
-                    t(
-                      'ファイルを読み取れませんでした。1行目に列名（日付・営業日・売上など）があるか確認してください。' +
-                        (code ? '\n(' + code + ')' : ''),
-                      'Could not read the file. Ensure row 1 has column headers (date, business day, sales, etc.).' +
-                        (code ? '\n(' + code + ')' : '')
-                    )
-                  );
+                  openSalesRecovery(err);
                 });
           };
           input.click();
@@ -16401,6 +16449,7 @@
         document.addEventListener('kpi:editLeaseChanged', syncCsvUploadTooltip);
 
         var mepCsvImportOpts = {
+          recoveryEntry: 'mep',
           persistByCsvYear: true,
           getYear: function () { return mefYear; },
           applyMaps: function (maps, year) {

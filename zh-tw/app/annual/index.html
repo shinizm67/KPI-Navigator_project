@@ -15033,7 +15033,7 @@
     <script src="../../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../../js/kpi-csv-templates.js"></script>
     <script src="../../../js/kpi-excel-templates.js"></script>
-    <script src="../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
+    <script src="../../../js/kpi-excel-sheet-picker.js?v=20261003-recovery"></script>
     <script src="../../../js/kpi-workbook-layout.js?v=20260927-bdfalse"></script>
     <script>
     (function () {
@@ -30328,6 +30328,8 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        /* Default is partial update. Full-month replace stays opt-in because the
+           upload UI never asks the user to declare the file a whole-month source. */
         if (!opts.fullMonthReplace && !hasOwn(maps.salesByDate, iso)) continue;
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
@@ -30415,6 +30417,27 @@
     return diffs;
   }
 
+  /**
+   * KPI-BD-FALSE-PROPAGATE: copy BD maps with hasOwn so explicit false survives.
+   * Do not skip falsy values; absent keys stay absent.
+   */
+  function assignExplicitBusinessDays(dest, src) {
+    if (!dest || typeof dest !== 'object') dest = {};
+    if (!src || typeof src !== 'object') return dest;
+    Object.keys(src).forEach(function (iso) {
+      if (!Object.prototype.hasOwnProperty.call(src, iso)) return;
+      dest[iso] = !!src[iso];
+    });
+    return dest;
+  }
+
+  function overlayBusinessDaysPreserveExplicit(fallback, explicit) {
+    var out = {};
+    assignExplicitBusinessDays(out, fallback);
+    assignExplicitBusinessDays(out, explicit);
+    return out;
+  }
+
   global.KpiWorkbookLayout = {
     __ready: true,
     detectLayout: detectLayout,
@@ -30428,6 +30451,8 @@
     completeHistoricalImport: completeHistoricalImport,
     diffHistoricalImport: diffHistoricalImport,
     importedClassification: importedClassification,
+    assignExplicitBusinessDays: assignExplicitBusinessDays,
+    overlayBusinessDaysPreserveExplicit: overlayBusinessDaysPreserveExplicit,
   };
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);
 
@@ -30531,6 +30556,7 @@
           'storesales',
           'dailysales',
         ];
+        /* Exact aliases only. Substring 売上 / sales / amount is not a sales column. */
         var SAFE_SALES_EXACT_KEYS = [
           '日次売上',
           '店舗売上',
@@ -30892,7 +30918,6 @@
           return true;
         }
 
-
         function headerIsExpenseTable(headerRow) {
           var hasItem = false;
           var hasAmt = false;
@@ -30935,6 +30960,12 @@
           return { kind: 'value', value: n };
         }
 
+        function columnsReason(reason) {
+          var err = new Error('columns');
+          err.reason = reason;
+          return err;
+        }
+
         function rowsToMaps(rows) {
           if (!rows || !rows.length) throw new Error('empty');
           var unmatchedMetrics = [];
@@ -30946,9 +30977,14 @@
             if (prepared && prepared.rows && prepared.rows.length) rows = prepared.rows;
           }
           var header = rows[0].map(function (c) { return String(c == null ? '' : c); });
-          if (headerIsExpenseTable(header)) throw new Error('columns');
+          if (headerIsExpenseTable(header)) throw columnsReason('expense-shaped');
           var cols = detectColumns(header);
-          if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          if (cols.dateIdx < 0 || cols.salesIdx < 0) {
+            var columnReason = 'both-missing';
+            if (cols.dateIdx >= 0 && cols.salesIdx < 0) columnReason = 'sales-missing';
+            else if (cols.dateIdx < 0 && cols.salesIdx >= 0) columnReason = 'date-missing';
+            throw columnsReason(columnReason);
+          }
           var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
@@ -31609,6 +31645,37 @@
             return;
           }
           if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
+          function openSalesRecovery(err) {
+            var code = err && err.message;
+            var reason = err && err.reason;
+            var category = 'D';
+            if (code === 'invalid-sales') category = 'C';
+            else if (code === 'meal-invalid') category = 'F';
+            else if (code === 'rows' || code === 'empty') category = 'E';
+            else if (code === 'columns') {
+              if (reason === 'sales-missing') category = 'A';
+              else if (reason === 'date-missing') category = 'B';
+            }
+            var picker = window.KpiExcelSheetPicker;
+            if (picker && typeof picker.showImportRecovery === 'function') {
+              picker.showImportRecovery({
+                kind: 'sales',
+                category: category,
+                entry: (options && options.recoveryEntry) || '',
+                restaurant: salesCsvAllowsRestaurantFields(),
+                pastSales: !!(options && options.recoveryEntry === 'past-sales'),
+                onRetry: function () { beginImport(options); },
+              });
+              return;
+            }
+            window.alert(
+              t(
+                'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
+              )
+            );
+          }
           var input = ensureFileInput();
           input.value = '';
           input.onchange = function () {
@@ -31704,41 +31771,14 @@
                     );
                     return;
                   }
-                  if (
-                    code === 'empty' ||
-                    code === 'columns' ||
-                    code === 'rows' ||
-                    code === 'unreadable' ||
-                    code === 'picker-required'
-                  ) {
-                    if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
-                      window.KpiExcelSheetPicker.showTemplateFallback('sales');
-                      return;
-                    }
-                    window.alert(
-                      t(
-                        'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                        'This sheet layout could not be recognized automatically. You can import using a KPN template.',
-                        '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
-                      )
-                    );
-                    return;
-                  }
-                  if (code === 'meal-invalid' || code === 'meal-persist' || code === 'persist-unavailable' || code === 'invalid-sales') {
+                  if (code === 'meal-persist' || code === 'persist-unavailable') {
                     window.alert(
                       (err && err.userMessage) ||
                         t('取り込みを中止しました。', 'Import stopped.', '已停止匯入。')
                     );
                     return;
                   }
-                  window.alert(
-                    t(
-                      'ファイルを読み取れませんでした。1行目に列名（日付・営業日・売上など）があるか確認してください。' +
-                        (code ? '\n(' + code + ')' : ''),
-                      'Could not read the file. Ensure row 1 has column headers (date, business day, sales, etc.).' +
-                        (code ? '\n(' + code + ')' : '')
-                    )
-                  );
+                  openSalesRecovery(err);
                 });
           };
           input.click();
@@ -38926,6 +38966,7 @@
       if (btnSave) btnSave.addEventListener('click', savePastSalesModal);
       if (btnCsv) {
         var csvImportOpts = {
+          recoveryEntry: 'past-sales',
           persistByCsvYear: true,
           getYear: function () { return state.year; },
           applyMaps: function (maps, year) {
@@ -41605,6 +41646,7 @@
       if (btnSave) btnSave.addEventListener('click', saveSalesDataModal);
       if (btnCsv) {
         var csvImportOpts = {
+          recoveryEntry: 'current-year',
           getYear: function () { return state.year; },
           applyMaps: function (maps, year) {
             pushUndoSnapshot();
@@ -42935,6 +42977,7 @@
       }
       if (btnCsv) {
         var csvImportOpts = {
+          recoveryEntry: 'annual-edit',
           getYear: function () { return state.year; },
           applyMaps: function (maps, year) {
             pushUndoSnapshot();

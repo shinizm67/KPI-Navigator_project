@@ -516,6 +516,12 @@ def daily_sales_import_js() -> str:
           return {{ kind: 'value', value: n }};
         }}
 
+        function columnsReason(reason) {{
+          var err = new Error('columns');
+          err.reason = reason;
+          return err;
+        }}
+
         function rowsToMaps(rows) {{
           if (!rows || !rows.length) throw new Error('empty');
           var unmatchedMetrics = [];
@@ -527,9 +533,14 @@ def daily_sales_import_js() -> str:
             if (prepared && prepared.rows && prepared.rows.length) rows = prepared.rows;
           }}
           var header = rows[0].map(function (c) {{ return String(c == null ? '' : c); }});
-          if (headerIsExpenseTable(header)) throw new Error('columns');
+          if (headerIsExpenseTable(header)) throw columnsReason('expense-shaped');
           var cols = detectColumns(header);
-          if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
+          if (cols.dateIdx < 0 || cols.salesIdx < 0) {{
+            var columnReason = 'both-missing';
+            if (cols.dateIdx >= 0 && cols.salesIdx < 0) columnReason = 'sales-missing';
+            else if (cols.dateIdx < 0 && cols.salesIdx >= 0) columnReason = 'date-missing';
+            throw columnsReason(columnReason);
+          }}
           var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
@@ -1190,6 +1201,37 @@ def daily_sales_import_js() -> str:
             return;
           }}
           if (window.__KPI_BUSY && window.__KPI_BUSY.isBusy()) return;
+          function openSalesRecovery(err) {{
+            var code = err && err.message;
+            var reason = err && err.reason;
+            var category = 'D';
+            if (code === 'invalid-sales') category = 'C';
+            else if (code === 'meal-invalid') category = 'F';
+            else if (code === 'rows' || code === 'empty') category = 'E';
+            else if (code === 'columns') {{
+              if (reason === 'sales-missing') category = 'A';
+              else if (reason === 'date-missing') category = 'B';
+            }}
+            var picker = window.KpiExcelSheetPicker;
+            if (picker && typeof picker.showImportRecovery === 'function') {{
+              picker.showImportRecovery({{
+                kind: 'sales',
+                category: category,
+                entry: (options && options.recoveryEntry) || '',
+                restaurant: salesCsvAllowsRestaurantFields(),
+                pastSales: !!(options && options.recoveryEntry === 'past-sales'),
+                onRetry: function () {{ beginImport(options); }},
+              }});
+              return;
+            }}
+            window.alert(
+              t(
+                'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                'This sheet layout could not be recognized automatically. You can import using a KPN template.',
+                '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
+              )
+            );
+          }}
           var input = ensureFileInput();
           input.value = '';
           input.onchange = function () {{
@@ -1285,41 +1327,14 @@ def daily_sales_import_js() -> str:
                     );
                     return;
                   }}
-                  if (
-                    code === 'empty' ||
-                    code === 'columns' ||
-                    code === 'rows' ||
-                    code === 'unreadable' ||
-                    code === 'picker-required'
-                  ) {{
-                    if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {{
-                      window.KpiExcelSheetPicker.showTemplateFallback('sales');
-                      return;
-                    }}
-                    window.alert(
-                      t(
-                        'このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                        'This sheet layout could not be recognized automatically. You can import using a KPN template.',
-                        '無法自動判斷此工作表的格式。可以使用 KPN 範本匯入。'
-                      )
-                    );
-                    return;
-                  }}
-                  if (code === 'meal-invalid' || code === 'meal-persist' || code === 'persist-unavailable' || code === 'invalid-sales') {{
+                  if (code === 'meal-persist' || code === 'persist-unavailable') {{
                     window.alert(
                       (err && err.userMessage) ||
                         t('取り込みを中止しました。', 'Import stopped.', '已停止匯入。')
                     );
                     return;
                   }}
-                  window.alert(
-                    t(
-                      'ファイルを読み取れませんでした。1行目に列名（日付・営業日・売上など）があるか確認してください。' +
-                        (code ? '\\n(' + code + ')' : ''),
-                      'Could not read the file. Ensure row 1 has column headers (date, business day, sales, etc.).' +
-                        (code ? '\\n(' + code + ')' : '')
-                    )
-                  );
+                  openSalesRecovery(err);
                 }});
           }};
           input.click();

@@ -4397,7 +4397,7 @@
   <script src="../../../../js/kpi-pl-expense-presets.js"></script>
   <script src="../../../../js/kpi-csv-templates.js"></script>
     <script src="../../../../js/kpi-excel-templates.js"></script>
-    <script src="../../../../js/kpi-excel-sheet-picker.js?v=20260923-c2picker"></script>
+    <script src="../../../../js/kpi-excel-sheet-picker.js?v=20261003-recovery"></script>
     <script src="../../../../js/kpi-workbook-layout.js?v=20260926-bdr2"></script>
     <script src="../../../../js/kpi-expense-csv-import.js"></script>
   <script src="../../../../js/kpi-expense-unknown-hold.js?v=20260922-c2l4"></script>
@@ -12657,6 +12657,15 @@
         function tt(ja, en, zh) {
           return typeof t === 'function' ? t(ja, en, zh) : (isJaLang() ? (zh != null && zh !== '' ? zh : ja) : en);
         }
+        function recoveryText(ja, en, zh) {
+          var raw = '';
+          try {
+            raw = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+          } catch (_eLang) {}
+          if (raw.indexOf('ja') === 0) return ja;
+          if (raw.indexOf('zh') === 0) return zh;
+          return en;
+        }
         function pad(n) {
           return typeof pad2 === 'function' ? pad2(n) : (n < 10 ? '0' + n : String(n));
         }
@@ -13387,6 +13396,30 @@
           panel.appendChild(el('p', 'pl-import-map__desc',
             tt('列の対応づけを確認し、未一致の費目は「既存へ割当」か「新規作成」を選んでください。', 'Confirm the column mapping and, for each unmatched item, choose "assign to existing" or "create new".', '請確認欄位對應；未相符科目請選擇「指派到既有」或「新建」。')));
 
+          var escapeBox = el('div', 'pl-import-map__escape');
+          escapeBox.appendChild(el('p', 'pl-import-map__escape-text',
+            recoveryText(
+              '費目の対応が難しいときは、雛形へ日付・費目・金額を貼ってください。',
+              'If matching items is difficult, paste the date, item, and amount into the expense template.',
+              '如果很難對應項目，請把日期、項目和金額貼到支出範本。'
+            )));
+          var escapeActions = el('div', 'pl-import-map__escape-actions');
+          function escapeDownload(label, kind) {
+            var button = el('button', 'pl-import-map__btn pl-import-map__btn--ghost', label);
+            button.type = 'button';
+            button.setAttribute('data-recovery-template', kind);
+            button.addEventListener('click', function () {
+              if (window.KpiCsvTemplates && typeof window.KpiCsvTemplates.downloadKind === 'function') {
+                window.KpiCsvTemplates.downloadKind(kind);
+              }
+            });
+            escapeActions.appendChild(button);
+          }
+          escapeDownload(recoveryText('日次の雛形', 'Daily template', '每日範本'), 'expense-daily');
+          escapeDownload(recoveryText('月次の雛形', 'Monthly template', '月度範本'), 'expense-monthly');
+          escapeBox.appendChild(escapeActions);
+          panel.appendChild(escapeBox);
+
           /* --- column mapping section --- */
           var colSec = el('div', 'pl-import-map__section');
           colSec.appendChild(el('h3', 'pl-import-map__section-title', tt('列の対応', 'Column mapping', '欄位對應')));
@@ -13597,6 +13630,25 @@
           modalEl = overlay;
         }
 
+        function openExpenseRecovery() {
+          var picker = window.KpiExcelSheetPicker;
+          if (picker && typeof picker.showImportRecovery === 'function') {
+            picker.showImportRecovery({
+              kind: 'expense',
+              category: 'D',
+              entry: 'pl-expense',
+              onRetry: function () { pickExpenseFile(); }
+            });
+            return;
+          }
+          if (picker && typeof picker.showTemplateFallback === 'function') {
+            picker.showTemplateFallback('expense');
+            return;
+          }
+          window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
+                          'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
+        }
+
         function runExpenseImport(file) {
           var importMeta = {
             sourceFilename: file && file.name ? String(file.name) : '',
@@ -13608,12 +13660,7 @@
           parseFile(file).then(function (rows) {
             rows = prepareExpenseMatrix(rows);
             if (!rows || !rows.length) {
-              if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
-                window.KpiExcelSheetPicker.showTemplateFallback('expense');
-                return;
-              }
-              window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                              'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
+              openExpenseRecovery();
               return;
             }
             var cols = detectColumns(rows);
@@ -13623,12 +13670,7 @@
                 if (normDate((rows[ri] || [])[cols.dateCol])) { hasDate = true; break; }
               }
               if (!hasDate) {
-                if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
-                  window.KpiExcelSheetPicker.showTemplateFallback('expense');
-                  return;
-                }
-                window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                                'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
+                openExpenseRecovery();
                 return;
               }
             }
@@ -13639,7 +13681,7 @@
               plan = buildPlan(rows, cols, makeResolver(lines0, aliases0), lines0, aliases0);
             }
             catch (e) {
-              window.alert(tt('ファイルを読み取れませんでした（空、または形式が不正です）。', 'Could not read the file (empty or invalid format).', '無法讀取檔案（空白或格式不正確）。'));
+              openExpenseRecovery();
               return;
             }
             var unmatchedCount = Object.keys(plan.unmatched).length;
@@ -13654,12 +13696,12 @@
             openMappingModal(rows, cols, importMeta);
           }).catch(function (err) {
             if (window.KpiExcelSheetPicker && window.KpiExcelSheetPicker.isCancelled(err)) return;
-            if (window.KpiExcelSheetPicker && typeof window.KpiExcelSheetPicker.showTemplateFallback === 'function') {
-              window.KpiExcelSheetPicker.showTemplateFallback('expense');
+            if (err && err.message === 'xlsx') {
+              window.alert(tt('Excel の読み込みに失敗しました。CSV でお試しください（オフライン時は .xlsx を読めません）。',
+                              'Failed to read Excel. Try CSV instead (.xlsx needs to be online).'));
               return;
             }
-            window.alert(tt('このシートの形式を自動判定できませんでした。KPNテンプレートを使用して取り込むことができます。',
-                            'This sheet layout could not be recognized automatically. You can import using a KPN template.'));
+            openExpenseRecovery();
           });
         }
 
