@@ -55,6 +55,14 @@ POST-LAUNCH (not the active path):
   revision 305924ee4afdcf6f62d52669a654f86bdd567ad3
   CURRENT PATH above is unchanged. Home is not the active path.
 
+REGISTERED (infrastructure; Phase 0 recorded; do not start implementation; CURRENT PATH unchanged):
+- BR-LOCAL-VERIFY-01 (Full Local Verification Environment) CRITICAL / HIGH
+  Pre-launch foundation and post-launch continuous infrastructure. Not a one-shot ticket.
+  Phase 0 audit recorded 2026-10-03. Implementation NOT STARTED.
+- BR-I18N-ARCH-01 (Localization Architecture v2) HIGH
+  Depends on a BR-LOCAL-VERIFY-01 baseline. Do not add Spanish as a fourth HTML tree.
+  Stripe may proceed in parallel. Implementation NOT STARTED.
+
 ACTIVE BRANCHES:
 - BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3A Basic Account Delete IMPLEMENTED — READY FOR HUMAN SMOKE; Phase 3B Paid / Stripe Account Delete BLOCKED — Stripe / Billing contract required)
 - BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29)
@@ -178,6 +186,7 @@ N/A (TRUNK-06 CLOSED)
 NEXT ACTION:
 BR-LAUNCH-09: Phase 3A (Basic Account Delete) READY FOR HUMAN SMOKE (`funkizm@mac.com` only, Shin GO required before any production deletion). Phase 3B (Paid / Stripe Account Delete) BLOCKED — Stripe / Billing contract required. Phase 3 Final Close only after 3A + 3B both pass. Phase 4 only after Shin GO.
 BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO). IP-independent abuse protection (`09f4711`: forwarded-header reject, global limiter, email limiter, IP auxiliary), consent record, Basic fixed, Pro Coming Soon. Controlled smoke test account `shinizm+kpnreg@gmail.com` kept and excluded from Founder metrics (Shin decides later). `registrationEnabled` is changed only on Shin's explicit instruction. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
+`BR-LOCAL-VERIFY-01` and `BR-I18N-ARCH-01` are REGISTERED (Phase 0 recorded 2026-10-03). Do not start either until Case + Shin review. Stripe stays a separate track. CURRENT PATH unchanged.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1782,6 +1791,64 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | design_note | [`docs/br-post-pace-alert-01.md`](./br-post-pace-alert-01.md) |
 | next_action | REGISTER ONLY. Do not change the current Home pace warning. |
 
+### BR-LOCAL-VERIFY-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-LOCAL-VERIFY-01` |
+| name | Full Local Verification Environment |
+| parent | none (infrastructure parent; do not reopen `TRUNK-06`; does not replace CURRENT PATH) |
+| status | REGISTERED — Phase 0 audit recorded 2026-10-03. Implementation NOT STARTED. |
+| priority | CRITICAL / HIGH (tree band P0 for release safety). Continuous, not a one-shot Launch ticket. |
+| type | Development Infrastructure / Release Safety / Continuous Quality |
+| timing | Pre-launch foundation and post-launch continuous. New features extend fixture and smoke coverage. |
+| started_at | registered 2026-10-03 |
+| return_to | none |
+| purpose | Confirm major KPN behavior locally without touching the production DB or production users. Sequence to prefer: local, automated smoke, representative human visual smoke, API / DB contract verification, production deploy, minimal production read-only verification. |
+| principle | Production-like frontend: real JS, navigation, rendering, importer, and feature gating. Replace dangerous external dependencies with a local fixture, a test DB, or a controlled local API. Do not weaken production code to make tests easier. Not a fake screenshot site. |
+| phase_0 | Audit only (2026-10-03). No local-auth mock, no new fixture framework, no page migration, no Stripe mock. Canonical local API doc is `php -S 127.0.0.1:8080 -t .` plus gitignored `api/v1/config.local.php`. Example `storageDriver` is `file`, so local MySQL is optional. `python -m http.server` serves HTML and does not execute PHP, so authenticated product behavior is incomplete on that server. Playwright is a host Python package launching system Chrome (`channel="chrome"`). There is no npm Playwright project. Committed browser harness to reuse, not replace: `scripts/_test_multi_business_upload_smoke.py` (local API stub, six business types). Logic harnesses: import safety guard, import recovery, multi-business acceptance. Auth contract tests exist for registration, password, email, delete, and session enforcement. They are not one command. |
+| pages | Derived 2026-10-03, excluding `scripts/`, `old_projecto/`, `back_up/`. 128 HTML/PHP files. Product surface 116 = app 22 (JA 8, EN 7, ZH-TW 7) + settings 57 (19 x 3) + public 32 (JA 11, EN 11, ZH-TW 10; no `zh-tw/index.html`) + admin PHP 5. Excluded from that 116: `PHP/` 4, `tools/` 4, PL `shell.html` / `layout-prototype.html` 3. Daily has no page (floating window). Initial Setup has no page (dialog on Annual / Monthly). Subscription UI is `setting/change_plan.html` plus static `plan_details.html`. |
+| local_run | This audit did not boot a server. Static HTML can open on the documented Python server. Product pages that call `/api/v1` do not complete there. Admin pages are PHP. `plan_details.html` and session management open, and they are dummy / construction state, not billing or session-limit behavior. |
+| auth_recommendation | One architecture: local PHP with `storageDriver=file` and versioned fixture users (logged out, Basic, Pro, setup required, setup complete, grandfather, demo/test, founder only where the page needs it). Playwright drives the real pages on `127.0.0.1`. Keep the existing Python API stub for importer-only browser tests. Do not make interception the second auth model. |
+| store_recommendation | Hybrid, with local PHP file storage as the primary. Fixture JSON seeds that file store. Playwright interception stays inside the existing importer harness. Local MySQL is optional later, not the first step. No production DB. |
+| visual | Functional smoke and visual smoke are both required. Playwright screenshots can cover geometry, overflow, clipped labels, locale layout, the responsive lower bound, modal placement, and pageerror. Human visual smoke stays representative. |
+| language_matrix | Same page, same state, same fixture, JP / EN / ZH-TW. Prerequisite for `BR-I18N-ARCH-01`. Trees already diverge (ZH-TW PL generator is JA/EN only). |
+| business_matrix | Do not run the full Cartesian product. Restaurant = full feature. Hotel = non-restaurant complex. Retail = non-restaurant simple. Hair / Fitness / Other = targeted parity. |
+| fixtures | Possible canonical set: empty, basic, pro, restaurant, hotel, retail, setup-required, full-year, imported, pl. Must be deterministic, versionable, free of personal data and production IDs, resettable. `fixtures/demo/restaurant-v1/` is restaurant CSV only. It is not this set. |
+| write_safety | Required later, not built: LOCAL TEST MODE refuses known production hosts, production DB credentials, FTP, live Stripe keys, outbound email, account deletion, registration, and password reset against production. Today, safety is per-script (`127.0.0.1` in some harnesses). Deploy scripts can still reach production. There is no shared hard fail. |
+| release_gate | Future gate before deploy: relevant contract tests, page functional smoke, locale smoke, visual smoke, pageerror 0, targeted human smoke, git diff audit, deploy, production static/read-only check. A single `python scripts/kpn_release_smoke.py` is not justified yet. Existing pieces are many scripts, not one command. Do not create it in Phase 0. |
+| stripe | Do not mock Stripe in this task yet. The local user/plan response must be able to grow later: unpaid Basic, active Pro, inactive, cancellation pending, checkout return, webhook-derived state. UI locale and billing region stay separate (`BR-I18N-ARCH-01`). |
+| phases | 0 audit (this node). 1 production-host refuse + local PHP file store. 2 fixture accounts. 3 reuse importer harness, do not fork it. 4 representative page/locale/business smoke. 5 visual smoke on that matrix. 6 release-gate command only after 1-5 exist. Coverage grows with each feature. |
+| size | First usable baseline is a small slice. Full page x locale x state coverage is continuous and larger than one implementation turn. |
+| p0 | No shared refuse of production hosts, DB, FTP, or mail. A static-server "open" is not a behavioral pass. Client tier fallback can show Pro while the server plan is Basic. |
+| p1 | No canonical account/store fixtures. No one-command gate. Subscription and session pages are not locally meaningful yet. Daily and Setup are not URLs. |
+| p2 | Full screenshot archive, admin visual matrix, responsive sweep beyond the representative set. |
+| next_action | Case + Shin review this Phase 0 record. Do not implement local auth, fixtures, or the release-gate command until that review. |
+| constraint | no application code; no test changes; no runtime changes; no DB migration; no Stripe; excel/ untouched |
+
+### BR-I18N-ARCH-01
+
+| Field | Value |
+|-------|-------|
+| id | `BR-I18N-ARCH-01` |
+| name | Localization Architecture v2 |
+| parent | none (architecture parent). Prerequisite: `BR-LOCAL-VERIFY-01` baseline. |
+| status | REGISTERED — direction recorded 2026-10-03. Implementation NOT STARTED. Phase 0 parity map not started. |
+| priority | HIGH (tree band P1). Post-launch scalability. Not a current Launch blocker. |
+| type | Architecture Debt Paydown / Internationalization / Post-launch Scalability |
+| started_at | registered 2026-10-03 |
+| return_to | `BR-LOCAL-VERIFY-01` until its baseline exists |
+| purpose | Stop copying a full HTML tree per language. Target: one shared page structure, locale dictionaries (`ja`, `en`, `zh-tw`, later `es` / `fr` / `it` / `th` / `id` and others), shared CSS for the majority, and a locale CSS override only where a language needs it. |
+| principle_locale_billing | UI locale and billing region are different. EN may serve US, GB, AU, SG, IN, and others. ES may serve Spain, Mexico, and Latin America. Stripe regional pricing must not be derived only from UI language. |
+| pilot | Home is the first product pilot after the local-verification baseline. It is smaller than generated Annual / Monthly / MEP, it has a fresh JP / EN / ZH-TW visual contract, and it has less editing logic. It still hydrates the store, so it is not a safe pilot before `BR-LOCAL-VERIFY-01`. A public legal page would be easier and would not prove app chrome. |
+| migration_order | 0 parity map. 1 i18n foundation. 2 Home. 3 Annual. 4 Monthly. 5 Daily floating window (there is no Daily HTML page). 6 Insight. 7 PL / MEP. 8 Profile / Settings / Subscription (skip dummy plan details and construction session management until those pages are real). 9 Setup dialog / Registration / Login. 10 Legal and remaining public pages. 11 Retire legacy locale HTML. Order stands. Do not start at Annual. |
+| no_big_bang | Never convert all pages at once. Each migrated group must reach local verified, 3-language parity, automated smoke, human visual approval where judgment is required, production deploy, and a stable period before the next group. |
+| spanish_gate | Do not add Spanish as a fourth duplicated HTML tree. Spanish is the first new language added through this architecture, and only after the v2 baseline exists. |
+| future_languages | Candidates only, not prioritized: Spanish, French, Italian, Thai, Indonesian, Malay, additional Chinese markets where appropriate. Adding a language must mean adding locale resources, not copying the application. |
+| relation | `BR-LOCAL-VERIFY-01` is the prerequisite. Then this task. Then ES and later locales. Stripe may proceed in parallel; local verification also protects that release. |
+| next_action | REGISTER ONLY. Do not start the parity map or any HTML consolidation until `BR-LOCAL-VERIFY-01` has a reviewed baseline and Case + Shin approve this task. |
+| constraint | no HTML merge; no locale dictionary; no Spanish; no Stripe; no runtime change in this registration |
+
 ---
 
 ## 8. DEFERRED BRANCHES????
@@ -1866,6 +1933,8 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-HOME-02` | Home / Simple Mode Redesign | PRODUCTION VERIFIED / CLOSED | P1 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PROGRESS-SCALE-01` | Dynamic Progress Bar Scale | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PACE-ALERT-01` | Business-day vs Sales Pace Alert Visual Contract | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
+| `BR-LOCAL-VERIFY-01` | Full Local Verification Environment | REGISTERED — Phase 0 recorded; implementation not started | CRITICAL / HIGH | none (infrastructure; CURRENT PATH unchanged) |
+| `BR-I18N-ARCH-01` | Localization Architecture v2 | REGISTERED — implementation not started | HIGH | prerequisite `BR-LOCAL-VERIFY-01` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -1889,7 +1958,8 @@ CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
 PRODUCTION VERIFIED / CLOSED (not the active path): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. Revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. CURRENT PATH unchanged.) `BR-POST-HOME-02` (Home / Simple Mode Redesign, P1. Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. 2026-10-03. CURRENT PATH unchanged.)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`  
-DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-POST-PACE-ALERT-01`
+DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-POST-PACE-ALERT-01`  
+REGISTERED infrastructure (Phase 0 recorded 2026-10-03; do not implement until Case + Shin review; CURRENT PATH unchanged): `BR-LOCAL-VERIFY-01` (prerequisite), then `BR-I18N-ARCH-01`. Spanish is not a fourth HTML tree. Stripe may proceed in parallel.
 
 ---
 
@@ -2053,3 +2123,4 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-02 | **BR-POST-PROGRESS-SCALE-01** and **BR-POST-PACE-ALERT-01** registered. Both DEFERRED / POST-LAUNCH / REDESIGN. Priority not raised. CURRENT PATH unchanged. Home status not changed. Sales Progress dynamic scale: evidence not found (`e69ada5`). Seasonality dynamic scale remains `getSeasonalityChartScale` (`9ef8dba`). Home pace warning remains `5e7dd63`. No implementation. |
 | 2026-10-02 | **BR-POST-HOME-02 registered** Home / Simple Mode Redesign. DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY. Design note [`docs/br-post-home-02.md`](./br-post-home-02.md). H2-1 not started. `BR-POST-HOME-01` stays PRODUCTION VERIFIED / CLOSED. CURRENT PATH unchanged. No implementation. |
 | 2026-10-03 | **BR-POST-HOME-02 PRODUCTION VERIFIED / CLOSED.** Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. Runtime files: `app/home/home-shell.css`, `app/home/index.html`, `en/app/home/index.html`, `zh-tw/app/home/index.html`. JP / EN / ZH-TW × Sci-Fi / Office at 1200px PASS. `kpi-navigator/favicon.ico` 404 was not a pageerror. CURRENT PATH unchanged. Home is not the active path. |
+| 2026-10-03 | **BR-LOCAL-VERIFY-01 and BR-I18N-ARCH-01 REGISTERED.** Phase 0 local-verification audit recorded in the `BR-LOCAL-VERIFY-01` node. Implementation not started. Home remains the intended first i18n pilot after that baseline. Spanish is not a fourth HTML tree. UI locale and billing region stay separate. CURRENT PATH unchanged. Docs only. |
