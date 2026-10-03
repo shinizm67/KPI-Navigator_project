@@ -140,12 +140,26 @@
   }
 
   function bindHold(btn, delta) {
-    if (!btn) return;
+    if (!btn || btn.getAttribute('data-home-hold') === '1') return;
+    btn.setAttribute('data-home-hold', '1');
     var delayId = null;
     var repeatId = null;
+    var pointerId = null;
     function clearHold() {
       if (delayId != null) { clearTimeout(delayId); delayId = null; }
       if (repeatId != null) { clearInterval(repeatId); repeatId = null; }
+    }
+    function releaseCapture() {
+      if (pointerId == null) return;
+      var id = pointerId;
+      pointerId = null;
+      try {
+        if (btn.hasPointerCapture(id)) btn.releasePointerCapture(id);
+      } catch (_e) {}
+    }
+    function endHold() {
+      clearHold();
+      releaseCapture();
     }
     function step() {
       commit(shiftIso(currentIso, delta));
@@ -153,15 +167,22 @@
     btn.addEventListener('pointerdown', function (ev) {
       if (ev.pointerType === 'mouse' && ev.button !== 0) return;
       ev.preventDefault();
-      clearHold();
+      endHold();
+      pointerId = ev.pointerId;
+      try { btn.setPointerCapture(ev.pointerId); } catch (_e2) {}
       step();
       delayId = setTimeout(function () {
+        delayId = null;
         repeatId = setInterval(step, HOLD_INTERVAL);
       }, HOLD_DELAY);
     });
-    btn.addEventListener('pointerup', clearHold);
-    btn.addEventListener('pointercancel', clearHold);
-    btn.addEventListener('lostpointercapture', clearHold);
+    btn.addEventListener('pointerup', endHold);
+    btn.addEventListener('pointercancel', endHold);
+    btn.addEventListener('pointerleave', endHold);
+    window.addEventListener('blur', endHold);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) endHold();
+    });
     btn.addEventListener('keydown', function (ev) {
       if (ev.key !== 'Enter' && ev.key !== ' ') return;
       ev.preventDefault();

@@ -82,6 +82,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 0 0 auto;
 }
 
 .home-window__nav,
@@ -99,19 +100,29 @@
 .home-window__nav {
   width: 20px;
   min-width: 20px;
+  flex: 0 0 20px;
   padding: 0;
   font-size: 16px;
   line-height: 1;
 }
 
 .home-window__date-btn {
-  width: auto;
-  min-width: 0;
+  width: 212px;
+  flex: 0 0 212px;
+  min-width: 212px;
   padding: 0;
   font-size: 20px;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
+}
+
+.home-window__today-slot {
+  display: flex;
+  flex: 0 0 64px;
+  width: 64px;
+  align-items: center;
+  justify-content: center;
 }
 
 .home-window__today {
