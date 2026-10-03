@@ -22,7 +22,7 @@
     html[lang='ja'] .lang-option-zh-tw { display: none !important; }
     html[lang='zh-TW'] .lang-option-ja, html[lang^='zh'] .lang-option-ja { display: none !important; }
   </style>
-  <link rel="stylesheet" href="../../../app/home/home-shell.css?v=20261003-h24b">
+  <link rel="stylesheet" href="../../../app/home/home-shell.css?v=20261003-h28">
 </head>
 <body class="si-fi profile-page home-page" id="body-el">
   <script src="../../../js/kpi-data-gateway.js?v=20261001-srd1"></script>
@@ -242,6 +242,41 @@
     })();
   </script>
   <main class="home-main" aria-label="Home">
+    <div class="home-top-zone">
+      <div class="workspace-selector-wrap">
+        <button type="button" class="profile-workspace-indicator" id="workspace-trigger" aria-label="Current workspace" aria-expanded="false" aria-haspopup="true">
+          <span class="profile-workspace-icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="profile-workspace-label">Workspace : Personal</span>
+        </button>
+        <div class="workspace-popup" id="workspace-popup" role="dialog" aria-label="Workspace list" hidden>
+          <div class="workspace-popup-inner">
+            <div class="workspace-popup-item is-current">Workspace : Personal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    (function () {
+      var trigger = document.getElementById('workspace-trigger');
+      var popup = document.getElementById('workspace-popup');
+      if (!trigger || !popup) return;
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !popup.hidden;
+        popup.hidden = isOpen;
+        trigger.setAttribute('aria-expanded', !isOpen);
+      });
+      popup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+      document.addEventListener('click', function () {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    })();
+    </script>
     <div class="home-windows">
       <article class="home-window" data-home-window="daily">
         <header class="home-window__head">

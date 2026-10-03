@@ -1,11 +1,11 @@
 # BR-POST-HOME-02 — Home / Simple Mode Redesign
 
-Status: **DEFERRED / POST-LAUNCH / P1 / REGISTER ONLY**  
+Status: **LOCAL HUMAN VISUAL REVIEW COMPLETE / NOT DEPLOYED / P1**  
 Parent: post-launch (do not reopen `TRUNK-06`)  
 Registered: 2026-10-02  
-First Action: H2-1 — Home v2 Pre-Implementation Audit (**NOT STARTED**)
+Local visual review: 2026-10-03
 
-`BR-POST-HOME-01` stays **PRODUCTION VERIFIED / CLOSED**. This task does not reopen it. CURRENT PATH is unchanged. H2-1 has not started. No implementation.
+`BR-POST-HOME-01` stays **PRODUCTION VERIFIED / CLOSED**. This task does not reopen it. CURRENT PATH is unchanged. Home v2 is implemented locally and the human visual review is complete. Production deploy has not been done. This status is not PRODUCTION VERIFIED.
 
 ## Product role
 
@@ -41,7 +41,19 @@ The red dimension lines, red px numbers, and red guide marks in the PNG are desi
 | Monthly | 360px | 985px |
 | Annual | same structure as Monthly | same structure as Monthly |
 
-Width: 1000px.
+Width: 900px.
+
+## Local visual contract
+
+Recorded from the local implementation after the 2026-10-03 human visual review. Production has not been checked.
+
+- Top control zone: the existing Global Menu, then the existing Workspace selector, then Daily / Monthly / Annual.
+- Workspace bottom to Daily top is about 60px. Daily to Monthly, and Monthly to Annual, are 50px between the card borders.
+- Primary KPI row 1 is 24px. Rows 2–4 are 20px. Labels are right-aligned. Values are left-aligned. The three cards share those edges. The visual gap from the label’s right edge to the value’s left edge is 100px.
+- The date text is 20px. The previous and next controls stay 16px. Today stays 12px.
+- The header has no separator. The 0.5px disclosure boundary appears only while Open, under the chevron. On Monthly and Annual Open, the gap above that line and the gap below it match.
+- Supporting KPI rows use the same visual rhythm as the primary KPI rows.
+- Sales Progress and Business-day Progress keep their existing calculation and rendering.
 
 ## Structure
 
@@ -49,6 +61,22 @@ Three windows share one reference date: Daily, Monthly, Annual. Each window has 
 
 - Close shows the primary KPIs only.
 - Open adds the supporting KPIs, progress, and the detail link.
+
+## Disclosure Boundary / Expanded Content Separator
+
+Candidate for a future shared KPN Expand / Collapse rule.
+
+An expand/collapse surface should show where the always-visible default content ends and the expanded content begins. Do not leave that boundary to the user’s guess.
+
+Home v2 draws that boundary as a 0.5px horizontal separator:
+
+- Above the line: the primary KPIs, which stay visible when the window is closed.
+- The chevron sits with that default content.
+- Below the line: supporting KPIs, progress, and the other expanded content.
+
+The separator is shown in the Open state, directly under the chevron. It is not shown in the Close state, because there is no expanded content.
+
+Thickness is 0.5px on purpose. 1px is too visually loud for this boundary. 0.5px still marks the information break and stays quiet in the Sci-Fi UI. Sci-Fi uses the existing cyan contract. Office uses a separator tone that fits the existing Office contract. This line is an information boundary, not decoration. The header under the title and date navigation does not use this line.
 
 ## Close
 
@@ -129,7 +157,7 @@ Home stays in the Global Menu, with the labels above. At the 1200px minimum view
 
 ## Detail navigation
 
-The lower-right of each window links to that window’s detail page. The label and the destination are not decided. Do not fix them as "Go to Annual" or any other wording.
+The lower-right of each window links to that window’s detail page. Home v2 keeps the existing v1 label and destination.
 
 ## Implementation principle
 
@@ -153,6 +181,6 @@ The lower-right of each window links to that window’s detail page. The label a
 
 ## H2-1 — Home v2 Pre-Implementation Audit
 
-Status: **NOT STARTED**.
+Status: **SUPERSEDED**.
 
-When started, the audit covers the current Home v1 DOM / JS / CSS, Global Menu, 1200px viewport, JP / EN / ZH-TW, Sci-Fi / Office, the shared reference date, existing KPI data sources, Close / Open implementation options, how far Monthly and Annual can share one structure, geometry differences from the PNG, and the candidate files.
+The separate pre-implementation audit was not recorded. Home v2 was implemented locally and closed by human visual review on 2026-10-03. Production deploy is still outstanding.

@@ -1,13 +1,29 @@
 /* Home shell only. Recompose Daily FW colors. Do not invent a theme.
    Window gap is the black band between independent boxes.
-   Default 32px. Visual smoke may set 24 or 40 on .home-windows. */
+   Default 20px. */
+.home-page .home-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+
+.home-top-zone {
+  width: min(900px, calc(100% - 48px));
+  box-sizing: border-box;
+}
+
+.home-page .home-top-zone .workspace-selector-wrap {
+  margin: 0;
+}
+
 .home-page .home-windows {
-  --home-window-gap: 32px;
+  --home-window-gap: 50px;
   display: flex;
   flex-direction: column;
   gap: var(--home-window-gap);
-  width: min(1000px, calc(100% - 48px));
-  margin: 28px auto 56px;
+  width: min(900px, calc(100% - 48px));
+  margin: 60px auto 56px;
   background: #000000;
   box-sizing: border-box;
 }
@@ -27,14 +43,8 @@
   min-width: 0;
 }
 
-.home-window.is-expanded .home-window__stage {
-  flex: 1 1 auto;
-}
-
-.home-window.is-expanded .home-window__controls {
-  margin-top: 0;
-  padding-top: 28px;
-}
+/* Open surplus stays above the detail link so the link can sit on the card bottom.
+   The stage itself stays at content height. See the controls rule. */
 
 .home-window[data-home-window="daily"].is-expanded {
   height: 650px;
@@ -46,18 +56,19 @@
 }
 
 .home-window__head {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 74px;
-  padding: 12px 18px 10px;
-  border-bottom: 0.5px solid rgba(88, 225, 243, 0.72);
+  gap: 12px;
+  min-height: 56px;
+  padding: 14px 18px 6px;
+  border-bottom: 0;
   box-sizing: border-box;
 }
 
 .home-window__identity {
   margin: 0;
+  justify-self: start;
   font-size: 24px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -65,6 +76,8 @@
 }
 
 .home-window__date {
+  grid-column: 2;
+  justify-self: center;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -92,12 +105,13 @@
 }
 
 .home-window__date-btn {
-  width: 196px;
-  min-width: 196px;
+  width: auto;
+  min-width: 0;
   padding: 0;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
   text-align: center;
+  white-space: nowrap;
 }
 
 .home-window__today {
@@ -123,44 +137,44 @@
 
 .home-window__stage {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
   flex: 0 0 auto;
   min-height: 0;
-  padding: 12px 28px 0 12px;
+  padding: 8px 24px 0;
   box-sizing: border-box;
 }
 
 .home-window__stage-main {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: contents;
 }
 
 .home-window__kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  order: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 100px;
+  row-gap: 30px;
+  width: 100%;
+  max-width: 100%;
+  margin: 24px 0 0;
   padding: 0;
+  align-items: center;
 }
 
 .home-window__kpi-cell {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 0;
-  border: 0;
-  padding: 0;
-  box-sizing: border-box;
+  display: contents;
 }
 
 .home-window__kpi-label {
   margin: 0;
-  flex: 1 1 auto;
+  justify-self: end;
+  max-width: 340px;
   min-width: 0;
   font-size: 20px;
   letter-spacing: 0.02em;
-  line-height: 1.2;
+  line-height: 1;
+  text-align: right;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -169,11 +183,16 @@
 
 .home-window__kpi-value {
   margin: 0;
-  flex: 0 0 auto;
-  font-size: 28px;
-  line-height: 1.15;
-  text-align: right;
+  justify-self: start;
+  font-size: 20px;
+  line-height: 1;
+  text-align: left;
   white-space: nowrap;
+}
+
+.home-window__stage-main > .home-window__kpi > .home-window__kpi-cell:first-child .home-window__kpi-label,
+.home-window__stage-main > .home-window__kpi > .home-window__kpi-cell:first-child .home-window__kpi-value {
+  font-size: 24px;
 }
 
 .home-window__expanded[hidden] {
@@ -181,11 +200,26 @@
 }
 
 .home-window__expanded {
-  margin: 28px 0 0;
-  padding: 0;
+  order: 3;
+  position: relative;
+  margin: 8px 0 0;
+  padding: 16px 0 0;
   border-top: 0;
   font-size: 16px;
   line-height: 1.2;
+}
+
+.home-window.is-expanded .home-window__expanded::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(88, 225, 243, 0.72);
+  transform: scaleY(0.5);
+  transform-origin: top center;
+  pointer-events: none;
 }
 
 .home-window__controls {
@@ -193,8 +227,53 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 28px;
-  padding: 0 28px 18px;
+  margin-top: auto;
+  padding: 13px 28px 22px;
+}
+
+.home-window.is-expanded .home-window__stage {
+  flex: 1 1 auto;
+}
+
+.home-window.is-expanded .home-window__controls {
+  margin-top: 0;
+}
+
+.home-window.is-expanded .home-window__expanded {
+  flex: 1 1 auto;
+  display: grid;
+  min-height: 0;
+  align-content: stretch;
+}
+
+.home-window.is-expanded[data-home-window="daily"] .home-window__expanded {
+  grid-template-rows: minmax(20px, 1fr) auto minmax(20px, 1fr);
+}
+
+.home-window.is-expanded[data-home-window="daily"] .home-window__expanded > .home-progress {
+  grid-row: 2;
+  margin-top: 0;
+}
+
+.home-window.is-expanded[data-home-window="monthly"] .home-window__expanded,
+.home-window.is-expanded[data-home-window="annual"] .home-window__expanded {
+  padding-top: 50px;
+  grid-template-rows: auto 118px auto 40px auto minmax(20px, 1fr);
+}
+
+.home-window.is-expanded .home-window__expanded > .home-window__goal {
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.home-window.is-expanded .home-window__expanded > .home-progress[data-home-progress="business"] {
+  grid-row: 3;
+  margin-top: 0;
+}
+
+.home-window.is-expanded .home-window__expanded > .home-progress[data-home-progress="sales"] {
+  grid-row: 5;
+  margin-top: 0;
 }
 
 .home-window__expand,
@@ -208,10 +287,12 @@
 }
 
 .home-window__expand {
+  order: 2;
+  align-self: flex-start;
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  margin-top: 72px;
+  margin: 13px 0 0 -12px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -263,6 +344,7 @@ body.office-mode .home-window__today {
 }
 
 body.office-mode .home-window__expand {
+  margin-left: -10px;
   border: 0;
   background: transparent;
   color: #111111;
@@ -278,17 +360,23 @@ body.office-mode .home-window__detail {
   border-bottom-color: #111111;
 }
 
+body.office-mode .home-window.is-expanded .home-window__expanded::before {
+  background: #111111;
+}
+
 .home-window__expanded .home-window__kpi {
+  order: 0;
   padding: 0;
   margin: 0;
-  gap: 16px;
+  width: 100%;
+  row-gap: 30px;
 }
 
 .home-progress {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 40px;
   min-height: 28px;
 }
 
