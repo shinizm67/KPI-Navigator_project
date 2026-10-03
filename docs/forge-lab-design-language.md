@@ -1,8 +1,9 @@
 # Forge Lab Design Language
 
-Version: **v0.1**  
+Version: **v0.2**  
 Status: **ACTIVE / EVOLVING**  
 Date: 2026-10-03  
+Revised: 2026-10-03（v0.2。v0.1 の定義は残す）  
 Scope: Forge Laboratory 全体（KPN、Forge Laboratory website、Orb、将来の Web app / UI product）
 
 正本はこのファイル。KPN 固有の数値は、ここへ共通 HARD RULE として上げない。
@@ -191,6 +192,17 @@ Structurally similar ≠ Visually identical.
 - Implementation: browser zoom を再現しない。size、spacing、alignment を別々に決める
 - Classification: **GUIDELINE**
 
+### 5-13. Interactive Anchor Stability
+
+連続クリック、repeated interaction、press-and-hold を前提とする control では、隣の可変 content によって hit target の位置を動かさない。
+
+- Human meaning: 「何回も押すボタンは、押している途中で逃げない」
+- Purpose: motor continuity、repeated input の効率、misclick 防止、視線と指でボタンを追い続ける負荷を減らす、操作の安定
+- Implementation: 可変テキストの隣に repeat control があるときは、variable content 用の fixed slot、reserved width、shared grid / flex anchor で、control の実座標を固定する。repeat state は pointer capture、release、cancel、blur、page hidden で必ず終える
+- Classification: repeated interaction を期待するときは **HARD RULE**
+- 枠の px は製品の example であり、Forge Lab 全体の固定値ではない
+- Home example: ◀ [212px fixed date slot] ▶ [64px Today slot]。日付テキストが変わっても、◀ / ▶ の hit target の X は不変。212px と 64px は Home の例
+
 ---
 
 ## 6. Measurement Reference
@@ -253,7 +265,7 @@ Visual Text Edge と Box Edge を混ぜない。Text-to-Text Visual Gap と Labe
 
 変更するときは、可能な限り短い理由を残す。
 
-例: v0.1 は 40px fixed。v0.2 で hard 40px をやめ、30–50px の visual guideline にした。理由は font metrics と container 高さで見た目が変わるため。
+例: ある版は 40px fixed。後の版で hard 40px をやめ、30–50px の visual guideline にした。理由は font metrics と container 高さで見た目が変わるため。
 
 古い定義を、なかったことにしない。
 
@@ -298,3 +310,4 @@ Home で変えた example（いずれも Home scope。Forge Lab 全体の HARD R
 | Version | Date | Action | Summary |
 |---|---|---|---|
 | v0.1 | 2026-10-03 | ADD | Initial Forge Lab Design Language。Home v2 の visual refinement から作成。Status: ACTIVE / EVOLVING。 |
+| v0.2 | 2026-10-03 | ADD | Interactive Anchor Stability を追加。Home の date navigation follow-up から。212px / 64px は Home example。Status: ACTIVE / EVOLVING。 |
