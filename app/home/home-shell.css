@@ -27,6 +27,15 @@
   min-width: 0;
 }
 
+.home-window.is-expanded .home-window__stage {
+  flex: 1 1 auto;
+}
+
+.home-window.is-expanded .home-window__controls {
+  margin-top: 0;
+  padding-top: 28px;
+}
+
 .home-window[data-home-window="daily"].is-expanded {
   height: 650px;
 }
@@ -116,9 +125,9 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  padding: 10px 22px 0 8px;
+  padding: 12px 28px 0 12px;
   box-sizing: border-box;
 }
 
@@ -130,13 +139,13 @@
 .home-window__kpi {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 6px 0 0;
+  gap: 20px;
+  padding: 0;
 }
 
 .home-window__kpi-cell {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   min-height: 0;
@@ -147,14 +156,21 @@
 
 .home-window__kpi-label {
   margin: 0;
-  font-size: 24px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 20px;
   letter-spacing: 0.02em;
-  line-height: 1.15;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .home-window__kpi-value {
   margin: 0;
-  font-size: 24px;
+  flex: 0 0 auto;
+  font-size: 28px;
   line-height: 1.15;
   text-align: right;
   white-space: nowrap;
@@ -165,7 +181,7 @@
 }
 
 .home-window__expanded {
-  margin: 16px 0 0;
+  margin: 28px 0 0;
   padding: 0;
   border-top: 0;
   font-size: 16px;
@@ -177,8 +193,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: auto;
-  padding: 8px 22px 16px;
+  margin-top: 28px;
+  padding: 0 28px 18px;
 }
 
 .home-window__expand,
@@ -195,7 +211,7 @@
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  margin-top: 8px;
+  margin-top: 72px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -264,24 +280,32 @@ body.office-mode .home-window__detail {
 
 .home-window__expanded .home-window__kpi {
   padding: 0;
-  margin-bottom: 8px;
-  gap: 12px;
+  margin: 0;
+  gap: 16px;
 }
 
 .home-progress {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 28px;
   min-height: 28px;
 }
 
+.home-window__expanded > .home-progress:first-child {
+  margin-top: 0;
+}
+
 .home-progress__label {
-  flex: 0 1 240px;
+  flex: 0 0 200px;
   margin: 0;
   font-size: 16px;
   line-height: 1.2;
   letter-spacing: 0.02em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .home-progress__track {
@@ -343,7 +367,7 @@ body.office-mode .home-window__detail {
   margin: 0;
   color: #58e1f3;
   font-family: 'Orbitron', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
   text-align: right;
 }
