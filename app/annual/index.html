@@ -41560,6 +41560,41 @@
             if (window.__KPI_DAILY_IMPORT && window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps) {
               window.__KPI_DAILY_IMPORT.persistDailyMealFromMaps(maps);
             }
+            if (
+              window.__KPI_DAILY_IMPORT &&
+              typeof window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields === 'function' &&
+              window.__KPI_DAILY_IMPORT.salesCsvAllowsRestaurantFields() &&
+              window.KpiYearStore &&
+              typeof KpiYearStore.bulkPersistMepYear === 'function'
+            ) {
+              var salesDataIncomeByYear = {};
+              var addSalesDataIncome = function (streamId, iso, val) {
+                var y = Number(String(iso).slice(0, 4));
+                if (!Number.isFinite(y)) return;
+                if (!salesDataIncomeByYear[y]) salesDataIncomeByYear[y] = {};
+                if (!salesDataIncomeByYear[y][streamId]) salesDataIncomeByYear[y][streamId] = {};
+                var n = Number(val);
+                salesDataIncomeByYear[y][streamId][iso] = Number.isFinite(n) ? Math.round(n) : 0;
+              };
+              Object.keys((maps && maps.foodByDate) || {}).forEach(function (iso) {
+                addSalesDataIncome('food_sales', iso, maps.foodByDate[iso]);
+              });
+              Object.keys((maps && maps.drinkByDate) || {}).forEach(function (iso) {
+                addSalesDataIncome('drink_sales', iso, maps.drinkByDate[iso]);
+              });
+              Object.keys(salesDataIncomeByYear).forEach(function (y) {
+                KpiYearStore.bulkPersistMepYear(
+                  Number(y),
+                  { dailyIncome: salesDataIncomeByYear[y] },
+                  {
+                    source: 'sales-data-csv-import',
+                    forceIncome: true,
+                    allowLockedYearImport: true,
+                    deferPersist: true
+                  }
+                );
+              });
+            }
             var persistP = KpiYearStore.persistFromAnnualDaily(
               { targetSalesByDate: maps.salesByDate || {}, businessDayByDate: maps.businessDayByDate || {} },
               { source: 'sales-data-csv-import' }
