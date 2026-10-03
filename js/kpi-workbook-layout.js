@@ -91,6 +91,7 @@
     var n = norm(raw);
     if (!n) return false;
     if (n === '合計' || n === '計' || n === 'total' || n === 'grandtotal') return true;
+    if (n === '小計' || n === '累計' || n === '月計' || n === 'subtotal' || n === 'cumulative') return true;
     if (n === '月間合計' || n === '月間' || n === 'monthlytotal') return true;
     return false;
   }
@@ -787,6 +788,9 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        /* Default is partial update. Full-month replace stays opt-in because the
+           upload UI never asks the user to declare the file a whole-month source. */
+        if (!opts.fullMonthReplace && !hasOwn(maps.salesByDate, iso)) continue;
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }

@@ -5946,6 +5946,7 @@
     var n = norm(raw);
     if (!n) return false;
     if (n === '合計' || n === '計' || n === 'total' || n === 'grandtotal') return true;
+    if (n === '小計' || n === '累計' || n === '月計' || n === 'subtotal' || n === 'cumulative') return true;
     if (n === '月間合計' || n === '月間' || n === 'monthlytotal') return true;
     return false;
   }
@@ -6642,6 +6643,7 @@
           if (hasOwn(maps.businessDayByDate, iso)) delete maps.businessDayByDate[iso];
           continue;
         }
+        if (!opts.fullMonthReplace && !hasOwn(maps.salesByDate, iso)) continue;
         if (!hasOwn(maps.salesByDate, iso)) {
           maps.salesByDate[iso] = 0;
         }
@@ -6844,6 +6846,25 @@
           'storesales',
           'dailysales',
         ];
+        var SAFE_SALES_EXACT_KEYS = [
+          '日次売上',
+          '店舗売上',
+          '売上',
+          '売上高',
+          '総売上',
+          '売上金額',
+          'dailysales',
+          'storesales',
+          'sales',
+          'netsales',
+          'grosssales',
+          'totalsales',
+          'amount',
+          '金額',
+        ];
+        var EXPENSE_ITEM_KEYS = ['費目', '項目', '科目', '勘定科目', 'item', 'category', 'account', 'expense', '経費', '支出'];
+        var EXPENSE_AMT_KEYS = ['金額', 'amount', 'cost', 'price'];
+        var AGGREGATE_LABELS = ['合計', '小計', '累計', '月計', '月間合計', '月間', 'total', 'subtotal', 'grandtotal', 'cumulative', 'monthlytotal'];
         var LUNCH_SALES_KEYS = ['ランチ売上', 'lunchsales', 'lunchsale'];
         var DINNER_SALES_KEYS = ['ディナー売上', 'dinnersales', 'dinnersale'];
         var LUNCH_CUST_KEYS = ['ランチ客数', 'lunchcustomers', 'lunchcustomer'];
@@ -6935,37 +6956,7 @@
             else if (drinkIdx < 0 && isDrinkHeader(norm)) drinkIdx = c;
             else if (dateIdx < 0 && matchKey(norm, DATE_KEYS)) dateIdx = c;
             else if (bizIdx < 0 && matchKey(norm, BIZ_KEYS)) bizIdx = c;
-            else if (salesIdx < 0 && matchExact(norm, DAILY_SALES_EXACT_KEYS)) salesIdx = c;
-            else if (
-              salesIdx < 0 &&
-              matchKey(norm, SALES_KEYS) &&
-              !isFoodHeader(norm) &&
-              !isDrinkHeader(norm) &&
-              !isMealSalesHeader(norm)
-            ) {
-              salesIdx = c;
-            }
-          }
-          if (dateIdx < 0 && headerRow.length >= 1) dateIdx = 0;
-          if (salesIdx < 0 && headerRow.length >= 2) {
-            salesIdx = headerRow.length - 1;
-            while (
-              salesIdx >= 0 &&
-              (salesIdx === dateIdx ||
-                salesIdx === foodIdx ||
-                salesIdx === drinkIdx ||
-                salesIdx === bizIdx ||
-                salesIdx === lunchSalesIdx ||
-                salesIdx === dinnerSalesIdx ||
-                salesIdx === lunchCustIdx ||
-                salesIdx === dinnerCustIdx ||
-                salesIdx === totalCustIdx ||
-                salesIdx === lunchGroupsIdx ||
-                salesIdx === dinnerGroupsIdx ||
-                salesIdx === totalGroupsIdx)
-            ) {
-              salesIdx--;
-            }
+            else if (salesIdx < 0 && matchExact(norm, SAFE_SALES_EXACT_KEYS)) salesIdx = c;
           }
           return {
             dateIdx: dateIdx,
@@ -7216,6 +7207,49 @@
           return true;
         }
 
+
+        function headerIsExpenseTable(headerRow) {
+          var hasItem = false;
+          var hasAmt = false;
+          var i;
+          for (i = 0; i < headerRow.length; i++) {
+            var n = normalizeHeader(headerRow[i]);
+            if (!n) continue;
+            if (matchExact(n, EXPENSE_ITEM_KEYS)) hasItem = true;
+            if (matchExact(n, EXPENSE_AMT_KEYS)) hasAmt = true;
+          }
+          return hasItem && hasAmt;
+        }
+
+        function isAggregateLabel(raw) {
+          return matchExact(normalizeHeader(raw), AGGREGATE_LABELS);
+        }
+
+        function rowHasAggregateLabel(row) {
+          var i;
+          for (i = 0; i < (row || []).length; i++) {
+            if (isAggregateLabel(row[i])) return true;
+          }
+          return false;
+        }
+
+        function classifySalesAmount(raw) {
+          if (raw == null || raw === '') return { kind: 'missing' };
+          if (typeof raw === 'number') {
+            if (!Number.isFinite(raw)) return { kind: 'invalid' };
+            return { kind: 'value', value: raw };
+          }
+          var s = String(raw).trim();
+          if (!s || s === '-' || s === '—' || s === '–' || s === '−') return { kind: 'missing' };
+          if (s.charAt(0) === '=' || /%/.test(s) || /[￥円]/.test(s)) return { kind: 'invalid' };
+          var t = s.replace(/[¥$,\s]/g, '');
+          if (!t || t === '-' || t === '—' || t === '–') return { kind: 'missing' };
+          if (!/^-?\d+(\.\d+)?$/.test(t)) return { kind: 'invalid' };
+          var n = Number(t);
+          if (!Number.isFinite(n)) return { kind: 'invalid' };
+          return { kind: 'value', value: n };
+        }
+
         function rowsToMaps(rows) {
           if (!rows || !rows.length) throw new Error('empty');
           var unmatchedMetrics = [];
@@ -7227,17 +7261,26 @@
             if (prepared && prepared.rows && prepared.rows.length) rows = prepared.rows;
           }
           var header = rows[0].map(function (c) { return String(c == null ? '' : c); });
+          if (headerIsExpenseTable(header)) throw new Error('columns');
           var cols = detectColumns(header);
           if (cols.dateIdx < 0 || cols.salesIdx < 0) throw new Error('columns');
           var allowRestaurant = salesCsvAllowsRestaurantFields();
           var pending = [];
           var mealErrors = [];
+          var invalidSales = [];
           for (var r = 1; r < rows.length; r++) {
             var row = rows[r];
             if (!row || !row.length) continue;
             var iso = parseDateCell(row[cols.dateIdx]);
             if (!iso) continue;
-            var sales = Math.round(parseSalesCell(row[cols.salesIdx]));
+            if (rowHasAggregateLabel(row)) continue;
+            var parsedSales = classifySalesAmount(row[cols.salesIdx]);
+            if (parsedSales.kind === 'missing') continue;
+            if (parsedSales.kind !== 'value') {
+              invalidSales.push(iso);
+              continue;
+            }
+            var sales = Math.round(parsedSales.value);
             var biz = cols.bizIdx >= 0 ? parseBizCell(row[cols.bizIdx]) : null;
             var lunchSales = readMealCell(row, cols.lunchSalesIdx, false);
             var dinnerSales = readMealCell(row, cols.dinnerSalesIdx, false);
@@ -7291,6 +7334,15 @@
               dinnerGroups: dinnerGroups,
               totalGroups: totalGroups,
             });
+          }
+          if (invalidSales.length) {
+            var invalidErr = new Error('invalid-sales');
+            invalidErr.userMessage = t(
+              '数値として読めない売上があります（' + invalidSales[0] + '）。0円としては保存しません。KPN雛形を使用してください。',
+              'A sales value could not be read as a number (' + invalidSales[0] + '). It was not saved as 0. Use a KPN template.',
+              '有無法讀成數字的銷售金額（' + invalidSales[0] + '）。不會當成0儲存。請使用 KPN 範本。'
+            );
+            throw invalidErr;
           }
           if (mealErrors.length) throw mealErrors[0];
           var salesByDate = {};
@@ -7979,7 +8031,7 @@
                     );
                     return;
                   }
-                  if (code === 'meal-invalid' || code === 'meal-persist' || code === 'persist-unavailable') {
+                  if (code === 'meal-invalid' || code === 'meal-persist' || code === 'persist-unavailable' || code === 'invalid-sales') {
                     window.alert(
                       (err && err.userMessage) ||
                         t('取り込みを中止しました。', 'Import stopped.', '已停止匯入。')

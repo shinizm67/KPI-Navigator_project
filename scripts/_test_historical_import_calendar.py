@@ -332,8 +332,14 @@ def main() -> int:
     cal_feb = run_case({"op": "lastDay", "y": 2025, "m": 2, "invalidDay": 29})
     assert_true(cal_feb.get("lastDay") == 28 and cal_feb.get("invalid") is None, "calendar non-leap Feb")
 
-    # 12. Vertical Import regression
-    t12 = run_case({"op": "parseThenComplete", "rows": VERTICAL_SAMPLE, "opts": OPTS})
+    # 12. Explicit full-month replace remains available, but is not the upload default.
+    t12 = run_case(
+        {
+            "op": "parseThenComplete",
+            "rows": VERTICAL_SAMPLE,
+            "opts": dict(OPTS, fullMonthReplace=True),
+        }
+    )
     assert_true(t12.get("layout") != "horizontal", "12 vertical not misdetected")
     assert_true((t12.get("before") or {}).get("imported") == 2, "12 vertical parse 2 days")
     assert_true((t12.get("before") or {}).get("salesByDate", {}).get("2026-01-03") == 120000, "12 vertical sales intact")
@@ -348,7 +354,7 @@ def main() -> int:
         {
             "op": "parseThenComplete",
             "rows": [["日付", "日次売上", "トータル客数", "トータル組数"], ["2025-03-02", "12345", "4", "2"]],
-            "opts": OPTS,
+            "opts": dict(OPTS, fullMonthReplace=True),
         }
     )
     assert_true((t12past.get("before") or {}).get("imported") == 1, "12 past vertical parse 1 day")
@@ -356,6 +362,12 @@ def main() -> int:
     assert_true((t12past.get("after") or {}).get("salesByDate", {}).get("2025-03-02") == 12345, "12 past vertical sales kept")
     assert_true(biz(t12past.get("after"), "2025-03-02") is True, "12 past vertical inferred open")
     assert_true(biz(t12past.get("after"), "2025-03-01") is False, "12 Mar 1 closed by replace contract")
+
+    t12partial = run_case({"op": "parseThenComplete", "rows": VERTICAL_SAMPLE, "opts": OPTS})
+    after_partial = t12partial.get("after") or {}
+    assert_true(after_partial.get("imported") == 2, "12 default import does not fill the month")
+    assert_true("2026-01-02" not in (after_partial.get("salesByDate") or {}), "12 missing Jan 2 is not invented")
+    assert_true("2026-01-02" not in (after_partial.get("businessDayByDate") or {}), "12 missing Jan 2 is not closed")
 
     # 13. Horizontal Import regression + Barca
     t13 = run_case({"op": "parseThenComplete", "csvText": BARCA.read_text(encoding="utf-8"), "opts": OPTS})
