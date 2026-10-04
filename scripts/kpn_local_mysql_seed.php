@@ -5,7 +5,10 @@
  * fx-legacy-pro is never written. Reseed deletes only those five user ids.
  *
  *   php scripts/kpn_local_mysql_seed.php
+ *   php scripts/kpn_local_mysql_seed.php seed fx-basic-restaurant-ready
  *   php scripts/kpn_local_mysql_seed.php dump
+ *
+ * A fixture id reseeds only that canonical account. The default reseeds all five.
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -66,9 +69,23 @@ if (isset($byId['fx-legacy-pro']) && property_exists($byId['fx-legacy-pro'], 'pl
     exit(1);
 }
 
+$seedIds = $mysqlIds;
+if ($cmd === 'seed' && isset($argv[2]) && (string) $argv[2] !== '') {
+    $onlyId = (string) $argv[2];
+    if (!in_array($onlyId, $mysqlIds, true)) {
+        fwrite(STDERR, "local_test_refused:fixture\n");
+        exit(1);
+    }
+    $seedIds = array($onlyId);
+}
+
 $userIds = array();
 foreach ($mysqlIds as $id) {
     $userIds[] = (string) $byId[$id]->userId;
+}
+$seedUserIds = array();
+foreach ($seedIds as $id) {
+    $seedUserIds[] = (string) $byId[$id]->userId;
 }
 
 $stamp = gmdate('Y-m-d H:i:s', strtotime((string) $fixture->clock->fixtureClock));
@@ -81,10 +98,10 @@ if ($cmd === 'dump') {
 
 try {
     $pdo->beginTransaction();
-    $marks = implode(',', array_fill(0, count($userIds), '?'));
+    $marks = implode(',', array_fill(0, count($seedUserIds), '?'));
     $del = $pdo->prepare('DELETE FROM kpi_users WHERE user_id IN (' . $marks . ')');
-    $del->execute($userIds);
-    foreach ($mysqlIds as $id) {
+    $del->execute($seedUserIds);
+    foreach ($seedIds as $id) {
         kpn_mysql_seed_account($pdo, $byId[$id], $stamp);
     }
     $pdo->commit();
@@ -96,7 +113,11 @@ try {
     exit(1);
 }
 
-echo 'seeded kpn_local_test ' . count($mysqlIds) . "\n";
+echo 'seeded kpn_local_test ' . count($seedIds);
+if (count($seedIds) === 1) {
+    echo ' ' . $seedIds[0];
+}
+echo "\n";
 exit(0);
 
 function kpn_mysql_seed_account(PDO $pdo, $account, $stamp)

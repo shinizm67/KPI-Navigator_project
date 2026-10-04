@@ -1,6 +1,6 @@
 # Canonical Fixtures v1
 
-`BR-LOCAL-VERIFY-01` Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 3B maps five of these accounts into local MySQL from this same manifest. Phase 3B is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3 Local MySQL Parity is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 4 Full Page Smoke is NEXT / UNSTARTED.
+`BR-LOCAL-VERIFY-01` Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 3B maps five of these accounts into local MySQL from this same manifest. Phase 3B is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3 Local MySQL Parity is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 4A-1 is IMPLEMENTED / LOCAL MYSQL VERIFIED / CLOSED (2026-10-04): 20 of 122 user-facing smoke cases. Phase 4A stays ACTIVE. Phase 4A-2 JP Settings + JP Public is NEXT / UNSTARTED.
 
 Source of truth: `fixtures/local/canonical/manifest.json`
 
@@ -89,6 +89,10 @@ Phase 3B seeds only these five accounts into `kpn_local_test`:
 
 `fx-basic-profile-required` keeps every profile field empty. The seeder omits `kpi_user_profiles` instead of filling SQL columns with invented values. Accounts that do have a profile stamp `updated_at` from `fixtureClock` (`2026-10-03 03:00:00` UTC).
 
+Opening `setting/profile.html` in a fresh browser sends the user to `profile_edit.html` when `kpi-profile-last` is absent. That happens for a ready account and for `fx-basic-profile-required`. The ready account still hydrates its canonical business name on the edit form. The profile-required account stays empty. This is existing product behavior. Phase 4 smoke records it and does not change the page.
+
+`scripts/kpn_local_mysql_seed.php seed <fixture-id>` restores one of the five accounts from this manifest. The default command still restores all five.
+
 Restaurant meal, customer, group, food, and drink values stay inside `store_json`. Hotel fixtures keep those structures absent. Daily expenses stay in `store_json`. Monthly PL expenses stay in `pl_json`. `kpi_daily_facts`, password-reset tokens, marketing rows, and account-deletion history are not seeded.
 
 ## Daily inputs parity
@@ -105,7 +109,7 @@ Password hashes are ignored. `2026-10-03T12:00:00+09:00`, `2026-10-03T03:00:00Z`
 
 ## MySQL reseed
 
-`scripts/kpn_local_mysql_seed.php` deletes and reinserts only the five canonical user ids. Child store, profile, and daily-input rows follow the existing foreign keys. It does not drop `kpn_local_test` and does not delete other rows. The connection must be `kpn_local_runtime`. Bootstrap or root is refused for this command.
+`scripts/kpn_local_mysql_seed.php` deletes and reinserts only the five canonical user ids. Passing one fixture id deletes and reinserts only that user. Child store, profile, and daily-input rows follow the existing foreign keys. It does not drop `kpn_local_test` and does not delete other rows. The connection must be `kpn_local_runtime`. Bootstrap or root is refused for this command.
 
 `kpi_v1_db_write_user` still stores a missing plan as `basic`, and that behavior is unchanged.
 
