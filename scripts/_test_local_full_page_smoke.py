@@ -1157,8 +1157,252 @@ def main_h2() -> None:
         shutil.rmtree(work, ignore_errors=True)
 
 
+H4_CASES = [
+    {
+        "id": "h4-pro-rest-2026",
+        "fixture": "fx-pro-restaurant-ready",
+        "iso": "2026-10-03",
+        "actual": "¥48,000",
+        "finalTarget": "¥36,000,000",
+        "forbid": "",
+    },
+    {
+        "id": "h4-basic-rest-2026",
+        "fixture": "fx-basic-restaurant-ready",
+        "iso": "2026-10-03",
+        "actual": "¥31,000",
+        "finalTarget": "—",
+        "forbid": "36,000,000",
+    },
+    {
+        "id": "h4-pro-hotel-2026",
+        "fixture": "fx-pro-hotel-ready",
+        "iso": "2026-10-03",
+        "actual": "¥64,000",
+        "finalTarget": "—",
+        "forbid": "36,000,000",
+    },
+    {
+        "id": "h4-pro-rest-2025",
+        "fixture": "fx-pro-restaurant-ready",
+        "iso": "2025-04-02",
+        "actual": "¥21,000",
+        "finalTarget": "—",
+        "forbid": "36,000,000",
+    },
+]
+
+H4_READY = """(spec) => {
+  const dash = '\\u2014';
+  const annual = document.querySelector('[data-home-window="annual"]');
+  const input = annual && annual.querySelector('[data-home-date-input]');
+  if (!annual || !input || input.value !== spec.iso) return false;
+  if (document.querySelector('.home-windows') && document.querySelector('.home-windows').hidden) return false;
+  const values = Array.from(annual.querySelectorAll('.home-window__kpi:not(.home-window__goal) .home-window__kpi-value')).map((el) => el.textContent);
+  const finalEl = annual.querySelector('[data-home-goal="final"]');
+  const remain = annual.querySelector('[data-home-goal="remaining"]');
+  const days = annual.querySelector('[data-home-goal="days"]');
+  const perDay = annual.querySelector('[data-home-goal="perDay"]');
+  const rates = Array.from(annual.querySelectorAll('[data-home-rate]')).map((el) => el.textContent);
+  const monthlyFinal = document.querySelector('[data-home-window="monthly"] [data-home-goal="final"]');
+  const dailyValues = Array.from(document.querySelectorAll('[data-home-window="daily"] .home-window__kpi:not(.home-window__goal) .home-window__kpi-value')).map((el) => el.textContent);
+  if (values.length < 4 || !finalEl || !remain || !days || !perDay || !monthlyFinal) return false;
+  if (values[0] !== spec.actual) return false;
+  if (values[1] !== dash || values[2] !== dash || values[3] !== dash) return false;
+  if (finalEl.textContent !== spec.finalTarget) return false;
+  if (remain.textContent !== dash || days.textContent !== dash || perDay.textContent !== dash) return false;
+  if (rates.some((rate) => rate !== dash)) return false;
+  if (monthlyFinal.textContent !== dash) return false;
+  if (dailyValues[1] !== dash) return false;
+  const shown = Array.from(document.querySelectorAll('.home-window__kpi-value, [data-home-rate]')).map((el) => el.textContent).join(' ');
+  if (spec.forbid && shown.indexOf(spec.forbid) >= 0) return false;
+  let store = null;
+  try { store = JSON.parse(localStorage.getItem('kpiNavigator.kpiYearStore') || 'null'); }
+  catch (e) { store = null; }
+  const oy = store && store.meta ? Number(store.meta.operatingYear) : NaN;
+  if (oy !== 2026) return false;
+  return true;
+}"""
+
+
+def open_h4(page, base: str, case: dict, account: dict) -> dict:
+    row = {
+        "id": case["id"],
+        "fixture": case["fixture"],
+        "iso": case["iso"],
+        "result": "FAIL",
+        "detail": "",
+        "finalUrl": "",
+        "actual": "",
+        "finalTarget": "",
+        "cumulative": "",
+    }
+    try:
+        target = base + "/app/home/index.html"
+        try:
+            page.goto(target, wait_until="domcontentloaded", timeout=90000)
+        except Exception as exc:
+            if "interrupted by another navigation" not in str(exc):
+                raise
+            page.goto(target, wait_until="domcontentloaded", timeout=90000)
+        page.wait_for_function(
+            """(userId) => {
+              const windows = document.querySelector('.home-windows');
+              return windows && !windows.hidden
+                && localStorage.getItem('kpiNavigator.lastKpiUserId') === userId
+                && !!document.querySelector('[data-home-window="annual"] [data-home-date-input]');
+            }""",
+            arg=account["userId"],
+            timeout=READY_MS,
+        )
+        page.evaluate(
+            """(iso) => {
+              const el = document.querySelector('[data-home-window="annual"] [data-home-date-input]');
+              el.value = iso;
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+            }""",
+            case["iso"],
+        )
+        page.wait_for_function(H4_READY, arg=case, timeout=READY_MS)
+        page.wait_for_timeout(700)
+        page.wait_for_function(H4_READY, arg=case, timeout=READY_MS)
+        snap = page.evaluate(
+            """() => {
+              const annual = document.querySelector('[data-home-window="annual"]');
+              const values = Array.from(annual.querySelectorAll('.home-window__kpi:not(.home-window__goal) .home-window__kpi-value')).map((el) => el.textContent);
+              return {
+                actual: values[0] || '',
+                cumulative: values[1] || '',
+                finalTarget: (annual.querySelector('[data-home-goal="final"]') || {}).textContent || '',
+              };
+            }"""
+        )
+        row["actual"] = snap["actual"]
+        row["cumulative"] = snap["cumulative"]
+        row["finalTarget"] = snap["finalTarget"]
+        row["result"] = "PASS"
+        row["detail"] = case["iso"]
+    except Exception as exc:
+        row["detail"] = str(exc).splitlines()[0][:240]
+    row["finalUrl"] = page.url
+    return row
+
+
+def main_h4() -> None:
+    php_path = php_bin()
+    if not php_path:
+        raise SystemExit("php not found")
+    php = php_command(php_path)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    accounts = {row["id"]: row for row in manifest["accounts"]}
+    order = [
+        "fx-pro-restaurant-ready",
+        "fx-basic-restaurant-ready",
+        "fx-pro-hotel-ready",
+    ]
+    work = Path(tempfile.mkdtemp(prefix="kpn-h4-"))
+    data_root = work / "data"
+    data_root.mkdir()
+    server = None
+    try:
+        user, password = read_runtime_identity()
+        cfg = work / "mysql.php"
+        port = free_port()
+        write_config(
+            cfg,
+            data_root,
+            dbUser=user,
+            dbPass=password,
+            passwordResetBaseUrl=f"http://127.0.0.1:{port}",
+        )
+        seeded = run_php(php, [str(MYSQL_SEED)], cfg)
+        if seeded.returncode != 0 or "seeded kpn_local_test 5" not in (seeded.stdout or ""):
+            raise SystemExit(f"mysql seed failed: {seeded.stderr or seeded.stdout}")
+        env = os.environ.copy()
+        env["KPI_V1_CONFIG"] = str(cfg)
+        server = subprocess.Popen(
+            php + ["-S", f"127.0.0.1:{port}", "-t", str(ROOT)],
+            cwd=str(ROOT),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        wait_http(port)
+        from playwright.sync_api import sync_playwright
+
+        base = f"http://127.0.0.1:{port}"
+        bag = {"pageerrors": [], "production": [], "ftp": [], "mail": []}
+        results = []
+        mutations = []
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(channel="chrome", headless=True)
+            seen = []
+            for case in H4_CASES:
+                if case["fixture"] not in seen:
+                    seen.append(case["fixture"])
+            for fixture_id in seen:
+                context = browser.new_context()
+                page = context.new_page()
+                watch(page, bag)
+                login(page, base, accounts[fixture_id])
+                for case in H4_CASES:
+                    if case["fixture"] != fixture_id:
+                        continue
+                    results.append(open_h4(page, base, case, accounts[fixture_id]))
+                context.close()
+                observed = dump_db(php, cfg)
+                categories = fixture_delta(accounts[fixture_id], observed)
+                if categories:
+                    mutations.append({"fixture": fixture_id, "categories": list(categories)})
+                    reseed_fixture(php, cfg, fixture_id)
+            browser.close()
+        final = dump_db(php, cfg)
+        final_dirty = [fixture_id for fixture_id in order if fixture_delta(accounts[fixture_id], final)]
+        failed = [row for row in results if row["result"] != "PASS"]
+        before = dump_db(php, cfg)
+        print(json.dumps({
+            "ok": not failed and not bag["pageerrors"] and not bag["production"] and not bag["ftp"] and not bag["mail"] and not final_dirty and before.get("database") == "kpn_local_test",
+            "phase": "BR-POST-HOME-01 H4",
+            "executed": len(results),
+            "passed": len(results) - len(failed),
+            "failed": [row["id"] + ": " + row["detail"] for row in failed],
+            "pageerrors": len(bag["pageerrors"]),
+            "productionRequests": len(bag["production"]),
+            "productionDbAccess": 0 if before.get("database") == "kpn_local_test" else 1,
+            "ftp": bag["ftp"],
+            "realMail": bag["mail"],
+            "runtimeUser": before.get("runtimeUser"),
+            "database": before.get("database"),
+            "fixtureMutations": mutations,
+            "finalCanonical": not final_dirty,
+            "results": [
+                {
+                    "id": row["id"],
+                    "result": row["result"],
+                    "iso": row["iso"],
+                    "actual": row["actual"],
+                    "finalTarget": row["finalTarget"],
+                    "cumulative": row["cumulative"],
+                }
+                for row in results
+            ],
+        }, ensure_ascii=True))
+        if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
+            raise SystemExit("h4 annual target failed")
+    finally:
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except Exception:
+                server.kill()
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "h2":
         main_h2()
+    elif len(sys.argv) > 1 and sys.argv[1] == "h4":
+        main_h4()
     else:
         main()

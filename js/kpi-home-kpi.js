@@ -2,7 +2,9 @@
    Prefers store.years[y].dailyFacts, the snapshot KpiYearStore.invalidateDailyFacts
    writes and Daily FW reads through metricsFromDailyFacts / __computeTwMetricsForIso.
    Does not copy HL daily-target allocation. If that snapshot is missing, sales are
-   summed from timeline.dailySales with the UI business-day rule and targets stay blank. */
+   summed from timeline.dailySales with the UI business-day rule and cumulative
+   targets stay blank. A saved sales-data-save target still shows as the Annual
+   final target for the selected date's year. */
 (function () {
   'use strict';
 
@@ -346,9 +348,15 @@
     out.ytdA = base.ytdA;
     out.mtdT = base.mtdT;
     out.ytdT = base.ytdT;
+    /* Annual final target is the saved plan for this selected year.
+       It does not wait for dailyFacts, and it is not the YTD cumulative target. */
+    var y = yearOf(iso);
+    if (hasSavedPlan(store, y)) {
+      var savedTarget = Number(yearRec(store, y).plan.targetSales);
+      if (Number.isFinite(savedTarget) && savedTarget > 0) out.finalAnnual = savedTarget;
+    }
     if (!base.hasPlan) return out;
     out.hasPlan = true;
-    var y = yearOf(iso);
     var annualTarget = Number(yearRec(store, y).plan.targetSales);
     out.finalAnnual = Number.isFinite(annualTarget) ? annualTarget : null;
     out.remainingAnnual =
@@ -486,7 +494,8 @@
         if (el) el.textContent = text;
       };
       var showMoney = goal.hasPlan && (kind === 'annual' || goal.facts);
-      setGoal('final', showMoney && finalN != null ? money(finalN) : DASH);
+      var showAnnualFinal = kind === 'annual' && finalN != null;
+      setGoal('final', (showMoney || showAnnualFinal) && finalN != null ? money(finalN) : DASH);
       setGoal('remaining', showMoney && remainN != null ? money(remainN) : DASH);
       setGoal('days', goal.facts && daysN != null ? countText(daysN) : DASH);
       setGoal('perDay', goal.facts && perN != null ? money(perN) : DASH);
