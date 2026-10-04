@@ -531,11 +531,12 @@
       }
     } catch (_e) {}
     try {
-      var tier =
-        sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
-      return String(tier).trim().toLowerCase() !== 'basic';
+      var tier = String(
+        sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || ''
+      ).trim().toLowerCase();
+      return tier === 'pro';
     } catch (_e2) {
-      return true;
+      return false;
     }
   }
 

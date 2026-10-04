@@ -27,15 +27,20 @@
 
   function readTier() {
     try {
-      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.isBasicPlan === 'function') {
-        return window.__KPI_AUTH.isBasicPlan() ? 'basic' : 'pro';
+      if (window.__KPI_AUTH && typeof window.__KPI_AUTH.readStoredTier === 'function') {
+        var stored = String(window.__KPI_AUTH.readStoredTier() || '').trim().toLowerCase();
+        if (stored === 'basic' || stored === 'pro') return stored;
+        return '';
       }
     } catch (_e0) {}
     try {
-      var raw = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
-      return String(raw).toLowerCase() === 'basic' ? 'basic' : 'pro';
+      var raw = String(sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '')
+        .trim()
+        .toLowerCase();
+      if (raw === 'basic' || raw === 'pro') return raw;
+      return '';
     } catch (_e1) {
-      return 'pro';
+      return '';
     }
   }
 
@@ -61,7 +66,7 @@
   }
 
   function applyUi(tier) {
-    var isPro = tier !== 'basic';
+    var isPro = tier === 'pro';
     var tierEl = document.getElementById('change-plan-current-tier');
     var note = document.getElementById('change-plan-already-pro-note');
     var basicAction = document.getElementById('change-plan-basic-action');

@@ -78,7 +78,7 @@ def test_auth_client_gate() -> None:
     assert_true("function resolveInsightOpenHref" in js, "non-overlay href resolver")
     assert_true("open=insight" in js, "deep-link open=insight")
     assert_true("app/profit/index.html" not in js.split("function bindInsightMenuGate")[-1][:2500], "gate does not target hub")
-    assert_true("isBasicPlan()" in js.split("function bindInsightMenuGate", 1)[-1][:900], "Basic uses existing plan gate")
+    assert_true("isProPlan()" in js.split("function bindInsightMenuGate", 1)[-1][:900], "Insight opens only for explicit Pro")
     assert_true("resolveChangePlanHref" in js.split("function bindInsightMenuGate", 1)[-1][:900], "Basic uses Change Plan")
     assert_true("bindInsightMenuGate(doc.getElementById" in js, "Insight btn uses menu gate not generic href gate")
     assert_true("bindProHrefGate(doc.getElementById ? doc.getElementById('header-booking-btn')" in js, "Booking still uses Pro href gate")

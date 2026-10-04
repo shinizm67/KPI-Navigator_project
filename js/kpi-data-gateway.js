@@ -131,9 +131,15 @@
     });
   }
 
+  function explicitClientPlan(raw) {
+    var p = String(raw == null ? '' : raw).trim().toLowerCase();
+    return p === 'basic' || p === 'pro' ? p : '';
+  }
+
   function applyPlanFromPayload(data) {
-    if (!data || !data.plan) return;
-    var p = String(data.plan).toLowerCase() === 'basic' ? 'basic' : 'pro';
+    if (!data || data.plan == null || String(data.plan).trim() === '') return;
+    var p = explicitClientPlan(data.plan);
+    if (!p) return;
     try {
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.applyServerPlan === 'function') {
         window.__KPI_AUTH.applyServerPlan(p, { source: 'hydrate' });
@@ -154,9 +160,9 @@
   function localTier() {
     try {
       var t = origGetItem.call(sessionStorage, TIER_KEY) || origGetItem.call(localStorage, TIER_KEY);
-      return String(t || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+      return explicitClientPlan(t);
     } catch (_e) {
-      return 'pro';
+      return '';
     }
   }
 
@@ -807,7 +813,7 @@
         body = window.__KPI_AUTH.attachExpectedUser({}, body).body || body;
       }
     } catch (_eExpBody) {}
-    if (localTier() === 'basic') {
+    if (localTier() !== 'pro') {
       body.store = stripProFromStore(storePayload);
     } else if (!plRehydrateHold) {
       var plLocal = collectPlFromLocal();
@@ -1267,19 +1273,19 @@
 
   function onPlanChangedForRehydrate(ev) {
     var detail = ev && ev.detail ? ev.detail : {};
-    var next = String(detail.plan || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    var next = explicitClientPlan(detail.plan);
     var prev = lastSeenPlan;
     lastSeenPlan = next;
     if (detail.source === 'hydrate') return;
-    if (next === 'pro' && prev === 'basic') requestProRehydrate();
+    if (next === 'pro' && prev !== 'pro') requestProRehydrate();
   }
 
   function onTierStorageForRehydrate(e) {
     if (!e || e.key !== TIER_KEY) return;
-    var next = String(e.newValue || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
-    var prev = String(e.oldValue || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    var next = explicitClientPlan(e.newValue);
+    var prev = explicitClientPlan(e.oldValue);
     lastSeenPlan = next;
-    if (next === 'pro' && prev === 'basic') requestProRehydrate();
+    if (next === 'pro' && prev !== 'pro') requestProRehydrate();
   }
 
   try {
@@ -1315,6 +1321,7 @@
 
   window.__KPI_DATA_GATEWAY = {
     __kpiStoreSyncReady: true,
+    clientTier: localTier,
     getJson: function (key) {
       /* Prefer in-memory full store — LS may hold a slimmed timeline window. */
       if (key === STORE_KEY) {

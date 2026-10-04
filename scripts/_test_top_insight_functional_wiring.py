@@ -45,7 +45,7 @@ def main() -> int:
     # --- entry / Basic-Pro gate ---
     check("function bindInsightMenuGate" in auth, "auth Insight menu gate")
     check("function openInsightFloatingWindow" in auth, "auth opens Insight FW")
-    check("isBasicPlan()" in auth and "resolveChangePlanHref" in auth, "Basic → Change Plan")
+    check("isProPlan()" in auth and "resolveChangePlanHref" in auth, "Basic or unresolved → Change Plan")
     check("openInsight()" in auth, "Pro calls openInsight")
     check("open=insight" in auth, "deep-link open=insight for non-overlay pages")
 

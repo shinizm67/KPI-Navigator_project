@@ -315,18 +315,22 @@
     return { switched: false, cleared: false, previousUserId: prev, userId: uid };
   }
 
+  /** Explicit basic|pro only. Empty or unknown is unresolved and is not Pro. */
   function normalizePlan(plan) {
-    return String(plan || '').toLowerCase() === 'basic' ? 'basic' : 'pro';
+    var p = String(plan == null ? '' : plan).trim().toLowerCase();
+    if (p === 'basic' || p === 'pro') return p;
+    return '';
   }
 
   /** Server plan → localStorage/sessionStorage (display gate). Dispatches kpi:planChanged. */
   function applyServerPlan(plan, opts) {
     var p = normalizePlan(plan);
+    if (p !== 'basic' && p !== 'pro') return '';
     var prevRaw = '';
     try {
       prevRaw = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '';
     } catch (_ePrev) {}
-    var prev = String(prevRaw || '').toLowerCase() === 'basic' ? 'basic' : prevRaw ? 'pro' : '';
+    var prev = normalizePlan(prevRaw);
     try {
       localStorage.setItem(TIER_KEY, p);
     } catch (_e0) {}
@@ -467,7 +471,11 @@
 
   function setPlan(plan, opts) {
     opts = opts || {};
-    var body = { plan: normalizePlan(plan) };
+    var normalized = normalizePlan(plan);
+    if (normalized !== 'basic' && normalized !== 'pro') {
+      return Promise.resolve({ status: 400, data: { ok: false, error: 'invalid_plan' } });
+    }
+    var body = { plan: normalized };
     if (opts.email) body.email = opts.email;
     if (opts.adminToken) body.adminToken = opts.adminToken;
     var headers = {};
@@ -538,6 +546,11 @@
 
   function isBasicPlan() {
     return String(readStoredTier() || '').toLowerCase() === 'basic';
+  }
+
+  /** Pro privileges require an explicit stored pro tier. Unresolved is not Pro. */
+  function isProPlan() {
+    return String(readStoredTier() || '').toLowerCase() === 'pro';
   }
 
   /** Locale-aware Change Plan URL (absolute under /kpi-navigator when possible). */
@@ -788,9 +801,9 @@
 
   /**
    * Global Menu Insight (#global-nav-index-btn):
-   * Pro + local FW → openInsight() (no hub navigation).
-   * Pro + no FW → Monthly ?open=insight.
-   * Basic → Change Plan (never silent).
+   * Explicit Pro + local FW → openInsight() (no hub navigation).
+   * Explicit Pro + no FW → Monthly ?open=insight.
+   * Basic or unresolved → Change Plan (never silent, never Pro).
    */
   function bindInsightMenuGate(el) {
     if (!el || el.getAttribute('data-kpi-insight-gate') === '1') return;
@@ -801,7 +814,7 @@
         ev.preventDefault();
         ev.stopImmediatePropagation();
         function go() {
-          if (isBasicPlan()) {
+          if (!isProPlan()) {
             var hrefBasic = el.getAttribute('data-href-basic') || resolveChangePlanHref();
             if (hrefBasic) global.location.href = hrefBasic;
             return;
@@ -832,7 +845,7 @@
         ev.preventDefault();
         ev.stopImmediatePropagation();
         function go() {
-          var target = isBasicPlan() ? hrefBasic : hrefPro;
+          var target = isProPlan() ? hrefPro : hrefBasic;
           if (target) window.location.href = target;
         }
         syncPlanFromServer().then(go).catch(go);
@@ -1007,6 +1020,9 @@
     applyServerPlan: applyServerPlan,
     syncPlanFromServer: syncPlanFromServer,
     isBasicPlan: isBasicPlan,
+    isProPlan: isProPlan,
+    normalizePlan: normalizePlan,
+    readStoredTier: readStoredTier,
     resolveChangePlanHref: resolveChangePlanHref,
     resolveLoginHref: resolveLoginHref,
     isPublicAuthPage: isPublicAuthPage,

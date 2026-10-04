@@ -386,22 +386,23 @@ def kpi_year_store_js() -> str:
 
         function getSubscriptionTier() {{
           try {{
-            return (
+            var tier = String(
               sessionStorage.getItem(SUBSCRIPTION_TIER_KEY) ||
               localStorage.getItem(SUBSCRIPTION_TIER_KEY) ||
-              'pro'
-            );
+              ''
+            ).trim().toLowerCase();
+            return tier === 'pro' || tier === 'basic' ? tier : '';
           }} catch (_e) {{
-            return 'pro';
+            return '';
           }}
         }}
 
         function isProSubscription() {{
-          return getSubscriptionTier() !== 'basic';
+          return getSubscriptionTier() === 'pro';
         }}
 
         function enforceSubscriptionTierDefaults() {{
-          if (isProSubscription()) return;
+          if (getSubscriptionTier() !== 'basic') return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {{
             store.meta.dailySalesInputPath = 'annual';
             persistStore();

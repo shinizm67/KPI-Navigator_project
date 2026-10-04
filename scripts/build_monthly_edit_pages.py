@@ -760,9 +760,9 @@ OFFICE_SCRIPTS = """
       var btn = document.getElementById('global-nav-index-btn');
       if (!btn) return;
       var KEY = 'kpiNavigator.subscriptionTier';
-      function isBasicPlan() {
+      function isExplicitPro() {
         try {
-          return (sessionStorage.getItem(KEY) || localStorage.getItem(KEY)) === 'basic';
+          return (sessionStorage.getItem(KEY) || localStorage.getItem(KEY)) === 'pro';
         } catch (e) {
           return false;
         }
@@ -771,7 +771,7 @@ OFFICE_SCRIPTS = """
       var hrefBasic = btn.getAttribute('data-href-basic');
       if (hrefPro) btn.setAttribute('href', hrefPro);
       btn.addEventListener('click', function (ev) {
-        if (!isBasicPlan()) return;
+        if (isExplicitPro()) return;
         ev.preventDefault();
         if (hrefBasic) window.location.href = hrefBasic;
       });

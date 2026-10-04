@@ -25206,22 +25206,23 @@ Cumulative Target Annual Sales</p>
 
         function getSubscriptionTier() {
           try {
-            return (
+            var tier = String(
               sessionStorage.getItem(SUBSCRIPTION_TIER_KEY) ||
               localStorage.getItem(SUBSCRIPTION_TIER_KEY) ||
-              'pro'
-            );
+              ''
+            ).trim().toLowerCase();
+            return tier === 'pro' || tier === 'basic' ? tier : '';
           } catch (_e) {
-            return 'pro';
+            return '';
           }
         }
 
         function isProSubscription() {
-          return getSubscriptionTier() !== 'basic';
+          return getSubscriptionTier() === 'pro';
         }
 
         function enforceSubscriptionTierDefaults() {
-          if (isProSubscription()) return;
+          if (getSubscriptionTier() !== 'basic') return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') !== 'annual') {
             store.meta.dailySalesInputPath = 'annual';
           }
@@ -25272,7 +25273,8 @@ Cumulative Target Annual Sales</p>
         function applyDailySalesInputPathFromLightKey(opts) {
           var next = readDailySalesInputPathLightKey();
           if (!next) return false;
-          if (!isProSubscription()) next = 'annual';
+          if (getSubscriptionTier() === 'basic') next = 'annual';
+          else if (next === 'mep' && getSubscriptionTier() !== 'pro') return false;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return false;
           store.meta.dailySalesInputPath = next;
           if (opts && opts.dispatch) {
@@ -25289,7 +25291,8 @@ Cumulative Target Annual Sales</p>
           var next = parseDailySalesInputPathValue(raw);
           if (raw == null || raw === '') next = 'annual';
           if (!next) return;
-          if (!isProSubscription()) next = 'annual';
+          if (getSubscriptionTier() === 'basic') next = 'annual';
+          else if (next === 'mep' && getSubscriptionTier() !== 'pro') return;
           if (normalizeSalesInputPath(store.meta.dailySalesInputPath || 'annual') === next) return;
           store.meta.dailySalesInputPath = next;
           document.dispatchEvent(
@@ -43859,11 +43862,12 @@ Cumulative Target Annual Sales</p>
       }
     } catch (_e) {}
     try {
-      var tier =
-        sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
-      return String(tier).trim().toLowerCase() !== 'basic';
+      var tier = String(
+        sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || ''
+      ).trim().toLowerCase();
+      return tier === 'pro';
     } catch (_e2) {
-      return true;
+      return false;
     }
   }
 

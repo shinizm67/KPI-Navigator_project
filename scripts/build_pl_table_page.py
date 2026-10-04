@@ -3167,10 +3167,10 @@ def pl_compare_client_js(*, monthly_edit: str, change_plan_href: str, labels: di
 
       function isBasicTier() {{
         try {{
-          var t = sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || 'pro';
-          return String(t).trim().toLowerCase() === 'basic';
+          var t = String(sessionStorage.getItem(TIER_KEY) || localStorage.getItem(TIER_KEY) || '').trim().toLowerCase();
+          return t !== 'pro';
         }} catch (_e) {{
-          return false;
+          return true;
         }}
       }}
 

@@ -183,14 +183,15 @@ def pl_sales_input_path_indicator_js() -> str:
           }}
           var pathRaw = store && store.meta && store.meta.dailySalesInputPath;
           var path = pathRaw === 'mep' ? 'mep' : 'annual';
-          var tier = 'pro';
+          var tier = '';
           try {{
-            tier =
+            tier = String(
               sessionStorage.getItem(TIER_KEY) ||
               localStorage.getItem(TIER_KEY) ||
-              'pro';
+              ''
+            ).trim().toLowerCase();
           }} catch (_e2) {{}}
-          return {{ path: path, pro: tier !== 'basic' }};
+          return {{ path: path, pro: tier === 'pro' }};
         }}
         function applyPath(path) {{
           var isMep = path === 'mep';
