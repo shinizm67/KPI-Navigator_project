@@ -1,6 +1,6 @@
 # Canonical Fixtures v1
 
-`BR-LOCAL-VERIFY-01` Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 3B maps five of these accounts into local MySQL from this same manifest. Phase 3B is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3 Local MySQL Parity is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 4A-1 is IMPLEMENTED / LOCAL MYSQL VERIFIED / CLOSED (2026-10-04): 20 of 122 user-facing smoke cases. Phase 4A stays ACTIVE. Phase 4A-2 JP Settings + JP Public is NEXT / UNSTARTED.
+`BR-LOCAL-VERIFY-01` is CLOSED (2026-10-04). Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED. Phase 3 maps five of these accounts into local MySQL from this same manifest and is REAL MYSQL VERIFIED / CLOSED. Phase 4 is LOCAL MYSQL VERIFIED / CLOSED: user-facing contract 122 / 122 (executed 123, supplemental 1) and Admin 5 / 5.
 
 Source of truth: `fixtures/local/canonical/manifest.json`
 
@@ -109,7 +109,9 @@ Password hashes are ignored. `2026-10-03T12:00:00+09:00`, `2026-10-03T03:00:00Z`
 
 ## MySQL reseed
 
-`scripts/kpn_local_mysql_seed.php` deletes and reinserts only the five canonical user ids. Passing one fixture id deletes and reinserts only that user. Child store, profile, and daily-input rows follow the existing foreign keys. It does not drop `kpn_local_test` and does not delete other rows. The connection must be `kpn_local_runtime`. Bootstrap or root is refused for this command.
+`scripts/kpn_local_mysql_seed.php` deletes and reinserts only the five canonical user ids. Passing one fixture id deletes and reinserts only that user. Child store, profile, and daily-input rows follow the existing foreign keys. It does not drop `kpn_local_test`. The connection must be `kpn_local_runtime`. Bootstrap or root is refused for this command.
+
+`founder-seed` and `founder-delete` are separate. They create and remove only `localfounder1` (`local-founder-admin@localhost.test`, role `founder_superadmin`) for Admin smoke. They do not change the five customer accounts, and they are not part of the 122 user-facing contract. The Admin runner deletes that user before it exits.
 
 `kpi_v1_db_write_user` still stores a missing plan as `basic`, and that behavior is unchanged.
 

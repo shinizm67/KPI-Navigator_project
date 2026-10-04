@@ -1,6 +1,6 @@
 # Local MySQL runtime — Phase 3A
 
-`BR-LOCAL-VERIFY-01` Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3B is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3 Local MySQL Parity is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 4 Full Page Smoke is NEXT / UNSTARTED. The parent stays ACTIVE / MAINTAINED.
+`BR-LOCAL-VERIFY-01` is CLOSED (2026-10-04). Phase 3A and Phase 3B are IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 3 Local MySQL Parity is REAL MYSQL VERIFIED / CLOSED. Phase 4 Full Page Smoke is LOCAL MYSQL VERIFIED / CLOSED.
 
 `fx-legacy-pro` stays a file-storage fixture. Plan schema, nullability, entitlement, and `kpi_v1_db_write_user` are unchanged.
 
@@ -70,4 +70,4 @@ php scripts/kpn_local_mysql_bootstrap.php recreate
 
 Normal seed and reseed use `kpn_local_runtime` on `kpn_local_test`. The command deletes only those five user ids, then inserts them again. It does not drop the database. `fx-legacy-pro` is not inserted. Representative daily sales are written to both `store_json` and `kpi_daily_inputs` from the manifest. Expenses stay in `store_json` / `pl_json`. `kpi_daily_facts` is not seeded.
 
-Phase 3B verification on 2026-10-04, Case approved: five-account seed, mutate/reseed restore, file/MySQL business parity, daily-input parity, runtime user `kpn_local_runtime`, session `+00:00`, charset `utf8mb4`, and the eight-page representative smoke (Basic Restaurant and Pro Hotel, each Home / Annual / Monthly / Profile) with pageerror 0 and production requests 0. Phase 3B is CLOSED. Full page smoke is Phase 4 and is not started.
+Phase 3B verification on 2026-10-04, Case approved: five-account seed, mutate/reseed restore, file/MySQL business parity, daily-input parity, runtime user `kpn_local_runtime`, session `+00:00`, charset `utf8mb4`, and the eight-page representative smoke (Basic Restaurant and Pro Hotel, each Home / Annual / Monthly / Profile) with pageerror 0 and production requests 0. Phase 3B is CLOSED. Phase 4 full-page smoke is LOCAL MYSQL VERIFIED / CLOSED: user-facing 122 / 122 and Admin 5 / 5.

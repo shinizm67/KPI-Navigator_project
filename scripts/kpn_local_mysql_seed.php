@@ -7,8 +7,11 @@
  *   php scripts/kpn_local_mysql_seed.php
  *   php scripts/kpn_local_mysql_seed.php seed fx-basic-restaurant-ready
  *   php scripts/kpn_local_mysql_seed.php dump
+ *   php scripts/kpn_local_mysql_seed.php founder-seed
+ *   php scripts/kpn_local_mysql_seed.php founder-delete
  *
  * A fixture id reseeds only that canonical account. The default reseeds all five.
+ * founder-seed / founder-delete touch only localfounder1. They do not change the five.
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -19,8 +22,8 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../api/v1/_db.php';
 
 $cmd = isset($argv[1]) ? (string) $argv[1] : 'seed';
-if ($cmd !== 'seed' && $cmd !== 'dump') {
-    fwrite(STDERR, "usage: php scripts/kpn_local_mysql_seed.php [seed|dump]\n");
+if ($cmd !== 'seed' && $cmd !== 'dump' && $cmd !== 'founder-seed' && $cmd !== 'founder-delete') {
+    fwrite(STDERR, "usage: php scripts/kpn_local_mysql_seed.php [seed|dump|founder-seed|founder-delete]\n");
     exit(1);
 }
 
@@ -43,6 +46,10 @@ if (!is_object($fixture) || !isset($fixture->accounts) || !is_array($fixture->ac
 if (!isset($fixture->clock->fixtureClock) || $fixture->clock->fixtureClock !== '2026-10-03T12:00:00+09:00') {
     fwrite(STDERR, "local_test_refused:fixture\n");
     exit(1);
+}
+if ($cmd === 'founder-seed' || $cmd === 'founder-delete') {
+    kpn_mysql_founder_local($cfg, $cmd);
+    exit(0);
 }
 
 $mysqlIds = array(
@@ -256,4 +263,61 @@ function kpn_mysql_seed_dump(PDO $pdo, array $userIds)
         'factRows' => (int) $facts->fetch()['n'],
     );
     echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+function kpn_mysql_founder_local($cfg, $cmd)
+{
+    $userId = 'localfounder1';
+    $email = 'local-founder-admin@localhost.test';
+    $pdo = kpi_v1_db_open($cfg, true);
+    $count = $pdo->prepare("SELECT COUNT(*) AS n FROM kpi_users WHERE role = 'founder_superadmin' AND user_id <> ?");
+    $count->execute(array($userId));
+    if ((int) $count->fetch()['n'] !== 0) {
+        fwrite(STDERR, "local_test_refused:founder_leak\n");
+        exit(1);
+    }
+    if ($cmd === 'founder-delete') {
+        $pdo->prepare('DELETE FROM kpi_users WHERE user_id = ? AND email = ? AND role = ?')->execute(array(
+            $userId,
+            $email,
+            'founder_superadmin',
+        ));
+        $left = $pdo->query("SELECT COUNT(*) AS n FROM kpi_users WHERE user_id = 'localfounder1' OR role = 'founder_superadmin'")->fetch();
+        if ((int) $left['n'] !== 0) {
+            fwrite(STDERR, "local_test_refused:founder_remains\n");
+            exit(1);
+        }
+        echo "deleted kpn_local_test founder\n";
+        return;
+    }
+    $created = '2026-10-03 03:00:00';
+    $hash = password_hash('Local-Founder-1', PASSWORD_DEFAULT);
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('DELETE FROM kpi_users WHERE user_id = ? OR email = ?')->execute(array($userId, $email));
+        $pdo->prepare(
+            'INSERT INTO kpi_users (user_id, email, password_hash, plan, disabled, role, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 0, ?, ?, ?)'
+        )->execute(array($userId, $email, $hash, 'basic', 'founder_superadmin', $created, $created));
+        $pdo->prepare(
+            'INSERT INTO kpi_store (user_id, store_json, annual_nav_json, pl_json, updated_at, revision)
+             VALUES (?, NULL, NULL, NULL, ?, 1)'
+        )->execute(array($userId, $created));
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        fwrite(STDERR, "local_mysql_seed_failed\n");
+        exit(1);
+    }
+    $roles = $pdo->prepare('SELECT user_id, role FROM kpi_users WHERE user_id <> ?');
+    $roles->execute(array($userId));
+    foreach ($roles->fetchAll() as $row) {
+        if ((string) $row['role'] !== 'user') {
+            fwrite(STDERR, "local_test_refused:founder_leak\n");
+            exit(1);
+        }
+    }
+    echo "seeded kpn_local_test founder\n";
 }
