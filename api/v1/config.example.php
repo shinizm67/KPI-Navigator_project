@@ -4,6 +4,10 @@
  * config.local.php is gitignored.
  */
 return [
+    // Local verification only. Production stays false. When true, the API refuses
+    // non-loopback DB / FTP / URL hosts and does not call mail().
+    'localTestMode' => false,
+    'localDataRoot' => '',
     // Shared secret for X-KPI-Store-Token (legacy Phase A; storeAuthMode=token|dual only)
     'token' => 'dev-change-me',
     // Legacy single-user id when storeAuthMode=token|dual without session

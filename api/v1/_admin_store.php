@@ -10,7 +10,7 @@ require_once __DIR__ . '/_admin_parent.php';
 
 function kpi_v1_admin_profiles_dir()
 {
-    $dir = __DIR__ . '/data/profiles';
+    $dir = kpi_v1_file_data_root() . '/profiles';
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
     }
@@ -19,7 +19,7 @@ function kpi_v1_admin_profiles_dir()
 
 function kpi_v1_admin_plan_history_path()
 {
-    return __DIR__ . '/data/plan_history.json';
+    return kpi_v1_file_data_root() . '/plan_history.json';
 }
 
 function kpi_v1_profile_empty($userId)

@@ -13,17 +13,30 @@ function kpi_v1_send_cors($origin)
 
 function kpi_v1_load_config()
 {
-    $local = __DIR__ . '/config.local.php';
-    $example = __DIR__ . '/config.example.php';
-    if (is_file($local)) {
-        $cfg = require $local;
-    } else {
-        $cfg = require $example;
+    $cfg = null;
+    $override = getenv('KPI_V1_CONFIG');
+    if (is_string($override) && $override !== '') {
+        $override = str_replace("\0", '', $override);
+        if (is_file($override)) {
+            $try = require $override;
+            if (is_array($try) && isset($try['localTestMode']) && $try['localTestMode'] === true) {
+                $cfg = $try;
+            }
+        }
+    }
+    if ($cfg === null) {
+        $local = __DIR__ . '/config.local.php';
+        $example = __DIR__ . '/config.example.php';
+        if (is_file($local)) {
+            $cfg = require $local;
+        } else {
+            $cfg = require $example;
+        }
     }
     if (!is_array($cfg)) {
         $cfg = [];
     }
-    return array_merge(
+    $cfg = array_merge(
         [
             'token' => 'dev-change-me',
             'userId' => 'default',
@@ -57,9 +70,28 @@ function kpi_v1_load_config()
             'passwordResetTtlMinutes' => 30,
             'passwordResetCooldownSeconds' => 120,
             'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
+            'localTestMode' => false,
+            'localDataRoot' => '',
         ],
         $cfg
     );
+    if (!empty($cfg['localTestMode'])) {
+        require_once __DIR__ . '/_local_test_guard.php';
+        kpi_v1_local_test_assert($cfg);
+    }
+    return $cfg;
+}
+
+/**
+ * File-storage root. Production stays api/v1/data. localTestMode uses localDataRoot.
+ */
+function kpi_v1_file_data_root()
+{
+    $cfg = kpi_v1_load_config();
+    if (empty($cfg['localTestMode'])) {
+        return __DIR__ . '/data';
+    }
+    return rtrim(str_replace('\\', '/', (string) $cfg['localDataRoot']), '/');
 }
 
 function kpi_v1_storage_driver($cfg)
@@ -114,7 +146,7 @@ function kpi_v1_data_path($userId)
     if ($safe === '') {
         $safe = 'default';
     }
-    $dir = __DIR__ . '/data';
+    $dir = kpi_v1_file_data_root();
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
     }
@@ -243,7 +275,7 @@ function kpi_v1_backup_dir($userId)
     if ($safe === '') {
         $safe = 'default';
     }
-    $dir = __DIR__ . '/data/backups/' . $safe;
+    $dir = kpi_v1_file_data_root() . '/backups/' . $safe;
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
     }

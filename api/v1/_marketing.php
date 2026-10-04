@@ -69,7 +69,7 @@ function kpi_v1_marketing_normalize_email($email)
 
 function kpi_v1_marketing_dir()
 {
-    return __DIR__ . '/data/marketing';
+    return kpi_v1_file_data_root() . '/marketing';
 }
 
 /** Unsubscribe-token secret only. Config `marketingTokenSecret` (>= 32 chars) or a generated file under data/marketing. Never used for evidence match_key. */

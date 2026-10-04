@@ -32,6 +32,11 @@ function kpi_v1_mail_send($cfg, $toEmail, $subject, $bodyText)
     if ($toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
         return false;
     }
+    if (!empty($cfg['localTestMode'])) {
+        require_once __DIR__ . '/_local_test_guard.php';
+        kpi_v1_local_test_note_mail_blocked($cfg);
+        return false;
+    }
     $addrs = kpi_v1_mail_addresses($cfg);
     $from = $addrs['from'];
     $headers = [

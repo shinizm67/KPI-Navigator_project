@@ -33,7 +33,7 @@ function kpi_v1_registration_int_cfg($cfg, $key, $default, $min, $max)
 
 function kpi_v1_registration_dir()
 {
-    $dir = __DIR__ . '/data/registration';
+    $dir = kpi_v1_file_data_root() . '/registration';
     if (!is_dir($dir)) {
         @mkdir($dir, 0750, true);
     }
@@ -269,7 +269,7 @@ function kpi_v1_registration_consent_from_body($body)
 
 function kpi_v1_consent_dir()
 {
-    $dir = __DIR__ . '/data/consents';
+    $dir = kpi_v1_file_data_root() . '/consents';
     if (!is_dir($dir)) {
         @mkdir($dir, 0750, true);
     }

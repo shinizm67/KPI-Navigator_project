@@ -1,0 +1,99 @@
+{
+  "accounts": [
+    {
+      "id": "LOCAL_BASIC",
+      "userId": "localbasic01",
+      "email": "local-basic@localhost.test",
+      "password": "Local-Basic-1",
+      "plan": "basic",
+      "businessType": "restaurant",
+      "profile": {
+        "businessName": "Local Restaurant Baseline",
+        "companyName": "Local Restaurant Company",
+        "businessType": "restaurant",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localbasic01",
+        "updatedAt": "2026-10-03T00:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "pl": null,
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "restaurant",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": true,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2026-04-02": 1100 },
+            "businessDays": { "2026-04-02": true }
+          },
+          "years": {}
+        }
+      }
+    },
+    {
+      "id": "LOCAL_PRO",
+      "userId": "localpro01",
+      "email": "local-pro@localhost.test",
+      "password": "Local-Pro-Hotel1",
+      "plan": "pro",
+      "businessType": "hotel",
+      "profile": {
+        "businessName": "Local Hotel Baseline",
+        "companyName": "Local Hotel Company",
+        "businessType": "hotel",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localpro01",
+        "updatedAt": "2026-10-03T00:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "pl": {
+          "catalog": { "lines": [] },
+          "expensesByYear": {},
+          "adjustmentsByYear": {},
+          "targetCostRate": null
+        },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "hotel",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": true,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2026-04-02": 2200 },
+            "businessDays": { "2026-04-02": true }
+          },
+          "years": {}
+        }
+      }
+    }
+  ]
+}

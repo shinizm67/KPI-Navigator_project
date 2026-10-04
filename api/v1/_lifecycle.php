@@ -86,7 +86,7 @@ function kpi_v1_lifecycle_cutoff()
 
 function kpi_v1_lifecycle_dir()
 {
-    return __DIR__ . '/data/lifecycle';
+    return kpi_v1_file_data_root() . '/lifecycle';
 }
 
 function kpi_v1_lifecycle_file($name)

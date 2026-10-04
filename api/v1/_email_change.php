@@ -16,7 +16,7 @@ const KPI_EMAIL_CHANGE_MAX_SENDS_PER_HOUR = 5;
 
 function kpi_v1_email_change_dir()
 {
-    $dir = __DIR__ . '/data/email_change';
+    $dir = kpi_v1_file_data_root() . '/email_change';
     if (!is_dir($dir)) {
         @mkdir($dir, 0750, true);
     }

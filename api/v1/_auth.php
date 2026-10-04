@@ -42,7 +42,7 @@ function kpi_v1_auth_boot($cfg)
 
 function kpi_v1_auth_users_dir()
 {
-    $dir = __DIR__ . '/data/users';
+    $dir = kpi_v1_file_data_root() . '/users';
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
     }

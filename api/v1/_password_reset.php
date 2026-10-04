@@ -76,7 +76,7 @@ function kpi_v1_password_reset_new_plain_token()
 
 function kpi_v1_password_reset_dir()
 {
-    $dir = __DIR__ . '/data/password_reset';
+    $dir = kpi_v1_file_data_root() . '/password_reset';
     if (!is_dir($dir)) {
         @mkdir($dir, 0750, true);
     }

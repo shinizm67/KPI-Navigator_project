@@ -7,7 +7,7 @@
 
 function kpi_v1_session_revoke_dir()
 {
-    $dir = __DIR__ . '/data/session_revoke';
+    $dir = kpi_v1_file_data_root() . '/session_revoke';
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
     }

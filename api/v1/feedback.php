@@ -96,7 +96,7 @@ $lines = [
 ];
 $text = implode("\n", $lines);
 
-$dir = __DIR__ . '/data/feedback';
+$dir = kpi_v1_file_data_root() . '/feedback';
 if (!is_dir($dir)) {
     @mkdir($dir, 0750, true);
 }

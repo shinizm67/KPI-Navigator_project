@@ -302,7 +302,7 @@ function kpi_v1_account_delete_cleanup_files($cfg, $user)
     if ($safe === null) {
         return ['invalid_user_id'];
     }
-    $data = __DIR__ . '/data';
+    $data = kpi_v1_file_data_root();
 
     foreach (['pending', 'sends'] as $kind) {
         if (!kpi_v1_account_delete_unlink(kpi_v1_email_change_path($kind, $userId))) {
