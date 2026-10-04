@@ -566,7 +566,8 @@
       path.indexOf('/app/booking') >= 0 ||
       path.indexOf('/app/profit') >= 0 ||
       path.indexOf('/app/monthly') >= 0 ||
-      path.indexOf('/app/annual') >= 0
+      path.indexOf('/app/annual') >= 0 ||
+      path.indexOf('/app/home') >= 0
     ) {
       if (path.indexOf('/en/') >= 0 || path.indexOf('/zh-tw/') >= 0) return '../../../setting/change_plan.html';
       return '../../setting/change_plan.html';
@@ -588,6 +589,7 @@
       path.indexOf('/app/profit') >= 0 ||
       path.indexOf('/app/monthly') >= 0 ||
       path.indexOf('/app/annual') >= 0 ||
+      path.indexOf('/app/home') >= 0 ||
       path.indexOf('/en/') >= 0 ||
       path.indexOf('/zh-tw/') >= 0
     ) {

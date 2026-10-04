@@ -21,6 +21,7 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.request
@@ -927,5 +928,237 @@ def main() -> None:
         shutil.rmtree(work, ignore_errors=True)
 
 
+H2_CASES = [
+    {"id": "h2-home-basic-jp", "fixture": "fx-basic-restaurant-ready", "path": "/app/home/index.html", "kind": "home-ready"},
+    {"id": "h2-home-basic-en", "fixture": "fx-basic-restaurant-ready", "path": "/en/app/home/index.html", "kind": "home-ready", "prefix": "/en/", "lang": "en"},
+    {"id": "h2-home-basic-zh-tw", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/app/home/index.html", "kind": "home-ready", "prefix": "/zh-tw/", "lang": "zh-TW"},
+    {"id": "h2-home-pro-jp", "fixture": "fx-pro-hotel-ready", "path": "/app/home/index.html", "kind": "home-ready"},
+    {"id": "h2-home-profile-jp", "fixture": "fx-basic-profile-required", "path": "/app/home/index.html", "kind": "home-profile"},
+    {"id": "h2-home-setup-jp", "fixture": "fx-basic-setup-required", "path": "/app/home/index.html", "kind": "home-setup"},
+    {"id": "h2-home-anon-jp", "fixture": "public", "path": "/app/home/index.html", "kind": "home-anon", "loginPath": "/login/index.html"},
+    {"id": "h2-home-anon-en", "fixture": "public", "path": "/en/app/home/index.html", "kind": "home-anon", "loginPath": "/en/login/index.html"},
+    {"id": "h2-home-anon-zh-tw", "fixture": "public", "path": "/zh-tw/app/home/index.html", "kind": "home-anon", "loginPath": "/zh-tw/login/index.html"},
+]
+
+
+def open_h2(page, base: str, case: dict, account: dict) -> dict:
+    row = {
+        "id": case["id"],
+        "route": case["path"],
+        "expected": case["kind"],
+        "result": "FAIL",
+        "detail": "",
+        "finalUrl": "",
+    }
+    try:
+        target = base + case["path"]
+        try:
+            page.goto(target, wait_until="domcontentloaded", timeout=90000)
+        except Exception as exc:
+            if "interrupted by another navigation" not in str(exc):
+                raise
+            page.goto(target, wait_until="domcontentloaded", timeout=90000)
+        kind = case["kind"]
+        if kind == "home-ready":
+            sales = account["blob"]["store"]["timeline"]["dailySales"]["2026-10-03"]
+            page.wait_for_function(
+                """(spec) => {
+                  const html = document.documentElement;
+                  if (html.getAttribute('data-kpi-pro-pending')) return false;
+                  if (getComputedStyle(html).visibility === 'hidden') return false;
+                  if (location.pathname.indexOf('/setting/change_plan') >= 0) return false;
+                  if (location.pathname.indexOf('/app/home/') < 0) return false;
+                  if (spec.prefix && location.pathname.indexOf(spec.prefix) !== 0) return false;
+                  if (spec.lang && html.lang !== spec.lang) return false;
+                  const windows = document.querySelector('.home-windows');
+                  if (!windows || windows.hidden) return false;
+                  if (document.querySelectorAll('.home-window').length < 3) return false;
+                  const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
+                    || localStorage.getItem('kpiNavigator.subscriptionTier');
+                  let store = null;
+                  try { store = JSON.parse(localStorage.getItem('kpiNavigator.kpiYearStore') || 'null'); }
+                  catch (e) { store = null; }
+                  const meta = store && store.meta ? store.meta : {};
+                  const map = store && store.timeline && store.timeline.dailySales ? store.timeline.dailySales : {};
+                  const amount = map[spec.iso] == null ? null : Number(map[spec.iso]);
+                  return localStorage.getItem('kpiNavigator.lastKpiUserId') === spec.userId
+                    && tier === spec.plan
+                    && meta.businessType === spec.businessType
+                    && !!(meta.setup && meta.setup.complete) === true
+                    && amount === spec.sales;
+                }""",
+                arg={
+                    "userId": account["userId"],
+                    "plan": account["plan"],
+                    "businessType": account["businessType"],
+                    "iso": "2026-10-03",
+                    "sales": sales,
+                    "prefix": case.get("prefix") or "",
+                    "lang": case.get("lang") or "",
+                },
+                timeout=READY_MS,
+            )
+        elif kind == "home-profile":
+            page.wait_for_function(
+                """(spec) => {
+                  const guard = document.getElementById('kpi-nr-guard');
+                  const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
+                    || localStorage.getItem('kpiNavigator.subscriptionTier');
+                  return localStorage.getItem('kpiNavigator.lastKpiUserId') === spec.userId
+                    && tier === 'basic'
+                    && location.pathname.indexOf('/app/annual/') >= 0
+                    && location.pathname.indexOf('/en/') < 0
+                    && location.pathname.indexOf('/zh-tw/') < 0
+                    && !!guard && guard.hidden === false
+                    && location.pathname.indexOf('/app/home/') < 0;
+                }""",
+                arg={"userId": account["userId"]},
+                timeout=READY_MS,
+            )
+        elif kind == "home-setup":
+            page.wait_for_function(
+                """async (spec) => {
+                  if (location.pathname.indexOf('/app/annual/') < 0) return false;
+                  if (location.pathname.indexOf('/app/home/') >= 0) return false;
+                  const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
+                    || localStorage.getItem('kpiNavigator.subscriptionTier');
+                  if (localStorage.getItem('kpiNavigator.lastKpiUserId') !== spec.userId || tier !== 'basic') return false;
+                  let store = null;
+                  try { store = JSON.parse(localStorage.getItem('kpiNavigator.kpiYearStore') || 'null'); }
+                  catch (e) { store = null; }
+                  const setup = store && store.meta && store.meta.setup ? store.meta.setup : {};
+                  if (setup.complete === true) return false;
+                  const nr = window.KpiNavigationReadiness;
+                  if (!nr || typeof nr.settle !== 'function') return false;
+                  const result = await nr.settle('basic');
+                  if (!result || result.status !== 'SETUP_INITIAL_REQUIRED' || result.setupComplete) return false;
+                  const resume = document.getElementById('kpi-nr-resume');
+                  const dialog = document.getElementById('kpi-s0');
+                  return (!!resume && resume.hidden === false) || (!!dialog && dialog.hidden === false);
+                }""",
+                arg={"userId": account["userId"]},
+                timeout=READY_MS,
+            )
+        elif kind == "home-anon":
+            page.wait_for_url(f"**{case['loginPath']}", timeout=READY_MS)
+            if "/app/login" in page.url:
+                raise SystemExit("broken /app/login redirect")
+            page.wait_for_selector("#btn-login", timeout=READY_MS)
+        row["result"] = "PASS"
+        row["detail"] = kind
+    except Exception as exc:
+        row["detail"] = str(exc).splitlines()[0][:240]
+    row["finalUrl"] = page.url
+    return row
+
+
+def main_h2() -> None:
+    php_path = php_bin()
+    if not php_path:
+        raise SystemExit("php not found")
+    php = php_command(php_path)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    accounts = {row["id"]: row for row in manifest["accounts"]}
+    order = [
+        "fx-basic-restaurant-ready",
+        "fx-pro-hotel-ready",
+        "fx-basic-profile-required",
+        "fx-basic-setup-required",
+    ]
+    work = Path(tempfile.mkdtemp(prefix="kpn-h2-"))
+    data_root = work / "data"
+    data_root.mkdir()
+    server = None
+    try:
+        user, password = read_runtime_identity()
+        cfg = work / "mysql.php"
+        port = free_port()
+        write_config(
+            cfg,
+            data_root,
+            dbUser=user,
+            dbPass=password,
+            passwordResetBaseUrl=f"http://127.0.0.1:{port}",
+        )
+        seeded = run_php(php, [str(MYSQL_SEED)], cfg)
+        if seeded.returncode != 0 or "seeded kpn_local_test 5" not in (seeded.stdout or ""):
+            raise SystemExit(f"mysql seed failed: {seeded.stderr or seeded.stdout}")
+        env = os.environ.copy()
+        env["KPI_V1_CONFIG"] = str(cfg)
+        server = subprocess.Popen(
+            php + ["-S", f"127.0.0.1:{port}", "-t", str(ROOT)],
+            cwd=str(ROOT),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        wait_http(port)
+        from playwright.sync_api import sync_playwright
+
+        base = f"http://127.0.0.1:{port}"
+        bag = {"pageerrors": [], "production": [], "ftp": [], "mail": []}
+        results = []
+        mutations = []
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(channel="chrome", headless=True)
+            seen = []
+            for case in H2_CASES:
+                key = (case.get("lang") or "ja", case["fixture"])
+                if key not in seen:
+                    seen.append(key)
+            for lang, fixture_id in seen:
+                context = browser.new_context()
+                page = context.new_page()
+                watch(page, bag)
+                if fixture_id != "public":
+                    login(page, base, accounts[fixture_id])
+                for case in H2_CASES:
+                    if (case.get("lang") or "ja", case["fixture"]) != (lang, fixture_id):
+                        continue
+                    account = {} if fixture_id == "public" else accounts[fixture_id]
+                    results.append(open_h2(page, base, case, account))
+                context.close()
+                if fixture_id == "public":
+                    continue
+                observed = dump_db(php, cfg)
+                categories = fixture_delta(accounts[fixture_id], observed)
+                if categories:
+                    mutations.append({"fixture": fixture_id, "categories": list(categories)})
+                    reseed_fixture(php, cfg, fixture_id)
+            browser.close()
+        final = dump_db(php, cfg)
+        final_dirty = [fixture_id for fixture_id in order if fixture_delta(accounts[fixture_id], final)]
+        failed = [row for row in results if row["result"] != "PASS"]
+        print(json.dumps({
+            "ok": not failed and not bag["pageerrors"] and not bag["production"] and not bag["ftp"] and not bag["mail"] and not final_dirty,
+            "phase": "BR-POST-HOME-01 H2",
+            "executed": len(results),
+            "passed": len(results) - len(failed),
+            "failed": [row["id"] + ": " + row["detail"] for row in failed],
+            "pageerrors": len(bag["pageerrors"]),
+            "productionRequests": len(bag["production"]),
+            "ftp": bag["ftp"],
+            "realMail": bag["mail"],
+            "runtimeUser": final.get("runtimeUser"),
+            "database": final.get("database"),
+            "fixtureMutations": mutations,
+            "finalCanonical": not final_dirty,
+            "results": [{"id": row["id"], "result": row["result"], "finalUrl": row["finalUrl"]} for row in results],
+        }, ensure_ascii=False))
+        if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
+            raise SystemExit("h2 home entry failed")
+    finally:
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except Exception:
+                server.kill()
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "h2":
+        main_h2()
+    else:
+        main()
