@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "phase": "BR-LOCAL-VERIFY-01",
+  "contract": "canonical-fixtures-v1",
+  "clock": {
+    "fixtureClock": "2026-10-03T12:00:00+09:00",
+    "fixtureTimezone": "Asia/Tokyo",
+    "canonicalDate": "2026-10-03",
+    "closedDate": "2026-10-04",
+    "historicalDate": "2025-04-02",
+    "operatingYear": 2026,
+    "displayYear": 2026
+  },
+  "phase1Aliases": {
+    "LOCAL_BASIC": "fx-basic-restaurant-ready",
+    "LOCAL_PRO": "fx-pro-hotel-ready"
+  },
+  "phase3": {
+    "mysql": "not-implemented",
+    "mapsTo": [
+      "kpi_users",
+      "kpi_user_profiles",
+      "kpi_store.store_json",
+      "kpi_store.annual_nav_json",
+      "kpi_store.pl_json"
+    ],
+    "legacyPlan": "fx-legacy-pro is file-storage only. kpi_v1_db_write_user stores a missing plan as basic. Phase 3 must decide legacy representation before any MySQL seed of this account."
+  },
+  "accounts": [
+    {
+      "id": "fx-basic-restaurant-ready",
+      "userId": "localbasicrest",
+      "email": "local-basic-restaurant@localhost.test",
+      "password": "Local-Basic-Rest1",
+      "planSource": "explicit",
+      "plan": "basic",
+      "businessType": "restaurant",
+      "setupState": "complete",
+      "dataState": "populated",
+      "purpose": "Basic Home, Annual, Monthly, Daily, and the restaurant sales schema.",
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": "Local Restaurant Ready",
+        "companyName": "Local Restaurant Company",
+        "businessType": "restaurant",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localbasicrest",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "restaurant",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": true,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2026-10-03": 31000 },
+            "businessDays": { "2026-10-03": true, "2026-10-04": false }
+          },
+          "years": {
+            "2026": {
+              "year": 2026,
+              "status": "open",
+              "plan": {},
+              "dailyMeal": {
+                "lunch_sales": { "2026-10-03": 12000 },
+                "dinner_sales": { "2026-10-03": 19000 },
+                "total_customers": { "2026-10-03": 40 },
+                "lunch_customers": { "2026-10-03": 18 },
+                "dinner_customers": { "2026-10-03": 22 },
+                "total_groups": { "2026-10-03": 12 },
+                "lunch_groups": { "2026-10-03": 5 },
+                "dinner_groups": { "2026-10-03": 7 }
+              },
+              "dailyIncome": {
+                "food_sales": { "2026-10-03": 20000 },
+                "drink_sales": { "2026-10-03": 11000 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fx-pro-restaurant-ready",
+      "userId": "localprorest",
+      "email": "local-pro-restaurant@localhost.test",
+      "password": "Local-Pro-Rest1",
+      "planSource": "explicit",
+      "plan": "pro",
+      "businessType": "restaurant",
+      "setupState": "complete",
+      "dataState": "populated-historical",
+      "purpose": "Richest baseline. Pro authorization, restaurant breakdown, PL, MEP, and one historical day.",
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": "Local Pro Restaurant",
+        "companyName": "Local Pro Restaurant Company",
+        "businessType": "restaurant",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localprorest",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "pl": {
+          "catalog": { "lines": [] },
+          "expensesByYear": { "2026": { "exp_rent:9": 150000 } },
+          "adjustmentsByYear": {},
+          "targetCostRate": null
+        },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "restaurant",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": false,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2025-04-02": 21000, "2026-10-03": 48000 },
+            "businessDays": { "2025-04-02": true, "2026-10-03": true, "2026-10-04": false }
+          },
+          "years": {
+            "2026": {
+              "year": 2026,
+              "status": "open",
+              "plan": { "targetSales": 36000000, "source": "sales-data-save" },
+              "dailyMeal": {
+                "lunch_sales": { "2026-10-03": 18000 },
+                "dinner_sales": { "2026-10-03": 30000 },
+                "total_customers": { "2026-10-03": 55 },
+                "lunch_customers": { "2026-10-03": 24 },
+                "dinner_customers": { "2026-10-03": 31 },
+                "total_groups": { "2026-10-03": 16 },
+                "lunch_groups": { "2026-10-03": 7 },
+                "dinner_groups": { "2026-10-03": 9 }
+              },
+              "dailyIncome": {
+                "food_sales": { "2026-10-03": 32000 },
+                "drink_sales": { "2026-10-03": 16000 }
+              },
+              "dailyExpenses": {
+                "exp_food_cost": { "2026-10-03": 9000 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fx-pro-hotel-ready",
+      "userId": "localprohotel",
+      "email": "local-pro-hotel@localhost.test",
+      "password": "Local-Pro-Hotel1",
+      "planSource": "explicit",
+      "plan": "pro",
+      "businessType": "hotel",
+      "setupState": "complete",
+      "dataState": "populated",
+      "purpose": "Complex non-restaurant baseline. Common sales fields, no meal or food/drink streams, hotel expense presets.",
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": "Local Hotel Ready",
+        "companyName": "Local Hotel Company",
+        "businessType": "hotel",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localprohotel",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "pl": {
+          "catalog": { "lines": [] },
+          "expensesByYear": {
+            "2026": {
+              "exp_linen_cleaning:9": 12000,
+              "exp_ota_fees:9": 7000
+            }
+          },
+          "adjustmentsByYear": {},
+          "targetCostRate": null
+        },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "hotel",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": true,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2026-10-03": 64000 },
+            "businessDays": { "2026-10-03": true, "2026-10-04": false }
+          },
+          "years": {
+            "2026": {
+              "year": 2026,
+              "status": "open",
+              "plan": {},
+              "dailyExpenses": {
+                "exp_variable_labor": { "2026-10-03": 8000 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fx-basic-profile-required",
+      "userId": "localprofile1",
+      "email": "local-profile-required@localhost.test",
+      "password": "Local-Profile-1",
+      "planSource": "explicit",
+      "plan": "basic",
+      "businessType": null,
+      "setupState": "profile-required",
+      "dataState": "empty",
+      "purpose": "Profile and business-type hard gate. Empty profile, no store, no sales, no annual target.",
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": null,
+        "companyName": null,
+        "businessType": null,
+        "genre": null,
+        "locale": null,
+        "country": null,
+        "stateRegion": null,
+        "city": null,
+        "currency": null
+      },
+      "blob": {
+        "userId": "localprofile1",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": null,
+        "pl": null,
+        "store": null
+      }
+    },
+    {
+      "id": "fx-basic-setup-required",
+      "userId": "localsetup01",
+      "email": "local-setup-required@localhost.test",
+      "password": "Local-Setup-1",
+      "planSource": "explicit",
+      "plan": "basic",
+      "businessType": "restaurant",
+      "setupState": "setup-required",
+      "dataState": "empty",
+      "purpose": "Initial Setup resume. Hard profile is complete, setup.complete is not true, and nothing grandfathered the account.",
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": "Local Setup Restaurant",
+        "companyName": "Local Setup Company",
+        "businessType": "restaurant",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "localsetup01",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "restaurant",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": false,
+              "historicalSkipped": false,
+              "currentYearAcknowledged": false,
+              "targetAcknowledged": false
+            }
+          },
+          "timeline": {
+            "dailySales": {},
+            "businessDays": {}
+          },
+          "years": {}
+        }
+      }
+    },
+    {
+      "id": "fx-legacy-pro",
+      "userId": "locallegacy01",
+      "email": "local-legacy-pro@localhost.test",
+      "password": "Local-Legacy-1",
+      "planSource": "legacy",
+      "businessType": "restaurant",
+      "setupState": "complete",
+      "dataState": "minimal-populated",
+      "purpose": "File-driver legacy plan. The user record omits plan so legacyPlan resolves to pro.",
+      "legacyFileDriverOnly": true,
+      "createdAt": "2026-10-03T03:00:00Z",
+      "profile": {
+        "businessName": "Local Legacy Restaurant",
+        "companyName": "Local Legacy Company",
+        "businessType": "restaurant",
+        "genre": null,
+        "locale": "ja",
+        "country": "JP",
+        "stateRegion": "Kanagawa",
+        "city": "Local City",
+        "currency": "JPY"
+      },
+      "blob": {
+        "userId": "locallegacy01",
+        "updatedAt": "2026-10-03T03:00:00Z",
+        "revision": 1,
+        "annualNav": { "calendarYear": 2026, "selectedIso": "2026-10-03" },
+        "store": {
+          "meta": {
+            "schemaVersion": 4,
+            "operatingYear": 2026,
+            "businessType": "restaurant",
+            "openingDate": "2024-04-01",
+            "setup": {
+              "complete": true,
+              "historicalSkipped": true,
+              "currentYearAcknowledged": true,
+              "targetAcknowledged": true
+            }
+          },
+          "timeline": {
+            "dailySales": { "2026-10-03": 15000 },
+            "businessDays": { "2026-10-03": true, "2026-10-04": false }
+          },
+          "years": {}
+        }
+      }
+    }
+  ],
+  "businessTypeCases": [
+    {
+      "id": "bt-retail",
+      "businessType": "retail",
+      "normalizeFrom": ["retail", "wear_shop"],
+      "presetFamily": "retail",
+      "analysisMode": "key_expenses",
+      "representativeLineIds": ["exp_inventory_cogs", "exp_packaging", "exp_shipping"]
+    },
+    {
+      "id": "bt-hair-salon",
+      "businessType": "hair_salon",
+      "normalizeFrom": ["hair_salon"],
+      "presetFamily": "hair_salon",
+      "analysisMode": "key_expenses",
+      "representativeLineIds": ["exp_treatment_materials", "exp_retail_product_cogs"]
+    },
+    {
+      "id": "bt-fitness",
+      "businessType": "fitness",
+      "normalizeFrom": ["fitness", "personal_trainer"],
+      "presetFamily": "fitness",
+      "analysisMode": "key_expenses",
+      "representativeLineIds": ["exp_training_equipment", "exp_facility_fee"]
+    },
+    {
+      "id": "bt-other",
+      "businessType": "other",
+      "normalizeFrom": ["other"],
+      "presetFamily": "other",
+      "analysisMode": "key_expenses",
+      "representativeLineIds": ["exp_materials", "exp_outsourcing"]
+    }
+  ]
+}

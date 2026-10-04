@@ -18,7 +18,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / "fixtures" / "local" / "phase1-baseline.json"
+MANIFEST = ROOT / "fixtures" / "local" / "canonical" / "manifest.json"
 SEED = ROOT / "scripts" / "kpn_local_test_seed.php"
 OUT = ROOT / "tests" / "results" / "local-runtime-foundation.json"
 LIVE_DATA = ROOT / "api" / "v1" / "data"
@@ -143,8 +143,9 @@ def main() -> None:
     php = php_bin()
     if not php:
         raise SystemExit("php not found")
-    accounts = json.loads(FIXTURE.read_text(encoding="utf-8"))["accounts"]
-    by_id = {row["id"]: row for row in accounts}
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    by_id = {row["id"]: row for row in manifest["accounts"]}
+    aliases = manifest["phase1Aliases"]
     work = Path(tempfile.mkdtemp(prefix="kpn-lv1-"))
     data_root = work / "data"
     data_root.mkdir()
@@ -391,8 +392,8 @@ def main() -> None:
                 context = browser.new_context()
                 page = context.new_page()
                 watch(page)
-                basic = by_id["LOCAL_BASIC"]
-                pro = by_id["LOCAL_PRO"]
+                basic = by_id[aliases["LOCAL_BASIC"]]
+                pro = by_id[aliases["LOCAL_PRO"]]
                 login(page, basic)
                 for _name, path in JP_PAGES:
                     open_page(page, path, basic, True)

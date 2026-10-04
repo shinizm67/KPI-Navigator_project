@@ -55,10 +55,12 @@ POST-LAUNCH (not the active path):
   revision 305924ee4afdcf6f62d52669a654f86bdd567ad3
   CURRENT PATH above is unchanged. Home is not the active path.
 
-REGISTERED (infrastructure; Phase 0 recorded; do not start implementation; CURRENT PATH unchanged):
+REGISTERED (infrastructure; CURRENT PATH unchanged):
 - BR-LOCAL-VERIFY-01 (Full Local Verification Environment) CRITICAL / HIGH
   Pre-launch foundation and post-launch continuous infrastructure. Not a one-shot ticket.
-  Phase 0 audit recorded 2026-10-03. Implementation NOT STARTED.
+  Phase 0 audit recorded 2026-10-03. Phase 1 LOCAL VERIFIED / CLOSED 2026-10-04.
+  Phase 2 Canonical Fixtures v1 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). Parent stays ACTIVE / MAINTAINED.
+  Phase 3 Local MySQL is not started.
 - BR-I18N-ARCH-01 (Localization Architecture v2) HIGH
   Depends on a BR-LOCAL-VERIFY-01 baseline. Do not add Spanish as a fourth HTML tree.
   Stripe may proceed in parallel. Implementation NOT STARTED.
@@ -186,7 +188,7 @@ N/A (TRUNK-06 CLOSED)
 NEXT ACTION:
 BR-LAUNCH-09: Phase 3A (Basic Account Delete) READY FOR HUMAN SMOKE (`funkizm@mac.com` only, Shin GO required before any production deletion). Phase 3B (Paid / Stripe Account Delete) BLOCKED — Stripe / Billing contract required. Phase 3 Final Close only after 3A + 3B both pass. Phase 4 only after Shin GO.
 BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO). IP-independent abuse protection (`09f4711`: forwarded-header reject, global limiter, email limiter, IP auxiliary), consent record, Basic fixed, Pro Coming Soon. Controlled smoke test account `shinizm+kpnreg@gmail.com` kept and excluded from Founder metrics (Shin decides later). `registrationEnabled` is changed only on Shin's explicit instruction. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
-`BR-LOCAL-VERIFY-01` Phase 1 is LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 2 Canonical Fixtures and Phase 3 Local MySQL are not started. `BR-I18N-ARCH-01` is not started. Stripe stays a separate track. CURRENT PATH unchanged.
+`BR-LOCAL-VERIFY-01` Phase 1 is LOCAL VERIFIED / CLOSED (2026-10-04). Phase 2 Canonical Fixtures v1 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3 Local MySQL is not started. `BR-I18N-ARCH-01` is not started. Stripe stays a separate track. CURRENT PATH unchanged.
 
 BASELINE UX CONVENTION (not a work branch):
 - Unfinished / coming-soon full pages → Construction State
@@ -1798,7 +1800,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `BR-LOCAL-VERIFY-01` |
 | name | Full Local Verification Environment |
 | parent | none (infrastructure parent; do not reopen `TRUNK-06`; does not replace CURRENT PATH) |
-| status | Phase 1 LOCAL VERIFIED / CLOSED (2026-10-04). Parent ACTIVE / MAINTAINED, not closed. Phase 2 Canonical Fixtures NOT STARTED. Phase 3 Local MySQL Parity NOT STARTED. |
+| status | Phase 1 LOCAL VERIFIED / CLOSED (2026-10-04). Phase 2 Canonical Fixtures v1 IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). Parent ACTIVE / MAINTAINED, not closed. Phase 3 Local MySQL Parity NOT STARTED. |
 | priority | CRITICAL / HIGH (tree band P0 for release safety). Continuous, not a one-shot Launch ticket. |
 | type | Development Infrastructure / Release Safety / Continuous Quality |
 | timing | Pre-launch foundation and post-launch continuous. New features extend fixture and smoke coverage. |
@@ -1818,14 +1820,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | write_safety | Required later, not built: LOCAL TEST MODE refuses known production hosts, production DB credentials, FTP, live Stripe keys, outbound email, account deletion, registration, and password reset against production. Today, safety is per-script (`127.0.0.1` in some harnesses). Deploy scripts can still reach production. There is no shared hard fail. |
 | release_gate | Future gate before deploy: relevant contract tests, page functional smoke, locale smoke, visual smoke, pageerror 0, targeted human smoke, git diff audit, deploy, production static/read-only check. A single `python scripts/kpn_release_smoke.py` is not justified yet. Existing pieces are many scripts, not one command. Do not create it in Phase 0. |
 | stripe | Do not mock Stripe in this task yet. The local user/plan response must be able to grow later: unpaid Basic, active Pro, inactive, cancellation pending, checkout return, webhook-derived state. UI locale and billing region stay separate (`BR-I18N-ARCH-01`). |
-| phases | 0 audit. 1 Safe Local Runtime Foundation LOCAL VERIFIED / CLOSED (2026-10-04). 2 Canonical Fixtures NOT STARTED. 3 Local MySQL Parity NOT STARTED. 4+ page / locale / business smoke expansion NOT STARTED. Importer harness reuse stays with the existing upload smoke. |
+| phases | 0 audit. 1 Safe Local Runtime Foundation LOCAL VERIFIED / CLOSED (2026-10-04). 2 Canonical Fixtures v1 IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). 3 Local MySQL Parity NOT STARTED. 4+ page / locale / business smoke expansion NOT STARTED. Importer harness reuse stays with the existing upload smoke. |
 | phase_mysql | **Phase 3 — Local MySQL Parity. NOT STARTED. Do not implement during Phase 1.** Local PHP to local MySQL with a production-equivalent schema and local fixtures. localTestMode may use MySQL only when the host is localhost, 127.0.0.1, or an explicitly approved local container host, and the database name is a dedicated local test database such as `kpn_local_test`. Production DB host, production DB name, and detectable production credentials are rejected. Future checks: migrations, SELECT, INSERT, UPDATE, DELETE on local-only data, transaction rollback, FK cascade, and account / store / sales / expense persistence. File storage remains the Phase 1 store. |
 | size | First usable baseline is a small slice. Full page x locale x state coverage is continuous and larger than one implementation turn. |
 | p0 | Phase 1 local guard is LOCAL VERIFIED / CLOSED. Unresolved client plan does not grant Pro. Explicit server `pro`, including `legacyPlan`, is still honored. A static-server "open" is not a behavioral pass. |
-| p1 | No canonical account/store fixtures. No one-command gate. Subscription and session pages are not locally meaningful yet. Daily and Setup are not URLs. |
+| p1 | Canonical fixture v1 is LOCAL VERIFIED / CLOSED. No one-command gate. Subscription and session pages are not locally meaningful yet. Daily and Setup are not URLs. Page smoke still has to inject `fixtureClock` before application JavaScript. |
 | p2 | Full screenshot archive, admin visual matrix, responsive sweep beyond the representative set. |
-| next_action | Phase 1 is closed. Parent stays ACTIVE / MAINTAINED. Do not start Phase 2 Canonical Fixtures, Phase 3 Local MySQL, `BR-I18N-ARCH-01`, or Stripe from this close. CURRENT PATH unchanged. |
-| constraint | no application code; no test changes; no runtime changes; no DB migration; no Stripe; excel/ untouched |
+| phase_2 | IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). Contract: [`local-canonical-fixtures.md`](./local-canonical-fixtures.md). Manifest `fixtures/local/canonical/manifest.json`. Six accounts, four lightweight business-type cases, fixed clock `2026-10-03T12:00:00+09:00` / `Asia/Tokyo`. Reset requires `localTestMode`, a non-production root, and `.kpn-local-fixture-root` bound to that path. `fx-legacy-pro` is file-storage only. Phase 1 ids `LOCAL_BASIC` / `LOCAL_PRO` alias the basic restaurant and pro hotel accounts. `fixtures/local/phase1-baseline.json` is retained and is not the seed source. |
+| next_action | Phase 2 is closed. Parent stays ACTIVE / MAINTAINED. Do not start Phase 3 Local MySQL, BR-I18N-ARCH-01, or Stripe. CURRENT PATH unchanged. |
+| constraint | Phase 2 changes the canonical manifest, the local seeder, the Phase 1 runner fixture source, and this task record. No MySQL, no importer change, no product clock, no Stripe, excel/ untouched. |
 
 ### BR-I18N-ARCH-01
 
@@ -1934,7 +1937,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-POST-HOME-02` | Home / Simple Mode Redesign | PRODUCTION VERIFIED / CLOSED | P1 | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PROGRESS-SCALE-01` | Dynamic Progress Bar Scale | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
 | `BR-POST-PACE-ALERT-01` | Business-day vs Sales Pace Alert Visual Contract | DEFERRED / POST-LAUNCH / REDESIGN | not raised | post-launch (do not reopen `TRUNK-06`) |
-| `BR-LOCAL-VERIFY-01` | Full Local Verification Environment | Phase 1 LOCAL VERIFIED / CLOSED; parent ACTIVE / MAINTAINED | CRITICAL / HIGH | none (infrastructure; CURRENT PATH unchanged) |
+| `BR-LOCAL-VERIFY-01` | Full Local Verification Environment | Phase 1 LOCAL VERIFIED / CLOSED; Phase 2 LOCAL VERIFIED / CLOSED; parent ACTIVE / MAINTAINED | CRITICAL / HIGH | none (infrastructure; CURRENT PATH unchanged) |
 | `BR-I18N-ARCH-01` | Localization Architecture v2 | REGISTERED — implementation not started | HIGH | prerequisite `BR-LOCAL-VERIFY-01` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
@@ -1960,7 +1963,7 @@ DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2)
 PRODUCTION VERIFIED / CLOSED (not the active path): `BR-POST-HOME-01` (KPN Home / Simple Mode, P1. Revision `3c8ec2598843bd07d524ac1642094007893ba2a3`. 78 runtime files. CURRENT PATH unchanged.) `BR-POST-HOME-02` (Home / Simple Mode Redesign, P1. Production commit `305924ee4afdcf6f62d52669a654f86bdd567ad3`. 2026-10-03. CURRENT PATH unchanged.)  
 DEFERRED importer (not Launch blockers): `BR-LAUNCH-01-C2-L6-A`, Horizontal parser, Mixed parser, advanced date inference, Preview expansion, `BR-POST-EXPENSE-LEDGER`  
 DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-POST-PACE-ALERT-01`  
-`BR-LOCAL-VERIFY-01` Phase 1 is LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 2 and Phase 3 Local MySQL are not started. `BR-I18N-ARCH-01` is not started. Spanish is not a fourth HTML tree. Stripe may proceed in parallel. CURRENT PATH unchanged.
+`BR-LOCAL-VERIFY-01` Phase 1 is LOCAL VERIFIED / CLOSED (2026-10-04). Phase 2 Canonical Fixtures v1 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3 Local MySQL is not started. `BR-I18N-ARCH-01` is not started. Spanish is not a fourth HTML tree. Stripe may proceed in parallel. CURRENT PATH unchanged.
 
 ---
 
@@ -2128,3 +2131,5 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 3 named, not started.** Local MySQL Parity. localTestMode may later use MySQL only for localhost / 127.0.0.1 / an approved local container and a dedicated DB name such as `kpn_local_test`. Production host, name, and detectable credentials are rejected. Phase 1 remains PARTIAL, not closed. CURRENT PATH unchanged. |
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 1 LOCAL VERIFIED.** Basic Home no longer uses `guardProPage`. Unresolved client plan does not grant Pro. Server `legacyPlan` resolution is unchanged. Parent task stays open. Phase 3 Local MySQL is not started. CURRENT PATH unchanged. |
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 1 LOCAL VERIFIED / CLOSED.** Parent stays ACTIVE / MAINTAINED. Phase 2 Canonical Fixtures, Phase 3 Local MySQL, localization v2, and Stripe are not started. CURRENT PATH unchanged. |
+| 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 2 Canonical Fixtures v1 IMPLEMENTED / AWAITING CASE REVIEW.** Manifest `fixtures/local/canonical/manifest.json`. Six accounts, four business-type cases, fixed clock, sentinel reset. Parent stays ACTIVE / MAINTAINED. Phase 3 Local MySQL is not started. Not closed. CURRENT PATH unchanged. |
+| 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 2 Canonical Fixtures v1 IMPLEMENTED / LOCAL VERIFIED / CLOSED.** Case approved. Parent stays ACTIVE / MAINTAINED. Phase 3 Local MySQL stays UNSTARTED. CURRENT PATH unchanged. |
