@@ -91,6 +91,98 @@ CASES = [
 ]
 
 
+def locale_cases(group: str, prefix: str, lang: str, rows: list[dict]) -> list[dict]:
+    out = []
+    for row in rows:
+        item = dict(row)
+        item["group"] = group
+        item["prefix"] = prefix
+        item["lang"] = lang
+        out.append(item)
+    return out
+
+
+EN_ROWS = [
+    {"id": "core-home-en", "fixture": "fx-basic-restaurant-ready", "path": "/en/app/home/index.html", "kind": "app", "expect": "EN Basic Home boots in English"},
+    {"id": "core-annual-en", "fixture": "fx-basic-restaurant-ready", "path": "/en/app/annual/index.html", "kind": "app", "expect": "EN Basic Annual boots in English"},
+    {"id": "core-monthly-en", "fixture": "fx-basic-restaurant-ready", "path": "/en/app/monthly/index.html", "kind": "app", "expect": "EN Basic Monthly boots in English"},
+    {"id": "core-profit-en", "fixture": "fx-basic-restaurant-ready", "path": "/en/app/profit/index.html", "kind": "profit", "expect": "EN Profit hub boots for Basic in English"},
+    {"id": "core-pl-en", "fixture": "fx-pro-hotel-ready", "path": "/en/app/profit/pl/index.html", "kind": "app", "expect": "EN Pro Hotel PL boots in English"},
+    {"id": "core-mep-en", "fixture": "fx-pro-hotel-ready", "path": "/en/app/monthly/edit/index.html", "kind": "app", "expect": "EN Pro Hotel MEP boots in English"},
+    {"id": "core-booking-en", "fixture": "fx-pro-hotel-ready", "path": "/en/app/booking/index.html", "kind": "booking", "expect": "EN Booking shows Coming Soon in English"},
+    {"id": "set-en-index", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/index.html", "kind": "profile", "expect": "EN settings index reaches profile edit in English and hydrates the ready name"},
+    {"id": "set-en-profile", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/profile.html", "kind": "profile", "expect": "EN profile reaches profile edit in English and hydrates the ready name"},
+    {"id": "set-en-profile-edit", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/profile_edit.html", "kind": "profile", "expect": "EN profile edit shows the canonical name in English"},
+    {"id": "set-en-preferences", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/preferences.html", "kind": "settings", "finalPath": "/en/setting/preferences.html", "selector": "#preferences-form", "expect": "EN preferences stay in English on Basic"},
+    {"id": "set-en-change-email", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/change_email.html", "kind": "settings", "finalPath": "/en/setting/change_email.html", "selector": "h2.profile-title-sub", "expect": "EN change email boots in English without sending mail"},
+    {"id": "set-en-change-email-edit", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/change_email_edit.html", "kind": "settings", "finalPath": "/en/setting/change_email_edit.html", "selector": "#change-email-form", "expect": "EN change email edit boots in English without sending mail"},
+    {"id": "set-en-change-password", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/change_password.html", "kind": "settings", "finalPath": "/en/setting/change_password.html", "selector": "#current-password", "expect": "EN change password boots in English without changing the password"},
+    {"id": "set-en-change-password-success", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/change_password_success.html", "kind": "settings", "finalPath": "/en/setting/change_password_success.html", "selector": "h2.profile-title-sub", "expect": "EN password completion boots in English"},
+    {"id": "set-en-change-plan", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/change_plan.html", "kind": "settings", "finalPath": "/en/setting/change_plan.html", "selector": "#change-plan-h1", "expect": "EN change plan stays Basic and English"},
+    {"id": "set-en-plan-details", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/plan_details.html", "kind": "settings", "finalPath": "/en/setting/plan_details.html", "selector": "#plan-details-h1", "expect": "EN plan details stay static and English"},
+    {"id": "set-en-session", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/session_management.html", "kind": "settings", "finalPath": "/en/setting/session_management.html", "selector": "#coming-soon-text", "text": "Coming soon", "expect": "EN session management shows Coming soon"},
+    {"id": "set-en-feedback", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/feedback.html", "kind": "settings", "finalPath": "/en/setting/feedback.html", "selector": "#feedback-message", "expect": "EN feedback boots in English without sending mail"},
+    {"id": "set-en-delete-1", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account1.html", "kind": "settings", "finalPath": "/en/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "EN delete step 1 boots in English"},
+    {"id": "set-en-delete-2", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account2.html", "kind": "settings", "finalPath": "/en/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "EN delete step 2 replaces to EN delete step 1"},
+    {"id": "set-en-delete-3", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account3.html", "kind": "settings", "finalPath": "/en/setting/delete_account3.html", "selector": "h3.delete-account-step-heading", "expect": "EN delete step 2 screen boots in English"},
+    {"id": "set-en-delete-4-1", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account4-1.html", "kind": "settings", "finalPath": "/en/setting/delete_account4-1.html", "selector": "h3.delete-account-step-heading", "expect": "EN delete step 3 screen boots in English"},
+    {"id": "set-en-delete-4-2", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account4-2.html", "kind": "settings", "finalPath": "/en/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "EN delete step 4-2 replaces to EN delete step 1"},
+    {"id": "set-en-delete-5", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account5.html", "kind": "settings", "finalPath": "/en/setting/delete_account5.html", "selector": "h2.delete-account-page-title", "expect": "EN delete final confirmation boots in English"},
+    {"id": "set-en-delete-done", "fixture": "fx-basic-restaurant-ready", "path": "/en/setting/delete_account_accomplished.html", "kind": "settings", "finalPath": "/en/index.html", "selector": "#lp-brand", "expect": "EN delete completion without the success flag returns to the EN top and stays Basic"},
+    {"id": "pub-en-top", "fixture": "public", "path": "/en/index.html", "kind": "public", "finalPath": "/en/index.html", "selector": "#lp-brand", "expect": "EN top loads signed out in English"},
+    {"id": "pub-en-login", "fixture": "public", "path": "/en/login/index.html", "kind": "public", "finalPath": "/en/login/index.html", "selector": "#btn-login", "expect": "EN login loads signed out in English"},
+    {"id": "pub-en-register", "fixture": "public", "path": "/en/register/registration_si-fi_en.html", "kind": "public", "finalPath": "/en/register/registration_si-fi_en.html", "selector": "#plan-title", "expect": "EN registration loads in English without submitting"},
+    {"id": "pub-en-forgot", "fixture": "public", "path": "/en/forgot-password/index.html", "kind": "public", "finalPath": "/en/forgot-password/index.html", "selector": "#forgot-form", "expect": "EN forgot password loads in English without sending mail"},
+    {"id": "pub-en-reset", "fixture": "public", "path": "/en/reset-password/index.html", "kind": "public", "finalPath": "/en/reset-password/index.html", "selector": "#reset-form", "expect": "EN reset password loads in English without changing a password"},
+    {"id": "pub-en-plan", "fixture": "public", "path": "/en/plan/index.html", "kind": "public", "finalPath": "/en/plan/index.html", "selector": "#plan-basic-cta", "expect": "EN plan page loads in English"},
+    {"id": "pub-en-terms", "fixture": "public", "path": "/en/legal/terms/index.html", "kind": "public", "finalPath": "/en/legal/terms/index.html", "selector": "h1.terms-title", "expect": "EN terms load in English"},
+    {"id": "pub-en-privacy", "fixture": "public", "path": "/en/legal/privacy/index.html", "kind": "public", "finalPath": "/en/legal/privacy/index.html", "selector": "h1.terms-title", "expect": "EN privacy policy loads in English"},
+    {"id": "pub-en-unsubscribe", "fixture": "public", "path": "/en/unsubscribe/index.html", "kind": "public", "finalPath": "/en/unsubscribe/index.html", "selector": "#unsubscribe-form", "expect": "EN unsubscribe loads in English without submitting"},
+    {"id": "pub-en-account-protection", "fixture": "public", "path": "/en/account_protection/account_protection.html", "kind": "public", "finalPath": "/en/account_protection/account_protection.html", "selector": ".defense-text", "expect": "EN account protection shows the reserved-page wording"},
+    {"id": "pub-en-defensive-protocol", "fixture": "public", "path": "/en/account_protection/defensive_protocol.html", "kind": "public", "finalPath": "/en/account_protection/defensive_protocol.html", "selector": "#defense-title", "expect": "EN defensive protocol boots in English without sending mail"},
+]
+ZH_ROWS = [
+    {"id": "core-home-zh-tw", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/app/home/index.html", "kind": "app", "expect": "ZH-TW Basic Home boots in Traditional Chinese"},
+    {"id": "core-annual-zh-tw", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/app/annual/index.html", "kind": "app", "expect": "ZH-TW Basic Annual boots in Traditional Chinese"},
+    {"id": "core-monthly-zh-tw", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/app/monthly/index.html", "kind": "app", "expect": "ZH-TW Basic Monthly boots in Traditional Chinese"},
+    {"id": "core-profit-zh-tw", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/app/profit/index.html", "kind": "profit", "expect": "ZH-TW Profit hub boots for Basic in Traditional Chinese"},
+    {"id": "core-pl-zh-tw", "fixture": "fx-pro-hotel-ready", "path": "/zh-tw/app/profit/pl/index.html", "kind": "app", "expect": "ZH-TW Pro Hotel PL boots in Traditional Chinese"},
+    {"id": "core-mep-zh-tw", "fixture": "fx-pro-hotel-ready", "path": "/zh-tw/app/monthly/edit/index.html", "kind": "app", "expect": "ZH-TW Pro Hotel MEP boots in Traditional Chinese"},
+    {"id": "core-booking-zh-tw", "fixture": "fx-pro-hotel-ready", "path": "/zh-tw/app/booking/index.html", "kind": "booking", "expect": "ZH-TW Booking shows Coming Soon in Traditional Chinese"},
+    {"id": "set-zh-tw-index", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/index.html", "kind": "profile", "expect": "ZH-TW settings index reaches profile edit in Traditional Chinese and hydrates the ready name"},
+    {"id": "set-zh-tw-profile", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/profile.html", "kind": "profile", "expect": "ZH-TW profile reaches profile edit in Traditional Chinese and hydrates the ready name"},
+    {"id": "set-zh-tw-profile-edit", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/profile_edit.html", "kind": "profile", "expect": "ZH-TW profile edit shows the canonical name in Traditional Chinese"},
+    {"id": "set-zh-tw-preferences", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/preferences.html", "kind": "settings", "finalPath": "/zh-tw/setting/preferences.html", "selector": "#preferences-form", "expect": "ZH-TW preferences stay in Traditional Chinese on Basic"},
+    {"id": "set-zh-tw-change-email", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/change_email.html", "kind": "settings", "finalPath": "/zh-tw/setting/change_email.html", "selector": "h2.profile-title-sub", "expect": "ZH-TW change email boots in Traditional Chinese without sending mail"},
+    {"id": "set-zh-tw-change-email-edit", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/change_email_edit.html", "kind": "settings", "finalPath": "/zh-tw/setting/change_email_edit.html", "selector": "#change-email-form", "expect": "ZH-TW change email edit boots in Traditional Chinese without sending mail"},
+    {"id": "set-zh-tw-change-password", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/change_password.html", "kind": "settings", "finalPath": "/zh-tw/setting/change_password.html", "selector": "#current-password", "expect": "ZH-TW change password boots in Traditional Chinese without changing the password"},
+    {"id": "set-zh-tw-change-password-success", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/change_password_success.html", "kind": "settings", "finalPath": "/zh-tw/setting/change_password_success.html", "selector": "h2.profile-title-sub", "expect": "ZH-TW password completion boots in Traditional Chinese"},
+    {"id": "set-zh-tw-change-plan", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/change_plan.html", "kind": "settings", "finalPath": "/zh-tw/setting/change_plan.html", "selector": "#change-plan-h1", "expect": "ZH-TW change plan stays Basic and Traditional Chinese"},
+    {"id": "set-zh-tw-plan-details", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/plan_details.html", "kind": "settings", "finalPath": "/zh-tw/setting/plan_details.html", "selector": "#plan-details-h1", "expect": "ZH-TW plan details stay static and Traditional Chinese"},
+    {"id": "set-zh-tw-session", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/session_management.html", "kind": "settings", "finalPath": "/zh-tw/setting/session_management.html", "selector": "#coming-soon-text", "text": "即將推出", "expect": "ZH-TW session management shows the construction state"},
+    {"id": "set-zh-tw-feedback", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/feedback.html", "kind": "settings", "finalPath": "/zh-tw/setting/feedback.html", "selector": "#feedback-message", "expect": "ZH-TW feedback boots in Traditional Chinese without sending mail"},
+    {"id": "set-zh-tw-delete-1", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account1.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "ZH-TW delete step 1 boots in Traditional Chinese"},
+    {"id": "set-zh-tw-delete-2", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account2.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "ZH-TW delete step 2 replaces to ZH-TW delete step 1"},
+    {"id": "set-zh-tw-delete-3", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account3.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account3.html", "selector": "h3.delete-account-step-heading", "expect": "ZH-TW delete step 2 screen boots in Traditional Chinese"},
+    {"id": "set-zh-tw-delete-4-1", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account4-1.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account4-1.html", "selector": "h3.delete-account-step-heading", "expect": "ZH-TW delete step 3 screen boots in Traditional Chinese"},
+    {"id": "set-zh-tw-delete-4-2", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account4-2.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "ZH-TW delete step 4-2 replaces to ZH-TW delete step 1"},
+    {"id": "set-zh-tw-delete-5", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account5.html", "kind": "settings", "finalPath": "/zh-tw/setting/delete_account5.html", "selector": "h2.delete-account-page-title", "expect": "ZH-TW delete final confirmation boots in Traditional Chinese"},
+    {"id": "set-zh-tw-delete-done", "fixture": "fx-basic-restaurant-ready", "path": "/zh-tw/setting/delete_account_accomplished.html", "kind": "settings", "finalPath": "/zh-tw/login/index.html", "selector": "#btn-login", "expect": "ZH-TW delete completion without the success flag returns to the ZH-TW login and stays Basic"},
+    {"id": "pub-zh-tw-login", "fixture": "public", "path": "/zh-tw/login/index.html", "kind": "public", "finalPath": "/zh-tw/login/index.html", "selector": "#btn-login", "expect": "ZH-TW login loads signed out in Traditional Chinese"},
+    {"id": "pub-zh-tw-register", "fixture": "public", "path": "/zh-tw/register/registration_si-fi_zh-tw.html", "kind": "public", "finalPath": "/zh-tw/register/registration_si-fi_zh-tw.html", "selector": "#plan-title", "expect": "ZH-TW registration loads in Traditional Chinese without submitting"},
+    {"id": "pub-zh-tw-forgot", "fixture": "public", "path": "/zh-tw/forgot-password/index.html", "kind": "public", "finalPath": "/zh-tw/forgot-password/index.html", "selector": "#forgot-form", "expect": "ZH-TW forgot password loads in Traditional Chinese without sending mail"},
+    {"id": "pub-zh-tw-reset", "fixture": "public", "path": "/zh-tw/reset-password/index.html", "kind": "public", "finalPath": "/zh-tw/reset-password/index.html", "selector": "#reset-form", "expect": "ZH-TW reset password loads in Traditional Chinese without changing a password"},
+    {"id": "pub-zh-tw-plan", "fixture": "public", "path": "/zh-tw/plan/index.html", "kind": "public", "finalPath": "/zh-tw/plan/index.html", "selector": "#plan-basic-cta", "expect": "ZH-TW plan page loads in Traditional Chinese"},
+    {"id": "pub-zh-tw-terms", "fixture": "public", "path": "/zh-tw/legal/terms/index.html", "kind": "public", "finalPath": "/zh-tw/legal/terms/index.html", "selector": "h1.terms-title", "expect": "ZH-TW terms load in Traditional Chinese"},
+    {"id": "pub-zh-tw-privacy", "fixture": "public", "path": "/zh-tw/legal/privacy/index.html", "kind": "public", "finalPath": "/zh-tw/legal/privacy/index.html", "selector": "h1.terms-title", "expect": "ZH-TW privacy policy loads in Traditional Chinese"},
+    {"id": "pub-zh-tw-unsubscribe", "fixture": "public", "path": "/zh-tw/unsubscribe/index.html", "kind": "public", "finalPath": "/zh-tw/unsubscribe/index.html", "selector": "#unsubscribe-form", "expect": "ZH-TW unsubscribe loads in Traditional Chinese without submitting"},
+    {"id": "pub-zh-tw-account-protection", "fixture": "public", "path": "/zh-tw/account_protection/account_protection.html", "kind": "public", "finalPath": "/zh-tw/account_protection/account_protection.html", "selector": ".defense-text", "expect": "ZH-TW account protection shows the reserved-page wording"},
+    {"id": "pub-zh-tw-defensive-protocol", "fixture": "public", "path": "/zh-tw/account_protection/defensive_protocol.html", "kind": "public", "finalPath": "/zh-tw/account_protection/defensive_protocol.html", "selector": "#defense-title", "expect": "ZH-TW defensive protocol boots in Traditional Chinese without sending mail"},
+]
+CASES.extend(locale_cases("en", "/en/", "en", EN_ROWS))
+CASES.extend(locale_cases("zh-tw", "/zh-tw/", "zh-TW", ZH_ROWS))
+
+
 def runtime_identity_path() -> Path:
     override = os.environ.get("KPN_LOCAL_MYSQL_RUNTIME_CONFIG", "")
     if override:
@@ -318,7 +410,9 @@ APP_READY = """(spec) => {
     && meta.businessType === spec.businessType
     && !!setup.complete === !!spec.setupComplete
     && amount === spec.sales
-    && location.pathname.indexOf(spec.path) >= 0;
+    && location.pathname.indexOf(spec.path) >= 0
+    && (!spec.prefix || location.pathname.indexOf(spec.prefix) === 0)
+    && (!spec.lang || document.documentElement.lang === spec.lang);
 }"""
 
 
@@ -374,6 +468,7 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
         "id": case["id"],
         "fixture": case["fixture"],
         "route": case["path"],
+        "locale": case.get("lang") or "",
         "coverage": case.get("coverage") or "contract",
         "expected": case["expect"],
         "result": "FAIL",
@@ -400,6 +495,8 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                     "iso": "2026-10-03",
                     "sales": account["blob"]["store"]["timeline"]["dailySales"]["2026-10-03"],
                     "path": case["path"].split("?")[0],
+                    "prefix": case.get("prefix") or "",
+                    "lang": case.get("lang") or "",
                 },
                 timeout=READY_MS,
             )
@@ -412,14 +509,18 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                   return uid === spec.userId && tier === 'basic'
                     && !!document.querySelector('.profit-hub-title')
                     && location.pathname.indexOf('/app/profit/index.html') >= 0
-                    && location.pathname.indexOf('/pl/') < 0;
+                    && location.pathname.indexOf('/pl/') < 0
+                    && (!spec.prefix || location.pathname.indexOf(spec.prefix) === 0)
+                    && (!spec.lang || document.documentElement.lang === spec.lang);
                 }""",
-                arg={"userId": account["userId"]},
+                arg={"userId": account["userId"], "prefix": case.get("prefix") or "", "lang": case.get("lang") or ""},
                 timeout=READY_MS,
             )
         elif kind == "profile":
             page.wait_for_function(
                 """async (spec) => {
+                  if (spec.prefix && location.pathname.indexOf(spec.prefix) !== 0) return false;
+                  if (spec.lang && document.documentElement.lang !== spec.lang) return false;
                   if (location.pathname.indexOf('/setting/profile_edit.html') < 0) return false;
                   const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
                     || localStorage.getItem('kpiNavigator.subscriptionTier');
@@ -433,7 +534,12 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                     && profile.businessType === 'restaurant'
                     && !!input && input.value === spec.name;
                 }""",
-                arg={"userId": account["userId"], "name": account["profile"]["businessName"]},
+                arg={
+                    "userId": account["userId"],
+                    "name": account["profile"]["businessName"],
+                    "prefix": case.get("prefix") or "",
+                    "lang": case.get("lang") or "",
+                },
                 timeout=READY_MS,
             )
         elif kind == "booking":
@@ -445,9 +551,11 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                   return localStorage.getItem('kpiNavigator.lastKpiUserId') === spec.userId
                     && tier === 'pro'
                     && location.pathname.indexOf('/app/booking/') >= 0
+                    && (!spec.prefix || location.pathname.indexOf(spec.prefix) === 0)
+                    && (!spec.lang || document.documentElement.lang === spec.lang)
                     && !!el && /COMING SOON/i.test(el.textContent || '');
                 }""",
-                arg={"userId": account["userId"]},
+                arg={"userId": account["userId"], "prefix": case.get("prefix") or "", "lang": case.get("lang") or ""},
                 timeout=READY_MS,
             )
         elif kind == "daily":
@@ -620,6 +728,8 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                   const el = spec.selector ? document.querySelector(spec.selector) : document.body;
                   if (!el) return false;
                   if (spec.text && (el.textContent || '').indexOf(spec.text) < 0) return false;
+                  if (spec.prefix && location.pathname.indexOf(spec.prefix) !== 0) return false;
+                  if (spec.lang && document.documentElement.lang !== spec.lang) return false;
                   return true;
                 }""",
                 arg={
@@ -627,6 +737,8 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                     "finalPath": case.get("finalPath") or case["path"].split("?")[0],
                     "selector": case.get("selector") or "",
                     "text": case.get("text") or "",
+                    "prefix": case.get("prefix") or "",
+                    "lang": case.get("lang") or "",
                 },
                 timeout=READY_MS,
             )
@@ -635,12 +747,16 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                 """(spec) => {
                   if (location.pathname.indexOf(spec.finalPath) < 0) return false;
                   if (localStorage.getItem('kpiNavigator.lastKpiUserId')) return false;
+                  if (spec.prefix && location.pathname.indexOf(spec.prefix) !== 0) return false;
+                  if (spec.lang && document.documentElement.lang !== spec.lang) return false;
                   const el = spec.selector ? document.querySelector(spec.selector) : document.body;
                   return !!el;
                 }""",
                 arg={
                     "finalPath": case.get("finalPath") or case["path"].split("?")[0],
                     "selector": case.get("selector") or "",
+                    "prefix": case.get("prefix") or "",
+                    "lang": case.get("lang") or "",
                 },
                 timeout=READY_MS,
             )
@@ -715,23 +831,33 @@ def main() -> None:
                 "fx-basic-profile-required",
                 "fx-basic-setup-required",
             ]
+            groups = []
+            for case in CASES:
+                key = (case.get("group") or "jp", case["fixture"])
+                if key not in groups:
+                    groups.append(key)
             mutations = []
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(channel="chrome", headless=True)
-                for fixture_id in order:
+                for group, fixture_id in groups:
                     context = browser.new_context()
                     page = context.new_page()
                     watch(page, bag)
-                    login(page, base, accounts[fixture_id])
+                    if fixture_id != "public":
+                        login(page, base, accounts[fixture_id])
                     for case in CASES:
-                        if case["fixture"] != fixture_id:
+                        if (case.get("group") or "jp", case["fixture"]) != (group, fixture_id):
                             continue
-                        results.append(open_case(page, base, case, accounts[fixture_id], bag))
+                        account = {} if fixture_id == "public" else accounts[fixture_id]
+                        results.append(open_case(page, base, case, account, bag))
                     context.close()
+                    if fixture_id == "public":
+                        continue
                     observed = dump_db(php, cfg)
                     categories = fixture_delta(accounts[fixture_id], observed)
                     if categories:
                         mutations.append({
+                            "group": group,
                             "fixture": fixture_id,
                             "fixtureMutated": True,
                             "categories": list(categories),
@@ -742,14 +868,6 @@ def main() -> None:
                         restored = dump_db(php, cfg)
                         if fixture_delta(accounts[fixture_id], restored):
                             raise SystemExit(f"reseed did not restore {fixture_id}")
-                public = browser.new_context()
-                page = public.new_page()
-                watch(page, bag)
-                for case in CASES:
-                    if case["fixture"] != "public":
-                        continue
-                    results.append(open_case(page, base, case, {}, bag))
-                public.close()
                 browser.close()
         finally:
             server.terminate()
@@ -765,7 +883,7 @@ def main() -> None:
             1 for row in results if row.get("coverage") != "supplemental" and row["result"] == "PASS"
         )
         report = {
-            "phase": "BR-LOCAL-VERIFY-01 Phase 4A-2",
+            "phase": "BR-LOCAL-VERIFY-01 Phase 4A-3",
             "executedCases": len(results),
             "passedCases": len(results) - len(failed),
             "failedCases": len(failed),
