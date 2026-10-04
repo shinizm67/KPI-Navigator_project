@@ -1,10 +1,13 @@
 /* Home collapsed KPIs.
    Prefers store.years[y].dailyFacts, the snapshot KpiYearStore.invalidateDailyFacts
    writes and Daily FW reads through metricsFromDailyFacts / __computeTwMetricsForIso.
-   Does not copy HL daily-target allocation. If that snapshot is missing, sales are
-   summed from timeline.dailySales with the UI business-day rule and cumulative
-   targets stay blank. A saved sales-data-save target still shows as the Annual
-   final target for the selected date's year. */
+   Does not copy HL daily-target allocation. If that snapshot is missing, positive
+   recorded sales are summed from timeline.dailySales. A missing business-day flag
+   does not hide a positive sales record, and a lone 0 is not a recorded open day.
+   Daily display is an em dash for an explicit closed day, an unknown day, or a
+   zero with no business-day flag. Explicit open with sales 0 shows as zero.
+   Cumulative targets stay blank. A saved sales-data-save target still shows as
+   the Annual final target for the selected date's year. */
 (function () {
   'use strict';
 
@@ -56,17 +59,29 @@
     return true;
   }
 
-  function salesAmt(store, iso) {
+  function businessDayFlag(store, iso) {
+    var bmap = store && store.timeline ? store.timeline.businessDays : null;
+    if (!bmap || !Object.prototype.hasOwnProperty.call(bmap, iso)) return null;
+    return !!bmap[iso];
+  }
+
+  function salesRecord(store, iso) {
     var smap = store && store.timeline ? store.timeline.dailySales : null;
-    if (!smap || !Object.prototype.hasOwnProperty.call(smap, iso)) return 0;
+    if (!smap || !Object.prototype.hasOwnProperty.call(smap, iso)) return null;
     var n = Number(smap[iso]);
-    if (!Number.isFinite(n)) return 0;
+    if (!Number.isFinite(n)) return null;
     if (n === 1234) {
       var y = yearOf(iso);
       if (Number.isFinite(y) && y < operatingYear(store)) return n;
       return 0;
     }
     return n;
+  }
+
+  function showRecordedDaily(flag, sales) {
+    if (flag === false) return false;
+    if (sales != null && sales > 0) return true;
+    return flag === true && sales === 0;
   }
 
   function factsFor(store, iso) {
@@ -108,16 +123,14 @@
       for (var day = 1; day <= dc; day++) {
         var dayIso = y + '-' + (m + 1 < 10 ? '0' : '') + (m + 1) + '-' + (day < 10 ? '0' : '') + day;
         if (dayIso > iso) break;
-        if (!isUiBusinessDay(store, dayIso)) {
-          if (dayIso === iso) open = false;
-          continue;
+        var sales = salesRecord(store, dayIso);
+        if (sales != null && sales > 0) {
+          ytdA += sales;
+          if (m === m0) mtdA += sales;
         }
-        var amt = salesAmt(store, dayIso);
-        ytdA += amt;
-        if (m === m0) mtdA += amt;
         if (dayIso === iso) {
-          open = true;
-          dailySales = amt;
+          open = showRecordedDaily(businessDayFlag(store, dayIso), sales);
+          dailySales = open && sales != null ? sales : 0;
         }
       }
     }

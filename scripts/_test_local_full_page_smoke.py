@@ -1016,10 +1016,17 @@ def open_h2(page, base: str, case: dict, account: dict) -> dict:
                 timeout=READY_MS,
             )
         elif kind == "home-setup":
-            page.wait_for_function(
-                """async (spec) => {
+            # Synchronous on purpose. page.wait_for_function completes when an async
+            # predicate settles, including a settled false, so the old async check
+            # could pass while Home was still the current page. Do not call settle()
+            # here: that consumes kpnSetup before the assertion URL is recorded.
+            reached = page.wait_for_function(
+                """(spec) => {
                   if (location.pathname.indexOf('/app/annual/') < 0) return false;
                   if (location.pathname.indexOf('/app/home/') >= 0) return false;
+                  const q = new URLSearchParams(location.search);
+                  if (q.get('kpnSetup') !== '1') return false;
+                  if (q.get('year') !== '2026' || q.get('month') !== '10' || q.get('iso') !== '2026-10-03') return false;
                   const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
                     || localStorage.getItem('kpiNavigator.subscriptionTier');
                   if (localStorage.getItem('kpiNavigator.lastKpiUserId') !== spec.userId || tier !== 'basic') return false;
@@ -1028,17 +1035,25 @@ def open_h2(page, base: str, case: dict, account: dict) -> dict:
                   catch (e) { store = null; }
                   const setup = store && store.meta && store.meta.setup ? store.meta.setup : {};
                   if (setup.complete === true) return false;
-                  const nr = window.KpiNavigationReadiness;
-                  if (!nr || typeof nr.settle !== 'function') return false;
-                  const result = await nr.settle('basic');
-                  if (!result || result.status !== 'SETUP_INITIAL_REQUIRED' || result.setupComplete) return false;
-                  const resume = document.getElementById('kpi-nr-resume');
-                  const dialog = document.getElementById('kpi-s0');
-                  return (!!resume && resume.hidden === false) || (!!dialog && dialog.hidden === false);
+                  const windows = document.querySelector('.home-windows');
+                  if (windows && windows.hidden === false) return false;
+                  try { sessionStorage.setItem('h2SetupAssertUrl', location.href); } catch (e2) {}
+                  return true;
                 }""",
                 arg={"userId": account["userId"]},
                 timeout=READY_MS,
             )
+            if reached.json_value() is not True:
+                raise RuntimeError("setup predicate did not return true")
+            assertion_url = page.evaluate("() => sessionStorage.getItem('h2SetupAssertUrl') || ''")
+            if (
+                "/app/annual/index.html" not in assertion_url
+                or "/app/home/" in assertion_url
+                or "kpnSetup=1" not in assertion_url
+                or "iso=2026-10-03" not in assertion_url
+            ):
+                raise RuntimeError("setup assertion url " + assertion_url)
+            row["assertionUrl"] = assertion_url
         elif kind == "home-anon":
             page.wait_for_url(f"**{case['loginPath']}", timeout=READY_MS)
             if "/app/login" in page.url:
@@ -1048,7 +1063,8 @@ def open_h2(page, base: str, case: dict, account: dict) -> dict:
         row["detail"] = kind
     except Exception as exc:
         row["detail"] = str(exc).splitlines()[0][:240]
-    row["finalUrl"] = page.url
+    observed = page.url
+    row["finalUrl"] = row.get("assertionUrl") or observed
     return row
 
 
@@ -1143,7 +1159,15 @@ def main_h2() -> None:
             "database": final.get("database"),
             "fixtureMutations": mutations,
             "finalCanonical": not final_dirty,
-            "results": [{"id": row["id"], "result": row["result"], "finalUrl": row["finalUrl"]} for row in results],
+            "results": [
+                {
+                    "id": row["id"],
+                    "result": row["result"],
+                    "finalUrl": row["finalUrl"],
+                    "assertionUrl": row.get("assertionUrl") or "",
+                }
+                for row in results
+            ],
         }, ensure_ascii=False))
         if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
             raise SystemExit("h2 home entry failed")
@@ -1399,10 +1423,372 @@ def main_h4() -> None:
         shutil.rmtree(work, ignore_errors=True)
 
 
+H6_DASH = "\u2014"
+H6_FIXTURE = "fx-basic-restaurant-ready"
+H6_ISO = "2026-10-03"
+H6_NEXT_ISO = "2026-09-30"
+
+H6_HREF_READY = """(iso) => {
+  const a = document.querySelector('[data-home-global-daily]');
+  if (!a) return false;
+  return a.getAttribute('href') === '../monthly/index.html?open=daily&iso=' + encodeURIComponent(iso);
+}"""
+
+H6_CELL_READY = """(spec) => {
+  const input = document.querySelector('[data-home-window="daily"] [data-home-date-input]');
+  if (!input || input.value !== spec.iso) return false;
+  const cell = (kind) => {
+    const win = document.querySelector('[data-home-window="' + kind + '"]');
+    const el = win && win.querySelector('.home-window__kpi:not(.home-window__goal) .home-window__kpi-value');
+    return el ? el.textContent : '';
+  };
+  if (cell('daily') !== spec.daily) return false;
+  if (spec.monthly && cell('monthly') !== spec.monthly) return false;
+  if (spec.annual && cell('annual') !== spec.annual) return false;
+  return true;
+}"""
+
+H6_OVERLAY_READY = """(spec) => {
+  const path = location.pathname || '';
+  if (spec.locale === 'en') {
+    if (path.indexOf('/en/app/monthly/') !== 0) return false;
+  } else if (spec.locale === 'zh-tw') {
+    if (path.indexOf('/zh-tw/app/monthly/') !== 0) return false;
+  } else if (path.indexOf('/app/monthly/') !== 0 || path.indexOf('/en/') === 0 || path.indexOf('/zh-tw/') === 0) {
+    return false;
+  }
+  if ((location.search || '').indexOf('iso=' + spec.iso) < 0) return false;
+  const overlay = document.getElementById('daily-overlay');
+  const input = document.getElementById('daily-overlay-date-input');
+  if (!overlay || overlay.hidden || overlay.getAttribute('aria-hidden') === 'true') return false;
+  if (!input || input.value !== spec.iso) return false;
+  return true;
+}"""
+
+
+def h6_row(case_id: str) -> dict:
+    return {
+        "id": case_id,
+        "result": "FAIL",
+        "detail": "",
+        "href": "",
+        "url": "",
+        "daily": "",
+        "monthly": "",
+        "annual": "",
+    }
+
+
+def h6_open_home(page, base: str, path: str, user_id: str) -> None:
+    target = base + path
+    try:
+        page.goto(target, wait_until="domcontentloaded", timeout=90000)
+    except Exception as exc:
+        if "interrupted by another navigation" not in str(exc):
+            raise
+        page.goto(target, wait_until="domcontentloaded", timeout=90000)
+    page.wait_for_function(
+        """(userId) => {
+          const windows = document.querySelector('.home-windows');
+          return windows && !windows.hidden
+            && localStorage.getItem('kpiNavigator.lastKpiUserId') === userId
+            && !!document.querySelector('[data-home-window="daily"] [data-home-date-input]');
+        }""",
+        arg=user_id,
+        timeout=READY_MS,
+    )
+
+
+def h6_set_iso(page, iso: str) -> None:
+    page.evaluate(
+        """(iso) => {
+          const el = document.querySelector('[data-home-window="daily"] [data-home-date-input]');
+          el.value = iso;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }""",
+        iso,
+    )
+
+
+def h6_wait_href(page, iso: str) -> str:
+    page.wait_for_function(H6_HREF_READY, arg=iso, timeout=READY_MS)
+    return page.evaluate(
+        """() => {
+          const a = document.querySelector('[data-home-global-daily]');
+          return a ? a.getAttribute('href') : '';
+        }"""
+    )
+
+
+def h6_backup_store(page) -> str:
+    return page.evaluate("() => localStorage.getItem('kpiNavigator.kpiYearStore') || ''")
+
+
+def h6_restore_store(page, raw: str) -> None:
+    if not raw:
+        return
+    page.evaluate(
+        """(raw) => {
+          const key = 'kpiNavigator.kpiYearStore';
+          const gw = window.__KPI_DATA_GATEWAY;
+          const store = JSON.parse(raw);
+          if (gw && typeof gw.setJsonLocalOnly === 'function') gw.setJsonLocalOnly(key, store);
+          else localStorage.setItem(key, raw);
+        }""",
+        raw,
+    )
+
+
+def h6_apply_local_states(page) -> None:
+    page.evaluate(
+        """() => {
+          const key = 'kpiNavigator.kpiYearStore';
+          const gw = window.__KPI_DATA_GATEWAY;
+          let store = gw && typeof gw.getJson === 'function' ? gw.getJson(key) : null;
+          if (!store) store = JSON.parse(localStorage.getItem(key) || 'null');
+          store = JSON.parse(JSON.stringify(store));
+          store.timeline = store.timeline || {};
+          store.timeline.businessDays = Object.assign({}, store.timeline.businessDays || {});
+          store.timeline.dailySales = Object.assign({}, store.timeline.dailySales || {});
+          const bd = store.timeline.businessDays;
+          const sales = store.timeline.dailySales;
+          bd['2026-09-16'] = true;
+          sales['2026-09-16'] = 0;
+          bd['2026-10-01'] = true;
+          delete sales['2026-10-01'];
+          delete bd['2026-09-20'];
+          sales['2026-09-20'] = 0;
+          delete bd['2026-10-05'];
+          sales['2026-10-05'] = 5000;
+          delete bd['2026-10-02'];
+          delete sales['2026-10-02'];
+          if (gw && typeof gw.setJsonLocalOnly === 'function') gw.setJsonLocalOnly(key, store);
+          else localStorage.setItem(key, JSON.stringify(store));
+        }"""
+    )
+
+
+def h6_wait_cells(page, spec: dict) -> dict:
+    h6_set_iso(page, spec["iso"])
+    page.wait_for_function(H6_CELL_READY, arg=spec, timeout=READY_MS)
+    page.wait_for_timeout(700)
+    page.wait_for_function(H6_CELL_READY, arg=spec, timeout=READY_MS)
+    return page.evaluate(
+        """() => {
+          const cell = (kind) => {
+            const win = document.querySelector('[data-home-window="' + kind + '"]');
+            const el = win && win.querySelector('.home-window__kpi:not(.home-window__goal) .home-window__kpi-value');
+            return el ? el.textContent : '';
+          };
+          return { daily: cell('daily'), monthly: cell('monthly'), annual: cell('annual') };
+        }"""
+    )
+
+
+def h6_click_daily(page, locale: str, iso: str) -> dict:
+    href = h6_wait_href(page, iso)
+    landed = {"url": ""}
+
+    def remember(frame) -> None:
+        try:
+            if frame == page.main_frame and "open=daily" in (frame.url or ""):
+                landed["url"] = frame.url
+        except Exception:
+            pass
+
+    page.on("framenavigated", remember)
+    page.locator("[data-home-global-daily]").click()
+    page.wait_for_function(
+        H6_OVERLAY_READY,
+        arg={"locale": locale, "iso": iso},
+        timeout=READY_MS,
+    )
+    overlay = page.evaluate(
+        """() => ({
+          path: location.pathname,
+          search: location.search,
+          iso: (document.getElementById('daily-overlay-date-input') || {}).value || ''
+        })"""
+    )
+    return {"href": href, "navigated": landed["url"], "overlay": overlay}
+
+
+def h6_locale_case(page, base: str, account: dict, case_id: str, path: str, locale: str) -> list[dict]:
+    rows = []
+    nav = h6_row(case_id)
+    try:
+        h6_open_home(page, base, path, account["userId"])
+        h6_set_iso(page, H6_ISO)
+        opened = h6_click_daily(page, locale, H6_ISO)
+        nav["href"] = opened["href"]
+        nav["url"] = opened["navigated"] or page.url
+        nav["detail"] = opened["overlay"]["path"] + opened["overlay"]["search"]
+        nav["daily"] = opened["overlay"]["iso"]
+        if "open=daily" not in opened["navigated"] or ("iso=" + H6_ISO) not in opened["navigated"]:
+            raise RuntimeError("navigation url missing open=daily or iso")
+        if opened["overlay"]["iso"] != H6_ISO:
+            raise RuntimeError("overlay date " + opened["overlay"]["iso"])
+        nav["result"] = "PASS"
+    except Exception as exc:
+        nav["detail"] = str(exc).splitlines()[0][:240]
+        nav["url"] = nav["url"] or page.url
+    rows.append(nav)
+    return rows
+
+
+def h6_jp_cases(page, base: str, account: dict) -> list[dict]:
+    rows = []
+    h6_open_home(page, base, "/app/home/index.html", account["userId"])
+    updated = h6_row("h6-date-update")
+    try:
+        h6_set_iso(page, H6_ISO)
+        before = h6_wait_href(page, H6_ISO)
+        h6_set_iso(page, H6_NEXT_ISO)
+        after = h6_wait_href(page, H6_NEXT_ISO)
+        updated["href"] = after
+        updated["detail"] = before + " -> " + after
+        if "iso=" + H6_ISO in after:
+            raise RuntimeError("stale iso remained")
+        updated["result"] = "PASS"
+    except Exception as exc:
+        updated["detail"] = str(exc).splitlines()[0][:240]
+    rows.append(updated)
+
+    backup = h6_backup_store(page)
+    h6_apply_local_states(page)
+    states = [
+        {"id": "h6-recorded-zero", "iso": "2026-09-16", "daily": "¥0"},
+        {"id": "h6-closed", "iso": "2026-10-04", "daily": H6_DASH},
+        {"id": "h6-missing", "iso": "2026-10-02", "daily": H6_DASH},
+        {"id": "h6-open-missing-sales", "iso": "2026-10-01", "daily": H6_DASH},
+        {"id": "h6-zero-without-flag", "iso": "2026-09-20", "daily": H6_DASH},
+        {
+            "id": "h6-positive-without-flag",
+            "iso": "2026-10-05",
+            "daily": "¥5,000",
+            "monthly": "¥36,000",
+            "annual": "¥36,000",
+        },
+    ]
+    for spec in states:
+        row = h6_row(spec["id"])
+        row["detail"] = spec["iso"]
+        try:
+            snap = h6_wait_cells(page, spec)
+            row["daily"] = snap["daily"]
+            row["monthly"] = snap["monthly"]
+            row["annual"] = snap["annual"]
+            row["result"] = "PASS"
+        except Exception as exc:
+            row["detail"] = spec["iso"] + " " + str(exc).splitlines()[0][:200]
+        rows.append(row)
+    h6_restore_store(page, backup)
+    h6_set_iso(page, H6_ISO)
+    rows.extend(h6_locale_case(page, base, account, "h6-daily-jp", "/app/home/index.html", "jp"))
+    return rows
+
+
+def main_h6() -> None:
+    php_path = php_bin()
+    if not php_path:
+        raise SystemExit("php not found")
+    php = php_command(php_path)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    accounts = {row["id"]: row for row in manifest["accounts"]}
+    account = accounts[H6_FIXTURE]
+    work = Path(tempfile.mkdtemp(prefix="kpn-h6-"))
+    data_root = work / "data"
+    data_root.mkdir()
+    server = None
+    try:
+        user, password = read_runtime_identity()
+        cfg = work / "mysql.php"
+        port = free_port()
+        write_config(
+            cfg,
+            data_root,
+            dbUser=user,
+            dbPass=password,
+            passwordResetBaseUrl=f"http://127.0.0.1:{port}",
+        )
+        seeded = run_php(php, [str(MYSQL_SEED)], cfg)
+        if seeded.returncode != 0 or "seeded kpn_local_test 5" not in (seeded.stdout or ""):
+            raise SystemExit("mysql seed failed")
+        env = os.environ.copy()
+        env["KPI_V1_CONFIG"] = str(cfg)
+        server = subprocess.Popen(
+            php + ["-S", f"127.0.0.1:{port}", "-t", str(ROOT)],
+            cwd=str(ROOT),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        wait_http(port)
+        from playwright.sync_api import sync_playwright
+
+        base = f"http://127.0.0.1:{port}"
+        bag = {"pageerrors": [], "production": [], "ftp": [], "mail": []}
+        results = []
+        mutations = []
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(channel="chrome", headless=True)
+            passes = [
+                ("jp", lambda page: h6_jp_cases(page, base, account)),
+                ("en", lambda page: h6_locale_case(page, base, account, "h6-daily-en", "/en/app/home/index.html", "en")),
+                ("zh-tw", lambda page: h6_locale_case(page, base, account, "h6-daily-zh", "/zh-tw/app/home/index.html", "zh-tw")),
+            ]
+            for _name, run in passes:
+                context = browser.new_context()
+                page = context.new_page()
+                watch(page, bag)
+                login(page, base, account)
+                results.extend(run(page))
+                context.close()
+                observed = dump_db(php, cfg)
+                categories = fixture_delta(account, observed)
+                if categories:
+                    mutations.append({"fixture": H6_FIXTURE, "categories": list(categories)})
+                    reseed_fixture(php, cfg, H6_FIXTURE)
+            browser.close()
+        final = dump_db(php, cfg)
+        final_dirty = bool(fixture_delta(account, final))
+        failed = [row for row in results if row["result"] != "PASS"]
+        before = dump_db(php, cfg)
+        print(json.dumps({
+            "ok": not failed and not bag["pageerrors"] and not bag["production"] and not bag["ftp"] and not bag["mail"] and not final_dirty and before.get("database") == "kpn_local_test",
+            "phase": "BR-POST-HOME-01 H6",
+            "executed": len(results),
+            "passed": len(results) - len(failed),
+            "failed": [row["id"] + ": " + row["detail"] for row in failed],
+            "pageerrors": len(bag["pageerrors"]),
+            "productionRequests": len(bag["production"]),
+            "productionDbAccess": 0 if before.get("database") == "kpn_local_test" else 1,
+            "ftp": bag["ftp"],
+            "realMail": bag["mail"],
+            "runtimeUser": before.get("runtimeUser"),
+            "database": before.get("database"),
+            "fixtureMutations": mutations,
+            "finalCanonical": not final_dirty,
+            "results": results,
+        }, ensure_ascii=True))
+        if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
+            raise SystemExit("h6 daily navigation failed")
+    finally:
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except Exception:
+                server.kill()
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "h2":
         main_h2()
     elif len(sys.argv) > 1 and sys.argv[1] == "h4":
         main_h4()
+    elif len(sys.argv) > 1 and sys.argv[1] == "h6":
+        main_h6()
     else:
         main()

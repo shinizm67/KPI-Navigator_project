@@ -125,9 +125,33 @@
       var path = base.split('?')[0];
       detail.setAttribute('href', path + '?' + q);
     });
+    syncGlobalDaily(currentIso);
     if (window.__KPI_HOME_KPI && typeof window.__KPI_HOME_KPI.paint === 'function') {
       window.__KPI_HOME_KPI.paint(currentIso);
     }
+  }
+
+  /* Home only. The generated Daily item stays an Annual link on other pages.
+     This page rewrites that one anchor to the same Monthly Daily handoff as
+     the Daily window, using the current selected date. */
+  function globalDailyAnchor() {
+    var nodes = document.querySelectorAll('.global-nav a.nav-frame-btn');
+    for (var i = 0; i < nodes.length; i++) {
+      var textEl = nodes[i].querySelector('.nav-btn-text');
+      var label = textEl ? String(textEl.textContent || '').replace(/\s+/g, '') : '';
+      if (label === '日次' || label === 'Daily' || label === '每日') return nodes[i];
+    }
+    return null;
+  }
+  function syncGlobalDaily(iso) {
+    if (!parseIso(iso)) return;
+    var link = globalDailyAnchor();
+    if (!link || link.id === 'global-nav-daily-btn') return;
+    var dailyDetail = document.querySelector('[data-home-window="daily"] [data-home-detail]');
+    var dailyBase = (dailyDetail && dailyDetail.getAttribute('data-home-href')) || '../monthly/index.html';
+    var dailyPath = String(dailyBase).split('?')[0];
+    link.setAttribute('href', dailyPath + '?open=daily&iso=' + encodeURIComponent(iso));
+    link.setAttribute('data-home-global-daily', '1');
   }
   function commit(iso) {
     if (!parseIso(iso) || iso === currentIso) {
