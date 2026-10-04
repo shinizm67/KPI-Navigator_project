@@ -7,6 +7,52 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 /**
+ * @return array{0:string,1:string,2:string,3:string}
+ */
+function kpi_v1_db_parts($cfg, $includeDatabase)
+{
+    $host = isset($cfg['dbHost']) ? (string) $cfg['dbHost'] : '127.0.0.1';
+    $port = isset($cfg['dbPort']) ? (int) $cfg['dbPort'] : 3306;
+    $name = isset($cfg['dbName']) ? (string) $cfg['dbName'] : '';
+    $user = isset($cfg['dbUser']) ? (string) $cfg['dbUser'] : '';
+    $pass = isset($cfg['dbPass']) ? (string) $cfg['dbPass'] : '';
+    $charset = isset($cfg['dbCharset']) ? (string) $cfg['dbCharset'] : 'utf8mb4';
+    if ($includeDatabase && ($name === '' || $user === '')) {
+        kpi_v1_json_out(500, ['ok' => false, 'error' => 'db_config_missing']);
+    }
+    $dsnHost = (strpos($host, ':') !== false) ? '[' . $host . ']' : $host;
+    $dsn = 'mysql:host=' . $dsnHost . ';port=' . $port . ';charset=' . $charset;
+    if ($includeDatabase) {
+        $dsn .= ';dbname=' . $name;
+    }
+    return [$dsn, $user, $pass, $charset];
+}
+
+/**
+ * Open one PDO. Local test mode sets the session clock to UTC after connect.
+ * Production connections are unchanged: API timestamps are already UTC strings from PHP.
+ *
+ * @return PDO
+ */
+function kpi_v1_db_open($cfg, $includeDatabase)
+{
+    $parts = kpi_v1_db_parts($cfg, $includeDatabase);
+    try {
+        $pdo = new PDO($parts[0], $parts[1], $parts[2], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+        if (!empty($cfg['localTestMode'])) {
+            $pdo->exec("SET time_zone = '+00:00'");
+        }
+    } catch (Throwable $e) {
+        kpi_v1_json_out(500, ['ok' => false, 'error' => 'db_connect_failed']);
+    }
+    return $pdo;
+}
+
+/**
  * @return PDO|null
  */
 function kpi_v1_db($cfg)
@@ -20,25 +66,7 @@ function kpi_v1_db($cfg)
     if (!kpi_v1_storage_is_mysql($cfg)) {
         return null;
     }
-    $host = isset($cfg['dbHost']) ? (string) $cfg['dbHost'] : '127.0.0.1';
-    $port = isset($cfg['dbPort']) ? (int) $cfg['dbPort'] : 3306;
-    $name = isset($cfg['dbName']) ? (string) $cfg['dbName'] : '';
-    $user = isset($cfg['dbUser']) ? (string) $cfg['dbUser'] : '';
-    $pass = isset($cfg['dbPass']) ? (string) $cfg['dbPass'] : '';
-    $charset = isset($cfg['dbCharset']) ? (string) $cfg['dbCharset'] : 'utf8mb4';
-    if ($name === '' || $user === '') {
-        kpi_v1_json_out(500, ['ok' => false, 'error' => 'db_config_missing']);
-    }
-    $dsn = 'mysql:host=' . $host . ';port=' . $port . ';dbname=' . $name . ';charset=' . $charset;
-    try {
-        $pdo = new PDO($dsn, $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]);
-    } catch (Throwable $e) {
-        kpi_v1_json_out(500, ['ok' => false, 'error' => 'db_connect_failed']);
-    }
+    $pdo = kpi_v1_db_open($cfg, true);
     return $pdo;
 }
 

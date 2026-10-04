@@ -1,6 +1,6 @@
 # Canonical Fixtures v1
 
-`BR-LOCAL-VERIFY-01` Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3 is unstarted.
+`BR-LOCAL-VERIFY-01` Phase 2 is IMPLEMENTED / LOCAL VERIFIED / CLOSED (2026-10-04). The parent stays ACTIVE / MAINTAINED. Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. This manifest is still the file-storage seed. Phase 3B has not mapped these accounts into MySQL.
 
 Source of truth: `fixtures/local/canonical/manifest.json`
 
@@ -71,6 +71,6 @@ An empty directory, or one that contains only `mail-blocked.log`, may receive th
 
 When the sentinel matches, the seeder deletes only prior fixture user blobs, `users/*.json`, and `profiles/*.json`. Other files in the root stay. `users/` or `profiles/` must contain JSON files only; anything else refuses the reset.
 
-The same manifest is the later Phase 3 map onto `kpi_users`, `kpi_user_profiles`, and `kpi_store` (`store_json`, `annual_nav_json`, `pl_json`). MySQL is not implemented. `fx-legacy-pro` must not go through `kpi_v1_db_write_user` until Phase 3 decides how a missing plan is stored. That writer currently inserts `basic`.
+The same manifest remains the file-storage source. Phase 3B will also copy representative daily sales into `kpi_daily_inputs`. `fx-legacy-pro` stays out of MySQL. `kpi_v1_db_write_user` still stores a missing plan as `basic`, and that behavior is unchanged.
 
 Paths in the seeder use PHP `realpath` and forward-slash normalization. Windows comparison is case-insensitive. The fixture JSON has no machine paths. The seeder is PHP, not PowerShell or bash.

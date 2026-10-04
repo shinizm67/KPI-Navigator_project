@@ -1,8 +1,10 @@
 <?php
 /**
- * BR-LOCAL-VERIFY-01 Phase 1.
+ * BR-LOCAL-VERIFY-01 Phase 1 / Phase 3A.
  * Active only when config localTestMode === true.
  * Refuses production hosts, non-loopback DB/FTP, and mail().
+ * File storage stays allowed. MySQL is allowed only for a loopback host and
+ * the exact database name kpn_local_test. This file does not open PDO.
  */
 
 function kpi_v1_local_test_fail($reason)
@@ -62,17 +64,47 @@ function kpi_v1_local_test_is_production_host($host)
     return false;
 }
 
+/**
+ * Phase 3A canonical MySQL host. TCP 127.0.0.1 is the contract.
+ * localhost and ::1 are the only other loopback names accepted.
+ * Empty host is not allowed for MySQL. No arbitrary container names.
+ */
+function kpi_v1_local_test_mysql_host_allowed($host)
+{
+    return $host === '127.0.0.1' || $host === 'localhost' || $host === '::1';
+}
+
+/**
+ * Exact allowlist. Substrings, empty names, and unsafe characters fail.
+ */
+function kpi_v1_local_test_mysql_db_allowed($name)
+{
+    $name = trim((string) $name);
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $name)) {
+        return false;
+    }
+    return $name === 'kpn_local_test';
+}
+
 function kpi_v1_local_test_assert($cfg)
 {
     if (!is_array($cfg) || empty($cfg['localTestMode'])) {
         return;
     }
     $driver = isset($cfg['storageDriver']) ? strtolower(trim((string) $cfg['storageDriver'])) : 'file';
-    if ($driver !== 'file') {
+    if ($driver !== 'file' && $driver !== 'mysql') {
         kpi_v1_local_test_fail('storage_driver');
     }
     $dbHost = kpi_v1_local_test_host_from_value(isset($cfg['dbHost']) ? $cfg['dbHost'] : '');
-    if (!kpi_v1_local_test_is_loopback($dbHost) || kpi_v1_local_test_is_production_host($dbHost)) {
+    if ($driver === 'mysql') {
+        if (!kpi_v1_local_test_mysql_host_allowed($dbHost) || kpi_v1_local_test_is_production_host($dbHost)) {
+            kpi_v1_local_test_fail('db_host');
+        }
+        $dbName = isset($cfg['dbName']) ? (string) $cfg['dbName'] : '';
+        if (!kpi_v1_local_test_mysql_db_allowed($dbName)) {
+            kpi_v1_local_test_fail('db_name');
+        }
+    } elseif (!kpi_v1_local_test_is_loopback($dbHost) || kpi_v1_local_test_is_production_host($dbHost)) {
         kpi_v1_local_test_fail('db_host');
     }
     foreach (['ftpHost', 'ftpUrl'] as $ftpKey) {

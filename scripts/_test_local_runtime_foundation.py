@@ -196,14 +196,14 @@ def main() -> None:
             passwordResetBaseUrl="https://forge-laboratory.com/kpi-navigator",
         )
         expect_refuse(php, work, port, "mail_address", supportEmail="support@forge-laboratory.com")
-        expect_refuse(php, work, port, "storage_driver", storageDriver="mysql")
+        expect_refuse(php, work, port, "db_name", storageDriver="mysql")
         report["guards"]["refuse"] = [
             "db_host",
             "ftp_host",
             "ftp_credential",
             "reset_url",
             "mail_address",
-            "storage_driver",
+            "db_name",
         ]
 
         mail = run_php(

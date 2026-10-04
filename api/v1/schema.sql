@@ -16,12 +16,15 @@ CREATE TABLE IF NOT EXISTS kpi_users (
   PRIMARY KEY (user_id),
   UNIQUE KEY uq_kpi_users_email (email),
   KEY idx_kpi_users_role (role),
-  KEY idx_kpi_users_parent (parent_user_id)
+  KEY idx_kpi_users_parent (parent_user_id),
+  KEY idx_kpi_users_created (created_at),
+  KEY idx_kpi_users_last_login (last_login_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Existing DBs created before disabled existed:
 -- ALTER TABLE kpi_users ADD COLUMN disabled TINYINT(1) NOT NULL DEFAULT 0 AFTER plan;
--- Admin Console Foundation: see schema_admin_console_foundation.add.sql
+-- Fresh installs include idx_kpi_users_created and idx_kpi_users_last_login.
+-- Existing databases already received those indexes from schema_admin_console_foundation.add.sql.
 
 CREATE TABLE IF NOT EXISTS kpi_store (
   user_id VARCHAR(64) NOT NULL,
