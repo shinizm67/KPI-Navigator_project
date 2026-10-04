@@ -2,7 +2,8 @@
 """BR-LOCAL-VERIFY-01 Phase 4A-1 — JP core / gate smoke on local MySQL.
 
 The frozen user-facing contract is 122 cases. This step runs the runner
-foundation and the 20 JP core, Pro, embedded, and gate cases only.
+foundation, the 20 JP core, Pro, embedded, and gate cases, plus JP Settings
+and JP Public startup cases. EN and ZH-TW stay out of this step.
 
 A fresh browser that opens setting/profile.html lands on profile_edit.html
 when kpi-profile-last is absent. That is existing product behavior. The ready
@@ -34,13 +35,14 @@ MYSQL_SEED = ROOT / "scripts" / "kpn_local_mysql_seed.php"
 OUT = ROOT / "tests" / "results" / "local-full-page-smoke.json"
 READY_MS = 20000
 
-# Phase 4A-1 only. Later steps append the remaining route families.
+# Contract cases fill the frozen 122. coverage=supplemental repeats a route and does not take a slot.
+CONTRACT_TARGET = 122
 CASES = [
     {"id": "core-home-jp", "fixture": "fx-basic-restaurant-ready", "path": "/app/home/index.html", "kind": "app", "expect": "normal Basic Home"},
     {"id": "core-annual-jp", "fixture": "fx-basic-restaurant-ready", "path": "/app/annual/index.html", "kind": "app", "expect": "normal Basic Annual"},
     {"id": "core-monthly-jp", "fixture": "fx-basic-restaurant-ready", "path": "/app/monthly/index.html", "kind": "app", "expect": "normal Basic Monthly"},
     {"id": "core-profit-jp", "fixture": "fx-basic-restaurant-ready", "path": "/app/profit/index.html", "kind": "profit", "expect": "Profit hub stays open for Basic"},
-    {"id": "core-profile-jp", "fixture": "fx-basic-restaurant-ready", "path": "/setting/profile.html", "kind": "profile", "expect": "Ready profile opens the edit form with the canonical business name"},
+    {"id": "core-profile-jp", "fixture": "fx-basic-restaurant-ready", "path": "/setting/profile.html", "kind": "profile", "coverage": "supplemental", "expect": "Ready profile opens the edit form with the canonical business name"},
     {"id": "core-pl-jp", "fixture": "fx-pro-hotel-ready", "path": "/app/profit/pl/index.html", "kind": "app", "expect": "Pro Hotel PL stays open"},
     {"id": "core-mep-jp", "fixture": "fx-pro-hotel-ready", "path": "/app/monthly/edit/index.html", "kind": "app", "expect": "Pro Hotel MEP stays open"},
     {"id": "core-booking-jp", "fixture": "fx-pro-hotel-ready", "path": "/app/booking/index.html", "kind": "booking", "expect": "Booking shows the intentional COMING SOON state"},
@@ -56,6 +58,36 @@ CASES = [
     {"id": "gate-booking", "fixture": "fx-basic-restaurant-ready", "path": "/app/booking/index.html", "kind": "pro-gate", "expect": "Basic Booking lands on Change Plan"},
     {"id": "gate-insight", "fixture": "fx-basic-restaurant-ready", "path": "/app/monthly/index.html", "kind": "insight-gate", "expect": "Basic Insight action lands on Change Plan"},
     {"id": "biz-pro-rest", "fixture": "fx-pro-restaurant-ready", "path": "/app/monthly/index.html", "kind": "restaurant", "expect": "Pro Restaurant Monthly keeps food sales that Hotel does not have"},
+    {"id": "set-jp-index", "fixture": "fx-basic-restaurant-ready", "path": "/setting/index.html", "kind": "profile", "expect": "Settings index replaces to profile edit and the ready name hydrates"},
+    {"id": "set-jp-profile", "fixture": "fx-basic-restaurant-ready", "path": "/setting/profile.html", "kind": "profile", "expect": "Ready profile opens the edit form with the canonical business name"},
+    {"id": "set-jp-profile-edit", "fixture": "fx-basic-restaurant-ready", "path": "/setting/profile_edit.html", "kind": "profile", "expect": "Profile edit shows the canonical business name"},
+    {"id": "set-jp-preferences", "fixture": "fx-basic-restaurant-ready", "path": "/setting/preferences.html", "kind": "settings", "finalPath": "/setting/preferences.html", "selector": "#preferences-form", "expect": "Preferences form stays on Basic"},
+    {"id": "set-jp-change-email", "fixture": "fx-basic-restaurant-ready", "path": "/setting/change_email.html", "kind": "settings", "finalPath": "/setting/change_email.html", "selector": "h2.profile-title-sub", "expect": "Change Email confirmation boots without sending mail"},
+    {"id": "set-jp-change-email-edit", "fixture": "fx-basic-restaurant-ready", "path": "/setting/change_email_edit.html", "kind": "settings", "finalPath": "/setting/change_email_edit.html", "selector": "#change-email-form", "expect": "Change Email edit form boots without sending mail"},
+    {"id": "set-jp-change-password", "fixture": "fx-basic-restaurant-ready", "path": "/setting/change_password.html", "kind": "settings", "finalPath": "/setting/change_password.html", "selector": "#current-password", "expect": "Change Password form boots without changing the password"},
+    {"id": "set-jp-change-password-success", "fixture": "fx-basic-restaurant-ready", "path": "/setting/change_password_success.html", "kind": "settings", "finalPath": "/setting/change_password_success.html", "selector": "h2.profile-title-sub", "expect": "Password completion screen boots without a password change"},
+    {"id": "set-jp-change-plan", "fixture": "fx-basic-restaurant-ready", "path": "/setting/change_plan.html", "kind": "settings", "finalPath": "/setting/change_plan.html", "selector": "#change-plan-h1", "expect": "Change Plan stays on Basic"},
+    {"id": "set-jp-plan-details", "fixture": "fx-basic-restaurant-ready", "path": "/setting/plan_details.html", "kind": "settings", "finalPath": "/setting/plan_details.html", "selector": "#plan-details-h1", "expect": "Plan details stays a static Basic page"},
+    {"id": "set-jp-session", "fixture": "fx-basic-restaurant-ready", "path": "/setting/session_management.html", "kind": "settings", "finalPath": "/setting/session_management.html", "selector": "#coming-soon-text", "text": "Coming soon", "expect": "Session Management shows the intentional construction state"},
+    {"id": "set-jp-feedback", "fixture": "fx-basic-restaurant-ready", "path": "/setting/feedback.html", "kind": "settings", "finalPath": "/setting/feedback.html", "selector": "#feedback-message", "expect": "Feedback form boots without sending mail"},
+    {"id": "set-jp-delete-1", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account1.html", "kind": "settings", "finalPath": "/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "Delete step 1 boots without deleting the account"},
+    {"id": "set-jp-delete-2", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account2.html", "kind": "settings", "finalPath": "/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "Delete step 2 replaces to delete step 1"},
+    {"id": "set-jp-delete-3", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account3.html", "kind": "settings", "finalPath": "/setting/delete_account3.html", "selector": "h3.delete-account-step-heading", "expect": "Delete step 2 screen boots without deleting the account"},
+    {"id": "set-jp-delete-4-1", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account4-1.html", "kind": "settings", "finalPath": "/setting/delete_account4-1.html", "selector": "h3.delete-account-step-heading", "expect": "Delete step 3 screen boots without deleting the account"},
+    {"id": "set-jp-delete-4-2", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account4-2.html", "kind": "settings", "finalPath": "/setting/delete_account1.html", "selector": "#delete-step1-heading", "expect": "Delete step 4-2 replaces to delete step 1"},
+    {"id": "set-jp-delete-5", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account5.html", "kind": "settings", "finalPath": "/setting/delete_account5.html", "selector": "h2.delete-account-page-title", "expect": "Delete final confirmation boots without deleting the account"},
+    {"id": "set-jp-delete-done", "fixture": "fx-basic-restaurant-ready", "path": "/setting/delete_account_accomplished.html", "kind": "settings", "finalPath": "/index.html", "selector": "#lp-brand", "expect": "Delete completion without the in-tab success flag returns to the JP top page and keeps Basic"},
+    {"id": "pub-jp-top", "fixture": "public", "path": "/index.html", "kind": "public", "finalPath": "/index.html", "selector": "#lp-brand", "expect": "JP top page loads signed out"},
+    {"id": "pub-jp-login", "fixture": "public", "path": "/login/index.html", "kind": "public", "finalPath": "/login/index.html", "selector": "#btn-login", "expect": "JP login loads signed out"},
+    {"id": "pub-jp-register", "fixture": "public", "path": "/register/registration_si-fi_jp/registration_si-fi_jp.html", "kind": "public", "finalPath": "/register/registration_si-fi_jp/registration_si-fi_jp.html", "selector": "#plan-title", "expect": "JP registration loads without submitting"},
+    {"id": "pub-jp-forgot", "fixture": "public", "path": "/forgot-password/index.html", "kind": "public", "finalPath": "/forgot-password/index.html", "selector": "#forgot-form", "expect": "Forgot password loads without sending mail"},
+    {"id": "pub-jp-reset", "fixture": "public", "path": "/reset-password/index.html", "kind": "public", "finalPath": "/reset-password/index.html", "selector": "#reset-form", "expect": "Reset password loads without changing a password"},
+    {"id": "pub-jp-plan", "fixture": "public", "path": "/plan/index.html", "kind": "public", "finalPath": "/plan/index.html", "selector": "#plan-basic-cta", "expect": "JP plan page loads as the current static page"},
+    {"id": "pub-jp-terms", "fixture": "public", "path": "/legal/terms/index.html", "kind": "public", "finalPath": "/legal/terms/index.html", "selector": "h1.terms-title", "expect": "JP terms load"},
+    {"id": "pub-jp-privacy", "fixture": "public", "path": "/legal/privacy/index.html", "kind": "public", "finalPath": "/legal/privacy/index.html", "selector": "h1.terms-title", "expect": "JP privacy policy loads"},
+    {"id": "pub-jp-unsubscribe", "fixture": "public", "path": "/unsubscribe/index.html", "kind": "public", "finalPath": "/unsubscribe/index.html", "selector": "#unsubscribe-form", "expect": "Unsubscribe loads without submitting"},
+    {"id": "pub-jp-account-protection", "fixture": "public", "path": "/account_protection/account_protection.html", "kind": "public", "finalPath": "/account_protection/account_protection.html", "selector": ".defense-text", "expect": "Account protection shows the reserved-page wording"},
+    {"id": "pub-jp-defensive-protocol", "fixture": "public", "path": "/account_protection/defensive_protocol.html", "kind": "public", "finalPath": "/account_protection/defensive_protocol.html", "selector": "#defense-title", "expect": "Defensive protocol boots without sending mail"},
 ]
 
 
@@ -342,6 +374,7 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
         "id": case["id"],
         "fixture": case["fixture"],
         "route": case["path"],
+        "coverage": case.get("coverage") or "contract",
         "expected": case["expect"],
         "result": "FAIL",
         "detail": "",
@@ -576,6 +609,41 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                 arg={"userId": account["userId"]},
                 timeout=READY_MS,
             )
+        elif kind == "settings":
+            page.wait_for_function(
+                """(spec) => {
+                  const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
+                    || localStorage.getItem('kpiNavigator.subscriptionTier');
+                  if (localStorage.getItem('kpiNavigator.lastKpiUserId') !== spec.userId) return false;
+                  if (tier !== 'basic') return false;
+                  if (location.pathname.indexOf(spec.finalPath) < 0) return false;
+                  const el = spec.selector ? document.querySelector(spec.selector) : document.body;
+                  if (!el) return false;
+                  if (spec.text && (el.textContent || '').indexOf(spec.text) < 0) return false;
+                  return true;
+                }""",
+                arg={
+                    "userId": account["userId"],
+                    "finalPath": case.get("finalPath") or case["path"].split("?")[0],
+                    "selector": case.get("selector") or "",
+                    "text": case.get("text") or "",
+                },
+                timeout=READY_MS,
+            )
+        elif kind == "public":
+            page.wait_for_function(
+                """(spec) => {
+                  if (location.pathname.indexOf(spec.finalPath) < 0) return false;
+                  if (localStorage.getItem('kpiNavigator.lastKpiUserId')) return false;
+                  const el = spec.selector ? document.querySelector(spec.selector) : document.body;
+                  return !!el;
+                }""",
+                arg={
+                    "finalPath": case.get("finalPath") or case["path"].split("?")[0],
+                    "selector": case.get("selector") or "",
+                },
+                timeout=READY_MS,
+            )
         else:
             raise SystemExit(f"unknown kind {kind}")
         fatal = fatal_text(page)
@@ -674,6 +742,14 @@ def main() -> None:
                         restored = dump_db(php, cfg)
                         if fixture_delta(accounts[fixture_id], restored):
                             raise SystemExit(f"reseed did not restore {fixture_id}")
+                public = browser.new_context()
+                page = public.new_page()
+                watch(page, bag)
+                for case in CASES:
+                    if case["fixture"] != "public":
+                        continue
+                    results.append(open_case(page, base, case, {}, bag))
+                public.close()
                 browser.close()
         finally:
             server.terminate()
@@ -684,11 +760,19 @@ def main() -> None:
             if fixture_delta(accounts[fixture_id], final)
         }
         failed = [row for row in results if row["result"] != "PASS"]
+        supplemental = [row["id"] for row in results if row.get("coverage") == "supplemental"]
+        contract_completed = sum(
+            1 for row in results if row.get("coverage") != "supplemental" and row["result"] == "PASS"
+        )
         report = {
-            "phase": "BR-LOCAL-VERIFY-01 Phase 4A-1",
-            "cases": len(results),
-            "pass": len(results) - len(failed),
-            "fail": len(failed),
+            "phase": "BR-LOCAL-VERIFY-01 Phase 4A-2",
+            "executedCases": len(results),
+            "passedCases": len(results) - len(failed),
+            "failedCases": len(failed),
+            "contractCoverageCompleted": contract_completed,
+            "contractCoverageTarget": CONTRACT_TARGET,
+            "supplementalCases": supplemental,
+            "remainingContractCoverage": CONTRACT_TARGET - contract_completed,
             "pageerrors": bag["pageerrors"],
             "productionRequests": bag["production"],
             "productionDbAccess": 0 if before.get("database") == "kpn_local_test" else 1,
@@ -701,16 +785,18 @@ def main() -> None:
             "finalDirty": final_dirty,
             "profileRouteNote": "Fresh profile.html falls through to profile_edit.html when kpi-profile-last is absent. Ready data still hydrates. Profile-required stays empty.",
             "results": results,
-            "frozenTotal": 122,
-            "remaining": 122 - len(results),
         }
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({
             "ok": not failed and not bag["pageerrors"] and not bag["production"] and not bag["ftp"] and not bag["mail"] and not final_dirty,
-            "cases": len(results),
-            "pass": report["pass"],
-            "fail": report["fail"],
+            "executedCases": report["executedCases"],
+            "passedCases": report["passedCases"],
+            "failedCases": report["failedCases"],
+            "contractCoverageCompleted": report["contractCoverageCompleted"],
+            "contractCoverageTarget": report["contractCoverageTarget"],
+            "supplementalCases": report["supplementalCases"],
+            "remainingContractCoverage": report["remainingContractCoverage"],
             "pageerrors": len(bag["pageerrors"]),
             "productionRequests": len(bag["production"]),
             "fixtureMutations": mutations,
@@ -718,7 +804,7 @@ def main() -> None:
             "failed": [row["id"] + ": " + row["detail"] for row in failed],
         }, ensure_ascii=False))
         if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
-            raise SystemExit("phase 4A-1 smoke failed")
+            raise SystemExit("phase 4 smoke failed")
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
