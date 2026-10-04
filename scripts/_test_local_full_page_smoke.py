@@ -1783,6 +1783,228 @@ def main_h6() -> None:
         shutil.rmtree(work, ignore_errors=True)
 
 
+H7_CASES = [
+    {
+        "id": "h7-basic-jp",
+        "fixture": "fx-basic-restaurant-ready",
+        "path": "/app/home/index.html",
+        "kind": "basic",
+        "changePlan": "/setting/change_plan.html",
+    },
+    {
+        "id": "h7-basic-en",
+        "fixture": "fx-basic-restaurant-ready",
+        "path": "/en/app/home/index.html",
+        "kind": "basic",
+        "changePlan": "/en/setting/change_plan.html",
+    },
+    {
+        "id": "h7-basic-zh",
+        "fixture": "fx-basic-restaurant-ready",
+        "path": "/zh-tw/app/home/index.html",
+        "kind": "basic",
+        "changePlan": "/zh-tw/setting/change_plan.html",
+    },
+    {
+        "id": "h7-pro-rest-jp",
+        "fixture": "fx-pro-restaurant-ready",
+        "path": "/app/home/index.html",
+        "kind": "pro",
+        "changePlan": "/setting/change_plan.html",
+    },
+    {
+        "id": "h7-pro-hotel-jp",
+        "fixture": "fx-pro-hotel-ready",
+        "path": "/app/home/index.html",
+        "kind": "pro",
+        "changePlan": "/setting/change_plan.html",
+    },
+]
+
+H7_DIALOG_READY = """() => {
+  const path = location.pathname || '';
+  if (path.indexOf('/app/home/') !== 0) return false;
+  if (path.indexOf('/en/') === 0 || path.indexOf('/zh-tw/') === 0) return false;
+  const dlg = document.getElementById('kpi-pl-mep-export-dialog');
+  const title = document.getElementById('kpi-pl-mep-export-title');
+  const run = document.getElementById('kpi-pl-mep-export-run');
+  const pl = document.getElementById('kpi-pl-mep-export-include-pl');
+  const api = window.__KPI_PL_MEP_EXPORT;
+  if (!dlg || dlg.hidden) return false;
+  if (!title || !title.textContent) return false;
+  if (!run || !pl) return false;
+  if (!api || typeof api.open !== 'function') return false;
+  return true;
+}"""
+
+
+def open_h7(page, base: str, case: dict, account: dict, downloads: list) -> dict:
+    row = {
+        "id": case["id"],
+        "fixture": case["fixture"],
+        "kind": case["kind"],
+        "result": "FAIL",
+        "detail": "",
+        "url": "",
+        "changePlan": "",
+        "dialog": "",
+        "downloads": 0,
+    }
+    before_downloads = len(downloads)
+    try:
+        h6_open_home(page, base, case["path"], account["userId"])
+        resolved = page.evaluate(
+            """() => {
+              const btn = document.getElementById('kpi-export-pl-mep');
+              if (!btn) return '';
+              const raw = btn.getAttribute('data-kpi-change-plan') || '';
+              return new URL(raw, location.href).pathname;
+            }"""
+        )
+        row["changePlan"] = resolved
+        if resolved != case["changePlan"]:
+            raise RuntimeError("change plan path " + resolved)
+        page.locator("#header-dl > summary").click()
+        page.locator("#kpi-export-pl-mep").click()
+        if case["kind"] == "basic":
+            page.wait_for_function(
+                "(path) => location.pathname === path",
+                arg=case["changePlan"],
+                timeout=READY_MS,
+            )
+            row["url"] = page.url
+            row["dialog"] = "absent"
+            if "/app/home/" in page.url:
+                raise RuntimeError("basic stayed on home")
+        else:
+            page.wait_for_function(H7_DIALOG_READY, timeout=READY_MS)
+            snap = page.evaluate(
+                """() => ({
+                  path: location.pathname,
+                  title: (document.getElementById('kpi-pl-mep-export-title') || {}).textContent || '',
+                  hidden: document.getElementById('kpi-pl-mep-export-dialog').hidden
+                })"""
+            )
+            row["url"] = page.url
+            row["dialog"] = snap["title"]
+            if snap["hidden"]:
+                raise RuntimeError("dialog hidden")
+            if snap["path"] != "/app/home/index.html":
+                raise RuntimeError("pro left home " + snap["path"])
+        row["downloads"] = len(downloads) - before_downloads
+        if row["downloads"]:
+            raise RuntimeError("unexpected download")
+        row["result"] = "PASS"
+        row["detail"] = case["kind"]
+    except Exception as exc:
+        row["detail"] = str(exc).splitlines()[0][:240]
+        row["url"] = row["url"] or page.url
+    return row
+
+
+def main_h7() -> None:
+    php_path = php_bin()
+    if not php_path:
+        raise SystemExit("php not found")
+    php = php_command(php_path)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    accounts = {row["id"]: row for row in manifest["accounts"]}
+    order = [
+        "fx-basic-restaurant-ready",
+        "fx-pro-restaurant-ready",
+        "fx-pro-hotel-ready",
+    ]
+    work = Path(tempfile.mkdtemp(prefix="kpn-h7-"))
+    data_root = work / "data"
+    data_root.mkdir()
+    server = None
+    try:
+        user, password = read_runtime_identity()
+        cfg = work / "mysql.php"
+        port = free_port()
+        write_config(
+            cfg,
+            data_root,
+            dbUser=user,
+            dbPass=password,
+            passwordResetBaseUrl=f"http://127.0.0.1:{port}",
+        )
+        seeded = run_php(php, [str(MYSQL_SEED)], cfg)
+        if seeded.returncode != 0 or "seeded kpn_local_test 5" not in (seeded.stdout or ""):
+            raise SystemExit("mysql seed failed")
+        env = os.environ.copy()
+        env["KPI_V1_CONFIG"] = str(cfg)
+        server = subprocess.Popen(
+            php + ["-S", f"127.0.0.1:{port}", "-t", str(ROOT)],
+            cwd=str(ROOT),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        wait_http(port)
+        from playwright.sync_api import sync_playwright
+
+        base = f"http://127.0.0.1:{port}"
+        bag = {"pageerrors": [], "production": [], "ftp": [], "mail": []}
+        results = []
+        mutations = []
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(channel="chrome", headless=True)
+            seen = []
+            for case in H7_CASES:
+                if case["fixture"] not in seen:
+                    seen.append(case["fixture"])
+            for fixture_id in seen:
+                context = browser.new_context()
+                page = context.new_page()
+                downloads = []
+                page.on("download", lambda item: downloads.append(item.suggested_filename))
+                watch(page, bag)
+                login(page, base, accounts[fixture_id])
+                for case in H7_CASES:
+                    if case["fixture"] != fixture_id:
+                        continue
+                    results.append(open_h7(page, base, case, accounts[fixture_id], downloads))
+                context.close()
+                observed = dump_db(php, cfg)
+                categories = fixture_delta(accounts[fixture_id], observed)
+                if categories:
+                    mutations.append({"fixture": fixture_id, "categories": list(categories)})
+                    reseed_fixture(php, cfg, fixture_id)
+            browser.close()
+        final = dump_db(php, cfg)
+        final_dirty = [fixture_id for fixture_id in order if fixture_delta(accounts[fixture_id], final)]
+        failed = [row for row in results if row["result"] != "PASS"]
+        before = dump_db(php, cfg)
+        print(json.dumps({
+            "ok": not failed and not bag["pageerrors"] and not bag["production"] and not bag["ftp"] and not bag["mail"] and not final_dirty and before.get("database") == "kpn_local_test",
+            "phase": "BR-POST-HOME-01 H7",
+            "executed": len(results),
+            "passed": len(results) - len(failed),
+            "failed": [row["id"] + ": " + row["detail"] for row in failed],
+            "pageerrors": len(bag["pageerrors"]),
+            "productionRequests": len(bag["production"]),
+            "productionDbAccess": 0 if before.get("database") == "kpn_local_test" else 1,
+            "ftp": bag["ftp"],
+            "realMail": bag["mail"],
+            "runtimeUser": before.get("runtimeUser"),
+            "database": before.get("database"),
+            "fixtureMutations": mutations,
+            "finalCanonical": not final_dirty,
+            "results": results,
+        }, ensure_ascii=True))
+        if failed or bag["pageerrors"] or bag["production"] or bag["ftp"] or bag["mail"] or final_dirty:
+            raise SystemExit("h7 mep pl export failed")
+    finally:
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except Exception:
+                server.kill()
+        shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "h2":
         main_h2()
@@ -1790,5 +2012,7 @@ if __name__ == "__main__":
         main_h4()
     elif len(sys.argv) > 1 and sys.argv[1] == "h6":
         main_h6()
+    elif len(sys.argv) > 1 and sys.argv[1] == "h7":
+        main_h7()
     else:
         main()

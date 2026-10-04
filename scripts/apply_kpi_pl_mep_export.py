@@ -15,12 +15,15 @@ MARKER = "/* KPI-PL-MEP-EXPORT */"
 # Pages that get the export script (JA/EN with Global Menu DL).
 TARGET_GLOBS = [
     "app/annual/index.html",
+    "app/home/index.html",
     "app/monthly/index.html",
     "app/monthly/edit/index.html",
     "app/profit/index.html",
     "app/profit/pl/index.html",
     "en/app/annual/index.html",
+    "en/app/home/index.html",
     "zh-tw/app/annual/index.html",
+    "zh-tw/app/home/index.html",
     "en/app/monthly/index.html",
     "zh-tw/app/monthly/index.html",
     "en/app/monthly/edit/index.html",
