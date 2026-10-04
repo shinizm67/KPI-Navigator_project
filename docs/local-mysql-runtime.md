@@ -1,6 +1,6 @@
 # Local MySQL runtime — Phase 3A
 
-`BR-LOCAL-VERIFY-01` Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). It does not seed canonical accounts. Phase 3 overall stays open. Phase 3B is NEXT / UNSTARTED. The parent stays ACTIVE / MAINTAINED.
+`BR-LOCAL-VERIFY-01` Phase 3A is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3B is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED (2026-10-04). Phase 3 Local MySQL Parity is IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED. Phase 4 Full Page Smoke is NEXT / UNSTARTED. The parent stays ACTIVE / MAINTAINED.
 
 `fx-legacy-pro` stays a file-storage fixture. Plan schema, nullability, entitlement, and `kpi_v1_db_write_user` are unchanged.
 
@@ -45,7 +45,9 @@ Bootstrap and the normal KPN connection are different accounts. Passwords stay i
 
 `KPN_LOCAL_MYSQL_ADMIN_CONFIG` and `KPN_LOCAL_MYSQL_RUNTIME_CONFIG` can point at those files. The admin file supplies only the account and password. Host, port, and database name still come from the guarded config, so the admin file cannot aim the connection at another server. The runtime account is `kpn_local_runtime`, granted `SELECT`, `INSERT`, `UPDATE`, and `DELETE` on `kpn_local_test` only, for `127.0.0.1` and `localhost`. It is not granted `CREATE DATABASE`, `DROP DATABASE`, or privileges on `*.*`.
 
-The bundled Windows PHP has `php_pdo_mysql.dll`, and a normal `php` start does not load it. Phase 3A does not add a system `php.ini`. The later local smoke runner must pass the extension settings itself.
+The bundled Windows PHP has `php_pdo_mysql.dll`, and a normal `php` start does not load it. No system or global `php.ini` is written.
+
+`scripts/kpn_local_php.py` finds `php` on `PATH`, then the portable binary under the local tools directory. If `php -m` already lists `pdo_mysql`, the runner uses that binary alone. Otherwise it adds `-d extension_dir` and `-d extension` for `php_pdo_mysql.dll` or `pdo_mysql.so` beside that binary. The absolute directory is chosen at runtime and is not stored in Git. Phase 3B seed and page smoke use this prefix, so a normal run does not need a hand-typed `-d` flag.
 
 ## Schema and reset
 
@@ -62,4 +64,10 @@ php scripts/kpn_local_mysql_bootstrap.php recreate
 
 `init` creates `kpn_local_test` if needed and applies the schema. `recreate` drops that database, creates it, and applies the schema. Both require the guard to pass first, then connect as the bootstrap identity. The SQL identifier is the literal `` `kpn_local_test` ``. After the schema load, bootstrap repairs `kpn_local_runtime`. The application config used for later API calls is that runtime identity, not the bootstrap account.
 
-Phase 3B will map representative daily sales into both `kpi_store.store_json` and `kpi_daily_inputs`. Expenses stay in `store_json` / `pl_json`. `kpi_daily_facts` is not a canonical seed target.
+## Canonical fixture seed
+
+`scripts/kpn_local_mysql_seed.php` reads `fixtures/local/canonical/manifest.json` and writes the five MySQL accounts. The mapping, daily-input contract, file/MySQL comparison, and legacy exclusion are in [`local-canonical-fixtures.md`](./local-canonical-fixtures.md).
+
+Normal seed and reseed use `kpn_local_runtime` on `kpn_local_test`. The command deletes only those five user ids, then inserts them again. It does not drop the database. `fx-legacy-pro` is not inserted. Representative daily sales are written to both `store_json` and `kpi_daily_inputs` from the manifest. Expenses stay in `store_json` / `pl_json`. `kpi_daily_facts` is not seeded.
+
+Phase 3B verification on 2026-10-04, Case approved: five-account seed, mutate/reseed restore, file/MySQL business parity, daily-input parity, runtime user `kpn_local_runtime`, session `+00:00`, charset `utf8mb4`, and the eight-page representative smoke (Basic Restaurant and Pro Hotel, each Home / Annual / Monthly / Profile) with pageerror 0 and production requests 0. Phase 3B is CLOSED. Full page smoke is Phase 4 and is not started.

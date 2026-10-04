@@ -16,15 +16,23 @@
     "LOCAL_PRO": "fx-pro-hotel-ready"
   },
   "phase3": {
-    "mysql": "not-implemented",
+    "mysql": "canonical-fixtures-v1",
+    "accounts": [
+      "fx-basic-restaurant-ready",
+      "fx-pro-restaurant-ready",
+      "fx-pro-hotel-ready",
+      "fx-basic-profile-required",
+      "fx-basic-setup-required"
+    ],
     "mapsTo": [
       "kpi_users",
       "kpi_user_profiles",
       "kpi_store.store_json",
       "kpi_store.annual_nav_json",
-      "kpi_store.pl_json"
+      "kpi_store.pl_json",
+      "kpi_daily_inputs"
     ],
-    "legacyPlan": "fx-legacy-pro is file-storage only. kpi_v1_db_write_user stores a missing plan as basic. Phase 3 must decide legacy representation before any MySQL seed of this account."
+    "legacyPlan": "fx-legacy-pro stays file-storage only. It is not seeded into MySQL. kpi_users.plan, its default, and legacyPlan are unchanged."
   },
   "accounts": [
     {
