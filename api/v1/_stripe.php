@@ -1,0 +1,659 @@
+<?php
+/**
+ * Stripe Sandbox subscription Checkout.
+ * Test keys only. Live keys and production hosts are refused.
+ * Entitlement changes happen only inside the verified webhook path.
+ */
+
+require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_billing_store.php';
+
+function kpi_v1_stripe_env_or_config($envName, $cfg, $cfgKey)
+{
+    $env = getenv($envName);
+    if (is_string($env) && trim($env) !== '') {
+        return trim($env);
+    }
+    if (isset($cfg[$cfgKey]) && trim((string) $cfg[$cfgKey]) !== '') {
+        return trim((string) $cfg[$cfgKey]);
+    }
+    return '';
+}
+
+function kpi_v1_stripe_prices($cfg)
+{
+    $basic = kpi_v1_stripe_env_or_config('STRIPE_PRICE_BASIC', $cfg, 'stripePriceBasic');
+    $pro = kpi_v1_stripe_env_or_config('STRIPE_PRICE_PRO', $cfg, 'stripePricePro');
+    if ($basic === '') {
+        $basic = 'price_1UN9VpKFNH29caO9yLytJKTw';
+    }
+    if ($pro === '') {
+        $pro = 'price_1UN9k2KFNH29caO9pCLbK7xS';
+    }
+    return ['basic' => $basic, 'pro' => $pro];
+}
+
+function kpi_v1_stripe_same($left, $right)
+{
+    if (!is_string($left) || !is_string($right) || strlen($left) !== strlen($right)) {
+        return false;
+    }
+    return hash_equals($left, $right);
+}
+
+function kpi_v1_stripe_plan_for_price(array $prices, $priceId)
+{
+    $priceId = (string) $priceId;
+    if (kpi_v1_stripe_same($prices['basic'], $priceId)) {
+        return 'basic';
+    }
+    if (kpi_v1_stripe_same($prices['pro'], $priceId)) {
+        return 'pro';
+    }
+    return null;
+}
+
+function kpi_v1_stripe_secret($cfg)
+{
+    return kpi_v1_stripe_env_or_config('STRIPE_SECRET_KEY', $cfg, 'stripeSecretKey');
+}
+
+function kpi_v1_stripe_webhook_secret($cfg)
+{
+    return kpi_v1_stripe_env_or_config('STRIPE_WEBHOOK_SECRET', $cfg, 'stripeWebhookSecret');
+}
+
+function kpi_v1_stripe_secret_is_test($secret)
+{
+    if (strpos($secret, 'sk_live_') === 0 || strpos($secret, 'rk_live_') === 0) {
+        return false;
+    }
+    return strpos($secret, 'sk_test_') === 0 || strpos($secret, 'rk_test_') === 0;
+}
+
+function kpi_v1_stripe_host_is_production($host)
+{
+    $host = strtolower(trim((string) $host));
+    $host = preg_replace('/:\d+$/', '', $host);
+    if ($host === '') {
+        return false;
+    }
+    $suffix = 'forge-laboratory.com';
+    if ($host === $suffix || substr($host, -strlen('.' . $suffix)) === '.' . $suffix) {
+        return true;
+    }
+    if (strpos($host, 'lolipop') !== false) {
+        return true;
+    }
+    return false;
+}
+
+function kpi_v1_stripe_request_host($server)
+{
+    $host = isset($server['HTTP_HOST']) ? (string) $server['HTTP_HOST'] : '';
+    return strtolower(preg_replace('/:\d+$/', '', trim($host)));
+}
+
+function kpi_v1_stripe_meta_user($object)
+{
+    if (!is_array($object) || !isset($object['metadata']) || !is_array($object['metadata'])) {
+        return '';
+    }
+    $id = isset($object['metadata']['kpn_user_id']) ? trim((string) $object['metadata']['kpn_user_id']) : '';
+    if (!preg_match('/^[A-Za-z0-9_-]{1,64}$/', $id)) {
+        return '';
+    }
+    return $id;
+}
+
+function kpi_v1_stripe_form_encode($params, $prefix = '')
+{
+    $pairs = [];
+    foreach ($params as $key => $value) {
+        $name = $prefix === '' ? (string) $key : $prefix . '[' . $key . ']';
+        if (is_array($value)) {
+            $nested = kpi_v1_stripe_form_encode($value, $name);
+            if ($nested !== '') {
+                $pairs[] = $nested;
+            }
+            continue;
+        }
+        $pairs[] = rawurlencode($name) . '=' . rawurlencode((string) $value);
+    }
+    return implode('&', $pairs);
+}
+
+function kpi_v1_stripe_return_urls($base, $locale)
+{
+    $locale = strtolower(trim((string) $locale));
+    if ($locale === 'zh-tw' || $locale === 'zh') {
+        $dir = '/zh-tw/setting/';
+    } elseif ($locale === 'en') {
+        $dir = '/en/setting/';
+    } else {
+        $dir = '/setting/';
+    }
+    return [
+        'success_url' => $base . $dir . 'checkout_success.html?checkout=return&session_id={CHECKOUT_SESSION_ID}',
+        'cancel_url' => $base . $dir . 'checkout_cancel.html',
+    ];
+}
+
+function kpi_v1_stripe_resolve_base($cfg, $server)
+{
+    $configured = kpi_v1_stripe_env_or_config('KPN_PUBLIC_BASE_URL', $cfg, 'publicBaseUrl');
+    if ($configured !== '') {
+        $parts = parse_url($configured);
+        $host = isset($parts['host']) ? (string) $parts['host'] : '';
+        if ($host === '' || kpi_v1_stripe_host_is_production($host)) {
+            return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+        }
+        return ['ok' => true, 'base' => rtrim($configured, '/')];
+    }
+    $host = kpi_v1_stripe_request_host($server);
+    if ($host === '' || kpi_v1_stripe_host_is_production($host)) {
+        return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+    }
+    $https = !empty($server['HTTPS']) && $server['HTTPS'] !== 'off';
+    $script = isset($server['SCRIPT_NAME']) ? str_replace('\\', '/', (string) $server['SCRIPT_NAME']) : '';
+    $marker = '/api/v1/billing/';
+    $pos = strpos($script, $marker);
+    $prefix = $pos === false ? '' : substr($script, 0, $pos);
+    return ['ok' => true, 'base' => ($https ? 'https' : 'http') . '://' . $host . $prefix];
+}
+
+function kpi_v1_stripe_checkout_params($userId, $plan, $priceId, $successUrl, $cancelUrl, $customerId)
+{
+    $params = [
+        'mode' => 'subscription',
+        'line_items' => [
+            [
+                'price' => $priceId,
+                'quantity' => '1',
+            ],
+        ],
+        'success_url' => $successUrl,
+        'cancel_url' => $cancelUrl,
+        'client_reference_id' => (string) $userId,
+        'metadata' => [
+            'kpn_user_id' => (string) $userId,
+            'kpn_plan' => (string) $plan,
+        ],
+        'subscription_data' => [
+            'metadata' => [
+                'kpn_user_id' => (string) $userId,
+                'kpn_plan' => (string) $plan,
+            ],
+        ],
+        'adaptive_pricing' => [
+            'enabled' => 'false',
+        ],
+    ];
+    if (is_string($customerId) && $customerId !== '') {
+        $params['customer'] = $customerId;
+    }
+    return $params;
+}
+
+function kpi_v1_stripe_checkout_blocks(array $billing)
+{
+    $status = isset($billing['subscriptionStatus']) ? (string) $billing['subscriptionStatus'] : '';
+    if (in_array($status, ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'], true)) {
+        return true;
+    }
+    if ($status === '' && !empty($billing['stripeSubscriptionId'])) {
+        return true;
+    }
+    return false;
+}
+
+function &kpi_v1_stripe_transport_slot()
+{
+    static $transport = null;
+    return $transport;
+}
+
+function kpi_v1_stripe_set_transport($transport)
+{
+    $slot = &kpi_v1_stripe_transport_slot();
+    $slot = $transport;
+}
+
+function kpi_v1_stripe_http($secret, $body, $idempotencyKey)
+{
+    $slot = &kpi_v1_stripe_transport_slot();
+    if (is_callable($slot)) {
+        return $slot($secret, '/v1/checkout/sessions', $body, $idempotencyKey);
+    }
+    if (!function_exists('curl_init')) {
+        return ['status' => 0, 'json' => null];
+    }
+    $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
+    if ($ch === false) {
+        return ['status' => 0, 'json' => null];
+    }
+    $headers = [
+        'Authorization: Bearer ' . $secret,
+        'Content-Type: application/x-www-form-urlencoded',
+        'User-Agent: KPN-Stripe-Sandbox/1',
+    ];
+    if ($idempotencyKey !== '') {
+        $headers[] = 'Idempotency-Key: ' . $idempotencyKey;
+    }
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $body,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 20,
+    ]);
+    $raw = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $json = is_string($raw) ? json_decode($raw, true) : null;
+    return ['status' => $status, 'json' => is_array($json) ? $json : null];
+}
+
+function kpi_v1_stripe_url_is_hosted_checkout($url)
+{
+    $parts = parse_url((string) $url);
+    return is_array($parts)
+        && isset($parts['scheme'], $parts['host'])
+        && $parts['scheme'] === 'https'
+        && strtolower((string) $parts['host']) === 'checkout.stripe.com';
+}
+
+/**
+ * Create a hosted Checkout Session. $user null means unauthenticated.
+ * Does not change kpi_users.plan.
+ */
+function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
+{
+    if (!is_array($user) || empty($user['userId'])) {
+        return ['ok' => false, 'status' => 401, 'error' => 'unauthorized'];
+    }
+    if (!empty($user['disabled'])) {
+        return ['ok' => false, 'status' => 403, 'error' => 'account_disabled'];
+    }
+    if (!is_array($body)) {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_json'];
+    }
+    foreach (['price', 'priceId', 'price_id', 'mode', 'success_url', 'cancel_url'] as $forbidden) {
+        if (array_key_exists($forbidden, $body)) {
+            return ['ok' => false, 'status' => 400, 'error' => 'client_price_forbidden'];
+        }
+    }
+    $plan = isset($body['plan']) ? strtolower(trim((string) $body['plan'])) : '';
+    if ($plan !== 'basic' && $plan !== 'pro') {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_plan'];
+    }
+    $secret = kpi_v1_stripe_secret($cfg);
+    if ($secret === '') {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
+    if (!kpi_v1_stripe_secret_is_test($secret)) {
+        return ['ok' => false, 'status' => 403, 'error' => 'live_key_forbidden'];
+    }
+    $prices = kpi_v1_stripe_prices($cfg);
+    if ($prices['basic'] === '' || $prices['pro'] === '' || kpi_v1_stripe_same($prices['basic'], $prices['pro'])) {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
+    $base = kpi_v1_stripe_resolve_base($cfg, is_array($server) ? $server : []);
+    if (empty($base['ok'])) {
+        return $base;
+    }
+    $locale = isset($body['locale']) ? (string) $body['locale'] : 'ja';
+    $urls = kpi_v1_stripe_return_urls($base['base'], $locale);
+    $userId = (string) $user['userId'];
+    $existing = null;
+    $look = kpi_v1_billing_transaction($cfg, function ($store) use ($userId) {
+        return ['ok' => true, 'billing' => $store->get($userId), 'rollback' => true];
+    });
+    if (empty($look['ok'])) {
+        return $look;
+    }
+    if (isset($look['billing']) && is_array($look['billing'])) {
+        $existing = $look['billing'];
+        if (kpi_v1_stripe_checkout_blocks($existing)) {
+            return ['ok' => false, 'status' => 409, 'error' => 'already_subscribed'];
+        }
+    }
+    $customerId = is_array($existing) ? $existing['stripeCustomerId'] : '';
+    $params = kpi_v1_stripe_checkout_params(
+        $userId,
+        $plan,
+        $prices[$plan],
+        $urls['success_url'],
+        $urls['cancel_url'],
+        is_string($customerId) ? $customerId : ''
+    );
+    $encoded = kpi_v1_stripe_form_encode($params);
+    $encoded = str_replace(rawurlencode('{CHECKOUT_SESSION_ID}'), '{CHECKOUT_SESSION_ID}', $encoded);
+    $now = $now === null ? time() : (int) $now;
+    $idempotency = 'kpn_' . hash('sha256', $userId . '|' . $plan . '|' . (string) (int) floor($now / 600));
+    $response = kpi_v1_stripe_http($secret, $encoded, $idempotency);
+    $status = isset($response['status']) ? (int) $response['status'] : 0;
+    $json = isset($response['json']) && is_array($response['json']) ? $response['json'] : null;
+    if ($status < 200 || $status >= 300 || $json === null || empty($json['url']) || empty($json['id'])) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
+    }
+    if (!kpi_v1_stripe_url_is_hosted_checkout($json['url'])) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
+    }
+    return [
+        'ok' => true,
+        'status' => 200,
+        'url' => (string) $json['url'],
+        'id' => (string) $json['id'],
+        'params' => $params,
+        'body' => $encoded,
+    ];
+}
+
+function kpi_v1_stripe_verify_signature($payload, $header, $secret, $now, $tolerance = 300)
+{
+    if (!is_string($payload) || $payload === '' || !is_string($header) || $header === '' || !is_string($secret) || $secret === '') {
+        return false;
+    }
+    $timestamp = '';
+    $signatures = [];
+    foreach (explode(',', $header) as $part) {
+        $part = trim($part);
+        if (strpos($part, 't=') === 0) {
+            $timestamp = substr($part, 2);
+        } elseif (strpos($part, 'v1=') === 0) {
+            $signatures[] = substr($part, 3);
+        }
+    }
+    if ($timestamp === '' || !ctype_digit($timestamp) || !$signatures) {
+        return false;
+    }
+    if (abs((int) $now - (int) $timestamp) > (int) $tolerance) {
+        return false;
+    }
+    $expected = hash_hmac('sha256', $timestamp . '.' . $payload, $secret);
+    foreach ($signatures as $signature) {
+        if (hash_equals($expected, $signature)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function kpi_v1_stripe_subscription_price($subscription)
+{
+    if (!is_array($subscription) || !isset($subscription['items']['data']) || !is_array($subscription['items']['data'])) {
+        return ['error' => 'unmapped_price'];
+    }
+    if (count($subscription['items']['data']) !== 1) {
+        return ['error' => 'unmapped_price'];
+    }
+    $item = $subscription['items']['data'][0];
+    if (!is_array($item)) {
+        return ['error' => 'unmapped_price'];
+    }
+    $qty = isset($item['quantity']) ? (int) $item['quantity'] : 1;
+    if ($qty !== 1) {
+        return ['error' => 'unexpected_quantity'];
+    }
+    $price = isset($item['price']) ? $item['price'] : null;
+    $priceId = '';
+    if (is_string($price)) {
+        $priceId = $price;
+    } elseif (is_array($price) && isset($price['id'])) {
+        $priceId = (string) $price['id'];
+    }
+    if ($priceId === '') {
+        return ['error' => 'unmapped_price'];
+    }
+    return ['priceId' => $priceId];
+}
+
+function kpi_v1_stripe_apply_subscription(array $prices, array $billing, array $object, $deleted)
+{
+    $status = $deleted ? 'canceled' : strtolower(trim((string) (isset($object['status']) ? $object['status'] : '')));
+    $billing['subscriptionStatus'] = $status;
+    $billing['cancelAtPeriodEnd'] = !empty($object['cancel_at_period_end']);
+    if (!empty($object['customer']) && is_string($object['customer'])) {
+        $billing['stripeCustomerId'] = $object['customer'];
+    }
+    if (!empty($object['id']) && is_string($object['id'])) {
+        $billing['stripeSubscriptionId'] = $object['id'];
+    }
+    if (isset($object['current_period_end']) && is_numeric($object['current_period_end'])) {
+        $billing['currentPeriodEnd'] = gmdate('c', (int) $object['current_period_end']);
+    }
+    $priceInfo = kpi_v1_stripe_subscription_price($object);
+    $mapped = null;
+    if (isset($priceInfo['priceId'])) {
+        $billing['stripePriceId'] = $priceInfo['priceId'];
+        $mapped = kpi_v1_stripe_plan_for_price($prices, $priceInfo['priceId']);
+    }
+    $plan = null;
+    $grant = ($status === 'active' && $mapped !== null && empty($priceInfo['error']));
+    if ($grant) {
+        $billing['entitlementGranted'] = true;
+        $plan = $mapped;
+    } else {
+        if (!empty($billing['entitlementGranted'])) {
+            $plan = 'basic';
+        }
+        $billing['entitlementGranted'] = false;
+    }
+    return ['billing' => $billing, 'plan' => $plan];
+}
+
+function kpi_v1_stripe_apply_event(array $prices, array $billing, array $event)
+{
+    $type = isset($event['type']) ? (string) $event['type'] : '';
+    $object = (isset($event['data']['object']) && is_array($event['data']['object'])) ? $event['data']['object'] : [];
+    $billing['lastEventId'] = isset($event['id']) ? (string) $event['id'] : $billing['lastEventId'];
+    $billing['updatedAt'] = gmdate('c');
+
+    if ($type === 'checkout.session.completed') {
+        if (isset($object['mode']) && (string) $object['mode'] !== 'subscription') {
+            return ['billing' => $billing, 'plan' => null];
+        }
+        if (!empty($object['customer']) && is_string($object['customer'])) {
+            $billing['stripeCustomerId'] = $object['customer'];
+        }
+        if (!empty($object['subscription']) && is_string($object['subscription'])) {
+            $billing['stripeSubscriptionId'] = $object['subscription'];
+        }
+        if (!empty($object['id']) && is_string($object['id'])) {
+            $billing['checkoutSessionId'] = $object['id'];
+        }
+        return ['billing' => $billing, 'plan' => null];
+    }
+
+    if ($type === 'customer.subscription.created' || $type === 'customer.subscription.updated' || $type === 'customer.subscription.deleted') {
+        return kpi_v1_stripe_apply_subscription($prices, $billing, $object, $type === 'customer.subscription.deleted');
+    }
+
+    if ($type === 'invoice.payment_succeeded' || $type === 'invoice.payment_failed') {
+        $billing['lastInvoiceStatus'] = $type === 'invoice.payment_succeeded' ? 'succeeded' : 'failed';
+        if (!empty($object['customer']) && is_string($object['customer']) && empty($billing['stripeCustomerId'])) {
+            $billing['stripeCustomerId'] = $object['customer'];
+        }
+        if (!empty($object['subscription']) && is_string($object['subscription']) && empty($billing['stripeSubscriptionId'])) {
+            $billing['stripeSubscriptionId'] = $object['subscription'];
+        }
+        return ['billing' => $billing, 'plan' => null];
+    }
+
+    return ['billing' => $billing, 'plan' => null, 'ignored' => true];
+}
+
+function kpi_v1_stripe_event_ids(array $event)
+{
+    $object = (isset($event['data']['object']) && is_array($event['data']['object'])) ? $event['data']['object'] : [];
+    $type = isset($event['type']) ? (string) $event['type'] : '';
+    $meta = kpi_v1_stripe_meta_user($object);
+    $reference = '';
+    if ($type === 'checkout.session.completed' && !empty($object['client_reference_id'])) {
+        $reference = trim((string) $object['client_reference_id']);
+        if (!preg_match('/^[A-Za-z0-9_-]{1,64}$/', $reference)) {
+            $reference = '';
+        }
+    }
+    $customer = '';
+    $subscription = '';
+    if (!empty($object['customer']) && is_string($object['customer'])) {
+        $customer = $object['customer'];
+    }
+    if ($type === 'checkout.session.completed' || strpos($type, 'invoice.') === 0) {
+        if (!empty($object['subscription']) && is_string($object['subscription'])) {
+            $subscription = $object['subscription'];
+        }
+    } elseif (strpos($type, 'customer.subscription.') === 0 && !empty($object['id'])) {
+        $subscription = (string) $object['id'];
+    }
+    return [
+        'metaUser' => $meta,
+        'reference' => $reference,
+        'customer' => $customer,
+        'subscription' => $subscription,
+    ];
+}
+
+function kpi_v1_stripe_set_user_plan($cfg, array $user, $newPlan)
+{
+    $newPlan = (string) $newPlan;
+    $old = isset($user['plan']) ? strtolower(trim((string) $user['plan'])) : 'basic';
+    if ($old !== 'basic' && $old !== 'pro') {
+        $old = 'basic';
+    }
+    if ($old === $newPlan) {
+        return;
+    }
+    if (!empty($user['disabled'])) {
+        return;
+    }
+    $user['plan'] = $newPlan;
+    $user['planUpdatedAt'] = gmdate('c');
+    kpi_v1_auth_write_user($user);
+    require_once __DIR__ . '/_admin_store.php';
+    kpi_v1_plan_history_append($cfg, $user['userId'], $old, $newPlan, 'stripe', 'stripe');
+}
+
+/**
+ * Verify and apply one Stripe event. Idempotent on event id.
+ * Browser success URLs never call this.
+ */
+function kpi_v1_stripe_handle_webhook($cfg, $payload, $header, $server, $now = null)
+{
+    $now = $now === null ? time() : (int) $now;
+    $server = is_array($server) ? $server : [];
+    if (kpi_v1_stripe_host_is_production(kpi_v1_stripe_request_host($server))) {
+        return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+    }
+    $secret = kpi_v1_stripe_webhook_secret($cfg);
+    if ($secret === '' || strpos($secret, 'sk_') === 0 || strpos($secret, 'rk_') === 0) {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
+    if (!kpi_v1_stripe_verify_signature((string) $payload, (string) $header, $secret, $now)) {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_signature'];
+    }
+    $event = json_decode((string) $payload, true);
+    if (!is_array($event) || empty($event['id']) || empty($event['type']) || !isset($event['data']['object'])) {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_event'];
+    }
+    $eventId = (string) $event['id'];
+    if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', $eventId)) {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_event'];
+    }
+    $prices = kpi_v1_stripe_prices($cfg);
+    $ids = kpi_v1_stripe_event_ids($event);
+
+    return kpi_v1_billing_transaction($cfg, function ($store) use ($cfg, $event, $eventId, $prices, $ids) {
+        if ($store->eventSeen($eventId)) {
+            return [
+                'ok' => true,
+                'status' => 200,
+                'duplicate' => true,
+                'rollback' => true,
+            ];
+        }
+        if ($ids['metaUser'] !== '' && $ids['reference'] !== '' && $ids['metaUser'] !== $ids['reference']) {
+            $store->putEvent($eventId, (string) $event['type']);
+            return ['ok' => true, 'status' => 200, 'ignored' => 'identity_conflict'];
+        }
+        $bound = $ids['metaUser'] !== '' ? $ids['metaUser'] : $ids['reference'];
+        $bySub = $ids['subscription'] !== '' ? $store->findBySubscription($ids['subscription']) : null;
+        $byCus = $ids['customer'] !== '' ? $store->findByCustomer($ids['customer']) : null;
+        if ($bound !== '' && $bySub !== null && $bound !== $bySub) {
+            $store->putEvent($eventId, (string) $event['type']);
+            return ['ok' => true, 'status' => 200, 'ignored' => 'identity_conflict'];
+        }
+        if ($bound !== '' && $byCus !== null && $bound !== $byCus) {
+            $store->putEvent($eventId, (string) $event['type']);
+            return ['ok' => true, 'status' => 200, 'ignored' => 'identity_conflict'];
+        }
+        if ($bound === '') {
+            $bound = $bySub !== null ? $bySub : ($byCus !== null ? $byCus : '');
+        }
+        if ($bound === '') {
+            $store->putEvent($eventId, (string) $event['type']);
+            return ['ok' => true, 'status' => 200, 'ignored' => 'unbound'];
+        }
+        $user = kpi_v1_auth_read_user($bound);
+        if (!is_array($user)) {
+            $store->putEvent($eventId, (string) $event['type']);
+            return ['ok' => true, 'status' => 200, 'ignored' => 'unknown_user'];
+        }
+        $billing = $store->get($bound);
+        if (!is_array($billing)) {
+            $billing = kpi_v1_billing_blank($bound);
+        }
+        $applied = kpi_v1_stripe_apply_event($prices, $billing, $event);
+        if (!empty($user['disabled'])) {
+            $applied['plan'] = null;
+            $applied['billing']['entitlementGranted'] = false;
+        }
+        $store->put($applied['billing']);
+        if (isset($applied['plan']) && ($applied['plan'] === 'basic' || $applied['plan'] === 'pro')) {
+            kpi_v1_stripe_set_user_plan($cfg, $user, $applied['plan']);
+        }
+        $store->putEvent($eventId, (string) $event['type']);
+        return [
+            'ok' => true,
+            'status' => 200,
+            'duplicate' => false,
+            'userId' => $bound,
+            'plan' => isset($applied['plan']) ? $applied['plan'] : null,
+            'billing' => $applied['billing'],
+        ];
+    });
+}
+
+function kpi_v1_billing_status_payload($cfg, array $user)
+{
+    $userId = (string) $user['userId'];
+    $look = kpi_v1_billing_transaction($cfg, function ($store) use ($userId) {
+        return ['ok' => true, 'billing' => $store->get($userId), 'rollback' => true];
+    });
+    $billing = (isset($look['billing']) && is_array($look['billing'])) ? $look['billing'] : null;
+    $prices = kpi_v1_stripe_prices($cfg);
+    $mapped = null;
+    if ($billing !== null && !empty($billing['stripePriceId'])) {
+        $mapped = kpi_v1_stripe_plan_for_price($prices, $billing['stripePriceId']);
+    }
+    $status = $billing !== null && isset($billing['subscriptionStatus']) ? $billing['subscriptionStatus'] : null;
+    $confirmed = $billing !== null
+        && !empty($billing['entitlementGranted'])
+        && $status === 'active'
+        && $mapped !== null;
+    $public = kpi_v1_auth_public_user($user, $cfg);
+    return [
+        'ok' => true,
+        'plan' => $public['plan'],
+        'billing' => [
+            'status' => $status,
+            'plan' => $mapped,
+            'cancelAtPeriodEnd' => $billing !== null && !empty($billing['cancelAtPeriodEnd']),
+            'currentPeriodEnd' => $billing !== null ? $billing['currentPeriodEnd'] : null,
+            'confirmed' => $confirmed,
+            'invoiceStatus' => $billing !== null ? $billing['lastInvoiceStatus'] : null,
+        ],
+    ];
+}

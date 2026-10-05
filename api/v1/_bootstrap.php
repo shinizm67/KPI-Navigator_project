@@ -72,6 +72,12 @@ function kpi_v1_load_config()
             'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
             'localTestMode' => false,
             'localDataRoot' => '',
+            // Stripe Sandbox. Secrets stay empty unless config.local.php or env sets them.
+            'stripeSecretKey' => '',
+            'stripeWebhookSecret' => '',
+            'stripePriceBasic' => 'price_1UN9VpKFNH29caO9yLytJKTw',
+            'stripePricePro' => 'price_1UN9k2KFNH29caO9pCLbK7xS',
+            'publicBaseUrl' => '',
         ],
         $cfg
     );

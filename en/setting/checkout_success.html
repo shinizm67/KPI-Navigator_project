@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription | Key Performance Navigator</title>
+  <link rel="stylesheet" href="../../register/style.css">
+</head>
+<body class="profile-page" data-checkout="success">
+  <main class="profile-content" style="max-width:40rem;margin:4rem auto;padding:0 1.25rem;">
+    <h1>Subscription</h1>
+    <p id="checkout-return-status" role="status">Checking the payment result. Returning from Checkout does not confirm a subscription.</p>
+    <p id="checkout-return-login" hidden><a href="../login/index.html">Sign in to continue</a></p>
+    <p id="checkout-return-continue" hidden><a href="../app/annual/index.html">Continue to KPN</a></p>
+    <p><a href="change_plan.html">Back to plan selection</a></p>
+  </main>
+  <script src="../../js/kpi-auth-client.js?v=20261006-stripe-return"></script>
+  <script src="../../js/kpi-checkout-return.js?v=20261006-stripe-return"></script>
+</body>
+</html>

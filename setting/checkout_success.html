@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サブスクリプション | Key Performance Navigator</title>
+  <link rel="stylesheet" href="../register/style.css">
+</head>
+<body class="profile-page" data-checkout="success">
+  <main class="profile-content" style="max-width:40rem;margin:4rem auto;padding:0 1.25rem;">
+    <h1>サブスクリプション</h1>
+    <p id="checkout-return-status" role="status">決済結果を確認しています。画面の移動だけでは契約は確定しません。</p>
+    <p id="checkout-return-login" hidden><a href="../login/index.html">ログインして続行</a></p>
+    <p id="checkout-return-continue" hidden><a href="../app/annual/index.html">KPNを続ける</a></p>
+    <p><a href="change_plan.html">プラン選択に戻る</a></p>
+  </main>
+  <script src="../js/kpi-auth-client.js?v=20261006-stripe-return"></script>
+  <script src="../js/kpi-checkout-return.js?v=20261006-stripe-return"></script>
+</body>
+</html>

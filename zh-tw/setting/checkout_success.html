@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訂閱 | Key Performance Navigator</title>
+  <link rel="stylesheet" href="../../register/style.css">
+</head>
+<body class="profile-page" data-checkout="success">
+  <main class="profile-content" style="max-width:40rem;margin:4rem auto;padding:0 1.25rem;">
+    <h1>訂閱</h1>
+    <p id="checkout-return-status" role="status">正在確認付款結果。從結帳頁返回並不代表訂閱已成立。</p>
+    <p id="checkout-return-login" hidden><a href="../login/index.html">登入以繼續</a></p>
+    <p id="checkout-return-continue" hidden><a href="../app/annual/index.html">繼續使用 KPN</a></p>
+    <p><a href="change_plan.html">返回方案選擇</a></p>
+  </main>
+  <script src="../../js/kpi-auth-client.js?v=20261006-stripe-return"></script>
+  <script src="../../js/kpi-checkout-return.js?v=20261006-stripe-return"></script>
+</body>
+</html>

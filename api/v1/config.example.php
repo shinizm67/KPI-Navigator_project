@@ -60,4 +60,15 @@ return [
     'marketingEvidenceKeyId' => 'k1',
     'marketingEvidenceSecret' => '',
     'marketingEvidencePreviousSecrets' => [],
+    // Stripe Sandbox only. Leave secrets empty here.
+    // Set STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET in the environment,
+    // or put sk_test_ / whsec_ values in gitignored config.local.php.
+    // Live keys (sk_live_ / rk_live_) are refused. Do not commit secrets.
+    'stripeSecretKey' => '',
+    'stripeWebhookSecret' => '',
+    'stripePriceBasic' => 'price_1UN9VpKFNH29caO9yLytJKTw',
+    'stripePricePro' => 'price_1UN9k2KFNH29caO9pCLbK7xS',
+    // Optional absolute origin for Checkout return URLs, no trailing path.
+    // Empty = derive from the current request. Production hosts are refused.
+    'publicBaseUrl' => '',
 ];

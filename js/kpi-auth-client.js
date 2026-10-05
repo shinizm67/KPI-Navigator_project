@@ -611,6 +611,15 @@
     return false;
   }
 
+  /**
+   * Checkout success must stay on screen when the browser has no KPN session.
+   * Webhook remains the only entitlement path. Other setting pages stay guarded.
+   */
+  function isCheckoutSuccessPage() {
+    var path = String(global.location.pathname || '').replace(/\\/g, '/').toLowerCase();
+    return /\/checkout_success\.html$/.test(path);
+  }
+
   function isSessionUnauthorized(r) {
     if (!r) return true;
     var status = r.status;
@@ -651,7 +660,7 @@
    * Safe to call repeatedly; public auth pages are no-ops.
    */
   function handleUnauthorizedSession(_r) {
-    if (isPublicAuthPage()) return;
+    if (isPublicAuthPage() || isCheckoutSuccessPage()) return;
     clearSessionDisplayState();
     redirectToLogin();
   }
