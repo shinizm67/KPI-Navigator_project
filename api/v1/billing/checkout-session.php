@@ -2,7 +2,9 @@
 /**
  * POST /api/v1/billing/checkout-session.php
  * Body: { "plan": "basic"|"pro", "locale"?: "ja"|"en"|"zh-tw" }
- * Session + X-KPI-Expected-User required. Price IDs are not accepted from the client.
+ * Session + X-KPI-Expected-User required.
+ * Price ID, country, currency, and region are not accepted from the client.
+ * The saved business country selects the Stripe Price.
  * Does not change the account plan. The webhook is authoritative.
  */
 

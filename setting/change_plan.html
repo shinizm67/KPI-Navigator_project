@@ -251,6 +251,7 @@
           <h3 class="plan-details-section-heading" id="change-plan-h2"><span class="plan-details-num">[ 2 ]</span> 現在の契約内容</h3>
           <ul class="change-plan-summary-list">
             <li><strong>現在のプラン:</strong> <span id="change-plan-current-tier">…</span></li>
+            <li><strong>現在の請求額:</strong> <span id="change-plan-current-price">—</span></li>
             <li><strong>請求サイクル:</strong> 月次</li>
             <li><strong>次回請求日:</strong> —</li>
           </ul>
@@ -269,8 +270,8 @@
               <thead>
                 <tr>
                   <th class="col-list">項目</th>
-                  <th class="col-plan">ベーシック ¥500/月</th>
-                  <th class="col-plan">プロ ¥3,000/月</th>
+                  <th class="col-plan" id="change-plan-basic-price">ベーシック</th>
+                  <th class="col-plan" id="change-plan-pro-price">プロ</th>
                 </tr>
               </thead>
               <tbody>
@@ -1515,6 +1516,6 @@
   window.__KPI_PL_MEP_EXPORT = { open: openDialog, bind: bind, preload: preloadXlsx };
 })();
   </script>
-  <script src="../js/kpi-change-plan-page.js"></script>
+  <script src="../js/kpi-change-plan-page.js?v=20261006-lp05"></script>
 </body>
 </html>

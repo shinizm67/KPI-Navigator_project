@@ -66,8 +66,13 @@ return [
     // Live keys (sk_live_ / rk_live_) are refused. Do not commit secrets.
     'stripeSecretKey' => '',
     'stripeWebhookSecret' => '',
+    // Price IDs. Saved business country selects the region. Profile currency does not.
+    // JP uses the Japan Prices. Any other, missing, or free-text country uses GLOBAL USD.
+    // Override with STRIPE_PRICE_BASIC / STRIPE_PRICE_PRO / STRIPE_PRICE_BASIC_JP / STRIPE_PRICE_PRO_JP.
     'stripePriceBasic' => 'price_1UN9VpKFNH29caO9yLytJKTw',
     'stripePricePro' => 'price_1UN9k2KFNH29caO9pCLbK7xS',
+    'stripePriceBasicJp' => 'price_1UNWRgKFNH29caO9kzKcLf3x',
+    'stripePriceProJp' => 'price_1UNWRhKFNH29caO9NXixShH5',
     // Optional absolute origin for Checkout return URLs, no trailing path.
     // Empty = derive from the current request. Production hosts are refused.
     'publicBaseUrl' => '',

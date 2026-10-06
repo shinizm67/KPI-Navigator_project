@@ -79,7 +79,7 @@
   var planCancel = document.getElementById('plan-cancel');
   if (planTitle && planPrice) {
     planTitle.textContent = 'Key Performance Navigator Basic';
-    planPrice.textContent = isJa ? '¥500/月' : '$5 / Month';
+    planPrice.textContent = isJa ? '¥1,000/月' : '$10 / Month';
     if (planCancel) {
       planCancel.textContent = isJa ? 'いつでも解約可能' : 'Cancel anytime';
     }

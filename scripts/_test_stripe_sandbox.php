@@ -4,14 +4,16 @@
  * Fixture keys below are not Stripe credentials.
  */
 
-$root = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'kpn-stripe-sbx-' . getmypid();
-if (!is_dir($root) && !mkdir($root, 0700, true)) {
+$root = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'kpn-stripe-sbx-' . getmypid() . '-' . bin2hex(random_bytes(4));
+if (!mkdir($root, 0700, true)) {
     fwrite(STDERR, "cannot create temp root\n");
     exit(1);
 }
 
 $basicPrice = 'price_1UN9VpKFNH29caO9yLytJKTw';
 $proPrice = 'price_1UN9k2KFNH29caO9pCLbK7xS';
+$basicJpy = 'price_1UNWRgKFNH29caO9kzKcLf3x';
+$proJpy = 'price_1UNWRhKFNH29caO9NXixShH5';
 $fixtureSecret = 'sk_test_fixture_only_not_real';
 $fixtureWebhook = 'whsec_fixture_only_not_real';
 
@@ -33,6 +35,8 @@ $config = [
     'stripeWebhookSecret' => $fixtureWebhook,
     'stripePriceBasic' => $basicPrice,
     'stripePricePro' => $proPrice,
+    'stripePriceBasicJp' => $basicJpy,
+    'stripePriceProJp' => $proJpy,
     'token' => 'test-token',
     'planAdminToken' => 'test-plan-token',
     'allowSelfPlanChange' => false,
@@ -40,6 +44,10 @@ $config = [
 ];
 file_put_contents($configPath, "<?php\nreturn " . var_export($config, true) . ";\n");
 putenv('KPI_V1_CONFIG=' . $configPath);
+
+foreach (['STRIPE_PRICE_BASIC', 'STRIPE_PRICE_PRO', 'STRIPE_PRICE_BASIC_JP', 'STRIPE_PRICE_PRO_JP'] as $priceEnv) {
+    putenv($priceEnv);
+}
 
 require dirname(__DIR__) . '/api/v1/_stripe.php';
 
@@ -512,6 +520,325 @@ foreach ([
     }
 }
 check('cancel return does not grant or force login', $cancelOk);
+
+function save_business_country($cfg, $userId, $country, $currency = null)
+{
+    kpi_v1_profile_write($cfg, $userId, [
+        'country' => $country,
+        'currency' => $currency,
+    ]);
+}
+
+function checkout_price_is($cfg, $user, $plan, $server, $now)
+{
+    return kpi_v1_stripe_start_checkout($cfg, $user, ['plan' => $plan, 'locale' => 'ja'], $server, $now);
+}
+
+$jpUser = make_user('u_lp03_jp', 'basic');
+save_business_country($cfg, $jpUser['userId'], ' jp ', 'USD');
+$lpCalls = count($calls);
+$jpBasic = checkout_price_is($cfg, $jpUser, 'basic', $server, $now);
+check(
+    'lp03 jp basic uses jpy price',
+    !empty($jpBasic['ok'])
+        && $jpBasic['params']['line_items'][0]['price'] === $basicJpy
+        && $jpBasic['params']['line_items'][0]['quantity'] === '1'
+        && $jpBasic['params']['adaptive_pricing']['enabled'] === 'false'
+        && count($calls) === $lpCalls + 1,
+    isset($jpBasic['error']) ? $jpBasic['error'] : ''
+);
+
+$jpPro = checkout_price_is($cfg, $jpUser, 'pro', $server, $now);
+check(
+    'lp03 jp pro uses jpy price',
+    !empty($jpPro['ok']) && $jpPro['params']['line_items'][0]['price'] === $proJpy,
+    isset($jpPro['error']) ? $jpPro['error'] : ''
+);
+
+$usUser = make_user('u_lp03_us', 'basic');
+save_business_country($cfg, $usUser['userId'], 'US', 'JPY');
+$usBasic = checkout_price_is($cfg, $usUser, 'basic', $server, $now);
+$usPro = checkout_price_is($cfg, $usUser, 'pro', $server, $now);
+check(
+    'lp03 us basic and pro use usd prices',
+    !empty($usBasic['ok'])
+        && $usBasic['params']['line_items'][0]['price'] === $basicPrice
+        && !empty($usPro['ok'])
+        && $usPro['params']['line_items'][0]['price'] === $proPrice,
+    isset($usBasic['error']) ? $usBasic['error'] : ''
+);
+
+$missingUser = make_user('u_lp03_missing', 'basic');
+$missing = checkout_price_is($cfg, $missingUser, 'basic', $server, $now);
+check(
+    'lp03 missing country uses usd',
+    !empty($missing['ok']) && $missing['params']['line_items'][0]['price'] === $basicPrice,
+    isset($missing['error']) ? $missing['error'] : ''
+);
+
+$freeUser = make_user('u_lp03_freetext', 'basic');
+save_business_country($cfg, $freeUser['userId'], '日本', 'JPY');
+$freeText = checkout_price_is($cfg, $freeUser, 'pro', $server, $now);
+save_business_country($cfg, $freeUser['userId'], 'TW', 'TWD');
+$taiwan = checkout_price_is($cfg, $freeUser, 'basic', $server, $now);
+check(
+    'lp03 free-text and unsupported country use usd',
+    !empty($freeText['ok'])
+        && $freeText['params']['line_items'][0]['price'] === $proPrice
+        && !empty($taiwan['ok'])
+        && $taiwan['params']['line_items'][0]['price'] === $basicPrice,
+    isset($freeText['error']) ? $freeText['error'] : ''
+);
+
+$currencyUser = make_user('u_lp03_currency', 'basic');
+save_business_country($cfg, $currencyUser['userId'], 'JP', 'USD');
+$currencyStillJpy = checkout_price_is($cfg, $currencyUser, 'pro', $server, $now);
+check(
+    'lp03 profile currency does not select price',
+    !empty($currencyStillJpy['ok']) && $currencyStillJpy['params']['line_items'][0]['price'] === $proJpy,
+    isset($currencyStillJpy['error']) ? $currencyStillJpy['error'] : ''
+);
+
+$blockedCalls = count($calls);
+$clientCountry = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'basic', 'country' => 'US'], $server, $now);
+$clientCurrency = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'basic', 'currency' => 'USD'], $server, $now);
+$clientRegion = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'basic', 'region' => 'GLOBAL'], $server, $now);
+$clientPrice = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'basic', 'price' => $basicPrice], $server, $now);
+$clientPriceId = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'pro', 'priceId' => $proJpy], $server, $now);
+$clientPriceSnake = kpi_v1_stripe_start_checkout($cfg, $currencyUser, ['plan' => 'pro', 'price_id' => $basicJpy], $server, $now);
+$afterReject = checkout_price_is($cfg, $currencyUser, 'basic', $server, $now);
+check(
+    'lp03 client country currency region and price are rejected',
+    empty($clientCountry['ok']) && $clientCountry['error'] === 'client_price_forbidden'
+        && empty($clientCurrency['ok']) && $clientCurrency['error'] === 'client_price_forbidden'
+        && empty($clientRegion['ok']) && $clientRegion['error'] === 'client_price_forbidden'
+        && empty($clientPrice['ok']) && $clientPrice['error'] === 'client_price_forbidden'
+        && empty($clientPriceId['ok']) && $clientPriceId['error'] === 'client_price_forbidden'
+        && empty($clientPriceSnake['ok']) && $clientPriceSnake['error'] === 'client_price_forbidden'
+        && count($calls) === $blockedCalls + 1
+        && !empty($afterReject['ok'])
+        && $afterReject['params']['line_items'][0]['price'] === $basicJpy,
+    isset($clientCountry['error']) ? $clientCountry['error'] : ''
+);
+
+$overrideCfg = $cfg;
+$overrideCfg['stripePriceBasicJp'] = 'price_cfg_override_basic_jp';
+$overrideCfg['stripePriceProJp'] = 'price_cfg_override_pro_jp';
+$overridden = kpi_v1_stripe_prices($overrideCfg);
+putenv('STRIPE_PRICE_BASIC_JP=price_env_override_basic_jp');
+$envOverridden = kpi_v1_stripe_prices($overrideCfg);
+putenv('STRIPE_PRICE_BASIC_JP');
+$clearedCfg = $cfg;
+$clearedCfg['stripePriceBasicJp'] = '';
+$clearedCfg['stripePriceProJp'] = '';
+$fallback = kpi_v1_stripe_prices($clearedCfg);
+check(
+    'lp03 config and env price overrides stay available',
+    $overridden['JP']['basic'] === 'price_cfg_override_basic_jp'
+        && $overridden['JP']['pro'] === 'price_cfg_override_pro_jp'
+        && $overridden['GLOBAL']['basic'] === $basicPrice
+        && $envOverridden['JP']['basic'] === 'price_env_override_basic_jp'
+        && $fallback['JP']['basic'] === $basicJpy
+        && $fallback['JP']['pro'] === $proJpy
+        && getenv('STRIPE_PRICE_BASIC_JP') === false
+);
+
+$jpyBasicUser = make_user('u_lp03_hook_basic', 'pro');
+$jpyBasicEvent = event_payload(
+    'evt_lp03_jpy_basic',
+    'customer.subscription.created',
+    subscription_object('sub_lp03_jpy_basic', 'cus_lp03_jpy_basic', 'active', $basicJpy, $jpyBasicUser['userId'], false, $now)
+);
+$jpyBasicResult = kpi_v1_stripe_handle_webhook($cfg, $jpyBasicEvent, sign_payload($jpyBasicEvent, $fixtureWebhook, $now), $whServer, $now);
+$jpyBasicStatus = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($jpyBasicUser['userId']));
+check(
+    'lp03 webhook jpy basic grants basic',
+    !empty($jpyBasicResult['ok'])
+        && kpi_v1_auth_read_user($jpyBasicUser['userId'])['plan'] === 'basic'
+        && $jpyBasicStatus['billing']['plan'] === 'basic'
+        && $jpyBasicStatus['billing']['confirmed'] === true
+        && $jpyBasicStatus['billing']['status'] === 'active',
+    json_encode($jpyBasicStatus)
+);
+
+$jpyProUser = make_user('u_lp03_hook_pro', 'basic');
+$jpyProEvent = event_payload(
+    'evt_lp03_jpy_pro',
+    'customer.subscription.updated',
+    subscription_object('sub_lp03_jpy_pro', 'cus_lp03_jpy_pro', 'active', $proJpy, $jpyProUser['userId'], false, $now)
+);
+$jpyProResult = kpi_v1_stripe_handle_webhook($cfg, $jpyProEvent, sign_payload($jpyProEvent, $fixtureWebhook, $now), $whServer, $now);
+$jpyProStatus = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($jpyProUser['userId']));
+check(
+    'lp03 webhook jpy pro grants pro',
+    !empty($jpyProResult['ok'])
+        && kpi_v1_auth_read_user($jpyProUser['userId'])['plan'] === 'pro'
+        && $jpyProStatus['billing']['plan'] === 'pro'
+        && $jpyProStatus['billing']['confirmed'] === true,
+    json_encode($jpyProStatus)
+);
+
+$unknownUser = make_user('u_lp03_hook_unknown', 'basic');
+$unknownJpy = event_payload(
+    'evt_lp03_unknown',
+    'customer.subscription.created',
+    subscription_object('sub_lp03_unknown', 'cus_lp03_unknown', 'active', 'price_not_allowlisted', $unknownUser['userId'], false, $now)
+);
+$unknownJpyResult = kpi_v1_stripe_handle_webhook($cfg, $unknownJpy, sign_payload($unknownJpy, $fixtureWebhook, $now), $whServer, $now);
+$unknownJpyStatus = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($unknownUser['userId']));
+check(
+    'lp03 unknown price grants nothing',
+    !empty($unknownJpyResult['ok'])
+        && kpi_v1_auth_read_user($unknownUser['userId'])['plan'] === 'basic'
+        && $unknownJpyStatus['billing']['plan'] === null
+        && empty($unknownJpyStatus['billing']['confirmed']),
+    json_encode($unknownJpyStatus)
+);
+
+function offer_is($payload, $currency, $basicAmount, $proAmount, $basicText, $proText)
+{
+    $offer = isset($payload['offer']) && is_array($payload['offer']) ? $payload['offer'] : [];
+    $basic = isset($offer['basic']) && is_array($offer['basic']) ? $offer['basic'] : [];
+    $pro = isset($offer['pro']) && is_array($offer['pro']) ? $offer['pro'] : [];
+    return isset($offer['currency']) && $offer['currency'] === $currency
+        && isset($basic['amount'], $basic['formattedAmount'])
+        && (int) $basic['amount'] === $basicAmount
+        && $basic['formattedAmount'] === $basicText
+        && isset($pro['amount'], $pro['formattedAmount'])
+        && (int) $pro['amount'] === $proAmount
+        && $pro['formattedAmount'] === $proText
+        && !isset($offer['basic']['price'])
+        && !isset($offer['pro']['priceId']);
+}
+
+$jpOfferUser = make_user('u_lp05_jp_offer', 'basic');
+save_business_country($cfg, $jpOfferUser['userId'], 'JP', 'USD');
+$jpOffer = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($jpOfferUser['userId']));
+check(
+    'lp05 jp offer is jpy even when profile currency is usd',
+    offer_is($jpOffer, 'JPY', 1000, 3000, '¥1,000', '¥3,000')
+        && $jpOffer['offer']['pricingRegion'] === 'JP'
+        && $jpOffer['billing']['subscriptionPrice'] === null,
+    json_encode($jpOffer['offer'])
+);
+
+$usOfferUser = make_user('u_lp05_us_offer', 'basic');
+save_business_country($cfg, $usOfferUser['userId'], 'US', 'JPY');
+$usOffer = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($usOfferUser['userId']));
+check(
+    'lp05 us offer is usd',
+    offer_is($usOffer, 'USD', 10, 30, '$10', '$30') && $usOffer['offer']['pricingRegion'] === 'GLOBAL',
+    json_encode($usOffer['offer'])
+);
+
+$missingOfferUser = make_user('u_lp05_missing_offer', 'basic');
+$missingOffer = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($missingOfferUser['userId']));
+$twOfferUser = make_user('u_lp05_tw_offer', 'basic');
+save_business_country($cfg, $twOfferUser['userId'], 'TW', 'TWD');
+$twOffer = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($twOfferUser['userId']));
+check(
+    'lp05 missing and tw offers use usd',
+    offer_is($missingOffer, 'USD', 10, 30, '$10', '$30')
+        && offer_is($twOffer, 'USD', 10, 30, '$10', '$30'),
+    json_encode([$missingOffer['offer'], $twOffer['offer']])
+);
+
+$tamperCalls = count($calls);
+$tamper = kpi_v1_stripe_start_checkout(
+    $cfg,
+    kpi_v1_auth_read_user($jpOfferUser['userId']),
+    ['plan' => 'pro', 'locale' => 'en', 'currency' => 'USD', 'country' => 'US', 'priceId' => $proPrice],
+    $server,
+    $now
+);
+$changeJs = (string) file_get_contents(dirname(__DIR__) . '/js/kpi-change-plan-page.js');
+$changeHtml = (string) file_get_contents(dirname(__DIR__) . '/setting/change_plan.html')
+    . (string) file_get_contents(dirname(__DIR__) . '/en/setting/change_plan.html')
+    . (string) file_get_contents(dirname(__DIR__) . '/zh-tw/setting/change_plan.html');
+check(
+    'lp05 client display values cannot select the checkout price',
+    empty($tamper['ok'])
+        && $tamper['error'] === 'client_price_forbidden'
+        && count($calls) === $tamperCalls
+        && strpos($changeJs, 'plan: plan, locale: pageLang()') !== false
+        && strpos($changeJs, "=== 'JP'") === false
+        && strpos($changeJs, 'priceId') === false
+        && strpos($changeHtml, '¥500') === false
+        && strpos($changeHtml, '$5') === false
+        && strpos($changeHtml, '$29') === false
+        && strpos($changeHtml, 'id="change-plan-basic-price"') !== false,
+    isset($tamper['error']) ? $tamper['error'] : ''
+);
+
+$usdSubUser = make_user('u_lp05_usd_sub', 'basic');
+save_business_country($cfg, $usdSubUser['userId'], 'US', 'USD');
+$usdEvent = event_payload(
+    'evt_lp05_usd_sub',
+    'customer.subscription.created',
+    subscription_object('sub_lp05_usd', 'cus_lp05_usd', 'active', $proPrice, $usdSubUser['userId'], false, $now)
+);
+kpi_v1_stripe_handle_webhook($cfg, $usdEvent, sign_payload($usdEvent, $fixtureWebhook, $now), $whServer, $now);
+save_business_country($cfg, $usdSubUser['userId'], 'JP', 'JPY');
+$usdAfterMove = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($usdSubUser['userId']));
+$usdStored = kpi_v1_billing_transaction($cfg, function ($store) use ($usdSubUser) {
+    return ['ok' => true, 'billing' => $store->get($usdSubUser['userId']), 'rollback' => true];
+});
+check(
+    'lp05 usd subscription stays usd after profile country becomes jp',
+    offer_is($usdAfterMove, 'JPY', 1000, 3000, '¥1,000', '¥3,000')
+        && $usdAfterMove['billing']['confirmed'] === true
+        && $usdAfterMove['billing']['plan'] === 'pro'
+        && $usdAfterMove['billing']['subscriptionPrice']['known'] === true
+        && $usdAfterMove['billing']['subscriptionPrice']['currency'] === 'USD'
+        && $usdAfterMove['billing']['subscriptionPrice']['amount'] === 30
+        && $usdAfterMove['billing']['subscriptionPrice']['formattedAmount'] === '$30'
+        && $usdStored['billing']['stripePriceId'] === $proPrice,
+    json_encode($usdAfterMove)
+);
+
+$jpySubUser = make_user('u_lp05_jpy_sub', 'basic');
+save_business_country($cfg, $jpySubUser['userId'], 'JP', 'JPY');
+$jpyEvent = event_payload(
+    'evt_lp05_jpy_sub',
+    'customer.subscription.created',
+    subscription_object('sub_lp05_jpy', 'cus_lp05_jpy', 'active', $proJpy, $jpySubUser['userId'], false, $now)
+);
+kpi_v1_stripe_handle_webhook($cfg, $jpyEvent, sign_payload($jpyEvent, $fixtureWebhook, $now), $whServer, $now);
+save_business_country($cfg, $jpySubUser['userId'], 'US', 'USD');
+$jpyAfterMove = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($jpySubUser['userId']));
+$jpyStored = kpi_v1_billing_transaction($cfg, function ($store) use ($jpySubUser) {
+    return ['ok' => true, 'billing' => $store->get($jpySubUser['userId']), 'rollback' => true];
+});
+check(
+    'lp05 jpy subscription stays jpy after profile country becomes us',
+    offer_is($jpyAfterMove, 'USD', 10, 30, '$10', '$30')
+        && $jpyAfterMove['billing']['confirmed'] === true
+        && $jpyAfterMove['billing']['subscriptionPrice']['currency'] === 'JPY'
+        && $jpyAfterMove['billing']['subscriptionPrice']['amount'] === 3000
+        && $jpyAfterMove['billing']['subscriptionPrice']['formattedAmount'] === '¥3,000'
+        && $jpyAfterMove['billing']['subscriptionPrice']['plan'] === 'pro'
+        && $jpyStored['billing']['stripePriceId'] === $proJpy,
+    json_encode($jpyAfterMove)
+);
+
+$unknownOfferUser = make_user('u_lp05_unknown_price', 'basic');
+$unknownOfferEvent = event_payload(
+    'evt_lp05_unknown_price',
+    'customer.subscription.created',
+    subscription_object('sub_lp05_unknown', 'cus_lp05_unknown', 'active', 'price_lp05_unknown', $unknownOfferUser['userId'], false, $now)
+);
+kpi_v1_stripe_handle_webhook($cfg, $unknownOfferEvent, sign_payload($unknownOfferEvent, $fixtureWebhook, $now), $whServer, $now);
+$unknownOffer = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user($unknownOfferUser['userId']));
+check(
+    'lp05 unknown subscription price is not given an amount',
+    empty($unknownOffer['billing']['confirmed'])
+        && $unknownOffer['billing']['plan'] === null
+        && $unknownOffer['billing']['subscriptionPrice']['known'] === false
+        && !isset($unknownOffer['billing']['subscriptionPrice']['amount'])
+        && !isset($unknownOffer['billing']['subscriptionPrice']['formattedAmount'])
+        && offer_is($unknownOffer, 'USD', 10, 30, '$10', '$30'),
+    json_encode($unknownOffer['billing'])
+);
 
 echo count($failures) === 0 ? "OK\n" : ("FAILED " . count($failures) . "\n");
 exit(count($failures) === 0 ? 0 : 1);

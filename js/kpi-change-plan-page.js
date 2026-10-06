@@ -187,6 +187,69 @@
       });
   }
 
+  function intervalLabel() {
+    return t('月', 'month', '每月');
+  }
+
+  function offerHeading(planName, row) {
+    if (!row || typeof row.formattedAmount !== 'string' || row.formattedAmount === '') return planName;
+    return planName + ' ' + row.formattedAmount + ' / ' + intervalLabel();
+  }
+
+  function paintOffer(offer) {
+    if (!offer || typeof offer !== 'object') return;
+    var basic = document.getElementById('change-plan-basic-price');
+    var pro = document.getElementById('change-plan-pro-price');
+    if (basic) {
+      basic.textContent = offerHeading(t('ベーシック', 'Basic', '基本'), offer.basic);
+    }
+    if (pro) {
+      pro.textContent = offerHeading(t('プロ', 'Pro', '專業'), offer.pro);
+    }
+  }
+
+  function paintSubscription(data) {
+    var el = document.getElementById('change-plan-current-price');
+    if (!el) return;
+    var billing = data && data.billing ? data.billing : {};
+    var price = billing.subscriptionPrice;
+    if (billing.confirmed === true && price && price.known === true && price.formattedAmount) {
+      el.textContent = price.formattedAmount + ' / ' + intervalLabel();
+      return;
+    }
+    if (price && price.known === false) {
+      el.textContent = t(
+        '請求額を確認できません',
+        'The billed amount cannot be confirmed.',
+        '無法確認收費金額。'
+      );
+      return;
+    }
+    el.textContent = '—';
+  }
+
+  function loadServerPricing() {
+    var auth = window.__KPI_AUTH;
+    if (!auth || typeof auth.resolveAuthBase !== 'function') return;
+    window
+      .fetch(auth.resolveAuthBase() + '/billing/status.php', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      })
+      .then(function (res) {
+        return res.json().catch(function () {
+          return null;
+        });
+      })
+      .then(function (data) {
+        if (!data || data.ok !== true) return;
+        paintOffer(data.offer);
+        paintSubscription(data);
+      })
+      .catch(function () {});
+  }
+
   function boot() {
     applyUi(readTier());
     function refresh() {
@@ -196,6 +259,7 @@
     if (window.__KPI_AUTH && typeof window.__KPI_AUTH.syncPlanFromServer === 'function') {
       window.__KPI_AUTH.syncPlanFromServer().then(refresh).catch(refresh);
     }
+    loadServerPricing();
     document.addEventListener('click', function (ev) {
       var node = ev.target && ev.target.closest ? ev.target.closest('#change-plan-basic-action, #change-plan-pro-action') : null;
       if (!node || String(node.tagName).toUpperCase() !== 'A') return;

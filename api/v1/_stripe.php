@@ -20,17 +20,92 @@ function kpi_v1_stripe_env_or_config($envName, $cfg, $cfgKey)
     return '';
 }
 
+function kpi_v1_stripe_price_value($cfg, $envName, $cfgKey, $fallback)
+{
+    $value = kpi_v1_stripe_env_or_config($envName, $cfg, $cfgKey);
+    if ($value === '') {
+        return $fallback;
+    }
+    return $value;
+}
+
+/**
+ * Regional Price map. Profile currency does not select a Price.
+ * GLOBAL is the USD list. JP is the Japan list. Other countries use GLOBAL.
+ */
 function kpi_v1_stripe_prices($cfg)
 {
-    $basic = kpi_v1_stripe_env_or_config('STRIPE_PRICE_BASIC', $cfg, 'stripePriceBasic');
-    $pro = kpi_v1_stripe_env_or_config('STRIPE_PRICE_PRO', $cfg, 'stripePricePro');
-    if ($basic === '') {
-        $basic = 'price_1UN9VpKFNH29caO9yLytJKTw';
+    return [
+        'GLOBAL' => [
+            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC', 'stripePriceBasic', 'price_1UN9VpKFNH29caO9yLytJKTw'),
+            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO', 'stripePricePro', 'price_1UN9k2KFNH29caO9pCLbK7xS'),
+        ],
+        'JP' => [
+            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC_JP', 'stripePriceBasicJp', 'price_1UNWRgKFNH29caO9kzKcLf3x'),
+            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO_JP', 'stripePriceProJp', 'price_1UNWRhKFNH29caO9NXixShH5'),
+        ],
+    ];
+}
+
+function kpi_v1_stripe_normalize_country($country)
+{
+    $code = strtoupper(trim((string) $country));
+    if ($code === 'JP') {
+        return 'JP';
     }
-    if ($pro === '') {
-        $pro = 'price_1UN9k2KFNH29caO9pCLbK7xS';
+    return '';
+}
+
+function kpi_v1_stripe_region_for_country($country)
+{
+    return kpi_v1_stripe_normalize_country($country) === 'JP' ? 'JP' : 'GLOBAL';
+}
+
+/**
+ * Billing region comes only from the saved business country.
+ * Request body, currency, locale, and client address are ignored.
+ */
+function kpi_v1_stripe_region_for_user($cfg, $userId)
+{
+    require_once __DIR__ . '/_admin_store.php';
+    $profile = kpi_v1_profile_read($cfg, $userId);
+    $country = (is_array($profile) && isset($profile['country'])) ? $profile['country'] : '';
+    return kpi_v1_stripe_region_for_country($country);
+}
+
+function kpi_v1_stripe_price_for_plan(array $prices, $region, $plan)
+{
+    $region = ($region === 'JP') ? 'JP' : 'GLOBAL';
+    $plan = ($plan === 'pro') ? 'pro' : 'basic';
+    $selected = '';
+    if (isset($prices[$region]) && is_array($prices[$region]) && isset($prices[$region][$plan]) && is_string($prices[$region][$plan])) {
+        $selected = $prices[$region][$plan];
     }
-    return ['basic' => $basic, 'pro' => $pro];
+    if ($selected === '' && isset($prices['GLOBAL'][$plan]) && is_string($prices['GLOBAL'][$plan])) {
+        $selected = $prices['GLOBAL'][$plan];
+    }
+    return $selected;
+}
+
+function kpi_v1_stripe_prices_configured(array $prices)
+{
+    foreach (['GLOBAL', 'JP'] as $region) {
+        if (!isset($prices[$region]) || !is_array($prices[$region])) {
+            return false;
+        }
+        $basic = isset($prices[$region]['basic']) ? $prices[$region]['basic'] : '';
+        $pro = isset($prices[$region]['pro']) ? $prices[$region]['pro'] : '';
+        if (!is_string($basic) || $basic === '' || !is_string($pro) || $pro === '') {
+            return false;
+        }
+        if (kpi_v1_stripe_same($basic, $pro)) {
+            return false;
+        }
+    }
+    return kpi_v1_stripe_plan_for_price($prices, $prices['GLOBAL']['basic']) === 'basic'
+        && kpi_v1_stripe_plan_for_price($prices, $prices['GLOBAL']['pro']) === 'pro'
+        && kpi_v1_stripe_plan_for_price($prices, $prices['JP']['basic']) === 'basic'
+        && kpi_v1_stripe_plan_for_price($prices, $prices['JP']['pro']) === 'pro';
 }
 
 function kpi_v1_stripe_same($left, $right)
@@ -44,13 +119,25 @@ function kpi_v1_stripe_same($left, $right)
 function kpi_v1_stripe_plan_for_price(array $prices, $priceId)
 {
     $priceId = (string) $priceId;
-    if (kpi_v1_stripe_same($prices['basic'], $priceId)) {
-        return 'basic';
+    $found = null;
+    foreach ($prices as $regionPrices) {
+        if (!is_array($regionPrices)) {
+            continue;
+        }
+        foreach (['basic', 'pro'] as $plan) {
+            if (!isset($regionPrices[$plan]) || !is_string($regionPrices[$plan])) {
+                continue;
+            }
+            if (!kpi_v1_stripe_same($regionPrices[$plan], $priceId)) {
+                continue;
+            }
+            if ($found !== null && $found !== $plan) {
+                return null;
+            }
+            $found = $plan;
+        }
     }
-    if (kpi_v1_stripe_same($prices['pro'], $priceId)) {
-        return 'pro';
-    }
-    return null;
+    return $found;
 }
 
 function kpi_v1_stripe_secret($cfg)
@@ -278,7 +365,7 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     if (!is_array($body)) {
         return ['ok' => false, 'status' => 400, 'error' => 'invalid_json'];
     }
-    foreach (['price', 'priceId', 'price_id', 'mode', 'success_url', 'cancel_url'] as $forbidden) {
+    foreach (['price', 'priceId', 'price_id', 'country', 'currency', 'region', 'mode', 'success_url', 'cancel_url'] as $forbidden) {
         if (array_key_exists($forbidden, $body)) {
             return ['ok' => false, 'status' => 400, 'error' => 'client_price_forbidden'];
         }
@@ -295,7 +382,7 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
         return ['ok' => false, 'status' => 403, 'error' => 'live_key_forbidden'];
     }
     $prices = kpi_v1_stripe_prices($cfg);
-    if ($prices['basic'] === '' || $prices['pro'] === '' || kpi_v1_stripe_same($prices['basic'], $prices['pro'])) {
+    if (!kpi_v1_stripe_prices_configured($prices)) {
         return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
     }
     $base = kpi_v1_stripe_resolve_base($cfg, is_array($server) ? $server : []);
@@ -305,6 +392,11 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     $locale = isset($body['locale']) ? (string) $body['locale'] : 'ja';
     $urls = kpi_v1_stripe_return_urls($base['base'], $locale);
     $userId = (string) $user['userId'];
+    $region = kpi_v1_stripe_region_for_user($cfg, $userId);
+    $priceId = kpi_v1_stripe_price_for_plan($prices, $region, $plan);
+    if ($priceId === '') {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
     $existing = null;
     $look = kpi_v1_billing_transaction($cfg, function ($store) use ($userId) {
         return ['ok' => true, 'billing' => $store->get($userId), 'rollback' => true];
@@ -322,7 +414,7 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     $params = kpi_v1_stripe_checkout_params(
         $userId,
         $plan,
-        $prices[$plan],
+        $priceId,
         $urls['success_url'],
         $urls['cancel_url'],
         is_string($customerId) ? $customerId : ''
@@ -330,7 +422,7 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     $encoded = kpi_v1_stripe_form_encode($params);
     $encoded = str_replace(rawurlencode('{CHECKOUT_SESSION_ID}'), '{CHECKOUT_SESSION_ID}', $encoded);
     $now = $now === null ? time() : (int) $now;
-    $idempotency = 'kpn_' . hash('sha256', $userId . '|' . $plan . '|' . (string) (int) floor($now / 600));
+    $idempotency = 'kpn_' . hash('sha256', $userId . '|' . $plan . '|' . $region . '|' . (string) (int) floor($now / 600));
     $response = kpi_v1_stripe_http($secret, $encoded, $idempotency);
     $status = isset($response['status']) ? (int) $response['status'] : 0;
     $json = isset($response['json']) && is_array($response['json']) ? $response['json'] : null;
@@ -626,6 +718,85 @@ function kpi_v1_stripe_handle_webhook($cfg, $payload, $header, $server, $now = n
     });
 }
 
+/**
+ * Display amounts for the allowlisted Sandbox Prices.
+ * Keyed by Price ID so a country change cannot relabel an existing subscription.
+ */
+function kpi_v1_stripe_known_price_displays()
+{
+    return [
+        'price_1UN9VpKFNH29caO9yLytJKTw' => ['plan' => 'basic', 'currency' => 'USD', 'amount' => 10],
+        'price_1UN9k2KFNH29caO9pCLbK7xS' => ['plan' => 'pro', 'currency' => 'USD', 'amount' => 30],
+        'price_1UNWRgKFNH29caO9kzKcLf3x' => ['plan' => 'basic', 'currency' => 'JPY', 'amount' => 1000],
+        'price_1UNWRhKFNH29caO9NXixShH5' => ['plan' => 'pro', 'currency' => 'JPY', 'amount' => 3000],
+    ];
+}
+
+function kpi_v1_stripe_format_amount($currency, $amount)
+{
+    if ($currency === 'JPY') {
+        return '¥' . number_format((int) $amount);
+    }
+    if ($currency === 'USD') {
+        return '$' . number_format((int) $amount);
+    }
+    return '';
+}
+
+function kpi_v1_stripe_public_amount($row)
+{
+    if (!is_array($row) || !isset($row['currency'], $row['amount'])) {
+        return ['amount' => null, 'formattedAmount' => ''];
+    }
+    return [
+        'amount' => (int) $row['amount'],
+        'formattedAmount' => kpi_v1_stripe_format_amount($row['currency'], $row['amount']),
+    ];
+}
+
+/**
+ * Regional offer for a new Checkout. Uses the saved business country only.
+ * Does not describe an existing subscription.
+ */
+function kpi_v1_stripe_offer_for_user($cfg, $userId)
+{
+    $prices = kpi_v1_stripe_prices($cfg);
+    $region = kpi_v1_stripe_region_for_user($cfg, $userId);
+    $catalog = kpi_v1_stripe_known_price_displays();
+    $basicId = kpi_v1_stripe_price_for_plan($prices, $region, 'basic');
+    $proId = kpi_v1_stripe_price_for_plan($prices, $region, 'pro');
+    $basic = isset($catalog[$basicId]) ? $catalog[$basicId] : null;
+    $pro = isset($catalog[$proId]) ? $catalog[$proId] : null;
+    $currency = '';
+    if (is_array($basic) && is_array($pro) && $basic['currency'] === $pro['currency']) {
+        $currency = $basic['currency'];
+    }
+    return [
+        'pricingRegion' => $region,
+        'currency' => $currency,
+        'basic' => kpi_v1_stripe_public_amount($basic),
+        'pro' => kpi_v1_stripe_public_amount($pro),
+    ];
+}
+
+function kpi_v1_stripe_subscription_price_display($priceId)
+{
+    $catalog = kpi_v1_stripe_known_price_displays();
+    $priceId = (string) $priceId;
+    if ($priceId === '' || !isset($catalog[$priceId])) {
+        return ['known' => false];
+    }
+    $row = $catalog[$priceId];
+    $public = kpi_v1_stripe_public_amount($row);
+    return [
+        'known' => true,
+        'plan' => $row['plan'],
+        'currency' => $row['currency'],
+        'amount' => $public['amount'],
+        'formattedAmount' => $public['formattedAmount'],
+    ];
+}
+
 function kpi_v1_billing_status_payload($cfg, array $user)
 {
     $userId = (string) $user['userId'];
@@ -644,9 +815,14 @@ function kpi_v1_billing_status_payload($cfg, array $user)
         && $status === 'active'
         && $mapped !== null;
     $public = kpi_v1_auth_public_user($user, $cfg);
+    $subscriptionPrice = null;
+    if ($billing !== null && !empty($billing['stripePriceId'])) {
+        $subscriptionPrice = kpi_v1_stripe_subscription_price_display($billing['stripePriceId']);
+    }
     return [
         'ok' => true,
         'plan' => $public['plan'],
+        'offer' => kpi_v1_stripe_offer_for_user($cfg, $userId),
         'billing' => [
             'status' => $status,
             'plan' => $mapped,
@@ -654,6 +830,7 @@ function kpi_v1_billing_status_payload($cfg, array $user)
             'currentPeriodEnd' => $billing !== null ? $billing['currentPeriodEnd'] : null,
             'confirmed' => $confirmed,
             'invoiceStatus' => $billing !== null ? $billing['lastInvoiceStatus'] : null,
+            'subscriptionPrice' => $subscriptionPrice,
         ],
     ];
 }

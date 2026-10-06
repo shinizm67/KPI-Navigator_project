@@ -102,7 +102,7 @@
   var planPrice = document.getElementById('plan-price');
   if (planTitle && planPrice) {
     planTitle.textContent = 'Key Performance Navigator Basic';
-    planPrice.textContent = '$5 / 月';
+    planPrice.textContent = '$10 / 月';
   }
 
   /* Forge Lab 風カスタム言語選択（画面右下） */
