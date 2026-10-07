@@ -292,6 +292,114 @@ check(
     empty($checkoutMismatch['ok']) && $checkoutMismatch['error'] === 'stripe_livemode_mismatch'
 );
 
+function display_matches($row, $plan, $currency, $amount, $text)
+{
+    return is_array($row)
+        && isset($row['known'], $row['plan'], $row['currency'], $row['amount'], $row['formattedAmount'])
+        && $row['known'] === true
+        && $row['plan'] === $plan
+        && $row['currency'] === $currency
+        && $row['amount'] === $amount
+        && $row['formattedAmount'] === $text;
+}
+
+function display_unknown($row)
+{
+    return $row === ['known' => false];
+}
+
+check(
+    '18 test basic usd display',
+    display_matches(kpi_v1_stripe_subscription_price_display($cfg, $sandboxBasic), 'basic', 'USD', 10, '$10')
+);
+check(
+    '19 test pro usd display',
+    display_matches(kpi_v1_stripe_subscription_price_display($cfg, $sandboxPro), 'pro', 'USD', 30, '$30')
+);
+check(
+    '20 test basic jpy display',
+    display_matches(kpi_v1_stripe_subscription_price_display($cfg, $sandboxBasicJp), 'basic', 'JPY', 1000, '¥1,000')
+);
+check(
+    '21 test pro jpy display',
+    display_matches(kpi_v1_stripe_subscription_price_display($cfg, $sandboxProJp), 'pro', 'JPY', 3000, '¥3,000')
+);
+check(
+    '22 live fixture basic usd display',
+    display_matches(kpi_v1_stripe_subscription_price_display($liveCfg, $liveBasic), 'basic', 'USD', 10, '$10')
+);
+check(
+    '23 live fixture pro usd display',
+    display_matches(kpi_v1_stripe_subscription_price_display($liveCfg, $livePro), 'pro', 'USD', 30, '$30')
+);
+check(
+    '24 live fixture basic jpy display',
+    display_matches(kpi_v1_stripe_subscription_price_display($liveCfg, $liveBasicJp), 'basic', 'JPY', 1000, '¥1,000')
+);
+check(
+    '25 live fixture pro jpy display',
+    display_matches(kpi_v1_stripe_subscription_price_display($liveCfg, $liveProJp), 'pro', 'JPY', 3000, '¥3,000')
+);
+
+$unknownDisplay = kpi_v1_stripe_subscription_price_display($cfg, 'price_unknown_display');
+$clashCfg = $liveCfg;
+$clashCfg['stripePriceBasic'] = 'price_clash_same_id';
+$clashCfg['stripePricePro'] = 'price_clash_same_id';
+$clashDisplay = kpi_v1_stripe_subscription_price_display($clashCfg, 'price_clash_same_id');
+check(
+    '26 unknown price does not inherit an amount',
+    display_unknown($unknownDisplay)
+        && display_unknown($clashDisplay)
+        && display_matches(kpi_v1_stripe_subscription_price_display($clashCfg, $liveProJp), 'pro', 'JPY', 3000, '¥3,000')
+);
+
+check(
+    '27 sandbox prices are not known live prices',
+    display_unknown(kpi_v1_stripe_subscription_price_display($liveCfg, $sandboxBasic))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($liveCfg, $sandboxPro))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($liveCfg, $sandboxBasicJp))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($liveCfg, $sandboxProJp))
+);
+
+check(
+    '28 fake live prices are not known test prices',
+    display_unknown(kpi_v1_stripe_subscription_price_display($cfg, $liveBasic))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($cfg, $livePro))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($cfg, $liveBasicJp))
+        && display_unknown(kpi_v1_stripe_subscription_price_display($cfg, $liveProJp))
+);
+
+$displayUser = make_user('u_mode_display');
+$displayRow = kpi_v1_billing_blank('u_mode_display');
+$displayRow['stripeCustomerId'] = 'cus_modedisplay';
+$displayRow['stripeSubscriptionId'] = 'sub_modedisplay';
+$displayRow['stripePriceId'] = $livePro;
+$displayRow['subscriptionStatus'] = 'active';
+$displayRow['entitlementGranted'] = true;
+kpi_v1_billing_transaction($liveCfg, function ($store) use ($displayRow) {
+    $store->put($displayRow);
+    return ['ok' => true];
+});
+require_once dirname(__DIR__) . '/api/v1/_admin_store.php';
+kpi_v1_profile_write($liveCfg, 'u_mode_display', ['country' => 'JP', 'currency' => 'USD']);
+$liveStatus = kpi_v1_billing_status_payload($liveCfg, kpi_v1_auth_read_user('u_mode_display'));
+$liveOffer = isset($liveStatus['offer']) && is_array($liveStatus['offer']) ? $liveStatus['offer'] : [];
+$shown = isset($liveStatus['billing']['subscriptionPrice']) ? $liveStatus['billing']['subscriptionPrice'] : null;
+check(
+    '29 live status shows the configured subscription amount',
+    kpi_v1_auth_read_user('u_mode_display')['plan'] === 'basic'
+        && display_matches($shown, 'pro', 'USD', 30, '$30')
+        && isset($liveOffer['currency'], $liveOffer['basic']['formattedAmount'], $liveOffer['pro']['formattedAmount'])
+        && $liveOffer['pricingRegion'] === 'JP'
+        && $liveOffer['currency'] === 'JPY'
+        && $liveOffer['basic']['amount'] === 1000
+        && $liveOffer['basic']['formattedAmount'] === '¥1,000'
+        && $liveOffer['pro']['amount'] === 3000
+        && $liveOffer['pro']['formattedAmount'] === '¥3,000'
+        && $liveOffer['basic']['formattedAmount'] !== $shown['formattedAmount'],
+    json_encode($liveStatus)
+);
+
 if ($failures) {
     fwrite(STDERR, count($failures) . " failed\n");
     exit(1);

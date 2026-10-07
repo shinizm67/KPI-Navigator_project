@@ -937,17 +937,60 @@ function kpi_v1_stripe_handle_webhook($cfg, $payload, $header, $server, $now = n
 }
 
 /**
- * Display amounts for the allowlisted Sandbox Prices.
- * Keyed by Price ID so a country change cannot relabel an existing subscription.
+ * Fixed catalog amounts for the four configured Price slots.
+ * The Price ID itself never selects an amount.
  */
-function kpi_v1_stripe_known_price_displays()
+function kpi_v1_stripe_display_rows()
 {
     return [
-        'price_1UN9VpKFNH29caO9yLytJKTw' => ['plan' => 'basic', 'currency' => 'USD', 'amount' => 10],
-        'price_1UN9k2KFNH29caO9pCLbK7xS' => ['plan' => 'pro', 'currency' => 'USD', 'amount' => 30],
-        'price_1UNWRgKFNH29caO9kzKcLf3x' => ['plan' => 'basic', 'currency' => 'JPY', 'amount' => 1000],
-        'price_1UNWRhKFNH29caO9NXixShH5' => ['plan' => 'pro', 'currency' => 'JPY', 'amount' => 3000],
+        'GLOBAL' => [
+            'basic' => ['plan' => 'basic', 'currency' => 'USD', 'amount' => 10],
+            'pro' => ['plan' => 'pro', 'currency' => 'USD', 'amount' => 30],
+        ],
+        'JP' => [
+            'basic' => ['plan' => 'basic', 'currency' => 'JPY', 'amount' => 1000],
+            'pro' => ['plan' => 'pro', 'currency' => 'JPY', 'amount' => 3000],
+        ],
     ];
+}
+
+/**
+ * Display map for the active mode's configured Price IDs.
+ * Test mode includes the Sandbox fallbacks. Live mode includes only explicit
+ * non-Sandbox IDs. A Price ID that maps to two different amounts is omitted.
+ */
+function kpi_v1_stripe_known_price_displays($cfg)
+{
+    $prices = kpi_v1_stripe_prices($cfg);
+    $rows = kpi_v1_stripe_display_rows();
+    $map = [];
+    foreach (['GLOBAL', 'JP'] as $region) {
+        foreach (['basic', 'pro'] as $plan) {
+            $id = (isset($prices[$region][$plan]) && is_string($prices[$region][$plan])) ? $prices[$region][$plan] : '';
+            if ($id === '' || !isset($rows[$region][$plan]) || !is_array($rows[$region][$plan])) {
+                continue;
+            }
+            $row = $rows[$region][$plan];
+            if (!array_key_exists($id, $map)) {
+                $map[$id] = $row;
+                continue;
+            }
+            if ($map[$id] === null) {
+                continue;
+            }
+            $prev = $map[$id];
+            if ($prev['plan'] !== $row['plan'] || $prev['currency'] !== $row['currency'] || (int) $prev['amount'] !== (int) $row['amount']) {
+                $map[$id] = null;
+            }
+        }
+    }
+    $known = [];
+    foreach ($map as $id => $row) {
+        if (is_array($row)) {
+            $known[$id] = $row;
+        }
+    }
+    return $known;
 }
 
 function kpi_v1_stripe_format_amount($currency, $amount)
@@ -980,7 +1023,7 @@ function kpi_v1_stripe_offer_for_user($cfg, $userId)
 {
     $prices = kpi_v1_stripe_prices($cfg);
     $region = kpi_v1_stripe_region_for_user($cfg, $userId);
-    $catalog = kpi_v1_stripe_known_price_displays();
+    $catalog = kpi_v1_stripe_known_price_displays($cfg);
     $basicId = kpi_v1_stripe_price_for_plan($prices, $region, 'basic');
     $proId = kpi_v1_stripe_price_for_plan($prices, $region, 'pro');
     $basic = isset($catalog[$basicId]) ? $catalog[$basicId] : null;
@@ -997,9 +1040,9 @@ function kpi_v1_stripe_offer_for_user($cfg, $userId)
     ];
 }
 
-function kpi_v1_stripe_subscription_price_display($priceId)
+function kpi_v1_stripe_subscription_price_display($cfg, $priceId)
 {
-    $catalog = kpi_v1_stripe_known_price_displays();
+    $catalog = kpi_v1_stripe_known_price_displays($cfg);
     $priceId = (string) $priceId;
     if ($priceId === '' || !isset($catalog[$priceId])) {
         return ['known' => false];
@@ -1035,7 +1078,7 @@ function kpi_v1_billing_status_payload($cfg, array $user)
     $public = kpi_v1_auth_public_user($user, $cfg);
     $subscriptionPrice = null;
     if ($billing !== null && !empty($billing['stripePriceId'])) {
-        $subscriptionPrice = kpi_v1_stripe_subscription_price_display($billing['stripePriceId']);
+        $subscriptionPrice = kpi_v1_stripe_subscription_price_display($cfg, $billing['stripePriceId']);
     }
     return [
         'ok' => true,
