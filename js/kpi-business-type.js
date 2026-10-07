@@ -328,18 +328,23 @@
       try {
         var mem = global.KpiYearStore.getStore();
         if (mem && mem.meta && typeof mem.meta === 'object' && store.meta) {
-          mem.meta.businessType = store.meta.businessType;
+          if (store.meta.businessType == null || store.meta.businessType === '') {
+            delete mem.meta.businessType;
+          } else {
+            mem.meta.businessType = store.meta.businessType;
+          }
         }
       } catch (_eMem) {}
     }
     return writeJson(STORE_KEY, store);
   }
 
-  function setBusinessType(value) {
+  /** Write or clear store.meta.businessType. Empty value clears it. Does not push. */
+  function writeMetaBusinessType(value) {
     var next = normalizeBusinessType(value);
-    if (!next) return false;
     var store = readStoreObject();
     if (!store || typeof store !== 'object') {
+      if (!next) return true;
       store = emptyStoreSkeleton();
     } else {
       try {
@@ -351,8 +356,46 @@
     if (!store.meta || typeof store.meta !== 'object') {
       store.meta = emptyStoreSkeleton().meta;
     }
-    store.meta.businessType = next;
-    var ok = persistStoreObject(store);
+    if (next) store.meta.businessType = next;
+    else delete store.meta.businessType;
+    return persistStoreObject(store);
+  }
+
+  function pushStoreMeta() {
+    var gw = global.__KPI_DATA_GATEWAY;
+    if (!gw || typeof gw.pushToServerWhenReady !== 'function') {
+      if (gw && typeof gw.pushToServerNow === 'function') {
+        return Promise.resolve(gw.pushToServerNow()).then(function (res) {
+          return res && res.ok === true ? { ok: true } : { ok: false, error: 'store_push_failed' };
+        }, function () {
+          return { ok: false, error: 'store_push_failed' };
+        });
+      }
+      return Promise.resolve({ ok: false, error: 'store_push_unavailable' });
+    }
+    return Promise.resolve(gw.pushToServerWhenReady(12000)).then(function (res) {
+      return res && res.ok === true ? { ok: true } : { ok: false, error: 'store_push_failed' };
+    }, function () {
+      return { ok: false, error: 'store_push_failed' };
+    });
+  }
+
+  /**
+   * Set or clear the canonical type, then wait for the store PUT.
+   * value '' clears meta. Does not write kpi_user_profiles.
+   */
+  function syncBusinessType(value) {
+    var next = normalizeBusinessType(value);
+    if (!writeMetaBusinessType(next || '')) {
+      return Promise.resolve({ ok: false, error: 'business_type_rejected' });
+    }
+    return pushStoreMeta();
+  }
+
+  function setBusinessType(value) {
+    var next = normalizeBusinessType(value);
+    if (!next) return false;
+    var ok = writeMetaBusinessType(next);
     /* BR-LAUNCH-01-C2-K: best-effort store PUT when gateway is on the page. */
     if (ok) {
       try {
@@ -611,6 +654,7 @@
     readMetaBusinessType: readMetaBusinessType,
     readPersistedBusinessType: readPersistedBusinessType,
     setBusinessType: setBusinessType,
+    syncBusinessType: syncBusinessType,
     isRestaurantLike: isRestaurantLike,
     label: label,
     populateSelect: populateSelect,

@@ -194,9 +194,9 @@
     </div>
     <script src="../../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../../js/kpi-data-gateway.js?v=20260927-bt1"></script>
-    <script src="../../js/kpi-business-type.js?v=20260927-bt1"></script>
+    <script src="../../js/kpi-business-type.js?v=20261007-p02"></script>
     <script src="../../js/kpi-profile-location.js"></script>
-    <script src="../../js/kpi-profile-server.js?v=20260927-bt1"></script>
+    <script src="../../js/kpi-profile-server.js?v=20261007-p02"></script>
     <script src="../../js/kpi-pl-expense-presets.js"></script>
     <script src="../../js/kpi-csv-templates.js"></script>
     <script src="../../js/kpi-excel-templates.js"></script>
@@ -524,13 +524,12 @@
         var canonicalType = window.KpiBusinessType
           ? window.KpiBusinessType.normalizeBusinessType(industryEl ? industryEl.value : '')
           : (industryEl ? industryEl.value : '');
-        if (!canonicalType) return;
-
         var currentType = initialBusinessType
           || (window.KpiBusinessType && typeof window.KpiBusinessType.readMetaBusinessType === 'function'
             ? (window.KpiBusinessType.readMetaBusinessType() || '')
             : '');
         if (
+          canonicalType &&
           currentType &&
           currentType !== canonicalType &&
           !profileSaveConfirmed &&
@@ -547,9 +546,6 @@
           return;
         }
         profileSaveConfirmed = false;
-        if (window.KpiBusinessType) {
-          window.KpiBusinessType.setBusinessType(canonicalType);
-        }
 
         var data = {
           userId: userIdEl ? userIdEl.textContent.trim() : '',
@@ -578,35 +574,32 @@
           kpiFocus: kpiFocusEl ? kpiFocusEl.value : ''
         };
 
-        try {
-          // 直後に表示する確認ページ用（一時）と、今後の閲覧用（永続）の両方に保存
-          sessionStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(data));
-          localStorage.setItem('kpi-profile-last', JSON.stringify(data));
-          // プロフィール編集済みフラグ（ナビゲーション用）
-          localStorage.setItem('kpi-profile-edited', '1');
-          if (data.currency) {
-            localStorage.setItem('kpi-currency', data.currency);
+        function showSaveError(kind) {
+          var note = document.getElementById('profile-save-status');
+          if (!note) {
+            note = document.createElement('p');
+            note.id = 'profile-save-status';
+            note.setAttribute('role', 'alert');
+            form.insertBefore(note, form.firstChild);
           }
-        } catch (err) {
+          note.textContent = kind === 'required'
+            ? '請填寫必填項目。'
+            : '無法儲存。輸入內容仍留在此畫面。';
+        }
+        var server = window.__KPI_PROFILE_SERVER;
+        if (!server || typeof server.commitProfileEdit !== 'function') {
+          showSaveError('save');
           return;
         }
-
-        var goProfile = function () { window.location.href = 'profile.html'; };
-        /* BR-LAUNCH-01-C2-K: flush store.meta.businessType via gateway before leave. */
-        var pushStore = Promise.resolve();
-        try {
-          var gw = window.__KPI_DATA_GATEWAY;
-          if (gw && typeof gw.pushToServerWhenReady === 'function') {
-            pushStore = Promise.resolve(gw.pushToServerWhenReady(12000)).catch(function () { return null; });
-          } else if (gw && typeof gw.pushToServerNow === 'function') {
-            pushStore = Promise.resolve(gw.pushToServerNow()).catch(function () { return null; });
+        server.commitProfileEdit(data).then(function (res) {
+          if (res && res.ok) {
+            window.location.href = 'profile.html';
+            return;
           }
-        } catch (_ePush) {}
-        var profileSave = Promise.resolve();
-        if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.saveServerProfile === 'function') {
-          profileSave = window.__KPI_PROFILE_SERVER.saveServerProfile(data).catch(function () { return null; });
-        }
-        Promise.all([pushStore, profileSave]).then(goProfile).catch(goProfile);
+          showSaveError(res && res.error === 'required' ? 'required' : 'save');
+        }).catch(function () {
+          showSaveError('save');
+        });
         return;
       });
     })();
@@ -933,34 +926,29 @@
         if (window.KpiBusinessType && industrySelect) {
           window.KpiBusinessType.populateSelect(industrySelect);
           syncIndustrySelectFromMeta();
-          if (genreInput) {
-            try {
-              var lastProfile = JSON.parse(localStorage.getItem('kpi-profile-last') || '{}');
-              var savedGenre = lastProfile && lastProfile.genre;
-              if (isGenrePrompt(savedGenre)) savedGenre = '';
-              var canonicalNow =
-                typeof window.KpiBusinessType.readMetaBusinessType === 'function'
-                  ? window.KpiBusinessType.readMetaBusinessType()
-                  : null;
-              if (canonicalNow === 'restaurant') {
-                retainedRestaurantGenre = savedGenre || '';
-                genreInput.value = savedGenre;
-              } else {
-                genreInput.value = '';
-              }
-            } catch (_eGenre) {
-              genreInput.value = '';
-            }
-          }
         }
         syncGenreField();
-        hydrateLocation();
-        /* Server profile preferred when synced; empty/unsynced server must not wipe local.
-           Industry select is always re-synced from store.meta only (Option B). */
+        /* Server profile is authoritative. Stale local fields are not painted first. */
         if (window.__KPI_PROFILE_SERVER && typeof window.__KPI_PROFILE_SERVER.hydrateEditForm === 'function') {
           window.__KPI_PROFILE_SERVER.hydrateEditForm({
             onDone: function (res) {
+              if (!res || res.source === 'unavailable') {
+                var note = document.getElementById('profile-save-status');
+                var host = document.getElementById('profile-form');
+                if (!note && host) {
+                  note = document.createElement('p');
+                  note.id = 'profile-save-status';
+                  note.setAttribute('role', 'alert');
+                  host.insertBefore(note, host.firstChild);
+                }
+                if (note) note.textContent = '無法確認伺服器上的個人資料。';
+                return;
+              }
               var merged = res && res.profile ? res.profile : null;
+              var savedGenre = merged && merged.genre ? String(merged.genre) : '';
+              if (isGenrePrompt(savedGenre)) savedGenre = '';
+              if (genreInput) genreInput.value = savedGenre;
+              if (savedGenre) retainedRestaurantGenre = savedGenre;
               var fromServer = merged
                 ? (window.KpiBusinessType
                     ? window.KpiBusinessType.normalizeBusinessType(merged.businessType || merged.industry)
@@ -976,6 +964,7 @@
               }
               syncIndustrySelectFromMeta();
               syncGenreField();
+              hydrateLocation();
               if (typeof syncLocationLists === 'function') syncLocationLists();
               maybeFocusIndustryFromHash();
             }

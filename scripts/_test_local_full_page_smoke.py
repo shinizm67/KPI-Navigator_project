@@ -5,10 +5,10 @@ The frozen user-facing contract is 122 cases. This step runs the runner
 foundation, the 20 JP core, Pro, embedded, and gate cases, plus JP Settings
 and JP Public startup cases. EN and ZH-TW stay out of this step.
 
-A fresh browser that opens setting/profile.html lands on profile_edit.html
-when kpi-profile-last is absent. That is existing product behavior. The ready
-fixture must still show its canonical business name. The profile-required
-fixture must stay empty.
+A fresh browser that opens setting/profile.html stays on the view when the
+server profile has content, and falls through to profile_edit.html when the
+server profile is empty. The ready fixture must still show its canonical
+business name. The profile-required fixture must stay empty.
 
 After each fixture group the runner compares MySQL with the manifest. A
 changed fixture is reseeded from that same manifest before the next group.
@@ -522,18 +522,24 @@ def open_case(page, base: str, case: dict, account: dict, bag: dict) -> dict:
                 """async (spec) => {
                   if (spec.prefix && location.pathname.indexOf(spec.prefix) !== 0) return false;
                   if (spec.lang && document.documentElement.lang !== spec.lang) return false;
-                  if (location.pathname.indexOf('/setting/profile_edit.html') < 0) return false;
+                  const onEdit = location.pathname.indexOf('/setting/profile_edit.html') >= 0;
+                  const onView = /\/setting\/profile\.html$/.test(location.pathname);
+                  if (!onEdit && !onView) return false;
                   const tier = sessionStorage.getItem('kpiNavigator.subscriptionTier')
                     || localStorage.getItem('kpiNavigator.subscriptionTier');
                   if (localStorage.getItem('kpiNavigator.lastKpiUserId') !== spec.userId || tier !== 'basic') return false;
                   const input = document.getElementById('profile-business-name');
+                  const shown = document.getElementById('fixed-business-name');
+                  const painted = onEdit
+                    ? (!!input && input.value === spec.name)
+                    : (!!shown && (shown.textContent || '').trim() === spec.name);
                   const res = await fetch('/api/v1/profile.php', {credentials:'include'});
                   const body = await res.json();
                   const profile = body.profile || {};
                   return res.status === 200
                     && profile.businessName === spec.name
                     && profile.businessType === 'restaurant'
-                    && !!input && input.value === spec.name;
+                    && painted;
                 }""",
                 arg={
                     "userId": account["userId"],
@@ -902,7 +908,7 @@ def main() -> None:
             "fixtureMutations": mutations,
             "finalCanonical": not final_dirty,
             "finalDirty": final_dirty,
-            "profileRouteNote": "Fresh profile.html falls through to profile_edit.html when kpi-profile-last is absent. Ready data still hydrates. Profile-required stays empty.",
+            "profileRouteNote": "Fresh profile.html stays on the view when the server profile has content, and falls through to profile_edit.html when the server profile is empty. Ready edit data still hydrates from the server. Profile-required stays empty.",
             "results": results,
         }
         OUT.parent.mkdir(parents=True, exist_ok=True)

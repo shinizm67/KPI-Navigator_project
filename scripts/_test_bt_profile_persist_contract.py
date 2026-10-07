@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BT = (ROOT / "js" / "kpi-business-type.js").read_text(encoding="utf-8")
 GW = (ROOT / "js" / "kpi-data-gateway.js").read_text(encoding="utf-8")
 CACHE = "20260927-bt1"
+PROFILE_CACHE = "20261007-p02"
 
 HOSTS = [
     ROOT / "setting/profile.html",
@@ -49,7 +50,8 @@ def main() -> int:
     for path in HOSTS:
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
-        check(f"kpi-business-type.js?v={CACHE}" in text, f"{rel} BT cache-bust")
+        bust = PROFILE_CACHE if rel.startswith("setting/") or rel.startswith("en/setting/") or rel.startswith("zh-tw/setting/") else CACHE
+        check(f"kpi-business-type.js?v={bust}" in text, f"{rel} BT cache-bust")
         if path.name == "profile_edit.html":
             check("fromServer" in text and "setBusinessType(fromServer)" in text, f"{rel} edit applies server BT before meta re-sync")
         if path.name == "profile.html":

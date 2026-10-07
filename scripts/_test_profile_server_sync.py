@@ -99,13 +99,11 @@ def main() -> None:
     ]:
         t = read(rel)
         check(f"{rel} loads profile-server js", "kpi-profile-server.js" in t)
-        check(f"{rel} calls saveServerProfile", "saveServerProfile" in t)
+        check(f"{rel} calls commitProfileEdit", "commitProfileEdit" in t)
         check(f"{rel} calls hydrateEditForm", "hydrateEditForm" in t)
-        check(f"{rel} local save before server", "kpi-profile-last" in t and t.find("kpi-profile-last") < t.find("saveServerProfile"))
-        check(
-            f"{rel} server fail still navigates",
-            "saveServerProfile(data).then(goProfile).catch(goProfile)" in t,
-        )
+        check(f"{rel} does not cache before save", "localStorage.setItem('kpi-profile-last'" not in t)
+        check(f"{rel} failure does not navigate as success", ".then(goProfile).catch(goProfile)" not in t)
+        check(f"{rel} navigates only after ok", "if (res && res.ok)" in t and "profile.html" in t)
 
     # Country / currency canonical still owned by existing helpers on save path
     jp = read("setting/profile_edit.html")

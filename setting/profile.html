@@ -191,8 +191,8 @@
     </div>
     <script src="../js/kpi-auth-client.js?v=20260923-c2c"></script>
     <script src="../js/kpi-currency.js"></script>
-    <script src="../js/kpi-business-type.js?v=20260927-bt1"></script>
-    <script src="../js/kpi-profile-server.js?v=20260927-bt1"></script>
+    <script src="../js/kpi-business-type.js?v=20261007-p02"></script>
+    <script src="../js/kpi-profile-server.js?v=20261007-p02"></script>
     <script src="../js/kpi-pl-expense-presets.js"></script>
     <script src="../js/kpi-csv-templates.js"></script>
     <script src="../js/kpi-excel-templates.js"></script>
@@ -508,22 +508,18 @@
     })();
     (function () {
       var STORAGE_KEY_PROFILE = 'kpi-profile-tmp';
-      var raw = sessionStorage.getItem(STORAGE_KEY_PROFILE);
-      // まずは直前の編集結果（sessionStorage）を優先し、それが無ければ最後に保存した内容（localStorage）を使う
-      if (!raw) {
-        raw = localStorage.getItem('kpi-profile-last');
+      function showUnavailable() {
+        var host = document.querySelector('main') || document.body;
+        var note = document.getElementById('profile-load-status');
+        if (!note) {
+          note = document.createElement('p');
+          note.id = 'profile-load-status';
+          note.setAttribute('role', 'alert');
+          host.insertBefore(note, host.firstChild);
+        }
+        note.textContent = 'サーバーのプロフィールを確認できません。';
       }
-      if (!raw) {
-        window.location.replace('profile_edit.html');
-        return;
-      }
-      var data;
-      try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        window.location.replace('profile_edit.html');
-        return;
-      }
+      function render(data) {
       function setText(id, value, fallback) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -599,8 +595,18 @@
       );
       setText('fixed-timezone', data.timezone);
       setText('fixed-kpi-focus', data.kpiFocus);
-      // 直前の一時データは読み込み後に削除（localStorage 側は保持）
       sessionStorage.removeItem(STORAGE_KEY_PROFILE);
+      }
+      var server = window.__KPI_PROFILE_SERVER;
+      if (!server || typeof server.hydrateDisplay !== 'function') {
+        showUnavailable();
+        return;
+      }
+      server.hydrateDisplay({
+        onReady: render,
+        onEmpty: function () { window.location.replace('profile_edit.html'); },
+        onUnavailable: showUnavailable
+      });
     })();
   </script>
   <script src="../js/kpi-profile-session-account.js?v=20260919-1" data-kpi-profile-account-mode="view"></script>

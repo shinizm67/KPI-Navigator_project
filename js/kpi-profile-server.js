@@ -1,6 +1,6 @@
 /**
  * Server profile sync for Profile Edit ↔ kpi_user_profiles.
- * localStorage remains the interactive store; server is best-effort for Admin.
+ * The server profile is authoritative. localStorage is a cache written after a successful read or save.
  */
 (function (global) {
   'use strict';
@@ -191,7 +191,7 @@
   }
 
   /**
-   * Authenticated users only. Never rolls back localStorage (caller owns local save).
+   * Authenticated users only. Does not write the local profile cache.
    * Duplicate concurrent saves share one in-flight request.
    */
   function saveServerProfile(data) {
@@ -314,55 +314,283 @@
       }
       currencyInput.value = code;
     }
+    setInputValue('profile-timezone', d.timezone || '');
+    setInputValue('profile-kpi-focus', d.kpiFocus || '');
+  }
+
+  function canonicalMetaType() {
+    try {
+      if (global.KpiBusinessType && typeof global.KpiBusinessType.readMetaBusinessType === 'function') {
+        return global.KpiBusinessType.readMetaBusinessType() || '';
+      }
+    } catch (_e) {}
+    return '';
+  }
+
+  function withCanonicalType(shape) {
+    var next = Object.assign({}, shape || {});
+    var meta = canonicalMetaType();
+    if (meta) {
+      next.businessType = meta;
+      next.industry = meta;
+    }
+    return next;
+  }
+
+  function attachLocalOnly(shape, local) {
+    var next = Object.assign({}, shape || {});
+    var src = local || {};
+    next.timezone = strOrEmpty(src.timezone);
+    next.kpiFocus = strOrEmpty(src.kpiFocus);
+    return next;
+  }
+
+  function writeProfileCache(shape) {
+    try {
+      localStorage.setItem(PROFILE_LAST_KEY, JSON.stringify(shape || {}));
+      if (shape && shape.currency) localStorage.setItem('kpi-currency', String(shape.currency));
+      localStorage.setItem('kpi-profile-edited', '1');
+      sessionStorage.setItem('kpi-profile-tmp', JSON.stringify(shape || {}));
+    } catch (_e) {}
+  }
+
+  var MIGRATE_PREFIX = 'kpi-profile-migrate-v1:';
+
+  function migrationDone(userId) {
+    try {
+      return localStorage.getItem(MIGRATE_PREFIX + String(userId || '')) === '1';
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function markMigrationDone(userId) {
+    try {
+      localStorage.setItem(MIGRATE_PREFIX + String(userId || ''), '1');
+    } catch (_e) {}
+  }
+
+  function serverRowEmpty(profile) {
+    if (!profile || !profile.synced) return true;
+    var shape = serverToLocalShape(profile);
+    return !['businessName', 'companyName', 'businessType', 'genre', 'country', 'stateRegion', 'city', 'currency'].some(function (k) {
+      return hasText(shape[k]);
+    });
   }
 
   /**
-   * Hydrate Profile Edit: local first, then overlay non-empty server fields when synced.
+   * One-time copy from this browser only when the server profile row is empty.
+   * A populated server row is never patched from local cache.
+   */
+  function emptyServerMigration(serverProfile, local) {
+    var userId = serverProfile && serverProfile.userId ? serverProfile.userId : '';
+    var shape = serverToLocalShape(serverProfile && serverProfile.synced ? serverProfile : {});
+    if (!serverRowEmpty(serverProfile) || migrationDone(userId)) return { shape: shape, payload: null };
+    var payload = serverToLocalShape(serverProfile && serverProfile.synced ? serverProfile : {});
+    var changed = false;
+    function fill(key, localKey) {
+      if (hasText(payload[key])) return;
+      var fromLocal = local && (local[localKey || key] != null ? local[localKey || key] : local[key]);
+      if (!hasText(fromLocal)) return;
+      payload[key] = String(fromLocal).trim();
+      shape[key] = payload[key];
+      changed = true;
+    }
+    fill('businessName');
+    fill('company', 'company');
+    fill('companyName', 'companyName');
+    if (!hasText(payload.companyName) && hasText(payload.company)) payload.companyName = payload.company;
+    if (!hasText(payload.company) && hasText(payload.companyName)) payload.company = payload.companyName;
+    fill('genre');
+    fill('country');
+    fill('state', 'state');
+    fill('stateRegion', 'stateRegion');
+    if (!hasText(payload.stateRegion) && hasText(payload.state)) payload.stateRegion = payload.state;
+    if (!hasText(payload.state) && hasText(payload.stateRegion)) payload.state = payload.stateRegion;
+    fill('city');
+    fill('currency');
+    var meta = canonicalMetaType();
+    if (meta) {
+      shape.businessType = meta;
+      shape.industry = meta;
+      if (!hasText(payload.businessType)) {
+        payload.businessType = meta;
+        payload.industry = meta;
+        changed = true;
+      }
+    } else {
+      fill('businessType', 'businessType');
+      if (!hasText(payload.businessType)) fill('industry', 'industry');
+      if (hasText(payload.businessType)) payload.industry = payload.businessType;
+    }
+    if (!changed) return { shape: withCanonicalType(shape), payload: null };
+    return { shape: withCanonicalType(shape), payload: payload };
+  }
+
+  function requiredGaps(data) {
+    var d = data || {};
+    var gaps = [];
+    if (!hasText(d.businessName)) gaps.push('businessName');
+    if (!hasText(d.company) && !hasText(d.companyName)) gaps.push('companyName');
+    if (!hasText(d.country)) gaps.push('country');
+    if (!hasText(d.state) && !hasText(d.stateRegion)) gaps.push('stateRegion');
+    if (!hasText(d.currency)) gaps.push('currency');
+    if (!hasText(d.businessType) && !hasText(d.industry)) gaps.push('businessType');
+    return gaps;
+  }
+
+  function chosenType(data) {
+    var raw = data && hasText(data.businessType) ? data.businessType : data && data.industry;
+    if (global.KpiBusinessType && typeof global.KpiBusinessType.normalizeBusinessType === 'function') {
+      return global.KpiBusinessType.normalizeBusinessType(raw) || '';
+    }
+    return hasText(raw) ? String(raw).trim() : '';
+  }
+
+  /**
+   * Canonical store type first when it changes, then the profile copy.
+   * Local cache is written only after the required writes succeed.
+   * A failed profile copy rolls the canonical type back. Cache is not updated.
+   */
+  function commitProfileEdit(data) {
+    var gaps = requiredGaps(data);
+    if (gaps.length) return Promise.resolve({ ok: false, error: 'required', missing: gaps });
+    var nextType = chosenType(data);
+    if (!nextType) return Promise.resolve({ ok: false, error: 'required', missing: ['businessType'] });
+    var prevType = canonicalMetaType();
+    var payload = Object.assign({}, data, { businessType: nextType, industry: nextType });
+
+    function remember() {
+      var shaped = attachLocalOnly(serverToLocalShape(buildPayload(payload)), payload);
+      shaped.businessType = nextType;
+      shaped.industry = nextType;
+      shaped.company = shaped.company || shaped.companyName || strOrEmpty(payload.company);
+      shaped.state = shaped.state || shaped.stateRegion || strOrEmpty(payload.state);
+      writeProfileCache(shaped);
+    }
+
+    function pushType(type) {
+      if (!global.KpiBusinessType || typeof global.KpiBusinessType.syncBusinessType !== 'function') {
+        return Promise.resolve({ ok: false, error: 'business_type_unavailable' });
+      }
+      return global.KpiBusinessType.syncBusinessType(type || '');
+    }
+
+    function saveCopy() {
+      return saveServerProfile(payload).then(function (saved) {
+        if (!saved || saved.ok !== true) {
+          return { ok: false, error: (saved && saved.error) || 'save_failed', status: saved && saved.status };
+        }
+        remember();
+        return { ok: true };
+      });
+    }
+
+    if (prevType === nextType && prevType) return saveCopy();
+
+    return pushType(nextType).then(function (pushed) {
+      if (!pushed || pushed.ok !== true) {
+        return pushType(prevType).then(function () {
+          return { ok: false, error: (pushed && pushed.error) || 'store_push_failed' };
+        });
+      }
+      return saveCopy().then(function (saved) {
+        if (saved && saved.ok === true) return saved;
+        return pushType(prevType).then(function () {
+          return { ok: false, error: (saved && saved.error) || 'save_failed', status: saved && saved.status };
+        });
+      });
+    });
+  }
+
+  function profileHasContent(profile) {
+    if (!profile || !profile.synced) return false;
+    var shape = serverToLocalShape(profile);
+    return ['businessName', 'companyName', 'businessType', 'genre', 'country', 'stateRegion', 'city', 'currency'].some(function (k) {
+      return hasText(shape[k]);
+    }) || !!canonicalMetaType();
+  }
+
+  function hydrateDisplay(opts) {
+    opts = opts || {};
+    return isAuthenticatedSession().then(function (authed) {
+      if (!authed) {
+        if (typeof opts.onUnavailable === 'function') opts.onUnavailable({ reason: 'unauthorized' });
+        return { source: 'unavailable' };
+      }
+      return loadServerProfile().then(function (res) {
+        if (!res.ok || !res.profile) {
+          if (typeof opts.onUnavailable === 'function') opts.onUnavailable(res);
+          return { source: 'unavailable' };
+        }
+        var local = readLocalProfile();
+        var plan = emptyServerMigration(res.profile, local);
+        function paint(shape) {
+          var view = attachLocalOnly(withCanonicalType(shape), local);
+          try {
+            localStorage.setItem(PROFILE_LAST_KEY, JSON.stringify(view));
+            if (view.currency) localStorage.setItem('kpi-currency', String(view.currency));
+          } catch (_eCache) {}
+          if (typeof opts.onReady === 'function') opts.onReady(view, res.profile);
+          return { source: 'server', profile: view };
+        }
+        if (!profileHasContent(res.profile) && !plan.payload) {
+          if (typeof opts.onEmpty === 'function') opts.onEmpty(res.profile);
+          return { source: 'empty', profile: res.profile };
+        }
+        if (!plan.payload) return paint(plan.shape);
+        return saveServerProfile(plan.payload).then(function (saved) {
+          if (!saved || saved.ok !== true) {
+            if (profileHasContent(res.profile)) return paint(serverToLocalShape(res.profile));
+            if (typeof opts.onUnavailable === 'function') opts.onUnavailable(saved);
+            return { source: 'unavailable' };
+          }
+          markMigrationDone(res.profile.userId);
+          return paint(plan.shape);
+        });
+      });
+    });
+  }
+
+  /**
+   * Hydrate Profile Edit from the server. Stale local fields do not override
+   * populated server values. An API failure leaves the form unconfirmed.
    */
   function hydrateEditForm(opts) {
     opts = opts || {};
-    var local = readLocalProfile();
-    applyLocalShapeToForm(local);
-    if (typeof opts.onLocal === 'function') {
-      try {
-        opts.onLocal(local);
-      } catch (_e0) {}
-    }
-
     return isAuthenticatedSession().then(function (authed) {
       if (!authed) {
-        if (typeof opts.onDone === 'function') opts.onDone({ source: 'local', profile: local });
-        return { source: 'local', profile: local };
+        if (typeof opts.onDone === 'function') opts.onDone({ source: 'unavailable', profile: null });
+        return { source: 'unavailable', profile: null };
       }
       return loadServerProfile().then(function (res) {
-        if (!res.ok || !res.profile || !res.profile.synced) {
-          if (typeof opts.onDone === 'function') opts.onDone({ source: 'local', profile: local });
-          return { source: 'local', profile: local };
+        if (!res.ok || !res.profile) {
+          if (typeof opts.onDone === 'function') opts.onDone({ source: 'unavailable', profile: null });
+          return { source: 'unavailable', profile: null };
         }
-        var merged = mergePreferServer(local, res.profile);
-        applyLocalShapeToForm(merged);
-        try {
-          var store = Object.assign({}, local, {
-            businessName: merged.businessName || local.businessName || '',
-            company: merged.company || merged.companyName || local.company || '',
-            industry: merged.businessType || merged.industry || local.industry || '',
-            businessType: merged.businessType || merged.industry || local.businessType || '',
-            genre: merged.genre || local.genre || '',
-            country: merged.country || local.country || '',
-            state: merged.state || merged.stateRegion || local.state || '',
-            city: merged.city || local.city || '',
-            currency: merged.currency || local.currency || '',
-          });
-          localStorage.setItem(PROFILE_LAST_KEY, JSON.stringify(store));
-          if (store.currency) localStorage.setItem('kpi-currency', store.currency);
-        } catch (_eStore) {}
-        if (typeof opts.onServer === 'function') {
+        var local = readLocalProfile();
+        var plan = emptyServerMigration(res.profile, local);
+        function apply(shape) {
+          var view = attachLocalOnly(withCanonicalType(shape), local);
+          applyLocalShapeToForm(view);
           try {
-            opts.onServer(merged, res.profile);
-          } catch (_e1) {}
+            localStorage.setItem(PROFILE_LAST_KEY, JSON.stringify(view));
+            if (view.currency) localStorage.setItem('kpi-currency', String(view.currency));
+          } catch (_eStore) {}
+          if (typeof opts.onServer === 'function') {
+            try {
+              opts.onServer(view, res.profile);
+            } catch (_e1) {}
+          }
+          if (typeof opts.onDone === 'function') opts.onDone({ source: 'server', profile: view });
+          return { source: 'server', profile: view };
         }
-        if (typeof opts.onDone === 'function') opts.onDone({ source: 'server', profile: merged });
-        return { source: 'server', profile: merged };
+        if (!plan.payload) return apply(plan.shape);
+        return saveServerProfile(plan.payload).then(function (saved) {
+          if (saved && saved.ok === true) markMigrationDone(res.profile.userId);
+          var shape = saved && saved.ok === true ? plan.shape : serverToLocalShape(res.profile.synced ? res.profile : {});
+          return apply(shape);
+        });
       });
     });
   }
@@ -371,6 +599,9 @@
     saveServerProfile: saveServerProfile,
     loadServerProfile: loadServerProfile,
     hydrateEditForm: hydrateEditForm,
+    hydrateDisplay: hydrateDisplay,
+    commitProfileEdit: commitProfileEdit,
+    requiredGaps: requiredGaps,
     mergePreferServer: mergePreferServer,
     readLocalProfile: readLocalProfile,
     applyLocalShapeToForm: applyLocalShapeToForm,
