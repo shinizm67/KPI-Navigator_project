@@ -60,20 +60,28 @@ return [
     'marketingEvidenceKeyId' => 'k1',
     'marketingEvidenceSecret' => '',
     'marketingEvidencePreviousSecrets' => [],
-    // Stripe Sandbox only. Leave secrets empty here.
-    // Set STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET in the environment,
-    // or put sk_test_ / whsec_ values in gitignored config.local.php.
-    // Live keys (sk_live_ / rk_live_) are refused. Do not commit secrets.
+    // Stripe mode. test or live. Omitted means test. Do not infer live from the host.
+    // Production sets STRIPE_MODE=live only after live Prices, a live webhook, and an HTTPS base exist.
+    // A live key in test mode, or a test key in live mode, is rejected. Missing key fails closed.
+    'stripeMode' => 'test',
+    // Secrets stay empty in this file. Test: STRIPE_SECRET_KEY or stripeSecretKey (sk_test_ or rk_test_).
+    // Live: the same key name, with sk_live_ or rk_live_, and only while stripeMode is live.
     'stripeSecretKey' => '',
+    // Test webhook signing secret. Live mode ignores this and requires stripeWebhookSecretLive.
+    // STRIPE_WEBHOOK_SECRET / STRIPE_WEBHOOK_SECRET_LIVE. The two values must differ.
     'stripeWebhookSecret' => '',
+    'stripeWebhookSecretLive' => '',
     // Price IDs. Saved business country selects the region. Profile currency does not.
     // JP uses the Japan Prices. Any other, missing, or free-text country uses GLOBAL USD.
-    // Override with STRIPE_PRICE_BASIC / STRIPE_PRICE_PRO / STRIPE_PRICE_BASIC_JP / STRIPE_PRICE_PRO_JP.
+    // The four values below are Sandbox defaults and apply only while stripeMode is test.
+    // Live mode ignores them. Set live Price IDs with the same keys or
+    // STRIPE_PRICE_BASIC / STRIPE_PRICE_PRO / STRIPE_PRICE_BASIC_JP / STRIPE_PRICE_PRO_JP.
     'stripePriceBasic' => 'price_1UN9VpKFNH29caO9yLytJKTw',
     'stripePricePro' => 'price_1UN9k2KFNH29caO9pCLbK7xS',
     'stripePriceBasicJp' => 'price_1UNWRgKFNH29caO9kzKcLf3x',
     'stripePriceProJp' => 'price_1UNWRhKFNH29caO9NXixShH5',
-    // Optional absolute origin for Checkout return URLs, no trailing path.
-    // Empty = derive from the current request. Production hosts are refused.
+    // Checkout and portal return origin. Test mode allows only localhost / 127.0.0.1.
+    // Live mode requires https and a forge-laboratory.com host. Empty derives from the request,
+    // then the same rule rejects it. The browser cannot supply this URL.
     'publicBaseUrl' => '',
 ];

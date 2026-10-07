@@ -106,6 +106,7 @@ kpi_v1_stripe_set_transport(function ($secret, $path, $body, $idempotency) use (
         'status' => 200,
         'json' => [
             'id' => 'bps_fixture',
+            'livemode' => false,
             'url' => 'https://billing.stripe.com/p/session/test_fixture',
         ],
     ];
@@ -160,7 +161,7 @@ check('5 arbitrary return URL rejected', $clientReturn['status'] === 400 && $cli
 $liveCfg = $cfg;
 $liveCfg['stripeSecretKey'] = 'sk_live_fixture_only_not_real';
 $live = kpi_v1_stripe_start_portal($liveCfg, kpi_v1_auth_read_user('u_portal_a'), [], $server);
-check('test customer is not sent with a live key', $live['status'] === 403 && $live['error'] === 'live_key_forbidden' && count($calls) === $beforeClient);
+check('test customer is not sent with a live key', $live['status'] === 403 && $live['error'] === 'stripe_key_mismatch' && count($calls) === $beforeClient);
 
 put_billing('u_portal_b', 'cus_livemodeother', null, null, false);
 $mode = kpi_v1_stripe_start_portal($cfg, kpi_v1_auth_read_user('u_portal_b'), [], $server);
@@ -176,7 +177,7 @@ check(
 $prodCfg = $cfg;
 $prodCfg['publicBaseUrl'] = 'https://forge-laboratory.com/kpi-navigator';
 $prod = kpi_v1_stripe_start_portal($prodCfg, kpi_v1_auth_read_user('u_portal_a'), [], $server);
-check('production host stays forbidden', $prod['status'] === 403 && $prod['error'] === 'production_forbidden');
+check('production host stays forbidden in test mode', $prod['status'] === 403 && $prod['error'] === 'return_url_rejected');
 
 $status = kpi_v1_billing_status_payload($cfg, kpi_v1_auth_read_user('u_portal_a'));
 $statusJson = json_encode($status);

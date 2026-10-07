@@ -109,6 +109,7 @@ function event_payload($id, $type, array $object)
     return json_encode([
         'id' => $id,
         'type' => $type,
+        'livemode' => false,
         'data' => ['object' => $object],
     ], JSON_UNESCAPED_SLASHES);
 }
@@ -149,6 +150,7 @@ kpi_v1_stripe_set_transport(function ($secret, $path, $body, $idempotency) use (
         'status' => 200,
         'json' => [
             'id' => 'cs_test_fixture',
+            'livemode' => false,
             'url' => 'https://checkout.stripe.com/c/pay/cs_test_fixture',
         ],
     ];
@@ -225,7 +227,7 @@ check('4b endpoint rejects missing session before Stripe', $unauthPos !== false 
 $liveCfg = $cfg;
 $liveCfg['stripeSecretKey'] = 'sk_live_fixture_forbidden';
 $live = kpi_v1_stripe_start_checkout($liveCfg, $user, ['plan' => 'pro'], $server, $now);
-check('live key refused', empty($live['ok']) && $live['error'] === 'live_key_forbidden' && count($calls) === $callCount);
+check('live key refused', empty($live['ok']) && $live['error'] === 'stripe_key_mismatch' && count($calls) === $callCount);
 
 $returnJs = (string) file_get_contents(dirname(__DIR__) . '/js/kpi-checkout-return.js');
 check(
@@ -382,16 +384,19 @@ check(
 $bad = kpi_v1_stripe_handle_webhook($cfg, $created, sign_payload($created, 'whsec_wrong', $now), $whServer, $now);
 check('bad signature rejected', empty($bad['ok']) && $bad['error'] === 'invalid_signature');
 
+$liveModeEvent = json_decode($created, true);
+$liveModeEvent['livemode'] = true;
+$liveModePayload = json_encode($liveModeEvent, JSON_UNESCAPED_SLASHES);
 $prod = kpi_v1_stripe_handle_webhook(
     $cfg,
-    $created,
-    sign_payload($created, $fixtureWebhook, $now),
+    $liveModePayload,
+    sign_payload($liveModePayload, $fixtureWebhook, $now),
     ['HTTP_HOST' => 'forge-laboratory.com'],
     $now
 );
 check(
-    'production host refused',
-    empty($prod['ok']) && $prod['error'] === 'production_forbidden' && kpi_v1_auth_read_user($user['userId'])['plan'] === 'basic'
+    'test mode rejects a live webhook event',
+    empty($prod['ok']) && $prod['error'] === 'stripe_livemode_mismatch' && kpi_v1_auth_read_user($user['userId'])['plan'] === 'basic'
 );
 
 $zh = kpi_v1_stripe_return_urls('http://127.0.0.1/kpi-navigator', 'zh-tw');

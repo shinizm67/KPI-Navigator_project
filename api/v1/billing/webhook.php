@@ -2,7 +2,7 @@
 /**
  * POST /api/v1/billing/webhook.php
  * Stripe-Signature required. No session. No trust in the browser return URL.
- * Sandbox hosts only. Production hosts are refused.
+ * test mode accepts only livemode false. live mode accepts only livemode true.
  */
 
 require_once __DIR__ . '/../_stripe.php';

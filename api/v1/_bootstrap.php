@@ -72,9 +72,11 @@ function kpi_v1_load_config()
             'passwordResetBaseUrl' => 'https://forge-laboratory.com/kpi-navigator',
             'localTestMode' => false,
             'localDataRoot' => '',
-            // Stripe Sandbox. Secrets stay empty unless config.local.php or env sets them.
+            // Stripe mode is explicit. Empty or omitted stays test. Host name never selects live.
+            'stripeMode' => 'test',
             'stripeSecretKey' => '',
             'stripeWebhookSecret' => '',
+            'stripeWebhookSecretLive' => '',
             'stripePriceBasic' => 'price_1UN9VpKFNH29caO9yLytJKTw',
             'stripePricePro' => 'price_1UN9k2KFNH29caO9pCLbK7xS',
             'stripePriceBasicJp' => 'price_1UNWRgKFNH29caO9kzKcLf3x',

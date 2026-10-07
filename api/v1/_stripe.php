@@ -1,7 +1,7 @@
 <?php
 /**
- * Stripe Sandbox subscription Checkout.
- * Test keys only. Live keys and production hosts are refused.
+ * Stripe subscription Checkout, webhook, and Customer Portal.
+ * stripeMode is test or live. The host name does not select the mode.
  * Entitlement changes happen only inside the verified webhook path.
  */
 
@@ -20,11 +20,49 @@ function kpi_v1_stripe_env_or_config($envName, $cfg, $cfgKey)
     return '';
 }
 
-function kpi_v1_stripe_price_value($cfg, $envName, $cfgKey, $fallback)
+function kpi_v1_stripe_sandbox_price_ids()
+{
+    return [
+        'price_1UN9VpKFNH29caO9yLytJKTw',
+        'price_1UN9k2KFNH29caO9pCLbK7xS',
+        'price_1UNWRgKFNH29caO9kzKcLf3x',
+        'price_1UNWRhKFNH29caO9NXixShH5',
+    ];
+}
+
+function kpi_v1_stripe_is_sandbox_price($priceId)
+{
+    return in_array((string) $priceId, kpi_v1_stripe_sandbox_price_ids(), true);
+}
+
+/**
+ * Empty STRIPE_MODE and stripeMode means test.
+ * Any other non-empty value is invalid. The host is not consulted.
+ * @return 'test'|'live'|''
+ */
+function kpi_v1_stripe_mode($cfg)
+{
+    $raw = strtolower(kpi_v1_stripe_env_or_config('STRIPE_MODE', $cfg, 'stripeMode'));
+    if ($raw === '') {
+        return 'test';
+    }
+    if ($raw === 'test' || $raw === 'live') {
+        return $raw;
+    }
+    return '';
+}
+
+function kpi_v1_stripe_price_value($cfg, $envName, $cfgKey, $fallback, $mode)
 {
     $value = kpi_v1_stripe_env_or_config($envName, $cfg, $cfgKey);
-    if ($value === '') {
-        return $fallback;
+    if ($value === '' && $mode === 'test') {
+        $value = $fallback;
+    }
+    if ($mode === 'live' && kpi_v1_stripe_is_sandbox_price($value)) {
+        return '';
+    }
+    if ($value !== '' && preg_match('/^price_[A-Za-z0-9_]+$/', $value) !== 1) {
+        return '';
     }
     return $value;
 }
@@ -35,14 +73,15 @@ function kpi_v1_stripe_price_value($cfg, $envName, $cfgKey, $fallback)
  */
 function kpi_v1_stripe_prices($cfg)
 {
+    $mode = kpi_v1_stripe_mode($cfg);
     return [
         'GLOBAL' => [
-            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC', 'stripePriceBasic', 'price_1UN9VpKFNH29caO9yLytJKTw'),
-            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO', 'stripePricePro', 'price_1UN9k2KFNH29caO9pCLbK7xS'),
+            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC', 'stripePriceBasic', 'price_1UN9VpKFNH29caO9yLytJKTw', $mode),
+            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO', 'stripePricePro', 'price_1UN9k2KFNH29caO9pCLbK7xS', $mode),
         ],
         'JP' => [
-            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC_JP', 'stripePriceBasicJp', 'price_1UNWRgKFNH29caO9kzKcLf3x'),
-            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO_JP', 'stripePriceProJp', 'price_1UNWRhKFNH29caO9NXixShH5'),
+            'basic' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_BASIC_JP', 'stripePriceBasicJp', 'price_1UNWRgKFNH29caO9kzKcLf3x', $mode),
+            'pro' => kpi_v1_stripe_price_value($cfg, 'STRIPE_PRICE_PRO_JP', 'stripePriceProJp', 'price_1UNWRhKFNH29caO9NXixShH5', $mode),
         ],
     ];
 }
@@ -147,32 +186,62 @@ function kpi_v1_stripe_secret($cfg)
 
 function kpi_v1_stripe_webhook_secret($cfg)
 {
-    return kpi_v1_stripe_env_or_config('STRIPE_WEBHOOK_SECRET', $cfg, 'stripeWebhookSecret');
+    $mode = kpi_v1_stripe_mode($cfg);
+    $testSecret = kpi_v1_stripe_env_or_config('STRIPE_WEBHOOK_SECRET', $cfg, 'stripeWebhookSecret');
+    if ($mode === 'live') {
+        $liveSecret = kpi_v1_stripe_env_or_config('STRIPE_WEBHOOK_SECRET_LIVE', $cfg, 'stripeWebhookSecretLive');
+        if ($liveSecret === '' || strpos($liveSecret, 'sk_') === 0 || strpos($liveSecret, 'rk_') === 0) {
+            return '';
+        }
+        if ($testSecret !== '' && hash_equals($liveSecret, $testSecret)) {
+            return '';
+        }
+        return $liveSecret;
+    }
+    if ($mode !== 'test') {
+        return '';
+    }
+    return $testSecret;
 }
 
-function kpi_v1_stripe_secret_is_test($secret)
+function kpi_v1_stripe_secret_matches_mode($secret, $mode)
 {
-    if (strpos($secret, 'sk_live_') === 0 || strpos($secret, 'rk_live_') === 0) {
-        return false;
+    $isTest = strpos($secret, 'sk_test_') === 0 || strpos($secret, 'rk_test_') === 0;
+    $isLive = strpos($secret, 'sk_live_') === 0 || strpos($secret, 'rk_live_') === 0;
+    if ($mode === 'test') {
+        return $isTest;
     }
-    return strpos($secret, 'sk_test_') === 0 || strpos($secret, 'rk_test_') === 0;
-}
-
-function kpi_v1_stripe_host_is_production($host)
-{
-    $host = strtolower(trim((string) $host));
-    $host = preg_replace('/:\d+$/', '', $host);
-    if ($host === '') {
-        return false;
-    }
-    $suffix = 'forge-laboratory.com';
-    if ($host === $suffix || substr($host, -strlen('.' . $suffix)) === '.' . $suffix) {
-        return true;
-    }
-    if (strpos($host, 'lolipop') !== false) {
-        return true;
+    if ($mode === 'live') {
+        return $isLive;
     }
     return false;
+}
+
+/**
+ * @return array{ok:bool, status?:int, error?:string, mode?:string, secret?:string}
+ */
+function kpi_v1_stripe_require_mode_key($cfg)
+{
+    $mode = kpi_v1_stripe_mode($cfg);
+    if ($mode !== 'test' && $mode !== 'live') {
+        return ['ok' => false, 'status' => 503, 'error' => 'stripe_mode_invalid'];
+    }
+    $secret = kpi_v1_stripe_secret($cfg);
+    if ($secret === '') {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
+    if (!kpi_v1_stripe_secret_matches_mode($secret, $mode)) {
+        return ['ok' => false, 'status' => 403, 'error' => 'stripe_key_mismatch'];
+    }
+    return ['ok' => true, 'mode' => $mode, 'secret' => $secret];
+}
+
+function kpi_v1_stripe_livemode_matches($value, $mode)
+{
+    if (!is_bool($value) || ($mode !== 'test' && $mode !== 'live')) {
+        return false;
+    }
+    return $value === ($mode === 'live');
 }
 
 function kpi_v1_stripe_request_host($server)
@@ -226,27 +295,56 @@ function kpi_v1_stripe_return_urls($base, $locale)
     ];
 }
 
+function kpi_v1_stripe_loopback_host($host)
+{
+    $host = strtolower(trim((string) $host));
+    return $host === 'localhost' || $host === '127.0.0.1' || $host === '::1';
+}
+
+function kpi_v1_stripe_base_allowed($base, $mode)
+{
+    $parts = parse_url((string) $base);
+    if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host']) || !empty($parts['user'])) {
+        return false;
+    }
+    $scheme = strtolower((string) $parts['scheme']);
+    $host = strtolower((string) $parts['host']);
+    $loop = kpi_v1_stripe_loopback_host($host);
+    if ($mode === 'test') {
+        return ($scheme === 'http' || $scheme === 'https') && $loop;
+    }
+    if ($mode !== 'live' || $scheme !== 'https' || $loop) {
+        return false;
+    }
+    $suffix = 'forge-laboratory.com';
+    return $host === $suffix || substr($host, -strlen('.' . $suffix)) === '.' . $suffix;
+}
+
 function kpi_v1_stripe_resolve_base($cfg, $server)
 {
+    $mode = kpi_v1_stripe_mode($cfg);
+    if ($mode !== 'test' && $mode !== 'live') {
+        return ['ok' => false, 'status' => 503, 'error' => 'stripe_mode_invalid'];
+    }
     $configured = kpi_v1_stripe_env_or_config('KPN_PUBLIC_BASE_URL', $cfg, 'publicBaseUrl');
     if ($configured !== '') {
-        $parts = parse_url($configured);
-        $host = isset($parts['host']) ? (string) $parts['host'] : '';
-        if ($host === '' || kpi_v1_stripe_host_is_production($host)) {
-            return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+        $base = rtrim($configured, '/');
+    } else {
+        $host = kpi_v1_stripe_request_host($server);
+        if ($host === '') {
+            return ['ok' => false, 'status' => 403, 'error' => 'return_url_rejected'];
         }
-        return ['ok' => true, 'base' => rtrim($configured, '/')];
+        $https = !empty($server['HTTPS']) && $server['HTTPS'] !== 'off';
+        $script = isset($server['SCRIPT_NAME']) ? str_replace('\\', '/', (string) $server['SCRIPT_NAME']) : '';
+        $marker = '/api/v1/billing/';
+        $pos = strpos($script, $marker);
+        $prefix = $pos === false ? '' : substr($script, 0, $pos);
+        $base = ($https ? 'https' : 'http') . '://' . $host . $prefix;
     }
-    $host = kpi_v1_stripe_request_host($server);
-    if ($host === '' || kpi_v1_stripe_host_is_production($host)) {
-        return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+    if (!kpi_v1_stripe_base_allowed($base, $mode)) {
+        return ['ok' => false, 'status' => 403, 'error' => 'return_url_rejected'];
     }
-    $https = !empty($server['HTTPS']) && $server['HTTPS'] !== 'off';
-    $script = isset($server['SCRIPT_NAME']) ? str_replace('\\', '/', (string) $server['SCRIPT_NAME']) : '';
-    $marker = '/api/v1/billing/';
-    $pos = strpos($script, $marker);
-    $prefix = $pos === false ? '' : substr($script, 0, $pos);
-    return ['ok' => true, 'base' => ($https ? 'https' : 'http') . '://' . $host . $prefix];
+    return ['ok' => true, 'base' => $base];
 }
 
 function kpi_v1_stripe_checkout_params($userId, $plan, $priceId, $successUrl, $cancelUrl, $customerId)
@@ -405,13 +503,12 @@ function kpi_v1_stripe_start_portal($cfg, $user, $body, $server, $now = null)
             return ['ok' => false, 'status' => 400, 'error' => 'client_billing_forbidden'];
         }
     }
-    $secret = kpi_v1_stripe_secret($cfg);
-    if ($secret === '') {
-        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    $key = kpi_v1_stripe_require_mode_key($cfg);
+    if (empty($key['ok'])) {
+        return $key;
     }
-    if (!kpi_v1_stripe_secret_is_test($secret)) {
-        return ['ok' => false, 'status' => 403, 'error' => 'live_key_forbidden'];
-    }
+    $secret = $key['secret'];
+    $mode = $key['mode'];
     $base = kpi_v1_stripe_resolve_base($cfg, is_array($server) ? $server : []);
     if (empty($base['ok'])) {
         return $base;
@@ -453,6 +550,9 @@ function kpi_v1_stripe_start_portal($cfg, $user, $body, $server, $now = null)
     if (!kpi_v1_stripe_url_is_hosted_portal($json['url'])) {
         return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
     }
+    if (!isset($json['livemode']) || !kpi_v1_stripe_livemode_matches($json['livemode'], $mode)) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_livemode_mismatch'];
+    }
     return [
         'ok' => true,
         'status' => 200,
@@ -487,13 +587,12 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     if ($plan !== 'basic' && $plan !== 'pro') {
         return ['ok' => false, 'status' => 400, 'error' => 'invalid_plan'];
     }
-    $secret = kpi_v1_stripe_secret($cfg);
-    if ($secret === '') {
-        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    $key = kpi_v1_stripe_require_mode_key($cfg);
+    if (empty($key['ok'])) {
+        return $key;
     }
-    if (!kpi_v1_stripe_secret_is_test($secret)) {
-        return ['ok' => false, 'status' => 403, 'error' => 'live_key_forbidden'];
-    }
+    $secret = $key['secret'];
+    $mode = $key['mode'];
     $prices = kpi_v1_stripe_prices($cfg);
     if (!kpi_v1_stripe_prices_configured($prices)) {
         return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
@@ -544,6 +643,9 @@ function kpi_v1_stripe_start_checkout($cfg, $user, $body, $server, $now = null)
     }
     if (!kpi_v1_stripe_url_is_hosted_checkout($json['url'])) {
         return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
+    }
+    if (!isset($json['livemode']) || !kpi_v1_stripe_livemode_matches($json['livemode'], $mode)) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_livemode_mismatch'];
     }
     return [
         'ok' => true,
@@ -748,9 +850,9 @@ function kpi_v1_stripe_set_user_plan($cfg, array $user, $newPlan)
 function kpi_v1_stripe_handle_webhook($cfg, $payload, $header, $server, $now = null)
 {
     $now = $now === null ? time() : (int) $now;
-    $server = is_array($server) ? $server : [];
-    if (kpi_v1_stripe_host_is_production(kpi_v1_stripe_request_host($server))) {
-        return ['ok' => false, 'status' => 403, 'error' => 'production_forbidden'];
+    $mode = kpi_v1_stripe_mode($cfg);
+    if ($mode !== 'test' && $mode !== 'live') {
+        return ['ok' => false, 'status' => 503, 'error' => 'stripe_mode_invalid'];
     }
     $secret = kpi_v1_stripe_webhook_secret($cfg);
     if ($secret === '' || strpos($secret, 'sk_') === 0 || strpos($secret, 'rk_') === 0) {
@@ -762,6 +864,9 @@ function kpi_v1_stripe_handle_webhook($cfg, $payload, $header, $server, $now = n
     $event = json_decode((string) $payload, true);
     if (!is_array($event) || empty($event['id']) || empty($event['type']) || !isset($event['data']['object'])) {
         return ['ok' => false, 'status' => 400, 'error' => 'invalid_event'];
+    }
+    if (!isset($event['livemode']) || !kpi_v1_stripe_livemode_matches($event['livemode'], $mode)) {
+        return ['ok' => false, 'status' => 400, 'error' => 'stripe_livemode_mismatch'];
     }
     $eventId = (string) $event['id'];
     if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', $eventId)) {
