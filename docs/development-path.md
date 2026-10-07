@@ -190,10 +190,12 @@ BR-LAUNCH-09: Phase 3A (Basic Account Delete) READY FOR HUMAN SMOKE (`funkizm@ma
 BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO). IP-independent abuse protection (`09f4711`: forwarded-header reject, global limiter, email limiter, IP auxiliary), consent record, Basic fixed, Pro Coming Soon. Controlled smoke test account `shinizm+kpnreg@gmail.com` kept and excluded from Founder metrics (Shin decides later). `registrationEnabled` is changed only on Shin's explicit instruction. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
 `BR-LOCAL-VERIFY-01` is CLOSED (2026-10-04). Phase 1 and Phase 2 are LOCAL VERIFIED / CLOSED. Phase 3 is REAL MYSQL VERIFIED / CLOSED. Phase 4 is LOCAL MYSQL VERIFIED / CLOSED: user-facing 122 / 122 (executed 123, supplemental 1) and Admin 5 / 5. `BR-I18N-ARCH-01` is not started. Stripe stays a separate track. CURRENT PATH unchanged.
 
-COORDINATION SNAPSHOT 2026-10-07 (does not close older nodes):
+COORDINATION SNAPSHOT 2026-10-08 (does not close older nodes):
+Standing rule: BR-AUDIT-FIRST — Audit Before Implementation. See Operating Rule. This is not a product task and does not start implementation.
 Stripe track: STRIPE-LIVE-07 RUNBOOK READY. Live work blocked by Stripe approval / Live access.
-Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE (P1 SETUP READINESS ISSUE). PROFILE-PERSISTENCE-02 PENDING. Do not implement until Case GO.
-Tutorial track: TUTORIAL-FA-01 IN PREPARATION. Final recording of Profile / Initial Setup screens that may change waits on PROFILE-PERSISTENCE-02. Other tutorial production may continue.
+Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE (P1 SETUP READINESS ISSUE). PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0a998345ef9ce541824ac414921b4a39bf`). Production deployment and multi-device / fresh-browser smoke are still required.
+Tutorial track: TUTORIAL-FA-01 IN PREPARATION. Final recording of Profile / Initial Setup stays blocked until that deploy and smoke pass. Other tutorial production may continue.
+Next Windows mainline: continue from the current canonical development path. Do not start a new product implementation in this docs registration.
 Windows remains the canonical development workstation. Mac is Tutorial Production / Read-Only Inspection only.
 
 BASELINE UX CONVENTION (not a work branch):
@@ -206,7 +208,7 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `08074e2b3e16314566c8f6482cd2bcbe1c4a6915` (2026-10-07 coordination snapshot) |
+| HEAD | `5b265a0a998345ef9ce541824ac414921b4a39bf` (2026-10-08 audit-first registration; profile persistence commit) |
 | origin sync | even with `origin/wip/unit5b-pl-mep-preset-engine-20260916` (0/0). Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -311,6 +313,35 @@ CLOSED node ? **?????**??????????????
 Windows is the canonical development workstation: implementation, Cursor code changes, Codex work, tests, commit, push, deploy, and Stripe production work. Case coordinates task order and GO / NO-GO. Shin performs final approvals, Stripe Dashboard operations, tutorial recording, and controlled production actions.
 
 Mac is a Tutorial Production / Read-Only Inspection workstation. It uses the same GitHub repository at a known canonical commit, preferably detached HEAD or another protected read-only state, and it does not keep an independent development branch. Mac Cursor may inspect code, explain behavior, search source, compare Cloud behavior against that commit, and prepare scripts, captions, shot lists, demo data, and tutorial production. Mac Cursor must not edit KPN production source, commit, push, create feature branches, merge, rebase, deploy, or modify production configuration. If Mac finds a KPN code issue, stop and report it to Case and the Windows canonical workflow.
+
+### BR-AUDIT-FIRST — Audit Before Implementation (2026-10-08)
+
+Standing development rule. Not a product feature and not an implementation task.
+
+Any task that touches an existing feature, existing data, existing API, persistence path, account state, billing state, or cross-device behavior must begin with a short current-state audit before implementation. The audit is proportional to the task. Do not turn every task into a large forensic investigation.
+
+Before modifying an existing system, inspect only the items that are relevant:
+
+1. Current canonical source of truth
+2. Current read path
+3. Current write / persistence path
+4. Existing duplicate or derived state
+5. Dependencies and downstream consumers
+6. Failure-path behavior
+7. Cross-device / cross-browser behavior where relevant
+8. Existing automated tests / regression coverage
+9. JP / EN / ZH-TW parity where UI is involved
+10. Current Git baseline and unrelated dirty files
+
+If the audit discovers another problem outside the current task, do not automatically expand scope. Document the finding, classify severity and relevance, register it as a Task Tree branch or follow-up candidate, preserve the evidence and the exact code path, and return to the current task unless the discovered issue blocks safe progress. If it is a true blocker, stop and elevate it before implementation.
+
+Before adding new storage or state, search for existing canonical storage. Avoid a duplicate source of truth. Distinguish canonical state from cache, derived state, and UI state. Do not create a new database table or field merely because the UI lacks a value.
+
+Implementation reviews must verify the relevant failure paths as well as the success path. Examples: server write failure, partial multi-API write, stale browser cache, session or auth failure, webhook failure, invalid imported data, missing configuration, and test / live environment mismatch.
+
+After implementation, run focused automated tests and the relevant regression tests. Define a minimal human smoke only where automation cannot prove the behavior. Do not require Shin to repeat broad manual testing when automated evidence is sufficient.
+
+Preferred flow: task, focused audit, implementation, automated verification, smoke if required, commit / push, then continue the main Task Tree. A side issue is registered as a branch and deferred unless it blocks safe progress.
 
 ### UX / UI convention: unfinished pages (baseline)
 
@@ -1876,9 +1907,9 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | status | AUDIT COMPLETE (2026-10-07) |
 | priority | P1 SETUP READINESS ISSUE |
 | started_at | 2026-10-07 |
-| return_to | `PROFILE-PERSISTENCE-02` (PENDING; do not start in this registration) |
+| return_to | `PROFILE-PERSISTENCE-02` (COMMITTED AND PUSHED; deploy and smoke remain) |
 | finding | “Profile is entirely localStorage-only” is false. `kpi_user_profiles` / `profile.php` already stores the main profile fields. No new profile table is required. Opening Date is server-canonical at `store.meta.openingDate`. Business Type exists in both profile storage and `store.meta.businessType`; `store.meta.businessType` is the current canonical path. Profile display pages still read browser-local data and do not hydrate from `profile.php`. Profile edit writes the local cache before server persistence is confirmed, so a server save failure can still look like success. Timezone and KPI Focus remain local-only. Required Initial Setup fields are substantially server-backed, so multi-device Initial Setup readiness is not fundamentally broken. Multi-device Profile display and edit consistency still needs improvement. |
-| next_action | None on this node. Implementation has not started. |
+| next_action | None on this node. The audit stays complete. Implementation lives on `PROFILE-PERSISTENCE-02`. |
 | constraint | audit only; no code; no new table; no commit of product code in the audit session |
 
 ### PROFILE-PERSISTENCE-02
@@ -1888,14 +1919,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `PROFILE-PERSISTENCE-02` |
 | name | Server-First Profile Hydration & Save Integrity |
 | parent | `PROFILE-PERSISTENCE-01` |
-| status | PENDING |
+| status | COMMITTED AND PUSHED (2026-10-07) |
 | priority | P1 |
-| started_at | not started |
+| started_at | 2026-10-07 |
+| commit | `5b265a0a998345ef9ce541824ac414921b4a39bf` |
 | return_to | `PROFILE-PERSISTENCE-01` |
 | depends_on | `PROFILE-PERSISTENCE-01` AUDIT COMPLETE |
 | scope | Profile display pages hydrate from the authenticated server profile. Save order: validate, server write, server success, local cache update, then navigate or update the UI. A server save failure is not success. Keep `store.meta.businessType` canonical and `profile.business_type` a synchronized copy. Do not create a second source of truth. Preserve existing account data. Multi-device and fresh-browser smoke is required. |
-| next_action | PENDING. Windows may plan only. Do not implement until Case GO. |
-| constraint | not started in TASK-TREE-PROFILE-TUTORIAL-01 |
+| next_action | Production deployment and multi-device / fresh-browser smoke are still required. Do not deploy from this task-tree registration. Tutorial Profile / Initial Setup final recording stays blocked until that smoke passes. |
+| constraint | implementation is already committed; this registration does not change product code or deploy |
 
 ### TUTORIAL-FA-01
 
@@ -1910,7 +1942,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | none |
 | purpose | About five short setup and tutorial videos for Full Authorized evaluator accounts. Target narrative: Forge Bistro Demo. |
 | sequence | #01 Profile / Initial Setup. #02 Past Sales import. #03 Current-year data and setup. #04 Annual Target. #05 Reading and using KPN. The exact sequence may be refined later. |
-| dependency | Not fully blocked. Only the final recording of Profile / Initial Setup screens that may change depends on `PROFILE-PERSISTENCE-02`. Work that may continue now: tutorial account preparation, Mac workstation setup, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro, non-Profile screen smoke, and recording workflow tests. |
+| dependency | Not fully blocked. Final recording of Profile / Initial Setup still waits on production deployment and multi-device / fresh-browser smoke of `PROFILE-PERSISTENCE-02` (`5b265a0` is committed and pushed, not deployed). Work that may continue now: tutorial account preparation, Mac workstation setup, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro, non-Profile screen smoke, and recording workflow tests. |
 | workstation | Mac, under the 2026-10-07 read-only inspection policy. |
 | next_action | IN PREPARATION. Do not edit KPN source from Mac. |
 | constraint | no product-code change; no Mac commit, push, branch, merge, rebase, or deploy |
@@ -2002,7 +2034,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LOCAL-VERIFY-01` | Full Local Verification Environment | CLOSED (2026-10-04). Phase 4 LOCAL MYSQL VERIFIED / CLOSED | CRITICAL / HIGH | none (infrastructure; CURRENT PATH unchanged) |
 | `BR-I18N-ARCH-01` | Localization Architecture v2 | REGISTERED — implementation not started | HIGH | prerequisite `BR-LOCAL-VERIFY-01` |
 | `PROFILE-PERSISTENCE-01` | Profile Source of Truth Audit | AUDIT COMPLETE (2026-10-07) | P1 SETUP READINESS ISSUE | none (coordination track) |
-| `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | PENDING | P1 | `PROFILE-PERSISTENCE-01` |
+| `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | COMMITTED AND PUSHED (`5b265a0`); deploy and fresh-browser smoke still required | P1 | `PROFILE-PERSISTENCE-01` |
 | `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION | not a code task | none; Profile / Initial Setup final recording depends on `PROFILE-PERSISTENCE-02` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
@@ -2204,3 +2236,4 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 Phase 3B IMPLEMENTED / REAL MYSQL VERIFIED / CLOSED.** Case approved. Phase 3 Local MySQL Parity is CLOSED. Parent stays ACTIVE / MAINTAINED. Phase 4 Full Page Smoke is NEXT / UNSTARTED. CURRENT PATH unchanged. |
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 CLOSED.** Phase 4 Full Page Smoke is LOCAL MYSQL VERIFIED / CLOSED. User-facing contract 122 / 122 (executed 123, supplemental 1). Admin 5 / 5, with normal-user HTTP 403. Local Founder `localfounder1` is smoke-only. CURRENT PATH unchanged. |
 | 2026-10-07 | **TASK-TREE-PROFILE-TUTORIAL-01.** Registered `PROFILE-PERSISTENCE-01` AUDIT COMPLETE (P1; profile is not local-only), `PROFILE-PERSISTENCE-02` PENDING, and `TUTORIAL-FA-01` IN PREPARATION. Stripe track noted as `STRIPE-LIVE-07` RUNBOOK READY, blocked on Live access. Mac is tutorial production / read-only. Windows remains canonical development. Docs only. No product implementation. |
+| 2026-10-08 | **TASK-TREE-AUDIT-FIRST-01.** Registered standing rule `BR-AUDIT-FIRST` under Operating Rule. Updated `PROFILE-PERSISTENCE-02` to COMMITTED AND PUSHED `5b265a0`, with production deploy and multi-device smoke still required before Tutorial Profile recording. `PROFILE-PERSISTENCE-01` stays AUDIT COMPLETE. `TUTORIAL-FA-01` stays IN PREPARATION. `STRIPE-LIVE-07` stays RUNBOOK READY, blocked on Live access. Docs only. No product implementation. |
