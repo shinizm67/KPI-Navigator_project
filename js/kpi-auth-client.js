@@ -946,6 +946,11 @@
       if (isZh) return '電子郵件或密碼不正確。';
       return 'Email or password is incorrect.';
     }
+    if (code === 'too_many_login_attempts') {
+      if (isJa) return 'ログインの試行が続いたため、しばらく時間をおいてから、もう一度お試しください。';
+      if (isZh) return '登入嘗試次數過多，請稍候再試。';
+      return 'Too many login attempts. Please wait a while and try again.';
+    }
     if (code === 'invalid_email') {
       if (isJa) return 'メールアドレスの形式が正しくありません。';
       if (isZh) return '電子郵件格式不正確。';
