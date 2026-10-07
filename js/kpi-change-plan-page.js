@@ -82,11 +82,7 @@
     }
 
     if (isPro) {
-      setCellContent(
-        basicAction,
-        t('ダウングレード', 'Down Grade Plan', '降級方案'),
-        false
-      );
+      setCellContent(basicAction, '\u2014', true);
       setCellContent(
         proAction,
         t('現在のプラン', 'Current Plan', '目前方案'),
@@ -100,7 +96,7 @@
       );
       setCellContent(
         proAction,
-        t('アップグレード', 'Upgrade Plan', '升級方案'),
+        t('プロを契約', 'Subscribe to Pro', '訂閱專業方案'),
         false
       );
     }
@@ -127,9 +123,9 @@
     }
     if (code === 'already_subscribed') {
       return t(
-        '有効なサブスクリプションがある間、このサンドボックスではプラン変更を開始できません。',
-        'Plan changes cannot be started in this sandbox while a subscription is active.',
-        '訂閱有效期間，此沙箱無法開始變更方案。'
+        '契約中は、この画面から別のプランの決済を開始できません。',
+        'A new checkout cannot be started from this page while a subscription is active.',
+        '訂閱有效期間，無法在此頁面開始新的結帳。'
       );
     }
     if (code === 'not_configured') {

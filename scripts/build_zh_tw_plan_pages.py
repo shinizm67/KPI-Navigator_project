@@ -82,35 +82,19 @@ PLAN_DETAILS_REPLACEMENTS = [
     (">Manage Billing</a>", ">管理帳單</a>"),
     ("]</span> Manage Subscription</h3>", "]</span> 訂閱管理</h3>"),
     (">Change Plan</a>", ">變更方案</a>"),
-    (
-        "Switch to Yearly Billing (Save 15%)",
-        "改為年繳（省 15%）",
-    ),
     ("Update Payment Method", "更新付款方式"),
     ("Cancel Subscription", "取消訂閱"),
     (
-        "Cancellation becomes effective at the end of the current billing period. Data is retained for 30 days after cancellation.",
-        "取消將於目前帳單週期結束時生效。取消後資料將保留 30 天。",
+        "You can continue using your current plan until the end of the current billing period after cancellation.",
+        "取消訂閱後，仍可使用目前方案至本期計費週期結束。",
     ),
     (
         "]</span> Data &amp; Cancellation Policy</h3>",
         "]</span> 資料與取消政策</h3>",
     ),
     (
-        "Downgrading to Basic restricts access to P&amp;L and AI modules.",
-        "降級至基本方案後，P&amp;L 與 AI 模組的存取將受限制。",
-    ),
-    (
-        "No data is deleted immediately upon downgrade.",
-        "降級時不會立即刪除資料。",
-    ),
-    (
-        "Account access remains active until the period ends.",
-        "帳戶存取權限會持續至週期結束。",
-    ),
-    (
-        "All data is permanently deleted after 30 days.",
-        "所有資料將於 30 天後永久刪除。",
+        "Cancellation alone does not delete account data.",
+        "僅取消訂閱不會刪除帳戶資料。",
     ),
     ("]</span> Support</h3>", "]</span> 支援</h3>"),
     ("Priority Email Support", "優先電子郵件支援"),
@@ -129,8 +113,8 @@ CHANGE_PLAN_REPLACEMENTS = [
     (">Change Plan</h2>", ">變更方案</h2>"),
     ("]</span> Current Plan</h3>", "]</span> 目前方案</h3>"),
     (
-        "Upgrade or downgrade your subscription plan.",
-        "可升級或降級您的訂閱方案。",
+        "A new monthly subscription can be started from this page.",
+        "可在此頁面開始新的月費訂閱。",
     ),
     ("]</span> Current Plan Summary</h3>", "]</span> 目前方案摘要</h3>"),
     ("<strong>Current Plan:</strong> Pro", "<strong>目前方案：</strong> 專業"),
@@ -161,19 +145,14 @@ CHANGE_PLAN_REPLACEMENTS = [
     ("12. Monthly Profit Analysis Dashboard", "12. 月次利潤分析儀表板"),
     ('aria-label="Included"', 'aria-label="包含"'),
     ('aria-label="Not included"', 'aria-label="不包含"'),
-    (">Down Grade Plan</a>", ">降級方案</a>"),
     (
         'role="status" aria-label="Your current plan">Current Plan</span>',
         'role="status" aria-label="您目前的方案">目前方案</span>',
     ),
     ("]</span> Billing Impact Notice</h3>", "]</span> 帳單影響說明</h3>"),
     (
-        "<strong>When upgrading:</strong> You get immediate access to new features. A prorated charge may be applied to your payment method today.",
-        "<strong>升級時：</strong>可立即使用新功能。可能會於今日依比例向您的付款方式收費。",
-    ),
-    (
-        "<strong>When downgrading:</strong> Changes take effect at the end of your current billing period. No immediate refund for the remaining time on the current plan.",
-        "<strong>降級時：</strong>變更於目前帳單週期結束後生效。目前方案剩餘期間不予即時退款。",
+        "You can continue using your current plan until the end of the current billing period after cancellation.",
+        "取消訂閱後，仍可使用目前方案至本期計費週期結束。",
     ),
 ]
 
