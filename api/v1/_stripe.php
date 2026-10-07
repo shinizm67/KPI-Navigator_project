@@ -306,16 +306,19 @@ function kpi_v1_stripe_set_transport($transport)
     $slot = $transport;
 }
 
-function kpi_v1_stripe_http($secret, $body, $idempotencyKey)
+function kpi_v1_stripe_http($secret, $body, $idempotencyKey, $path = '/v1/checkout/sessions')
 {
+    if (!is_string($path) || strpos($path, '/v1/') !== 0) {
+        $path = '/v1/checkout/sessions';
+    }
     $slot = &kpi_v1_stripe_transport_slot();
     if (is_callable($slot)) {
-        return $slot($secret, '/v1/checkout/sessions', $body, $idempotencyKey);
+        return $slot($secret, $path, $body, $idempotencyKey);
     }
     if (!function_exists('curl_init')) {
         return ['status' => 0, 'json' => null];
     }
-    $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
+    $ch = curl_init('https://api.stripe.com' . $path);
     if ($ch === false) {
         return ['status' => 0, 'json' => null];
     }
@@ -348,6 +351,116 @@ function kpi_v1_stripe_url_is_hosted_checkout($url)
         && isset($parts['scheme'], $parts['host'])
         && $parts['scheme'] === 'https'
         && strtolower((string) $parts['host']) === 'checkout.stripe.com';
+}
+
+function kpi_v1_stripe_portal_return_url($base, $locale)
+{
+    $locale = strtolower(trim((string) $locale));
+    if ($locale === 'zh-tw' || $locale === 'zh') {
+        $dir = '/zh-tw/setting/';
+    } elseif ($locale === 'en') {
+        $dir = '/en/setting/';
+    } else {
+        $dir = '/setting/';
+    }
+    return $base . $dir . 'change_plan.html';
+}
+
+function kpi_v1_stripe_customer_id_ok($customerId)
+{
+    return is_string($customerId) && preg_match('/^cus_[A-Za-z0-9]{1,250}$/', $customerId) === 1;
+}
+
+function kpi_v1_stripe_url_is_hosted_portal($url)
+{
+    $parts = parse_url((string) $url);
+    return is_array($parts)
+        && isset($parts['scheme'], $parts['host'])
+        && $parts['scheme'] === 'https'
+        && strtolower((string) $parts['host']) === 'billing.stripe.com'
+        && empty($parts['user']);
+}
+
+/**
+ * Billing Portal Session for the signed-in user's stored Stripe customer.
+ * The browser cannot choose the customer, subscription, or return URL.
+ * Does not cancel or change the subscription. Dashboard portal settings do.
+ */
+function kpi_v1_stripe_start_portal($cfg, $user, $body, $server, $now = null)
+{
+    if (!is_array($user) || empty($user['userId'])) {
+        return ['ok' => false, 'status' => 401, 'error' => 'unauthorized'];
+    }
+    if (!empty($user['disabled'])) {
+        return ['ok' => false, 'status' => 403, 'error' => 'account_disabled'];
+    }
+    if (!is_array($body)) {
+        return ['ok' => false, 'status' => 400, 'error' => 'invalid_json'];
+    }
+    foreach ([
+        'customer', 'customerId', 'customer_id', 'subscription', 'subscriptionId', 'subscription_id',
+        'return_url', 'returnUrl', 'mode', 'price', 'priceId', 'price_id',
+    ] as $forbidden) {
+        if (array_key_exists($forbidden, $body)) {
+            return ['ok' => false, 'status' => 400, 'error' => 'client_billing_forbidden'];
+        }
+    }
+    $secret = kpi_v1_stripe_secret($cfg);
+    if ($secret === '') {
+        return ['ok' => false, 'status' => 503, 'error' => 'not_configured'];
+    }
+    if (!kpi_v1_stripe_secret_is_test($secret)) {
+        return ['ok' => false, 'status' => 403, 'error' => 'live_key_forbidden'];
+    }
+    $base = kpi_v1_stripe_resolve_base($cfg, is_array($server) ? $server : []);
+    if (empty($base['ok'])) {
+        return $base;
+    }
+    $locale = isset($body['locale']) ? (string) $body['locale'] : 'ja';
+    $returnUrl = kpi_v1_stripe_portal_return_url($base['base'], $locale);
+    $userId = (string) $user['userId'];
+    $look = kpi_v1_billing_transaction($cfg, function ($store) use ($userId) {
+        return ['ok' => true, 'billing' => $store->get($userId), 'rollback' => true];
+    });
+    if (empty($look['ok'])) {
+        return $look;
+    }
+    $billing = (isset($look['billing']) && is_array($look['billing'])) ? $look['billing'] : null;
+    $customerId = is_array($billing) && isset($billing['stripeCustomerId']) ? (string) $billing['stripeCustomerId'] : '';
+    if (!kpi_v1_stripe_customer_id_ok($customerId)) {
+        return ['ok' => false, 'status' => 409, 'error' => 'no_stripe_customer'];
+    }
+    $params = [
+        'customer' => $customerId,
+        'return_url' => $returnUrl,
+    ];
+    $encoded = kpi_v1_stripe_form_encode($params);
+    $now = $now === null ? time() : (int) $now;
+    $idempotency = 'kpn_portal_' . hash('sha256', $userId . '|' . (string) (int) floor($now / 60));
+    $response = kpi_v1_stripe_http($secret, $encoded, $idempotency, '/v1/billing_portal/sessions');
+    $status = isset($response['status']) ? (int) $response['status'] : 0;
+    $json = isset($response['json']) && is_array($response['json']) ? $response['json'] : null;
+    $stripeCode = '';
+    if (is_array($json) && isset($json['error']) && is_array($json['error']) && isset($json['error']['code'])) {
+        $stripeCode = (string) $json['error']['code'];
+    }
+    if ($stripeCode === 'resource_missing') {
+        return ['ok' => false, 'status' => 409, 'error' => 'customer_mode_mismatch'];
+    }
+    if ($status < 200 || $status >= 300 || $json === null || empty($json['url']) || empty($json['id'])) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
+    }
+    if (!kpi_v1_stripe_url_is_hosted_portal($json['url'])) {
+        return ['ok' => false, 'status' => 502, 'error' => 'stripe_error'];
+    }
+    return [
+        'ok' => true,
+        'status' => 200,
+        'url' => (string) $json['url'],
+        'id' => (string) $json['id'],
+        'params' => $params,
+        'body' => $encoded,
+    ];
 }
 
 /**
@@ -831,6 +944,7 @@ function kpi_v1_billing_status_payload($cfg, array $user)
             'confirmed' => $confirmed,
             'invoiceStatus' => $billing !== null ? $billing['lastInvoiceStatus'] : null,
             'subscriptionPrice' => $subscriptionPrice,
+            'portalAvailable' => $billing !== null && kpi_v1_stripe_customer_id_ok(isset($billing['stripeCustomerId']) ? (string) $billing['stripeCustomerId'] : ''),
         ],
     ];
 }

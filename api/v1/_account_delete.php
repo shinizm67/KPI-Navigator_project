@@ -32,6 +32,77 @@ function kpi_v1_account_delete_password_fingerprint($passwordHash)
     return hash('sha256', 'kpn-account-delete|' . (string) $passwordHash);
 }
 
+/** Statuses that still need Stripe. Ended statuses are not in this list. */
+function kpi_v1_account_delete_subscription_block_code($status, $subscriptionId)
+{
+    $status = strtolower(trim((string) $status));
+    $subscriptionId = trim((string) $subscriptionId);
+    if (in_array($status, ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'], true)) {
+        return 'active_subscription_exists';
+    }
+    $ended = ['canceled', 'incomplete_expired', 'ended'];
+    if ($status === '' || in_array($status, $ended, true)) {
+        if ($status === '' && $subscriptionId !== '') {
+            return 'active_subscription_exists';
+        }
+        return null;
+    }
+    if ($subscriptionId !== '') {
+        return 'active_subscription_exists';
+    }
+    return null;
+}
+
+/**
+ * @param PDO|null $pdo when already inside the delete transaction, read on that connection
+ * @return string|null active_subscription_exists | billing_state_unavailable
+ */
+function kpi_v1_account_delete_subscription_block($cfg, $userId, $pdo = null)
+{
+    $userId = (string) $userId;
+    if ($pdo instanceof PDO) {
+        try {
+            $st = $pdo->prepare(
+                'SELECT subscription_status, stripe_subscription_id FROM kpi_stripe_subscriptions WHERE user_id = ? LIMIT 1'
+            );
+            $st->execute([$userId]);
+            $row = $st->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                return null;
+            }
+            return kpi_v1_account_delete_subscription_block_code($row['subscription_status'], $row['stripe_subscription_id']);
+        } catch (Throwable $e) {
+            return 'billing_state_unavailable';
+        }
+    }
+    require_once __DIR__ . '/_billing_store.php';
+    $look = kpi_v1_billing_transaction($cfg, function ($store) use ($userId) {
+        return ['ok' => true, 'billing' => $store->get($userId), 'rollback' => true];
+    });
+    if (empty($look['ok'])) {
+        return 'billing_state_unavailable';
+    }
+    $billing = (isset($look['billing']) && is_array($look['billing'])) ? $look['billing'] : null;
+    if ($billing === null) {
+        return null;
+    }
+    return kpi_v1_account_delete_subscription_block_code(
+        isset($billing['subscriptionStatus']) ? $billing['subscriptionStatus'] : '',
+        isset($billing['stripeSubscriptionId']) ? $billing['stripeSubscriptionId'] : ''
+    );
+}
+
+function kpi_v1_account_delete_reject_http($code)
+{
+    if ($code === 'protected_account') {
+        return 403;
+    }
+    if ($code === 'billing_state_unavailable') {
+        return 503;
+    }
+    return 409;
+}
+
 /** @return string|null error code when this user may not delete itself */
 function kpi_v1_account_delete_reject_reason($cfg, $user)
 {
@@ -42,7 +113,7 @@ function kpi_v1_account_delete_reject_reason($cfg, $user)
     if (kpi_v1_account_delete_has_children($cfg, (string) $user['userId'])) {
         return 'has_child_accounts';
     }
-    return null;
+    return kpi_v1_account_delete_subscription_block($cfg, (string) $user['userId']);
 }
 
 /** Fails closed: a lookup error counts as "has children". */
@@ -179,6 +250,11 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null, $m
                 $pdo->rollBack();
                 return 'has_child_accounts';
             }
+            $subscriptionBlock = kpi_v1_account_delete_subscription_block($cfg, $userId, $pdo);
+            if ($subscriptionBlock !== null) {
+                $pdo->rollBack();
+                return $subscriptionBlock;
+            }
             $mkt = kpi_v1_marketing_run($cfg, function ($ctx) use ($row, $marketingChoice) {
                 return kpi_v1_marketing_op_account_deleted($ctx, (string) $row['email'], $marketingChoice);
             }, $pdo);
@@ -227,6 +303,10 @@ function kpi_v1_account_delete_user_record($cfg, $user, &$lifecycleId = null, $m
     }
     if (kpi_v1_account_delete_has_children($cfg, $userId)) {
         return 'has_child_accounts';
+    }
+    $subscriptionBlock = kpi_v1_account_delete_subscription_block($cfg, $userId);
+    if ($subscriptionBlock !== null) {
+        return $subscriptionBlock;
     }
     $record = kpi_v1_lifecycle_build_record($cfg, $fresh, kpi_v1_lifecycle_file_origin($userId), kpi_v1_lifecycle_segment($cfg, $userId));
     if ($record === null) {
@@ -385,7 +465,7 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId, $marketingChoice = 
     }
     $reject = kpi_v1_account_delete_reject_reason($cfg, $user);
     if ($reject !== null) {
-        return [$reject === 'protected_account' ? 403 : 409, ['ok' => false, 'error' => $reject]];
+        return [kpi_v1_account_delete_reject_http($reject), ['ok' => false, 'error' => $reject]];
     }
     if (!kpi_v1_account_delete_intent_valid($user)) {
         unset($_SESSION['kpi_delete_intent']);
@@ -407,8 +487,8 @@ function kpi_v1_account_delete_execute_locked($cfg, $userId, $marketingChoice = 
         unset($_SESSION['kpi_delete_intent']);
         return [403, ['ok' => false, 'error' => 'delete_intent_required']];
     }
-    if ($result === 'has_child_accounts') {
-        return [409, ['ok' => false, 'error' => 'has_child_accounts']];
+    if ($result === 'has_child_accounts' || $result === 'active_subscription_exists' || $result === 'billing_state_unavailable') {
+        return [kpi_v1_account_delete_reject_http($result), ['ok' => false, 'error' => $result]];
     }
     if ($result !== 'ok') {
         return [500, ['ok' => false, 'error' => 'delete_failed']];

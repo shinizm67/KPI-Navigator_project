@@ -141,6 +141,74 @@
     return t('決済を開始できませんでした。', 'Checkout could not be started.', '無法開始結帳。');
   }
 
+  function portalError(code) {
+    if (code === 'unauthorized' || code === 'precondition_required') {
+      return t('ログインが必要です。', 'Please sign in.', '請先登入。');
+    }
+    if (code === 'no_stripe_customer') {
+      return t('まだお支払い情報はありません。', 'There is no billing profile yet.', '尚無付款資料。');
+    }
+    if (code === 'client_billing_forbidden') {
+      return t('請求画面を開けません。', 'The billing page cannot be opened.', '無法開啟付款頁面。');
+    }
+    return t('支払い・契約の管理画面を開けませんでした。', 'The billing page could not be opened.', '無法開啟付款與訂閱管理頁面。');
+  }
+
+  function paintPortal(data) {
+    var wrap = document.getElementById('change-plan-portal');
+    var btn = document.getElementById('change-plan-portal-btn');
+    if (!wrap || !btn) return;
+    var billing = data && data.billing ? data.billing : {};
+    btn.textContent = t('支払い・契約を管理', 'Manage billing & subscription', '管理付款與訂閱');
+    wrap.hidden = billing.portalAvailable !== true;
+  }
+
+  var portalBusy = false;
+
+  function beginPortal() {
+    var auth = window.__KPI_AUTH;
+    if (!auth || typeof auth.resolveAuthBase !== 'function' || typeof auth.attachExpectedUser !== 'function') {
+      statusEl().textContent = portalError('unauthorized');
+      return;
+    }
+    if (portalBusy) return;
+    portalBusy = true;
+    statusEl().textContent = t(
+      '支払い・契約の管理画面へ移動しています。',
+      'Opening the billing page.',
+      '正在前往付款與訂閱管理頁面。'
+    );
+    var attached = auth.attachExpectedUser({}, { locale: pageLang() });
+    window
+      .fetch(auth.resolveAuthBase() + '/billing/portal-session.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, attached.headers),
+        body: JSON.stringify(attached.body),
+      })
+      .then(function (res) {
+        return res.json().catch(function () {
+          return { ok: false, error: 'invalid_response' };
+        }).then(function (data) {
+          return { status: res.status, data: data || { ok: false } };
+        });
+      })
+      .then(function (r) {
+        portalBusy = false;
+        var data = r.data || {};
+        var url = typeof data.url === 'string' ? data.url : '';
+        if (r.status === 200 && data.ok && url.indexOf('https://billing.stripe.com/') === 0) {
+          window.location.assign(url);
+          return;
+        }
+        statusEl().textContent = portalError(data.error || '');
+      })
+      .catch(function () {
+        portalBusy = false;
+        statusEl().textContent = portalError('');
+      });
+  }
+
   var checkoutBusy = false;
 
   function beginStripeCheckout(plan) {
@@ -246,6 +314,7 @@
         if (!data || data.ok !== true) return;
         paintOffer(data.offer);
         paintSubscription(data);
+        paintPortal(data);
       })
       .catch(function () {});
   }
@@ -265,6 +334,12 @@
       if (!node || String(node.tagName).toUpperCase() !== 'A') return;
       ev.preventDefault();
       beginStripeCheckout(node.id === 'change-plan-basic-action' ? 'basic' : 'pro');
+    });
+    document.addEventListener('click', function (ev) {
+      var portalBtn = ev.target && ev.target.closest ? ev.target.closest('#change-plan-portal-btn') : null;
+      if (!portalBtn) return;
+      ev.preventDefault();
+      beginPortal();
     });
   }
 

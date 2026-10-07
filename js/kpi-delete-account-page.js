@@ -63,6 +63,13 @@
         '請先整理關聯帳戶。'
       );
     },
+    activeSubscription: function () {
+      return t(
+        '有効なサブスクリプションがあります。先に「支払い・契約を管理」から解約してください。契約期間終了後にアカウントを削除できます。',
+        'An active subscription still exists. Cancel it from “Manage billing & subscription” first. You can delete the account after the subscription ends.',
+        '仍有有效的訂閱。請先從「管理付款與訂閱」取消。訂閱期間結束後才能刪除帳戶。'
+      );
+    },
     ackRequired: function () {
       return t(
         '内容を確認し、チェックを入れてください。',
@@ -172,6 +179,7 @@
   function commonError(code) {
     if (code === 'protected_account') return MSG.protectedAccount();
     if (code === 'has_child_accounts') return MSG.children();
+    if (code === 'active_subscription_exists') return MSG.activeSubscription();
     if (code === 'stale_account') return staleAccountText('');
     return '';
   }

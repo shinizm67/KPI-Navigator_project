@@ -49,7 +49,7 @@ if ($action === 'verify') {
     }
     $reject = kpi_v1_account_delete_reject_reason($cfg, $user);
     if ($reject !== null) {
-        kpi_v1_json_out($reject === 'protected_account' ? 403 : 409, ['ok' => false, 'error' => $reject]);
+        kpi_v1_json_out(kpi_v1_account_delete_reject_http($reject), ['ok' => false, 'error' => $reject]);
     }
     kpi_v1_account_delete_issue_intent($user);
     kpi_v1_json_out(200, [
