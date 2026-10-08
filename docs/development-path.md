@@ -194,7 +194,7 @@ COORDINATION SNAPSHOT 2026-10-08 (does not close older nodes):
 Standing rule: BR-AUDIT-FIRST — Audit Before Implementation. See Operating Rule. This is not a product task and does not start implementation.
 Stripe track: STRIPE-LIVE-07 RUNBOOK READY. Live work blocked by Stripe approval / Live access.
 Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE. PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0`). PROFILE-PERSISTENCE-03 production smoke failed on fresh-browser direct Profile save and is superseded. PROFILE-PERSISTENCE-04 VERIFIED IN PRODUCTION / COMPLETE (`0edce9ea51ce90616f00748995f007679154ff10`).
-Tutorial track: TUTORIAL-FA-01 IN PREPARATION. Profile / Initial Setup recording is UNBLOCKED. Other tutorial production may continue.
+Tutorial track: TUTORIAL-FA-01 IN PREPARATION. HOME-BLANK-01 AUDIT COMPLETE. HOME-BLANK-02 PRODUCTION HOTFIX VERIFIED. Profile / Initial Setup recording is UNBLOCKED. Other tutorial production may continue.
 Next Windows mainline: continue from the current canonical development path. Do not start a new product implementation in this docs registration.
 Windows remains the canonical development workstation. Mac is Tutorial Production / Read-Only Inspection only.
 
@@ -208,7 +208,7 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `0edce9ea51ce90616f00748995f007679154ff10` (2026-10-08 profile store sync on direct entry) |
+| HEAD | `b1b1f880c9e9588f93a346ae12621c045c071aab` (2026-10-08 Home fresh-session bootstrap visibility) |
 | origin sync | even with `origin/wip/unit5b-pl-mep-preset-engine-20260916` (0/0). Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1971,10 +1971,39 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | none |
 | purpose | About five short setup and tutorial videos for Full Authorized evaluator accounts. Target narrative: Forge Bistro Demo. |
 | sequence | #01 Profile / Initial Setup. #02 Past Sales import. #03 Current-year data and setup. #04 Annual Target. #05 Reading and using KPN. The exact sequence may be refined later. |
-| dependency | Profile / Initial Setup recording is UNBLOCKED. `PROFILE-PERSISTENCE-04` is verified in production. Mac cross-device recording remains optional follow-up. Work that may continue: tutorial account preparation, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro. |
+| dependency | Profile / Initial Setup recording is UNBLOCKED. `HOME-BLANK-02` restored a visible Home path in production. Mac cross-device Profile check passed in `TUTORIAL-FA-01A`. Work that may continue: tutorial account preparation, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro. |
 | workstation | Mac, under the 2026-10-07 read-only inspection policy. |
 | next_action | IN PREPARATION. Do not edit KPN source from Mac. |
 | constraint | no product-code change; no Mac commit, push, branch, merge, rebase, or deploy |
+
+### HOME-BLANK-01
+
+| Field | Value |
+|-------|-------|
+| id | `HOME-BLANK-01` |
+| name | Production Home Blank Screen Audit |
+| parent | `TUTORIAL-FA-01` |
+| status | AUDIT COMPLETE (2026-10-08) |
+| priority | P0 at audit time |
+| started_at | 2026-10-08 |
+| finding | Production Home HTML set `data-kpi-pro-pending` and hid the document with `visibility:hidden`. Nothing cleared it. Windows and Mac both stayed black. Canonical HEAD did not use that gate. `js/kpi-home-entry.js` was missing in production. |
+| next_action | None. The production page is replaced by `HOME-BLANK-02`. |
+
+### HOME-BLANK-02
+
+| Field | Value |
+|-------|-------|
+| id | `HOME-BLANK-02` |
+| name | Align Production Home With Canonical Head |
+| parent | `HOME-BLANK-01` |
+| status | PRODUCTION HOTFIX VERIFIED (2026-10-08) |
+| priority | P0, resolved in production |
+| started_at | 2026-10-08 |
+| commit | `b1b1f880c9e9588f93a346ae12621c045c071aab` |
+| scope | Production Home HTML for JP, EN, and ZH-TW, plus `js/kpi-home-entry.js`. `js/kpi-home-shell.js` and `js/kpi-home-kpi.js` match the previous HEAD and were not part of the product commit. A missing local store now leaves Home for Annual instead of staying hidden. Cache query on the three Home scripts is `20261008-hb02`. |
+| verification | Fresh browser on the FA account: Home direct, Home after Profile, and Home after Annual each landed on visible Annual with 「初期設定を続ける」. `?kpnSetup=1` opened Initial Setup step 01. Logged-out Home landed on the visible login page. `data-kpi-pro-pending` is absent. registration lock stayed false. Stripe files were not deployed. Git blobs are LF. The deployed copies are the same text with CRLF. No second deploy. |
+| next_action | None on this node. Initial Setup is still not linked from Profile, settings, or Home. That discoverability gap stays a UX follow-up. |
+| constraint | registration lock and Stripe configuration were not changed. |
 
 ---
 
@@ -2066,7 +2095,9 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | COMMITTED AND PUSHED (`5b265a0`); fresh-browser gap closed by `PROFILE-PERSISTENCE-04` | P1 | `PROFILE-PERSISTENCE-01` |
 | `PROFILE-PERSISTENCE-03` | Production Profile Smoke | PARTIAL / FAIL — superseded | P0 at smoke time | `PROFILE-PERSISTENCE-02` |
 | `PROFILE-PERSISTENCE-04` | Fresh-Browser Profile Store Bootstrap | VERIFIED IN PRODUCTION / COMPLETE (`0edce9e`) | BLOCKER, resolved | `PROFILE-PERSISTENCE-03` |
-| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION; Profile / Initial Setup recording UNBLOCKED | not a code task | `PROFILE-PERSISTENCE-04` |
+| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION; Profile / Initial Setup recording UNBLOCKED | not a code task | `HOME-BLANK-02` |
+| `HOME-BLANK-01` | Production Home Blank Screen Audit | AUDIT COMPLETE (2026-10-08) | P0 at audit time | `TUTORIAL-FA-01` |
+| `HOME-BLANK-02` | Align Production Home With Canonical Head | PRODUCTION HOTFIX VERIFIED (2026-10-08) | P0, resolved in production | `HOME-BLANK-01` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -2269,3 +2300,4 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-07 | **TASK-TREE-PROFILE-TUTORIAL-01.** Registered `PROFILE-PERSISTENCE-01` AUDIT COMPLETE (P1; profile is not local-only), `PROFILE-PERSISTENCE-02` PENDING, and `TUTORIAL-FA-01` IN PREPARATION. Stripe track noted as `STRIPE-LIVE-07` RUNBOOK READY, blocked on Live access. Mac is tutorial production / read-only. Windows remains canonical development. Docs only. No product implementation. |
 | 2026-10-08 | **TASK-TREE-AUDIT-FIRST-01.** Registered standing rule `BR-AUDIT-FIRST` under Operating Rule. Updated `PROFILE-PERSISTENCE-02` to COMMITTED AND PUSHED `5b265a0`, with production deploy and multi-device smoke still required before Tutorial Profile recording. `PROFILE-PERSISTENCE-01` stays AUDIT COMPLETE. `TUTORIAL-FA-01` stays IN PREPARATION. `STRIPE-LIVE-07` stays RUNBOOK READY, blocked on Live access. Docs only. No product implementation. |
 | 2026-10-08 | **PROFILE-PERSISTENCE-04.** Fresh-browser direct Profile save is verified in production at `0edce9e`. `PROFILE-PERSISTENCE-03` stays the recorded smoke failure and is superseded. Profile / Initial Setup recording on `TUTORIAL-FA-01` is UNBLOCKED. This task-tree note is not part of the product commit. |
+| 2026-10-08 | **HOME-BLANK-02.** Production Home no longer stays black. Product commit `b1b1f88`. `HOME-BLANK-01` stays AUDIT COMPLETE. The FA account Home path lands on visible Annual and shows 「初期設定を続ける」. `TUTORIAL-FA-01` recording is UNBLOCKED. registration lock and Stripe were not changed. |
