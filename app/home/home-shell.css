@@ -343,7 +343,7 @@ html[lang^="zh"] .home-progress__rate {
   padding-bottom: 2px;
 }
 
-body.office-mode .home-page .home-windows {
+body.office-mode.home-page .home-windows {
   background: transparent;
 }
 

@@ -15,7 +15,7 @@ if (!css.includes('html[lang="zh-TW"] .home-window')) fail('zh-TW font override 
 if (!css.includes("font-family: 'BIZ UDPGothic', 'BIZ UDP Gothic', sans-serif;")) fail('BIZ font missing');
 const office = css.split('body.office-mode .home-window {')[1] || '';
 if (!office.includes('border-radius: 12px')) fail('office radius is not 12px');
-if (!css.includes('body.office-mode .home-page .home-windows') || !css.includes('background: transparent;')) {
+if (!css.includes('body.office-mode.home-page .home-windows') || !css.includes('background: transparent;')) {
   fail('office gap background not transparent');
 }
 if (/body\.office-mode \.home-windows[\s\S]{0,80}background:\s*#000/.test(css)) fail('office gap still black');
@@ -38,7 +38,7 @@ const cases = [
 ];
 for (const [page, attr, expected] of cases) {
   const html = fs.readFileSync(path.join(root, page), 'utf8');
-  if (!html.includes('home-shell.css?v=20261008-hv01')) fail(page + ' css cache');
+  if (!html.includes('home-shell.css?v=20261008-hv02')) fail(page + ' css cache');
   if (!html.includes(attr)) fail(page + ' missing ' + attr);
   const href = attr.split('"')[1];
   const got = resolve(page, href);
