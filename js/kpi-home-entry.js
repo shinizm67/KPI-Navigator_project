@@ -73,11 +73,22 @@
       return;
     }
     var store = readStore();
-    if (!store) return;
+    if (!store) {
+      var pendingHref = annualHref(null);
+      if (pendingHref) {
+        window.location.replace(pendingHref);
+        return;
+      }
+      if (windows) windows.hidden = false;
+      return;
+    }
     fetch(profileUrl(), { credentials: 'same-origin', cache: 'no-store' })
       .then(function (res) { return res.json().then(function (body) { return { res: res, body: body }; }); })
       .then(function (pair) {
-        if (!pair.res.ok || !pair.body || pair.body.ok !== true) return;
+        if (!pair.res.ok || !pair.body || pair.body.ok !== true) {
+          if (windows) windows.hidden = false;
+          return;
+        }
         var bt = false;
         try {
           bt = !!(
@@ -95,7 +106,9 @@
           plan: plan,
         }));
       })
-      .catch(function () {});
+      .catch(function () {
+        if (windows) windows.hidden = false;
+      });
   }
 
   document.addEventListener('kpi:storeHydrateSettled', function (ev) {
