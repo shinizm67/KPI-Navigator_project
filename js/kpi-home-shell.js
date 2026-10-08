@@ -267,6 +267,9 @@
   });
 
   paint();
+  document.addEventListener('kpi:storeHydrateSettled', function () {
+    paint();
+  });
   if (readStoredIso() !== currentIso) writeShared(currentIso, 'home-initial');
 
   var body = document.getElementById('body-el');
