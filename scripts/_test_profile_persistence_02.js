@@ -48,11 +48,20 @@ function boot(opts) {
   if (opts.localProfile) {
     local.setItem('kpi-profile-last', JSON.stringify(opts.localProfile));
   }
+  const listeners = {};
   const document = {
     readyState: 'complete',
     documentElement: { getAttribute: function () { return 'ja'; }, lang: 'ja' },
     getElementById: field,
-    addEventListener: function () {},
+    addEventListener: function (name, fn) {
+      (listeners[name] = listeners[name] || []).push(fn);
+    },
+    removeEventListener: function (name, fn) {
+      listeners[name] = (listeners[name] || []).filter(function (item) { return item !== fn; });
+    },
+    dispatchEvent: function (ev) {
+      (listeners[ev.type] || []).slice().forEach(function (fn) { fn(ev); });
+    },
     createElement: function () { return { setAttribute: function () {}, style: {}, appendChild: function () {} }; },
     querySelector: function () { return null; },
     body: { insertBefore: function () {} },
@@ -69,6 +78,8 @@ function boot(opts) {
     String: String,
     Number: Number,
     Error: Error,
+    CustomEvent: function CustomEvent(type) { this.type = type; },
+    dispatchEvent: function () {},
     document: document,
     localStorage: local,
     sessionStorage: session,
@@ -107,7 +118,20 @@ function boot(opts) {
         catch (e) { return null; }
       },
     },
-    __KPI_DATA_GATEWAY: {
+    __KPI_DATA_GATEWAY: opts.freshStore ? {
+      enableSessionSync: function (baseUrl) {
+        if (opts.storeInitFail) throw new Error('init');
+        calls.push({ url: String(baseUrl), method: 'INIT', body: { authMode: 'session', hasToken: false } });
+        document.dispatchEvent({ type: 'kpi:storeHydrateSettled' });
+        return { enabled: true, authMode: 'session', baseUrl: baseUrl };
+      },
+      pushToServerWhenReady: function () {
+        calls.push({ url: 'store', method: 'PUT', body: null });
+        if (opts.crossUser) return Promise.resolve({ ok: false, error: 'stale_account' });
+        if (opts.storeFail) return Promise.resolve({ ok: false, error: 'store_push_failed' });
+        return Promise.resolve({ ok: true });
+      },
+    } : {
       pushToServerWhenReady: function () {
         calls.push({ url: 'store', method: 'PUT', body: null });
         if (opts.storeFail) return Promise.resolve({ ok: false, error: 'store_push_failed' });
@@ -305,6 +329,89 @@ async function main() {
   const setup = fs.readFileSync(path.join(ROOT, 'js', 'kpi-setup-step0.js'), 'utf8');
   check(setup.indexOf('function writeOpeningDate') >= 0 && setup.indexOf('store.meta.openingDate') >= 0, '13 opening date still writes store.meta.openingDate');
 
+  const demo = {
+    businessName: 'Forge Bistro Demo',
+    company: 'Forge Laboratory Demo',
+    businessType: 'restaurant',
+    genre: 'Italian',
+    country: 'Japan',
+    state: 'Kanagawa',
+    city: 'Fujisawa',
+    currency: 'JPY',
+  };
+  const direct = boot({ freshStore: true, profile: { synced: false, userId: 'u1' } });
+  check(direct.local.getItem('kpi-profile-last') == null && direct.local.getItem('kpi-profile-tmp') == null, '04 fresh browser has no profile cache');
+  check(direct.local.getItem('kpiNavigator.storeSync') == null, '04 fresh browser has no Annual sync flag');
+  const directSave = await direct.context.__KPI_PROFILE_SERVER.commitProfileEdit(demo);
+  const directInit = direct.calls.filter(function (c) { return c.method === 'INIT'; });
+  const directPuts = direct.calls.filter(function (c) { return c.method === 'PUT'; });
+  const directPosts = posts(direct.calls);
+  check(directSave.ok === true, '04 first Business Type save succeeds');
+  check(directInit.length === 1 && directInit[0].url.indexOf('/api/v1/store.php') >= 0 && directInit[0].body.authMode === 'session' && directInit[0].body.hasToken === false, '04 save enables authenticated session store sync');
+  check(directPuts.length >= 1 && directPosts.length === 1 && direct.calls.indexOf(directPuts[0]) < direct.calls.indexOf(directPosts[0]), '04 canonical store write happens before profile.php');
+  check(metaType(direct.local) === 'restaurant' && direct.local.getItem('kpi-profile-last') != null, '04 cache updates after both writes');
+
+  const unchanged = boot({ freshStore: true, profile: populated, store: storeRestaurant });
+  const unchangedSave = await unchanged.context.__KPI_PROFILE_SERVER.commitProfileEdit({
+    businessName: 'Server Bistro',
+    company: 'Server Co',
+    businessType: 'restaurant',
+    country: 'Japan',
+    state: 'Tokyo',
+    currency: 'JPY',
+  });
+  check(unchangedSave.ok === true && unchanged.calls.filter(function (c) { return c.method === 'PUT'; }).length === 0 && posts(unchanged.calls).length === 1, '04 unchanged Business Type does not rewrite the store');
+
+  const changedFresh = boot({ freshStore: true, profile: populated, store: storeRestaurant });
+  const changedFreshSave = await changedFresh.context.__KPI_PROFILE_SERVER.commitProfileEdit({
+    businessName: 'Server Bistro',
+    company: 'Server Co',
+    businessType: 'hotel',
+    country: 'Japan',
+    state: 'Tokyo',
+    currency: 'JPY',
+  });
+  check(changedFreshSave.ok === true && metaType(changedFresh.local) === 'hotel' && posts(changedFresh.calls).length === 1, '04 existing Business Type change still saves');
+
+  const initFail = boot({ freshStore: true, storeInitFail: true, profile: { synced: false, userId: 'u1' } });
+  const initFailSave = await initFail.context.__KPI_PROFILE_SERVER.commitProfileEdit(demo);
+  check(initFailSave.ok === false && posts(initFail.calls).length === 0 && initFail.local.getItem('kpi-profile-last') == null, '04 store initialization failure does not save');
+
+  const writeFail = boot({ freshStore: true, storeFail: true, profile: { synced: false, userId: 'u1' } });
+  const writeFailSave = await writeFail.context.__KPI_PROFILE_SERVER.commitProfileEdit(demo);
+  check(writeFailSave.ok === false && posts(writeFail.calls).length === 0 && writeFail.local.getItem('kpi-profile-last') == null, '04 store write failure does not save');
+
+  const copyFail = boot({ freshStore: true, postFail: true, profile: populated, store: storeRestaurant });
+  const copyFailSave = await copyFail.context.__KPI_PROFILE_SERVER.commitProfileEdit({
+    businessName: 'Nope',
+    company: 'Nope Co',
+    businessType: 'hotel',
+    country: 'Japan',
+    state: 'Tokyo',
+    currency: 'JPY',
+  });
+  check(copyFailSave.ok === false && copyFail.local.getItem('kpi-profile-last') == null && metaType(copyFail.local) === 'restaurant' && copyFail.profile().businessName === 'Server Bistro', '04 profile failure rolls the canonical type back');
+
+  const loggedOut = boot({ freshStore: true, authed: false, profile: populated, store: storeRestaurant });
+  const loggedOutSave = await loggedOut.context.__KPI_PROFILE_SERVER.commitProfileEdit(demo);
+  check(loggedOutSave.ok === false && loggedOut.calls.filter(function (c) { return c.method === 'INIT'; }).length === 0 && posts(loggedOut.calls).length === 0, '04 logged-out save does not enable store sync');
+
+  const cross = boot({ freshStore: true, crossUser: true, profile: populated, store: storeRestaurant });
+  const crossSave = await cross.context.__KPI_PROFILE_SERVER.commitProfileEdit({
+    businessName: 'Server Bistro',
+    company: 'Server Co',
+    businessType: 'hotel',
+    country: 'Japan',
+    state: 'Tokyo',
+    currency: 'JPY',
+  });
+  check(crossSave.ok === false && posts(cross.calls).length === 0 && cross.local.getItem('kpi-profile-last') == null, '04 cross-user store rejection does not save');
+
+  const gatewayJs = fs.readFileSync(path.join(ROOT, 'js', 'kpi-data-gateway.js'), 'utf8');
+  const authPhp = fs.readFileSync(path.join(ROOT, 'api', 'v1', '_auth.php'), 'utf8');
+  check(gatewayJs.indexOf('assertCanMutateUserData') >= 0 && gatewayJs.indexOf("authMode: 'session'") >= 0, '04 store sync stays on the session gateway');
+  check(authPhp.indexOf('stale_account') >= 0, '04 expected-user mismatch stays rejected');
+
   const pages = [
     ['setting/profile.html', 'hydrateDisplay', 'サーバーのプロフィールを確認できません。'],
     ['en/setting/profile.html', 'hydrateDisplay', 'The server profile could not be confirmed.'],
@@ -317,7 +424,8 @@ async function main() {
     const text = fs.readFileSync(path.join(ROOT, row[0]), 'utf8');
     const edit = row[0].indexOf('profile_edit') >= 0;
     check(text.indexOf(row[1]) >= 0 && text.indexOf(row[2]) >= 0, '15 ' + row[0] + ' uses the server-first path');
-    check(text.indexOf('kpi-profile-server.js?v=20261007-p02') >= 0, '15 ' + row[0] + ' cache bust');
+    check(text.indexOf('kpi-profile-server.js?v=20261008-p04') >= 0, '15 ' + row[0] + ' cache bust');
+    check(text.indexOf('kpi-data-gateway.js?v=20260927-bt1') >= 0, '04 ' + row[0] + ' can boot store sync');
     if (edit) {
       check(text.indexOf('.then(goProfile).catch(goProfile)') < 0 && text.indexOf('if (res && res.ok)') >= 0, '6 15 ' + row[0] + ' navigates only after ok');
       check(text.indexOf('localStorage.setItem(\'kpi-profile-last\'') < 0, '5 15 ' + row[0] + ' does not cache before save');

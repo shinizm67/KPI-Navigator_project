@@ -457,6 +457,8 @@
     if (gaps.length) return Promise.resolve({ ok: false, error: 'required', missing: gaps });
     var nextType = chosenType(data);
     if (!nextType) return Promise.resolve({ ok: false, error: 'required', missing: ['businessType'] });
+    return prepareCanonicalStore().then(function (ready) {
+    if (!ready) return { ok: false, error: 'store_unavailable' };
     var prevType = canonicalMetaType();
     var payload = Object.assign({}, data, { businessType: nextType, industry: nextType });
 
@@ -501,6 +503,98 @@
         });
       });
     });
+    });
+  }
+
+  var canonicalStoreReady = false;
+
+  function storeApiUrl() {
+    var root = '';
+    try {
+      if (global.__KPI_AUTH && typeof global.__KPI_AUTH.resolveAppRoot === 'function') {
+        root = String(global.__KPI_AUTH.resolveAppRoot() || '');
+      }
+    } catch (_eRoot) {}
+    if (!root) {
+      try {
+        var path = String(global.location && global.location.pathname || '');
+        var matched = path.match(/^(.*?\/kpi-navigator)(?:\/|$)/);
+        if (matched) root = matched[1];
+      } catch (_ePath) {}
+    }
+    return (root || '') + '/api/v1/store.php';
+  }
+
+  /** Let the existing store gateway proceed without waiting for an Annual page. */
+  function markStoreScopeReady() {
+    try {
+      if (!global.KpiYearStore || typeof global.KpiYearStore !== 'object') {
+        global.KpiYearStore = {};
+      }
+      global.KpiYearStore.__userScopeReady = true;
+    } catch (_eReady) {}
+    try {
+      global.dispatchEvent(new CustomEvent('kpi:yearStoreUserScopeReady'));
+    } catch (_eEvent) {}
+  }
+
+  function waitForStoreHydrate(timeoutMs) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(ok) {
+        if (done) return;
+        done = true;
+        try {
+          document.removeEventListener('kpi:storeHydrateSettled', onSettled);
+        } catch (_eRm) {}
+        resolve(ok);
+      }
+      function onSettled() {
+        finish(true);
+      }
+      try {
+        document.addEventListener('kpi:storeHydrateSettled', onSettled);
+      } catch (_eAdd) {
+        finish(false);
+        return;
+      }
+      global.setTimeout(function () {
+        finish(false);
+      }, timeoutMs);
+    });
+  }
+
+  /**
+   * Authenticated session sync only. Same enableSessionSync path as Annual.
+   * No token mode and no new store. A missing bootstrap (tests) stays as-is.
+   */
+  function prepareCanonicalStore() {
+    var gw = global.__KPI_DATA_GATEWAY;
+    if (!gw || typeof gw.pushToServerWhenReady !== 'function') {
+      return Promise.resolve(false);
+    }
+    if (typeof gw.enableSessionSync !== 'function') {
+      return Promise.resolve(true);
+    }
+    if (canonicalStoreReady) return Promise.resolve(true);
+    return isAuthenticatedSession().then(function (authed) {
+      if (!authed) return false;
+      var pending = waitForStoreHydrate(12000);
+      markStoreScopeReady();
+      try {
+        gw.enableSessionSync(storeApiUrl());
+      } catch (_eEnable) {
+        try {
+          document.dispatchEvent(new CustomEvent('kpi:storeHydrateSettled'));
+        } catch (_eCancel) {}
+        return false;
+      }
+      markStoreScopeReady();
+      return pending.then(function (ok) {
+        if (ok) canonicalStoreReady = true;
+        return ok;
+      });
+    });
   }
 
   function profileHasContent(profile) {
@@ -518,6 +612,7 @@
         if (typeof opts.onUnavailable === 'function') opts.onUnavailable({ reason: 'unauthorized' });
         return { source: 'unavailable' };
       }
+      return prepareCanonicalStore().then(function () {
       return loadServerProfile().then(function (res) {
         if (!res.ok || !res.profile) {
           if (typeof opts.onUnavailable === 'function') opts.onUnavailable(res);
@@ -549,6 +644,7 @@
           return paint(plan.shape);
         });
       });
+      });
     });
   }
 
@@ -563,6 +659,7 @@
         if (typeof opts.onDone === 'function') opts.onDone({ source: 'unavailable', profile: null });
         return { source: 'unavailable', profile: null };
       }
+      return prepareCanonicalStore().then(function () {
       return loadServerProfile().then(function (res) {
         if (!res.ok || !res.profile) {
           if (typeof opts.onDone === 'function') opts.onDone({ source: 'unavailable', profile: null });
@@ -591,6 +688,7 @@
           var shape = saved && saved.ok === true ? plan.shape : serverToLocalShape(res.profile.synced ? res.profile : {});
           return apply(shape);
         });
+      });
       });
     });
   }
