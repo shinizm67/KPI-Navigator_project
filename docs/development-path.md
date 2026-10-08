@@ -15,7 +15,7 @@ BR-LAUNCH-05 (Registration -> Initial Setup Integration) P1
 Phase 0 audit + Freeze 2026-09-28
 Phase 1 CLOSED 2026-09-28 — Registration UI simplification (`6994e30` deployed; Shin approved)
 Phase 2 CLOSED 2026-09-28 — consent record / registration-status GET / abuse protection / cache-bust (`5a3267e` + `e9e8cc2` deployed; Shin approved)
-Phase 3 ACTIVE 2026-09-28 — production readiness; ConoHa: trusted real IP not obtainable → IP-independent abuse protection deployed + production verified 2026-09-29 (`09f4711`); consent table applied + verified; Controlled Registration Smoke PASS 2026-09-29 → READY approved → **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO; registrationEnabled true)
+Phase 3 ACTIVE 2026-09-28 — production readiness; ConoHa: trusted real IP not obtainable → IP-independent abuse protection deployed + production verified 2026-09-29 (`09f4711`); consent table applied + verified; Controlled Registration Smoke PASS 2026-09-29 → READY approved → **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO; registrationEnabled true). Later production safety: `registrationEnabled` is false. Public self-registration is intentionally LOCKED until paid registration / billing entitlement is ready. `BR-LAUNCH-05` is not reopened.
 
 BR-LAUNCH-09 (Account Security & Destructive Actions) P0
 Phase 0 CLOSED 2026-09-28 — audit (fake Delete / Password / Email flows; allowSelfPlanChange false in production)
@@ -67,7 +67,7 @@ REGISTERED (infrastructure; CURRENT PATH unchanged):
 
 ACTIVE BRANCHES:
 - BR-LAUNCH-09 Account Security & Destructive Actions P0 (Phase 0 / 1 / 2 CLOSED; Phase 3A Basic Account Delete IMPLEMENTED — READY FOR HUMAN SMOKE; Phase 3B Paid / Stripe Account Delete BLOCKED — Stripe / Billing contract required)
-- BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29)
+- BR-LAUNCH-05 Registration -> Initial Setup Integration P1 (Phase 1 / 2 CLOSED 2026-09-28; PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29; later intentionally LOCKED, `registrationEnabled` false; not reopened)
 - BR-ONBOARDING-01 (outside TRUNK-06; do not reopen TRUNK-06)
 - (BR-ONBOARDING-01-R2 CLOSED 2026-09-27 — fixed, deployed, production verified)
 
@@ -175,6 +175,8 @@ DEFERRED:
   parent: BR-LAUNCH-05. Not in Launch-required scope (public registration went live 2026-09-29 without it). Reconsider before paid Pro / billing.
 - BR-LAUNCH-05-REG-SESSION register.php sets a session but the UI sends the user to Login P2 REGISTER ONLY
   parent: BR-LAUNCH-05. Behavior unchanged. Cleanup options (stop session on register, or go straight in) decided later.
+- BR-LAUNCH-05-PAID-GATE Paid Registration / Entitlement Gate REGISTER ONLY
+  parent: BR-LAUNCH-05. Do not implement here. Public self-registration stays locked until this paid registration / billing entitlement flow is ready.
 - BR-POST-PROGRESS-SCALE-01 Dynamic Progress Bar Scale POST-LAUNCH / REDESIGN
   parent: post-launch. REGISTER ONLY. Do not change the current Sales Progress contract. See [`docs/br-post-progress-scale-01.md`](./br-post-progress-scale-01.md).
 - BR-POST-PACE-ALERT-01 Business-day vs Sales Pace Alert Visual Contract POST-LAUNCH / REDESIGN
@@ -187,15 +189,17 @@ N/A (TRUNK-06 CLOSED)
 
 NEXT ACTION:
 BR-LAUNCH-09: Phase 3A (Basic Account Delete) READY FOR HUMAN SMOKE (`funkizm@mac.com` only, Shin GO required before any production deletion). Phase 3B (Paid / Stripe Account Delete) BLOCKED — Stripe / Billing contract required. Phase 3 Final Close only after 3A + 3B both pass. Phase 4 only after Shin GO.
-BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO). IP-independent abuse protection (`09f4711`: forwarded-header reject, global limiter, email limiter, IP auxiliary), consent record, Basic fixed, Pro Coming Soon. Controlled smoke test account `shinizm+kpnreg@gmail.com` kept and excluded from Founder metrics (Shin decides later). `registrationEnabled` is changed only on Shin's explicit instruction. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`.
+BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (Shin GO). IP-independent abuse protection (`09f4711`: forwarded-header reject, global limiter, email limiter, IP auxiliary), consent record, Basic fixed, Pro Coming Soon. Controlled smoke test account `shinizm+kpnreg@gmail.com` kept and excluded from Founder metrics (Shin decides later). `registrationEnabled` is changed only on Shin's explicit instruction. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Initial Setup (BR-ONBOARDING-01) stays IMPLEMENTED / PRODUCTION VERIFIED. Do not reopen `TRUNK-06`. Later production safety, without reopening this branch: `registrationEnabled` is false and public self-registration is intentionally LOCKED. Follow-up `BR-LAUNCH-05-PAID-GATE` is REGISTER ONLY.
 `BR-LOCAL-VERIFY-01` is CLOSED (2026-10-04). Phase 1 and Phase 2 are LOCAL VERIFIED / CLOSED. Phase 3 is REAL MYSQL VERIFIED / CLOSED. Phase 4 is LOCAL MYSQL VERIFIED / CLOSED: user-facing 122 / 122 (executed 123, supplemental 1) and Admin 5 / 5. `BR-I18N-ARCH-01` is not started. Stripe stays a separate track. CURRENT PATH unchanged.
 
 COORDINATION SNAPSHOT 2026-10-08 (does not close older nodes):
 Standing rule: BR-AUDIT-FIRST — Audit Before Implementation. See Operating Rule. This is not a product task and does not start implementation.
-Stripe track: STRIPE-LIVE-07 RUNBOOK READY. Live work blocked by Stripe approval / Live access.
-Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE. PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0`). PROFILE-PERSISTENCE-03 production smoke failed on fresh-browser direct Profile save and is superseded. PROFILE-PERSISTENCE-04 VERIFIED IN PRODUCTION / COMPLETE (`0edce9ea51ce90616f00748995f007679154ff10`).
-Tutorial track: TUTORIAL-FA-01 IN PREPARATION. HOME-BLANK-01 AUDIT COMPLETE. HOME-BLANK-02 PRODUCTION HOTFIX VERIFIED. Profile / Initial Setup recording is UNBLOCKED. Other tutorial production may continue.
-Next Windows mainline: continue from the current canonical development path. Do not start a new product implementation in this docs registration.
+Stripe track: STRIPE-LIVE-07 RUNBOOK READY. Stripe Live remains under review. No Live billing release is complete.
+Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE. PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0`). PROFILE-PERSISTENCE-03 production smoke failed on fresh-browser direct Profile save and is superseded. PROFILE-PERSISTENCE-04 VERIFIED IN PRODUCTION / COMPLETE (`0edce9ea51ce90616f00748995f007679154ff10`): server-first save, fresh-browser direct save, second-browser restore, and canonical Business Type on `store.meta.businessType`. PROFILE-PERSISTENCE-05 is the docs finalization at `00bf7fd`.
+Registration track: the 2026-09-29 public enable remains historical. Current production `registrationEnabled` is false. Public self-registration is intentionally LOCKED. `BR-LAUNCH-05` is not reopened. `BR-LAUNCH-05-PAID-GATE` is REGISTER ONLY.
+Home track: HOME-BLANK-01 AUDIT COMPLETE. HOME-BLANK-02 PRODUCTION HOTFIX VERIFIED. HOME-READINESS-01 VERIFIED IN PRODUCTION. Authenticated Home stays available when Initial Setup is incomplete, with no Home-to-Annual redirect. HOME-VISUAL-01 COMPLETE (`83f1f59`). HOME-I18N-01 COMPLETE (`b6e883d`).
+Tutorial track: TUTORIAL-FA-01 UNBLOCKED. Video production remains in preparation. Profile / Initial Setup recording may continue.
+Next Windows mainline: `BR-LAUNCH-09` Phase 3A, session `BR-LAUNCH-09-3A-HS`. Explicit Shin GO is required. Target account `funkizm@mac.com` only. Phase 3B stays blocked on the Stripe / Billing contract. Do not run that smoke from this docs note.
 Windows remains the canonical development workstation. Mac is Tutorial Production / Read-Only Inspection only.
 
 BASELINE UX CONVENTION (not a work branch):
@@ -208,7 +212,7 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `b1b1f880c9e9588f93a346ae12621c045c071aab` (2026-10-08 Home fresh-session bootstrap visibility) |
+| HEAD | `b6e883d368bbf3bae8e7c50f6c4bff2d690b9317` (2026-10-08 Home period labels; this reconciliation is the following docs commit) |
 | origin sync | even with `origin/wip/unit5b-pl-mep-preset-engine-20260916` (0/0). Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1497,14 +1501,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | redesign_2026-09-29 | Shin decided: global limits as proposed, reject only `CF-Connecting-IP` / `X-Real-IP`, keep the IP limiter as auxiliary, production read-only probe allowed. Implemented (local, not deployed): `register.php` order = `registrationEnabled` → forwarded-header reject (400 `registration_rejected`, before any counter) → global attempts 30 / 10 min → IP 10 / 10 min (auxiliary) → honeypot / token → email 5 / h → password → consent → duplicate 409 → global creations 40 / 24 h and 10 / h (only requests that reach creation) → create. Same file counters + flock under `data/registration` (timestamps only); storage failure → 503; full → 429 `rate_limited` (existing UI message). Config overrides `registrationGlobalAttemptMax` / `registrationGlobalAttemptWindowSeconds` / `registrationGlobalCreateHourMax` / `registrationGlobalCreateDayMax` (optional). No UI / schema change. Tests: registration contract 73/73; server smoke 94/98 (all new R1–R6 checks green: header reject in any case, no counter touched, XFF not rejected, global attempt bound with rotating IP buckets, creation slots only on reaching creation, day limit, 12-process concurrency, defaults; the 4 reds are the known harness artifacts from L4); lifecycle 29/29, privacy 46/46, delete 49/49; emergency gate 37/40 (Plan CTA 3 pre-existing). Production probe (key-guarded temp file, removed; names / booleans only): scripted plain GET / POST and real Chrome GET + registration-style POST carry neither header; sent `CF-Connecting-IP` / `X-Real-IP` are detected; `X-Forwarded-For` is not. Residual risk (Shin acceptance needed before enable): no trusted client IP, no email verification (`BR-LAUNCH-05-EMAIL-VERIFY`), form token re-obtainable anonymously, 409 reveals registered emails, a flood can fill the global limit and pause signups (login unaffected). |
 | redesign_deploy_2026-09-29 | Shin GO (deploy only; not an enable GO). Deployed `09f4711` `api/v1/_registration.php` + `api/v1/auth/register.php` (production matched `09f4711~1` before upload; FTP SHA match). Production verify 16/16: status false / no token / versions; register POST plain, with `CF-Connecting-IP`, `X-Real-IP`, `X-Forwarded-For`, `?plan=pro` and 12 repeats all 403 `registration_disabled` (gate before every limiter, no 429 / 503), GET 405; key-guarded read-only diag (removed, 0 left): new functions live, header detection on production PHP (plain no / CF yes / X-Real-IP yes / XFF no), limits 30/600, 10/3600, 40/86400, IP 10/600, email 5/3600 with no config overrides, counter dir writable + flock ok, production `register.php` order as designed. Real counters untouched. `registrationEnabled` false. |
 | controlled_smoke_2026-09-29 | **Controlled Registration Smoke PASS (Shin GO; not a permanent enable).** Production `registrationEnabled` flipped true for ~18 s (one config value, php -l + byte verify) and back to false. Before: config false, status false / no token, form hidden, POST 403, test email absent (14 users, 0 consents). Real Chrome (JP Sci-Fi): Plan Basic CTA → JP Registration → email / password / confirm / consent → 201 → 「登録が完了しました。ログイン画面へ進みます。」 → Login → Annual → KPN SETUP REQUIRED guard → 初期設定を始める → STEP 01 Business Profile 0 / 7 (not saved). One request each: `CF-Connecting-IP` → 400 `registration_rejected`, `X-Real-IP` → 400 `registration_rejected` (weak password, nothing could be created); duplicate email → 409 `email_taken`. After: status false / no token, form hidden, direct POST 403. Read-only DB: test account `shinizm+kpnreg@gmail.com` exactly 1 (basic / user / enabled / no parent / no children, last_login set), consent exactly 1 (terms 2026-02-16, privacy 2026-09-29, accepted_at, `public_registration`), origin `new`, no store / profile / daily rows / plan history; users 14 → 15, other 14 users unchanged (digest incl. plan / role / disabled / password / parent and updated_at), no new non-basic account, deletion history +0. Smoke 29/30: the one red is a harness artifact (register response body unreadable after the page navigated; status 201 captured, DB basic / user). Password generated into a local owner-only file outside the repo (not printed; 0 repo hits). Test account kept (Shin decides). P2: the config flip to false took a few seconds to show in `registration-status` (likely PHP opcache revalidation); the enable / disable procedure must re-check status and retry. |
-| status | PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29 (Phase 1 / 2 CLOSED; Phase 3 controlled smoke PASS; registrationEnabled true) |
+| status | PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29, then intentionally LOCKED. `registrationEnabled` is false. The branch is not reopened. |
 | priority | P1 |
 | started_at | 2026-09-20 |
 | return_to | `TRUNK-06` |
 | reason | ?????????? readiness ???Stripe / billing ??????????????????????? assessment ????? |
 | evidence | commit `af07bf7` Disable public registration until billing is ready; `free-trial-account-ops.md`?billingType ???? |
 | enable_2026-09-29 | **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED** (Shin approved the smoke + READY verdict and gave the enable GO). Before: test account `shinizm+kpnreg@gmail.com` set `exclude_from_metrics = true` (same helper as `admin/set-metrics-exclusion.php`, one-shot key-guarded PHP, removed; only its origin row changed; metrics 2026-09 Active 14 → 13, New 6 → 5, excluded accounts 1). Production `registrationEnabled` written true once; `registration-status` true after 3 s (opcache delay polled). Verify 19/19 (no account created): status true + token + Terms 2026-02-16 / Privacy 2026-09-29 (3 reads); Registration form shown JP / EN / ZH-TW; Plan Basic CTA → same-language Registration with the register label, Pro stays Coming Soon / 即將推出 (mailto); register POST `{}` / filled honeypot / forged token / `CF-Connecting-IP` / Pro + role escalation → 400 `registration_rejected`, GET 405; production `register.php` == repo (plan `basic`, role `user` fixed); test account still excluded; other users unchanged. Limits unchanged (global 30 / 10 min, creations 10 / h + 40 / 24 h, email 5 / h, IP 10 / 10 min auxiliary). |
-| next_action | Live. Watch for abuse / support contacts. Test account `shinizm+kpnreg@gmail.com` kept (excluded from metrics) until Shin decides. Post-launch: `BR-LAUNCH-05-EMAIL-VERIFY` (reconsider before paid Pro), `BR-LAUNCH-05-REG-SESSION` (P2). Consent table done. Then controlled smoke (after Shin GO), then `READY TO ENABLE PUBLIC REGISTRATION`. `registrationEnabled` is flipped only by Shin with explicit GO. |
+| locked_after_enable | After the 2026-09-29 enable, production safety set `registrationEnabled` false. Public self-registration is intentionally LOCKED until the paid registration / billing entitlement flow is ready. The 2026-09-29 enable row stays in this node. `BR-LAUNCH-05` is not reopened. Follow-up `BR-LAUNCH-05-PAID-GATE` is REGISTER ONLY and is not implemented here. |
+| next_action | Not the next implementation task. Watch stays historical. `registrationEnabled` changes only on Shin's explicit instruction. `BR-LAUNCH-09` Phase 3A remains the next mainline action and still requires explicit Shin GO. |
 | note | Separate tasks: `BR-LAUNCH-05-EMAIL-VERIFY`, `BR-LAUNCH-05-REG-SESSION` (P2). Billing / Stripe stay out of scope. |
 
 ### BR-LAUNCH-09
@@ -1958,6 +1963,21 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | next_action | None on this node. |
 | constraint | registration lock and Stripe configuration were not changed |
 
+### PROFILE-PERSISTENCE-05
+
+| Field | Value |
+|-------|-------|
+| id | `PROFILE-PERSISTENCE-05` |
+| name | Record Verified Profile Persistence Release |
+| parent | `PROFILE-PERSISTENCE-04` |
+| status | DOCUMENTATION COMPLETE (`00bf7fd`) |
+| priority | docs only |
+| started_at | 2026-10-08 |
+| commit | `00bf7fdf53bc2c0834996c4f4b2c36fe1dec5bdc` |
+| scope | Task Tree finalization of the verified profile release. No further product change. Server-first profile, fresh-browser direct save, and second-browser restore stay on `PROFILE-PERSISTENCE-04`. Canonical Business Type remains `store.meta.businessType`. |
+| next_action | None. |
+| constraint | documentation only |
+
 ### TUTORIAL-FA-01
 
 | Field | Value |
@@ -1965,15 +1985,15 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | id | `TUTORIAL-FA-01` |
 | name | Full Authorized Tutorial Production |
 | parent | none (production support; does not reopen `TRUNK-06`) |
-| status | IN PREPARATION |
+| status | UNBLOCKED (2026-10-08). Video production remains IN PREPARATION. |
 | priority | not a code task |
 | started_at | registered 2026-10-07 |
 | return_to | none |
 | purpose | About five short setup and tutorial videos for Full Authorized evaluator accounts. Target narrative: Forge Bistro Demo. |
 | sequence | #01 Profile / Initial Setup. #02 Past Sales import. #03 Current-year data and setup. #04 Annual Target. #05 Reading and using KPN. The exact sequence may be refined later. |
-| dependency | Profile / Initial Setup recording is UNBLOCKED. `HOME-BLANK-02` restored a visible Home path in production. Mac cross-device Profile check passed in `TUTORIAL-FA-01A`. Work that may continue: tutorial account preparation, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro. |
-| workstation | Mac, under the 2026-10-07 read-only inspection policy. |
-| next_action | IN PREPARATION. Do not edit KPN source from Mac. |
+| dependency | Profile / Initial Setup recording is UNBLOCKED. `HOME-READINESS-01` keeps Home visible when Initial Setup is incomplete. Mac cross-device Profile check passed in `TUTORIAL-FA-01A`. Work that may continue: tutorial account preparation, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro. |
+| workstation | Mac is Tutorial Production / Read-Only Inspection. Windows remains the canonical development environment. |
+| next_action | UNBLOCKED for recording preparation. Do not edit KPN source from Mac. |
 | constraint | no product-code change; no Mac commit, push, branch, merge, rebase, or deploy |
 
 ### HOME-BLANK-01
@@ -2004,6 +2024,54 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | verification | Fresh browser on the FA account: Home direct, Home after Profile, and Home after Annual each landed on visible Annual with 「初期設定を続ける」. `?kpnSetup=1` opened Initial Setup step 01. Logged-out Home landed on the visible login page. `data-kpi-pro-pending` is absent. registration lock stayed false. Stripe files were not deployed. Git blobs are LF. The deployed copies are the same text with CRLF. No second deploy. |
 | next_action | None on this node. Initial Setup is still not linked from Profile, settings, or Home. That discoverability gap stays a UX follow-up. |
 | constraint | registration lock and Stripe configuration were not changed. |
+
+### HOME-READINESS-01
+
+| Field | Value |
+|-------|-------|
+| id | `HOME-READINESS-01` |
+| name | Home Remains Available Before Setup Completion |
+| parent | `HOME-BLANK-02` |
+| status | VERIFIED IN PRODUCTION (2026-10-08) |
+| priority | P0, resolved in production |
+| started_at | 2026-10-08 |
+| commit | `2243d26b4312710e6457aff231efc0bf0201d4e3` |
+| scope | Home no longer leaves for Annual because Initial Setup is incomplete or the local store is missing. An authenticated Home starts the existing session store sync itself. Missing metrics stay as an em dash. |
+| verification | Fresh browser on the FA account, with Business Type set and Opening Date empty: Home direct, hard reload, Profile then Home, and Annual then Home all stayed on visible Home. Logged-out Home opened the visible login page. registration lock stayed false. Stripe files were not deployed. |
+| next_action | None on this node. Initial Setup is still not linked from Profile, settings, or Home. |
+| constraint | registration lock and Stripe configuration were not changed. |
+
+### HOME-VISUAL-01
+
+| Field | Value |
+|-------|-------|
+| id | `HOME-VISUAL-01` |
+| name | Home Font, Office Gap, and zh-tw Route |
+| parent | `HOME-READINESS-01` |
+| status | COMPLETE (2026-10-08) |
+| priority | P0, resolved in production |
+| started_at | 2026-10-08 |
+| commit | `d7a49782411e3bd97fa7af6a3ee30c777f725418` and `83f1f59125d041fec5f9712572502eafdf479402` |
+| scope | JP and zh-TW Home use BIZ UDPGothic, including Sci-Fi. EN Sci-Fi keeps Orbitron. Office gaps between Daily, Monthly, and Annual use the Office page background. Home panels use border-radius 12px. The zh-tw Home language route resolves. |
+| verification | Production cache-busted checks: JP Sci-Fi font BIZ UDPGothic; EN Sci-Fi font Orbitron; JP Office gap transparent over the page background; panel radius 12px; zh-tw Home opens and language links resolve. |
+| next_action | None on this node. |
+| constraint | registration lock, Stripe, and profile persistence were not changed. |
+
+### HOME-I18N-01
+
+| Field | Value |
+|-------|-------|
+| id | `HOME-I18N-01` |
+| name | Home Period Labels |
+| parent | `HOME-VISUAL-01` |
+| status | COMPLETE (2026-10-08) |
+| priority | P1, resolved in production |
+| started_at | 2026-10-08 |
+| commit | `b6e883d368bbf3bae8e7c50f6c4bff2d690b9317` |
+| scope | Home section titles follow the page language in Sci-Fi and Office. JP: 日次 / 月次 / 年次. EN: Daily / Monthly / Annual. ZH-TW: 每日 / 月度 / 年度, matching the top navigation. |
+| verification | Production JP, EN, and ZH-TW Home, in Sci-Fi and Office, showed those labels. Panel height stayed 360px. EN Sci-Fi stayed Orbitron. The EN to JP language switch opened the Japanese Home. |
+| next_action | None on this node. |
+| constraint | registration lock, Stripe, and profile persistence were not changed. |
 
 ---
 
@@ -2095,9 +2163,14 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | COMMITTED AND PUSHED (`5b265a0`); fresh-browser gap closed by `PROFILE-PERSISTENCE-04` | P1 | `PROFILE-PERSISTENCE-01` |
 | `PROFILE-PERSISTENCE-03` | Production Profile Smoke | PARTIAL / FAIL — superseded | P0 at smoke time | `PROFILE-PERSISTENCE-02` |
 | `PROFILE-PERSISTENCE-04` | Fresh-Browser Profile Store Bootstrap | VERIFIED IN PRODUCTION / COMPLETE (`0edce9e`) | BLOCKER, resolved | `PROFILE-PERSISTENCE-03` |
-| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION; Profile / Initial Setup recording UNBLOCKED | not a code task | `HOME-BLANK-02` |
+| `PROFILE-PERSISTENCE-05` | Record Verified Profile Persistence Release | DOCUMENTATION COMPLETE (`00bf7fd`) | docs only | `PROFILE-PERSISTENCE-04` |
+| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | UNBLOCKED; video production still in preparation | not a code task | `HOME-I18N-01` |
 | `HOME-BLANK-01` | Production Home Blank Screen Audit | AUDIT COMPLETE (2026-10-08) | P0 at audit time | `TUTORIAL-FA-01` |
 | `HOME-BLANK-02` | Align Production Home With Canonical Head | PRODUCTION HOTFIX VERIFIED (2026-10-08) | P0, resolved in production | `HOME-BLANK-01` |
+| `HOME-READINESS-01` | Home Remains Available Before Setup Completion | VERIFIED IN PRODUCTION (2026-10-08) | P0, resolved in production | `HOME-BLANK-02` |
+| `HOME-VISUAL-01` | Home Font, Office Gap, and zh-tw Route | COMPLETE (2026-10-08) | P0, resolved in production | `HOME-READINESS-01` |
+| `HOME-I18N-01` | Home Period Labels | COMPLETE (2026-10-08) | P1, resolved in production | `HOME-VISUAL-01` |
+| `BR-LAUNCH-05-PAID-GATE` | Paid Registration / Entitlement Gate | REGISTER ONLY | not started | `BR-LAUNCH-05` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -2115,7 +2188,7 @@ CLOSED under `BR-LAUNCH-03`: `BR-LAUNCH-03-A`, `BR-LAUNCH-03-B`, `BR-LAUNCH-03-C
 PAUSED under `TRUNK-06` (legacy): none  
 ACTIVE under `BR-LAUNCH-02`: none (parent CLOSED)  
 DEFERRED / ACTIVE-LATER: none under `BR-LAUNCH-02` (`BR-LAUNCH-02-A` CLOSED)  
-ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (Phase 2 CLOSED; Phase 3 ACTIVE — BLOCKED on client IP), `BR-LAUNCH-09` (Phase 0 / 1 / 2 CLOSED; Phase 3A READY FOR HUMAN SMOKE; Phase 3B BLOCKED — Stripe / Billing contract required)  
+ACTIVE (outside `TRUNK-06` closeout): `BR-LAUNCH-05` (ENABLED 2026-09-29, then intentionally LOCKED; `registrationEnabled` false; not reopened; not the next implementation task), `BR-LAUNCH-09` (ACTIVE; Phase 3A READY FOR LIFECYCLE DELETE HUMAN SMOKE, explicit Shin GO required, `funkizm@mac.com` only; Phase 3B BLOCKED — Stripe / Billing contract required)  
 DEFERRED under `TRUNK-06`: `BR-POST-XLSX-REPORT`  
 CLOSED post-launch (do not reopen `TRUNK-06`): `BR-POST-BOOKING-ICON-COLOR`, `BR-POST-FOOTER-VERSION`, `BR-POST-COCKPIT-GAP`, `BR-POST-HOME-01`, `BR-POST-HOME-02`  
 DEFERRED UX: `BR-UI-PL-EXPENSE-CLASSIFY-TOOLTIPS` (parent `BR-LAUNCH-01-C2`, P2), `BR-UI-PL-INSIGHT-FIRSTOPEN-PERF`  
@@ -2301,3 +2374,7 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-08 | **TASK-TREE-AUDIT-FIRST-01.** Registered standing rule `BR-AUDIT-FIRST` under Operating Rule. Updated `PROFILE-PERSISTENCE-02` to COMMITTED AND PUSHED `5b265a0`, with production deploy and multi-device smoke still required before Tutorial Profile recording. `PROFILE-PERSISTENCE-01` stays AUDIT COMPLETE. `TUTORIAL-FA-01` stays IN PREPARATION. `STRIPE-LIVE-07` stays RUNBOOK READY, blocked on Live access. Docs only. No product implementation. |
 | 2026-10-08 | **PROFILE-PERSISTENCE-04.** Fresh-browser direct Profile save is verified in production at `0edce9e`. `PROFILE-PERSISTENCE-03` stays the recorded smoke failure and is superseded. Profile / Initial Setup recording on `TUTORIAL-FA-01` is UNBLOCKED. This task-tree note is not part of the product commit. |
 | 2026-10-08 | **HOME-BLANK-02.** Production Home no longer stays black. Product commit `b1b1f88`. `HOME-BLANK-01` stays AUDIT COMPLETE. The FA account Home path lands on visible Annual and shows 「初期設定を続ける」. `TUTORIAL-FA-01` recording is UNBLOCKED. registration lock and Stripe were not changed. |
+| 2026-10-08 | **HOME-READINESS-01.** Home stays on screen when Initial Setup is incomplete. Product commit `2243d26`. Missing metrics use an em dash. `TUTORIAL-FA-01` recording stays UNBLOCKED. registration lock and Stripe were not changed. |
+| 2026-10-08 | **HOME-VISUAL-01 COMPLETE.** JP and zh-TW Home use BIZ UDPGothic. EN Sci-Fi keeps Orbitron. Office gaps use the page background. Panel radius is 12px. zh-tw Home route is fixed. Product commits `d7a4978` and `83f1f59`. |
+| 2026-10-08 | **HOME-I18N-01 COMPLETE.** Home titles: JP 日次 / 月次 / 年次, EN Daily / Monthly / Annual, ZH-TW 每日 / 月度 / 年度. Product commit `b6e883d`. |
+| 2026-10-08 | **TASK-TREE-RECONCILE-01.** Public registration remains historically ENABLED on 2026-09-29 and is now intentionally LOCKED (`registrationEnabled` false). `BR-LAUNCH-05` is not reopened. `BR-LAUNCH-05-PAID-GATE` is REGISTER ONLY. Profile 04 stays verified; 05 is docs `00bf7fd`. Tutorial recording is UNBLOCKED. `STRIPE-LIVE-07` stays RUNBOOK READY; Live billing is not complete. Next mainline remains `BR-LAUNCH-09` Phase 3A, explicit Shin GO, `funkizm@mac.com` only. Phase 3B stays blocked. Docs only. |
