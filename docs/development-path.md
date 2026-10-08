@@ -193,8 +193,8 @@ BR-LAUNCH-05 **PUBLIC REGISTRATION ENABLED / PRODUCTION VERIFIED 2026-09-29** (S
 COORDINATION SNAPSHOT 2026-10-08 (does not close older nodes):
 Standing rule: BR-AUDIT-FIRST — Audit Before Implementation. See Operating Rule. This is not a product task and does not start implementation.
 Stripe track: STRIPE-LIVE-07 RUNBOOK READY. Live work blocked by Stripe approval / Live access.
-Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE (P1 SETUP READINESS ISSUE). PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0a998345ef9ce541824ac414921b4a39bf`). Production deployment and multi-device / fresh-browser smoke are still required.
-Tutorial track: TUTORIAL-FA-01 IN PREPARATION. Final recording of Profile / Initial Setup stays blocked until that deploy and smoke pass. Other tutorial production may continue.
+Profile track: PROFILE-PERSISTENCE-01 AUDIT COMPLETE. PROFILE-PERSISTENCE-02 COMMITTED AND PUSHED (`5b265a0`). PROFILE-PERSISTENCE-03 production smoke failed on fresh-browser direct Profile save and is superseded. PROFILE-PERSISTENCE-04 VERIFIED IN PRODUCTION / COMPLETE (`0edce9ea51ce90616f00748995f007679154ff10`).
+Tutorial track: TUTORIAL-FA-01 IN PREPARATION. Profile / Initial Setup recording is UNBLOCKED. Other tutorial production may continue.
 Next Windows mainline: continue from the current canonical development path. Do not start a new product implementation in this docs registration.
 Windows remains the canonical development workstation. Mac is Tutorial Production / Read-Only Inspection only.
 
@@ -208,7 +208,7 @@ BASELINE UX CONVENTION (not a work branch):
 | field | value |
 |------|-----|
 | git branch | `wip/unit5b-pl-mep-preset-engine-20260916` |
-| HEAD | `5b265a0a998345ef9ce541824ac414921b4a39bf` (2026-10-08 audit-first registration; profile persistence commit) |
+| HEAD | `0edce9ea51ce90616f00748995f007679154ff10` (2026-10-08 profile store sync on direct entry) |
 | origin sync | even with `origin/wip/unit5b-pl-mep-preset-engine-20260916` (0/0). Do not force push. |
 | excel/ | user-owned dirty / **do not touch** |
 
@@ -1926,8 +1926,37 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | `PROFILE-PERSISTENCE-01` |
 | depends_on | `PROFILE-PERSISTENCE-01` AUDIT COMPLETE |
 | scope | Profile display pages hydrate from the authenticated server profile. Save order: validate, server write, server success, local cache update, then navigate or update the UI. A server save failure is not success. Keep `store.meta.businessType` canonical and `profile.business_type` a synchronized copy. Do not create a second source of truth. Preserve existing account data. Multi-device and fresh-browser smoke is required. |
-| next_action | Production deployment and multi-device / fresh-browser smoke are still required. Do not deploy from this task-tree registration. Tutorial Profile / Initial Setup final recording stays blocked until that smoke passes. |
+| next_action | In production. The fresh-browser direct-entry gap found by `PROFILE-PERSISTENCE-03` is fixed and verified by `PROFILE-PERSISTENCE-04`. |
 | constraint | implementation is already committed; this registration does not change product code or deploy |
+
+### PROFILE-PERSISTENCE-03
+
+| Field | Value |
+|-------|-------|
+| id | `PROFILE-PERSISTENCE-03` |
+| name | Production Profile Smoke |
+| parent | `PROFILE-PERSISTENCE-02` |
+| status | PARTIAL / FAIL — superseded by `PROFILE-PERSISTENCE-04` |
+| priority | P0 at the time of the smoke |
+| started_at | 2026-10-08 |
+| finding | Production deploy of `5b265a0` succeeded. A fresh browser that opened Profile Edit directly could not save. Store sync was enabled only after Annual or MEP. `profile.php` was not called. The form stayed on screen and the server profile stayed empty. |
+| next_action | None. The blocker is fixed and verified by `PROFILE-PERSISTENCE-04`. |
+
+### PROFILE-PERSISTENCE-04
+
+| Field | Value |
+|-------|-------|
+| id | `PROFILE-PERSISTENCE-04` |
+| name | Fresh-Browser Profile Store Bootstrap |
+| parent | `PROFILE-PERSISTENCE-03` |
+| status | VERIFIED IN PRODUCTION / COMPLETE (2026-10-08) |
+| priority | BLOCKER, resolved |
+| started_at | 2026-10-08 |
+| commit | `0edce9ea51ce90616f00748995f007679154ff10` |
+| scope | Profile display and edit initialize the existing authenticated session store sync. No Annual or MEP visit is required first. Canonical Business Type is written before the profile copy. Cache and navigation happen only after server success. |
+| verification | Fresh browser on `kpn_full_authorized00`: direct Profile Edit save, store PUT, profile POST, display, reopen, second fresh browser restore, and profile-cache clear all passed. Opening Date stayed empty and readiness stayed incomplete, matching `store.meta.openingDate`. Mac cross-device check was not run. |
+| next_action | None on this node. |
+| constraint | registration lock and Stripe configuration were not changed |
 
 ### TUTORIAL-FA-01
 
@@ -1942,7 +1971,7 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | return_to | none |
 | purpose | About five short setup and tutorial videos for Full Authorized evaluator accounts. Target narrative: Forge Bistro Demo. |
 | sequence | #01 Profile / Initial Setup. #02 Past Sales import. #03 Current-year data and setup. #04 Annual Target. #05 Reading and using KPN. The exact sequence may be refined later. |
-| dependency | Not fully blocked. Final recording of Profile / Initial Setup still waits on production deployment and multi-device / fresh-browser smoke of `PROFILE-PERSISTENCE-02` (`5b265a0` is committed and pushed, not deployed). Work that may continue now: tutorial account preparation, Mac workstation setup, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro, non-Profile screen smoke, and recording workflow tests. |
+| dependency | Profile / Initial Setup recording is UNBLOCKED. `PROFILE-PERSISTENCE-04` is verified in production. Mac cross-device recording remains optional follow-up. Work that may continue: tutorial account preparation, narration and script, shot list, demo CSV and data, titles and captions, DaVinci template, intro and outro. |
 | workstation | Mac, under the 2026-10-07 read-only inspection policy. |
 | next_action | IN PREPARATION. Do not edit KPN source from Mac. |
 | constraint | no product-code change; no Mac commit, push, branch, merge, rebase, or deploy |
@@ -2034,8 +2063,10 @@ Closeout 2026-09-23: Launch subset complete. C2-L6 CLOSED. Remaining candidates 
 | `BR-LOCAL-VERIFY-01` | Full Local Verification Environment | CLOSED (2026-10-04). Phase 4 LOCAL MYSQL VERIFIED / CLOSED | CRITICAL / HIGH | none (infrastructure; CURRENT PATH unchanged) |
 | `BR-I18N-ARCH-01` | Localization Architecture v2 | REGISTERED — implementation not started | HIGH | prerequisite `BR-LOCAL-VERIFY-01` |
 | `PROFILE-PERSISTENCE-01` | Profile Source of Truth Audit | AUDIT COMPLETE (2026-10-07) | P1 SETUP READINESS ISSUE | none (coordination track) |
-| `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | COMMITTED AND PUSHED (`5b265a0`); deploy and fresh-browser smoke still required | P1 | `PROFILE-PERSISTENCE-01` |
-| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION | not a code task | none; Profile / Initial Setup final recording depends on `PROFILE-PERSISTENCE-02` |
+| `PROFILE-PERSISTENCE-02` | Server-First Profile Hydration & Save Integrity | COMMITTED AND PUSHED (`5b265a0`); fresh-browser gap closed by `PROFILE-PERSISTENCE-04` | P1 | `PROFILE-PERSISTENCE-01` |
+| `PROFILE-PERSISTENCE-03` | Production Profile Smoke | PARTIAL / FAIL — superseded | P0 at smoke time | `PROFILE-PERSISTENCE-02` |
+| `PROFILE-PERSISTENCE-04` | Fresh-Browser Profile Store Bootstrap | VERIFIED IN PRODUCTION / COMPLETE (`0edce9e`) | BLOCKER, resolved | `PROFILE-PERSISTENCE-03` |
+| `TUTORIAL-FA-01` | Full Authorized Tutorial Production | IN PREPARATION; Profile / Initial Setup recording UNBLOCKED | not a code task | `PROFILE-PERSISTENCE-04` |
 
 CLOSED under `TRUNK-06`: `BR-LAUNCH-01`, `BR-LAUNCH-02`, `BR-LAUNCH-03`, `BR-LAUNCH-04`, `BR-LAUNCH-06`, `BR-LAUNCH-07`, `BR-LAUNCH-08`  
 CLOSED under `BR-LAUNCH-02`: `BR-LAUNCH-02-A`, `BR-LAUNCH-02-B`  
@@ -2237,3 +2268,4 @@ DEFERRED post-launch REDESIGN (do not start): `BR-POST-PROGRESS-SCALE-01`, `BR-P
 | 2026-10-04 | **BR-LOCAL-VERIFY-01 CLOSED.** Phase 4 Full Page Smoke is LOCAL MYSQL VERIFIED / CLOSED. User-facing contract 122 / 122 (executed 123, supplemental 1). Admin 5 / 5, with normal-user HTTP 403. Local Founder `localfounder1` is smoke-only. CURRENT PATH unchanged. |
 | 2026-10-07 | **TASK-TREE-PROFILE-TUTORIAL-01.** Registered `PROFILE-PERSISTENCE-01` AUDIT COMPLETE (P1; profile is not local-only), `PROFILE-PERSISTENCE-02` PENDING, and `TUTORIAL-FA-01` IN PREPARATION. Stripe track noted as `STRIPE-LIVE-07` RUNBOOK READY, blocked on Live access. Mac is tutorial production / read-only. Windows remains canonical development. Docs only. No product implementation. |
 | 2026-10-08 | **TASK-TREE-AUDIT-FIRST-01.** Registered standing rule `BR-AUDIT-FIRST` under Operating Rule. Updated `PROFILE-PERSISTENCE-02` to COMMITTED AND PUSHED `5b265a0`, with production deploy and multi-device smoke still required before Tutorial Profile recording. `PROFILE-PERSISTENCE-01` stays AUDIT COMPLETE. `TUTORIAL-FA-01` stays IN PREPARATION. `STRIPE-LIVE-07` stays RUNBOOK READY, blocked on Live access. Docs only. No product implementation. |
+| 2026-10-08 | **PROFILE-PERSISTENCE-04.** Fresh-browser direct Profile save is verified in production at `0edce9e`. `PROFILE-PERSISTENCE-03` stays the recorded smoke failure and is superseded. Profile / Initial Setup recording on `TUTORIAL-FA-01` is UNBLOCKED. This task-tree note is not part of the product commit. |
