@@ -222,6 +222,31 @@
     </script>
   </header>
   <!-- KPI-SITE-HEADER:END -->
+  <script>
+    (function () {
+      var gearBtn = document.getElementById('btn-account-settings');
+      var accountPopup = document.getElementById('account-settings-popup');
+      var menuDropdown = document.getElementById('settings-dropdown');
+      if (!gearBtn || !accountPopup) return;
+
+      gearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = !accountPopup.hidden;
+        accountPopup.hidden = isOpen;
+        gearBtn.setAttribute('aria-expanded', !isOpen);
+        if (!isOpen && menuDropdown) menuDropdown.hidden = true;
+      });
+
+      accountPopup.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', function () {
+        accountPopup.hidden = true;
+        gearBtn.setAttribute('aria-expanded', 'false');
+      });
+    })();
+  </script>
   <main class="home-main" aria-label="Home">
     <div class="home-top-zone">
       <div class="workspace-selector-wrap">
