@@ -13597,6 +13597,7 @@
     }
     .sales-data-modal__table tr.sales-data-modal__row--off .sales-data-modal__sales-input {
       color: var(--sdm-row-off-text);
+      opacity: 0.35;
     }
     .sales-data-modal__table td.sales-data-modal__month-td {
       width: var(--sdm-col-month);
@@ -14914,6 +14915,8 @@
     <script src="../../../js/kpi-planning-readiness.js?v=20260926-alloc3"></script>
 
     <script src="../../../js/kpi-business-type.js?v=20260927-bt1"></script>
+    <script src="../../../js/kpi-business-calendar.js?v=20261106-cal01"></script>
+    <script src="../../../js/kpi-allocation.js?v=20261107-cal02b"></script>
     <script src="../../../js/kpi-navigation-readiness.js?v=20260927-s5a"></script>
     <script src="../../../js/kpi-profile-location.js"></script>
     <script src="../../../js/kpi-profile-server.js?v=20260927-bt1"></script>
@@ -18911,10 +18914,10 @@ Cumulative Target Annual Sales</p>
         if (ytdTEl) ytdTEl.textContent = m.hasPlan ? fmtInsightMoney(m.ytdT) : DASH;
         if (gapEl) {
           gapEl.textContent =
-            m.hasPlan && typeof window.__twFmtDiff === 'function'
+            m.hasPlan && Number(m.ytdT) > 0 && typeof window.__twFmtDiff === 'function'
               ? window.__twFmtDiff(m.ytdA, m.ytdT)
               : DASH;
-          if (m.hasPlan) window.applyInsightTwDiffEl(gapEl, m.ytdA, m.ytdT);
+          if (m.hasPlan && Number(m.ytdT) > 0) window.applyInsightTwDiffEl(gapEl, m.ytdA, m.ytdT);
           else window.applyInsightTwDiffEl(gapEl, NaN, NaN);
         }
         if (achEl) achEl.textContent = m.hasPlan ? fmtInsightAchPct(m.ytdA, m.ytdT) : DASH;
@@ -19902,7 +19905,7 @@ Cumulative Target Annual Sales</p>
         );
         setInsightRevisionValue(
           revisionValue(groups, 2, 1),
-          m.hasPlan && typeof window.__twFmtDiff === 'function'
+          m.hasPlan && Number(m.ytdT) > 0 && typeof window.__twFmtDiff === 'function'
             ? window.__twFmtDiff(m.ytdA, m.ytdT)
             : DASH
         );
@@ -21909,7 +21912,7 @@ Cumulative Target Annual Sales</p>
           [
             fmtOverlayMoney(m.mtdA),
             m.hasPlan ? fmtOverlayMoney(m.mtdT) : dash,
-            m.hasPlan ? fmtOverlayDiff(m.mtdA, m.mtdT) : dash,
+            m.hasPlan && Number(m.mtdT) > 0 ? fmtOverlayDiff(m.mtdA, m.mtdT) : dash,
             m.hasPlan ? fmtOverlayAchPct(m.mtdA, m.mtdT) : dash,
             m.hasPlan && m.monthlyDailyNeed != null ? fmtOverlayMoney(m.monthlyDailyNeed) : dash,
             m.hasPlan ? fmtOverlayCount(m.monthRemainingBD) : dash,
@@ -21923,7 +21926,7 @@ Cumulative Target Annual Sales</p>
           [
             fmtOverlayMoney(m.ytdA),
             m.hasPlan ? fmtOverlayMoney(m.ytdT) : dash,
-            m.hasPlan ? fmtOverlayDiff(m.ytdA, m.ytdT) : dash,
+            m.hasPlan && Number(m.ytdT) > 0 ? fmtOverlayDiff(m.ytdA, m.ytdT) : dash,
             m.hasPlan ? fmtOverlayAchPct(m.ytdA, m.ytdT) : dash,
           ],
           m.hasPlan && Number.isFinite(Number(m.ytdT)) && Number(m.ytdT) > 0
@@ -22866,7 +22869,7 @@ Cumulative Target Annual Sales</p>
         if (!Number.isFinite(currentPercent) || currentPercent <= 0) currentPercent = fallbackPercent;
         var varRoot = graphEl;
 
-        function renderAllocation(percent) {
+        function renderAllocation(percent, textPercent) {
           var safePercent = Number(percent);
           if (!Number.isFinite(safePercent) || safePercent <= 0) safePercent = fallbackPercent;
 
@@ -22889,7 +22892,11 @@ Cumulative Target Annual Sales</p>
           varRoot.style.setProperty('--kgi-x', kgiX + 'px');
           varRoot.style.setProperty('--fill-w', kgiX + 'px');
           varRoot.style.setProperty('--marker-color', markerColor);
-          if (percentEl) percentEl.textContent = formatPercentText(safePercent);
+          if (percentEl) {
+            var labelPercent = textPercent == null ? safePercent : Number(textPercent);
+            if (!Number.isFinite(labelPercent)) labelPercent = safePercent;
+            percentEl.textContent = formatPercentText(labelPercent);
+          }
         }
 
         if (options.editable && percentEl) {
@@ -22910,8 +22917,8 @@ Cumulative Target Annual Sales</p>
 
         renderAllocation(currentPercent);
         return {
-          setPercent: function (value) {
-            renderAllocation(value);
+          setPercent: function (value, textValue) {
+            renderAllocation(value, textValue);
           },
           getPercent: function () {
             return currentPercent;
@@ -26285,11 +26292,26 @@ Cumulative Target Annual Sales</p>
           return isBaselineActualDay(iso);
         }
 
+        function snapshotActualBusinessDay(iso) {
+          if (!validIso(iso)) return null;
+          var flag = readBusinessDay(iso);
+          if (flag === false) return false;
+          if (flag === true) return true;
+          var sales = snapshotSalesAmt(iso);
+          if (sales != null) return true;
+          return null;
+        }
+
         function snapshotSalesAmt(iso) {
-          if (!Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) return 0;
-          var n = Number(store.timeline.dailySales[iso]);
-          if (!Number.isFinite(n) || isLegacyPlaceholderSales(n)) return 0;
-          return n;
+          var n = null;
+          if (window.KpiRg && typeof KpiRg.readStoreActual === 'function') {
+            n = KpiRg.readStoreActual(store, iso).value;
+          } else if (Object.prototype.hasOwnProperty.call(store.timeline.dailySales, iso)) {
+            n = Number(store.timeline.dailySales[iso]);
+          }
+          if (n == null || !Number.isFinite(Number(n))) return null;
+          if (isLegacyPlaceholderSales(Number(n))) return 0;
+          return Number(n);
         }
 
         function snapshotDailyTargetValue(year, iso, isBiz) {
@@ -26323,6 +26345,35 @@ Cumulative Target Annual Sales</p>
           return rec.monthlyFacts[yearMonth] || null;
         }
 
+        function snapshotMapTarget(map, iso) {
+          if (!map || !Object.prototype.hasOwnProperty.call(map, iso)) return null;
+          var raw = map[iso];
+          var value = raw != null && typeof raw === 'object' ? raw.value : raw;
+          if (value == null || !Number.isFinite(Number(value))) return null;
+          return Number(value);
+        }
+
+        function snapshotTargetRoute(year) {
+          if (!window.KpiAllocation || typeof KpiAllocation.planningDay !== 'function') {
+            return { mode: 'failed' };
+          }
+          var probe = KpiAllocation.planningDay(store, year, String(year) + '-01-01');
+          if (probe === null) return { mode: 'legacy' };
+          if (typeof computePlanMonthlyTargets !== 'function') return { mode: 'failed' };
+          if (typeof buildDailyTargetDisplayMapForYear !== 'function') return { mode: 'failed' };
+          var plan = computePlanMonthlyTargets(year);
+          if (!plan || plan.allocation !== 'hamilton' || !plan.daysByMonth) return { mode: 'failed' };
+          var map = buildDailyTargetDisplayMapForYear(year);
+          if (!map || typeof map !== 'object') return { mode: 'failed' };
+          var expected = 0;
+          for (var mi = 0; mi < 12; mi++) {
+            var list = plan.daysByMonth[mi];
+            if (list && list.length) expected += list.length;
+          }
+          if (!expected || Object.keys(map).length !== expected) return { mode: 'failed' };
+          return { mode: 'mold', map: map };
+        }
+
         /**
          * One overwrite + invalidation function.
          * Touches only opts.year. Other years stay as they are.
@@ -26345,10 +26396,11 @@ Cumulative Target Annual Sales</p>
           var rec = ensureYearRecord(year);
           if (!rec.dailyFacts || typeof rec.dailyFacts !== 'object') rec.dailyFacts = {};
           if (!rec.monthlyFacts || typeof rec.monthlyFacts !== 'object') rec.monthlyFacts = {};
+          var targetRoute = snapshotTargetRoute(year);
           var ytdA = 0;
-          var ytdT = 0;
+          var ytdT = targetRoute.mode === 'failed' ? null : 0;
           var mtdA = 0;
-          var mtdT = 0;
+          var mtdT = targetRoute.mode === 'failed' ? null : 0;
           var prevMonth = -1;
           var lastIso = null;
           for (var m = 0; m < 12; m++) {
@@ -26357,23 +26409,37 @@ Cumulative Target Annual Sales</p>
               var iso = year + '-' + pad2(m + 1) + '-' + pad2(day);
               if (m !== prevMonth) {
                 mtdA = 0;
-                mtdT = 0;
+                mtdT = targetRoute.mode === 'failed' ? null : 0;
                 prevMonth = m;
               }
               var isBiz = snapshotIsBusinessDay(iso);
               var sales = snapshotSalesAmt(iso);
-              var dailyTarget = snapshotDailyTargetValue(year, iso, isBiz);
-              if (isBiz) {
+              var closedWithSales = readBusinessDay(iso) === false && sales != null;
+              var dailyTarget;
+              if (targetRoute.mode === 'mold') {
+                dailyTarget = snapshotMapTarget(targetRoute.map, iso);
+              } else if (targetRoute.mode === 'failed') {
+                dailyTarget = null;
+              } else {
+                dailyTarget = snapshotDailyTargetValue(year, iso, isBiz);
+              }
+              if ((isBiz || closedWithSales) && sales != null) {
                 ytdA += sales;
                 mtdA += sales;
+              }
+              if (targetRoute.mode === 'mold') {
                 if (dailyTarget != null) {
                   ytdT += dailyTarget;
                   mtdT += dailyTarget;
                 }
+              } else if (targetRoute.mode === 'legacy' && isBiz && dailyTarget != null) {
+                ytdT += dailyTarget;
+                mtdT += dailyTarget;
               }
               rec.dailyFacts[iso] = {
                 sales: sales,
-                businessDay: isBiz,
+                salesEntered: sales != null,
+                businessDay: snapshotActualBusinessDay(iso),
                 dailyTarget: dailyTarget,
                 mtdActual: mtdA,
                 mtdTarget: mtdT,
@@ -26397,6 +26463,7 @@ Cumulative Target Annual Sales</p>
           rec.dailyFactsReason = opts.reason || 'invalidate';
           try {
             if (
+              targetRoute.mode !== 'failed' &&
               window.__KPI_DAILY_FACTS_SYNC &&
               typeof window.__KPI_DAILY_FACTS_SYNC.schedulePutYear === 'function'
             ) {
@@ -27819,6 +27886,10 @@ Cumulative Target Annual Sales</p>
 
         function isWeekdayPlanningDay(y, m0, day) {
           var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(day);
+          if (window.KpiAllocation && typeof KpiAllocation.planningDay === 'function') {
+            var decided = KpiAllocation.planningDay(store, y, iso);
+            if (decided !== null) return decided;
+          }
           if (typeof isPlanningBusinessDay === 'function') return isPlanningBusinessDay(iso);
           return isCalendarBusinessDay(y, m0, day);
         }
@@ -27939,6 +28010,19 @@ Cumulative Target Annual Sales</p>
           }
           var weights = readMonthlyHlWeights(y);
           if (!weights || weights.length !== 12) weights = DEFAULT_HL_WEIGHTS.slice();
+          if (window.KpiAllocation && typeof KpiAllocation.operatingPlan === 'function') {
+            var sharedPlan = KpiAllocation.operatingPlan({
+              year: y,
+              annualTarget: Number(annualTarget),
+              seasonality: weights,
+              store: store
+            });
+            if (sharedPlan && sharedPlan.ok && sharedPlan.legacy !== true && sharedPlan.plan) {
+              __planMonthlyTargetsCache[y] = sharedPlan.plan;
+              return sharedPlan.plan;
+            }
+            if (sharedPlan && sharedPlan.ok === false) return null;
+          }
           var monthlyBD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
           var totalBD = 0;
           for (var m0 = 0; m0 < 12; m0++) {
@@ -28201,6 +28285,38 @@ Cumulative Target Annual Sales</p>
           if (!Number.isFinite(oy) || !Number.isFinite(month) || month < 0 || month > 11) return {};
           var plan = computePlanMonthlyTargets(oy);
           if (!plan) return {};
+          if (plan.allocation === 'hamilton' && window.KpiAllocation && typeof KpiAllocation.displayMapFromPlan === 'function') {
+            var hTarget = plan.monthlyTargets[month];
+            if (!(hTarget > 0)) return {};
+            var hMode = normalizeDailyTargetMode(
+              opts.dailyTargetMode != null ? opts.dailyTargetMode : readDailyTargetMode(oy)
+            );
+            var hEffective = hMode;
+            var hFallback = false;
+            if (hMode === DAILY_TARGET_MODE_WEEKDAY && !weekdayTargetDataReady(oy)) {
+              hEffective = DAILY_TARGET_MODE_FLAT;
+              hFallback = true;
+            }
+            var hKey = dailyTargetDisplayCacheKey(
+              oy, month, hMode, hEffective, hFallback, hTarget, opts.baselineYears
+            );
+            if (__dailyTargetDisplayCache[hKey]) return __dailyTargetDisplayCache[hKey];
+            var hMap = KpiAllocation.displayMapFromPlan(plan, month, function (day) {
+              if (hEffective !== DAILY_TARGET_MODE_WEEKDAY) return 1;
+              var share = computeWeekdayShareAvg(oy, month, day.dow, opts.baselineYears);
+              var list = plan.daysByMonth && plan.daysByMonth[month];
+              var same = 0;
+              if (list) {
+                for (var hi = 0; hi < list.length; hi++) {
+                  if (list[hi].dow === day.dow) same += 1;
+                }
+              }
+              if (!(share > 0) || !(same > 0)) return 1;
+              return share / same;
+            });
+            __dailyTargetDisplayCache[hKey] = hMap;
+            return hMap;
+          }
           var monthlyTarget = plan.monthlyTargets[month];
           if (!(monthlyTarget > 0)) return {};
 
@@ -34124,6 +34240,15 @@ Cumulative Target Annual Sales</p>
         ) {
           return false;
         }
+        if (
+          window.KpiAllocation &&
+          typeof KpiAllocation.planningDay === 'function' &&
+          window.KpiYearStore &&
+          typeof KpiYearStore.getStore === 'function'
+        ) {
+          var moldDay = KpiAllocation.planningDay(KpiYearStore.getStore(), y, iso);
+          if (moldDay !== null) return moldDay;
+        }
         return isTimelineBusinessDay(iso, bmap, isWeekend);
       }
 
@@ -34219,6 +34344,29 @@ Cumulative Target Annual Sales</p>
         }
         cell.classList.remove('annual-daily-row__cell--neg');
         cell.classList.add(twDiffSeverityClass(actual, target));
+      }
+      function enteredTwSales(iso) {
+        if (!window.KpiYearStore || typeof KpiYearStore.readDailySales !== 'function') return null;
+        var live = KpiYearStore.readDailySales(iso);
+        if (live != null && Number.isFinite(Number(live))) return Number(live);
+        var store = typeof KpiYearStore.getStore === 'function' ? KpiYearStore.getStore() : null;
+        var tl = store && store.timeline && store.timeline.dailySales;
+        if (!tl || !Object.prototype.hasOwnProperty.call(tl, iso)) return null;
+        var raw = Number(tl[iso]);
+        if (!Number.isFinite(raw) || raw !== 1234) return null;
+        var oy = typeof KpiYearStore.getOperatingYear === 'function'
+          ? KpiYearStore.getOperatingYear()
+          : new Date().getFullYear();
+        var y = Number(String(iso).slice(0, 4));
+        if (Number.isFinite(y) && y < oy) return raw;
+        return 0;
+      }
+      function dailyFactSalesDisplay(iso) {
+        if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return null;
+        var store = KpiYearStore.getStore();
+        var tl = store && store.timeline && store.timeline.dailySales;
+        if (!tl || typeof tl !== 'object') return null;
+        return enteredTwSales(iso);
       }
       function readTwSalesAmt(iso, smap) {
         if (!smap || !Object.prototype.hasOwnProperty.call(smap, iso)) return 0;
@@ -35238,6 +35386,7 @@ Cumulative Target Annual Sales</p>
           iso: src.iso,
           isBusinessToday: src.isBusinessToday,
           hasPlan: src.hasPlan,
+          salesEntered: src.salesEntered,
           dailySales: src.dailySales,
           dailyTarget: src.dailyTarget,
           mtdA: src.mtdA,
@@ -35256,6 +35405,7 @@ Cumulative Target Annual Sales</p>
       function tryIncrementalTwMetrics(fromIso, toIso, fromMetrics, direction) {
         // direction: +1 = from -> to (to = from+1), -1 = from -> to (to = from-1)
         if (!fromMetrics || !fromIso || !toIso) return null;
+        if (!fromMetrics.hasPlan) return null;
         var fromD = new Date(String(fromIso).trim() + 'T00:00:00');
         var toD = new Date(String(toIso).trim() + 'T00:00:00');
         if (!isFinite(fromD.getTime()) || !isFinite(toD.getTime())) return null;
@@ -35283,7 +35433,7 @@ Cumulative Target Annual Sales</p>
           return {
             biz: biz,
             planBiz: planBiz,
-            sales: biz ? readTwSalesAmt(dayIso, smap) : 0,
+            sales: enteredTwSales(dayIso),
             target: planBiz ? dayTarget : null,
           };
         }
@@ -35296,9 +35446,11 @@ Cumulative Target Annual Sales</p>
             m.monthRemainingBD = Math.max(0, Number(m.monthRemainingBD) - 1);
           }
           var entered = dayMeta(toIso);
+          if (entered.sales != null) {
+            m.ytdA = Number(m.ytdA) + Number(entered.sales);
+            m.mtdA = Number(m.mtdA) + Number(entered.sales);
+          }
           if (entered.biz) {
-            m.ytdA = Number(m.ytdA) + entered.sales;
-            m.mtdA = Number(m.mtdA) + entered.sales;
             if (entered.target != null) {
               m.ytdT = Number(m.ytdT) + entered.target;
               m.mtdT = Number(m.mtdT) + entered.target;
@@ -35309,15 +35461,16 @@ Cumulative Target Annual Sales</p>
             m.dailyTarget = entered.target;
           } else {
             m.isBusinessToday = false;
-            m.dailySales = 0;
+            m.dailySales = entered.sales;
             m.dailyTarget = null;
           }
+          m.salesEntered = entered.sales != null;
         } else {
           // leave fromIso (newer), enter toIso (older)
           var dropped = dayMeta(fromIso);
-          if (dropped.biz) {
-            m.ytdA = Number(m.ytdA) - dropped.sales;
-            m.mtdA = Number(m.mtdA) - dropped.sales;
+          if (dropped.sales != null) {
+            m.ytdA = Number(m.ytdA) - Number(dropped.sales);
+            m.mtdA = Number(m.mtdA) - Number(dropped.sales);
           }
           if (dropped.target != null) {
             m.ytdT = Number(m.ytdT) - dropped.target;
@@ -35334,9 +35487,10 @@ Cumulative Target Annual Sales</p>
             m.dailyTarget = back.target;
           } else {
             m.isBusinessToday = false;
-            m.dailySales = 0;
+            m.dailySales = back.sales;
             m.dailyTarget = null;
           }
+          m.salesEntered = back.sales != null;
         }
         return finalizeTwMetricsNeeds(m);
       }
@@ -35369,10 +35523,19 @@ Cumulative Target Annual Sales</p>
           for (var day = 1; day <= dc; day++) {
             var dayIso = y + '-' + pad2(m + 1) + '-' + pad2(day);
             var f = facts[dayIso];
+            var moldPlan =
+              window.KpiAllocation &&
+              typeof KpiAllocation.planningDay === 'function' &&
+              window.KpiYearStore &&
+              typeof KpiYearStore.getStore === 'function'
+                ? KpiAllocation.planningDay(KpiYearStore.getStore(), y, dayIso)
+                : null;
             var planBiz =
-              window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function'
-                ? KpiYearStore.isPlanningBusinessDay(dayIso)
-                : !!(f && f.businessDay);
+              moldPlan !== null
+                ? moldPlan
+                : window.KpiYearStore && typeof KpiYearStore.isPlanningBusinessDay === 'function'
+                  ? KpiYearStore.isPlanningBusinessDay(dayIso)
+                  : !!(f && f.businessDay);
             if (!planBiz) continue;
             var tgt = f && f.dailyTarget;
             if (m === m0 && tgt != null && Number.isFinite(Number(tgt))) {
@@ -35426,8 +35589,10 @@ Cumulative Target Annual Sales</p>
           iso: iso,
           isBusinessToday: !!fact.businessDay,
           hasPlan: hasPlan,
-          dailySales: Number(fact.sales) || 0,
-          dailyTarget: fact.businessDay ? fact.dailyTarget : null,
+          hasRecordedActual: fact.mtdActual != null || fact.ytdActual != null,
+          salesEntered: fact.salesEntered === true ? true : (fact.salesEntered === false ? false : null),
+          dailySales: dailyFactSalesDisplay(iso),
+          dailyTarget: fact.dailyTarget != null && Number.isFinite(Number(fact.dailyTarget)) ? Number(fact.dailyTarget) : null,
           mtdA: Number(fact.mtdActual) || 0,
           mtdT: fact.mtdTarget,
           ytdA: Number(fact.ytdActual) || 0,
@@ -35441,6 +35606,78 @@ Cumulative Target Annual Sales</p>
           annualDailyNeed: null,
         });
       }
+
+      function allocationCumulativeThrough(iso) {
+        if (!window.KpiAllocation || typeof KpiAllocation.planningDay !== 'function') return null;
+        if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return null;
+        if (typeof KpiYearStore.readAnnualTarget !== 'function') return null;
+        if (typeof KpiYearStore.computePlanMonthlyTargets !== 'function') return null;
+        if (typeof KpiYearStore.buildDailyTargetDisplayMapForYear !== 'function') return null;
+        var y = Number(String(iso || '').slice(0, 4));
+        var month = Number(String(iso || '').slice(5, 7));
+        if (!Number.isFinite(y) || !Number.isFinite(month)) return null;
+        var live = KpiYearStore.getStore();
+        var probe = KpiAllocation.planningDay(live, y, String(y) + '-01-01');
+        if (probe === null) return null;
+        var annual = KpiYearStore.readAnnualTarget(y);
+        if (annual == null || !Number.isFinite(Number(annual)) || Number(annual) <= 0) return { failed: true };
+        var plan = KpiYearStore.computePlanMonthlyTargets(y);
+        if (!plan || plan.allocation !== 'hamilton' || !plan.daysByMonth || !plan.monthlyTargets) return { failed: true };
+        var map = KpiYearStore.buildDailyTargetDisplayMapForYear(y);
+        if (!map || typeof map !== 'object') return { failed: true };
+        var expected = 0;
+        var mi;
+        for (mi = 0; mi < 12; mi++) {
+          var list = plan.daysByMonth[mi];
+          if (list && list.length) expected += list.length;
+        }
+        var keys = Object.keys(map);
+        if (!expected || keys.length !== expected) return { failed: true };
+        var mtd = 0;
+        var ytd = 0;
+        var mtdDays = 0;
+        var ytdDays = 0;
+        var sawValue = false;
+        var i;
+        for (i = 0; i < keys.length; i++) {
+          var day = keys[i];
+          if (day > iso) continue;
+          ytdDays += 1;
+          var inMonth = Number(day.slice(5, 7)) === month;
+          if (inMonth) mtdDays += 1;
+          var raw = map[day];
+          var value = raw != null && typeof raw === 'object' ? raw.value : raw;
+          if (value == null || !Number.isFinite(Number(value))) continue;
+          sawValue = true;
+          var n = Number(value);
+          ytd += n;
+          if (inMonth) mtd += n;
+        }
+        if ((mtdDays > 0 || ytdDays > 0) && !sawValue) return { failed: true };
+        return { mtdT: mtd, ytdT: ytd };
+      }
+      function applyAllocationCumulative(iso, metrics) {
+        if (!metrics) return metrics;
+        var sums = allocationCumulativeThrough(iso);
+        if (!sums) return metrics;
+        if (sums.failed) {
+          metrics.mtdT = null;
+          metrics.ytdT = null;
+          metrics.cumulativeUncomputed = true;
+          return metrics;
+        }
+        metrics.mtdT = sums.mtdT;
+        metrics.ytdT = sums.ytdT;
+        metrics.cumulativeFromAllocation = true;
+        return metrics;
+      }
+      function cumulativeTargetShown(m, value) {
+        if (!m || m.cumulativeUncomputed === true) return false;
+        if (m.cumulativeFromAllocation !== true) return false;
+        return value != null && Number.isFinite(Number(value));
+      }
+      window.__cumulativeTargetShown = cumulativeTargetShown;
+
       function computeTwMetricsForIso(iso) {
         if (!iso) return null;
         if (Object.prototype.hasOwnProperty.call(twMetricsCache, iso)) {
@@ -35448,6 +35685,7 @@ Cumulative Target Annual Sales</p>
         }
         var fromFacts = metricsFromDailyFacts(iso);
         if (fromFacts) {
+          fromFacts = applyAllocationCumulative(iso, fromFacts);
           twMetricsCache[iso] = fromFacts;
           return fromFacts;
         }
@@ -35455,6 +35693,7 @@ Cumulative Target Annual Sales</p>
         if (prevIso && Object.prototype.hasOwnProperty.call(twMetricsCache, prevIso)) {
           var fwd = tryIncrementalTwMetrics(prevIso, iso, twMetricsCache[prevIso], 1);
           if (fwd) {
+            fwd = applyAllocationCumulative(iso, fwd);
             twMetricsCache[iso] = fwd;
             return fwd;
           }
@@ -35463,6 +35702,7 @@ Cumulative Target Annual Sales</p>
         if (nextIso && Object.prototype.hasOwnProperty.call(twMetricsCache, nextIso)) {
           var back = tryIncrementalTwMetrics(nextIso, iso, twMetricsCache[nextIso], -1);
           if (back) {
+            back = applyAllocationCumulative(iso, back);
             twMetricsCache[iso] = back;
             return back;
           }
@@ -35482,6 +35722,7 @@ Cumulative Target Annual Sales</p>
         var hasPlan = false;
         var isBusinessToday = false;
         var dailySales = 0;
+        var daySalesEntered = false;
         var dailyTarget = null;
         var mtdA = 0;
         var mtdT = 0;
@@ -35498,7 +35739,8 @@ Cumulative Target Annual Sales</p>
             var isWk = dt.getDay() === 0 || dt.getDay() === 6;
             var uiBiz = isTimelineBusinessDay(dayIso, bmap, isWk);
             var planBiz = isTwPlanningBusinessDay(dayIso, bmap, isWk);
-            if (!uiBiz && !planBiz) continue;
+            var salesAmt = enteredTwSales(dayIso);
+            if (!uiBiz && !planBiz && salesAmt == null) continue;
             var dayTarget = null;
             if (planBiz && Object.prototype.hasOwnProperty.call(tgtMap, dayIso)) {
               dayTarget = Number(tgtMap[dayIso]);
@@ -35506,8 +35748,7 @@ Cumulative Target Annual Sales</p>
             }
             if (m === m0 && dayTarget != null) monthlyFullTarget += dayTarget;
             if (dayIso <= iso) {
-              if (uiBiz) {
-                var salesAmt = readTwSalesAmt(dayIso, smap);
+              if (salesAmt != null) {
                 ytdA += salesAmt;
                 if (m === m0) mtdA += salesAmt;
               }
@@ -35522,16 +35763,44 @@ Cumulative Target Annual Sales</p>
               yearRemainingBD++;
             }
             if (dayIso === iso) {
-              isBusinessToday = uiBiz;
-              dailySales = uiBiz ? readTwSalesAmt(dayIso, smap) : 0;
+              var dayStored =
+                smap &&
+                Object.prototype.hasOwnProperty.call(smap, dayIso) &&
+                Number.isFinite(Number(smap[dayIso]));
+              if (plan) {
+                isBusinessToday = uiBiz;
+                dailySales = salesAmt != null ? salesAmt : null;
+              } else if (dayStored) {
+                isBusinessToday = true;
+                dailySales = Number(smap[dayIso]);
+              } else {
+                isBusinessToday = false;
+                dailySales = null;
+              }
               dailyTarget = planBiz ? dayTarget : null;
+              daySalesEntered = salesAmt != null;
             }
+          }
+        }
+        var recordedActual = false;
+        if (
+          !hasPlan &&
+          window.KpiCockpitFacts &&
+          typeof window.KpiCockpitFacts.recordedSalesThrough === 'function'
+        ) {
+          var throughSales = window.KpiCockpitFacts.recordedSalesThrough(y, iso, smap);
+          if (throughSales && throughSales.any) {
+            recordedActual = true;
+            mtdA = throughSales.mtd;
+            ytdA = throughSales.ytd;
           }
         }
         var result = finalizeTwMetricsNeeds({
           iso: iso,
           isBusinessToday: isBusinessToday,
           hasPlan: hasPlan,
+          hasRecordedActual: recordedActual,
+          salesEntered: daySalesEntered,
           dailySales: dailySales,
           dailyTarget: dailyTarget,
           mtdA: mtdA,
@@ -35546,6 +35815,7 @@ Cumulative Target Annual Sales</p>
           yearRemainingBD: yearRemainingBD,
           annualDailyNeed: null,
         });
+        result = applyAllocationCumulative(iso, result);
         twMetricsCache[iso] = result;
         return result;
       }
@@ -35911,7 +36181,10 @@ Cumulative Target Annual Sales</p>
           if (typeof widget.setDisabled === 'function') widget.setDisabled();
           return;
         }
-        if (typeof widget.setPercent === 'function') widget.setPercent(Math.max(0.1, pct));
+        if (typeof widget.setPercent === 'function') {
+          if (pct === 0) widget.setPercent(0.1, 0);
+          else widget.setPercent(Math.max(0.1, pct));
+        }
       }
       function refreshArea1Cockpit(iso) {
         iso = iso || resolveArea1Iso();
@@ -35945,20 +36218,29 @@ Cumulative Target Annual Sales</p>
           setAchWidget(widgets.annualAch, NaN, NaN, false);
           return;
         }
-        var hasDailyPlan = m.isBusinessToday && m.dailyTarget != null;
-        setMoneyCell(dailySalesEl, m.dailySales, m.isBusinessToday);
-        setMoneyCell(dailyTargetEl, m.dailyTarget, hasDailyPlan);
-        setDiffCell(dailyDiffEl, m.dailySales, m.dailyTarget, hasDailyPlan);
-        setAchWidget(widgets.dailyAch, m.dailySales, m.dailyTarget, hasDailyPlan);
+        var showDailyTarget = m.dailyTarget != null && Number.isFinite(Number(m.dailyTarget));
+        var dayEntered = m.salesEntered === true;
+        var salesFinite = m.dailySales != null && Number.isFinite(Number(m.dailySales));
+        var showDailySales = dayEntered ? salesFinite : (m.salesEntered == null && salesFinite && Number(m.dailySales) !== 0);
+        var showDailyCompare = showDailyTarget && dayEntered && salesFinite;
+        setMoneyCell(dailySalesEl, m.dailySales, showDailySales);
+        setMoneyCell(dailyTargetEl, m.dailyTarget, showDailyTarget);
+        setDiffCell(dailyDiffEl, m.dailySales, m.dailyTarget, showDailyCompare);
+        setAchWidget(widgets.dailyAch, m.dailySales, m.dailyTarget, showDailyCompare);
         var hasMonthlyPlan = m.hasPlan;
-        setMoneyCell(monthlySalesEl, m.mtdA, hasMonthlyPlan);
-        setMoneyCell(monthlyTargetEl, m.mtdT, hasMonthlyPlan);
-        setDiffCell(monthlyDiffEl, m.mtdA, m.mtdT, hasMonthlyPlan);
-        setAchWidget(widgets.monthlyAch, m.mtdA, m.mtdT, hasMonthlyPlan);
-        setMoneyCell(annualSalesEl, m.ytdA, hasMonthlyPlan);
-        setMoneyCell(annualTargetEl, m.ytdT, hasMonthlyPlan);
-        setDiffCell(annualDiffEl, m.ytdA, m.ytdT, hasMonthlyPlan);
-        setAchWidget(widgets.annualAch, m.ytdA, m.ytdT, hasMonthlyPlan);
+        var showRecordedActual = hasMonthlyPlan || m.hasRecordedActual === true;
+        var showMtd = cumulativeTargetShown(m, m.mtdT);
+        var showYtd = cumulativeTargetShown(m, m.ytdT);
+        var showMtdCompare = showMtd && Number(m.mtdT) > 0;
+        var showYtdCompare = showYtd && Number(m.ytdT) > 0;
+        setMoneyCell(monthlySalesEl, m.mtdA, showRecordedActual);
+        setMoneyCell(monthlyTargetEl, m.mtdT, showMtd);
+        setDiffCell(monthlyDiffEl, m.mtdA, m.mtdT, showMtdCompare);
+        setAchWidget(widgets.monthlyAch, m.mtdA, m.mtdT, showMtdCompare);
+        setMoneyCell(annualSalesEl, m.ytdA, showRecordedActual);
+        setMoneyCell(annualTargetEl, m.ytdT, showYtd);
+        setDiffCell(annualDiffEl, m.ytdA, m.ytdT, showYtdCompare);
+        setAchWidget(widgets.annualAch, m.ytdA, m.ytdT, showYtdCompare);
       }
       window.refreshArea1Cockpit = refreshArea1Cockpit;
       window.refreshArea1KpiStripDiffs = refreshArea1Cockpit;
@@ -39306,15 +39588,16 @@ Cumulative Target Annual Sales</p>
             var inp = tr.querySelector('.sales-data-modal__sales-input');
             if (cb) {
               if (!cb.checked) {
+                var enteredOff = !!(inp && inp.getAttribute('data-sales-entered') === '1');
                 var lastOff = '0';
-                if (inp) {
+                if (enteredOff) {
                   var laOff = inp.getAttribute('data-last-active');
                   if (laOff != null && laOff !== '') {
                     var lnOff = Number(laOff);
                     if (isFinite(lnOff)) lastOff = String(Math.round(lnOff));
                   }
                 }
-                return { off: true, last: lastOff };
+                return { off: true, last: lastOff, entered: enteredOff };
               }
               /* ON: 表示中の入力値を正とする（data-last-active は B.DAY OFF 復元用。
                  lease 切れ等で input ハンドラが last-active を更新できなくても Save を落とさない） */
@@ -39419,7 +39702,7 @@ Cumulative Target Annual Sales</p>
             prevM0 = item.m0;
           }
           var defs = getSalesDataRowDefaultsForTotals(item.iso, item.isWk);
-          if (!defs.off) {
+          if (!defs.off || defs.entered) {
             var n = Math.round(Number(defs.last));
             if (isFinite(n)) {
               monthRunning += n;
@@ -39428,15 +39711,16 @@ Cumulative Target Annual Sales</p>
           }
           map[item.iso] = {
             off: defs.off,
-            monthly: defs.off ? null : monthRunning,
-            annual: defs.off ? null : yearRunning
+            entered: !!defs.entered,
+            monthly: defs.off && !defs.entered ? null : monthRunning,
+            annual: defs.off && !defs.entered ? null : yearRunning
           };
         }
         return map;
       }
 
-      function salesDataTotalsCellText(off, n) {
-        if (off || n == null || !isFinite(Number(n))) return '—';
+      function salesDataTotalsCellText(off, n, entered) {
+        if ((off && !entered) || n == null || !isFinite(Number(n))) return '—';
         return formatAmountCell(n);
       }
 
@@ -40281,22 +40565,23 @@ Cumulative Target Annual Sales</p>
         var ps = ensureSalesDataDaily();
         var bmap = ps.businessDayByDate;
         var map = ps.targetSalesByDate;
+        var storedLast = null;
+        if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
+          var storedN = Number(map[iso]);
+          if (!isFinite(storedN) || storedN === 1234) storedN = 0;
+          storedLast = String(Math.round(storedN));
+        }
+        var entered = storedLast != null;
         if (bmap && Object.prototype.hasOwnProperty.call(bmap, iso)) {
           var isBusiness = !!bmap[iso];
-          if (!isBusiness) return { off: true, last: '0' };
-          if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
-            var bn = Number(map[iso]);
-            if (!isFinite(bn) || bn === 1234) bn = 0;
-            return { off: false, last: String(Math.round(bn)) };
+          if (!isBusiness) {
+            return { off: true, last: entered ? storedLast : '0', entered: entered };
           }
-          return { off: false, last: '0' };
+          if (entered) return { off: false, last: storedLast, entered: true };
+          return { off: false, last: '0', entered: false };
         }
-        var last = '0';
-        if (map && Object.prototype.hasOwnProperty.call(map, iso)) {
-          var n = Number(map[iso]);
-          if (isFinite(n) && n !== 1234) last = String(Math.round(n));
-        }
-        return { off: false, last: last };
+        if (entered) return { off: false, last: storedLast, entered: true };
+        return { off: false, last: '0', entered: false };
       }
       function isWeekendIso(iso) {
         var p = String(iso || '').split('-');
@@ -40324,7 +40609,17 @@ Cumulative Target Annual Sales</p>
         if (!inp) return;
         if (off) {
           inp.readOnly = true;
-          inp.value = fmtSalesInput(0);
+          var keptRaw = inp.getAttribute('data-last-active');
+          var keepEntered = inp.getAttribute('data-sales-entered') === '1';
+          if (!keepEntered && keptRaw != null && keptRaw !== '' && keptRaw !== '0') keepEntered = true;
+          if (keepEntered) {
+            var keptN = keptRaw != null && keptRaw !== '' ? Number(keptRaw) : 0;
+            if (!Number.isFinite(keptN) || keptN === 1234) keptN = 0;
+            inp.value = fmtSalesInput(keptN);
+          } else {
+            inp.value = '';
+            inp.removeAttribute('data-last-active');
+          }
         } else if (
           window.__KPI_EDIT_GUARDS &&
           typeof window.__KPI_EDIT_GUARDS.mepSalesPathActive === 'function' &&
@@ -41136,10 +41431,17 @@ Cumulative Target Annual Sales</p>
           inp.className = 'sales-data-modal__sales-input';
           inp.setAttribute('data-iso-date', item.iso);
           inp.setAttribute('inputmode', 'decimal');
-          inp.setAttribute('data-last-active', defs.last);
+          if (defs.entered) inp.setAttribute('data-sales-entered', '1');
+          if (defs.entered || !off) inp.setAttribute('data-last-active', defs.last);
           if (off) {
-            inp.value = fmtSalesInput(0);
             inp.readOnly = true;
+            if (defs.entered) {
+              var offShown = defs.last != null && defs.last !== '' ? Number(defs.last) : 0;
+              if (!Number.isFinite(offShown) || offShown === 1234) offShown = 0;
+              inp.value = fmtSalesInput(offShown);
+            } else {
+              inp.value = '';
+            }
           } else {
             var salesN =
               defs.last != null && defs.last !== '' ? Number(defs.last) : 0;
@@ -41154,10 +41456,10 @@ Cumulative Target Annual Sales</p>
           var totalsEntry = totalsMap[item.iso];
           let tdMonthly = document.createElement('td');
           tdMonthly.className = 'sales-data-modal__monthly-td';
-          tdMonthly.textContent = salesDataTotalsCellText(off, totalsEntry && totalsEntry.monthly);
+          tdMonthly.textContent = salesDataTotalsCellText(off, totalsEntry && totalsEntry.monthly, totalsEntry && totalsEntry.entered);
           let tdAnnual = document.createElement('td');
           tdAnnual.className = 'sales-data-modal__annual-td';
-          tdAnnual.textContent = salesDataTotalsCellText(off, totalsEntry && totalsEntry.annual);
+          tdAnnual.textContent = salesDataTotalsCellText(off, totalsEntry && totalsEntry.annual, totalsEntry && totalsEntry.entered);
 
           tr.appendChild(tdDate);
           tr.appendChild(tdCb);
@@ -41169,7 +41471,7 @@ Cumulative Target Annual Sales</p>
           cb.addEventListener('change', function () {
             pushUndoSnapshot();
             var inpEl = tr.querySelector('.sales-data-modal__sales-input');
-            if (!cb.checked && inpEl && !inpEl.readOnly) {
+            if (!cb.checked && inpEl && !inpEl.readOnly && inpEl.getAttribute('data-sales-entered') === '1') {
               var raw = String(inpEl.value || '').replace(/[^\d.-]/g, '');
               if (raw !== '') inpEl.setAttribute('data-last-active', String(Number(raw)));
             }
@@ -41188,8 +41490,10 @@ Cumulative Target Annual Sales</p>
             var raw = String(inp.value || '').replace(/[^\d.-]/g, '');
             /* 表示値と data-last-active を常に同期（Save / B.DAY OFF 復元）。
                canWrite 拒否時でも last-active だけは更新し、Save が旧値を拾わないようにする */
-            if (raw !== '') inp.setAttribute('data-last-active', String(Number(raw)));
-            else inp.removeAttribute('data-last-active');
+            if (raw !== '') {
+              inp.setAttribute('data-last-active', String(Number(raw)));
+              inp.setAttribute('data-sales-entered', '1');
+            } else inp.removeAttribute('data-last-active');
             if (
               window.KpiYearStore &&
               rowIso &&

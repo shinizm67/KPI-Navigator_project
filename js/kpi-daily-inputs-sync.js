@@ -151,16 +151,19 @@
     var changed = false;
     rows.forEach(function (row) {
       if (!row || !row.iso) return;
+      var salesMissing = !Object.prototype.hasOwnProperty.call(row, 'sales') || row.sales === null || row.sales === '';
       var sales = Number(row.sales);
-      if (!Number.isFinite(sales)) sales = 0;
+      var salesOk = !salesMissing && Number.isFinite(sales);
       var salesMap = store.timeline.dailySales;
       var hasPrevSales = Object.prototype.hasOwnProperty.call(salesMap, row.iso);
       var prevS = hasPrevSales ? salesMap[row.iso] : undefined;
       /* 0 is canonical. Operating-year 1234 is sentinel, not protected. */
       var keepCanonicalSales = hasPrevSales && isProtectedCanonicalSales(row.iso, prevS);
+      /* A missing timeline key must not become an explicit 0 from a biz-only or omitted sales field. */
+      var skipMissingZero = salesOk && sales === 0 && !hasPrevSales;
       var hadPrevB = Object.prototype.hasOwnProperty.call(store.timeline.businessDays, row.iso);
       var prevB = hadPrevB ? store.timeline.businessDays[row.iso] : undefined;
-      if (!keepCanonicalSales) {
+      if (salesOk && !keepCanonicalSales && !skipMissingZero) {
         salesMap[row.iso] = sales;
       }
 
@@ -182,7 +185,7 @@
         if (hadPrevB) delete store.timeline.businessDays[row.iso];
       }
 
-      if (!keepCanonicalSales && prevS !== sales) changed = true;
+      if (salesOk && !keepCanonicalSales && !skipMissingZero && prevS !== sales) changed = true;
       if (hadPrevB !== nextHadB) changed = true;
       else if (nextHadB && prevB !== nextB) changed = true;
     });

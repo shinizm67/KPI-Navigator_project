@@ -2,12 +2,12 @@
    Prefers store.years[y].dailyFacts, the snapshot KpiYearStore.invalidateDailyFacts
    writes and Daily FW reads through metricsFromDailyFacts / __computeTwMetricsForIso.
    Does not copy HL daily-target allocation. If that snapshot is missing, positive
-   recorded sales are summed from timeline.dailySales. A missing business-day flag
-   does not hide a positive sales record, and a lone 0 is not a recorded open day.
-   Daily display is an em dash for an explicit closed day, an unknown day, or a
-   zero with no business-day flag. Explicit open with sales 0 shows as zero.
-   Cumulative targets stay blank. A saved sales-data-save target still shows as
-   the Annual final target for the selected date's year. */
+   recorded sales are summed from timeline.dailySales. businessDay stays true, false,
+   or null. Explicit false shows the saved sales and dashes that day's target,
+   difference, and rate. Null keeps a saved daily target. salesEntered separates
+   unentered from zero. Explicit open with sales 0 compares as zero.
+   Monthly and annual money actuals keep saved sales, including an explicit closed day.
+   A saved sales-data-save target still shows as the Annual final target. */
 (function () {
   'use strict';
 
@@ -92,6 +92,7 @@
 
   function factsUsable(store, iso, fact) {
     if (!fact) return false;
+    if (fact.salesEntered === true && fact.businessDay === false) return true;
     var annualTarget = hasSavedPlan(store, yearOf(iso)) ? Number(yearRec(store, yearOf(iso)).plan.targetSales) : 0;
     if (
       annualTarget > 0 &&
@@ -115,8 +116,10 @@
     var m0 = Number(String(iso).slice(5, 7)) - 1;
     var mtdA = 0;
     var ytdA = 0;
-    var dailySales = 0;
+    var dailySales = null;
     var open = false;
+    var salesEntered = false;
+    var dayFlag = null;
     if (!Number.isFinite(y) || !Number.isFinite(m0)) return null;
     for (var m = 0; m < 12; m++) {
       var dc = new Date(y, m + 1, 0).getDate();
@@ -129,14 +132,18 @@
           if (m === m0) mtdA += sales;
         }
         if (dayIso === iso) {
-          open = showRecordedDaily(businessDayFlag(store, dayIso), sales);
-          dailySales = open && sales != null ? sales : 0;
+          dayFlag = businessDayFlag(store, dayIso);
+          open = showRecordedDaily(dayFlag, sales);
+          salesEntered = sales != null;
+          dailySales = sales != null ? sales : null;
         }
       }
     }
     return {
       isBusinessToday: open,
+      businessDay: dayFlag,
       hasPlan: false,
+      salesEntered: salesEntered,
       dailySales: dailySales,
       dailyTarget: null,
       mtdA: mtdA,
@@ -149,7 +156,8 @@
   function rowToFact(row) {
     return {
       sales: row.sales,
-      businessDay: !!row.businessDay,
+      salesEntered: row.salesEntered === true ? true : (row.salesEntered === false ? false : null),
+      businessDay: row.businessDay === true ? true : (row.businessDay === false ? false : null),
       dailyTarget: row.dailyTarget,
       mtdActual: row.mtdActual,
       mtdTarget: row.mtdTarget,
@@ -242,12 +250,15 @@
     if (!store || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return null;
     var fact = remoteFacts[iso] || factsFor(store, iso);
     if (factsUsable(store, iso, fact)) {
-      var openFact = !!fact.businessDay;
+      var biz = fact.businessDay === true ? true : (fact.businessDay === false ? false : null);
+      var entered = fact.salesEntered === true ? true : (fact.salesEntered === false ? false : null);
       return {
-        isBusinessToday: openFact,
+        isBusinessToday: biz === true,
+        businessDay: biz,
         hasPlan: hasSavedPlan(store, yearOf(iso)),
-        dailySales: Number(fact.sales) || 0,
-        dailyTarget: openFact ? numOrNull(fact.dailyTarget) : null,
+        salesEntered: entered,
+        dailySales: entered === true ? (Number(fact.sales) || 0) : null,
+        dailyTarget: biz === false ? null : numOrNull(fact.dailyTarget),
         mtdA: Number(fact.mtdActual) || 0,
         mtdT: numOrNull(fact.mtdTarget),
         ytdA: Number(fact.ytdActual) || 0,
@@ -290,13 +301,18 @@
   function cellsFor(kind, m) {
     if (!m) return [DASH, DASH, DASH, DASH];
     if (kind === 'daily') {
-      if (!m.isBusinessToday) return [DASH, DASH, DASH, DASH];
-      if (m.dailyTarget == null) return [money(m.dailySales), DASH, DASH, DASH];
+      var enteredDaily = m.salesEntered === true;
+      var salesCell = enteredDaily ? money(m.dailySales) : DASH;
+      if (!enteredDaily && m.dailyTarget == null) return [DASH, DASH, DASH, DASH];
+      if (m.dailyTarget == null || !enteredDaily) {
+        var targetCell = m.dailyTarget != null ? money(m.dailyTarget) : DASH;
+        return [salesCell, targetCell, DASH, DASH];
+      }
       return [
-        money(m.dailySales),
+        salesCell,
         money(m.dailyTarget),
-        diff(m.dailySales, m.dailyTarget),
-        ach(m.dailySales, m.dailyTarget)
+        diff(Number(m.dailySales), Number(m.dailyTarget)),
+        ach(Number(m.dailySales), Number(m.dailyTarget))
       ];
     }
     var actual = kind === 'monthly' ? m.mtdA : m.ytdA;
@@ -354,9 +370,9 @@
       ytdT: null
     };
     if (!store || !base || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return out;
-    out.isBusinessToday = !!base.isBusinessToday;
-    out.dailySales = base.isBusinessToday ? base.dailySales : null;
-    out.dailyTarget = base.isBusinessToday ? base.dailyTarget : null;
+    out.isBusinessToday = base.businessDay === true;
+    out.dailySales = base.dailySales;
+    out.dailyTarget = base.dailyTarget;
     out.mtdA = base.mtdA;
     out.ytdA = base.ytdA;
     out.mtdT = base.mtdT;

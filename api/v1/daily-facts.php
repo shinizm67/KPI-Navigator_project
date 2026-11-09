@@ -102,17 +102,40 @@ if ($method === 'PUT') {
             || $mtdTarget === false || $ytdActual === false || $ytdTarget === false) {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_number']);
         }
-        $biz = !empty($item['businessDay']);
-        $parsed[] = [
+        $parsedRow = [
             'iso' => (string) $item['iso'],
             'sales' => $sales,
-            'business_day' => $biz ? 1 : 0,
             'daily_target' => $dailyTarget,
             'mtd_actual' => $mtdActual,
             'mtd_target' => $mtdTarget,
             'ytd_actual' => $ytdActual,
             'ytd_target' => $ytdTarget,
         ];
+        if (array_key_exists('businessDay', $item)) {
+            $rawBiz = $item['businessDay'];
+            if ($rawBiz === null) {
+                $parsedRow['business_day'] = null;
+            } elseif ($rawBiz === true || $rawBiz === 1 || $rawBiz === '1') {
+                $parsedRow['business_day'] = 1;
+            } elseif ($rawBiz === false || $rawBiz === 0 || $rawBiz === '0') {
+                $parsedRow['business_day'] = 0;
+            } else {
+                kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_business_day']);
+            }
+        }
+        if (array_key_exists('salesEntered', $item)) {
+            $rawEntered = $item['salesEntered'];
+            if ($rawEntered === null) {
+                $parsedRow['sales_entered'] = null;
+            } elseif ($rawEntered === true || $rawEntered === 1 || $rawEntered === '1') {
+                $parsedRow['sales_entered'] = 1;
+            } elseif ($rawEntered === false || $rawEntered === 0 || $rawEntered === '0') {
+                $parsedRow['sales_entered'] = 0;
+            } else {
+                kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_sales_entered']);
+            }
+        }
+        $parsed[] = $parsedRow;
     }
     $written = kpi_v1_db_upsert_daily_facts($cfg, $userId, $parsed);
     kpi_v1_json_out(200, [

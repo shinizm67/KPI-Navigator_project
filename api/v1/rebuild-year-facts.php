@@ -154,6 +154,26 @@ function kpi_v1_rebuild_snapshot_biz($bizMap, $iso)
     return kpi_v1_rebuild_js_truthy(kpi_v1_rebuild_map_get($bizMap, $iso));
 }
 
+function kpi_v1_rebuild_actual_business_day($bizMap, $salesMap, $iso)
+{
+    /* facts.business_day only. Explicit false, then explicit true, then a sales key, else null.
+       Key presence is not a truthy value. The mold is not read. */
+    if (!kpi_v1_facts_valid_iso($iso)) {
+        return null;
+    }
+    if (kpi_v1_rebuild_own($bizMap, $iso)) {
+        $raw = kpi_v1_rebuild_map_get($bizMap, $iso);
+        if (!kpi_v1_rebuild_js_truthy($raw)) {
+            return 0;
+        }
+        return 1;
+    }
+    if (kpi_v1_rebuild_sales_value($salesMap, $iso) !== null) {
+        return 1;
+    }
+    return null;
+}
+
 function kpi_v1_rebuild_snapshot_sales($salesMap, $iso, $placeholder)
 {
     if (!kpi_v1_rebuild_map_has($salesMap, $iso)) {
@@ -307,8 +327,300 @@ function kpi_v1_rebuild_daily_target_mode($store, $year)
     return 'weekday-weighted';
 }
 
+function kpi_v1_rebuild_own($map, $iso)
+{
+    if (is_object($map)) {
+        return property_exists($map, (string) $iso);
+    }
+    if (is_array($map)) {
+        return array_key_exists($iso, $map);
+    }
+    return false;
+}
+
+function kpi_v1_rebuild_normalize_closed_weekdays($days)
+{
+    if (!is_array($days) || !count($days)) {
+        return null;
+    }
+    $seen = [];
+    $out = [];
+    foreach ($days as $n) {
+        if (!is_int($n) && !(is_float($n) && $n == floor($n))) {
+            continue;
+        }
+        $n = (int) $n;
+        if ($n < 0 || $n > 6 || isset($seen[$n])) {
+            continue;
+        }
+        $seen[$n] = true;
+        $out[] = $n;
+    }
+    if (!count($out) || count($out) !== count($days)) {
+        return null;
+    }
+    sort($out);
+    return $out;
+}
+
+function kpi_v1_rebuild_normalize_calendar($raw)
+{
+    if (!is_object($raw) && !is_array($raw)) {
+        return null;
+    }
+    $mode = is_object($raw) ? ($raw->mode ?? null) : ($raw['mode'] ?? null);
+    if ($mode === 'irregular' || $mode === 'always-open') {
+        return ['mode' => $mode];
+    }
+    if ($mode !== 'fixed-weekday') {
+        return null;
+    }
+    $days = is_object($raw) ? ($raw->closedWeekdays ?? null) : ($raw['closedWeekdays'] ?? null);
+    if (is_object($days)) {
+        $days = array_values(get_object_vars($days));
+    }
+    $closed = kpi_v1_rebuild_normalize_closed_weekdays($days);
+    if ($closed === null) {
+        return null;
+    }
+    return ['mode' => 'fixed-weekday', 'closedWeekdays' => $closed];
+}
+
+function kpi_v1_rebuild_operating_calendar($store, $year)
+{
+    $meta = kpi_v1_rebuild_prop($store, 'meta');
+    $oy = kpi_v1_rebuild_num(kpi_v1_rebuild_prop($meta, 'operatingYear'));
+    if ($oy === null || (int) $oy !== (int) $year) {
+        return null;
+    }
+    $rec = kpi_v1_rebuild_year_rec($store, $year);
+    $plan = kpi_v1_rebuild_prop($rec, 'plan');
+    return kpi_v1_rebuild_normalize_calendar(kpi_v1_rebuild_prop($plan, 'businessCalendar'));
+}
+
+function kpi_v1_rebuild_sales_value($map, $iso)
+{
+    if (!kpi_v1_rebuild_own($map, $iso)) {
+        return null;
+    }
+    $value = kpi_v1_rebuild_map_get($map, $iso);
+    if (is_string($value) && trim($value) !== '' && is_numeric($value)) {
+        $value = (float) $value;
+    }
+    if (!is_int($value) && !is_float($value)) {
+        return null;
+    }
+    if (!is_finite($value) || $value < 0) {
+        return null;
+    }
+    return (float) $value;
+}
+
+function kpi_v1_rebuild_explicit_flag($map, $iso)
+{
+    if (!kpi_v1_rebuild_own($map, $iso)) {
+        return null;
+    }
+    $value = kpi_v1_rebuild_map_get($map, $iso);
+    if ($value === true) {
+        return true;
+    }
+    if ($value === false) {
+        return false;
+    }
+    return null;
+}
+
+function kpi_v1_rebuild_classify_day($salesMap, $bizMap, $year, $m0, $day, $calendar)
+{
+    $iso = kpi_v1_rebuild_iso($year, $m0, $day);
+    $dow = kpi_v1_rebuild_dow($year, $m0, $day);
+    $sales = kpi_v1_rebuild_sales_value($salesMap, $iso);
+    $entered = $sales !== null;
+    $flag = kpi_v1_rebuild_explicit_flag($bizMap, $iso);
+    if ($flag === true) {
+        return 'explicit-open';
+    }
+    if ($flag === false && $entered) {
+        return 'conflict';
+    }
+    if ($flag === false) {
+        return 'explicit-closed';
+    }
+    if ($entered) {
+        return 'actual-open';
+    }
+    if ($calendar === null) {
+        return 'unset';
+    }
+    if ($calendar['mode'] === 'fixed-weekday') {
+        return in_array($dow, $calendar['closedWeekdays'], true) ? 'provisional-closed' : 'provisional-open';
+    }
+    if ($calendar['mode'] === 'irregular' || $calendar['mode'] === 'always-open') {
+        return 'provisional-open';
+    }
+    return 'unset';
+}
+
+function kpi_v1_rebuild_hamilton(int $total, array $weights): ?array
+{
+    if ($total < 0) {
+        return null;
+    }
+    $sumW = 0.0;
+    $integer = true;
+    foreach ($weights as $weight) {
+        if (!is_numeric($weight) || $weight < 0) {
+            return null;
+        }
+        $sumW += (float) $weight;
+        if ((float) $weight != floor((float) $weight)) {
+            $integer = false;
+        }
+    }
+    if (!($sumW > 0)) {
+        return null;
+    }
+    $floors = [];
+    $scores = [];
+    $assigned = 0;
+    foreach ($weights as $i => $weight) {
+        if ($integer) {
+            $prod = $total * (int) $weight;
+            $sumInt = (int) $sumW;
+            $floor = intdiv($prod, $sumInt);
+            $scores[$i] = $prod - ($floor * $sumInt);
+        } else {
+            $quota = ($total * (float) $weight) / $sumW;
+            $floor = (int) floor($quota);
+            $frac = $quota - $floor;
+            if ($frac < 1e-9) {
+                $frac = 0.0;
+            }
+            if (1 - $frac < 1e-9) {
+                $floor += 1;
+                $frac = 0.0;
+            }
+            $scores[$i] = $frac;
+        }
+        $floors[$i] = $floor;
+        $assigned += $floor;
+    }
+    $order = array_keys($floors);
+    usort($order, function ($a, $b) use ($scores) {
+        if ($scores[$a] != $scores[$b]) {
+            return $scores[$a] < $scores[$b] ? 1 : -1;
+        }
+        return $a <=> $b;
+    });
+    $left = $total - $assigned;
+    for ($i = 0; $i < $left; $i++) {
+        $floors[$order[$i]] += 1;
+    }
+    return $floors;
+}
+
+function kpi_v1_rebuild_hamilton_months($salesMap, $bizMap, $store, $year, $defaultHl, $calendar)
+{
+    $annual = kpi_v1_rebuild_read_annual_target($store, $year);
+    if ($annual === null || floor($annual) != $annual) {
+        return null;
+    }
+    $annual = (int) $annual;
+    $weightsHl = kpi_v1_rebuild_read_hl_weights($store, $year, $defaultHl);
+    $counts = array_fill(0, 12, 0);
+    $daysByMonth = array_fill(0, 12, []);
+    $conflicts = [];
+    for ($m0 = 0; $m0 < 12; $m0++) {
+        $dc = kpi_v1_rebuild_days_in_month($year, $m0);
+        for ($day = 1; $day <= $dc; $day++) {
+            $iso = kpi_v1_rebuild_iso($year, $m0, $day);
+            $status = kpi_v1_rebuild_classify_day($salesMap, $bizMap, $year, $m0, $day, $calendar);
+            if ($status === 'conflict') {
+                $conflicts[] = $iso;
+            }
+            if ($status !== 'explicit-open' && $status !== 'actual-open' && $status !== 'provisional-open') {
+                continue;
+            }
+            $counts[$m0]++;
+            $daysByMonth[$m0][] = [
+                'iso' => $iso,
+                'dow' => kpi_v1_rebuild_dow($year, $m0, $day),
+            ];
+        }
+    }
+    $monthWeights = [];
+    for ($i = 0; $i < 12; $i++) {
+        $monthWeights[] = $counts[$i] * (float) $weightsHl[$i];
+    }
+    $months = kpi_v1_rebuild_hamilton($annual, $monthWeights);
+    if ($months === null) {
+        return null;
+    }
+    $totalBD = array_sum($counts);
+    return [
+        'monthlyBD' => $counts,
+        'monthlyTargets' => array_map('floatval', $months),
+        'allocation' => 'hamilton',
+        'daysByMonth' => $daysByMonth,
+        'conflicts' => $conflicts,
+        'provisional' => count($conflicts) > 0,
+        'totalBD' => $totalBD,
+        'annualTarget' => $annual,
+    ];
+}
+
+function kpi_v1_rebuild_hamilton_month_map($plan, $salesMap, $bizMap, $year, $m0, $mode, $baselineYears, $fallback)
+{
+    $map = [];
+    $list = $plan['daysByMonth'][$m0] ?? [];
+    $target = (int) $plan['monthlyTargets'][$m0];
+    if ($target <= 0 || !count($list)) {
+        return $map;
+    }
+    $weights = [];
+    $counts = array_fill(0, 7, 0);
+    foreach ($list as $day) {
+        $counts[(int) $day['dow']]++;
+    }
+    foreach ($list as $day) {
+        $weight = 1.0;
+        if ($mode === 'weekday-weighted' && count($baselineYears)) {
+            $share = kpi_v1_rebuild_share_avg($salesMap, $bizMap, $baselineYears, $m0, (int) $day['dow'], $fallback);
+            $count = $counts[(int) $day['dow']];
+            if (is_numeric($share) && $share > 0 && $count > 0) {
+                $weight = ((float) $share) / $count;
+            }
+        }
+        $weights[] = $weight;
+    }
+    $order = [];
+    foreach ($list as $i => $day) {
+        $order[] = ['i' => $i, 'iso' => $day['iso']];
+    }
+    usort($order, function ($a, $b) {
+        return $a['iso'] <=> $b['iso'];
+    });
+    $sortedWeights = [];
+    foreach ($order as $row) {
+        $sortedWeights[] = $weights[$row['i']];
+    }
+    $amounts = kpi_v1_rebuild_hamilton($target, $sortedWeights);
+    if ($amounts === null) {
+        return $map;
+    }
+    foreach ($order as $pos => $row) {
+        $map[$row['iso']] = (int) $amounts[$pos];
+    }
+    return $map;
+}
+
 function kpi_v1_rebuild_plan_monthly_targets($salesMap, $bizMap, $store, $year, $defaultHl)
 {
+    $calendar = kpi_v1_rebuild_operating_calendar($store, $year);
+    if ($calendar !== null) {
+        return kpi_v1_rebuild_hamilton_months($salesMap, $bizMap, $store, $year, $defaultHl, $calendar);
+    }
     $annual = kpi_v1_rebuild_read_annual_target($store, $year);
     if ($annual === null) {
         return null;
@@ -533,6 +845,18 @@ function kpi_v1_rebuild_month_display_map(
     if (!($monthlyTarget > 0)) {
         return $map;
     }
+    if (isset($plan['allocation']) && $plan['allocation'] === 'hamilton') {
+        return kpi_v1_rebuild_hamilton_month_map(
+            $plan,
+            $salesMap,
+            $bizMap,
+            $year,
+            $m0,
+            $mode,
+            $baselineYears,
+            $fallback
+        );
+    }
     $rows = [];
     $dc = kpi_v1_rebuild_days_in_month($year, $m0);
     for ($day = 1; $day <= $dc; $day++) {
@@ -686,8 +1010,14 @@ function kpi_v1_rebuild_year_rows($store, $year, $defaultHl, $placeholder, $fall
             $iso = kpi_v1_rebuild_iso($year, $m0, $day);
             $isBiz = kpi_v1_rebuild_snapshot_biz($bizMap, $iso);
             $sales = kpi_v1_rebuild_snapshot_sales($salesMap, $iso, $placeholder);
+            $flag = kpi_v1_rebuild_explicit_flag($bizMap, $iso);
+            $hasSales = kpi_v1_rebuild_sales_value($salesMap, $iso) !== null;
+            $conflict = $flag === false && $hasSales;
+            $hamilton = is_array($plan) && isset($plan['allocation']) && $plan['allocation'] === 'hamilton';
             $dailyTarget = null;
-            if ($isBiz) {
+            if ($hamilton && isset($monthMaps[$m0][$iso])) {
+                $dailyTarget = (float) $monthMaps[$m0][$iso];
+            } elseif ($isBiz) {
                 if (isset($monthMaps[$m0][$iso])) {
                     $dailyTarget = (float) $monthMaps[$m0][$iso];
                 } else {
@@ -705,17 +1035,20 @@ function kpi_v1_rebuild_year_rows($store, $year, $defaultHl, $placeholder, $fall
                         $dailyTarget = (float) round($raw);
                     }
                 }
+            }
+            if ($isBiz || $conflict) {
                 $ytdA += $sales;
                 $mtdA += $sales;
-                if ($dailyTarget !== null) {
-                    $ytdT += $dailyTarget;
-                    $mtdT += $dailyTarget;
-                }
+            }
+            if ($dailyTarget !== null && ($hamilton || $isBiz)) {
+                $ytdT += $dailyTarget;
+                $mtdT += $dailyTarget;
             }
             $rows[] = [
                 'iso' => $iso,
                 'sales' => round($sales, 2),
-                'business_day' => $isBiz ? 1 : 0,
+                'business_day' => kpi_v1_rebuild_actual_business_day($bizMap, $salesMap, $iso),
+                'sales_entered' => $hasSales ? 1 : 0,
                 'daily_target' => $dailyTarget,
                 'mtd_actual' => round($mtdA, 2),
                 'mtd_target' => round($mtdT, 2),

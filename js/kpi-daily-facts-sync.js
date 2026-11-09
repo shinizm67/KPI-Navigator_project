@@ -125,7 +125,9 @@
 
   function factKey(f) {
     if (!f) return '';
-    return [f.sales, f.businessDay ? 1 : 0, f.dailyTarget, f.mtdActual, f.mtdTarget, f.ytdActual, f.ytdTarget].join('|');
+    var enteredKey = f.salesEntered === true ? 1 : (f.salesEntered === false ? 0 : '');
+    var bizKey = f.businessDay === true ? 1 : (f.businessDay === false ? 0 : '');
+    return [f.sales, enteredKey, bizKey, f.dailyTarget, f.mtdActual, f.mtdTarget, f.ytdActual, f.ytdTarget].join('|');
   }
   function applyRows(rows) {
     if (!window.KpiYearStore || typeof KpiYearStore.getStore !== 'function') return;
@@ -143,7 +145,8 @@
       }
       var next = {
         sales: row.sales,
-        businessDay: !!row.businessDay,
+        salesEntered: row.salesEntered === true ? true : (row.salesEntered === false ? false : null),
+        businessDay: row.businessDay === true ? true : (row.businessDay === false ? false : null),
         dailyTarget: row.dailyTarget,
         mtdActual: row.mtdActual,
         mtdTarget: row.mtdTarget,
@@ -174,16 +177,20 @@
       if (Number(String(iso).slice(0, 4)) !== Number(year)) return;
       var f = rec.dailyFacts[iso];
       if (!f) return;
-      out.push({
+      var row = {
         iso: iso,
         sales: f.sales,
-        businessDay: !!f.businessDay,
+        businessDay: f.businessDay === true ? true : (f.businessDay === false ? false : null),
         dailyTarget: f.dailyTarget,
         mtdActual: f.mtdActual,
         mtdTarget: f.mtdTarget,
         ytdActual: f.ytdActual,
         ytdTarget: f.ytdTarget,
-      });
+      };
+      if (Object.prototype.hasOwnProperty.call(f, 'salesEntered')) {
+        row.salesEntered = f.salesEntered === true ? true : (f.salesEntered === false ? false : null);
+      }
+      out.push(row);
     });
     return out;
   }

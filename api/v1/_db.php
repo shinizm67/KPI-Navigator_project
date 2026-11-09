@@ -438,6 +438,22 @@ function kpi_v1_facts_num($value, $allowNull)
     return round((float) $value, 2);
 }
 
+function kpi_v1_facts_entered_api($raw)
+{
+    if ($raw === null || $raw === '') {
+        return null;
+    }
+    return (int) $raw === 1;
+}
+
+function kpi_v1_facts_business_day_api($raw)
+{
+    if ($raw === null || $raw === '') {
+        return null;
+    }
+    return (int) $raw === 1;
+}
+
 function kpi_v1_facts_row_to_api(array $row)
 {
     $numOrNull = function ($raw) {
@@ -449,7 +465,10 @@ function kpi_v1_facts_row_to_api(array $row)
     return [
         'iso' => (string) $row['iso'],
         'sales' => round((float) $row['sales'], 2),
-        'businessDay' => !empty($row['business_day']),
+        'salesEntered' => kpi_v1_facts_entered_api(
+            array_key_exists('sales_entered', $row) ? $row['sales_entered'] : null
+        ),
+        'businessDay' => kpi_v1_facts_business_day_api($row['business_day']),
         'dailyTarget' => $numOrNull($row['daily_target']),
         'mtdActual' => round((float) $row['mtd_actual'], 2),
         'mtdTarget' => $numOrNull($row['mtd_target']),
@@ -475,7 +494,7 @@ function kpi_v1_db_read_daily_facts($cfg, $userId, $fromIso, $toIso)
     $pdo = kpi_v1_db($cfg);
     try {
         $stmt = $pdo->prepare(
-            'SELECT iso, sales, business_day, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target
+            'SELECT iso, sales, sales_entered, business_day, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target
              FROM kpi_daily_facts
              WHERE user_id = ? AND iso >= ? AND iso <= ?
              ORDER BY iso ASC'
@@ -506,11 +525,12 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
 {
     $pdo = kpi_v1_db($cfg);
     $sql = 'INSERT INTO kpi_daily_facts
-              (user_id, iso, sales, business_day, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              (user_id, iso, sales, business_day, sales_entered, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
               sales = VALUES(sales),
-              business_day = VALUES(business_day),
+              business_day = IF(? = 1, VALUES(business_day), business_day),
+              sales_entered = IF(? = 1, VALUES(sales_entered), sales_entered),
               daily_target = VALUES(daily_target),
               mtd_actual = VALUES(mtd_actual),
               mtd_target = VALUES(mtd_target),
@@ -524,17 +544,22 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
         $stmt = $pdo->prepare($sql);
         $n = 0;
         foreach ($rows as $row) {
+            $bizSet = array_key_exists('business_day', $row);
+            $enteredSet = array_key_exists('sales_entered', $row);
             $stmt->execute([
                 $uid,
                 $row['iso'],
                 $row['sales'],
-                $row['business_day'],
+                $bizSet ? $row['business_day'] : null,
+                $enteredSet ? $row['sales_entered'] : null,
                 $row['daily_target'],
                 $row['mtd_actual'],
                 $row['mtd_target'],
                 $row['ytd_actual'],
                 $row['ytd_target'],
                 $now,
+                $bizSet ? 1 : 0,
+                $enteredSet ? 1 : 0,
             ]);
             $n++;
         }
