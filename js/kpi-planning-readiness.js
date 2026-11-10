@@ -302,26 +302,61 @@
     return n < 10 ? '0' + n : String(n);
   }
 
-  function isUiBusinessDay(iso) {
+  function explicitBusinessDayMap(businessDayMap) {
+    if (businessDayMap && typeof businessDayMap === 'object') return businessDayMap;
     var api = storeApi();
-    if (api && typeof api.isUiBusinessDay === 'function') return !!api.isUiBusinessDay(iso);
-    if (api && typeof api.readBusinessDay === 'function') {
-      var flag = api.readBusinessDay(iso);
-      if (flag === false) return false;
+    var store = api && typeof api.getStore === 'function' ? api.getStore() : null;
+    var map = store && store.timeline ? store.timeline.businessDays : null;
+    return map && typeof map === 'object' ? map : null;
+  }
+
+  /* AN-1-07: only an explicit true counts. Missing keys and false stay out. */
+  function isExplicitTrueBusinessDay(iso, businessDayMap) {
+    var map = explicitBusinessDayMap(businessDayMap);
+    return !!(map && map[iso] === true);
+  }
+
+  /* Server sync uses the existing hydrateComplete flag. No sync means no fetch is pending. */
+  function explicitTrueCountReady() {
+    var gw = global.__KPI_DATA_GATEWAY;
+    if (!gw || typeof gw.storeHydrateState !== 'function') return true;
+    var state = null;
+    try {
+      state = gw.storeHydrateState();
+    } catch (_eHyd) {
       return true;
     }
-    return true;
+    if (!state || state.syncEnabled !== true) return true;
+    return state.complete === true;
+  }
+
+  function countExplicitTrueBusinessDays(year, businessDayMap) {
+    if (!explicitTrueCountReady()) return null;
+    var y = Number(year);
+    if (!Number.isFinite(y)) return null;
+    var map = explicitBusinessDayMap(businessDayMap);
+    if (!map) return null;
+    var total = 0;
+    for (var m0 = 0; m0 < 12; m0++) {
+      var dc = new Date(y, m0 + 1, 0).getDate();
+      for (var d = 1; d <= dc; d++) {
+        var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(d);
+        if (map[iso] === true) total++;
+      }
+    }
+    return total;
   }
 
   function businessDaysSignature(year) {
     var y = Number(year);
     if (!Number.isFinite(y)) return '';
+    var map = explicitBusinessDayMap(null);
     var parts = [];
     for (var m0 = 0; m0 < 12; m0++) {
       var dc = new Date(y, m0 + 1, 0).getDate();
       for (var d = 1; d <= dc; d++) {
         var iso = y + '-' + pad2(m0 + 1) + '-' + pad2(d);
-        parts.push(isUiBusinessDay(iso) ? '1' : '0');
+        parts.push(map && map[iso] === true ? '1' : '0');
       }
     }
     return 'bd:' + y + ':' + fnv1a(parts.join(''));
@@ -329,15 +364,10 @@
 
   function countOpenDays(year) {
     var y = Number(year);
-    var open = 0;
+    var open = countExplicitTrueBusinessDays(y);
     var total = 0;
-    for (var m0 = 0; m0 < 12; m0++) {
-      var dc = new Date(y, m0 + 1, 0).getDate();
-      for (var d = 1; d <= dc; d++) {
-        total++;
-        if (isUiBusinessDay(y + '-' + pad2(m0 + 1) + '-' + pad2(d))) open++;
-      }
-    }
+    if (!Number.isFinite(y) || open == null) return { open: 0, total: -1 };
+    for (var m0 = 0; m0 < 12; m0++) total += new Date(y, m0 + 1, 0).getDate();
     return { open: open, total: total };
   }
 
@@ -1789,6 +1819,12 @@
     ].forEach(function (ev) {
       document.addEventListener(ev, onDataChanged);
     });
+    document.addEventListener('kpi:storeHydrateSettled', function () {
+      var ui = global.__ANNUAL_UI;
+      if (ui && typeof ui.syncBusinessDayDisplayFromDailyMap === 'function') {
+        ui.syncBusinessDayDisplayFromDailyMap();
+      }
+    });
     document.addEventListener('insight:dateChanged', refreshTooltips);
     document.addEventListener('annual:dailyDateChanged', refreshTooltips);
     document.addEventListener('annual:timelineRowsRendered', refreshTooltips);
@@ -1840,6 +1876,8 @@
     onSeasonalityUserSaved: onSeasonalityUserSaved,
     isUserSeasonalityEditSource: isUserSeasonalityEditSource,
     businessDaysSignature: businessDaysSignature,
+    countExplicitTrueBusinessDays: countExplicitTrueBusinessDays,
+    isExplicitTrueBusinessDay: isExplicitTrueBusinessDay,
     seasonalitySignature: seasonalitySignature,
     isDefaultSeasonality: isDefaultSeasonality,
     isAllocTotalOk: isAllocTotalOk,

@@ -13040,7 +13040,7 @@
         </div>
         <div class="annual-total-bd-group">
           <p class="annual-total-bd-label">年間営業日数</p>
-          <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">286</div>
+          <div class="annual-total-bd-value" id="annual-total-bd-value" data-field="annual.totalBusinessDay">—</div>
         </div>
         <div class="annual-target-sales-group">
           <p class="annual-target-sales-label">年次目標売上</p>
@@ -24151,7 +24151,12 @@
           window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
           window.__ANNUAL_DATA.totalBusinessDay = hasPlan ? totalBD : null;
           var bdHeadEl = document.getElementById('annual-total-bd-value');
-          if (bdHeadEl) bdHeadEl.textContent = hasPlan ? String(totalBD) : DASH;
+          var explicitHead =
+            window.KpiPlanningReadiness &&
+            typeof window.KpiPlanningReadiness.countExplicitTrueBusinessDays === 'function'
+              ? window.KpiPlanningReadiness.countExplicitTrueBusinessDays(year, bmap)
+              : null;
+          if (bdHeadEl) bdHeadEl.textContent = explicitHead == null ? DASH : String(explicitHead);
           var monthCursor = 0;
           var COCKPIT_CHUNK_BUDGET_MS = 3;
           function chunkTick() {
@@ -24828,7 +24833,12 @@
         var counts = computeBusinessDayCountsForYear(cy, bmap);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
         window.__ANNUAL_DATA.totalBusinessDay = counts.planningActive ? counts.total : null;
-        bdEl.textContent = counts.planningActive ? String(counts.total) : '—';
+        var explicitTotal =
+          window.KpiPlanningReadiness &&
+          typeof window.KpiPlanningReadiness.countExplicitTrueBusinessDays === 'function'
+            ? window.KpiPlanningReadiness.countExplicitTrueBusinessDays(cy, bmap)
+            : null;
+        bdEl.textContent = explicitTotal == null ? '—' : String(explicitTotal);
 
         var rows = document.querySelectorAll('.annual-open-table tbody tr');
         for (var i = 0; i < rows.length && i < 12; i++) {

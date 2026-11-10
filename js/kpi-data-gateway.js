@@ -1362,6 +1362,13 @@
         hasToken: !!cfg.token,
       };
     },
+    /* Existing hydrate flag. complete is true only after a successful store GET. */
+    storeHydrateState: function () {
+      return {
+        syncEnabled: canSync(cfg),
+        complete: hydrateComplete === true,
+      };
+    },
     /** Hold PUTs after cross-tab account switch. Do not hydrate or wipe local edits. */
     holdPutsForStaleAccount: function () {
       if (putTimer != null) {

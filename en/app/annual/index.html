@@ -22765,7 +22765,12 @@ Cumulative Target Annual Sales</p>
         var counts = computeBusinessDayCountsForYear(cy, bmap);
         window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
         window.__ANNUAL_DATA.totalBusinessDay = counts.planningActive ? counts.total : null;
-        bdEl.textContent = counts.planningActive ? String(counts.total) : '—';
+        var explicitTotal =
+          window.KpiPlanningReadiness &&
+          typeof window.KpiPlanningReadiness.countExplicitTrueBusinessDays === 'function'
+            ? window.KpiPlanningReadiness.countExplicitTrueBusinessDays(cy, bmap)
+            : null;
+        bdEl.textContent = explicitTotal == null ? '—' : String(explicitTotal);
 
         var rows = document.querySelectorAll('.annual-open-table tbody tr');
         for (var i = 0; i < rows.length && i < 12; i++) {
@@ -29408,7 +29413,12 @@ Cumulative Target Annual Sales</p>
           window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
           window.__ANNUAL_DATA.totalBusinessDay = hasPlan ? totalBD : null;
           var bdEl = document.getElementById('annual-total-bd-value');
-          if (bdEl) bdEl.textContent = hasPlan ? String(totalBD) : DASH;
+          var explicitHead =
+            window.KpiPlanningReadiness &&
+            typeof window.KpiPlanningReadiness.countExplicitTrueBusinessDays === 'function'
+              ? window.KpiPlanningReadiness.countExplicitTrueBusinessDays(year, bmap)
+              : null;
+          if (bdEl) bdEl.textContent = explicitHead == null ? DASH : String(explicitHead);
 
           for (var m0 = 0; m0 < 12; m0++) {
             var mk = MONTH_KEYS[m0];
