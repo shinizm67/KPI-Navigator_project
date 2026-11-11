@@ -20162,8 +20162,6 @@
               });
             }
           }
-          var nav = gw().getJson(SELECTED_DATE_KEY);
-          if (nav && nav.selectedIso) store.meta.selectedDate = nav.selectedIso;
           store.meta.legacyMigrated = true;
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           persistStoreIfYearMepSafe();
@@ -22053,7 +22051,8 @@
           sanitizePlaceholderSalesMap(store.timeline.dailySales);
           daily.targetSalesByDate = Object.assign({}, store.timeline.dailySales);
           daily.businessDayByDate = Object.assign({}, store.timeline.businessDays);
-          if (store.meta.selectedDate) daily.selectedDate = store.meta.selectedDate;
+          var selectedIso = readStoredSelectedIso();
+          if (selectedIso) daily.selectedDate = selectedIso;
           var oy = getOperatingYear();
           var yr = store.years[oy];
           var planN =
@@ -22250,17 +22249,22 @@
           return isos.length;
         }
 
-        function hydrateNavFromStorage() {
+        function readStoredSelectedIso() {
           var nav = gw().getJson(SELECTED_DATE_KEY);
-          if (!nav || typeof nav !== 'object') return;
-          if (nav.selectedIso && validIso(nav.selectedIso)) {
-            store.meta.selectedDate = nav.selectedIso;
+          if (nav && nav.selectedIso) {
+            return validIso(nav.selectedIso) ? nav.selectedIso : null;
           }
+          if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
+            return store.meta.selectedDate;
+          }
+          return null;
+        }
+
+        function hydrateNavFromStorage() {
         }
 
         function setSelectedDate(iso, source) {
           if (!validIso(iso)) return;
-          store.meta.selectedDate = iso;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily) {
             window.__ANNUAL_DATA.daily.selectedDate = iso;
           }
@@ -22278,12 +22282,8 @@
         }
 
         function getSelectedDate() {
-          var nav = gw().getJson(SELECTED_DATE_KEY);
-          if (nav && nav.selectedIso && validIso(nav.selectedIso)) {
-            store.meta.selectedDate = nav.selectedIso;
-            return nav.selectedIso;
-          }
-          if (store.meta.selectedDate) return store.meta.selectedDate;
+          var stored = readStoredSelectedIso();
+          if (stored) return stored;
           if (window.__ANNUAL_DATA && window.__ANNUAL_DATA.daily && window.__ANNUAL_DATA.daily.selectedDate) {
             return window.__ANNUAL_DATA.daily.selectedDate;
           }
@@ -22564,10 +22564,9 @@
           hydrateNavFromStorage();
           if (window.__ANNUAL_DATA) {
             var navCy = gw().getJson(SELECTED_DATE_KEY);
-            if (store.meta.selectedDate && validIso(store.meta.selectedDate)) {
-              window.__ANNUAL_DATA.calendarYear = isoYear(store.meta.selectedDate);
-            } else if (navCy && navCy.selectedIso && validIso(navCy.selectedIso)) {
-              window.__ANNUAL_DATA.calendarYear = isoYear(navCy.selectedIso);
+            var selectedIso = readStoredSelectedIso();
+            if (selectedIso) {
+              window.__ANNUAL_DATA.calendarYear = isoYear(selectedIso);
             } else if (navCy && navCy.calendarYear != null && Number.isFinite(Number(navCy.calendarYear))) {
               window.__ANNUAL_DATA.calendarYear = Number(navCy.calendarYear);
             } else {
@@ -27043,7 +27042,7 @@
             detail: { isoDate: iso, date: d, targetSales: target, source: source || 'selection' }
           })
         );
-        if (window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
+        if (!opts.skipNavPersist && window.KpiYearStore && typeof KpiYearStore.setSelectedDate === 'function') {
           KpiYearStore.setSelectedDate(iso, source || 'annual-ui');
         }
         syncDisplayContextAfterDailySelection(d, iso, source);
@@ -27054,8 +27053,10 @@
         var d = parseISODateLocal(iso);
         if (!d) return false;
         var src = source || 'focus-sync';
-        var opts = src === 'focus-sync' ? { skipJumpGuard: true } : {};
-        return applyDailySelection(d, src, opts);
+        var viewOnly = src === 'focus-sync-view';
+        var opts = src === 'focus-sync' || viewOnly ? { skipJumpGuard: true } : {};
+        if (viewOnly) opts.skipNavPersist = true;
+        return applyDailySelection(d, viewOnly ? 'focus-sync' : src, opts);
       };
 
       function daysInMonth(year, monthIndex0) {
@@ -27093,8 +27094,6 @@
         updatePastKpiByIso(iso);
       });
 
-      var nowInit = new Date();
-      var initialDate = new Date(nowInit.getFullYear(), nowInit.getMonth(), nowInit.getDate());
       function readDisplayIsoFromUrl() {
         try {
           var p = new URLSearchParams(window.location.search);
@@ -27119,22 +27118,81 @@
         } catch (_eUrlIso) {}
         return null;
       }
-      var urlIso = readDisplayIsoFromUrl();
-      var boot = window.__KPI_SHARED_DATE && typeof window.__KPI_SHARED_DATE.bootCockpitIso === 'function'
-        ? window.__KPI_SHARED_DATE.bootCockpitIso()
-        : null;
-      if (boot && boot.iso) {
-        var bootDate = parseISODateLocal(boot.iso);
-        if (bootDate) initialDate = bootDate;
-      } else if (urlIso) {
-        var urlDate = parseISODateLocal(urlIso);
-        if (urlDate) initialDate = urlDate;
-      } else if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
-        var storeIso = KpiYearStore.getSelectedDate();
-        var storeDate = storeIso ? parseISODateLocal(storeIso) : null;
-        if (storeDate) initialDate = storeDate;
+      function readInitialNavPick() {
+        try {
+          var gw = window.__KPI_DATA_GATEWAY;
+          var nav = gw && typeof gw.getJson === 'function' ? gw.getJson('kpiNavigator.annualNav') : null;
+          if (!nav || !nav.selectedIso) return { present: false, iso: '' };
+          return parseISODateLocal(nav.selectedIso)
+            ? { present: true, iso: nav.selectedIso }
+            : { present: true, iso: '' };
+        } catch (_eNavPick) {
+          return { present: false, iso: '' };
+        }
       }
-      applyDailySelection(initialDate, (boot && boot.source) || 'initial', { skipJumpGuard: true });
+      function readLegacyMetaIso() {
+        try {
+          var store = window.KpiYearStore && typeof KpiYearStore.getStore === 'function'
+            ? KpiYearStore.getStore()
+            : null;
+          var iso = store && store.meta ? store.meta.selectedDate : '';
+          return iso && parseISODateLocal(iso) ? iso : '';
+        } catch (_eMetaPick) {
+          return '';
+        }
+      }
+      function applyInitialDailyDate() {
+        var boot = null;
+        function readBoot() {
+          if (!boot && window.__KPI_SHARED_DATE && typeof window.__KPI_SHARED_DATE.bootCockpitIso === 'function') {
+            boot = window.__KPI_SHARED_DATE.bootCockpitIso();
+          }
+          return boot;
+        }
+        var navPick = readInitialNavPick();
+        if (navPick.iso) {
+          readBoot();
+          applyDailySelection(parseISODateLocal(navPick.iso), 'initial', { skipJumpGuard: true, skipNavPersist: true });
+          return;
+        }
+        if (!navPick.present) {
+          var metaIso = readLegacyMetaIso();
+          var metaDate = metaIso ? parseISODateLocal(metaIso) : null;
+          if (metaDate) {
+            readBoot();
+            applyDailySelection(metaDate, 'initial', { skipJumpGuard: true, skipNavPersist: true });
+            return;
+          }
+          var hyd = window.__KPI_DATA_GATEWAY && typeof window.__KPI_DATA_GATEWAY.storeHydrateState === 'function'
+            ? window.__KPI_DATA_GATEWAY.storeHydrateState()
+            : null;
+          if (hyd && hyd.syncEnabled && hyd.complete !== true) {
+            document.addEventListener('kpi:storeHydrateSettled', applyInitialDailyDate, { once: true });
+            return;
+          }
+        }
+        readBoot();
+        var nowInit = new Date();
+        var initialDate = new Date(nowInit.getFullYear(), nowInit.getMonth(), nowInit.getDate());
+        var urlIso = readDisplayIsoFromUrl();
+        if (boot && boot.iso) {
+          var bootDate = parseISODateLocal(boot.iso);
+          if (bootDate) initialDate = bootDate;
+        } else if (urlIso) {
+          var urlDate = parseISODateLocal(urlIso);
+          if (urlDate) initialDate = urlDate;
+        } else if (window.KpiYearStore && typeof KpiYearStore.getSelectedDate === 'function') {
+          var storeIso = KpiYearStore.getSelectedDate();
+          var storeDate = storeIso ? parseISODateLocal(storeIso) : null;
+          if (storeDate) initialDate = storeDate;
+        }
+        applyDailySelection(initialDate, (boot && boot.source) || 'initial', { skipJumpGuard: true });
+      }
+      if (window.KpiYearStore && window.KpiYearStore.__userScopeReady !== true) {
+        window.addEventListener('kpi:yearStoreUserScopeReady', applyInitialDailyDate, { once: true });
+      } else {
+        applyInitialDailyDate();
+      }
 
       dateBtn.addEventListener('click', function () {
         dateBtn.setAttribute('aria-expanded', 'true');
@@ -32288,7 +32346,9 @@
           currentFocusIso = hdr.getAttribute('data-iso') || currentFocusIso;
           var isoNow = hdr.getAttribute('data-iso');
           if (isoNow) {
-            syncArea2ByIso(isoNow);
+            if (lastScrollDir !== 0 && !(__monthlyEdgeLockUntil && Date.now() < __monthlyEdgeLockUntil)) {
+              syncArea2ByIso(isoNow);
+            }
             syncMonthlyVfocusYearBadge(isoNow);
           }
         }
@@ -32300,6 +32360,7 @@
         state.year = next.year;
         state.month0 = next.month0;
         __monthlyEdgeLockUntil = Date.now() + 900;
+        lastScrollDir = 0;
         /* KPI-MRP-PHASE2-4 */
         primeMonthlyTwNeighborTargetMaps(state.year);
         persistMonthlyLast();
@@ -32316,11 +32377,15 @@
       }
       function settleMonthlyScroll() {
         snapTimer = 0;
-        if (settleSkip > 0) return;
+        if (settleSkip > 0) {
+          scheduleMonthlySettle();
+          return;
+        }
 
         var maxScroll = Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+        var fromUser = lastScrollDir !== 0;
         var edgeLocked = __monthlyEdgeLockUntil && Date.now() < __monthlyEdgeLockUntil;
-        if (!edgeLocked) {
+        if (!edgeLocked && fromUser) {
           if (lastScrollDir < 0 && scrollEl.scrollLeft <= EDGE_EPS) {
             if (crossMonthByEdge(-1)) return;
           }
@@ -32343,8 +32408,12 @@
         if (!hdr) return;
         var iso = hdr.getAttribute('data-iso');
         if (!iso) return;
+        if (!fromUser) {
+          var keepIso = readDailySelectedIso();
+          if (keepIso && isoToIndex[keepIso] != null) iso = keepIso;
+        }
         scrollToIso(iso);
-        syncArea2ByIso(iso);
+        syncArea2ByIso(iso, fromUser);
         /* KPI-MRP-PHASE3-0 */
         scheduleMonthlyTwLazyVisibleHydrate();
       }
@@ -32352,11 +32421,13 @@
         if (snapTimer) clearTimeout(snapTimer);
         snapTimer = setTimeout(settleMonthlyScroll, SNAP_DELAY_MS);
       }
-      scrollEl.addEventListener('scroll', function () {
+      scrollEl.addEventListener('scroll', function (ev) {
         var x = scrollEl.scrollLeft;
         var dx = x - lastScrollLeft;
-        if (dx > 0.1) lastScrollDir = 1;
-        else if (dx < -0.1) lastScrollDir = -1;
+        if (ev.isTrusted && settleSkip <= 0) {
+          if (dx > 0.1) lastScrollDir = 1;
+          else if (dx < -0.1) lastScrollDir = -1;
+        }
         lastScrollLeft = x;
         scheduleVFocusUpdate();
         scheduleMonthlySettle();
@@ -32486,11 +32557,11 @@
         } catch (_eNavPersist) {}
         syncMonthlyVfocusYearBadge(Number(y));
       }
-      function syncArea2ByIso(iso) {
+      function syncArea2ByIso(iso, persistNav) {
         if (!iso || focusedIso === iso) return;
         focusedIso = iso;
         if (window.__ANNUAL_UI && typeof window.__ANNUAL_UI.setDailyDateByISO === 'function') {
-          window.__ANNUAL_UI.setDailyDateByISO(iso, 'focus-sync');
+          window.__ANNUAL_UI.setDailyDateByISO(iso, persistNav === false ? 'focus-sync-view' : 'focus-sync');
         }
       }
       function readAnnualNav() {
