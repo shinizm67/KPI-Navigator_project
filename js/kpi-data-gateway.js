@@ -44,6 +44,7 @@
   var hookQuiet = false;
   /** Block PUT until KpiYearStore finishes post-bind init (KPI-LS-USER-SCOPE-7-B). */
   var userScopePutHold = false;
+  var boundStoreUserId = '';
   /** Last GET revision. null = no row; 0 is a valid existing revision. undefined = not hydrated. */
   var serverRevision = undefined;
   /** After 409, block PUT until GET replaces dirty memory. */
@@ -837,6 +838,30 @@
       if (window.__KPI_AUTH && typeof window.__KPI_AUTH.getPageUserId === 'function') {
         if (!window.__KPI_AUTH.getPageUserId()) return false;
       }
+      var pageUidForPut = '';
+      var staleForPut = false;
+      if (window.__KPI_AUTH) {
+        if (typeof window.__KPI_AUTH.getPageUserId === 'function') {
+          pageUidForPut = window.__KPI_AUTH.getPageUserId() || '';
+        }
+        if (typeof window.__KPI_AUTH.isStaleAccount === 'function') {
+          staleForPut = !!window.__KPI_AUTH.isStaleAccount();
+        }
+      }
+      if (
+        window.KpiCockpitFacts &&
+        typeof window.KpiCockpitFacts.allowStorePut === 'function'
+      ) {
+        if (!window.KpiCockpitFacts.allowStorePut(pageUidForPut, boundStoreUserId, staleForPut)) {
+          return false;
+        }
+      } else if (
+        staleForPut ||
+        !pageUidForPut ||
+        (boundStoreUserId && pageUidForPut !== boundStoreUserId)
+      ) {
+        return false;
+      }
     } catch (_eStale) {}
     return true;
   }
@@ -849,6 +874,7 @@
   function doPut(cfg) {
     if (!canStorePut(cfg)) return Promise.resolve({ ok: false, skipped: true });
     var body = buildPutBody(cfg);
+    if (!canStorePut(cfg)) return Promise.resolve({ ok: false, skipped: true });
     pendingPutKind = 'full';
     var hasStore = body.store && typeof body.store === 'object';
     var hasNav = Object.prototype.hasOwnProperty.call(body, 'annualNav');
@@ -887,6 +913,7 @@
                 conflict: false,
                 status: res.status,
                 error: 'stale_account',
+                staleWarningShown: true,
               };
             }
             if (!res.ok) {
@@ -1027,6 +1054,15 @@
   }
 
   function onYearStoreUserScopeReady() {
+    try {
+      if (
+        window.__KPI_AUTH &&
+        typeof window.__KPI_AUTH.isStaleAccount === 'function' &&
+        window.__KPI_AUTH.isStaleAccount()
+      ) {
+        return;
+      }
+    } catch (_eStaleReady) {}
     userScopePutHold = false;
   }
 
@@ -1044,6 +1080,14 @@
       credentials: fetchCreds(cfg),
     })
       .then(function (res) {
+        if (res.status === 402) {
+          try {
+            if (window.__KPI_AUTH && typeof window.__KPI_AUTH.redirectToChangePlan === 'function') {
+              window.__KPI_AUTH.redirectToChangePlan();
+            }
+          } catch (_ePlan) {}
+          return null;
+        }
         if (res.status === 401 || res.status === 403) {
           try {
             if (
@@ -1188,6 +1232,7 @@
             console.info('[KPI Store Sync] hydrated from server', data.updatedAt || '', data.plan || '');
           } catch (_eLog) {}
         }
+        if (data && data.userId) boundStoreUserId = String(data.userId);
         hydrateComplete = true;
         /* Fires on every successful GET, including store:null (no row yet).
            kpi:storeHydratedFromServer stays gated on changed for its existing listeners. */
@@ -1368,6 +1413,19 @@
         syncEnabled: canSync(cfg),
         complete: hydrateComplete === true,
       };
+    },
+    noteCommittedRevision: function (revision) {
+      if (revision === null || revision === undefined || revision === '') return false;
+      var n = Number(revision);
+      if (!isFinite(n)) return false;
+      serverRevision = n;
+      return true;
+    },
+    getServerRevision: function () {
+      return serverRevision === undefined ? null : serverRevision;
+    },
+    revisionKnown: function () {
+      return serverRevision !== undefined;
     },
     /** Hold PUTs after cross-tab account switch. Do not hydrate or wipe local edits. */
     holdPutsForStaleAccount: function () {
