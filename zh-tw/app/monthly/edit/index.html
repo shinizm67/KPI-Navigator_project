@@ -8022,6 +8022,47 @@
           );
         }
 
+        function notifyImportPersistFailure(err) {
+          var code = err && err.message ? String(err.message) : '';
+          var saveCodes = {
+            'store-save-failed': true,
+            'daily-inputs-save-failed': true,
+            'daily-facts-rebuild-failed': true
+          };
+          if (!saveCodes[code]) return false;
+          var result = err && err.persistResult && typeof err.persistResult === 'object' ? err.persistResult : null;
+          var detail = result && result.error ? String(result.error) : '';
+          var status = result ? Number(result.status) : NaN;
+          if (detail === 'stale_account') {
+            if (!(result && result.staleWarningShown)) {
+              if (window.__KPI_AUTH && typeof window.__KPI_AUTH.showStaleAccountWarning === 'function') {
+                window.__KPI_AUTH.showStaleAccountWarning();
+              } else {
+                window.alert(t(
+                  '別のタブでログイン中のアカウントが変更されました。この画面を再読み込みしてから操作してください。',
+                  'The signed-in account changed in another tab. Reload this page before continuing.',
+                  '其他分頁的登入帳號已變更。請重新載入此畫面後再操作。'
+                ));
+              }
+            }
+            return true;
+          }
+          if (detail === 'conflict' || (result && result.conflict) || status === 409) {
+            window.alert(t(
+              '別の保存と競合したため、この取込はサーバへ反映していません。画面を再読み込みしてから、もう一度取り込んでください。',
+              'This import conflicted with another save, so it was not applied on the server. Reload this page, then import again.',
+              '此匯入與另一項儲存發生衝突，因此沒有寫入伺服器。請重新載入畫面後再匯入。'
+            ));
+            return true;
+          }
+          window.alert(t(
+            '保存できませんでした。接続を確認して、もう一度取り込んでください。',
+            'Could not save. Check the connection and import again.',
+            '無法儲存。請確認連線後再匯入。'
+          ));
+          return true;
+        }
+
         function beginImport(options) {
           var api = getDailyImportApi();
           if (!api) {
@@ -8169,6 +8210,7 @@
                     );
                     return;
                   }
+                  if (notifyImportPersistFailure(err)) return;
                   openSalesRecovery(err);
                 });
           };
@@ -8265,6 +8307,44 @@
           return patch;
         }
 
+        var MOLD_MEAL_FIELDS = {
+          dinnerSalesByDate: 'dinner_sales',
+          lunchSalesByDate: 'lunch_sales',
+          totalCustomersByDate: 'total_customers',
+          lunchCustomersByDate: 'lunch_customers',
+          dinnerCustomersByDate: 'dinner_customers',
+          totalGroupsByDate: 'total_groups',
+          lunchGroupsByDate: 'lunch_groups',
+          dinnerGroupsByDate: 'dinner_groups'
+        };
+
+        function moldYearRecord(store, iso, bucket) {
+          var y = String(iso).slice(0, 4);
+          if (!store.years || typeof store.years !== 'object') store.years = {};
+          if (!store.years[y] || typeof store.years[y] !== 'object') store.years[y] = {};
+          if (!store.years[y][bucket] || typeof store.years[y][bucket] !== 'object') store.years[y][bucket] = {};
+          return store.years[y][bucket];
+        }
+
+        function moldSetField(bucket, field, iso, value) {
+          if (!bucket[field] || typeof bucket[field] !== 'object') bucket[field] = {};
+          bucket[field][iso] = value;
+        }
+
+        function dispatchImportCommitted() {
+          var detail = { source: 'import-commit', bulk: true };
+          ['dailySalesChanged', 'businessDayChanged'].forEach(function (kind) {
+            try {
+              document.dispatchEvent(new CustomEvent('kpi:' + kind, { detail: detail }));
+              document.dispatchEvent(new CustomEvent('kpi:readSurfacesRefresh', { detail: { kind: kind, source: 'import-commit', bulk: true } }));
+            } catch (_eEv) {}
+          });
+          try {
+            document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: detail }));
+            document.dispatchEvent(new CustomEvent('annual:businessDayMapChanged', { detail: detail }));
+          } catch (_eAn) {}
+        }
+
         function moldFail(status, data, lost) {
           var err = new Error('store-save-failed');
           err.persistResult = { ok: false, error: lost ? 'network' : (data && data.error ? String(data.error) : (status ? 'http_' + status : 'network')), status: status || 0 };
@@ -8299,6 +8379,17 @@
               store.timeline.businessDays[iso] = patch.businessDayByDate[iso] === true;
               if (store.timeline.businessDayUnresolved) delete store.timeline.businessDayUnresolved[iso];
             }
+          });
+          Object.keys(patch.foodByDate || {}).forEach(function (iso) {
+            moldSetField(moldYearRecord(store, iso, 'dailyIncome'), 'food_sales', iso, patch.foodByDate[iso]);
+          });
+          Object.keys(patch.drinkByDate || {}).forEach(function (iso) {
+            moldSetField(moldYearRecord(store, iso, 'dailyIncome'), 'drink_sales', iso, patch.drinkByDate[iso]);
+          });
+          Object.keys(MOLD_MEAL_FIELDS).forEach(function (name) {
+            Object.keys(patch[name] || {}).forEach(function (iso) {
+              moldSetField(moldYearRecord(store, iso, 'dailyMeal'), MOLD_MEAL_FIELDS[name], iso, patch[name][iso]);
+            });
           });
           var gw = window.__KPI_DATA_GATEWAY;
           if (gw && typeof gw.setJsonLocalOnly === 'function') {
@@ -8342,6 +8433,7 @@
               if (!res.ok || !data || data.ok !== true) return moldFail(res.status, data, false);
               if (typeof gw.noteCommittedRevision === 'function') gw.noteCommittedRevision(data.revision);
               applyCommittedMoldPatch(patch);
+              dispatchImportCommitted();
               return { atomic: true, facts: 'in-transaction', revision: data.revision };
             });
           }, function () {

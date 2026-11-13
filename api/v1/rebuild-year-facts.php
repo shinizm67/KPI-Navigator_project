@@ -12,6 +12,8 @@ $cfg = kpi_v1_load_config();
 kpi_v1_store_boot($cfg);
 
 $userId = kpi_v1_store_resolve_user_id($cfg);
+require_once __DIR__ . '/_subscription_access.php';
+kpi_v1_subscription_access_require($cfg, $userId);
 $method = $_SERVER['REQUEST_METHOD'];
 
 if (!kpi_v1_storage_is_mysql($cfg)) {
@@ -156,22 +158,22 @@ function kpi_v1_rebuild_snapshot_biz($bizMap, $iso)
 
 function kpi_v1_rebuild_actual_business_day($bizMap, $salesMap, $iso)
 {
-    /* facts.business_day only. Explicit false, then explicit true, then a sales key, else null.
-       Key presence is not a truthy value. The mold is not read. */
+    /* facts.business_day only. Explicit false → 0, explicit true → 1, no key → null.
+       A sales key does not imply open or closed. The mold is not read. $salesMap is unused. */
     if (!kpi_v1_facts_valid_iso($iso)) {
         return null;
     }
-    if (kpi_v1_rebuild_own($bizMap, $iso)) {
-        $raw = kpi_v1_rebuild_map_get($bizMap, $iso);
-        if (!kpi_v1_rebuild_js_truthy($raw)) {
-            return 0;
-        }
-        return 1;
+    if (!kpi_v1_rebuild_own($bizMap, $iso)) {
+        return null;
     }
-    if (kpi_v1_rebuild_sales_value($salesMap, $iso) !== null) {
-        return 1;
+    $raw = kpi_v1_rebuild_map_get($bizMap, $iso);
+    if ($raw === null) {
+        return null;
     }
-    return null;
+    if (!kpi_v1_rebuild_js_truthy($raw)) {
+        return 0;
+    }
+    return 1;
 }
 
 function kpi_v1_rebuild_snapshot_sales($salesMap, $iso, $placeholder)

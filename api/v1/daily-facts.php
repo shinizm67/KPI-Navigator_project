@@ -12,6 +12,8 @@ $cfg = kpi_v1_load_config();
 kpi_v1_store_boot($cfg);
 
 $userId = kpi_v1_store_resolve_user_id($cfg);
+require_once __DIR__ . '/_subscription_access.php';
+kpi_v1_subscription_access_require($cfg, $userId);
 $method = $_SERVER['REQUEST_METHOD'];
 
 $MAX_WINDOW_DAYS = 550;
@@ -71,6 +73,11 @@ if ($method === 'PUT') {
         kpi_v1_json_out(400, ['ok' => false, 'error' => 'missing_rows']);
     }
     kpi_v1_require_expected_user($userId, $body);
+    foreach ($body as $bodyKey => $_bodyUnused) {
+        if ($bodyKey !== 'rows' && $bodyKey !== 'expectedUserId') {
+            kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_field']);
+        }
+    }
     if (count($body['rows']) > $MAX_PUT_ROWS) {
         kpi_v1_json_out(400, [
             'ok' => false,
@@ -78,12 +85,29 @@ if ($method === 'PUT') {
             'maxRows' => $MAX_PUT_ROWS,
         ]);
     }
+    $factsRowKeys = [
+        'iso' => true,
+        'sales' => true,
+        'salesEntered' => true,
+        'businessDay' => true,
+        'dailyTarget' => true,
+        'mtdActual' => true,
+        'mtdTarget' => true,
+        'ytdActual' => true,
+        'ytdTarget' => true,
+    ];
     $parsed = [];
     foreach ($body['rows'] as $item) {
         if (!is_array($item) || !isset($item['iso']) || !kpi_v1_facts_valid_iso((string) $item['iso'])) {
             kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_iso']);
         }
-        $sales = kpi_v1_facts_num(isset($item['sales']) ? $item['sales'] : 0, false);
+        foreach ($item as $rowKey => $_rowUnused) {
+            if (!isset($factsRowKeys[$rowKey])) {
+                kpi_v1_json_out(400, ['ok' => false, 'error' => 'invalid_field']);
+            }
+        }
+        $salesSet = array_key_exists('sales', $item) && $item['sales'] !== null && $item['sales'] !== '';
+        $sales = $salesSet ? kpi_v1_facts_num($item['sales'], false) : 0.0;
         $dailyTarget = kpi_v1_facts_num(
             array_key_exists('dailyTarget', $item) ? $item['dailyTarget'] : null,
             true
@@ -104,13 +128,15 @@ if ($method === 'PUT') {
         }
         $parsedRow = [
             'iso' => (string) $item['iso'],
-            'sales' => $sales,
             'daily_target' => $dailyTarget,
             'mtd_actual' => $mtdActual,
             'mtd_target' => $mtdTarget,
             'ytd_actual' => $ytdActual,
             'ytd_target' => $ytdTarget,
         ];
+        if ($salesSet) {
+            $parsedRow['sales'] = $sales;
+        }
         if (array_key_exists('businessDay', $item)) {
             $rawBiz = $item['businessDay'];
             if ($rawBiz === null) {

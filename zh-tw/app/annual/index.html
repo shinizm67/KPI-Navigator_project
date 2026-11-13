@@ -31776,6 +31776,47 @@
           );
         }
 
+        function notifyImportPersistFailure(err) {
+          var code = err && err.message ? String(err.message) : '';
+          var saveCodes = {
+            'store-save-failed': true,
+            'daily-inputs-save-failed': true,
+            'daily-facts-rebuild-failed': true
+          };
+          if (!saveCodes[code]) return false;
+          var result = err && err.persistResult && typeof err.persistResult === 'object' ? err.persistResult : null;
+          var detail = result && result.error ? String(result.error) : '';
+          var status = result ? Number(result.status) : NaN;
+          if (detail === 'stale_account') {
+            if (!(result && result.staleWarningShown)) {
+              if (window.__KPI_AUTH && typeof window.__KPI_AUTH.showStaleAccountWarning === 'function') {
+                window.__KPI_AUTH.showStaleAccountWarning();
+              } else {
+                window.alert(t(
+                  '別のタブでログイン中のアカウントが変更されました。この画面を再読み込みしてから操作してください。',
+                  'The signed-in account changed in another tab. Reload this page before continuing.',
+                  '其他分頁的登入帳號已變更。請重新載入此畫面後再操作。'
+                ));
+              }
+            }
+            return true;
+          }
+          if (detail === 'conflict' || (result && result.conflict) || status === 409) {
+            window.alert(t(
+              '別の保存と競合したため、この取込はサーバへ反映していません。画面を再読み込みしてから、もう一度取り込んでください。',
+              'This import conflicted with another save, so it was not applied on the server. Reload this page, then import again.',
+              '此匯入與另一項儲存發生衝突，因此沒有寫入伺服器。請重新載入畫面後再匯入。'
+            ));
+            return true;
+          }
+          window.alert(t(
+            '保存できませんでした。接続を確認して、もう一度取り込んでください。',
+            'Could not save. Check the connection and import again.',
+            '無法儲存。請確認連線後再匯入。'
+          ));
+          return true;
+        }
+
         function beginImport(options) {
           var api = getDailyImportApi();
           if (!api) {
@@ -31923,6 +31964,7 @@
                     );
                     return;
                   }
+                  if (notifyImportPersistFailure(err)) return;
                   openSalesRecovery(err);
                 });
           };
@@ -32019,6 +32061,44 @@
           return patch;
         }
 
+        var MOLD_MEAL_FIELDS = {
+          dinnerSalesByDate: 'dinner_sales',
+          lunchSalesByDate: 'lunch_sales',
+          totalCustomersByDate: 'total_customers',
+          lunchCustomersByDate: 'lunch_customers',
+          dinnerCustomersByDate: 'dinner_customers',
+          totalGroupsByDate: 'total_groups',
+          lunchGroupsByDate: 'lunch_groups',
+          dinnerGroupsByDate: 'dinner_groups'
+        };
+
+        function moldYearRecord(store, iso, bucket) {
+          var y = String(iso).slice(0, 4);
+          if (!store.years || typeof store.years !== 'object') store.years = {};
+          if (!store.years[y] || typeof store.years[y] !== 'object') store.years[y] = {};
+          if (!store.years[y][bucket] || typeof store.years[y][bucket] !== 'object') store.years[y][bucket] = {};
+          return store.years[y][bucket];
+        }
+
+        function moldSetField(bucket, field, iso, value) {
+          if (!bucket[field] || typeof bucket[field] !== 'object') bucket[field] = {};
+          bucket[field][iso] = value;
+        }
+
+        function dispatchImportCommitted() {
+          var detail = { source: 'import-commit', bulk: true };
+          ['dailySalesChanged', 'businessDayChanged'].forEach(function (kind) {
+            try {
+              document.dispatchEvent(new CustomEvent('kpi:' + kind, { detail: detail }));
+              document.dispatchEvent(new CustomEvent('kpi:readSurfacesRefresh', { detail: { kind: kind, source: 'import-commit', bulk: true } }));
+            } catch (_eEv) {}
+          });
+          try {
+            document.dispatchEvent(new CustomEvent('annual:salesMapChanged', { detail: detail }));
+            document.dispatchEvent(new CustomEvent('annual:businessDayMapChanged', { detail: detail }));
+          } catch (_eAn) {}
+        }
+
         function moldFail(status, data, lost) {
           var err = new Error('store-save-failed');
           err.persistResult = { ok: false, error: lost ? 'network' : (data && data.error ? String(data.error) : (status ? 'http_' + status : 'network')), status: status || 0 };
@@ -32053,6 +32133,17 @@
               store.timeline.businessDays[iso] = patch.businessDayByDate[iso] === true;
               if (store.timeline.businessDayUnresolved) delete store.timeline.businessDayUnresolved[iso];
             }
+          });
+          Object.keys(patch.foodByDate || {}).forEach(function (iso) {
+            moldSetField(moldYearRecord(store, iso, 'dailyIncome'), 'food_sales', iso, patch.foodByDate[iso]);
+          });
+          Object.keys(patch.drinkByDate || {}).forEach(function (iso) {
+            moldSetField(moldYearRecord(store, iso, 'dailyIncome'), 'drink_sales', iso, patch.drinkByDate[iso]);
+          });
+          Object.keys(MOLD_MEAL_FIELDS).forEach(function (name) {
+            Object.keys(patch[name] || {}).forEach(function (iso) {
+              moldSetField(moldYearRecord(store, iso, 'dailyMeal'), MOLD_MEAL_FIELDS[name], iso, patch[name][iso]);
+            });
           });
           var gw = window.__KPI_DATA_GATEWAY;
           if (gw && typeof gw.setJsonLocalOnly === 'function') {
@@ -32096,6 +32187,7 @@
               if (!res.ok || !data || data.ok !== true) return moldFail(res.status, data, false);
               if (typeof gw.noteCommittedRevision === 'function') gw.noteCommittedRevision(data.revision);
               applyCommittedMoldPatch(patch);
+              dispatchImportCommitted();
               return { atomic: true, facts: 'in-transaction', revision: data.revision };
             });
           }, function () {
@@ -41270,6 +41362,44 @@
         }
         return Promise.resolve({ ok: false, error: 'edit_lease_lost' });
       }
+      function salesDataSaveFailedMessage() {
+        var lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+        if (lang.indexOf('zh') === 0) {
+          return '無法儲存。輸入內容仍留在畫面中。請確認連線後再儲存。';
+        }
+        if (lang.indexOf('ja') === 0) {
+          return '保存できませんでした。入力内容は画面に残っています。接続を確認して、もう一度保存してください。';
+        }
+        return 'Could not save. Your input is still on this screen. Check the connection and save again.';
+      }
+      function rejectSalesDataSaveFailed(persistResult) {
+        var result = persistResult && typeof persistResult === 'object'
+          ? persistResult
+          : { ok: false, error: 'store-save-failed' };
+        if (result.conflict) {
+          return {
+            ok: false,
+            conflict: true,
+            error: 'conflict',
+            status: result.status || 409
+          };
+        }
+        if (result.error === 'stale_account') {
+          return { ok: false, error: 'stale_account', status: result.status };
+        }
+        try {
+          window.alert(salesDataSaveFailedMessage());
+        } catch (_eSaveAlert) {}
+        var safeError = result.error === 'network'
+          ? 'network'
+          : (result.error === 'unconfirmed' ? 'unconfirmed' : 'store-save-failed');
+        return {
+          ok: false,
+          error: safeError,
+          status: result.status,
+          conflict: false
+        };
+      }
       function rejectSalesDataSaveNotLive() {
         var msg = isSalesDataForeignLeaseLost()
           ? salesDataLeaseLostSaveMessage()
@@ -41292,7 +41422,15 @@
           return window.__KPI_BUSY.run('save', function () { return saveSalesDataModal(); });
         }
 
-        var y = state.year;
+        var y =
+          window.KpiCockpitFacts && typeof window.KpiCockpitFacts.resolveTargetSaveYear === 'function'
+            ? window.KpiCockpitFacts.resolveTargetSaveYear(
+                state.year,
+                typeof getCalendarYear === 'function' ? getCalendarYear() : null,
+                typeof getOperatingYear === 'function' ? getOperatingYear() : null
+              )
+            : state.year;
+        if (!isFinite(y) && typeof getCalendarYear === 'function') y = getCalendarYear();
         if (!isFinite(y)) y = getOperatingYear();
         var refDirty = !!state.referenceDirty;
         if (refDirty) stashReferenceForYear(y);
@@ -41318,25 +41456,70 @@
         if (!canEditSalesDataLiveNow()) {
           return rejectSalesDataSaveNotLive();
         }
-        return Promise.resolve(persistSalesDataShared()).then(function (persistResult) {
-          if (
-            persistResult &&
-            (persistResult.conflict ||
-              persistResult.status === 428 ||
-              persistResult.error === 'network')
-          ) {
-            return persistResult;
+        function salesDataServerSyncOn() {
+          try {
+            var raw = localStorage.getItem('kpiNavigator.storeSync');
+            var parsed = raw ? JSON.parse(raw) : null;
+            return !!(parsed && parsed.enabled);
+          } catch (_eSyncOn) {
+            return false;
           }
-          if (persistResult && persistResult.ok === false) {
-            return rejectSalesDataSaveLeaseLost();
-          }
-          if (refDirty) {
-            if (window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
-              KpiYearStore.writeAnnualTarget(y, targetToWrite, { source: 'sales-data-save' });
-            } else {
-              window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
-              window.__ANNUAL_DATA.targetSales = targetToWrite;
+        }
+        function readPlanSnapForSave(year) {
+          var snap = {
+            empty: true,
+            hadMemory: !!(
+              window.__ANNUAL_DATA &&
+              Object.prototype.hasOwnProperty.call(window.__ANNUAL_DATA, 'targetSales')
+            ),
+            memoryTarget: window.__ANNUAL_DATA ? window.__ANNUAL_DATA.targetSales : undefined
+          };
+          try {
+            var st = window.KpiYearStore.getStore();
+            var plan = st && st.years && st.years[year] && st.years[year].plan;
+            if (plan) {
+              snap.empty = false;
+              snap.hasTarget = Object.prototype.hasOwnProperty.call(plan, 'targetSales');
+              snap.targetSales = plan.targetSales;
+              snap.hasSource = Object.prototype.hasOwnProperty.call(plan, 'source');
+              snap.source = plan.source;
+              snap.hasUpdated = Object.prototype.hasOwnProperty.call(plan, 'updatedAt');
+              snap.updatedAt = plan.updatedAt;
             }
+          } catch (_ePlanSnap) {}
+          return snap;
+        }
+        function restorePlanSnapForSave(year, snap) {
+          try {
+            var st = window.KpiYearStore && KpiYearStore.getStore && KpiYearStore.getStore();
+            var rec = st && st.years && st.years[year];
+            if (rec) {
+              if (!rec.plan || typeof rec.plan !== 'object') rec.plan = {};
+              if (!snap || snap.empty) {
+                delete rec.plan.targetSales;
+                delete rec.plan.source;
+                delete rec.plan.updatedAt;
+              } else {
+                if (snap.hasTarget) rec.plan.targetSales = snap.targetSales;
+                else delete rec.plan.targetSales;
+                if (snap.hasSource) rec.plan.source = snap.source;
+                else delete rec.plan.source;
+                if (snap.hasUpdated) rec.plan.updatedAt = snap.updatedAt;
+                else delete rec.plan.updatedAt;
+              }
+            }
+            if (snap && snap.hadMemory) {
+              window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+              window.__ANNUAL_DATA.targetSales = snap.memoryTarget;
+            }
+            var gwLocal = window.__KPI_DATA_GATEWAY;
+            if (st && gwLocal && typeof gwLocal.setJsonLocalOnly === 'function') {
+              gwLocal.setJsonLocalOnly('kpiNavigator.kpiYearStore', st);
+            }
+          } catch (_ePlanRestore) {}
+        }
+        function completeSalesDataSaveUi() {
+          if (refDirty) {
             document.dispatchEvent(new CustomEvent('annual:targetSalesChanged', {
               detail: { year: y, targetSales: targetToWrite > 0 ? targetToWrite : null, source: 'sales-data-save' }
             }));
@@ -41381,6 +41564,50 @@
           refreshSalesDataTableTotals();
           updateSalesDataSummary();
           return { ok: true };
+        }
+        var planSnapForSecondPut = null;
+        var planWrittenForSecondPut = false;
+        return Promise.resolve(persistSalesDataShared()).then(function (persistResult) {
+          if (persistResult && persistResult.ok === false) {
+            if (
+              persistResult.error === 'edit_lease_lost' ||
+              persistResult.error === 'path_blocked'
+            ) {
+              return rejectSalesDataSaveLeaseLost();
+            }
+            return rejectSalesDataSaveFailed(persistResult);
+          }
+          if (!refDirty) return completeSalesDataSaveUi();
+          planSnapForSecondPut = readPlanSnapForSave(y);
+          if (window.KpiYearStore && typeof KpiYearStore.writeAnnualTarget === 'function') {
+            KpiYearStore.writeAnnualTarget(y, targetToWrite, { source: 'sales-data-save' });
+          } else {
+            window.__ANNUAL_DATA = window.__ANNUAL_DATA || {};
+            window.__ANNUAL_DATA.targetSales = targetToWrite;
+          }
+          planWrittenForSecondPut = true;
+          var gwPut = window.__KPI_DATA_GATEWAY;
+          var secondPut =
+            gwPut && typeof gwPut.flushPut === 'function'
+              ? gwPut.flushPut()
+              : Promise.resolve(
+                  salesDataServerSyncOn() ? { ok: false, error: 'unconfirmed' } : undefined
+                );
+          return Promise.resolve(secondPut).then(function (secondResult) {
+            if (salesDataServerSyncOn() && !(secondResult && secondResult.ok === true)) {
+              restorePlanSnapForSave(y, planSnapForSecondPut);
+              planWrittenForSecondPut = false;
+              return rejectSalesDataSaveFailed(
+                secondResult && typeof secondResult === 'object'
+                  ? secondResult
+                  : { ok: false, error: 'unconfirmed' }
+              );
+            }
+            return completeSalesDataSaveUi();
+          });
+        }).catch(function (err) {
+          if (planWrittenForSecondPut) restorePlanSnapForSave(y, planSnapForSecondPut);
+          return rejectSalesDataSaveFailed(err && err.persistResult);
         });
       }
 
@@ -42260,7 +42487,36 @@
                 );
               });
             }
-            var persistP = window.__KPI_DAILY_IMPORT.commitMoldImport(maps, { scope: 'sales-data' });
+            var salesDataMoldOy = window.KpiYearStore && typeof KpiYearStore.getOperatingYear === 'function'
+              ? Number(KpiYearStore.getOperatingYear()) : NaN;
+            function salesDataMoldIsoOk(iso) {
+              var yy = Number(String(iso).slice(0, 4));
+              return Number.isFinite(salesDataMoldOy) && Number.isFinite(yy) && yy === salesDataMoldOy;
+            }
+            function salesDataMoldMap(src) {
+              var out = {};
+              Object.keys(src || {}).forEach(function (iso) {
+                if (!salesDataMoldIsoOk(iso)) return;
+                out[iso] = src[iso];
+              });
+              return out;
+            }
+            var salesDataMoldMaps = {
+              salesByDate: salesDataMoldMap(maps && maps.salesByDate),
+              salesEnteredByDate: salesDataMoldMap(maps && maps.salesEnteredByDate),
+              businessDayByDate: salesDataMoldMap(maps && maps.businessDayByDate),
+              dinnerSalesByDate: salesDataMoldMap(maps && maps.dinnerSalesByDate),
+              lunchSalesByDate: salesDataMoldMap(maps && maps.lunchSalesByDate),
+              totalCustomersByDate: salesDataMoldMap(maps && maps.totalCustomersByDate),
+              lunchCustomersByDate: salesDataMoldMap(maps && maps.lunchCustomersByDate),
+              dinnerCustomersByDate: salesDataMoldMap(maps && maps.dinnerCustomersByDate),
+              totalGroupsByDate: salesDataMoldMap(maps && maps.totalGroupsByDate),
+              lunchGroupsByDate: salesDataMoldMap(maps && maps.lunchGroupsByDate),
+              dinnerGroupsByDate: salesDataMoldMap(maps && maps.dinnerGroupsByDate),
+              foodByDate: salesDataMoldMap(maps && maps.foodByDate),
+              drinkByDate: salesDataMoldMap(maps && maps.drinkByDate)
+            };
+            var persistP = window.__KPI_DAILY_IMPORT.commitMoldImport(salesDataMoldMaps, { scope: 'sales-data' });
             window.__KPI_DAILY_IMPORT.applyToRowState(state.rowStateByIso, maps, year);
             recomputeModalDirty();
             syncUndoButton();

@@ -269,13 +269,23 @@ function kpi_v1_db_cas_put($cfg, $userId, $expectedRevision, $buildNextBlob)
     }
 }
 
+function kpi_v1_db_user_license_ready(PDO $pdo)
+{
+    try {
+        $probe = $pdo->query("SHOW COLUMNS FROM kpi_users LIKE 'full_authorized'");
+        return (bool) ($probe && $probe->fetch(PDO::FETCH_ASSOC));
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
 function kpi_v1_db_read_user($cfg, $userId)
 {
     $pdo = kpi_v1_db($cfg);
     $row = null;
     try {
         $stmt = $pdo->prepare(
-            'SELECT user_id, email, password_hash, plan, disabled, role, plan_updated_at, created_at, last_login_at, parent_user_id
+            'SELECT user_id, email, password_hash, plan, disabled, full_authorized, role, plan_updated_at, created_at, last_login_at, parent_user_id
              FROM kpi_users WHERE user_id = ? LIMIT 1'
         );
         $stmt->execute([(string) $userId]);
@@ -307,6 +317,7 @@ function kpi_v1_db_read_user($cfg, $userId)
         'plan' => (string) $row['plan'],
         'disabled' => !empty($row['disabled']),
         'role' => isset($row['role']) ? (string) $row['role'] : 'user',
+        'fullAuthorized' => isset($row['full_authorized']) && (int) $row['full_authorized'] === 1,
         'createdAt' => !empty($row['created_at'])
             ? gmdate('c', strtotime($row['created_at'] . ' UTC'))
             : gmdate('c'),
@@ -347,6 +358,34 @@ function kpi_v1_db_write_user($cfg, $user)
         $lastLoginTs = gmdate('Y-m-d H:i:s', strtotime((string) $user['lastLoginAt']) ?: time());
     }
     $now = gmdate('Y-m-d H:i:s');
+    $license = (isset($user['fullAuthorized']) && $user['fullAuthorized'] === true) ? 1 : 0;
+    if (kpi_v1_db_user_license_ready($pdo)) {
+        $stmt = $pdo->prepare(
+            'INSERT INTO kpi_users (
+                user_id, email, password_hash, plan, disabled, full_authorized, role, plan_updated_at,
+                created_at, updated_at, last_login_at, parent_user_id
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               email = VALUES(email),
+               password_hash = VALUES(password_hash),
+               plan = VALUES(plan),
+               disabled = VALUES(disabled),
+               full_authorized = VALUES(full_authorized),
+               role = VALUES(role),
+               plan_updated_at = VALUES(plan_updated_at),
+               updated_at = VALUES(updated_at),
+               last_login_at = VALUES(last_login_at),
+               parent_user_id = VALUES(parent_user_id)'
+        );
+        $stmt->execute([
+            $userId, $email, $hash, $plan, $disabled, $license, $role, $planUpdatedTs,
+            $createdTs, $now, $lastLoginTs, $parent,
+        ]);
+        return;
+    }
+    if ($license === 1) {
+        kpi_v1_json_out(503, ['ok' => false, 'error' => 'license_storage_unavailable']);
+    }
     try {
         $stmt = $pdo->prepare(
             'INSERT INTO kpi_users (user_id, email, password_hash, plan, disabled, role, plan_updated_at, created_at, updated_at, last_login_at, parent_user_id)
@@ -528,7 +567,7 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
               (user_id, iso, sales, business_day, sales_entered, daily_target, mtd_actual, mtd_target, ytd_actual, ytd_target, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
-              sales = VALUES(sales),
+              sales = IF(? = 1, VALUES(sales), sales),
               business_day = IF(? = 1, VALUES(business_day), business_day),
               sales_entered = IF(? = 1, VALUES(sales_entered), sales_entered),
               daily_target = VALUES(daily_target),
@@ -544,12 +583,13 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
         $stmt = $pdo->prepare($sql);
         $n = 0;
         foreach ($rows as $row) {
+            $salesSet = array_key_exists('sales', $row);
             $bizSet = array_key_exists('business_day', $row);
             $enteredSet = array_key_exists('sales_entered', $row);
             $stmt->execute([
                 $uid,
                 $row['iso'],
-                $row['sales'],
+                $salesSet ? $row['sales'] : 0,
                 $bizSet ? $row['business_day'] : null,
                 $enteredSet ? $row['sales_entered'] : null,
                 $row['daily_target'],
@@ -558,6 +598,7 @@ function kpi_v1_db_upsert_daily_facts($cfg, $userId, array $rows)
                 $row['ytd_actual'],
                 $row['ytd_target'],
                 $now,
+                $salesSet ? 1 : 0,
                 $bizSet ? 1 : 0,
                 $enteredSet ? 1 : 0,
             ]);
